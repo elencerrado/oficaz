@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { ChevronRight, ChevronLeft, Trash2 } from 'lucide-react';
 import { RecipientSelector } from './recipient-selector';
 
 interface EditCampaignDialogProps {
@@ -15,23 +15,70 @@ interface EditCampaignDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface EmailContent {
+  subtitle: string;
+  heading: string;
+  paragraph: string;
+  buttonText: string;
+  buttonUrl: string;
+}
+
 export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaignDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [currentStep, setCurrentStep] = useState(1);
 
   const [formData, setFormData] = useState({
     name: '',
     subject: '',
     preheader: '',
-    htmlContent: '',
+    selectedEmails: [] as string[],
     targetAudience: 'registered_users' as string,
     includeActiveSubscriptions: true,
     includeTrialSubscriptions: true,
     includeBlockedSubscriptions: false,
     includeCancelledSubscriptions: false,
     includeProspects: false,
-    selectedEmails: [] as string[],
   });
+
+  const [emailContent, setEmailContent] = useState<EmailContent>({
+    subtitle: '',
+    heading: '',
+    paragraph: '',
+    buttonText: '',
+    buttonUrl: '',
+  });
+
+  const [useRawHtml, setUseRawHtml] = useState(false);
+  const [rawHtmlContent, setRawHtmlContent] = useState('');
+
+  // Parse HTML to extract visual content (simple text extraction)
+  const parseHtmlContent = (html: string): EmailContent | null => {
+    // Check for template marker - only parse if it's our template
+    if (!html.includes('<!-- OFICAZ_TEMPLATE_V1 -->')) {
+      return null;
+    }
+
+    try {
+      // Try to extract content from our template structure
+      const subtitleMatch = html.match(/<!-- Subtitle -->[\s\S]*?<p[^>]*>(.*?)<\/p>/);
+      const headingMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/);
+      const paragraphMatch = html.match(/<h1[^>]*>.*?<\/h1>[\s\S]*?<p[^>]*>(.*?)<\/p>/);
+      const buttonTextMatch = html.match(/<a[^>]*style="[^"]*display: inline-block[^"]*"[^>]*>(.*?)<\/a>/);
+      const buttonUrlMatch = html.match(/<a[^>]*href="([^"]+)"[^>]*style="[^"]*display: inline-block[^"]*"/);
+
+      return {
+        subtitle: subtitleMatch ? subtitleMatch[1].trim() : '',
+        heading: headingMatch ? headingMatch[1].trim() : '',
+        paragraph: paragraphMatch ? paragraphMatch[1].trim() : '',
+        buttonText: buttonTextMatch ? buttonTextMatch[1].trim() : '',
+        buttonUrl: buttonUrlMatch ? buttonUrlMatch[1].trim() : '',
+      };
+    } catch (e) {
+      // If parsing fails, return null
+    }
+    return null;
+  };
 
   // Update form data when campaign changes
   useEffect(() => {
@@ -40,17 +87,96 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
         name: campaign.name || '',
         subject: campaign.subject || '',
         preheader: campaign.preheader || '',
-        htmlContent: campaign.htmlContent || '',
+        selectedEmails: campaign.selectedEmails || [],
         targetAudience: campaign.targetAudience || 'registered_users',
         includeActiveSubscriptions: campaign.includeActiveSubscriptions ?? true,
         includeTrialSubscriptions: campaign.includeTrialSubscriptions ?? true,
         includeBlockedSubscriptions: campaign.includeBlockedSubscriptions ?? false,
         includeCancelledSubscriptions: campaign.includeCancelledSubscriptions ?? false,
         includeProspects: campaign.includeProspects ?? false,
-        selectedEmails: campaign.selectedEmails || [],
       });
+
+      // Try to parse HTML content
+      const parsed = parseHtmlContent(campaign.htmlContent || '');
+      if (parsed) {
+        setEmailContent(parsed);
+        setUseRawHtml(false);
+      } else {
+        // Fallback to raw HTML editing for old campaigns
+        setRawHtmlContent(campaign.htmlContent || '');
+        setUseRawHtml(true);
+      }
+      
+      setCurrentStep(1);
     }
   }, [campaign]);
+
+  const generateHtmlContent = (content: EmailContent) => {
+    return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${formData.subject}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <!-- OFICAZ_TEMPLATE_V1 -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Logo Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%); padding: 30px; text-align: center;">
+              <img src="https://oficaz.es/email-logo.png" alt="Oficaz Logo" style="height: 40px; display: block; margin: 0 auto;" />
+            </td>
+          </tr>
+          
+          <!-- Subtitle -->
+          ${content.subtitle ? `
+          <tr>
+            <td style="padding: 20px 40px 10px; text-align: center;">
+              <p style="margin: 0; color: #666; font-size: 14px; line-height: 1.5;">${content.subtitle}</p>
+            </td>
+          </tr>
+          ` : ''}
+          
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: ${content.subtitle ? '10px' : '30px'} 40px 20px;">
+              ${content.heading ? `<h1 style="margin: 0 0 20px; color: #1a1a1a; font-size: 24px; font-weight: 600; line-height: 1.3;">${content.heading}</h1>` : ''}
+              ${content.paragraph ? `<p style="margin: 0; color: #444; font-size: 16px; line-height: 1.6;">${content.paragraph}</p>` : ''}
+            </td>
+          </tr>
+          
+          <!-- Button -->
+          ${content.buttonText && content.buttonUrl ? `
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center;">
+              <a href="${content.buttonUrl}" style="display: inline-block; background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">${content.buttonText}</a>
+            </td>
+          </tr>
+          ` : '<tr><td style="padding-bottom: 20px;"></td></tr>'}
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8f9fa; padding: 30px 40px; border-top: 1px solid #e9ecef; text-align: center;">
+              <p style="margin: 0 0 10px; color: #666; font-size: 14px;">© ${new Date().getFullYear()} Oficaz. Todos los derechos reservados.</p>
+              <p style="margin: 0; color: #999; font-size: 12px;">
+                Este correo fue enviado desde Oficaz<br/>
+                <a href="{{{unsubscribe_url}}}" style="color: #007AFF; text-decoration: none;">Cancelar suscripción</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
+  };
 
   const updateCampaignMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -113,94 +239,253 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateCampaignMutation.mutate(formData);
+  const handleSubmit = () => {
+    const htmlContent = useRawHtml ? rawHtmlContent : generateHtmlContent(emailContent);
+    updateCampaignMutation.mutate({
+      ...formData,
+      htmlContent,
+    });
   };
 
+  const canProceedStep1 = formData.name && formData.subject;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      onOpenChange(isOpen);
+      if (!isOpen) setCurrentStep(1);
+    }}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 border-white/20 text-white">
         <DialogHeader>
-          <DialogTitle className="text-white">Editar Campaña</DialogTitle>
+          <DialogTitle className="text-white">Editar Campaña - Paso {currentStep} de 3</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="name" className="text-white">Nombre de la Campaña</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Ej: Newsletter Septiembre 2024"
-              className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-              required
-            />
-          </div>
 
-          <div>
-            <Label htmlFor="subject" className="text-white">Asunto del Email</Label>
-            <Input
-              id="subject"
-              value={formData.subject}
-              onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-              placeholder="Ej: Novedades de Oficaz - Septiembre"
-              className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-              required
+        {/* Progress Indicator */}
+        <div className="flex items-center justify-center gap-2 mb-4">
+          {[1, 2, 3].map((step) => (
+            <div
+              key={step}
+              className={`h-2 w-20 rounded-full transition-colors ${
+                step === currentStep ? 'bg-blue-500' : step < currentStep ? 'bg-blue-400/50' : 'bg-white/20'
+              }`}
             />
-          </div>
+          ))}
+        </div>
 
-          <div>
-            <Label htmlFor="preheader" className="text-white">Preheader (texto preview)</Label>
-            <Input
-              id="preheader"
-              value={formData.preheader}
-              onChange={(e) => setFormData({ ...formData, preheader: e.target.value })}
-              placeholder="Texto que aparece junto al asunto en el inbox"
-              className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-            />
-          </div>
+        {/* Step 1: Basic Info */}
+        {currentStep === 1 && (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="name" className="text-white">Nombre de la Campaña</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Ej: Newsletter Septiembre 2024"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                data-testid="input-edit-campaign-name"
+              />
+            </div>
 
-          <div>
-            <Label htmlFor="htmlContent" className="text-white">Contenido del Email (HTML)</Label>
-            <Textarea
-              id="htmlContent"
-              value={formData.htmlContent}
-              onChange={(e) => setFormData({ ...formData, htmlContent: e.target.value })}
-              placeholder="<h1>¡Hola!</h1><p>Contenido del email...</p>"
-              rows={8}
-              className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-              required
-            />
-          </div>
+            <div>
+              <Label htmlFor="subject" className="text-white">Asunto del Email</Label>
+              <Input
+                id="subject"
+                value={formData.subject}
+                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                placeholder="Ej: Novedades de Oficaz - Septiembre"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                data-testid="input-edit-campaign-subject"
+              />
+            </div>
 
-          <div className="space-y-3">
-            <Label className="text-white">Destinatarios</Label>
-            <RecipientSelector
-              selectedEmails={formData.selectedEmails}
-              onSelectionChange={(emails) => setFormData({ ...formData, selectedEmails: emails })}
-            />
-          </div>
-
-          <div className="flex justify-between gap-2 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => deleteCampaignMutation.mutate()} 
-              disabled={deleteCampaignMutation.isPending}
-              className="border-red-500 text-red-500 hover:bg-red-500/10"
-            >
-              {deleteCampaignMutation.isPending ? 'Eliminando...' : 'Eliminar Campaña'}
-            </Button>
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="border-white/20 text-white hover:bg-white/10">
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={updateCampaignMutation.isPending} className="bg-blue-600 hover:bg-blue-700">
-                {updateCampaignMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
-              </Button>
+            <div>
+              <Label htmlFor="preheader" className="text-white">Preheader (opcional)</Label>
+              <Input
+                id="preheader"
+                value={formData.preheader}
+                onChange={(e) => setFormData({ ...formData, preheader: e.target.value })}
+                placeholder="Texto que aparece junto al asunto en el inbox"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                data-testid="input-edit-campaign-preheader"
+              />
+              <p className="text-xs text-white/50 mt-1">Este texto aparece como preview del email</p>
             </div>
           </div>
-        </form>
+        )}
+
+        {/* Step 2: Email Content */}
+        {currentStep === 2 && (
+          <div className="space-y-4">
+            {useRawHtml ? (
+              <>
+                <div className="bg-yellow-500/20 rounded-lg p-4 border border-yellow-400/30">
+                  <p className="text-sm text-yellow-200">
+                    Esta campaña usa HTML personalizado. Puedes editarlo directamente aquí.
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="rawHtml" className="text-white">Contenido HTML</Label>
+                  <Textarea
+                    id="rawHtml"
+                    value={rawHtmlContent}
+                    onChange={(e) => setRawHtmlContent(e.target.value)}
+                    rows={12}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50 font-mono text-sm"
+                    data-testid="input-raw-html"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="bg-white/5 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-white/70">
+                    <strong className="text-white">Vista previa:</strong> El email incluirá automáticamente el logo de Oficaz en la parte superior.
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="subtitle" className="text-white">Subtítulo (opcional)</Label>
+                  <Input
+                    id="subtitle"
+                    value={emailContent.subtitle}
+                    onChange={(e) => setEmailContent({ ...emailContent, subtitle: e.target.value })}
+                    placeholder="Ej: Descubre las novedades de este mes"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                    data-testid="input-edit-email-subtitle"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="heading" className="text-white">Encabezado Principal</Label>
+                  <Input
+                    id="heading"
+                    value={emailContent.heading}
+                    onChange={(e) => setEmailContent({ ...emailContent, heading: e.target.value })}
+                    placeholder="Ej: ¡Nuevas funcionalidades disponibles!"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                    data-testid="input-edit-email-heading"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="paragraph" className="text-white">Párrafo de Contenido</Label>
+                  <Textarea
+                    id="paragraph"
+                    value={emailContent.paragraph}
+                    onChange={(e) => setEmailContent({ ...emailContent, paragraph: e.target.value })}
+                    placeholder="Escribe el contenido principal del email..."
+                    rows={5}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                    data-testid="input-edit-email-paragraph"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="buttonText" className="text-white">Texto del Botón (opcional)</Label>
+                    <Input
+                      id="buttonText"
+                      value={emailContent.buttonText}
+                      onChange={(e) => setEmailContent({ ...emailContent, buttonText: e.target.value })}
+                      placeholder="Ej: Ver más"
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                      data-testid="input-edit-button-text"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="buttonUrl" className="text-white">URL del Botón (opcional)</Label>
+                    <Input
+                      id="buttonUrl"
+                      value={emailContent.buttonUrl}
+                      onChange={(e) => setEmailContent({ ...emailContent, buttonUrl: e.target.value })}
+                      placeholder="https://oficaz.es"
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                      data-testid="input-edit-button-url"
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-white/5 rounded-lg p-4">
+                  <p className="text-sm text-white/70">
+                    El pie de página se añadirá automáticamente con el copyright de Oficaz y el enlace de cancelar suscripción.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Step 3: Recipients */}
+        {currentStep === 3 && (
+          <div className="space-y-4">
+            <div className="bg-white/5 rounded-lg p-4 mb-4">
+              <p className="text-sm text-white/70">
+                Selecciona los destinatarios que recibirán esta campaña. Los cambios en los destinatarios solo afectarán a futuros envíos.
+              </p>
+            </div>
+            
+            <div className="space-y-3">
+              <Label className="text-white">Destinatarios</Label>
+              <RecipientSelector
+                selectedEmails={formData.selectedEmails}
+                onSelectionChange={(emails) => setFormData({ ...formData, selectedEmails: emails })}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Navigation Buttons */}
+        <div className="flex justify-between pt-6 border-t border-white/10">
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => deleteCampaignMutation.mutate()}
+              disabled={deleteCampaignMutation.isPending}
+              className="border-red-500 text-red-500 hover:bg-red-500/10"
+              data-testid="button-delete-campaign"
+            >
+              <Trash2 className="w-4 h-4 mr-1" />
+              {deleteCampaignMutation.isPending ? 'Eliminando...' : 'Eliminar'}
+            </Button>
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => currentStep > 1 ? setCurrentStep(currentStep - 1) : onOpenChange(false)}
+              className="border-white/20 text-white hover:bg-white/10"
+              data-testid="button-edit-previous-step"
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              {currentStep === 1 ? 'Cancelar' : 'Anterior'}
+            </Button>
+
+            {currentStep < 3 ? (
+              <Button
+                type="button"
+                onClick={() => setCurrentStep(currentStep + 1)}
+                disabled={currentStep === 1 && !canProceedStep1}
+                className="bg-blue-600 hover:bg-blue-700"
+                data-testid="button-edit-next-step"
+              >
+                Siguiente
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={handleSubmit}
+                disabled={updateCampaignMutation.isPending}
+                className="bg-green-600 hover:bg-green-700"
+                data-testid="button-save-campaign"
+              >
+                {updateCampaignMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
+              </Button>
+            )}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
