@@ -8145,7 +8145,7 @@ Responde directamente a este email para contactar con la persona.
       // Update campaign status and increment counters
       const updateData: any = { 
         status: 'sent',
-        sentCount: sql`${schema.emailCampaigns.sentCount} + ${successCount}`,
+        sentCount: sql`COALESCE(${schema.emailCampaigns.sentCount}, 0) + ${successCount}`,
       };
       
       // Only set sentAt on first send
