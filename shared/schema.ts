@@ -803,3 +803,116 @@ export const insertPromotionalCodeSchema = createInsertSchema(promotionalCodes).
 
 export type PromotionalCode = typeof promotionalCodes.$inferSelect;
 export type InsertPromotionalCode = z.infer<typeof insertPromotionalCodeSchema>;
+
+// Email Marketing - Prospects table (contactos externos para captación)
+export const emailProspects = pgTable("email_prospects", {
+  id: serial("id").primaryKey(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  name: varchar("name", { length: 255 }),
+  company: varchar("company", { length: 255 }),
+  phone: varchar("phone", { length: 50 }),
+  source: varchar("source", { length: 100 }), // "manual", "import", "landing_page", etc
+  tags: text("tags").array().default([]), // Etiquetas para segmentación
+  status: varchar("status", { length: 50 }).default("active").notNull(), // active, unsubscribed, bounced
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertEmailProspectSchema = createInsertSchema(emailProspects).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type EmailProspect = typeof emailProspects.$inferSelect;
+export type InsertEmailProspect = z.infer<typeof insertEmailProspectSchema>;
+
+// Email Marketing - Campaigns table
+export const emailCampaigns = pgTable("email_campaigns", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  subject: varchar("subject", { length: 500 }).notNull(),
+  preheader: varchar("preheader", { length: 255 }), // Texto preview en inbox
+  htmlContent: text("html_content").notNull(),
+  status: varchar("status", { length: 50 }).default("draft").notNull(), // draft, scheduled, sending, sent, failed
+  
+  // Segmentación de destinatarios
+  targetAudience: varchar("target_audience", { length: 50 }).notNull(), // "all_users", "registered_users", "prospects", "custom"
+  
+  // Filtros para usuarios registrados
+  includeActiveSubscriptions: boolean("include_active_subscriptions").default(false),
+  includeTrialSubscriptions: boolean("include_trial_subscriptions").default(false),
+  includeBlockedSubscriptions: boolean("include_blocked_subscriptions").default(false),
+  includeCancelledSubscriptions: boolean("include_cancelled_subscriptions").default(false),
+  specificPlans: text("specific_plans").array(), // ["basic", "pro", "master"]
+  
+  // Incluir prospects
+  includeProspects: boolean("include_prospects").default(false),
+  prospectTags: text("prospect_tags").array(), // Filtrar prospects por tags
+  
+  // Programación
+  scheduledAt: timestamp("scheduled_at"),
+  sentAt: timestamp("sent_at"),
+  
+  // Estadísticas
+  recipientsCount: integer("recipients_count").default(0),
+  sentCount: integer("sent_count").default(0),
+  deliveredCount: integer("delivered_count").default(0),
+  openedCount: integer("opened_count").default(0),
+  clickedCount: integer("clicked_count").default(0),
+  bouncedCount: integer("bounced_count").default(0),
+  unsubscribedCount: integer("unsubscribed_count").default(0),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertEmailCampaignSchema = createInsertSchema(emailCampaigns).omit({
+  id: true,
+  recipientsCount: true,
+  sentCount: true,
+  deliveredCount: true,
+  openedCount: true,
+  clickedCount: true,
+  bouncedCount: true,
+  unsubscribedCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type EmailCampaign = typeof emailCampaigns.$inferSelect;
+export type InsertEmailCampaign = z.infer<typeof insertEmailCampaignSchema>;
+
+// Email Marketing - Campaign Sends (tracking individual de envíos)
+export const emailCampaignSends = pgTable("email_campaign_sends", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").references(() => emailCampaigns.id, { onDelete: "cascade" }).notNull(),
+  recipientEmail: varchar("recipient_email", { length: 255 }).notNull(),
+  recipientName: varchar("recipient_name", { length: 255 }),
+  recipientType: varchar("recipient_type", { length: 50 }).notNull(), // "user", "prospect"
+  
+  // Tracking
+  status: varchar("status", { length: 50 }).default("pending").notNull(), // pending, sent, delivered, opened, clicked, bounced, failed
+  sendgridMessageId: varchar("sendgrid_message_id", { length: 255 }),
+  sentAt: timestamp("sent_at"),
+  deliveredAt: timestamp("delivered_at"),
+  openedAt: timestamp("opened_at"),
+  clickedAt: timestamp("clicked_at"),
+  bouncedAt: timestamp("bounced_at"),
+  bounceReason: text("bounce_reason"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  campaignEmailIdx: index("campaign_email_idx").on(table.campaignId, table.recipientEmail),
+}));
+
+export const insertEmailCampaignSendSchema = createInsertSchema(emailCampaignSends).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type EmailCampaignSend = typeof emailCampaignSends.$inferSelect;
+export type InsertEmailCampaignSend = z.infer<typeof insertEmailCampaignSendSchema>;
