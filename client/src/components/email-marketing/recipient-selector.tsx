@@ -10,19 +10,56 @@ interface RecipientSelectorProps {
 }
 
 export function RecipientSelector({ selectedEmails, onSelectionChange }: RecipientSelectorProps) {
-  const { data: usersByStatus, isLoading } = useQuery({
-    queryKey: ['/api/super-admin/users-by-subscription-status'],
+  // Fetch users by category (parallel queries)
+  const { data: activeUsers = [], isLoading: loadingActive } = useQuery({
+    queryKey: ['/api/super-admin/recipients', 'active'],
     queryFn: async () => {
       const token = localStorage.getItem('superAdminToken');
-      const response = await fetch('/api/super-admin/users-by-subscription-status', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+      const response = await fetch('/api/super-admin/recipients/active', {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (!response.ok) throw new Error('Failed to fetch users');
+      if (!response.ok) throw new Error('Failed to fetch active users');
       return response.json();
-    },
+    }
   });
+
+  const { data: trialUsers = [], isLoading: loadingTrial } = useQuery({
+    queryKey: ['/api/super-admin/recipients', 'trial'],
+    queryFn: async () => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch('/api/super-admin/recipients/trial', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Failed to fetch trial users');
+      return response.json();
+    }
+  });
+
+  const { data: blockedUsers = [], isLoading: loadingBlocked } = useQuery({
+    queryKey: ['/api/super-admin/recipients', 'blocked'],
+    queryFn: async () => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch('/api/super-admin/recipients/blocked', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Failed to fetch blocked users');
+      return response.json();
+    }
+  });
+
+  const { data: cancelledUsers = [], isLoading: loadingCancelled } = useQuery({
+    queryKey: ['/api/super-admin/recipients', 'cancelled'],
+    queryFn: async () => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch('/api/super-admin/recipients/cancelled', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Failed to fetch cancelled users');
+      return response.json();
+    }
+  });
+
+  const isLoading = loadingActive || loadingTrial || loadingBlocked || loadingCancelled;
 
   const toggleEmail = (email: string) => {
     if (selectedEmails.includes(email)) {
@@ -60,10 +97,10 @@ export function RecipientSelector({ selectedEmails, onSelectionChange }: Recipie
   }
 
   const categories = [
-    { key: 'active', label: 'Suscripciones Activas', users: usersByStatus?.active || [], color: 'blue' },
-    { key: 'trial', label: 'En Período de Prueba', users: usersByStatus?.trial || [], color: 'yellow' },
-    { key: 'blocked', label: 'Bloqueadas', users: usersByStatus?.blocked || [], color: 'red' },
-    { key: 'cancelled', label: 'Canceladas', users: usersByStatus?.cancelled || [], color: 'gray' },
+    { key: 'active', label: 'Suscripciones Activas', users: activeUsers, color: 'blue' },
+    { key: 'trial', label: 'En Período de Prueba', users: trialUsers, color: 'yellow' },
+    { key: 'blocked', label: 'Bloqueadas', users: blockedUsers, color: 'red' },
+    { key: 'cancelled', label: 'Canceladas', users: cancelledUsers, color: 'gray' },
   ];
 
   return (
