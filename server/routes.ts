@@ -5516,6 +5516,76 @@ Responde directamente a este email para contactar con la persona.
     });
   });
 
+  // New simplified superadmin authentication - Step 1: Access Password
+  app.post('/api/super-admin/verify-access-password', async (req, res) => {
+    try {
+      const { accessPassword } = req.body;
+      
+      const SUPER_ADMIN_ACCESS_PASSWORD = process.env.SUPER_ADMIN_ACCESS_PASSWORD;
+      
+      // 🔒 SECURITY: Check if Super Admin password is configured
+      if (!SUPER_ADMIN_ACCESS_PASSWORD) {
+        console.log('🚨 SECURITY: Super Admin access attempt blocked - no access password configured');
+        return res.status(503).json({ message: "Acceso Super Admin deshabilitado por configuración de seguridad" });
+      }
+      
+      if (accessPassword !== SUPER_ADMIN_ACCESS_PASSWORD) {
+        console.log('🚨 SuperAdmin access denied: Invalid access password');
+        // 🔒 AUDIT: Log failed access attempts for security monitoring
+        console.log(`🚨 SECURITY AUDIT: Failed Super Admin access attempt - IP: ${req.ip}, Time: ${new Date().toISOString()}`);
+        return res.status(401).json({ message: "Contraseña de acceso incorrecta" });
+      }
+
+      console.log('✅ SuperAdmin access password verified - Step 1 complete');
+      res.json({ success: true, message: "Contraseña verificada correctamente" });
+    } catch (error) {
+      console.error("Error in access password verification:", error);
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // New simplified superadmin authentication - Step 2: Login
+  app.post('/api/super-admin/login', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
+      const SUPER_ADMIN_PASSWORD = process.env.SUPER_ADMIN_PASSWORD;
+      
+      // 🔒 SECURITY: Check if Super Admin credentials are configured
+      if (!SUPER_ADMIN_EMAIL || !SUPER_ADMIN_PASSWORD) {
+        console.log('🚨 SECURITY: Super Admin login attempt blocked - credentials not configured');
+        return res.status(503).json({ message: "Acceso Super Admin deshabilitado por configuración de seguridad" });
+      }
+      
+      if (email !== SUPER_ADMIN_EMAIL || password !== SUPER_ADMIN_PASSWORD) {
+        console.log('🚨 SuperAdmin login denied: Invalid credentials');
+        // 🔒 AUDIT: Log failed login attempts for security monitoring
+        console.log(`🚨 SECURITY AUDIT: Failed Super Admin login attempt - Email: ${email}, IP: ${req.ip}, Time: ${new Date().toISOString()}`);
+        return res.status(401).json({ message: "Email o contraseña incorrectos" });
+      }
+
+      // Generate final super admin JWT token
+      const superAdminToken = jwt.sign(
+        { 
+          type: 'super_admin_access',
+          role: 'super_admin',
+          email: SUPER_ADMIN_EMAIL,
+          accessGrantedAt: Date.now()
+        },
+        process.env.JWT_SECRET || 'secret',
+        { expiresIn: '24h' }
+      );
+
+      console.log('✅ SuperAdmin login successful - Access granted');
+      res.json({ token: superAdminToken, message: "Acceso autorizado" });
+    } catch (error) {
+      console.error("Error in superadmin login:", error);
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // OLD EMAIL-BASED SYSTEM (deprecated but kept for backward compatibility)
   app.post('/api/super-admin/verify-access-code', async (req, res) => {
     try {
       const { accessCode } = req.body;
