@@ -63,23 +63,41 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
     }
 
     try {
-      // Try to extract content from our template structure
+      // Helper function to convert <br/> back to newlines and clean HTML
+      const cleanHtml = (text: string): string => {
+        return text
+          .replace(/<br\s*\/?>/gi, '\n')
+          .trim();
+      };
+
+      // Extract subtitle (in blue header, after <!-- Subtitle --> comment)
       const subtitleMatch = html.match(/<!-- Subtitle -->[\s\S]*?<p[^>]*>(.*?)<\/p>/);
+      
+      // Extract heading (h1 tag)
       const headingMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/);
-      const paragraphMatch = html.match(/<h1[^>]*>.*?<\/h1>[\s\S]*?<p[^>]*>(.*?)<\/p>/);
+      
+      // Extract paragraph (first p tag after h1, in white content area)
+      // Look for p tag that's NOT in the blue header (after h1)
+      const contentAfterH1 = html.split(/<h1[^>]*>.*?<\/h1>/)[1];
+      const paragraphMatch = contentAfterH1?.match(/<p[^>]*>(.*?)<\/p>/);
+      
+      // Extract button text and URL
       const buttonTextMatch = html.match(/<a[^>]*style="[^"]*display: inline-block[^"]*"[^>]*>(.*?)<\/a>/);
       const buttonUrlMatch = html.match(/<a[^>]*href="([^"]+)"[^>]*style="[^"]*display: inline-block[^"]*"/);
+      
+      // Extract signature (after <!-- Signature --> comment, in italic style)
       const signatureMatch = html.match(/<!-- Signature -->[\s\S]*?<p[^>]*>(.*?)<\/p>/);
 
       return {
-        subtitle: subtitleMatch ? subtitleMatch[1].trim() : '',
-        heading: headingMatch ? headingMatch[1].trim() : '',
-        paragraph: paragraphMatch ? paragraphMatch[1].trim() : '',
+        subtitle: subtitleMatch ? cleanHtml(subtitleMatch[1]) : '',
+        heading: headingMatch ? cleanHtml(headingMatch[1]) : '',
+        paragraph: paragraphMatch ? cleanHtml(paragraphMatch[1]) : '',
         buttonText: buttonTextMatch ? buttonTextMatch[1].trim() : '',
         buttonUrl: buttonUrlMatch ? buttonUrlMatch[1].trim() : '',
-        signature: signatureMatch ? signatureMatch[1].trim() : '',
+        signature: signatureMatch ? cleanHtml(signatureMatch[1]) : '',
       };
     } catch (e) {
+      console.error('Error parsing HTML:', e);
       // If parsing fails, return null
     }
     return null;
