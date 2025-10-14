@@ -148,7 +148,7 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
               fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
             }}
           >
-            {/* Logo Header */}
+            {/* Logo Header with Subtitle */}
             <tbody>
               <tr>
                 <td
@@ -161,14 +161,8 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
                   <img
                     src="https://oficaz.es/images/logo-white.png"
                     alt="Oficaz Logo"
-                    style={{ height: '40px', display: 'block', margin: '0 auto' }}
+                    style={{ height: '40px', display: 'block', margin: '0 auto 15px auto' }}
                   />
-                </td>
-              </tr>
-
-              {/* Subtitle - Editable */}
-              <tr>
-                <td style={{ padding: '20px 40px 10px', textAlign: 'center' }}>
                   <p
                     ref={subtitleRef}
                     contentEditable
@@ -176,14 +170,14 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
                     onBlur={() => handleBlur('subtitle', subtitleRef)}
                     style={{
                       margin: 0,
-                      color: '#666',
+                      color: '#ffffff',
                       fontSize: '14px',
                       lineHeight: '1.5',
                       minHeight: '20px',
                       outline: 'none',
                       cursor: 'text',
                     }}
-                    className="hover:bg-blue-50 transition-colors rounded px-2 py-1"
+                    className="hover:bg-white/10 transition-colors rounded px-2 py-1"
                     data-testid="editable-subtitle"
                   >
                     {content.subtitle || placeholders.subtitle}

@@ -54,21 +54,13 @@ export function CreateCampaignDialog() {
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-          <!-- Logo Header -->
+          <!-- Logo Header with Subtitle -->
           <tr>
             <td style="background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%); padding: 30px; text-align: center;">
-              <img src="https://oficaz.es/images/logo-white.png" alt="Oficaz Logo" style="height: 40px; display: block; margin: 0 auto;" />
+              <img src="https://oficaz.es/images/logo-white.png" alt="Oficaz Logo" style="height: 40px; display: block; margin: 0 auto ${content.subtitle ? '15px' : '0'} auto;" />
+              ${content.subtitle ? `<p style="margin: 0; color: #ffffff; font-size: 14px; line-height: 1.5;">${content.subtitle}</p>` : ''}
             </td>
           </tr>
-          
-          <!-- Subtitle -->
-          ${content.subtitle ? `
-          <tr>
-            <td style="padding: 20px 40px 10px; text-align: center;">
-              <p style="margin: 0; color: #666; font-size: 14px; line-height: 1.5;">${content.subtitle}</p>
-            </td>
-          </tr>
-          ` : ''}
           
           <!-- Main Content -->
           <tr>
