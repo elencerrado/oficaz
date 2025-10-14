@@ -7878,54 +7878,55 @@ Responde directamente a este email para contactar con la persona.
       
       if (category === 'active') {
         users = await db.execute(sql`
-          SELECT DISTINCT
+          SELECT DISTINCT ON (c.id)
             u.company_email as email, 
             c.name as "companyName"
-          FROM users u
-          INNER JOIN companies c ON u.company_id = c.id
+          FROM companies c
           INNER JOIN subscriptions s ON c.id = s.company_id
+          INNER JOIN users u ON c.id = u.company_id
           WHERE u.company_email IS NOT NULL 
-          AND u.role IN ('owner', 'admin')
+          AND u.role = 'admin'
           AND s.status = 'active'
-          ORDER BY c.name
+          ORDER BY c.id, u.role
         `);
       } else if (category === 'trial') {
         users = await db.execute(sql`
-          SELECT DISTINCT
+          SELECT DISTINCT ON (c.id)
             u.company_email as email, 
             c.name as "companyName"
-          FROM users u
-          INNER JOIN companies c ON u.company_id = c.id
+          FROM companies c
           INNER JOIN subscriptions s ON c.id = s.company_id
+          INNER JOIN users u ON c.id = u.company_id
           WHERE u.company_email IS NOT NULL 
-          AND u.role IN ('owner', 'admin')
+          AND u.role = 'admin'
           AND s.status = 'trialing'
-          ORDER BY c.name
+          ORDER BY c.id, u.role
         `);
       } else if (category === 'blocked') {
         users = await db.execute(sql`
-          SELECT DISTINCT
+          SELECT DISTINCT ON (c.id)
             u.company_email as email, 
             c.name as "companyName"
-          FROM users u
-          INNER JOIN companies c ON u.company_id = c.id
+          FROM companies c
+          INNER JOIN subscriptions s ON c.id = s.company_id
+          INNER JOIN users u ON c.id = u.company_id
           WHERE u.company_email IS NOT NULL 
-          AND u.role IN ('owner', 'admin')
-          AND u.status = 'blocked'
-          ORDER BY c.name
+          AND u.role = 'admin'
+          AND s.status = 'blocked'
+          ORDER BY c.id, u.role
         `);
       } else if (category === 'cancelled') {
         users = await db.execute(sql`
-          SELECT DISTINCT
+          SELECT DISTINCT ON (c.id)
             u.company_email as email, 
             c.name as "companyName"
-          FROM users u
-          INNER JOIN companies c ON u.company_id = c.id
+          FROM companies c
           INNER JOIN subscriptions s ON c.id = s.company_id
+          INNER JOIN users u ON c.id = u.company_id
           WHERE u.company_email IS NOT NULL 
-          AND u.role IN ('owner', 'admin')
+          AND u.role = 'admin'
           AND s.status = 'inactive'
-          ORDER BY c.name
+          ORDER BY c.id, u.role
         `);
       } else {
         return res.status(400).json({ success: false, message: 'Categoría inválida' });
