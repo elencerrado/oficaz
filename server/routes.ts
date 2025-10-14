@@ -7894,6 +7894,22 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Get campaign send history
+  app.get('/api/super-admin/email-campaigns/:id/history', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const campaignId = parseInt(req.params.id);
+      const sends = await db.select()
+        .from(schema.emailCampaignSends)
+        .where(eq(schema.emailCampaignSends.campaignId, campaignId))
+        .orderBy(desc(schema.emailCampaignSends.sentAt));
+      
+      res.json(sends);
+    } catch (error: any) {
+      console.error('Error fetching campaign history:', error);
+      res.status(500).json({ success: false, message: 'Error al obtener historial' });
+    }
+  });
+
   // Get all email prospects
   app.get('/api/super-admin/email-prospects', authenticateSuperAdmin, async (req: any, res) => {
     try {
