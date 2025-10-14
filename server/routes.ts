@@ -7886,19 +7886,16 @@ Responde directamente a este email para contactar con la persona.
         return res.status(400).json({ success: false, message: 'Categoría inválida' });
       }
 
-      const users = await db.select({
-        email: schema.users.email,
-        companyName: schema.companies.name,
-      })
-      .from(schema.users)
-      .innerJoin(schema.companies, eq(schema.users.companyId, schema.companies.id))
-      .innerJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId))
-      .where(and(
-        isNotNull(schema.users.email),
-        eq(schema.subscriptions.status, statusMap[category])
-      ));
+      const users = await db.execute(sql`
+        SELECT u.email, c.name as "companyName"
+        FROM users u
+        INNER JOIN companies c ON u.company_id = c.id
+        INNER JOIN subscriptions s ON c.id = s.company_id
+        WHERE u.email IS NOT NULL 
+        AND s.status = ${statusMap[category]}
+      `);
 
-      res.json(users);
+      res.json(users.rows);
     } catch (error: any) {
       console.error('Error fetching recipients:', error);
       res.status(500).json({ success: false, message: 'Error al obtener destinatarios' });
