@@ -235,12 +235,6 @@ const SuperAdminPromoCodes = () => {
   return (
     <SuperAdminLayout>
       <div className="px-6 py-4 min-h-screen" style={{ overflowX: 'clip' }}>
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-white">Códigos Promocionales</h1>
-          <p className="text-white/60 mt-1">Gestiona los códigos promocionales para extender períodos de prueba</p>
-        </div>
-
       {/* Create Button */}
       <div className="mb-6">
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>

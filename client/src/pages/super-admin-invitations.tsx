@@ -186,17 +186,6 @@ export default function SuperAdminInvitations() {
 
   return (
     <SuperAdminLayout>
-      {/* Header */}
-      <div className="bg-white/10 backdrop-blur-xl border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Gestión de Invitaciones</h1>
-            <p className="text-white/70 text-sm">Controla el acceso al registro de nuevas empresas</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Registration Settings Card */}
         <Card className="mb-8 bg-white/5 backdrop-blur-xl border border-white/10">

@@ -267,16 +267,6 @@ export default function SuperAdminPlans() {
 
   return (
     <SuperAdminLayout>
-      {/* Header */}
-      <header className="bg-white/10 backdrop-blur-xl border-b border-white/20">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Gestión de Planes</h1>
-            <p className="text-white/60 mt-1">Configura los planes de suscripción y sus funcionalidades</p>
-          </div>
-        </div>
-      </header>
-
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Plans Configuration Table */}
         <Card className="bg-white/10 backdrop-blur-xl border-white/20">

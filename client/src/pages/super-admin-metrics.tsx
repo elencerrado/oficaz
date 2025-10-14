@@ -43,16 +43,6 @@ export default function SuperAdminMetrics() {
 
   return (
     <SuperAdminLayout>
-      {/* Header */}
-      <header className="bg-white/10 backdrop-blur-xl border-b border-white/20">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Métricas y Estadísticas</h1>
-            <p className="text-white/60">Análisis completo del sistema</p>
-          </div>
-        </div>
-      </header>
-
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

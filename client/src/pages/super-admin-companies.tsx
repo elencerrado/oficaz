@@ -200,12 +200,6 @@ export default function SuperAdminCompanies() {
   return (
     <SuperAdminLayout>
       <div className="container mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Gestión de Empresas</h1>
-          <p className="text-white/60">Administra y configura todas las empresas registradas</p>
-        </div>
-
         {/* Filters */}
         <Card className="bg-white/10 backdrop-blur-xl border-white/20 mb-6">
           <CardContent className="pt-6">
