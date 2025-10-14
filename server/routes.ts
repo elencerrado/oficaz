@@ -7840,6 +7840,9 @@ Responde directamente a este email para contactar con la persona.
   app.get('/api/super-admin/email-campaigns', authenticateSuperAdmin, async (req: any, res) => {
     try {
       const campaigns = await storage.getAllEmailCampaigns();
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.json(campaigns);
     } catch (error: any) {
       console.error('Error fetching email campaigns:', error);
