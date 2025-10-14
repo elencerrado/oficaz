@@ -7912,8 +7912,29 @@ Responde directamente a este email para contactar con la persona.
         console.log(`🖱️ Email clicked: sendId=${sendId}, campaign=${sendRecord.campaignId}, url=${targetUrl}`);
       }
 
-      // Redirect to target URL
-      res.redirect(targetUrl);
+      // Add campaign tracking parameter to registration URLs
+      let finalUrl = targetUrl;
+      if (sendRecord) {
+        try {
+          const urlObj = new URL(targetUrl, 'https://oficaz.es'); // Use base for relative URLs
+          const isRegistrationUrl = urlObj.pathname.includes('/register') || 
+                                    urlObj.pathname.includes('/registro') ||
+                                    urlObj.pathname.includes('/signup');
+          
+          if (isRegistrationUrl) {
+            urlObj.searchParams.set('campaign', sendRecord.campaignId.toString());
+            urlObj.searchParams.set('source', 'email');
+            finalUrl = urlObj.toString();
+            console.log(`📊 Added campaign tracking to registration URL: campaign=${sendRecord.campaignId}`);
+          }
+        } catch (urlError) {
+          console.error('Error parsing URL for campaign tracking:', urlError);
+          // Keep original URL if parsing fails
+        }
+      }
+
+      // Redirect to target URL (with campaign tracking if applicable)
+      res.redirect(finalUrl);
     } catch (error) {
       console.error('Error tracking email click:', error);
       // Still redirect even on error if URL is provided
