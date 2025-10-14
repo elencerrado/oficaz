@@ -154,14 +154,14 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
                 <td
                   style={{
                     background: 'linear-gradient(135deg, #007AFF 0%, #0051D5 100%)',
-                    padding: '30px',
+                    padding: '20px',
                     textAlign: 'center',
                   }}
                 >
                   <img
-                    src="https://oficaz.es/images/logo-white.png"
+                    src="/email-logo.png"
                     alt="Oficaz Logo"
-                    style={{ height: '40px', display: 'block', margin: '0 auto 15px auto' }}
+                    style={{ height: '35px', display: 'block', margin: '0 auto 10px auto' }}
                   />
                   <p
                     ref={subtitleRef}
@@ -171,9 +171,9 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
                     style={{
                       margin: 0,
                       color: '#ffffff',
-                      fontSize: '14px',
-                      lineHeight: '1.5',
-                      minHeight: '20px',
+                      fontSize: '13px',
+                      lineHeight: '1.4',
+                      minHeight: '18px',
                       outline: 'none',
                       cursor: 'text',
                     }}
