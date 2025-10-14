@@ -42,10 +42,21 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
     onChange({ ...content, [field]: value });
   };
 
+  const placeholders: Record<keyof EmailContent, string> = {
+    subtitle: 'Haz clic para añadir un subtítulo...',
+    heading: 'Haz clic para añadir el encabezado...',
+    paragraph: 'Haz clic para añadir el contenido principal...',
+    buttonText: 'Texto del botón',
+    buttonUrl: '',
+  };
+
   const handleBlur = (field: keyof EmailContent, ref: React.RefObject<HTMLElement>) => {
     if (ref.current) {
       const newValue = ref.current.textContent || '';
-      if (newValue !== content[field]) {
+      // Don't save placeholder text as actual content
+      if (newValue === placeholders[field]) {
+        handleContentChange(field, '');
+      } else if (newValue !== content[field]) {
         handleContentChange(field, newValue);
       }
     }
@@ -163,7 +174,7 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
                     className="hover:bg-blue-50 transition-colors rounded px-2 py-1"
                     data-testid="editable-subtitle"
                   >
-                    {content.subtitle || 'Haz clic para añadir un subtítulo...'}
+                    {content.subtitle || placeholders.subtitle}
                   </p>
                 </td>
               </tr>
@@ -189,7 +200,7 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
                     className="hover:bg-blue-50 transition-colors rounded px-2 py-1"
                     data-testid="editable-heading"
                   >
-                    {content.heading || 'Haz clic para añadir el encabezado...'}
+                    {content.heading || placeholders.heading}
                   </h1>
                   <p
                     ref={paragraphRef}
@@ -208,43 +219,42 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
                     className="hover:bg-blue-50 transition-colors rounded px-2 py-1"
                     data-testid="editable-paragraph"
                   >
-                    {content.paragraph || 'Haz clic para añadir el contenido principal...'}
+                    {content.paragraph || placeholders.paragraph}
                   </p>
                 </td>
               </tr>
 
               {/* Button - Editable Text */}
-              {(content.buttonText || content.buttonUrl) && (
-                <tr>
-                  <td style={{ padding: '20px 40px 40px', textAlign: 'center' }}>
-                    <a
-                      ref={buttonTextRef}
-                      contentEditable
-                      suppressContentEditableWarning
-                      onBlur={() => handleBlur('buttonText', buttonTextRef)}
-                      href={content.buttonUrl || '#'}
-                      onClick={(e) => e.preventDefault()}
-                      style={{
-                        display: 'inline-block',
-                        background: 'linear-gradient(135deg, #007AFF 0%, #0051D5 100%)',
-                        color: '#ffffff',
-                        textDecoration: 'none',
-                        padding: '14px 32px',
-                        borderRadius: '6px',
-                        fontWeight: 600,
-                        fontSize: '16px',
-                        minWidth: '100px',
-                        outline: 'none',
-                        cursor: 'text',
-                      }}
-                      className="hover:opacity-90 transition-opacity"
-                      data-testid="editable-button-text"
-                    >
-                      {content.buttonText || 'Texto del botón'}
-                    </a>
-                  </td>
-                </tr>
-              )}
+              <tr>
+                <td style={{ padding: '20px 40px 40px', textAlign: 'center' }}>
+                  <a
+                    ref={buttonTextRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    onBlur={() => handleBlur('buttonText', buttonTextRef)}
+                    href={content.buttonUrl || '#'}
+                    onClick={(e) => e.preventDefault()}
+                    style={{
+                      display: 'inline-block',
+                      background: 'linear-gradient(135deg, #007AFF 0%, #0051D5 100%)',
+                      color: '#ffffff',
+                      textDecoration: 'none',
+                      padding: '14px 32px',
+                      borderRadius: '6px',
+                      fontWeight: 600,
+                      fontSize: '16px',
+                      minWidth: '100px',
+                      outline: 'none',
+                      cursor: 'text',
+                      opacity: (!content.buttonText && !content.buttonUrl) ? 0.5 : 1,
+                    }}
+                    className="hover:opacity-90 transition-opacity"
+                    data-testid="editable-button-text"
+                  >
+                    {content.buttonText || placeholders.buttonText}
+                  </a>
+                </td>
+              </tr>
 
               {/* Footer */}
               <tr>
@@ -275,7 +285,7 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
 
       <div className="bg-blue-500/10 rounded-lg p-3 border border-blue-400/30">
         <p className="text-sm text-blue-200">
-          💡 <strong>Tip:</strong> El botón solo aparecerá si añades texto y URL. El subtítulo es opcional.
+          💡 <strong>Tip:</strong> El botón siempre está visible para que puedas editarlo. Si dejas el texto vacío, no aparecerá en el email final.
         </p>
       </div>
     </div>

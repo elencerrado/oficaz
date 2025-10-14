@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { ChevronRight, ChevronLeft, Trash2 } from 'lucide-react';
 import { RecipientSelector } from './recipient-selector';
+import { EmailPreviewEditor } from './email-preview-editor';
 
 interface EditCampaignDialogProps {
   campaign: any;
@@ -336,81 +337,10 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
                 </div>
               </>
             ) : (
-              <>
-                <div className="bg-white/5 rounded-lg p-4 mb-4">
-                  <p className="text-sm text-white/70">
-                    <strong className="text-white">Vista previa:</strong> El email incluirá automáticamente el logo de Oficaz en la parte superior.
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="subtitle" className="text-white">Subtítulo (opcional)</Label>
-                  <Input
-                    id="subtitle"
-                    value={emailContent.subtitle}
-                    onChange={(e) => setEmailContent({ ...emailContent, subtitle: e.target.value })}
-                    placeholder="Ej: Descubre las novedades de este mes"
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                    data-testid="input-edit-email-subtitle"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="heading" className="text-white">Encabezado Principal</Label>
-                  <Input
-                    id="heading"
-                    value={emailContent.heading}
-                    onChange={(e) => setEmailContent({ ...emailContent, heading: e.target.value })}
-                    placeholder="Ej: ¡Nuevas funcionalidades disponibles!"
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                    data-testid="input-edit-email-heading"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="paragraph" className="text-white">Párrafo de Contenido</Label>
-                  <Textarea
-                    id="paragraph"
-                    value={emailContent.paragraph}
-                    onChange={(e) => setEmailContent({ ...emailContent, paragraph: e.target.value })}
-                    placeholder="Escribe el contenido principal del email..."
-                    rows={5}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                    data-testid="input-edit-email-paragraph"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="buttonText" className="text-white">Texto del Botón (opcional)</Label>
-                    <Input
-                      id="buttonText"
-                      value={emailContent.buttonText}
-                      onChange={(e) => setEmailContent({ ...emailContent, buttonText: e.target.value })}
-                      placeholder="Ej: Ver más"
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                      data-testid="input-edit-button-text"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="buttonUrl" className="text-white">URL del Botón (opcional)</Label>
-                    <Input
-                      id="buttonUrl"
-                      value={emailContent.buttonUrl}
-                      onChange={(e) => setEmailContent({ ...emailContent, buttonUrl: e.target.value })}
-                      placeholder="https://oficaz.es"
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                      data-testid="input-edit-button-url"
-                    />
-                  </div>
-                </div>
-
-                <div className="bg-white/5 rounded-lg p-4">
-                  <p className="text-sm text-white/70">
-                    El pie de página se añadirá automáticamente con el copyright de Oficaz y el enlace de cancelar suscripción.
-                  </p>
-                </div>
-              </>
+              <EmailPreviewEditor
+                content={emailContent}
+                onChange={setEmailContent}
+              />
             )}
           </div>
         )}
