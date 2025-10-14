@@ -7834,6 +7834,88 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // ==================== EMAIL MARKETING ENDPOINTS ====================
+  
+  // Get all email campaigns
+  app.get('/api/super-admin/email-campaigns', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const campaigns = await storage.getAllEmailCampaigns();
+      res.json(campaigns);
+    } catch (error: any) {
+      console.error('Error fetching email campaigns:', error);
+      res.status(500).json({ success: false, message: 'Error al obtener campañas' });
+    }
+  });
+
+  // Get all email prospects
+  app.get('/api/super-admin/email-prospects', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const prospects = await storage.getAllEmailProspects();
+      res.json(prospects);
+    } catch (error: any) {
+      console.error('Error fetching email prospects:', error);
+      res.status(500).json({ success: false, message: 'Error al obtener prospects' });
+    }
+  });
+
+  // Get registered users stats for email marketing
+  app.get('/api/super-admin/registered-users-stats', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const stats = await storage.getRegisteredUsersStats();
+      res.json(stats);
+    } catch (error: any) {
+      console.error('Error fetching registered users stats:', error);
+      res.status(500).json({ success: false, message: 'Error al obtener estadísticas de usuarios' });
+    }
+  });
+
+  // Create email prospect
+  app.post('/api/super-admin/email-prospects', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const prospect = await storage.createEmailProspect(req.body);
+      res.json(prospect);
+    } catch (error: any) {
+      console.error('Error creating email prospect:', error);
+      if (error.message?.includes('unique constraint')) {
+        return res.status(400).json({ success: false, message: 'Este email ya existe' });
+      }
+      res.status(500).json({ success: false, message: 'Error al crear prospect' });
+    }
+  });
+
+  // Create email campaign
+  app.post('/api/super-admin/email-campaigns', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const campaign = await storage.createEmailCampaign(req.body);
+      res.json(campaign);
+    } catch (error: any) {
+      console.error('Error creating email campaign:', error);
+      res.status(500).json({ success: false, message: 'Error al crear campaña' });
+    }
+  });
+
+  // Update email campaign
+  app.patch('/api/super-admin/email-campaigns/:id', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const campaign = await storage.updateEmailCampaign(parseInt(req.params.id), req.body);
+      res.json(campaign);
+    } catch (error: any) {
+      console.error('Error updating email campaign:', error);
+      res.status(500).json({ success: false, message: 'Error al actualizar campaña' });
+    }
+  });
+
+  // Delete email prospect
+  app.delete('/api/super-admin/email-prospects/:id', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      await storage.deleteEmailProspect(parseInt(req.params.id));
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Error deleting email prospect:', error);
+      res.status(500).json({ success: false, message: 'Error al eliminar prospect' });
+    }
+  });
+
   // Endpoint to manage company custom features
   app.patch('/api/companies/custom-features', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
     try {

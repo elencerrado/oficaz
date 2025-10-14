@@ -12,7 +12,10 @@ import type {
   WorkAlarm, InsertWorkAlarm,
   WorkShift, InsertWorkShift,
   PromotionalCode, InsertPromotionalCode,
-  ImageProcessingJob, InsertImageProcessingJob
+  ImageProcessingJob, InsertImageProcessingJob,
+  EmailCampaign, InsertEmailCampaign,
+  EmailProspect, InsertEmailProspect,
+  EmailCampaignSend, InsertEmailCampaignSend
 } from '@shared/schema';
 import Stripe from 'stripe';
 
@@ -224,6 +227,15 @@ export interface IStorage {
   updateImageProcessingJob(id: number, updates: Partial<InsertImageProcessingJob & Pick<ImageProcessingJob, 'status' | 'errorMessage' | 'startedAt' | 'completedAt'>>): Promise<ImageProcessingJob | undefined>;
   getPendingImageProcessingJobs(): Promise<ImageProcessingJob[]>;
   getImageProcessingJobsByUser(userId: number): Promise<ImageProcessingJob[]>;
+
+  // Email Marketing
+  getAllEmailCampaigns(): Promise<any[]>;
+  getAllEmailProspects(): Promise<any[]>;
+  getRegisteredUsersStats(): Promise<{ total: number; active: number; trial: number; blocked: number; cancelled: number }>;
+  createEmailProspect(prospect: any): Promise<any>;
+  createEmailCampaign(campaign: any): Promise<any>;
+  updateEmailCampaign(id: number, updates: any): Promise<any>;
+  deleteEmailProspect(id: number): Promise<boolean>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -2758,6 +2770,70 @@ export class DrizzleStorage implements IStorage {
       .from(schema.imageProcessingJobs)
       .where(eq(schema.imageProcessingJobs.userId, userId))
       .orderBy(desc(schema.imageProcessingJobs.createdAt));
+  }
+
+  // ===== EMAIL MARKETING =====
+  
+  async getAllEmailCampaigns(): Promise<any[]> {
+    return await db.select()
+      .from(schema.emailCampaigns)
+      .orderBy(desc(schema.emailCampaigns.createdAt));
+  }
+
+  async getAllEmailProspects(): Promise<any[]> {
+    return await db.select()
+      .from(schema.emailProspects)
+      .orderBy(desc(schema.emailProspects.createdAt));
+  }
+
+  async getRegisteredUsersStats(): Promise<{ total: number; active: number; trial: number; blocked: number; cancelled: number }> {
+    const results = await db.select({
+      total: sql<number>`count(*)`,
+      active: sql<number>`count(*) filter (where ${schema.subscriptions.status} = 'active')`,
+      trial: sql<number>`count(*) filter (where ${schema.subscriptions.status} = 'trial')`,
+      blocked: sql<number>`count(*) filter (where ${schema.subscriptions.status} = 'blocked')`,
+      cancelled: sql<number>`count(*) filter (where ${schema.subscriptions.status} = 'inactive')`
+    })
+    .from(schema.companies)
+    .innerJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId));
+
+    const stats = results[0] || { total: 0, active: 0, trial: 0, blocked: 0, cancelled: 0 };
+    return {
+      total: Number(stats.total),
+      active: Number(stats.active),
+      trial: Number(stats.trial),
+      blocked: Number(stats.blocked),
+      cancelled: Number(stats.cancelled)
+    };
+  }
+
+  async createEmailProspect(prospect: any): Promise<any> {
+    const [created] = await db.insert(schema.emailProspects)
+      .values(prospect)
+      .returning();
+    return created;
+  }
+
+  async createEmailCampaign(campaign: any): Promise<any> {
+    const [created] = await db.insert(schema.emailCampaigns)
+      .values(campaign)
+      .returning();
+    return created;
+  }
+
+  async updateEmailCampaign(id: number, updates: any): Promise<any> {
+    const [updated] = await db.update(schema.emailCampaigns)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.emailCampaigns.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteEmailProspect(id: number): Promise<boolean> {
+    const result = await db.delete(schema.emailProspects)
+      .where(eq(schema.emailProspects.id, id))
+      .returning();
+    return result.length > 0;
   }
 }
 
