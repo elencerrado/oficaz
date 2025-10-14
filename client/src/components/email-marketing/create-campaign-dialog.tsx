@@ -57,7 +57,7 @@ export function CreateCampaignDialog() {
           <!-- Logo Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%); padding: 30px; text-align: center;">
-              <img src="https://oficaz.es/email-logo.png" alt="Oficaz Logo" style="height: 40px; display: block; margin: 0 auto;" />
+              <img src="https://oficaz.es/images/logo-white.png" alt="Oficaz Logo" style="height: 40px; display: block; margin: 0 auto;" />
             </td>
           </tr>
           
