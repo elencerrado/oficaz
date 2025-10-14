@@ -8113,6 +8113,40 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Duplicate email campaign
+  app.post('/api/super-admin/email-campaigns/:id/duplicate', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const campaignId = parseInt(req.params.id);
+      
+      // Get original campaign
+      const originalCampaign = await storage.getEmailCampaignById(campaignId);
+      if (!originalCampaign) {
+        return res.status(404).json({ success: false, message: 'Campaña no encontrada' });
+      }
+
+      // Create duplicate without sent data
+      const duplicateData = {
+        name: `${originalCampaign.name} (Copia)`,
+        subject: originalCampaign.subject,
+        preheader: originalCampaign.preheader,
+        htmlContent: originalCampaign.htmlContent,
+        selectedEmails: originalCampaign.selectedEmails || [],
+        status: 'draft' as const,
+      };
+
+      const duplicatedCampaign = await storage.createEmailCampaign(duplicateData);
+      
+      res.json({ 
+        success: true, 
+        message: 'Campaña duplicada correctamente',
+        campaign: duplicatedCampaign
+      });
+    } catch (error: any) {
+      console.error('Error duplicating email campaign:', error);
+      res.status(500).json({ success: false, message: 'Error al duplicar campaña' });
+    }
+  });
+
   // Send email campaign
   app.post('/api/super-admin/email-campaigns/:id/send', authenticateSuperAdmin, async (req: any, res) => {
     try {
