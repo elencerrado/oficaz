@@ -7996,83 +7996,76 @@ Responde directamente a este email para contactar con la persona.
         return res.status(404).json({ success: false, message: 'Campaña no encontrada' });
       }
 
-      // Get recipients based on campaign settings
-      const recipients: Array<{ email: string; type: 'user' | 'prospect'; name?: string }> = [];
-
-      // Get registered users based on filters
-      if (campaign.includeActiveSubscriptions || campaign.includeTrialSubscriptions || 
-          campaign.includeBlockedSubscriptions || campaign.includeCancelledSubscriptions) {
-        const users = await db.select({
-          email: schema.users.email,
-          name: schema.users.name,
-          subscriptionStatus: schema.subscriptions.status,
-        })
-        .from(schema.users)
-        .leftJoin(schema.companies, eq(schema.users.companyId, schema.companies.id))
-        .leftJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId))
-        .where(
-          or(
-            campaign.includeActiveSubscriptions ? eq(schema.subscriptions.status, 'active') : undefined,
-            campaign.includeTrialSubscriptions ? eq(schema.subscriptions.status, 'trialing') : undefined,
-            campaign.includeBlockedSubscriptions ? eq(schema.subscriptions.status, 'blocked') : undefined,
-            campaign.includeCancelledSubscriptions ? eq(schema.subscriptions.status, 'cancelled') : undefined,
-          )
-        );
-        
-        recipients.push(...users.filter(u => u.email).map(u => ({ 
-          email: u.email!, 
-          name: u.name || undefined, 
-          type: 'user' as const 
-        })));
+      // Use selected_emails array from campaign
+      const selectedEmails = campaign.selectedEmails || [];
+      
+      if (selectedEmails.length === 0) {
+        return res.status(400).json({ success: false, message: 'No hay destinatarios seleccionados' });
       }
 
-      // Get prospects if included
-      if (campaign.includeProspects) {
-        const prospects = await db.select({
-          email: schema.emailProspects.email,
-          name: schema.emailProspects.name,
-        })
-        .from(schema.emailProspects)
-        .where(eq(schema.emailProspects.status, 'active'));
-        
-        recipients.push(...prospects.filter(p => p.email).map(p => ({ 
-          email: p.email, 
-          name: p.name || undefined, 
-          type: 'prospect' as const 
-        })));
+      // Configure email transporter
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.hostinger.com',
+        port: 465,
+        secure: true, // SSL
+        auth: {
+          user: 'soy@oficaz.es',
+          pass: 'Sanisidro@2025',
+        },
+      });
+
+      // Send emails to all selected recipients
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const email of selectedEmails) {
+        try {
+          await transporter.sendMail({
+            from: '"Oficaz" <soy@oficaz.es>',
+            to: email,
+            subject: campaign.subject,
+            html: campaign.htmlContent,
+          });
+
+          // Record successful send
+          await db.insert(schema.emailCampaignSends).values({
+            campaignId,
+            recipientEmail: email,
+            recipientType: 'user', // We'll improve this later
+            status: 'sent',
+            sentAt: new Date(),
+          });
+          
+          successCount++;
+        } catch (emailError) {
+          console.error(`Failed to send email to ${email}:`, emailError);
+          
+          // Record failed send
+          await db.insert(schema.emailCampaignSends).values({
+            campaignId,
+            recipientEmail: email,
+            recipientType: 'user',
+            status: 'failed',
+            sentAt: new Date(),
+          });
+          
+          failCount++;
+        }
       }
-
-      // Remove duplicates by email
-      const uniqueRecipients = Array.from(
-        new Map(recipients.map(r => [r.email, r])).values()
-      );
-
-      // TODO: Integrate with SendGrid to actually send emails
-      // For now, just mark campaign as sent and create send records
       
       // Update campaign status
       await storage.updateEmailCampaign(campaignId, { 
         status: 'sent',
-        recipientsCount: uniqueRecipients.length,
+        recipientsCount: selectedEmails.length,
         sentAt: new Date(),
       });
 
-      // Create campaign send records
-      for (const recipient of uniqueRecipients) {
-        await db.insert(schema.emailCampaignSends).values({
-          campaignId,
-          recipientEmail: recipient.email,
-          recipientName: recipient.name,
-          recipientType: recipient.type,
-          status: 'sent',
-          sentAt: new Date(),
-        });
-      }
-
       res.json({ 
         success: true, 
-        message: `Campaña enviada a ${uniqueRecipients.length} destinatarios`,
-        recipientsCount: uniqueRecipients.length,
+        message: `Campaña enviada: ${successCount} exitosos, ${failCount} fallidos`,
+        recipientsCount: selectedEmails.length,
+        successCount,
+        failCount
       });
     } catch (error: any) {
       console.error('Error sending email campaign:', error);
