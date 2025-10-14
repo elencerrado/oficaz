@@ -34,6 +34,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
     name: '',
     subject: '',
     preheader: '',
+    audienceType: 'subscribers' as 'subscribers' | 'one_time',
     selectedEmails: [] as string[],
     targetAudience: 'registered_users' as string,
     includeActiveSubscriptions: true,
@@ -128,6 +129,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
         name: campaign.name || '',
         subject: campaign.subject || '',
         preheader: campaign.preheader || '',
+        audienceType: campaign.audienceType || 'subscribers', // Default a subscribers para compatibilidad
         selectedEmails: campaign.selectedEmails || [],
         targetAudience: campaign.targetAudience || 'registered_users',
         includeActiveSubscriptions: campaign.includeActiveSubscriptions ?? true,
@@ -152,7 +154,16 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
     }
   }, [campaign]);
 
-  const generateHtmlContent = (content: EmailContent) => {
+  const generateHtmlContent = (content: EmailContent, audienceType: 'subscribers' | 'one_time' = 'subscribers') => {
+    // Footer condicional: solo para suscritos incluye el texto de "Este correo fue enviado desde Oficaz"
+    const footerContent = audienceType === 'subscribers' 
+      ? `<p style="margin: 0 0 10px; color: #666; font-size: 14px;">© ${new Date().getFullYear()} Oficaz. Todos los derechos reservados.</p>
+              <p style="margin: 0; color: #999; font-size: 12px;">
+                Este correo fue enviado desde Oficaz<br/>
+                <a href="{{{unsubscribe_url}}}" style="color: #007AFF; text-decoration: none;">Cancelar suscripción</a>
+              </p>`
+      : `<p style="margin: 0; color: #666; font-size: 14px;">© ${new Date().getFullYear()} Oficaz. Todos los derechos reservados.</p>`;
+
     return `
 <!DOCTYPE html>
 <html lang="es">
@@ -206,7 +217,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
           <!-- Footer -->
           <tr>
             <td style="background-color: #f8f9fa; padding: 30px 40px; border-top: 1px solid #e9ecef; text-align: center;">
-              <p style="margin: 0; color: #666; font-size: 14px;">© ${new Date().getFullYear()} Oficaz. Todos los derechos reservados.</p>
+              ${footerContent}
             </td>
           </tr>
         </table>
@@ -305,12 +316,13 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
         signature: emailContent.signature || defaultPlaceholders.signature,
       };
       
-      htmlContent = generateHtmlContent(contentWithDefaults);
+      htmlContent = generateHtmlContent(contentWithDefaults, formData.audienceType);
     }
     
     updateCampaignMutation.mutate({
       ...formData,
       htmlContent,
+      audienceType: formData.audienceType, // Asegurar que se envía el audienceType
     });
   };
 

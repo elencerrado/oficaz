@@ -42,7 +42,16 @@ export function CreateCampaignDialog() {
     signature: '',
   });
 
-  const generateHtmlContent = (content: EmailContent) => {
+  const generateHtmlContent = (content: EmailContent, audienceType: 'subscribers' | 'one_time' = 'subscribers') => {
+    // Footer condicional: solo para suscritos incluye el texto de "Este correo fue enviado desde Oficaz"
+    const footerContent = audienceType === 'subscribers' 
+      ? `<p style="margin: 0 0 10px; color: #666; font-size: 14px;">© ${new Date().getFullYear()} Oficaz. Todos los derechos reservados.</p>
+              <p style="margin: 0; color: #999; font-size: 12px;">
+                Este correo fue enviado desde Oficaz<br/>
+                <a href="{{{unsubscribe_url}}}" style="color: #007AFF; text-decoration: none;">Cancelar suscripción</a>
+              </p>`
+      : `<p style="margin: 0; color: #666; font-size: 14px;">© ${new Date().getFullYear()} Oficaz. Todos los derechos reservados.</p>`;
+
     return `
 <!DOCTYPE html>
 <html lang="es">
@@ -96,7 +105,7 @@ export function CreateCampaignDialog() {
           <!-- Footer -->
           <tr>
             <td style="background-color: #f8f9fa; padding: 30px 40px; border-top: 1px solid #e9ecef; text-align: center;">
-              <p style="margin: 0; color: #666; font-size: 14px;">© ${new Date().getFullYear()} Oficaz. Todos los derechos reservados.</p>
+              ${footerContent}
             </td>
           </tr>
         </table>
@@ -176,7 +185,7 @@ export function CreateCampaignDialog() {
       signature: emailContent.signature || defaultPlaceholders.signature,
     };
     
-    const htmlContent = generateHtmlContent(contentWithDefaults);
+    const htmlContent = generateHtmlContent(contentWithDefaults, formData.audienceType);
     createCampaignMutation.mutate({
       ...formData,
       htmlContent,
