@@ -30,11 +30,22 @@ interface Company {
   subscription: {
     plan: string;
     status: string;
+    stripeStatus?: string;
   };
   promotionalCode?: {
     code: string;
     description: string;
   } | null;
+  trialInfo?: {
+    daysRemaining: number;
+    isTrialActive: boolean;
+    trialDuration: number;
+  };
+  deletionInfo?: {
+    scheduledForDeletion: boolean;
+    deletionScheduledAt?: string;
+    isDeleted: boolean;
+  };
 }
 
 const planColors = {
@@ -47,6 +58,62 @@ const planLabels = {
   basic: "Basic", 
   pro: "Pro",
   master: "Master"
+};
+
+// Helper function to get subscription status badge info
+const getSubscriptionBadge = (company: Company) => {
+  // Priority 1: Company deleted
+  if (company.deletionInfo?.isDeleted) {
+    return {
+      text: 'Eliminada',
+      variant: 'destructive' as const,
+      className: 'bg-red-900 text-white border-red-700'
+    };
+  }
+
+  // Priority 2: Scheduled for deletion
+  if (company.deletionInfo?.scheduledForDeletion) {
+    return {
+      text: 'Cancelada - Eliminación programada',
+      variant: 'destructive' as const,
+      className: 'bg-orange-600 text-white'
+    };
+  }
+
+  // Priority 3: Trial active
+  if (company.trialInfo?.isTrialActive) {
+    const days = company.trialInfo.daysRemaining;
+    return {
+      text: `Prueba - ${days} día${days !== 1 ? 's' : ''}`,
+      variant: 'secondary' as const,
+      className: 'bg-blue-500 text-white'
+    };
+  }
+
+  // Priority 4: Paid subscription active
+  if (company.subscription.status === 'active' && company.subscription.stripeStatus === 'active') {
+    return {
+      text: 'Suscrito',
+      variant: 'default' as const,
+      className: 'bg-emerald-500 text-white'
+    };
+  }
+
+  // Priority 5: Trial expired (only if trial was active before and now expired)
+  if (!company.trialInfo?.isTrialActive && company.trialInfo?.daysRemaining !== undefined && company.trialInfo.daysRemaining <= 0 && !company.subscription.stripeStatus) {
+    return {
+      text: 'Trial expirado',
+      variant: 'secondary' as const,
+      className: 'bg-gray-600 text-white'
+    };
+  }
+
+  // Default: show subscription status
+  return {
+    text: company.subscription.status === 'active' ? 'Activo' : 'Inactivo',
+    variant: company.subscription.status === 'active' ? 'default' as const : 'secondary' as const,
+    className: company.subscription.status === 'active' ? 'bg-emerald-500' : 'bg-gray-500'
+  };
 };
 
 export default function SuperAdminCompanies() {
@@ -311,22 +378,17 @@ export default function SuperAdminCompanies() {
                         </Button>
                       </>
                     )}
-                    <Badge 
-                      variant={company.subscription.status === 'active' ? 'default' : 'secondary'}
-                      className={
-                        company.subscription.status === 'active' 
-                          ? 'bg-emerald-500' 
-                          : company.subscription.status === 'trial' 
-                            ? 'bg-blue-500' 
-                            : 'bg-gray-500'
-                      }
-                    >
-                      {company.subscription.status === 'active' 
-                        ? 'Activo' 
-                        : company.subscription.status === 'trial' 
-                          ? 'Prueba' 
-                          : 'Inactivo'}
-                    </Badge>
+                    {(() => {
+                      const badge = getSubscriptionBadge(company);
+                      return (
+                        <Badge 
+                          variant={badge.variant}
+                          className={badge.className}
+                        >
+                          {badge.text}
+                        </Badge>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}

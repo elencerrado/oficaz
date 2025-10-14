@@ -897,11 +897,16 @@ export class DrizzleStorage implements IStorage {
         email: schema.companies.email,
         alias: schema.companies.companyAlias,
         createdAt: schema.companies.createdAt,
+        trialDurationDays: schema.companies.trialDurationDays,
+        scheduledForDeletion: schema.companies.scheduledForDeletion,
+        deletionScheduledAt: schema.companies.deletionScheduledAt,
+        isDeleted: schema.companies.isDeleted,
         userCount: sql<number>`count(${schema.users.id})`.as('userCount'),
         subscriptionPlan: schema.subscriptions.plan,
         subscriptionStatus: schema.subscriptions.status,
         subscriptionMaxUsers: schema.subscriptions.maxUsers,
         subscriptionEndDate: schema.subscriptions.endDate,
+        stripeSubscriptionStatus: schema.subscriptions.stripeSubscriptionStatus,
         promoCodeId: schema.companies.usedPromotionalCode,
         promoCodeText: schema.promotionalCodes.code,
         promoCodeDescription: schema.promotionalCodes.description,
@@ -912,25 +917,48 @@ export class DrizzleStorage implements IStorage {
       .leftJoin(schema.promotionalCodes, eq(schema.companies.usedPromotionalCode, schema.promotionalCodes.code))
       .groupBy(schema.companies.id, schema.subscriptions.id, schema.promotionalCodes.id);
 
-    return result.map(row => ({
-      id: row.id,
-      name: row.name,
-      cif: row.cif,
-      email: row.email,
-      alias: row.alias,
-      userCount: row.userCount || 0,
-      subscription: {
-        plan: row.subscriptionPlan || 'basic',
-        status: row.subscriptionStatus || 'active',
-        maxUsers: row.subscriptionMaxUsers || 5,
-        endDate: row.subscriptionEndDate?.toISOString(),
-      },
-      promotionalCode: row.promoCodeId ? {
-        code: row.promoCodeText,
-        description: row.promoCodeDescription,
-      } : null,
-      createdAt: row.createdAt?.toISOString() || new Date().toISOString(),
-    }));
+    return result.map(row => {
+      // Calculate trial info
+      const trialDuration = row.trialDurationDays || 14;
+      const trialStartDate = new Date(row.createdAt || new Date());
+      const trialEndDate = new Date(trialStartDate);
+      trialEndDate.setDate(trialEndDate.getDate() + trialDuration);
+      
+      const now = new Date();
+      const daysRemaining = Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const isTrialActive = daysRemaining > 0;
+
+      return {
+        id: row.id,
+        name: row.name,
+        cif: row.cif,
+        email: row.email,
+        alias: row.alias,
+        userCount: row.userCount || 0,
+        subscription: {
+          plan: row.subscriptionPlan || 'basic',
+          status: row.subscriptionStatus || 'active',
+          maxUsers: row.subscriptionMaxUsers || 5,
+          endDate: row.subscriptionEndDate?.toISOString(),
+          stripeStatus: row.stripeSubscriptionStatus,
+        },
+        promotionalCode: row.promoCodeId ? {
+          code: row.promoCodeText,
+          description: row.promoCodeDescription,
+        } : null,
+        trialInfo: {
+          daysRemaining: Math.max(0, daysRemaining),
+          isTrialActive,
+          trialDuration,
+        },
+        deletionInfo: {
+          scheduledForDeletion: row.scheduledForDeletion || false,
+          deletionScheduledAt: row.deletionScheduledAt?.toISOString(),
+          isDeleted: row.isDeleted || false,
+        },
+        createdAt: row.createdAt?.toISOString() || new Date().toISOString(),
+      };
+    });
   }
 
   async getSuperAdminStats(): Promise<any> {
