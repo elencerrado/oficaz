@@ -7874,28 +7874,62 @@ Responde directamente a este email para contactar con la persona.
     try {
       const { category } = req.params;
       
-      // Map category to subscription status
-      const statusMap: Record<string, string> = {
-        active: 'active',
-        trial: 'trialing',
-        blocked: 'blocked',
-        cancelled: 'inactive'
-      };
-
-      if (!statusMap[category]) {
+      let users;
+      
+      if (category === 'active') {
+        users = await db.execute(sql`
+          SELECT DISTINCT
+            u.company_email as email, 
+            c.name as "companyName"
+          FROM users u
+          INNER JOIN companies c ON u.company_id = c.id
+          INNER JOIN subscriptions s ON c.id = s.company_id
+          WHERE u.company_email IS NOT NULL 
+          AND u.role IN ('owner', 'admin')
+          AND s.status = 'active'
+          ORDER BY c.name
+        `);
+      } else if (category === 'trial') {
+        users = await db.execute(sql`
+          SELECT DISTINCT
+            u.company_email as email, 
+            c.name as "companyName"
+          FROM users u
+          INNER JOIN companies c ON u.company_id = c.id
+          INNER JOIN subscriptions s ON c.id = s.company_id
+          WHERE u.company_email IS NOT NULL 
+          AND u.role IN ('owner', 'admin')
+          AND s.status = 'trialing'
+          ORDER BY c.name
+        `);
+      } else if (category === 'blocked') {
+        users = await db.execute(sql`
+          SELECT DISTINCT
+            u.company_email as email, 
+            c.name as "companyName"
+          FROM users u
+          INNER JOIN companies c ON u.company_id = c.id
+          WHERE u.company_email IS NOT NULL 
+          AND u.role IN ('owner', 'admin')
+          AND u.status = 'blocked'
+          ORDER BY c.name
+        `);
+      } else if (category === 'cancelled') {
+        users = await db.execute(sql`
+          SELECT DISTINCT
+            u.company_email as email, 
+            c.name as "companyName"
+          FROM users u
+          INNER JOIN companies c ON u.company_id = c.id
+          INNER JOIN subscriptions s ON c.id = s.company_id
+          WHERE u.company_email IS NOT NULL 
+          AND u.role IN ('owner', 'admin')
+          AND s.status = 'inactive'
+          ORDER BY c.name
+        `);
+      } else {
         return res.status(400).json({ success: false, message: 'Categoría inválida' });
       }
-
-      const users = await db.execute(sql`
-        SELECT 
-          u.company_email as email, 
-          c.name as "companyName"
-        FROM users u
-        INNER JOIN companies c ON u.company_id = c.id
-        INNER JOIN subscriptions s ON c.id = s.company_id
-        WHERE u.company_email IS NOT NULL 
-        AND s.status = ${statusMap[category]}
-      `);
 
       res.json(users.rows);
     } catch (error: any) {
