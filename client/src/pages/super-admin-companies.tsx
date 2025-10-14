@@ -30,7 +30,7 @@ interface Company {
   subscription: {
     plan: string;
     status: string;
-    stripeStatus?: string;
+    stripeSubscriptionId?: string;
   };
   promotionalCode?: {
     code: string;
@@ -90,8 +90,8 @@ const getSubscriptionBadge = (company: Company) => {
     };
   }
 
-  // Priority 4: Paid subscription active
-  if (company.subscription.status === 'active' && company.subscription.stripeStatus === 'active') {
+  // Priority 4: Paid subscription active (has Stripe subscription)
+  if (company.subscription.status === 'active' && company.subscription.stripeSubscriptionId) {
     return {
       text: 'Suscrito',
       variant: 'default' as const,
@@ -100,7 +100,7 @@ const getSubscriptionBadge = (company: Company) => {
   }
 
   // Priority 5: Trial expired (only if trial was active before and now expired)
-  if (!company.trialInfo?.isTrialActive && company.trialInfo?.daysRemaining !== undefined && company.trialInfo.daysRemaining <= 0 && !company.subscription.stripeStatus) {
+  if (!company.trialInfo?.isTrialActive && company.trialInfo?.daysRemaining !== undefined && company.trialInfo.daysRemaining <= 0 && !company.subscription.stripeSubscriptionId) {
     return {
       text: 'Trial expirado',
       variant: 'secondary' as const,

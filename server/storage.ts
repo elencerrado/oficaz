@@ -906,7 +906,7 @@ export class DrizzleStorage implements IStorage {
         subscriptionStatus: schema.subscriptions.status,
         subscriptionMaxUsers: schema.subscriptions.maxUsers,
         subscriptionEndDate: schema.subscriptions.endDate,
-        stripeSubscriptionStatus: schema.subscriptions.stripeSubscriptionStatus,
+        stripeSubscriptionId: schema.subscriptions.stripeSubscriptionId,
         promoCodeId: schema.companies.usedPromotionalCode,
         promoCodeText: schema.promotionalCodes.code,
         promoCodeDescription: schema.promotionalCodes.description,
@@ -915,7 +915,27 @@ export class DrizzleStorage implements IStorage {
       .leftJoin(schema.users, eq(schema.companies.id, schema.users.companyId))
       .leftJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId))
       .leftJoin(schema.promotionalCodes, eq(schema.companies.usedPromotionalCode, schema.promotionalCodes.code))
-      .groupBy(schema.companies.id, schema.subscriptions.id, schema.promotionalCodes.id);
+      .groupBy(
+        schema.companies.id, 
+        schema.companies.name,
+        schema.companies.cif,
+        schema.companies.email,
+        schema.companies.companyAlias,
+        schema.companies.createdAt,
+        schema.companies.trialDurationDays,
+        schema.companies.scheduledForDeletion,
+        schema.companies.deletionScheduledAt,
+        schema.companies.isDeleted,
+        schema.companies.usedPromotionalCode,
+        schema.subscriptions.id,
+        schema.subscriptions.plan,
+        schema.subscriptions.status,
+        schema.subscriptions.maxUsers,
+        schema.subscriptions.endDate,
+        schema.subscriptions.stripeSubscriptionId,
+        schema.promotionalCodes.code,
+        schema.promotionalCodes.description
+      );
 
     return result.map(row => {
       // Calculate trial info
@@ -940,7 +960,7 @@ export class DrizzleStorage implements IStorage {
           status: row.subscriptionStatus || 'active',
           maxUsers: row.subscriptionMaxUsers || 5,
           endDate: row.subscriptionEndDate?.toISOString(),
-          stripeStatus: row.stripeSubscriptionStatus,
+          stripeSubscriptionId: row.stripeSubscriptionId,
         },
         promotionalCode: row.promoCodeId ? {
           code: row.promoCodeText,
