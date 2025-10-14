@@ -4,20 +4,15 @@ import { getAuthHeaders } from "@/lib/auth";
 import { 
   Building2, 
   Users, 
-  Crown, 
-  TrendingUp, 
-  LogOut,
-  Eye,
-  Settings,
-  Mail,
+  TrendingUp,
   AlertTriangle,
   BarChart3,
   Euro,
   ArrowRight
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SuperAdminLayout } from "@/components/layout/super-admin-layout";
 
 interface CompanyWithStats {
   id: number;
@@ -99,48 +94,21 @@ export default function SuperAdminDashboard() {
     },
   });
 
-  const handleLogout = () => {
-    localStorage.removeItem('superAdminToken');
-    setLocation("/super-admin");
-  };
-
   if (statsLoading || companiesLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white/70">Cargando panel de administración...</p>
+      <SuperAdminLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-white/70">Cargando panel de administración...</p>
+          </div>
         </div>
-      </div>
+      </SuperAdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
-      {/* Header */}
-      <header className="bg-white/10 backdrop-blur-xl border-b border-white/20">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <Crown className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-white">Oficaz Super Admin</h1>
-                <p className="text-white/60 text-sm">Panel de administración global</p>
-              </div>
-            </div>
-            <Button
-              onClick={handleLogout}
-              variant="ghost"
-              className="text-white/80 hover:text-white hover:bg-white/10"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Cerrar Sesión
-            </Button>
-          </div>
-        </div>
-      </header>
+    <SuperAdminLayout>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Two Column Layout */}
@@ -243,72 +211,6 @@ export default function SuperAdminDashboard() {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <Card className="bg-white/10 backdrop-blur-xl border-white/20 mb-8">
-          <CardHeader>
-            <CardTitle className="text-white">Gestión y Configuración</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Button 
-                variant="ghost" 
-                className="h-auto p-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white flex flex-col items-center gap-3"
-                onClick={() => setLocation('/super-admin/companies')}
-              >
-                <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
-                  <Building2 className="h-6 w-6 text-emerald-400" />
-                </div>
-                <div className="text-center">
-                  <p className="font-medium">Empresas</p>
-                  <p className="text-xs text-white/60">Gestionar empresas</p>
-                </div>
-              </Button>
-              
-              <Button 
-                variant="ghost" 
-                className="h-auto p-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white flex flex-col items-center gap-3"
-                onClick={() => setLocation('/super-admin/plans')}
-              >
-                <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
-                  <Settings className="h-6 w-6 text-purple-400" />
-                </div>
-                <div className="text-center">
-                  <p className="font-medium">Planes</p>
-                  <p className="text-xs text-white/60">Configurar suscripciones</p>
-                </div>
-              </Button>
-
-              <Button 
-                variant="ghost" 
-                className="h-auto p-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white flex flex-col items-center gap-3"
-                onClick={() => setLocation('/super-admin/invitations')}
-              >
-                <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center">
-                  <Mail className="h-6 w-6 text-orange-400" />
-                </div>
-                <div className="text-center">
-                  <p className="font-medium">Invitaciones</p>
-                  <p className="text-xs text-white/60">Control de registro</p>
-                </div>
-              </Button>
-
-              <Button 
-                variant="ghost" 
-                className="h-auto p-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white flex flex-col items-center gap-3"
-                onClick={() => setLocation('/super-admin/promo-codes')}
-              >
-                <div className="w-12 h-12 bg-yellow-500/20 rounded-xl flex items-center justify-center">
-                  <Crown className="h-6 w-6 text-yellow-400" />
-                </div>
-                <div className="text-center">
-                  <p className="font-medium">Promociones</p>
-                  <p className="text-xs text-white/60">Códigos promocionales</p>
-                </div>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
 
         {/* Pending Deletions Alert */}
         {pendingDeletions && pendingDeletions.length > 0 && (
@@ -348,6 +250,6 @@ export default function SuperAdminDashboard() {
           </Card>
         )}
       </div>
-    </div>
+    </SuperAdminLayout>
   );
 }
