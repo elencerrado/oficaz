@@ -147,9 +147,8 @@ export function CreateCampaignDialog() {
             />
           </div>
 
-          <div className="space-y-3">
-            <Label className="text-white">Prospects Externos</Label>
-            <div className="flex items-center space-x-2 border border-white/20 rounded-lg p-4 bg-white/5">
+          <div className="border border-white/20 rounded-lg p-4 bg-white/5">
+            <div className="flex items-center space-x-2">
               <Checkbox
                 id="prospects"
                 checked={formData.includeProspects}
