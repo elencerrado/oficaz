@@ -143,105 +143,105 @@ export default function SuperAdminDashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Metrics Viewer Card */}
-        <Card 
-          className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20 mb-8 cursor-pointer hover:from-white/15 hover:to-white/10 transition-all duration-300 group"
-          onClick={() => setLocation('/super-admin/metrics')}
-        >
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <BarChart3 className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-white text-xl">Panel de Métricas</CardTitle>
-                  <p className="text-white/60 text-sm mt-1">Haz clic para ver análisis completo</p>
-                </div>
-              </div>
-              <ArrowRight className="w-5 h-5 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            {/* Main Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="bg-blue-500/10 rounded-xl p-4 border border-blue-400/20">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                    <Building2 className="w-6 h-6 text-blue-400" />
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Metrics Viewer Card - Compact */}
+          <Card 
+            className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20 cursor-pointer hover:from-white/15 hover:to-white/10 transition-all duration-300 group"
+            onClick={() => setLocation('/super-admin/metrics')}
+          >
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <BarChart3 className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-white">{stats?.totalCompanies || 0}</div>
-                    <p className="text-xs text-white/60">Empresas</p>
+                    <CardTitle className="text-white text-base">Panel de Métricas</CardTitle>
+                    <p className="text-white/60 text-xs">Click para análisis completo</p>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {/* Stats Grid - 2x2 */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-blue-500/10 rounded-lg p-3 border border-blue-400/20">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-5 h-5 text-blue-400" />
+                    <div>
+                      <div className="text-xl font-bold text-white">{stats?.totalCompanies || 0}</div>
+                      <p className="text-[10px] text-white/60">Empresas</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-emerald-500/10 rounded-lg p-3 border border-emerald-400/20">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-emerald-400" />
+                    <div>
+                      <div className="text-xl font-bold text-white">{stats?.totalUsers || 0}</div>
+                      <p className="text-[10px] text-white/60">Usuarios</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-purple-500/10 rounded-lg p-3 border border-purple-400/20">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-purple-400" />
+                    <div>
+                      <div className="text-xl font-bold text-white">{stats?.activePaidSubscriptions || 0}</div>
+                      <p className="text-[10px] text-white/60">Activas</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-500/10 rounded-lg p-3 border border-yellow-400/20">
+                  <div className="flex items-center gap-2">
+                    <Euro className="w-5 h-5 text-yellow-400" />
+                    <div>
+                      <div className="text-xl font-bold text-white">{stats?.monthlyRevenue?.toFixed(2) || '0.00'}€</div>
+                      <p className="text-[10px] text-white/60">MRR</p>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-emerald-500/10 rounded-xl p-4 border border-emerald-400/20">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                    <Users className="w-6 h-6 text-emerald-400" />
+              {/* Plan Distribution - Compact */}
+              <div className="border-t border-white/10 pt-3">
+                <p className="text-xs text-white/60 mb-2">Distribución por Plan</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-blue-500/5 rounded-lg p-2 border border-blue-400/10 text-center">
+                    <div className="w-8 h-8 bg-blue-500 rounded-md mx-auto mb-1 flex items-center justify-center">
+                      <span className="text-white font-bold text-xs">{stats?.planDistribution?.basic || 0}</span>
+                    </div>
+                    <p className="text-[10px] text-white/70 font-medium">Basic</p>
                   </div>
-                  <div>
-                    <div className="text-2xl font-bold text-white">{stats?.totalUsers || 0}</div>
-                    <p className="text-xs text-white/60">Usuarios</p>
+
+                  <div className="bg-purple-500/5 rounded-lg p-2 border border-purple-400/10 text-center">
+                    <div className="w-8 h-8 bg-purple-500 rounded-md mx-auto mb-1 flex items-center justify-center">
+                      <span className="text-white font-bold text-xs">{stats?.planDistribution?.pro || 0}</span>
+                    </div>
+                    <p className="text-[10px] text-white/70 font-medium">Pro</p>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-yellow-500/5 to-yellow-600/5 rounded-lg p-2 border border-yellow-400/10 text-center">
+                    <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-md mx-auto mb-1 flex items-center justify-center">
+                      <span className="text-white font-bold text-xs">{stats?.planDistribution?.master || 0}</span>
+                    </div>
+                    <p className="text-[10px] text-white/70 font-medium">Master</p>
                   </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="bg-purple-500/10 rounded-xl p-4 border border-purple-400/20">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-purple-400" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-white">{stats?.activePaidSubscriptions || 0}</div>
-                    <p className="text-xs text-white/60">Activas</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-yellow-500/10 rounded-xl p-4 border border-yellow-400/20">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center">
-                    <Euro className="w-6 h-6 text-yellow-400" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-white">{stats?.monthlyRevenue?.toFixed(2) || '0.00'}€</div>
-                    <p className="text-xs text-white/60">MRR</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Plan Distribution */}
-            <div className="border-t border-white/10 pt-4">
-              <p className="text-sm text-white/60 mb-3">Distribución por Plan</p>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-blue-500/5 rounded-lg p-3 border border-blue-400/10 text-center">
-                  <div className="w-10 h-10 bg-blue-500 rounded-lg mx-auto mb-2 flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">{stats?.planDistribution?.basic || 0}</span>
-                  </div>
-                  <p className="text-xs text-white/70 font-medium">Basic</p>
-                </div>
-
-                <div className="bg-purple-500/5 rounded-lg p-3 border border-purple-400/10 text-center">
-                  <div className="w-10 h-10 bg-purple-500 rounded-lg mx-auto mb-2 flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">{stats?.planDistribution?.pro || 0}</span>
-                  </div>
-                  <p className="text-xs text-white/70 font-medium">Pro</p>
-                </div>
-
-                <div className="bg-gradient-to-br from-yellow-500/5 to-yellow-600/5 rounded-lg p-3 border border-yellow-400/10 text-center">
-                  <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg mx-auto mb-2 flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">{stats?.planDistribution?.master || 0}</span>
-                  </div>
-                  <p className="text-xs text-white/70 font-medium">Master</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Placeholder for future panel */}
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg border-dashed flex items-center justify-center min-h-[300px]">
+            <p className="text-white/40 text-sm">Espacio disponible para otro panel</p>
+          </div>
+        </div>
 
         {/* Quick Actions */}
         <Card className="bg-white/10 backdrop-blur-xl border-white/20 mb-8">
