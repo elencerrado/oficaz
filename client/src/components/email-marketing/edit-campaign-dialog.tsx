@@ -90,6 +90,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache',
         },
       });
       if (!response.ok) throw new Error('Failed to delete campaign');
@@ -100,7 +101,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
         title: 'Campaña eliminada',
         description: 'La campaña ha sido eliminada correctamente',
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-campaigns'] });
+      queryClient.resetQueries({ queryKey: ['/api/super-admin/email-campaigns'] });
       onOpenChange(false);
     },
     onError: () => {
