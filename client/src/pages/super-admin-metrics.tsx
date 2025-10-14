@@ -1,0 +1,230 @@
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { getAuthHeaders } from "@/lib/auth";
+import { 
+  Building2, 
+  Users, 
+  TrendingUp, 
+  Euro,
+  ArrowLeft,
+  Calendar,
+  CreditCard,
+  BarChart3
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+interface SuperAdminStats {
+  totalCompanies: number;
+  totalUsers: number;
+  activeSubscriptions: number;
+  activePaidSubscriptions: number;
+  revenue: number;
+  monthlyRevenue: number;
+  yearlyRevenue: number;
+  planDistribution: {
+    basic: number;
+    pro: number;
+    master: number;
+  };
+}
+
+export default function SuperAdminMetrics() {
+  const [, setLocation] = useLocation();
+
+  const { data: stats, isLoading } = useQuery<SuperAdminStats>({
+    queryKey: ['/api/super-admin/stats'],
+    queryFn: async () => {
+      const response = await fetch('/api/super-admin/stats', {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) throw new Error('Failed to fetch stats');
+      return response.json();
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white/70">Cargando métricas...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+      {/* Header */}
+      <header className="bg-white/10 backdrop-blur-xl border-b border-white/20">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => setLocation('/super-admin/dashboard')}
+              className="text-white hover:bg-white/10"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Volver
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-white">Métricas y Estadísticas</h1>
+              <p className="text-white/60">Análisis completo del sistema</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white/80">
+                Empresas Totales
+              </CardTitle>
+              <Building2 className="h-4 w-4 text-blue-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-white">{stats?.totalCompanies || 0}</div>
+              <p className="text-xs text-white/60 mt-1">Empresas registradas</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white/80">
+                Usuarios Totales
+              </CardTitle>
+              <Users className="h-4 w-4 text-emerald-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-white">{stats?.totalUsers || 0}</div>
+              <p className="text-xs text-white/60 mt-1">Usuarios activos</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white/80">
+                Suscripciones Activas
+              </CardTitle>
+              <CreditCard className="h-4 w-4 text-purple-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-white">{stats?.activeSubscriptions || 0}</div>
+              <p className="text-xs text-white/60 mt-1">Total de suscripciones</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white/80">
+                Suscripciones de Pago
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-yellow-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-white">{stats?.activePaidSubscriptions || 0}</div>
+              <p className="text-xs text-white/60 mt-1">Con Stripe activo</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Revenue Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 backdrop-blur-xl border-blue-400/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white/90">
+                Ingresos Totales
+              </CardTitle>
+              <Euro className="h-5 w-5 text-blue-300" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-bold text-white">{stats?.revenue?.toFixed(2) || '0.00'}€</div>
+              <p className="text-xs text-white/70 mt-2">Ingresos acumulados</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 backdrop-blur-xl border-emerald-400/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white/90">
+                Ingresos Mensuales
+              </CardTitle>
+              <Calendar className="h-5 w-5 text-emerald-300" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-bold text-white">{stats?.monthlyRevenue?.toFixed(2) || '0.00'}€</div>
+              <p className="text-xs text-white/70 mt-2">Estimado por mes</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 backdrop-blur-xl border-purple-400/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white/90">
+                Ingresos Anuales
+              </CardTitle>
+              <TrendingUp className="h-5 w-5 text-purple-300" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-bold text-white">{stats?.yearlyRevenue?.toFixed(2) || '0.00'}€</div>
+              <p className="text-xs text-white/70 mt-2">Estimado anual</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Plan Distribution */}
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <CardTitle className="text-white">Distribución de Planes</CardTitle>
+                <p className="text-sm text-white/60 mt-1">Análisis por tipo de suscripción</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-blue-500/20 rounded-xl p-6 border border-blue-400/30">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white font-semibold">Plan Basic</h3>
+                  <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+                <div className="text-4xl font-bold text-white mb-2">{stats?.planDistribution?.basic || 0}</div>
+                <p className="text-sm text-blue-200">Empresas con plan básico</p>
+              </div>
+
+              <div className="bg-purple-500/20 rounded-xl p-6 border border-purple-400/30">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white font-semibold">Plan Pro</h3>
+                  <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+                <div className="text-4xl font-bold text-white mb-2">{stats?.planDistribution?.pro || 0}</div>
+                <p className="text-sm text-purple-200">Empresas con plan profesional</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 rounded-xl p-6 border border-yellow-400/30">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white font-semibold">Plan Master</h3>
+                  <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center">
+                    <CreditCard className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+                <div className="text-4xl font-bold text-white mb-2">{stats?.planDistribution?.master || 0}</div>
+                <p className="text-sm text-yellow-200">Empresas con plan master</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

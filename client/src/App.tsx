@@ -64,6 +64,7 @@ import EmployeeSchedule from "@/pages/employee-schedule";
 // Super admin pages - lazy loaded (rarely accessed)
 const SuperAdminSecurity = lazy(() => import("@/pages/super-admin-security"));
 const SuperAdminDashboard = lazy(() => import("@/pages/super-admin-dashboard"));
+const SuperAdminMetrics = lazy(() => import("@/pages/super-admin-metrics"));
 const SuperAdminPlans = lazy(() => import("@/pages/super-admin-plans"));
 const SuperAdminCompanyDetail = lazy(() => import("@/pages/super-admin-company-detail"));
 const SuperAdminCompanies = lazy(() => import("@/pages/super-admin-companies"));
@@ -247,6 +248,11 @@ function Router() {
         <Route path="/super-admin/dashboard">
           <Suspense fallback={<PageLoading />}>
             <SuperAdminDashboard />
+          </Suspense>
+        </Route>
+        <Route path="/super-admin/metrics">
+          <Suspense fallback={<PageLoading />}>
+            <SuperAdminMetrics />
           </Suspense>
         </Route>
         <Route path="/super-admin/plans">
