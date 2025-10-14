@@ -8176,10 +8176,13 @@ Responde directamente a este email para contactar con la persona.
             sentAt: new Date(),
           }).returning();
 
-          const domain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://oficaz.replit.app';
+          // Use official domain for better deliverability and tracking reliability
+          const domain = process.env.NODE_ENV === 'production' 
+            ? 'https://oficaz.es' 
+            : `https://${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}`;
 
-          // Add tracking pixel to HTML
-          const trackingPixel = `<img src="${domain}/api/track/open/${sendRecord.id}" width="1" height="1" style="display:none;" alt="" />`;
+          // Add tracking pixel to HTML (optimized for Outlook compatibility)
+          const trackingPixel = `<img src="${domain}/api/track/open/${sendRecord.id}" width="1" height="1" border="0" style="display:block;border:0;outline:none;" alt="" />`;
           
           // Replace button URL with tracking URL
           let htmlWithTracking = campaign.htmlContent;
