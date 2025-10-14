@@ -7880,6 +7880,52 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Track email click (public endpoint - no auth required)
+  app.get('/api/track/click/:sendId', async (req, res) => {
+    try {
+      const sendId = parseInt(req.params.sendId);
+      const targetUrl = req.query.url as string;
+      
+      if (!targetUrl) {
+        return res.status(400).send('Missing target URL');
+      }
+
+      // Get the send record
+      const [sendRecord] = await db.select()
+        .from(schema.emailCampaignSends)
+        .where(eq(schema.emailCampaignSends.id, sendId))
+        .limit(1);
+
+      if (sendRecord && !sendRecord.clickedAt) {
+        // Mark as clicked
+        await db.update(schema.emailCampaignSends)
+          .set({ clickedAt: new Date() })
+          .where(eq(schema.emailCampaignSends.id, sendId));
+
+        // Increment campaign clicked count
+        await db.update(schema.emailCampaigns)
+          .set({ 
+            clickedCount: sql`${schema.emailCampaigns.clickedCount} + 1`
+          })
+          .where(eq(schema.emailCampaigns.id, sendRecord.campaignId));
+
+        console.log(`🖱️ Email clicked: sendId=${sendId}, campaign=${sendRecord.campaignId}, url=${targetUrl}`);
+      }
+
+      // Redirect to target URL
+      res.redirect(targetUrl);
+    } catch (error) {
+      console.error('Error tracking email click:', error);
+      // Still redirect even on error if URL is provided
+      const targetUrl = req.query.url as string;
+      if (targetUrl) {
+        res.redirect(targetUrl);
+      } else {
+        res.status(500).send('Error tracking click');
+      }
+    }
+  });
+
   // Get all email campaigns
   app.get('/api/super-admin/email-campaigns', authenticateSuperAdmin, async (req: any, res) => {
     try {
