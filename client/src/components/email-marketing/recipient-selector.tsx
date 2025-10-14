@@ -142,15 +142,17 @@ export function RecipientSelector({ selectedEmails, onSelectionChange }: Recipie
                   {users.map((user: any) => (
                     <div 
                       key={user.email}
-                      className="flex items-center gap-3 p-2 rounded hover:bg-white/5 cursor-pointer"
-                      onClick={() => toggleEmail(user.email)}
+                      className="flex items-center gap-3 p-2 rounded hover:bg-white/5"
                     >
                       <Checkbox
                         checked={selectedEmails.includes(user.email)}
                         onCheckedChange={() => toggleEmail(user.email)}
                         className="border-white/30 data-[state=checked]:bg-blue-600"
                       />
-                      <div className="flex-1 min-w-0">
+                      <div 
+                        className="flex-1 min-w-0 cursor-pointer"
+                        onClick={() => toggleEmail(user.email)}
+                      >
                         <p className="text-sm text-white truncate">{user.email}</p>
                         <p className="text-xs text-white/50 truncate">{user.companyName}</p>
                       </div>
