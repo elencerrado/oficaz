@@ -7836,6 +7836,50 @@ Responde directamente a este email para contactar con la persona.
 
   // ==================== EMAIL MARKETING ENDPOINTS ====================
   
+  // Track email open (public endpoint - no auth required)
+  app.get('/api/track/open/:sendId', async (req, res) => {
+    try {
+      const sendId = parseInt(req.params.sendId);
+      
+      // Get the send record
+      const [sendRecord] = await db.select()
+        .from(schema.emailCampaignSends)
+        .where(eq(schema.emailCampaignSends.id, sendId))
+        .limit(1);
+
+      if (sendRecord && !sendRecord.openedAt) {
+        // Mark as opened
+        await db.update(schema.emailCampaignSends)
+          .set({ openedAt: new Date() })
+          .where(eq(schema.emailCampaignSends.id, sendId));
+
+        // Increment campaign opened count
+        await db.update(schema.emailCampaigns)
+          .set({ 
+            openedCount: sql`${schema.emailCampaigns.openedCount} + 1`
+          })
+          .where(eq(schema.emailCampaigns.id, sendRecord.campaignId));
+
+        console.log(`📧 Email opened: sendId=${sendId}, campaign=${sendRecord.campaignId}`);
+      }
+
+      // Return 1x1 transparent pixel
+      const pixel = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+      res.writeHead(200, {
+        'Content-Type': 'image/gif',
+        'Content-Length': pixel.length,
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      });
+      res.end(pixel);
+    } catch (error) {
+      console.error('Error tracking email open:', error);
+      // Still return the pixel even on error
+      const pixel = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+      res.writeHead(200, { 'Content-Type': 'image/gif' });
+      res.end(pixel);
+    }
+  });
+
   // Get all email campaigns
   app.get('/api/super-admin/email-campaigns', authenticateSuperAdmin, async (req: any, res) => {
     try {
