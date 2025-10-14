@@ -8,6 +8,7 @@ import { CreateCampaignDialog } from '@/components/email-marketing/create-campai
 import { AddProspectDialog } from '@/components/email-marketing/add-prospect-dialog';
 import { EditCampaignDialog } from '@/components/email-marketing/edit-campaign-dialog';
 import { CampaignHistoryDialog } from '@/components/email-marketing/campaign-history-dialog';
+import { CampaignConversionsDialog } from '@/components/email-marketing/campaign-conversions-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Send, 
@@ -21,13 +22,15 @@ import {
   Trash2,
   Edit,
   History,
-  Copy
+  Copy,
+  TrendingUp
 } from 'lucide-react';
 
 export default function SuperAdminMarketing() {
   const [activeTab, setActiveTab] = useState('campaigns');
   const [editingCampaign, setEditingCampaign] = useState<any>(null);
   const [historyCampaign, setHistoryCampaign] = useState<any>(null);
+  const [conversionsCampaign, setConversionsCampaign] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -298,16 +301,28 @@ export default function SuperAdminMarketing() {
                             )}
                           </div>
                           {campaign.status === 'sent' && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => setHistoryCampaign(campaign)}
-                              className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
-                              data-testid={`button-history-campaign-${campaign.id}`}
-                            >
-                              <History className="w-4 h-4 mr-1" />
-                              Historial
-                            </Button>
+                            <>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => setConversionsCampaign(campaign)}
+                                className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                                data-testid={`button-conversions-campaign-${campaign.id}`}
+                              >
+                                <TrendingUp className="w-4 h-4 mr-1" />
+                                Conversiones
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => setHistoryCampaign(campaign)}
+                                className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
+                                data-testid={`button-history-campaign-${campaign.id}`}
+                              >
+                                <History className="w-4 h-4 mr-1" />
+                                Historial
+                              </Button>
+                            </>
                           )}
                           <Button 
                             variant="ghost" 
@@ -515,6 +530,15 @@ export default function SuperAdminMarketing() {
           campaignName={historyCampaign.name}
           open={!!historyCampaign}
           onOpenChange={(open) => !open && setHistoryCampaign(null)}
+        />
+      )}
+
+      {/* Campaign Conversions Dialog */}
+      {conversionsCampaign && (
+        <CampaignConversionsDialog
+          campaign={conversionsCampaign}
+          open={!!conversionsCampaign}
+          onOpenChange={(open) => !open && setConversionsCampaign(null)}
         />
       )}
     </SuperAdminLayout>
