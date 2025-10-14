@@ -20,7 +20,8 @@ import {
   MousePointerClick,
   Trash2,
   Edit,
-  History
+  History,
+  Copy
 } from 'lucide-react';
 
 export default function SuperAdminMarketing() {
@@ -105,6 +106,38 @@ export default function SuperAdminMarketing() {
       toast({
         title: 'Error',
         description: error.message || 'No se pudo enviar la campaña',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Duplicate campaign mutation
+  const duplicateCampaignMutation = useMutation({
+    mutationFn: async (campaignId: number) => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch(`/api/super-admin/email-campaigns/${campaignId}/duplicate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to duplicate campaign');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'Campaña duplicada',
+        description: 'La campaña se duplicó correctamente',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-campaigns'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo duplicar la campaña',
         variant: 'destructive',
       });
     },
@@ -276,6 +309,17 @@ export default function SuperAdminMarketing() {
                               Historial
                             </Button>
                           )}
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => duplicateCampaignMutation.mutate(campaign.id)}
+                            disabled={duplicateCampaignMutation.isPending}
+                            className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                            data-testid={`button-duplicate-campaign-${campaign.id}`}
+                          >
+                            <Copy className="w-4 h-4 mr-1" />
+                            Duplicar
+                          </Button>
                           <Button 
                             variant="ghost" 
                             size="sm"
