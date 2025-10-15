@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { SuperAdminSidebar } from './super-admin-sidebar';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,15 @@ interface SuperAdminLayoutProps {
 
 export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    const token = sessionStorage.getItem('superAdminToken');
+    
+    if (!token) {
+      setLocation('/super-admin');
+    }
+  }, [setLocation]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">

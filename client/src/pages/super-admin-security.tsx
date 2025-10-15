@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,14 @@ export default function SuperAdminSecurity() {
   const [error, setError] = useState("");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+
+  // Check if already logged in on mount
+  useEffect(() => {
+    const token = sessionStorage.getItem('superAdminToken');
+    if (token) {
+      setLocation('/super-admin/dashboard');
+    }
+  }, [setLocation]);
 
   const handleAccessPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
