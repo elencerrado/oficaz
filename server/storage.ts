@@ -1090,12 +1090,34 @@ export class DrizzleStorage implements IStorage {
 
     const yearlyRevenue = monthlyRevenue * 12;
 
+    // Calculate ACTUAL accumulated revenue from all paid invoices
+    let totalAccumulatedRevenue = 0;
+    
+    try {
+      // Get all paid invoices from Stripe
+      const invoices = await stripe.invoices.list({
+        limit: 100, // Get last 100 invoices
+        status: 'paid',
+      });
+      
+      // Sum up all paid amounts
+      for (const invoice of invoices.data) {
+        if (invoice.amount_paid) {
+          // Convert from cents to euros
+          totalAccumulatedRevenue += invoice.amount_paid / 100;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching Stripe invoices for accumulated revenue:', error);
+    }
+
     return {
       totalCompanies: companiesCount[0]?.count || 0,
       totalUsers: usersCount[0]?.count || 0,
       activePaidSubscriptions,
       monthlyRevenue,
       yearlyRevenue,
+      totalAccumulatedRevenue,
       planDistribution: planCounts,
       // Legacy field for backward compatibility
       activeSubscriptions: activePaidSubscriptions,

@@ -43,6 +43,7 @@ interface SuperAdminStats {
   revenue: number;
   monthlyRevenue: number;
   yearlyRevenue: number;
+  totalAccumulatedRevenue: number;
   planDistribution: {
     basic: number;
     pro: number;

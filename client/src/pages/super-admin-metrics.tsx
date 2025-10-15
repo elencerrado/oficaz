@@ -20,6 +20,7 @@ interface SuperAdminStats {
   revenue: number;
   monthlyRevenue: number;
   yearlyRevenue: number;
+  totalAccumulatedRevenue: number;
   planDistribution: {
     basic: number;
     pro: number;
@@ -109,8 +110,8 @@ export default function SuperAdminMetrics() {
               <Euro className="h-5 w-5 text-blue-300" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-white">{stats?.revenue?.toFixed(2) || '0.00'}€</div>
-              <p className="text-xs text-white/70 mt-2">Ingresos acumulados</p>
+              <div className="text-4xl font-bold text-white">{stats?.totalAccumulatedRevenue?.toFixed(2) || '0.00'}€</div>
+              <p className="text-xs text-white/70 mt-2">Ingresos acumulados reales</p>
             </CardContent>
           </Card>
 
