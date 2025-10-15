@@ -308,7 +308,7 @@ const SuperAdminPromoCodes = () => {
                   <Input
                     type="date"
                     value={formData.validFrom || ''}
-                    onChange={(e) => setFormData({ ...formData, validFrom: e.target.value || null })}
+                    onChange={(e) => setFormData({ ...formData, validFrom: e.target.value ? e.target.value : null })}
                     data-testid="input-valid-from"
                   />
                 </div>
@@ -317,7 +317,7 @@ const SuperAdminPromoCodes = () => {
                   <Input
                     type="date"
                     value={formData.validUntil || ''}
-                    onChange={(e) => setFormData({ ...formData, validUntil: e.target.value || null })}
+                    onChange={(e) => setFormData({ ...formData, validUntil: e.target.value ? e.target.value : null })}
                     data-testid="input-valid-until"
                   />
                 </div>
@@ -524,7 +524,7 @@ const SuperAdminPromoCodes = () => {
                 <Input
                   type="date"
                   value={formData.validFrom || ''}
-                  onChange={(e) => setFormData({ ...formData, validFrom: e.target.value || null })}
+                  onChange={(e) => setFormData({ ...formData, validFrom: e.target.value ? e.target.value : null })}
                   data-testid="input-edit-valid-from"
                 />
               </div>
@@ -533,7 +533,7 @@ const SuperAdminPromoCodes = () => {
                 <Input
                   type="date"
                   value={formData.validUntil || ''}
-                  onChange={(e) => setFormData({ ...formData, validUntil: e.target.value || null })}
+                  onChange={(e) => setFormData({ ...formData, validUntil: e.target.value ? e.target.value : null })}
                   data-testid="input-edit-valid-until"
                 />
               </div>
