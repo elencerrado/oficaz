@@ -1503,4 +1503,53 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   overflow: hidden !important;
 }
 
+/* ========================================
+   SUPER ADMIN FIXED DARK MODE
+   ======================================== */
+/* Force dark mode for all SuperAdmin pages regardless of system theme */
+
+/* SuperAdmin Switch components - Force dark theme colors */
+.min-h-screen.bg-gradient-to-br.from-slate-900 [role="switch"] {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.min-h-screen.bg-gradient-to-br.from-slate-900 [role="switch"][data-state="checked"] {
+  background-color: rgb(37, 99, 235) !important;
+}
+
+.min-h-screen.bg-gradient-to-br.from-slate-900 [role="switch"] > span {
+  background-color: rgb(255, 255, 255) !important;
+}
+
+/* SuperAdmin Input components - Force dark theme */
+.min-h-screen.bg-gradient-to-br.from-slate-900 input[type="text"],
+.min-h-screen.bg-gradient-to-br.from-slate-900 input[type="number"],
+.min-h-screen.bg-gradient-to-br.from-slate-900 input[type="email"],
+.min-h-screen.bg-gradient-to-br.from-slate-900 input[type="password"] {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: rgb(255, 255, 255) !important;
+}
+
+.min-h-screen.bg-gradient-to-br.from-slate-900 input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* SuperAdmin Select components - Force dark theme */
+.min-h-screen.bg-gradient-to-br.from-slate-900 [role="combobox"] {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: rgb(255, 255, 255) !important;
+}
+
+/* SuperAdmin Label components - Force white text */
+.min-h-screen.bg-gradient-to-br.from-slate-900 label {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* SuperAdmin Badge components - Force colors */
+.min-h-screen.bg-gradient-to-br.from-slate-900 .bg-white\/20 {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
 
