@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Mail, Eye, MousePointerClick, UserCheck, Calendar, BarChart3 } from 'lucide-react';
+import { Mail, Eye, MousePointerClick, UserCheck, Calendar, BarChart3, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -44,51 +44,140 @@ export function ProspectStatsDialog({ prospect, open, onOpenChange }: ProspectSt
             <p className="text-white/60">Este prospect no ha participado en ninguna campaña</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {/* Summary Stats */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-blue-500/20 rounded-lg p-3 border border-blue-400/30">
-                <div className="flex items-center gap-2 text-blue-300 mb-1">
-                  <Mail className="w-4 h-4" />
-                  <span className="text-xs font-medium">Campañas</span>
-                </div>
-                <p className="text-2xl font-bold text-white">{campaignHistory.campaigns.length}</p>
-              </div>
-              
-              <div className="bg-purple-500/20 rounded-lg p-3 border border-purple-400/30">
-                <div className="flex items-center gap-2 text-purple-300 mb-1">
-                  <Eye className="w-4 h-4" />
-                  <span className="text-xs font-medium">Abiertos</span>
-                </div>
-                <p className="text-2xl font-bold text-white">
-                  {campaignHistory.campaigns.filter((c: any) => c.openedAt).length}
-                </p>
-              </div>
-              
-              <div className="bg-indigo-500/20 rounded-lg p-3 border border-indigo-400/30">
-                <div className="flex items-center gap-2 text-indigo-300 mb-1">
-                  <MousePointerClick className="w-4 h-4" />
-                  <span className="text-xs font-medium">Clicks</span>
-                </div>
-                <p className="text-2xl font-bold text-white">
-                  {campaignHistory.campaigns.filter((c: any) => c.clickedAt).length}
-                </p>
+          <div className="space-y-5">
+            {/* Registration Status - Prominente */}
+            <div className={`rounded-lg p-4 border-2 ${
+              campaignHistory.registration 
+                ? 'bg-green-500/20 border-green-400/50' 
+                : 'bg-gray-500/20 border-gray-400/30'
+            }`}>
+              <div className="flex items-center gap-3">
+                {campaignHistory.registration ? (
+                  <>
+                    <CheckCircle className="w-6 h-6 text-green-400" />
+                    <div className="flex-1">
+                      <p className="text-green-300 font-semibold text-lg">✓ Cliente Registrado</p>
+                      <p className="text-white text-sm mt-1">Empresa: {campaignHistory.registration.companyName}</p>
+                      <p className="text-green-200/70 text-xs mt-0.5">
+                        {format(new Date(campaignHistory.registration.registeredAt), "dd/MM/yyyy 'a las' HH:mm", { locale: es })}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-6 h-6 text-gray-400" />
+                    <div>
+                      <p className="text-gray-300 font-semibold text-lg">No Registrado</p>
+                      <p className="text-gray-400 text-sm">Aún no se ha convertido en cliente</p>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
-            {/* Registration Status */}
-            {campaignHistory.registration && (
-              <div className="bg-green-500/20 border border-green-400/30 rounded-lg p-4">
-                <div className="flex items-center gap-2 text-green-300 mb-2">
-                  <UserCheck className="w-5 h-5" />
-                  <span className="font-medium">¡Registrado como cliente!</span>
-                </div>
-                <p className="text-white text-sm">Empresa: {campaignHistory.registration.companyName}</p>
-                <p className="text-green-200/70 text-xs mt-1">
-                  {format(new Date(campaignHistory.registration.registeredAt), "dd/MM/yyyy 'a las' HH:mm", { locale: es })}
-                </p>
-              </div>
-            )}
+            {/* Conversion Funnel */}
+            <div className="bg-white/5 rounded-lg p-4">
+              <h3 className="text-white font-medium mb-4">Embudo de Conversión</h3>
+              
+              {(() => {
+                const totalCampaigns = campaignHistory.campaigns.length;
+                const totalOpened = campaignHistory.campaigns.filter((c: any) => c.openedAt).length;
+                const totalClicked = campaignHistory.campaigns.filter((c: any) => c.clickedAt).length;
+                const isRegistered = !!campaignHistory.registration;
+                
+                const openRate = totalCampaigns > 0 ? Math.round((totalOpened / totalCampaigns) * 100) : 0;
+                const clickRate = totalOpened > 0 ? Math.round((totalClicked / totalOpened) * 100) : 0;
+                const conversionRate = totalClicked > 0 && isRegistered ? 100 : 0;
+                
+                return (
+                  <div className="space-y-3">
+                    {/* Enviado */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0 w-32">
+                        <div className="flex items-center gap-2 text-blue-300">
+                          <Mail className="w-4 h-4" />
+                          <span className="text-sm font-medium">Enviado</span>
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="bg-blue-500/30 h-8 rounded flex items-center px-3">
+                          <span className="text-white font-bold">{totalCampaigns}</span>
+                        </div>
+                      </div>
+                      <div className="w-16 text-right">
+                        <span className="text-white font-semibold">100%</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-center">
+                      <ArrowRight className="w-5 h-5 text-white/40 rotate-90" />
+                    </div>
+                    
+                    {/* Abierto */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0 w-32">
+                        <div className="flex items-center gap-2 text-purple-300">
+                          <Eye className="w-4 h-4" />
+                          <span className="text-sm font-medium">Abierto</span>
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="bg-purple-500/30 h-8 rounded flex items-center px-3" style={{ width: `${openRate}%`, minWidth: '20%' }}>
+                          <span className="text-white font-bold">{totalOpened}</span>
+                        </div>
+                      </div>
+                      <div className="w-16 text-right">
+                        <span className="text-white font-semibold">{openRate}%</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-center">
+                      <ArrowRight className="w-5 h-5 text-white/40 rotate-90" />
+                    </div>
+                    
+                    {/* Click */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0 w-32">
+                        <div className="flex items-center gap-2 text-indigo-300">
+                          <MousePointerClick className="w-4 h-4" />
+                          <span className="text-sm font-medium">Click</span>
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="bg-indigo-500/30 h-8 rounded flex items-center px-3" style={{ width: `${clickRate > 0 ? clickRate : 10}%`, minWidth: '20%' }}>
+                          <span className="text-white font-bold">{totalClicked}</span>
+                        </div>
+                      </div>
+                      <div className="w-16 text-right">
+                        <span className="text-white font-semibold">{clickRate}%</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-center">
+                      <ArrowRight className="w-5 h-5 text-white/40 rotate-90" />
+                    </div>
+                    
+                    {/* Registrado */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0 w-32">
+                        <div className="flex items-center gap-2 text-green-300">
+                          <UserCheck className="w-4 h-4" />
+                          <span className="text-sm font-medium">Registrado</span>
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className={`h-8 rounded flex items-center px-3 ${isRegistered ? 'bg-green-500/30' : 'bg-gray-500/20'}`} style={{ width: isRegistered ? '100%' : '20%', minWidth: '20%' }}>
+                          <span className="text-white font-bold">{isRegistered ? 1 : 0}</span>
+                        </div>
+                      </div>
+                      <div className="w-16 text-right">
+                        <span className="text-white font-semibold">{isRegistered ? '✓' : '-'}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
 
             {/* Campaign List */}
             <div>
