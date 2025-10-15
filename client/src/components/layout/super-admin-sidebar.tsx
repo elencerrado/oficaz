@@ -95,14 +95,14 @@ export function SuperAdminSidebar({ isOpen, onClose }: SuperAdminSidebarProps) {
         }}
       >
         {/* Logo / Header */}
-        <div className="p-6 border-b border-white/10">
-          <div className="flex flex-col items-center gap-3">
+        <div className="p-4 border-b border-white/10">
+          <div className="flex flex-col items-center gap-2">
             <img 
               src={oficazLogo} 
               alt="Oficaz" 
-              className="h-10 w-auto dark:brightness-0 dark:invert"
+              className="h-6 w-auto dark:brightness-0 dark:invert opacity-90"
             />
-            <h2 className="text-white font-bold text-lg">Super Admin</h2>
+            <h2 className="text-white/80 font-medium text-sm">Super Admin</h2>
           </div>
         </div>
 
