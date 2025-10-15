@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { getAuthHeaders } from '@/lib/auth';
@@ -12,7 +12,13 @@ import {
   Eye,
   Users,
   Tag,
-  ArrowLeft
+  ArrowLeft,
+  Crown,
+  Settings,
+  Edit2,
+  Euro,
+  AlertCircle,
+  Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
@@ -23,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface Company {
   id: number;
@@ -30,10 +37,19 @@ interface Company {
   cif: string;
   email: string;
   userCount: number;
+  activeUsers?: number;
+  trialDurationDays?: number;
   subscription: {
     plan: string;
     status: string;
     stripeSubscriptionId?: string;
+    maxUsers?: number;
+    monthlyPrice?: number;
+    customMonthlyPrice?: number;
+    pricePerUser?: number;
+    customPricePerUser?: number;
+    useCustomSettings?: boolean;
+    features?: any;
   };
   promotionalCode?: {
     code: string;
@@ -43,6 +59,8 @@ interface Company {
     daysRemaining: number;
     isTrialActive: boolean;
     trialDuration: number;
+    trialStartDate: string;
+    trialEndDate: string;
   };
   deletionInfo?: {
     scheduledForDeletion: boolean;
@@ -50,6 +68,18 @@ interface Company {
     isDeleted: boolean;
   };
 }
+
+const featureLabels = {
+  messages: 'Mensajes',
+  documents: 'Documentos',
+  vacation: 'Vacaciones',
+  timeTracking: 'Fichajes',
+  timeEditingPermissions: 'Editar horas empleados',
+  reports: 'Reportes',
+  analytics: 'Analíticas',
+  customization: 'Personalización',
+  api: 'API',
+};
 
 const planColors = {
   basic: "bg-blue-500", 
@@ -65,7 +95,6 @@ const planLabels = {
 
 // Helper function to get subscription status badge info
 const getSubscriptionBadge = (company: Company) => {
-  // Priority 1: Company deleted
   if (company.deletionInfo?.isDeleted) {
     return {
       text: 'Eliminada',
@@ -74,7 +103,6 @@ const getSubscriptionBadge = (company: Company) => {
     };
   }
 
-  // Priority 2: Scheduled for deletion
   if (company.deletionInfo?.scheduledForDeletion) {
     return {
       text: 'Cancelada - Eliminación programada',
@@ -83,7 +111,6 @@ const getSubscriptionBadge = (company: Company) => {
     };
   }
 
-  // Priority 3: Trial active
   if (company.trialInfo?.isTrialActive) {
     const days = company.trialInfo.daysRemaining;
     return {
@@ -93,7 +120,6 @@ const getSubscriptionBadge = (company: Company) => {
     };
   }
 
-  // Priority 4: Paid subscription active (has Stripe subscription)
   if (company.subscription.status === 'active' && company.subscription.stripeSubscriptionId) {
     return {
       text: 'Suscrito',
@@ -102,7 +128,6 @@ const getSubscriptionBadge = (company: Company) => {
     };
   }
 
-  // Priority 5: Trial expired (only if trial was active before and now expired)
   if (!company.trialInfo?.isTrialActive && company.trialInfo?.daysRemaining !== undefined && company.trialInfo.daysRemaining <= 0 && !company.subscription.stripeSubscriptionId) {
     return {
       text: 'Trial expirado',
@@ -111,7 +136,6 @@ const getSubscriptionBadge = (company: Company) => {
     };
   }
 
-  // Default: show subscription status
   return {
     text: company.subscription.status === 'active' ? 'Activo' : 'Inactivo',
     variant: company.subscription.status === 'active' ? 'default' as const : 'secondary' as const,
@@ -129,10 +153,19 @@ export default function SuperAdminCompanies() {
   
   // Edit mode states
   const [editingCompanyId, setEditingCompanyId] = useState<number | null>(null);
-  const [editPlan, setEditPlan] = useState<string>("");
-  const [editMaxUsers, setEditMaxUsers] = useState<string>("");
-  const [editCustomPrice, setEditCustomPrice] = useState<string>("");
-  const [editUseCustomSettings, setEditUseCustomSettings] = useState(false);
+  const [editingPlanField, setEditingPlanField] = useState(false);
+  const [editingMaxUsers, setEditingMaxUsers] = useState(false);
+  const [editingPrice, setEditingPrice] = useState(false);
+  const [editingTrialDuration, setEditingTrialDuration] = useState(false);
+  const [newPlanValue, setNewPlanValue] = useState('');
+  const [newMaxUsers, setNewMaxUsers] = useState('');
+  const [newPrice, setNewPrice] = useState('');
+  const [newTrialDuration, setNewTrialDuration] = useState('');
+  const [useCustomSettings, setUseCustomSettings] = useState(false);
+  const [customFeatures, setCustomFeatures] = useState<any>({});
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [confirmationText, setConfirmationText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -147,8 +180,35 @@ export default function SuperAdminCompanies() {
       return response.json();
     },
     retry: false,
-    staleTime: 30000, // Cache for 30 seconds
+    staleTime: 30000,
     refetchOnMount: false,
+  });
+
+  // Fetch company details when editing
+  const { data: selectedCompanyDetail } = useQuery({
+    queryKey: ['/api/super-admin/companies', editingCompanyId],
+    queryFn: async () => {
+      const response = await fetch(`/api/super-admin/companies/${editingCompanyId}`, {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) throw new Error('Failed to fetch company');
+      return response.json();
+    },
+    enabled: !!editingCompanyId,
+    retry: false,
+  });
+
+  // Fetch available plans
+  const { data: plans } = useQuery({
+    queryKey: ['/api/super-admin/subscription-plans'],
+    queryFn: async () => {
+      const response = await fetch('/api/super-admin/subscription-plans', {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) throw new Error('Failed to fetch plans');
+      return response.json();
+    },
+    retry: false,
   });
 
   const updateSubscriptionMutation = useMutation({
@@ -182,30 +242,46 @@ export default function SuperAdminCompanies() {
   });
 
   const updateCompanyMutation = useMutation({
-    mutationFn: async ({ companyId, data }: { companyId: number; data: any }) => {
-      const response = await fetch(`/api/super-admin/companies/${companyId}/subscription`, {
+    mutationFn: async (data: any) => {
+      const response = await fetch(`/api/super-admin/companies/${editingCompanyId}/subscription`, {
         method: 'PATCH',
         headers: {
-          ...getAuthHeaders(),
           'Content-Type': 'application/json',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || 'Failed to update company');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to update company');
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (data.subscription) {
+        setUseCustomSettings(data.subscription.useCustomSettings || false);
+        setCustomFeatures(data.subscription.features || {});
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/companies', editingCompanyId] });
       queryClient.invalidateQueries({ queryKey: ['/api/super-admin/companies'] });
+      queryClient.refetchQueries({ queryKey: ['/api/super-admin/companies', editingCompanyId] });
+      
       toast({
         title: "Éxito",
         description: "Empresa actualizada correctamente",
       });
-      setEditingCompanyId(null);
+      setEditingPlanField(false);
+      setEditingMaxUsers(false);
+      setEditingPrice(false);
+      setEditingTrialDuration(false);
     },
     onError: (error: any) => {
+      if (selectedCompanyDetail) {
+        setUseCustomSettings(selectedCompanyDetail.subscription.useCustomSettings || false);
+        setCustomFeatures(selectedCompanyDetail.subscription.features || {});
+      }
+      
       toast({
         title: "Error",
         description: error.message,
@@ -213,6 +289,56 @@ export default function SuperAdminCompanies() {
       });
     },
   });
+
+  const deleteCompanyMutation = useMutation({
+    mutationFn: async (confirmationText: string) => {
+      const token = sessionStorage.getItem('superAdminToken');
+      const response = await fetch(`/api/super-admin/companies/${editingCompanyId}/delete-permanently`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ confirmationText }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al eliminar la empresa');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+      setConfirmationText('');
+      setEditingCompanyId(null);
+      
+      toast({
+        title: "Empresa eliminada",
+        description: data.message,
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/companies'] });
+    },
+    onError: (error: Error) => {
+      setIsDeleting(false);
+      
+      toast({
+        title: "Error al eliminar empresa",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (selectedCompanyDetail) {
+      setUseCustomSettings(selectedCompanyDetail.subscription.useCustomSettings || false);
+      setCustomFeatures(selectedCompanyDetail.subscription.features || {});
+    }
+  }, [selectedCompanyDetail]);
 
   const filteredCompanies = companies?.filter((company: Company) => {
     const matchesSearch = 
@@ -243,139 +369,574 @@ export default function SuperAdminCompanies() {
 
   const openEditMode = (company: Company) => {
     setEditingCompanyId(company.id);
-    setEditPlan(company.subscription.plan);
-    setEditMaxUsers("");
-    setEditCustomPrice("");
-    setEditUseCustomSettings(false);
   };
 
-  const handleSaveCompany = () => {
-    if (!editingCompanyId) return;
+  const handlePlanSave = () => {
+    if (!newPlanValue) return;
     
-    const data: any = {
-      plan: editPlan,
-    };
-
-    if (editMaxUsers) {
-      data.maxUsers = parseInt(editMaxUsers);
+    let finalFeatures = customFeatures;
+    if (!useCustomSettings) {
+      const planDefaults = plans?.find((p: any) => p.name === newPlanValue)?.features;
+      if (planDefaults) {
+        finalFeatures = planDefaults;
+        setCustomFeatures(planDefaults);
+      }
     }
 
-    if (editCustomPrice) {
-      data.customMonthlyPrice = parseFloat(editCustomPrice);
-      data.useCustomSettings = true;
-    }
-
-    if (editUseCustomSettings) {
-      data.useCustomSettings = true;
-    }
-
-    updateCompanyMutation.mutate({ companyId: editingCompanyId, data });
+    updateCompanyMutation.mutate({ 
+      plan: newPlanValue,
+      features: finalFeatures,
+      useCustomSettings
+    });
   };
 
-  const selectedCompany = companies?.find((c: Company) => c.id === editingCompanyId);
+  const handleMaxUsersSave = () => {
+    updateCompanyMutation.mutate({ 
+      maxUsers: newMaxUsers ? parseInt(newMaxUsers) : null 
+    });
+  };
+
+  const handlePriceSave = () => {
+    if (!newPrice) return;
+    updateCompanyMutation.mutate({ 
+      customMonthlyPrice: parseFloat(newPrice) 
+    });
+  };
+
+  const handleClearCustomPrice = () => {
+    updateCompanyMutation.mutate({ 
+      customMonthlyPrice: null 
+    });
+  };
+
+  const handleTrialDurationSave = () => {
+    updateCompanyMutation.mutate({ 
+      trialDurationDays: newTrialDuration ? parseInt(newTrialDuration) : null 
+    });
+  };
+
+  const toggleCustomSettings = async () => {
+    const newCustomState = !useCustomSettings;
+    setUseCustomSettings(newCustomState);
+    
+    if (!newCustomState) {
+      const planFeatures = plans?.find((p: any) => p.name === selectedCompanyDetail?.subscription?.plan)?.features;
+      if (planFeatures) {
+        setCustomFeatures(planFeatures);
+        updateCompanyMutation.mutate({ 
+          features: planFeatures,
+          useCustomSettings: newCustomState
+        });
+      }
+    } else {
+      updateCompanyMutation.mutate({ 
+        useCustomSettings: newCustomState
+      });
+    }
+  };
+
+  const saveCustomSettings = async () => {
+    updateCompanyMutation.mutate({ 
+      features: customFeatures,
+      useCustomSettings
+    });
+  };
+
+  const handleDeleteCompany = () => {
+    if (confirmationText !== 'ELIMINAR PERMANENTEMENTE') {
+      toast({
+        title: "Error de confirmación",
+        description: 'Debes escribir exactamente "ELIMINAR PERMANENTEMENTE"',
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsDeleting(true);
+    deleteCompanyMutation.mutate(confirmationText);
+  };
 
   // If in edit mode, show edit form
-  if (editingCompanyId && selectedCompany) {
+  if (editingCompanyId && selectedCompanyDetail) {
+    const company = selectedCompanyDetail;
+    
     return (
       <SuperAdminLayout>
         <div className="container mx-auto px-6 py-8">
           <Button
             variant="ghost"
             onClick={() => setEditingCompanyId(null)}
-            className="text-white/70 hover:text-white hover:bg-white/10 mb-6"
+            className="!text-white/70 hover:!text-white hover:!bg-white/10 mb-6"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver a la lista
+            Volver
           </Button>
 
-          <Card className="!bg-white/10 backdrop-blur-xl !border-white/20">
+          <div className="mb-8">
+            <h1 className="text-2xl font-semibold !text-white mb-1">Gestión de Empresa</h1>
+            <p className="!text-white/60">Configuración personalizada para {company.name}</p>
+          </div>
+
+          {/* Company Info Card */}
+          <Card className="!bg-white/10 backdrop-blur-xl !border-white/20 mb-8">
             <CardHeader>
-              <CardTitle className="text-white">Editar Empresa</CardTitle>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                  <Building2 className="w-8 h-8 text-white" />
+                </div>
+                <div className="flex-1">
+                  <CardTitle className="!text-white text-xl">{company.name}</CardTitle>
+                  <div className="flex items-center gap-4 text-sm !text-white/60 mt-1">
+                    <span>CIF: {company.cif}</span>
+                    <span>•</span>
+                    <span>{company.email}</span>
+                    <span>•</span>
+                    <span>{company.userCount} usuarios</span>
+                  </div>
+                </div>
+                <Badge 
+                  className={`${planColors[company.subscription.plan as keyof typeof planColors]} text-white`}
+                >
+                  {planLabels[company.subscription.plan as keyof typeof planLabels]}
+                </Badge>
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
+          </Card>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Plan & Pricing Configuration */}
+            <Card className="!bg-white/10 backdrop-blur-xl !border-white/20">
+              <CardHeader>
+                <CardTitle className="!text-white flex items-center gap-2">
+                  <Crown className="w-5 h-5" />
+                  Configuración de Plan
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Plan Selection */}
                 <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-white">{selectedCompany.name}</h3>
-                  <p className="text-sm text-white/60">{selectedCompany.email}</p>
-                  <p className="text-sm text-white/60">{selectedCompany.cif}</p>
+                  <label className="text-sm font-medium !text-white/80">Plan de Suscripción</label>
+                  <div className="flex items-center gap-2">
+                    {editingPlanField ? (
+                      <>
+                        <Select value={newPlanValue} onValueChange={setNewPlanValue}>
+                          <SelectTrigger className="flex-1 !bg-white/10 !border-white/20 !text-white">
+                            <SelectValue placeholder="Seleccionar plan" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {plans?.map((plan: any) => (
+                              <SelectItem key={plan.name} value={plan.name}>
+                                {plan.displayName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button size="sm" onClick={handlePlanSave} disabled={updateCompanyMutation.isPending}>
+                          <Check className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setEditingPlanField(false)} className="!text-white/60">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Badge className={`${planColors[company.subscription.plan as keyof typeof planColors]} text-white flex-1 justify-center`}>
+                          {planLabels[company.subscription.plan as keyof typeof planLabels]}
+                        </Badge>
+                        <Button size="sm" variant="ghost" onClick={() => setEditingPlanField(true)} className="!text-white/60">
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label className="text-white/80">Plan</Label>
-                    <Select value={editPlan} onValueChange={setEditPlan}>
-                      <SelectTrigger className="!bg-white/10 !border-white/20 !text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="basic">Basic</SelectItem>
-                        <SelectItem value="pro">Pro</SelectItem>
-                        <SelectItem value="master">Master</SelectItem>
-                      </SelectContent>
-                    </Select>
+                {/* Max Users */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium !text-white/80">Límite de Usuarios</label>
+                  <div className="flex items-center gap-2">
+                    {editingMaxUsers ? (
+                      <>
+                        <Input
+                          type="number"
+                          placeholder="∞ (ilimitado)"
+                          value={newMaxUsers}
+                          onChange={(e) => setNewMaxUsers(e.target.value)}
+                          className="flex-1 !bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
+                        />
+                        <Button size="sm" onClick={handleMaxUsersSave} disabled={updateCompanyMutation.isPending}>
+                          <Check className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setEditingMaxUsers(false)} className="!text-white/60">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex-1 px-3 py-2 !bg-white/10 border !border-white/20 rounded-lg !text-white">
+                          {company.subscription.maxUsers || '∞ (ilimitado)'}
+                        </div>
+                        <Button size="sm" variant="ghost" onClick={() => setEditingMaxUsers(true)} className="!text-white/60">
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-white/80">Máximo de Usuarios (opcional)</Label>
-                    <Input
-                      type="number"
-                      placeholder="Límite del plan por defecto"
-                      value={editMaxUsers}
-                      onChange={(e) => setEditMaxUsers(e.target.value)}
-                      className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
-                    />
+                {/* Custom Price */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium !text-white/80">Precio Mensual Personalizado (€/mes)</label>
+                  <p className="text-xs !text-white/60">
+                    Precio fijo mensual para toda la empresa. Si no se establece, se usa el precio estándar del plan ({company.subscription.monthlyPrice || '0'}€/mes).
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {editingPrice ? (
+                      <>
+                        <div className="flex items-center flex-1">
+                          <Euro className="w-4 h-4 !text-white/60 absolute ml-3 z-10" />
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={newPrice}
+                            onChange={(e) => setNewPrice(e.target.value)}
+                            className="pl-8 !bg-white/10 !border-white/20 !text-white"
+                          />
+                        </div>
+                        <Button size="sm" onClick={handlePriceSave} disabled={updateCompanyMutation.isPending}>
+                          <Check className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setEditingPrice(false)} className="!text-white/60">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex-1 px-3 py-2 !bg-white/10 border !border-white/20 rounded-lg !text-white flex items-center gap-2">
+                          <Euro className="w-4 h-4 text-green-400" />
+                          {company.subscription.customMonthlyPrice ? (
+                            <>
+                              {company.subscription.customMonthlyPrice}
+                              <span className="!text-white/60">€/mes (personalizado)</span>
+                            </>
+                          ) : (
+                            <>
+                              {company.subscription.monthlyPrice || '0'}
+                              <span className="!text-white/60">€/mes (estándar {company.subscription.plan})</span>
+                            </>
+                          )}
+                        </div>
+                        <Button size="sm" variant="ghost" onClick={() => setEditingPrice(true)} className="!text-white/60">
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        {company.subscription.customMonthlyPrice && (
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={handleClearCustomPrice} 
+                            className="text-red-400 hover:text-red-300"
+                            title="Usar precio estándar del plan"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </>
+                    )}
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-white/80">Precio Personalizado (€/mes, opcional)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="Precio del plan por defecto"
-                      value={editCustomPrice}
-                      onChange={(e) => setEditCustomPrice(e.target.value)}
-                      className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
-                    />
+                {/* Trial Duration */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium !text-white/80">Duración del Período de Prueba (días)</label>
+                  <div className="flex items-center gap-2">
+                    {editingTrialDuration ? (
+                      <>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="365"
+                          placeholder="14"
+                          value={newTrialDuration}
+                          onChange={(e) => setNewTrialDuration(e.target.value)}
+                          className="flex-1 !bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
+                        />
+                        <Button size="sm" onClick={handleTrialDurationSave} disabled={updateCompanyMutation.isPending}>
+                          <Check className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setEditingTrialDuration(false)} className="!text-white/60">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex-1 px-3 py-2 !bg-white/10 border !border-white/20 rounded-lg !text-white flex items-center gap-2">
+                          🕐 {company.trialDurationDays || 14} días
+                          <span className="!text-white/60">de prueba</span>
+                        </div>
+                        <Button size="sm" variant="ghost" onClick={() => setEditingTrialDuration(true)} className="!text-white/60">
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
+                </div>
 
-                  <div className="space-y-2 flex items-end">
-                    <div className="flex items-center justify-between w-full">
-                      <Label className="text-white/80">Configuración Personalizada</Label>
-                      <Switch
-                        checked={editUseCustomSettings}
-                        onCheckedChange={setEditUseCustomSettings}
-                      />
+                {/* Trial Status */}
+                {company.trialInfo && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium !text-white/80">Estado del Período de Prueba</label>
+                    <div className="p-4 !bg-white/5 border !border-white/10 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          {company.trialInfo.isTrialActive ? (
+                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                          ) : (
+                            <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                          )}
+                          <span className="!text-white font-medium">
+                            {company.trialInfo.isTrialActive ? 'Prueba Activa' : 'Prueba Expirada'}
+                          </span>
+                        </div>
+                        <div className="!text-white/60 text-sm">
+                          {company.trialInfo.daysRemaining} días restantes
+                        </div>
+                      </div>
+                      <div className="text-xs !text-white/50 space-y-1">
+                        <div>Inicio: {new Date(company.trialInfo.trialStartDate).toLocaleDateString('es-ES')}</div>
+                        <div>Fin: {new Date(company.trialInfo.trialEndDate).toLocaleDateString('es-ES')}</div>
+                        <div>Duración total: {company.trialInfo.trialDuration} días</div>
+                      </div>
                     </div>
                   </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Features Configuration */}
+            <Card className="!bg-white/10 backdrop-blur-xl !border-white/20">
+              <CardHeader>
+                <CardTitle className="!text-white flex items-center gap-2">
+                  <Settings className="w-5 h-5" />
+                  Funcionalidades
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Toggle para configuración personalizada */}
+                <div className="border !border-white/20 rounded-lg p-4 bg-blue-500/10">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="text-sm font-medium !text-white">Configuración Personalizada</h3>
+                      <p className="text-xs !text-white/60">
+                        {useCustomSettings 
+                          ? 'Esta empresa usa configuración personalizada independiente del plan' 
+                          : 'Esta empresa sigue la configuración por defecto del plan seleccionado'
+                        }
+                      </p>
+                    </div>
+                    <Button
+                      variant={useCustomSettings ? "destructive" : "default"}
+                      size="sm"
+                      onClick={toggleCustomSettings}
+                      disabled={updateCompanyMutation.isPending}
+                    >
+                      {useCustomSettings ? 'Desactivar Personalización' : 'Activar Personalización'}
+                    </Button>
+                  </div>
+                  <div className="text-xs !text-white/50">
+                    {useCustomSettings 
+                      ? '⚙️ Las funcionalidades se pueden modificar individualmente'
+                      : '📋 Las funcionalidades siguen automáticamente la configuración del plan'
+                    }
+                  </div>
                 </div>
 
-                <div className="flex gap-3 pt-4">
-                  <Button
-                    onClick={handleSaveCompany}
-                    disabled={updateCompanyMutation.isPending}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    {updateCompanyMutation.isPending ? "Guardando..." : "Guardar Cambios"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setEditingCompanyId(null)}
-                    className="!bg-white/10 !border-white/20 !text-white hover:!bg-white/20"
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setLocation(`/super-admin/companies/${selectedCompany.id}`)}
-                    className="!bg-white/10 !border-white/20 !text-white hover:!bg-white/20"
-                  >
-                    Configuración Avanzada
-                  </Button>
+                {/* Funcionalidades */}
+                <div>
+                  {!useCustomSettings && (
+                    <div className="mb-4 p-3 !bg-white/5 border !border-white/10 rounded-lg">
+                      <p className="text-sm !text-white/70">
+                        🔒 Configuración automática según el plan "{company.subscription.plan}". 
+                        Activa la personalización para modificar individualmente.
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-3">
+                    {Object.entries(customFeatures).map(([key, enabled]) => (
+                      <div key={key} className={`flex items-center justify-between p-3 !bg-white/5 rounded-lg ${!useCustomSettings ? 'opacity-60' : ''}`}>
+                        <span className="!text-white/80 text-sm">{featureLabels[key as keyof typeof featureLabels] || key}</span>
+                        {useCustomSettings ? (
+                          <Switch
+                            checked={enabled as boolean}
+                            onCheckedChange={(checked) => {
+                              setCustomFeatures((prev: any) => ({
+                                ...prev,
+                                [key]: checked
+                              }));
+                            }}
+                          />
+                        ) : (
+                          <Badge variant={enabled ? "default" : "secondary"} className="text-xs">
+                            {enabled ? 'Habilitado' : 'Deshabilitado'}
+                          </Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {useCustomSettings && (
+                    <div className="mt-4 flex justify-end">
+                      <Button 
+                        onClick={saveCustomSettings}
+                        disabled={updateCompanyMutation.isPending}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        Guardar Configuración Personalizada
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Users Stats */}
+          <Card className="!bg-white/10 backdrop-blur-xl !border-white/20 mt-8">
+            <CardHeader>
+              <CardTitle className="!text-white flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Estadísticas de Usuarios
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="!bg-white/5 p-4 rounded-lg border !border-white/10">
+                  <div className="text-2xl font-bold !text-white">{company.userCount}</div>
+                  <div className="text-sm !text-white/60">Usuarios Totales</div>
+                </div>
+                <div className="!bg-white/5 p-4 rounded-lg border !border-white/10">
+                  <div className="text-2xl font-bold text-emerald-400">{company.activeUsers || 0}</div>
+                  <div className="text-sm !text-white/60">Usuarios Activos</div>
+                </div>
+                <div className="!bg-white/5 p-4 rounded-lg border !border-white/10">
+                  <div className="text-2xl font-bold text-yellow-400">
+                    €{((company.subscription.customPricePerUser || company.subscription.pricePerUser || 0) * company.userCount).toFixed(2)}
+                  </div>
+                  <div className="text-sm !text-white/60">Ingresos Mensuales</div>
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Danger Zone */}
+          <Card className="bg-red-500/10 backdrop-blur-xl border-red-500/30 mt-8">
+            <CardHeader>
+              <CardTitle className="text-red-400 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5" />
+                Zona de Peligro
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-medium text-red-400 mb-2">Eliminar empresa permanentemente</h3>
+                  <p className="text-sm !text-white/60 mb-4">
+                    Esta acción eliminará completamente la empresa y todos sus datos asociados. Esta acción no se puede deshacer.
+                  </p>
+                  <p className="text-sm text-red-400 mb-4">
+                    Se eliminarán:
+                  </p>
+                  <ul className="text-sm !text-white/60 list-disc list-inside mb-4 space-y-1">
+                    <li>Todos los usuarios y sus datos personales</li>
+                    <li>Fichajes y registros de tiempo</li>
+                    <li>Solicitudes de vacaciones</li>
+                    <li>Documentos y archivos subidos</li>
+                    <li>Mensajes y notificaciones</li>
+                    <li>Configuración de empresa</li>
+                    <li>Datos de suscripción y facturación</li>
+                  </ul>
+                </div>
+                <Button 
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  variant="destructive"
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Eliminar Empresa Permanentemente
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+          <DialogContent className="!bg-gray-900 border-red-500/30 !text-white max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-red-400 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5" />
+                Confirmar Eliminación Permanente
+              </DialogTitle>
+              <DialogDescription className="text-gray-300">
+                Esta acción eliminará permanentemente la empresa <strong>{company?.name}</strong> y todos sus datos.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="bg-red-500/10 p-4 rounded-lg border border-red-500/30">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-red-400">
+                      ⚠️ ADVERTENCIA: Esta acción es irreversible
+                    </p>
+                    <p className="text-sm text-gray-300">
+                      Se eliminarán TODOS los datos de la empresa, usuarios, fichajes, documentos y configuraciones.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="confirmation" className="text-sm font-medium text-gray-300">
+                  Para confirmar, escribe: <span className="text-red-400 font-mono">ELIMINAR PERMANENTEMENTE</span>
+                </Label>
+                <Input
+                  id="confirmation"
+                  type="text"
+                  value={confirmationText}
+                  onChange={(e) => setConfirmationText(e.target.value)}
+                  placeholder="ELIMINAR PERMANENTEMENTE"
+                  className="mt-2 bg-gray-800 border-gray-600 text-white"
+                  disabled={isDeleting}
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsDeleteModalOpen(false);
+                    setConfirmationText('');
+                    setIsDeleting(false);
+                  }}
+                  disabled={isDeleting}
+                  className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  variant="destructive"
+                  onClick={handleDeleteCompany}
+                  disabled={confirmationText !== 'ELIMINAR PERMANENTEMENTE' || isDeleting}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {isDeleting ? 'Eliminando...' : 'Eliminar Permanentemente'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </SuperAdminLayout>
     );
   }
@@ -390,17 +951,17 @@ export default function SuperAdminCompanies() {
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-4 h-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 !text-white/50 w-4 h-4" />
                   <Input
                     placeholder="Buscar empresas por nombre, CIF o email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50 pl-10"
+                    className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/50 pl-10"
                   />
                 </div>
               </div>
               <Select value={filterPlan} onValueChange={setFilterPlan}>
-                <SelectTrigger className="w-48 bg-white/10 border-white/20 text-white">
+                <SelectTrigger className="w-48 !bg-white/10 !border-white/20 !text-white">
                   <SelectValue placeholder="Filtrar por plan" />
                 </SelectTrigger>
                 <SelectContent>
@@ -411,7 +972,7 @@ export default function SuperAdminCompanies() {
                 </SelectContent>
               </Select>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-48 bg-white/10 border-white/20 text-white">
+                <SelectTrigger className="w-48 !bg-white/10 !border-white/20 !text-white">
                   <SelectValue placeholder="Filtrar por estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -428,7 +989,7 @@ export default function SuperAdminCompanies() {
         {/* Companies List */}
         <Card className="!bg-white/10 backdrop-blur-xl !border-white/20">
           <CardHeader>
-            <CardTitle className="text-white flex items-center justify-between">
+            <CardTitle className="!text-white flex items-center justify-between">
               Empresas ({filteredCompanies.length})
               <Badge variant="secondary" className="bg-white/20 text-white">
                 {filteredCompanies.length} de {companies?.length || 0}
@@ -440,15 +1001,15 @@ export default function SuperAdminCompanies() {
               {filteredCompanies.map((company: Company) => (
                 <div
                   key={company.id}
-                  className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors"
+                  className="flex items-center justify-between p-4 !bg-white/5 rounded-xl border !border-white/10 hover:!bg-white/10 transition-colors"
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
                       <Building2 className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-white">{company.name}</h3>
-                      <div className="flex items-center gap-4 text-sm text-white/60">
+                      <h3 className="font-semibold !text-white">{company.name}</h3>
+                      <div className="flex items-center gap-4 text-sm !text-white/60">
                         <span>{company.cif}</span>
                         <span>•</span>
                         <span>{company.email}</span>
@@ -479,7 +1040,7 @@ export default function SuperAdminCompanies() {
                     {editingCompany === company.id ? (
                       <div className="flex items-center gap-2">
                         <Select value={newPlan} onValueChange={setNewPlan}>
-                          <SelectTrigger className="w-32 bg-white/10 border-white/20 text-white">
+                          <SelectTrigger className="w-32 !bg-white/10 !border-white/20 !text-white">
                             <SelectValue placeholder="Seleccionar plan" />
                           </SelectTrigger>
                           <SelectContent>
@@ -500,7 +1061,7 @@ export default function SuperAdminCompanies() {
                           size="sm"
                           variant="ghost"
                           onClick={cancelPlanChange}
-                          className="text-white/60 hover:text-white hover:bg-white/10"
+                          className="!text-white/60 hover:!text-white hover:!bg-white/10"
                         >
                           <X className="w-4 h-4" />
                         </Button>
@@ -517,7 +1078,7 @@ export default function SuperAdminCompanies() {
                           size="sm"
                           variant="ghost"
                           onClick={() => openEditMode(company)}
-                          className="text-white/60 hover:text-white hover:bg-white/10"
+                          className="!text-white/60 hover:!text-white hover:!bg-white/10"
                           title="Editar empresa"
                         >
                           <Edit className="w-4 h-4" />
@@ -526,7 +1087,7 @@ export default function SuperAdminCompanies() {
                           size="sm"
                           variant="ghost"
                           onClick={() => setLocation(`/super-admin/companies/${company.id}`)}
-                          className="text-white/60 hover:text-white hover:bg-white/10"
+                          className="!text-white/60 hover:!text-white hover:!bg-white/10"
                           title="Ver detalles"
                         >
                           <Eye className="w-4 h-4" />
@@ -550,8 +1111,8 @@ export default function SuperAdminCompanies() {
               
               {filteredCompanies.length === 0 && (
                 <div className="text-center py-12">
-                  <Filter className="w-12 h-12 text-white/30 mx-auto mb-4" />
-                  <p className="text-white/60">No se encontraron empresas con los filtros aplicados</p>
+                  <Filter className="w-12 h-12 !text-white/30 mx-auto mb-4" />
+                  <p className="!text-white/60">No se encontraron empresas con los filtros aplicados</p>
                 </div>
               )}
             </div>
