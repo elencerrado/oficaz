@@ -4,6 +4,9 @@ import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CreateCampaignDialog } from '@/components/email-marketing/create-campaign-dialog';
 import { AddProspectDialog } from '@/components/email-marketing/add-prospect-dialog';
 import { EditProspectDialog } from '@/components/email-marketing/edit-prospect-dialog';
@@ -33,7 +36,9 @@ export default function SuperAdminMarketing() {
   const [conversionsCampaign, setConversionsCampaign] = useState<any>(null);
   const [editingProspect, setEditingProspect] = useState<any>(null);
   const [statsProspect, setStatsProspect] = useState<any>(null);
-  const { toast } = useToast();
+  const [isTableView, setIsTableView] = useState(false);
+  const [editingCell, setEditingCell] = useState<{ id: number; field: string } | null>(null);
+  const { toast} = useToast();
   const queryClient = useQueryClient();
 
   const { data: campaigns } = useQuery({
@@ -174,6 +179,35 @@ export default function SuperAdminMarketing() {
         description: 'No se pudo eliminar el prospect',
         variant: 'destructive',
       });
+    },
+  });
+
+  // Update prospect inline mutation
+  const updateProspectInlineMutation = useMutation({
+    mutationFn: async ({ prospectId, field, value }: { prospectId: number; field: string; value: any }) => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch(`/api/super-admin/email-prospects/${prospectId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ [field]: value }),
+      });
+      if (!response.ok) throw new Error('Failed to update prospect');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-prospects'] });
+      setEditingCell(null);
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'No se pudo actualizar el prospect',
+        variant: 'destructive',
+      });
+      setEditingCell(null);
     },
   });
 
@@ -434,7 +468,17 @@ export default function SuperAdminMarketing() {
                       <Send className="w-5 h-5" />
                       Prospects Externos
                     </CardTitle>
-                    <AddProspectDialog />
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-white/70">Vista Tabla</span>
+                        <Switch
+                          checked={isTableView}
+                          onCheckedChange={setIsTableView}
+                          className="data-[state=checked]:bg-purple-600"
+                        />
+                      </div>
+                      <AddProspectDialog />
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -442,6 +486,217 @@ export default function SuperAdminMarketing() {
                     <div className="text-center py-8">
                       <Users className="w-10 h-10 text-white/40 mx-auto mb-3" />
                       <p className="text-white/60">No hay prospects externos añadidos</p>
+                    </div>
+                  ) : isTableView ? (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="border-white/20 hover:bg-white/5">
+                            <TableHead className="text-white/90">Email</TableHead>
+                            <TableHead className="text-white/90">Nombre</TableHead>
+                            <TableHead className="text-white/90">Empresa</TableHead>
+                            <TableHead className="text-white/90">Teléfono</TableHead>
+                            <TableHead className="text-white/90">Localización</TableHead>
+                            <TableHead className="text-white/90">Tags</TableHead>
+                            <TableHead className="text-white/90">Notas</TableHead>
+                            <TableHead className="text-white/90 w-24">Acciones</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {prospects.map((prospect: any) => (
+                            <TableRow key={prospect.id} className="border-white/20 hover:bg-white/5">
+                              <TableCell className="text-white font-medium">{prospect.email}</TableCell>
+                              <TableCell
+                                className="text-white cursor-pointer hover:bg-white/10"
+                                onDoubleClick={() => setEditingCell({ id: prospect.id, field: 'name' })}
+                              >
+                                {editingCell?.id === prospect.id && editingCell?.field === 'name' ? (
+                                  <Input
+                                    defaultValue={prospect.name || ''}
+                                    autoFocus
+                                    className="bg-white/10 border-white/20 text-white h-8"
+                                    onBlur={(e) => {
+                                      if (e.target.value !== prospect.name) {
+                                        updateProspectInlineMutation.mutate({
+                                          prospectId: prospect.id,
+                                          field: 'name',
+                                          value: e.target.value || null,
+                                        });
+                                      } else {
+                                        setEditingCell(null);
+                                      }
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.currentTarget.blur();
+                                      } else if (e.key === 'Escape') {
+                                        setEditingCell(null);
+                                      }
+                                    }}
+                                  />
+                                ) : (
+                                  prospect.name || '-'
+                                )}
+                              </TableCell>
+                              <TableCell
+                                className="text-white cursor-pointer hover:bg-white/10"
+                                onDoubleClick={() => setEditingCell({ id: prospect.id, field: 'company' })}
+                              >
+                                {editingCell?.id === prospect.id && editingCell?.field === 'company' ? (
+                                  <Input
+                                    defaultValue={prospect.company || ''}
+                                    autoFocus
+                                    className="bg-white/10 border-white/20 text-white h-8"
+                                    onBlur={(e) => {
+                                      if (e.target.value !== prospect.company) {
+                                        updateProspectInlineMutation.mutate({
+                                          prospectId: prospect.id,
+                                          field: 'company',
+                                          value: e.target.value || null,
+                                        });
+                                      } else {
+                                        setEditingCell(null);
+                                      }
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.currentTarget.blur();
+                                      } else if (e.key === 'Escape') {
+                                        setEditingCell(null);
+                                      }
+                                    }}
+                                  />
+                                ) : (
+                                  prospect.company || '-'
+                                )}
+                              </TableCell>
+                              <TableCell
+                                className="text-white cursor-pointer hover:bg-white/10"
+                                onDoubleClick={() => setEditingCell({ id: prospect.id, field: 'phone' })}
+                              >
+                                {editingCell?.id === prospect.id && editingCell?.field === 'phone' ? (
+                                  <Input
+                                    defaultValue={prospect.phone || ''}
+                                    autoFocus
+                                    className="bg-white/10 border-white/20 text-white h-8"
+                                    onBlur={(e) => {
+                                      if (e.target.value !== prospect.phone) {
+                                        updateProspectInlineMutation.mutate({
+                                          prospectId: prospect.id,
+                                          field: 'phone',
+                                          value: e.target.value || null,
+                                        });
+                                      } else {
+                                        setEditingCell(null);
+                                      }
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.currentTarget.blur();
+                                      } else if (e.key === 'Escape') {
+                                        setEditingCell(null);
+                                      }
+                                    }}
+                                  />
+                                ) : (
+                                  prospect.phone || '-'
+                                )}
+                              </TableCell>
+                              <TableCell
+                                className="text-white cursor-pointer hover:bg-white/10"
+                                onDoubleClick={() => setEditingCell({ id: prospect.id, field: 'location' })}
+                              >
+                                {editingCell?.id === prospect.id && editingCell?.field === 'location' ? (
+                                  <Input
+                                    defaultValue={prospect.location || ''}
+                                    autoFocus
+                                    className="bg-white/10 border-white/20 text-white h-8"
+                                    onBlur={(e) => {
+                                      if (e.target.value !== prospect.location) {
+                                        updateProspectInlineMutation.mutate({
+                                          prospectId: prospect.id,
+                                          field: 'location',
+                                          value: e.target.value || null,
+                                        });
+                                      } else {
+                                        setEditingCell(null);
+                                      }
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.currentTarget.blur();
+                                      } else if (e.key === 'Escape') {
+                                        setEditingCell(null);
+                                      }
+                                    }}
+                                  />
+                                ) : (
+                                  prospect.location || '-'
+                                )}
+                              </TableCell>
+                              <TableCell className="text-white">
+                                {prospect.tags?.map((tag: string) => (
+                                  <span key={tag} className="px-2 py-0.5 bg-purple-500/20 text-purple-200 text-xs rounded mr-1">
+                                    {tag}
+                                  </span>
+                                )) || '-'}
+                              </TableCell>
+                              <TableCell
+                                className="text-white text-xs cursor-pointer hover:bg-white/10 max-w-xs truncate"
+                                onDoubleClick={() => setEditingCell({ id: prospect.id, field: 'notes' })}
+                              >
+                                {editingCell?.id === prospect.id && editingCell?.field === 'notes' ? (
+                                  <Input
+                                    defaultValue={prospect.notes || ''}
+                                    autoFocus
+                                    className="bg-white/10 border-white/20 text-white h-8"
+                                    onBlur={(e) => {
+                                      if (e.target.value !== prospect.notes) {
+                                        updateProspectInlineMutation.mutate({
+                                          prospectId: prospect.id,
+                                          field: 'notes',
+                                          value: e.target.value || null,
+                                        });
+                                      } else {
+                                        setEditingCell(null);
+                                      }
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.currentTarget.blur();
+                                      } else if (e.key === 'Escape') {
+                                        setEditingCell(null);
+                                      }
+                                    }}
+                                  />
+                                ) : (
+                                  prospect.notes || '-'
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setStatsProspect(prospect)}
+                                    className="h-7 w-7 p-0 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20"
+                                  >
+                                    <BarChart3 className="w-3.5 h-3.5" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleDeleteProspect(prospect.id)}
+                                    className="h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </div>
                   ) : (
                     <div className="space-y-2">
