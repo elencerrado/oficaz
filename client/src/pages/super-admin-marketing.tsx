@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { CreateCampaignDialog } from '@/components/email-marketing/create-campaign-dialog';
 import { AddProspectDialog } from '@/components/email-marketing/add-prospect-dialog';
+import { EditProspectDialog } from '@/components/email-marketing/edit-prospect-dialog';
 import { EditCampaignDialog } from '@/components/email-marketing/edit-campaign-dialog';
 import { CampaignHistoryDialog } from '@/components/email-marketing/campaign-history-dialog';
 import { CampaignConversionsDialog } from '@/components/email-marketing/campaign-conversions-dialog';
@@ -21,6 +22,7 @@ import {
   MousePointerClick,
   Trash2,
   Edit,
+  Edit2,
   History,
   Copy,
   TrendingUp
@@ -31,6 +33,7 @@ export default function SuperAdminMarketing() {
   const [editingCampaign, setEditingCampaign] = useState<any>(null);
   const [historyCampaign, setHistoryCampaign] = useState<any>(null);
   const [conversionsCampaign, setConversionsCampaign] = useState<any>(null);
+  const [editingProspect, setEditingProspect] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -145,6 +148,46 @@ export default function SuperAdminMarketing() {
       });
     },
   });
+
+  // Delete prospect mutation
+  const deleteProspectMutation = useMutation({
+    mutationFn: async (prospectId: number) => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch(`/api/super-admin/email-prospects/${prospectId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to delete prospect');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Prospect eliminado',
+        description: 'El prospect se eliminó correctamente',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-prospects'] });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'No se pudo eliminar el prospect',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Handler functions
+  const handleEditProspect = (prospect: any) => {
+    setEditingProspect(prospect);
+  };
+
+  const handleDeleteProspect = (prospectId: number) => {
+    if (confirm('¿Estás seguro de que quieres eliminar este prospect?')) {
+      deleteProspectMutation.mutate(prospectId);
+    }
+  };
 
   // Calculate statistics
   const totalCampaigns = campaigns?.length || 0;
@@ -422,12 +465,12 @@ export default function SuperAdminMarketing() {
                   ) : (
                     <div className="space-y-2">
                       {prospects.slice(0, 5).map((prospect: any) => (
-                        <div key={prospect.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                          <div>
+                        <div key={prospect.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors group">
+                          <div className="flex-1">
                             <p className="font-medium text-white">{prospect.name || prospect.email}</p>
                             <p className="text-sm text-white/60">{prospect.email}</p>
                           </div>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
                             {prospect.tags && prospect.tags.length > 0 && (
                               <div className="flex gap-1">
                                 {prospect.tags.slice(0, 2).map((tag: string) => (
@@ -444,6 +487,24 @@ export default function SuperAdminMarketing() {
                             }`}>
                               {prospect.status}
                             </span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEditProspect(prospect)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                              data-testid={`button-edit-prospect-${prospect.id}`}
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteProspect(prospect.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                              data-testid={`button-delete-prospect-${prospect.id}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </div>
                         </div>
                       ))}
@@ -520,6 +581,15 @@ export default function SuperAdminMarketing() {
           campaign={editingCampaign}
           open={!!editingCampaign}
           onOpenChange={(open) => !open && setEditingCampaign(null)}
+        />
+      )}
+
+      {/* Edit Prospect Dialog */}
+      {editingProspect && (
+        <EditProspectDialog
+          prospect={editingProspect}
+          open={!!editingProspect}
+          onOpenChange={(open) => !open && setEditingProspect(null)}
         />
       )}
 

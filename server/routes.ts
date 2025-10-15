@@ -8405,6 +8405,29 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Update email prospect
+  app.patch('/api/super-admin/email-prospects/:id', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const prospectId = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      // Validate email if present
+      if (updateData.email) {
+        const emailSchema = z.string().email();
+        emailSchema.parse(updateData.email);
+      }
+      
+      await storage.updateEmailProspect(prospectId, updateData);
+      res.json({ success: true, message: 'Prospect actualizado correctamente' });
+    } catch (error: any) {
+      console.error('Error updating email prospect:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ success: false, message: 'Email inválido' });
+      }
+      res.status(500).json({ success: false, message: 'Error al actualizar prospect' });
+    }
+  });
+
   // Delete email prospect
   app.delete('/api/super-admin/email-prospects/:id', authenticateSuperAdmin, async (req: any, res) => {
     try {

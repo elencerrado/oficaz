@@ -234,6 +234,7 @@ export interface IStorage {
   getAllEmailProspects(): Promise<any[]>;
   getRegisteredUsersStats(): Promise<{ total: number; active: number; trial: number; blocked: number; cancelled: number }>;
   createEmailProspect(prospect: any): Promise<any>;
+  updateEmailProspect(id: number, updates: any): Promise<any>;
   createEmailCampaign(campaign: any): Promise<any>;
   updateEmailCampaign(id: number, updates: any): Promise<any>;
   deleteEmailCampaign(id: number): Promise<boolean>;
@@ -2849,6 +2850,14 @@ export class DrizzleStorage implements IStorage {
       .values(prospect)
       .returning();
     return created;
+  }
+
+  async updateEmailProspect(id: number, updates: any): Promise<any> {
+    const [updated] = await db.update(schema.emailProspects)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.emailProspects.id, id))
+      .returning();
+    return updated;
   }
 
   async createEmailCampaign(campaign: any): Promise<any> {
