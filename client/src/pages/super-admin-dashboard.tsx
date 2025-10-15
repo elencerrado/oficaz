@@ -160,14 +160,9 @@ export default function SuperAdminDashboard() {
           >
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <BarChart3 className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-white text-base">Panel de Métricas</CardTitle>
-                    <p className="text-white/60 text-xs">Click para análisis completo</p>
-                  </div>
+                <div>
+                  <CardTitle className="text-white/90 text-base font-semibold">Datos Suscripciones</CardTitle>
+                  <p className="text-xs text-white/50 mt-1">Click para análisis completo</p>
                 </div>
                 <ArrowRight className="w-4 h-4 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" />
               </div>
