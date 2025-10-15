@@ -19,6 +19,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 
 interface Company {
@@ -123,6 +126,15 @@ export default function SuperAdminCompanies() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [editingCompany, setEditingCompany] = useState<number | null>(null);
   const [newPlan, setNewPlan] = useState<string>("");
+  
+  // Dialog states
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [editPlan, setEditPlan] = useState<string>("");
+  const [editMaxUsers, setEditMaxUsers] = useState<string>("");
+  const [editCustomPrice, setEditCustomPrice] = useState<string>("");
+  const [editUseCustomSettings, setEditUseCustomSettings] = useState(false);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -170,6 +182,39 @@ export default function SuperAdminCompanies() {
     },
   });
 
+  const updateCompanyMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch(`/api/super-admin/companies/${selectedCompany?.id}/subscription`, {
+        method: 'PATCH',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || 'Failed to update company');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/companies'] });
+      toast({
+        title: "Éxito",
+        description: "Empresa actualizada correctamente",
+      });
+      setIsEditDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const filteredCompanies = companies?.filter((company: Company) => {
     const matchesSearch = 
       company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -195,6 +240,38 @@ export default function SuperAdminCompanies() {
   const cancelPlanChange = () => {
     setEditingCompany(null);
     setNewPlan("");
+  };
+
+  const openEditDialog = (company: Company) => {
+    setSelectedCompany(company);
+    setEditPlan(company.subscription.plan);
+    setEditMaxUsers("");
+    setEditCustomPrice("");
+    setEditUseCustomSettings(false);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveCompany = () => {
+    if (!selectedCompany) return;
+    
+    const data: any = {
+      plan: editPlan,
+    };
+
+    if (editMaxUsers) {
+      data.maxUsers = parseInt(editMaxUsers);
+    }
+
+    if (editCustomPrice) {
+      data.customMonthlyPrice = parseFloat(editCustomPrice);
+      data.useCustomSettings = true;
+    }
+
+    if (editUseCustomSettings) {
+      data.useCustomSettings = true;
+    }
+
+    updateCompanyMutation.mutate(data);
   };
 
   return (
@@ -332,9 +409,9 @@ export default function SuperAdminCompanies() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => setLocation(`/super-admin/companies/${company.id}`)}
+                          onClick={() => openEditDialog(company)}
                           className="text-white/60 hover:text-white hover:bg-white/10"
-                          title="Configuración avanzada"
+                          title="Editar empresa"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
@@ -374,6 +451,87 @@ export default function SuperAdminCompanies() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Edit Company Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="!bg-gray-900 !border-white/20 !text-white sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-white">Editar Empresa</DialogTitle>
+          </DialogHeader>
+          {selectedCompany && (
+            <div className="space-y-6 py-4">
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-white">{selectedCompany.name}</h3>
+                <p className="text-sm text-white/60">{selectedCompany.email}</p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-white/80">Plan</Label>
+                  <Select value={editPlan} onValueChange={setEditPlan}>
+                    <SelectTrigger className="!bg-white/10 !border-white/20 !text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="basic">Basic</SelectItem>
+                      <SelectItem value="pro">Pro</SelectItem>
+                      <SelectItem value="master">Master</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-white/80">Máximo de Usuarios (opcional)</Label>
+                  <Input
+                    type="number"
+                    placeholder="Dejar vacío para usar el límite del plan"
+                    value={editMaxUsers}
+                    onChange={(e) => setEditMaxUsers(e.target.value)}
+                    className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-white/80">Precio Personalizado (€/mes, opcional)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="Dejar vacío para usar precio del plan"
+                    value={editCustomPrice}
+                    onChange={(e) => setEditCustomPrice(e.target.value)}
+                    className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label className="text-white/80">Configuración Personalizada</Label>
+                  <Switch
+                    checked={editUseCustomSettings}
+                    onCheckedChange={setEditUseCustomSettings}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={handleSaveCompany}
+                  disabled={updateCompanyMutation.isPending}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  {updateCompanyMutation.isPending ? "Guardando..." : "Guardar Cambios"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                  className="flex-1 !bg-white/10 !border-white/20 !text-white hover:!bg-white/20"
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </SuperAdminLayout>
   );
 }
