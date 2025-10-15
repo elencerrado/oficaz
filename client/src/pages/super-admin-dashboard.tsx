@@ -8,7 +8,11 @@ import {
   AlertTriangle,
   BarChart3,
   Euro,
-  ArrowRight
+  ArrowRight,
+  Send,
+  Eye,
+  MousePointerClick,
+  UserPlus
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -96,6 +100,38 @@ export default function SuperAdminDashboard() {
       if (!response.ok) throw new Error('Failed to fetch pending deletions');
       return response.json();
     },
+  });
+
+  const { data: emailStats } = useQuery({
+    queryKey: ['/api/super-admin/email-campaign-stats'],
+    queryFn: async () => {
+      const response = await fetch('/api/super-admin/email-campaigns', {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) throw new Error('Failed to fetch email stats');
+      const campaigns = await response.json();
+      
+      const totalSent = campaigns?.reduce((sum: number, c: any) => sum + (c.sentRecipientsCount || 0), 0) || 0;
+      const totalOpened = campaigns?.reduce((sum: number, c: any) => sum + (c.openedCount || 0), 0) || 0;
+      const totalClicked = campaigns?.reduce((sum: number, c: any) => sum + (c.clickedCount || 0), 0) || 0;
+      const totalRegistered = campaigns?.reduce((sum: number, c: any) => sum + (c.registeredCount || 0), 0) || 0;
+      
+      const openRate = totalSent > 0 ? Math.round((totalOpened / totalSent) * 100) : 0;
+      const clickRate = totalSent > 0 ? Math.round((totalClicked / totalSent) * 100) : 0;
+      const conversionRate = totalSent > 0 ? Math.round((totalRegistered / totalSent) * 100) : 0;
+      
+      return {
+        totalSent,
+        totalOpened,
+        totalClicked,
+        totalRegistered,
+        openRate,
+        clickRate,
+        conversionRate
+      };
+    },
+    staleTime: 30000,
+    refetchOnMount: false,
   });
 
   if (statsLoading || companiesLoading) {
@@ -209,10 +245,110 @@ export default function SuperAdminDashboard() {
             </CardContent>
           </Card>
 
-          {/* Placeholder for future panel */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg border-dashed flex items-center justify-center min-h-[300px]">
-            <p className="text-white/40 text-sm">Espacio disponible para otro panel</p>
-          </div>
+          {/* Email Campaign Funnel Metrics Card */}
+          <Card 
+            className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20 cursor-pointer hover:from-white/15 hover:to-white/10 transition-all duration-300 group"
+            onClick={() => setLocation('/super-admin/marketing')}
+          >
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-white/90 text-base font-semibold">Embudo de Conversión Email</CardTitle>
+                  <p className="text-xs text-white/50 mt-1">Click para gestión completa</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {/* Funnel Stats - 2x2 */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-blue-500/10 rounded-lg p-3 border border-blue-400/20">
+                  <div className="flex items-center gap-2">
+                    <Send className="w-5 h-5 text-blue-400" />
+                    <div>
+                      <div className="text-xl font-bold text-white">{emailStats?.totalSent || 0}</div>
+                      <p className="text-[10px] text-white/60">Enviados</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-emerald-500/10 rounded-lg p-3 border border-emerald-400/20">
+                  <div className="flex items-center gap-2">
+                    <Eye className="w-5 h-5 text-emerald-400" />
+                    <div>
+                      <div className="text-xl font-bold text-white">{emailStats?.openRate || 0}%</div>
+                      <p className="text-[10px] text-white/60">Apertura</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-purple-500/10 rounded-lg p-3 border border-purple-400/20">
+                  <div className="flex items-center gap-2">
+                    <MousePointerClick className="w-5 h-5 text-purple-400" />
+                    <div>
+                      <div className="text-xl font-bold text-white">{emailStats?.clickRate || 0}%</div>
+                      <p className="text-[10px] text-white/60">CTR</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-500/10 rounded-lg p-3 border border-yellow-400/20">
+                  <div className="flex items-center gap-2">
+                    <UserPlus className="w-5 h-5 text-yellow-400" />
+                    <div>
+                      <div className="text-xl font-bold text-white">{emailStats?.conversionRate || 0}%</div>
+                      <p className="text-[10px] text-white/60">Conversión</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Funnel Progress Bar */}
+              <div className="border-t border-white/10 pt-3">
+                <p className="text-xs text-white/60 mb-2">Progreso del Embudo</p>
+                <div className="space-y-2">
+                  <div>
+                    <div className="flex justify-between text-[10px] text-white/70 mb-1">
+                      <span>Abiertos</span>
+                      <span>{emailStats?.totalOpened || 0}</span>
+                    </div>
+                    <div className="w-full bg-white/5 rounded-full h-1.5">
+                      <div 
+                        className="bg-emerald-400 h-1.5 rounded-full transition-all" 
+                        style={{ width: `${emailStats?.openRate || 0}%` }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between text-[10px] text-white/70 mb-1">
+                      <span>Clicks</span>
+                      <span>{emailStats?.totalClicked || 0}</span>
+                    </div>
+                    <div className="w-full bg-white/5 rounded-full h-1.5">
+                      <div 
+                        className="bg-purple-400 h-1.5 rounded-full transition-all" 
+                        style={{ width: `${emailStats?.clickRate || 0}%` }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between text-[10px] text-white/70 mb-1">
+                      <span>Registrados</span>
+                      <span>{emailStats?.totalRegistered || 0}</span>
+                    </div>
+                    <div className="w-full bg-white/5 rounded-full h-1.5">
+                      <div 
+                        className="bg-yellow-400 h-1.5 rounded-full transition-all" 
+                        style={{ width: `${emailStats?.conversionRate || 0}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
 
