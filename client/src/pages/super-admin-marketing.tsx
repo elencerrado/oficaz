@@ -30,7 +30,10 @@ import {
   TrendingUp,
   Table2,
   LayoutList,
-  Search
+  Search,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 
 export default function SuperAdminMarketing() {
@@ -43,6 +46,8 @@ export default function SuperAdminMarketing() {
   const [editingCell, setEditingCell] = useState<{ id: number | string; field: string } | null>(null);
   const [tagInput, setTagInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const { toast} = useToast();
   const queryClient = useQueryClient();
 
@@ -104,24 +109,53 @@ export default function SuperAdminMarketing() {
     return Array.from(tagsSet).sort();
   }, [prospects]);
 
-  // Filter prospects based on search term
+  // Filter and sort prospects
   const filteredProspects = React.useMemo(() => {
     if (!prospects) return [];
-    if (!searchTerm.trim()) return prospects;
     
-    const term = searchTerm.toLowerCase().trim();
-    return prospects.filter((prospect: any) => {
-      return (
-        prospect.email?.toLowerCase().includes(term) ||
-        prospect.name?.toLowerCase().includes(term) ||
-        prospect.company?.toLowerCase().includes(term) ||
-        prospect.phone?.toLowerCase().includes(term) ||
-        prospect.location?.toLowerCase().includes(term) ||
-        prospect.notes?.toLowerCase().includes(term) ||
-        prospect.tags?.some((tag: string) => tag.toLowerCase().includes(term))
-      );
-    });
-  }, [prospects, searchTerm]);
+    let result = [...prospects];
+    
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase().trim();
+      result = result.filter((prospect: any) => {
+        return (
+          prospect.email?.toLowerCase().includes(term) ||
+          prospect.name?.toLowerCase().includes(term) ||
+          prospect.company?.toLowerCase().includes(term) ||
+          prospect.phone?.toLowerCase().includes(term) ||
+          prospect.location?.toLowerCase().includes(term) ||
+          prospect.notes?.toLowerCase().includes(term) ||
+          prospect.tags?.some((tag: string) => tag.toLowerCase().includes(term))
+        );
+      });
+    }
+    
+    // Apply sorting
+    if (sortField) {
+      result.sort((a: any, b: any) => {
+        const aVal = a[sortField] || '';
+        const bVal = b[sortField] || '';
+        
+        if (sortDirection === 'asc') {
+          return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+        } else {
+          return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+        }
+      });
+    }
+    
+    return result;
+  }, [prospects, searchTerm, sortField, sortDirection]);
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
 
   // Send campaign mutation
   const sendCampaignMutation = useMutation({
@@ -551,11 +585,71 @@ export default function SuperAdminMarketing() {
                       <Table>
                         <TableHeader>
                           <TableRow className="border-white/20 hover:bg-white/5">
-                            <TableHead className="text-white/90">Email</TableHead>
-                            <TableHead className="text-white/90">Nombre</TableHead>
-                            <TableHead className="text-white/90">Empresa</TableHead>
-                            <TableHead className="text-white/90">Teléfono</TableHead>
-                            <TableHead className="text-white/90">Localización</TableHead>
+                            <TableHead 
+                              className="text-white/90 cursor-pointer hover:text-white select-none"
+                              onClick={() => handleSort('email')}
+                            >
+                              <div className="flex items-center gap-1">
+                                Email
+                                {sortField === 'email' ? (
+                                  sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                                ) : (
+                                  <ArrowUpDown className="w-3 h-3 opacity-40" />
+                                )}
+                              </div>
+                            </TableHead>
+                            <TableHead 
+                              className="text-white/90 cursor-pointer hover:text-white select-none"
+                              onClick={() => handleSort('name')}
+                            >
+                              <div className="flex items-center gap-1">
+                                Nombre
+                                {sortField === 'name' ? (
+                                  sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                                ) : (
+                                  <ArrowUpDown className="w-3 h-3 opacity-40" />
+                                )}
+                              </div>
+                            </TableHead>
+                            <TableHead 
+                              className="text-white/90 cursor-pointer hover:text-white select-none"
+                              onClick={() => handleSort('company')}
+                            >
+                              <div className="flex items-center gap-1">
+                                Empresa
+                                {sortField === 'company' ? (
+                                  sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                                ) : (
+                                  <ArrowUpDown className="w-3 h-3 opacity-40" />
+                                )}
+                              </div>
+                            </TableHead>
+                            <TableHead 
+                              className="text-white/90 cursor-pointer hover:text-white select-none"
+                              onClick={() => handleSort('phone')}
+                            >
+                              <div className="flex items-center gap-1">
+                                Teléfono
+                                {sortField === 'phone' ? (
+                                  sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                                ) : (
+                                  <ArrowUpDown className="w-3 h-3 opacity-40" />
+                                )}
+                              </div>
+                            </TableHead>
+                            <TableHead 
+                              className="text-white/90 cursor-pointer hover:text-white select-none"
+                              onClick={() => handleSort('location')}
+                            >
+                              <div className="flex items-center gap-1">
+                                Localización
+                                {sortField === 'location' ? (
+                                  sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                                ) : (
+                                  <ArrowUpDown className="w-3 h-3 opacity-40" />
+                                )}
+                              </div>
+                            </TableHead>
                             <TableHead className="text-white/90">Tags</TableHead>
                             <TableHead className="text-white/90">Notas</TableHead>
                             <TableHead className="text-white/90 w-24">Acciones</TableHead>
