@@ -250,7 +250,7 @@ const SuperAdminPromoCodes = () => {
               Crear Código Promocional
             </Button>
           </DialogTrigger>
-          <DialogContent className="!bg-white/10 backdrop-blur-xl !border-white/20 max-w-md">
+          <DialogContent className="bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 border-white/20 text-white max-w-md">
             <DialogHeader>
               <DialogTitle className="!text-white">Crear Código Promocional</DialogTitle>
               <DialogDescription className="!text-white/70">
@@ -260,48 +260,48 @@ const SuperAdminPromoCodes = () => {
             
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium !text-white/80">Código</label>
+                <label className="text-sm font-medium text-white">Código</label>
                 <Input
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                   placeholder="OFICAZ60"
-                  className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                   data-testid="input-code"
                 />
               </div>
               
               <div>
-                <label className="text-sm font-medium !text-white/80">Descripción</label>
+                <label className="text-sm font-medium text-white">Descripción</label>
                 <Textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Código promocional para 2 meses de prueba gratuita"
-                  className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                   data-testid="input-description"
                 />
               </div>
               
               <div>
-                <label className="text-sm font-medium !text-white/80">Días de prueba</label>
+                <label className="text-sm font-medium text-white">Días de prueba</label>
                 <Input
                   type="number"
                   value={formData.trialDurationDays}
                   onChange={(e) => setFormData({ ...formData, trialDurationDays: parseInt(e.target.value) || 60 })}
                   min="1"
-                  className="!bg-white/10 !border-white/20 !text-white"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                   data-testid="input-trial-days"
                 />
               </div>
               
               <div>
-                <label className="text-sm font-medium !text-white/80">Usos máximos (opcional)</label>
+                <label className="text-sm font-medium text-white">Usos máximos (opcional)</label>
                 <Input
                   type="number"
                   value={formData.maxUses || ''}
                   onChange={(e) => setFormData({ ...formData, maxUses: e.target.value ? parseInt(e.target.value) : null })}
                   placeholder="Ilimitado"
                   min="1"
-                  className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                   data-testid="input-max-uses"
                 />
               </div>
@@ -474,7 +474,7 @@ const SuperAdminPromoCodes = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="!bg-white/10 backdrop-blur-xl !border-white/20 max-w-md">
+        <DialogContent className="bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 border-white/20 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="!text-white">Editar Código Promocional</DialogTitle>
             <DialogDescription className="!text-white/70">
@@ -484,41 +484,41 @@ const SuperAdminPromoCodes = () => {
           
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium !text-white/80">Código</label>
+              <label className="text-sm font-medium text-white">Código</label>
               <Input
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                 placeholder="OFICAZ60"
-                className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                 data-testid="input-edit-code"
               />
             </div>
             
             <div>
-              <label className="text-sm font-medium !text-white/80">Descripción</label>
+              <label className="text-sm font-medium text-white">Descripción</label>
               <Textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Código promocional para 2 meses de prueba gratuita"
-                className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                 data-testid="input-edit-description"
               />
             </div>
             
             <div>
-              <label className="text-sm font-medium !text-white/80">Días de prueba</label>
+              <label className="text-sm font-medium text-white">Días de prueba</label>
               <Input
                 type="number"
                 value={formData.trialDurationDays}
                 onChange={(e) => setFormData({ ...formData, trialDurationDays: parseInt(e.target.value) || 60 })}
                 min="1"
-                className="!bg-white/10 !border-white/20 !text-white"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                 data-testid="input-edit-trial-days"
               />
             </div>
             
             <div>
-              <label className="text-sm font-medium !text-white/80">Usos máximos (opcional)</label>
+              <label className="text-sm font-medium text-white">Usos máximos (opcional)</label>
               <Input
                 type="number"
                 value={formData.maxUses || ''}
