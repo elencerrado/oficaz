@@ -742,7 +742,7 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
 
       {/* Delete Confirmation Modal */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="bg-gray-900 border-red-500/30 text-white max-w-md">
+        <DialogContent className="!bg-white/10 backdrop-blur-xl !border-white/20 !text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="text-red-400 flex items-center gap-2">
               <AlertCircle className="w-5 h-5" />
