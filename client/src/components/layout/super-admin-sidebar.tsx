@@ -101,7 +101,7 @@ export function SuperAdminSidebar({ isOpen, onClose }: SuperAdminSidebarProps) {
             <img 
               src={oficazLogo} 
               alt="Oficaz" 
-              className="h-6 w-auto dark:brightness-0 dark:invert opacity-90"
+              className="h-6 w-auto brightness-0 invert opacity-90"
             />
             <h2 className="text-white/80 font-medium text-sm">Super Admin</h2>
           </div>
