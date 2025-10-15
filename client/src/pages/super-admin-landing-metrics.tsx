@@ -6,7 +6,7 @@ import { format, subDays, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export default function SuperAdminLandingMetrics() {
-  const { data: metrics, isLoading } = useQuery({
+  const { data: metrics } = useQuery({
     queryKey: ['/api/super-admin/landing-metrics'],
     queryFn: async () => {
       const token = localStorage.getItem('superAdminToken');
@@ -20,16 +20,6 @@ export default function SuperAdminLandingMetrics() {
     },
     refetchInterval: 60000, // Refetch every minute
   });
-
-  if (isLoading) {
-    return (
-      <SuperAdminLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin h-12 w-12 border-4 border-white border-t-transparent rounded-full"></div>
-        </div>
-      </SuperAdminLayout>
-    );
-  }
 
   const conversionRate = metrics?.totalVisits > 0 
     ? ((metrics.totalRegistrations / metrics.totalVisits) * 100).toFixed(2)
