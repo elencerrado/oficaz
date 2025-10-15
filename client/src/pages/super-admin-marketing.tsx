@@ -288,7 +288,7 @@ export default function SuperAdminMarketing() {
     <SuperAdminLayout>
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="bg-white/10 backdrop-blur-xl border-white/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white/80">
@@ -299,21 +299,6 @@ export default function SuperAdminMarketing() {
             <CardContent>
               <div className="text-3xl font-bold text-white">{totalCampaigns}</div>
               <p className="text-xs text-white/60 mt-1">{draftCampaigns} borradores, {sentCampaigns} enviadas</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">
-                Usuarios Registrados
-              </CardTitle>
-              <Users className="h-4 w-4 text-emerald-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-white">{registeredUsers?.total || 0}</div>
-              <p className="text-xs text-white/60 mt-1">
-                {registeredUsers?.active || 0} activos, {registeredUsers?.trial || 0} en prueba
-              </p>
             </CardContent>
           </Card>
 
