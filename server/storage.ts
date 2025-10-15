@@ -1092,8 +1092,14 @@ export class DrizzleStorage implements IStorage {
 
     // Calculate ACTUAL accumulated revenue from all paid invoices
     let totalAccumulatedRevenue = 0;
+    let currentMonthRevenue = 0;
     
     try {
+      // Get current month start timestamp
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthStartTimestamp = Math.floor(monthStart.getTime() / 1000);
+      
       // Get all paid invoices from Stripe
       const invoices = await stripe.invoices.list({
         limit: 100, // Get last 100 invoices
@@ -1104,7 +1110,13 @@ export class DrizzleStorage implements IStorage {
       for (const invoice of invoices.data) {
         if (invoice.amount_paid) {
           // Convert from cents to euros
-          totalAccumulatedRevenue += invoice.amount_paid / 100;
+          const amount = invoice.amount_paid / 100;
+          totalAccumulatedRevenue += amount;
+          
+          // Check if invoice was paid in current month
+          if (invoice.status_transitions?.paid_at && invoice.status_transitions.paid_at >= monthStartTimestamp) {
+            currentMonthRevenue += amount;
+          }
         }
       }
     } catch (error) {
@@ -1118,6 +1130,7 @@ export class DrizzleStorage implements IStorage {
       monthlyRevenue,
       yearlyRevenue,
       totalAccumulatedRevenue,
+      currentMonthRevenue,
       planDistribution: planCounts,
       // Legacy field for backward compatibility
       activeSubscriptions: activePaidSubscriptions,

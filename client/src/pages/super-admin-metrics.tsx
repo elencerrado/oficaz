@@ -21,6 +21,7 @@ interface SuperAdminStats {
   monthlyRevenue: number;
   yearlyRevenue: number;
   totalAccumulatedRevenue: number;
+  currentMonthRevenue: number;
   planDistribution: {
     basic: number;
     pro: number;
@@ -118,13 +119,13 @@ export default function SuperAdminMetrics() {
           <Card className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 backdrop-blur-xl border-emerald-400/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white/90">
-                Ingresos Mensuales
+                Ingresos Mes Actual
               </CardTitle>
               <Calendar className="h-5 w-5 text-emerald-300" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-white">{stats?.monthlyRevenue?.toFixed(2) || '0.00'}€</div>
-              <p className="text-xs text-white/70 mt-2">Estimado por mes</p>
+              <div className="text-4xl font-bold text-white">{stats?.currentMonthRevenue?.toFixed(2) || '0.00'}€</div>
+              <p className="text-xs text-white/70 mt-2">Ingresos reales del mes</p>
             </CardContent>
           </Card>
 
