@@ -73,6 +73,9 @@ const SuperAdminPromoCodes = lazy(() => import("@/pages/super-admin-promo-codes"
 const SuperAdminMarketing = lazy(() => import("@/pages/super-admin-marketing"));
 const SuperAdminLandingMetrics = lazy(() => import("@/pages/super-admin-landing-metrics"));
 
+// SuperAdmin specific loading component
+import { SuperAdminPageLoading } from "@/components/layout/super-admin-page-loading";
+
 // Utility pages - lazy loaded
 const InvitationRegister = lazy(() => import("@/pages/invitation-register"));
 
@@ -242,60 +245,60 @@ function Router() {
     return (
       <Switch>
         <Route path="/super-admin/security">
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<SuperAdminPageLoading />}>
             <SuperAdminSecurity />
           </Suspense>
         </Route>
 
         <Route path="/super-admin/dashboard">
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<SuperAdminPageLoading />}>
             <SuperAdminDashboard />
           </Suspense>
         </Route>
         <Route path="/super-admin/metrics">
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<SuperAdminPageLoading />}>
             <SuperAdminMetrics />
           </Suspense>
         </Route>
         <Route path="/super-admin/plans">
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<SuperAdminPageLoading />}>
             <SuperAdminPlans />
           </Suspense>
         </Route>
         <Route path="/super-admin/companies">
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<SuperAdminPageLoading />}>
             <SuperAdminCompanies />
           </Suspense>
         </Route>
         <Route path="/super-admin/companies/:id">
           {(params) => (
-            <Suspense fallback={<PageLoading />}>
+            <Suspense fallback={<SuperAdminPageLoading />}>
               <SuperAdminCompanyDetail companyId={params.id} />
             </Suspense>
           )}
         </Route>
         <Route path="/super-admin/invitations">
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<SuperAdminPageLoading />}>
             <SuperAdminInvitations />
           </Suspense>
         </Route>
         <Route path="/super-admin/promo-codes">
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<SuperAdminPageLoading />}>
             <SuperAdminPromoCodes />
           </Suspense>
         </Route>
         <Route path="/super-admin/marketing">
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<SuperAdminPageLoading />}>
             <SuperAdminMarketing />
           </Suspense>
         </Route>
         <Route path="/super-admin/landing-metrics">
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<SuperAdminPageLoading />}>
             <SuperAdminLandingMetrics />
           </Suspense>
         </Route>
         <Route path="/super-admin">
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<SuperAdminPageLoading />}>
             <SuperAdminSecurity />
           </Suspense>
         </Route>
