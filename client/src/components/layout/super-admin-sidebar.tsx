@@ -28,7 +28,7 @@ export function SuperAdminSidebar({ isOpen, onClose }: SuperAdminSidebarProps) {
       icon: LayoutDashboard
     },
     { 
-      name: 'Métricas', 
+      name: 'Métricas Subs', 
       href: '/super-admin/metrics', 
       icon: BarChart3
     },
