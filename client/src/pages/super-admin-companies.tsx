@@ -11,7 +11,8 @@ import {
   X,
   Eye,
   Users,
-  Tag
+  Tag,
+  ArrowLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
@@ -19,7 +20,6 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
@@ -127,9 +127,8 @@ export default function SuperAdminCompanies() {
   const [editingCompany, setEditingCompany] = useState<number | null>(null);
   const [newPlan, setNewPlan] = useState<string>("");
   
-  // Dialog states
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  // Edit mode states
+  const [editingCompanyId, setEditingCompanyId] = useState<number | null>(null);
   const [editPlan, setEditPlan] = useState<string>("");
   const [editMaxUsers, setEditMaxUsers] = useState<string>("");
   const [editCustomPrice, setEditCustomPrice] = useState<string>("");
@@ -183,8 +182,8 @@ export default function SuperAdminCompanies() {
   });
 
   const updateCompanyMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await fetch(`/api/super-admin/companies/${selectedCompany?.id}/subscription`, {
+    mutationFn: async ({ companyId, data }: { companyId: number; data: any }) => {
+      const response = await fetch(`/api/super-admin/companies/${companyId}/subscription`, {
         method: 'PATCH',
         headers: {
           ...getAuthHeaders(),
@@ -204,7 +203,7 @@ export default function SuperAdminCompanies() {
         title: "Éxito",
         description: "Empresa actualizada correctamente",
       });
-      setIsEditDialogOpen(false);
+      setEditingCompanyId(null);
     },
     onError: (error: any) => {
       toast({
@@ -242,17 +241,16 @@ export default function SuperAdminCompanies() {
     setNewPlan("");
   };
 
-  const openEditDialog = (company: Company) => {
-    setSelectedCompany(company);
+  const openEditMode = (company: Company) => {
+    setEditingCompanyId(company.id);
     setEditPlan(company.subscription.plan);
     setEditMaxUsers("");
     setEditCustomPrice("");
     setEditUseCustomSettings(false);
-    setIsEditDialogOpen(true);
   };
 
   const handleSaveCompany = () => {
-    if (!selectedCompany) return;
+    if (!editingCompanyId) return;
     
     const data: any = {
       plan: editPlan,
@@ -271,14 +269,123 @@ export default function SuperAdminCompanies() {
       data.useCustomSettings = true;
     }
 
-    updateCompanyMutation.mutate(data);
+    updateCompanyMutation.mutate({ companyId: editingCompanyId, data });
   };
 
+  const selectedCompany = companies?.find((c: Company) => c.id === editingCompanyId);
+
+  // If in edit mode, show edit form
+  if (editingCompanyId && selectedCompany) {
+    return (
+      <SuperAdminLayout>
+        <div className="container mx-auto px-6 py-8">
+          <Button
+            variant="ghost"
+            onClick={() => setEditingCompanyId(null)}
+            className="text-white/70 hover:text-white hover:bg-white/10 mb-6"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Volver a la lista
+          </Button>
+
+          <Card className="!bg-white/10 backdrop-blur-xl !border-white/20">
+            <CardHeader>
+              <CardTitle className="text-white">Editar Empresa</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-white">{selectedCompany.name}</h3>
+                  <p className="text-sm text-white/60">{selectedCompany.email}</p>
+                  <p className="text-sm text-white/60">{selectedCompany.cif}</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-white/80">Plan</Label>
+                    <Select value={editPlan} onValueChange={setEditPlan}>
+                      <SelectTrigger className="!bg-white/10 !border-white/20 !text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="basic">Basic</SelectItem>
+                        <SelectItem value="pro">Pro</SelectItem>
+                        <SelectItem value="master">Master</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-white/80">Máximo de Usuarios (opcional)</Label>
+                    <Input
+                      type="number"
+                      placeholder="Límite del plan por defecto"
+                      value={editMaxUsers}
+                      onChange={(e) => setEditMaxUsers(e.target.value)}
+                      className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-white/80">Precio Personalizado (€/mes, opcional)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="Precio del plan por defecto"
+                      value={editCustomPrice}
+                      onChange={(e) => setEditCustomPrice(e.target.value)}
+                      className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
+                    />
+                  </div>
+
+                  <div className="space-y-2 flex items-end">
+                    <div className="flex items-center justify-between w-full">
+                      <Label className="text-white/80">Configuración Personalizada</Label>
+                      <Switch
+                        checked={editUseCustomSettings}
+                        onCheckedChange={setEditUseCustomSettings}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    onClick={handleSaveCompany}
+                    disabled={updateCompanyMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {updateCompanyMutation.isPending ? "Guardando..." : "Guardar Cambios"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setEditingCompanyId(null)}
+                    className="!bg-white/10 !border-white/20 !text-white hover:!bg-white/20"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setLocation(`/super-admin/companies/${selectedCompany.id}`)}
+                    className="!bg-white/10 !border-white/20 !text-white hover:!bg-white/20"
+                  >
+                    Configuración Avanzada
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </SuperAdminLayout>
+    );
+  }
+
+  // Default: show companies list
   return (
     <SuperAdminLayout>
       <div className="container mx-auto px-6 py-8">
         {/* Filters */}
-        <Card className="bg-white/10 backdrop-blur-xl border-white/20 mb-6">
+        <Card className="!bg-white/10 backdrop-blur-xl !border-white/20 mb-6">
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
@@ -319,7 +426,7 @@ export default function SuperAdminCompanies() {
         </Card>
 
         {/* Companies List */}
-        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+        <Card className="!bg-white/10 backdrop-blur-xl !border-white/20">
           <CardHeader>
             <CardTitle className="text-white flex items-center justify-between">
               Empresas ({filteredCompanies.length})
@@ -409,7 +516,7 @@ export default function SuperAdminCompanies() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => openEditDialog(company)}
+                          onClick={() => openEditMode(company)}
                           className="text-white/60 hover:text-white hover:bg-white/10"
                           title="Editar empresa"
                         >
@@ -451,87 +558,6 @@ export default function SuperAdminCompanies() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Edit Company Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="!bg-gray-900 !border-white/20 !text-white sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="text-white">Editar Empresa</DialogTitle>
-          </DialogHeader>
-          {selectedCompany && (
-            <div className="space-y-6 py-4">
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold text-white">{selectedCompany.name}</h3>
-                <p className="text-sm text-white/60">{selectedCompany.email}</p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-white/80">Plan</Label>
-                  <Select value={editPlan} onValueChange={setEditPlan}>
-                    <SelectTrigger className="!bg-white/10 !border-white/20 !text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="basic">Basic</SelectItem>
-                      <SelectItem value="pro">Pro</SelectItem>
-                      <SelectItem value="master">Master</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-white/80">Máximo de Usuarios (opcional)</Label>
-                  <Input
-                    type="number"
-                    placeholder="Dejar vacío para usar el límite del plan"
-                    value={editMaxUsers}
-                    onChange={(e) => setEditMaxUsers(e.target.value)}
-                    className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-white/80">Precio Personalizado (€/mes, opcional)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="Dejar vacío para usar precio del plan"
-                    value={editCustomPrice}
-                    onChange={(e) => setEditCustomPrice(e.target.value)}
-                    className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Label className="text-white/80">Configuración Personalizada</Label>
-                  <Switch
-                    checked={editUseCustomSettings}
-                    onCheckedChange={setEditUseCustomSettings}
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <Button
-                  onClick={handleSaveCompany}
-                  disabled={updateCompanyMutation.isPending}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
-                >
-                  {updateCompanyMutation.isPending ? "Guardando..." : "Guardar Cambios"}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditDialogOpen(false)}
-                  className="flex-1 !bg-white/10 !border-white/20 !text-white hover:!bg-white/20"
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </SuperAdminLayout>
   );
 }
