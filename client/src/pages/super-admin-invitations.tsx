@@ -311,43 +311,43 @@ export default function SuperAdminInvitations() {
                     Nueva Invitación
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-slate-900 border-slate-700">
+                <DialogContent className="!bg-white/10 backdrop-blur-xl !border-white/20">
                   <DialogHeader>
-                    <DialogTitle className="text-white">Crear Invitación</DialogTitle>
-                    <DialogDescription className="text-slate-300">
+                    <DialogTitle className="!text-white">Crear Invitación</DialogTitle>
+                    <DialogDescription className="!text-white/70">
                       Genera un enlace de invitación que será válido por 7 días
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="email" className="text-white">Email del destinatario</Label>
+                      <Label htmlFor="email" className="!text-white/80">Email del destinatario</Label>
                       <Input
                         id="email"
                         type="email"
                         placeholder="empresa@ejemplo.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="bg-slate-800 border-slate-600 text-white"
+                        className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="inviter-name" className="text-white">Nombre del invitador</Label>
+                      <Label htmlFor="inviter-name" className="!text-white/80">Nombre del invitador</Label>
                       <Input
                         id="inviter-name"
                         placeholder="Tu nombre"
                         value={inviterName}
                         onChange={(e) => setInviterName(e.target.value)}
-                        className="bg-slate-800 border-slate-600 text-white"
+                        className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="company-name" className="text-white">Nombre de la empresa (opcional)</Label>
+                      <Label htmlFor="company-name" className="!text-white/80">Nombre de la empresa (opcional)</Label>
                       <Input
                         id="company-name"
                         placeholder="Oficaz"
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
-                        className="bg-slate-800 border-slate-600 text-white"
+                        className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
                       />
                     </div>
                   </div>
@@ -355,7 +355,7 @@ export default function SuperAdminInvitations() {
                     <Button
                       variant="outline"
                       onClick={() => setIsInviteDialogOpen(false)}
-                      className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                      className="!bg-white/10 !border-white/20 !text-white hover:!bg-white/20"
                     >
                       Cancelar
                     </Button>
