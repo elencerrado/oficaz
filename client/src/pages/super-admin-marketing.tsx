@@ -27,7 +27,9 @@ import {
   Edit,
   Edit2,
   Copy,
-  TrendingUp
+  TrendingUp,
+  Table2,
+  LayoutList
 } from 'lucide-react';
 
 export default function SuperAdminMarketing() {
@@ -36,7 +38,7 @@ export default function SuperAdminMarketing() {
   const [conversionsCampaign, setConversionsCampaign] = useState<any>(null);
   const [editingProspect, setEditingProspect] = useState<any>(null);
   const [statsProspect, setStatsProspect] = useState<any>(null);
-  const [isTableView, setIsTableView] = useState(false);
+  const [isTableView, setIsTableView] = useState(true);
   const [editingCell, setEditingCell] = useState<{ id: number | string; field: string } | null>(null);
   const [tagInput, setTagInput] = useState('');
   const { toast} = useToast();
@@ -471,13 +473,29 @@ export default function SuperAdminMarketing() {
                       Prospects Externos
                     </CardTitle>
                     <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-white/70">Vista Tabla</span>
-                        <Switch
-                          checked={isTableView}
-                          onCheckedChange={setIsTableView}
-                          className="data-[state=checked]:bg-purple-600"
-                        />
+                      <div className="flex items-center gap-1 bg-white/10 rounded-lg p-1">
+                        <button
+                          onClick={() => setIsTableView(true)}
+                          className={`p-2 rounded transition-all ${
+                            isTableView 
+                              ? 'bg-purple-600 text-white' 
+                              : 'text-white/60 hover:text-white/90'
+                          }`}
+                          title="Vista Tabla"
+                        >
+                          <Table2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setIsTableView(false)}
+                          className={`p-2 rounded transition-all ${
+                            !isTableView 
+                              ? 'bg-purple-600 text-white' 
+                              : 'text-white/60 hover:text-white/90'
+                          }`}
+                          title="Vista Lista"
+                        >
+                          <LayoutList className="w-4 h-4" />
+                        </button>
                       </div>
                       <AddProspectDialog />
                     </div>
