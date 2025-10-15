@@ -29,7 +29,8 @@ import {
   Copy,
   TrendingUp,
   Table2,
-  LayoutList
+  LayoutList,
+  Search
 } from 'lucide-react';
 
 export default function SuperAdminMarketing() {
@@ -41,6 +42,7 @@ export default function SuperAdminMarketing() {
   const [isTableView, setIsTableView] = useState(true);
   const [editingCell, setEditingCell] = useState<{ id: number | string; field: string } | null>(null);
   const [tagInput, setTagInput] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast} = useToast();
   const queryClient = useQueryClient();
 
@@ -101,6 +103,25 @@ export default function SuperAdminMarketing() {
     });
     return Array.from(tagsSet).sort();
   }, [prospects]);
+
+  // Filter prospects based on search term
+  const filteredProspects = React.useMemo(() => {
+    if (!prospects) return [];
+    if (!searchTerm.trim()) return prospects;
+    
+    const term = searchTerm.toLowerCase().trim();
+    return prospects.filter((prospect: any) => {
+      return (
+        prospect.email?.toLowerCase().includes(term) ||
+        prospect.name?.toLowerCase().includes(term) ||
+        prospect.company?.toLowerCase().includes(term) ||
+        prospect.phone?.toLowerCase().includes(term) ||
+        prospect.location?.toLowerCase().includes(term) ||
+        prospect.notes?.toLowerCase().includes(term) ||
+        prospect.tags?.some((tag: string) => tag.toLowerCase().includes(term))
+      );
+    });
+  }, [prospects, searchTerm]);
 
   // Send campaign mutation
   const sendCampaignMutation = useMutation({
@@ -467,11 +488,24 @@ export default function SuperAdminMarketing() {
               {/* Prospects Section */}
               <Card className="bg-white/10 backdrop-blur-xl border-white/20">
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-4">
                     <CardTitle className="text-white flex items-center gap-2">
                       <Send className="w-5 h-5" />
                       Prospects Externos
                     </CardTitle>
+                    <div className="flex-1 max-w-md">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
+                        <Input
+                          type="text"
+                          placeholder="Buscar por cualquier campo..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="bg-white/10 border-white/20 text-white placeholder:text-white/40 pl-10"
+                          data-testid="input-search-prospects"
+                        />
+                      </div>
+                    </div>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-1 bg-white/10 rounded-lg p-1">
                         <button
@@ -507,6 +541,11 @@ export default function SuperAdminMarketing() {
                       <Users className="w-10 h-10 text-white/40 mx-auto mb-3" />
                       <p className="text-white/60">No hay prospects externos añadidos</p>
                     </div>
+                  ) : filteredProspects.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Search className="w-10 h-10 text-white/40 mx-auto mb-3" />
+                      <p className="text-white/60">No se encontraron resultados</p>
+                    </div>
                   ) : isTableView ? (
                     <div className="overflow-x-auto">
                       <Table>
@@ -523,7 +562,7 @@ export default function SuperAdminMarketing() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {[{ id: 'new', email: '', name: '', company: '', phone: '', location: '', tags: [], notes: '' }, ...prospects].map((prospect: any) => (
+                          {[{ id: 'new', email: '', name: '', company: '', phone: '', location: '', tags: [], notes: '' }, ...filteredProspects].map((prospect: any) => (
                             <TableRow key={prospect.id} className="border-white/20 hover:bg-white/5">
                               <TableCell
                                 className="text-white font-medium cursor-pointer hover:bg-white/10"
@@ -940,7 +979,7 @@ export default function SuperAdminMarketing() {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {prospects.slice(0, 5).map((prospect: any) => (
+                      {filteredProspects.slice(0, 5).map((prospect: any) => (
                         <div key={prospect.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors group">
                           <div className="flex-1">
                             <p className="font-medium text-white">{prospect.name || prospect.email}</p>
