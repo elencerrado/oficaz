@@ -8018,26 +8018,58 @@ Responde directamente a este email para contactar con la persona.
         .where(eq(schema.emailCampaignSends.campaignId, campaignId))
         .orderBy(desc(schema.emailCampaignSends.sentAt));
       
-      // Get companies registered from this campaign with email
-      const registeredCompaniesRaw = await db.select({
-        companyId: schema.companies.id,
-        email: schema.users.companyEmail,
-        subscriptionStatus: schema.subscriptions.status,
-      })
+      // Get companies registered from this campaign
+      const registeredCompanies = await db.select()
         .from(schema.companies)
-        .leftJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId))
-        .leftJoin(schema.users, and(
-          eq(schema.users.companyId, schema.companies.id),
-          eq(schema.users.role, 'admin')
-        ))
         .where(eq(schema.companies.emailCampaignId, campaignId));
+      
+      const companyIds = registeredCompanies.map(c => c.id);
+      
+      // Get subscriptions for these companies
+      let subscriptions: any[] = [];
+      if (companyIds.length > 0) {
+        subscriptions = await db.select()
+          .from(schema.subscriptions)
+          .where(sql`${schema.subscriptions.companyId} IN (${sql.join(companyIds, sql`, `)})`);
+      }
+      
+      const registeredCompaniesRaw = registeredCompanies.map(c => {
+        const subscription = subscriptions.find(s => s.companyId === c.id);
+        return {
+          companyId: c.id,
+          subscriptionStatus: subscription?.status || null,
+        };
+      });
+      
+      // Get admin emails for registered companies (only if there are companies)
+      let companyEmails: any[] = [];
+      
+      if (companyIds.length > 0) {
+        const result = await db.execute(sql`
+          SELECT company_id as "companyId", company_email as "email"
+          FROM users
+          WHERE company_id IN (${sql.join(companyIds, sql`, `)})
+          AND role = 'admin'
+        `);
+        companyEmails = (result as any).rows || result;
+      }
+      
+      // Merge company data with emails
+      const registeredWithEmails = registeredCompaniesRaw.map(c => {
+        const emailData = companyEmails.find(e => e.companyId === c.companyId);
+        return {
+          companyId: c.companyId,
+          email: emailData?.email || null,
+          subscriptionStatus: c.subscriptionStatus,
+        };
+      });
       
       // Organize emails by stage
       const sentEmails = allSends.map(s => ({ email: s.email, name: s.name, timestamp: s.sentAt }));
       const openedEmails = allSends.filter(s => s.openedAt).map(s => ({ email: s.email, name: s.name, timestamp: s.openedAt }));
       const clickedEmails = allSends.filter(s => s.clickedAt).map(s => ({ email: s.email, name: s.name, timestamp: s.clickedAt }));
-      const registeredEmails = registeredCompaniesRaw.map(c => ({ email: c.email, name: null, companyId: c.companyId }));
-      const paidEmails = registeredCompaniesRaw.filter(c => c.subscriptionStatus === 'active').map(c => ({ email: c.email, name: null, companyId: c.companyId }));
+      const registeredEmails = registeredWithEmails.map(c => ({ email: c.email, name: null, companyId: c.companyId }));
+      const paidEmails = registeredWithEmails.filter(c => c.subscriptionStatus === 'active').map(c => ({ email: c.email, name: null, companyId: c.companyId }));
       
       // Calculate metrics
       const totalSent = sentEmails.length;
