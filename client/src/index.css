@@ -1509,21 +1509,26 @@ input[type="month"]::-webkit-calendar-picker-indicator {
 /* Force dark mode for all SuperAdmin pages regardless of system theme */
 
 /* SuperAdmin Switch components - Glassmorphism style matching other components */
-.min-h-screen.bg-gradient-to-br.from-slate-900 [role="switch"] {
+body button[role="switch"][data-state="unchecked"],
+body button[role="switch"]:not([data-state="checked"]) {
   background-color: rgba(255, 255, 255, 0.1) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
 }
 
-.min-h-screen.bg-gradient-to-br.from-slate-900 [role="switch"][data-state="checked"] {
+body button[role="switch"][data-state="checked"] {
   background-color: rgba(59, 130, 246, 0.5) !important;
-  border: 1px solid rgba(59, 130, 246, 0.6) !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: rgba(59, 130, 246, 0.6) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
 }
 
-.min-h-screen.bg-gradient-to-br.from-slate-900 [role="switch"] > span {
+body button[role="switch"] > span {
   background-color: rgb(255, 255, 255) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
 }
