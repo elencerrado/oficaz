@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Dialog,
@@ -7,7 +8,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
-import { TrendingUp, Users, MousePointerClick, UserPlus, TestTube, CreditCard, ArrowRight } from 'lucide-react';
+import { TrendingUp, Send, Eye, MousePointerClick, UserPlus, CreditCard, ArrowRight, ChevronDown, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface CampaignConversionsDialogProps {
   campaign: any;
@@ -16,6 +20,8 @@ interface CampaignConversionsDialogProps {
 }
 
 export function CampaignConversionsDialog({ campaign, open, onOpenChange }: CampaignConversionsDialogProps) {
+  const [expandedStep, setExpandedStep] = useState<string | null>(null);
+
   const { data: conversions, isLoading } = useQuery({
     queryKey: [`/api/super-admin/email-campaigns/${campaign?.id}/conversions`],
     queryFn: async () => {
@@ -32,48 +38,62 @@ export function CampaignConversionsDialog({ campaign, open, onOpenChange }: Camp
     staleTime: 30000,
   });
 
-  const funnelSteps = conversions ? [
+  const funnelSteps = conversions && conversions.funnel ? [
     {
-      icon: Users,
+      id: 'sent',
+      icon: Send,
       label: 'Enviados',
       value: conversions.funnel.sent,
       color: 'text-blue-400',
       bgColor: 'bg-blue-500/20',
       percentage: 100,
+      details: conversions.details.sent,
     },
     {
+      id: 'opened',
+      icon: Eye,
+      label: 'Abiertos',
+      value: conversions.funnel.opened,
+      color: 'text-purple-400',
+      bgColor: 'bg-purple-500/20',
+      percentage: conversions.rates.openRate,
+      details: conversions.details.opened,
+    },
+    {
+      id: 'clicked',
       icon: MousePointerClick,
       label: 'Clicks',
       value: conversions.funnel.clicked,
-      color: 'text-purple-400',
-      bgColor: 'bg-purple-500/20',
+      color: 'text-indigo-400',
+      bgColor: 'bg-indigo-500/20',
       percentage: conversions.rates.clickRate,
+      details: conversions.details.clicked,
     },
     {
+      id: 'registered',
       icon: UserPlus,
-      label: 'Registros',
+      label: 'Registrados',
       value: conversions.funnel.registered,
       color: 'text-green-400',
       bgColor: 'bg-green-500/20',
       percentage: conversions.rates.registrationRate,
+      details: conversions.details.registered,
     },
     {
-      icon: TestTube,
-      label: 'En Prueba',
-      value: conversions.funnel.trials,
-      color: 'text-yellow-400',
-      bgColor: 'bg-yellow-500/20',
-      percentage: conversions.rates.trialRate,
-    },
-    {
+      id: 'paid',
       icon: CreditCard,
       label: 'Pagando',
       value: conversions.funnel.paid,
       color: 'text-emerald-400',
       bgColor: 'bg-emerald-500/20',
       percentage: conversions.rates.paidRate,
+      details: conversions.details.paid,
     },
   ] : [];
+
+  const toggleStep = (stepId: string) => {
+    setExpandedStep(expandedStep === stepId ? null : stepId);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -119,15 +139,16 @@ export function CampaignConversionsDialog({ campaign, open, onOpenChange }: Camp
               </CardContent>
             </Card>
 
-            {/* Funnel Visualization */}
+            {/* Funnel Visualization with Expandable Details */}
             <div className="space-y-3">
               {funnelSteps.map((step, index) => {
                 const Icon = step.icon;
                 const nextStep = funnelSteps[index + 1];
                 const conversionRate = nextStep ? nextStep.percentage : 0;
+                const isExpanded = expandedStep === step.id;
                 
                 return (
-                  <div key={step.label} className="space-y-2">
+                  <div key={step.id} className="space-y-2">
                     <Card className={`border-white/20 hover:border-white/30 transition-all ${step.bgColor}`}>
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
@@ -147,12 +168,53 @@ export function CampaignConversionsDialog({ campaign, open, onOpenChange }: Camp
                               </div>
                             </div>
                           </div>
-                          {index === 0 && (
-                            <div className="text-right">
-                              <p className="text-xs text-white/40">Base</p>
-                            </div>
+                          {step.value > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleStep(step.id)}
+                              className="text-white/70 hover:text-white hover:bg-white/10"
+                              data-testid={`button-expand-${step.id}`}
+                            >
+                              {isExpanded ? (
+                                <ChevronDown className="h-5 w-5" />
+                              ) : (
+                                <ChevronRight className="h-5 w-5" />
+                              )}
+                            </Button>
                           )}
                         </div>
+
+                        {/* Expanded Email List */}
+                        {isExpanded && step.details && step.details.length > 0 && (
+                          <div className="mt-4 pt-4 border-t border-white/10">
+                            <div className="max-h-60 overflow-y-auto space-y-2">
+                              {step.details.map((detail: any, idx: number) => (
+                                <div
+                                  key={idx}
+                                  className="flex items-center justify-between p-2 rounded bg-white/5 hover:bg-white/10 transition-colors"
+                                >
+                                  <div>
+                                    <p className="text-sm text-white">{detail.email}</p>
+                                    {detail.name && (
+                                      <p className="text-xs text-white/60">{detail.name}</p>
+                                    )}
+                                  </div>
+                                  {detail.timestamp && (
+                                    <p className="text-xs text-white/50">
+                                      {format(new Date(detail.timestamp), "d MMM, HH:mm", { locale: es })}
+                                    </p>
+                                  )}
+                                  {detail.companyId && (
+                                    <p className="text-xs text-white/50">
+                                      Empresa #{detail.companyId}
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                     
@@ -171,43 +233,6 @@ export function CampaignConversionsDialog({ campaign, open, onOpenChange }: Camp
                 );
               })}
             </div>
-
-            {/* Companies List */}
-            {conversions.companies && conversions.companies.length > 0 && (
-              <Card className="bg-white/5 border-white/20">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">
-                    Empresas Registradas ({conversions.companies.length})
-                  </h3>
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {conversions.companies.map((company: any) => (
-                      <div
-                        key={company.companyId}
-                        className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-2 h-2 rounded-full ${
-                            company.subscriptionStatus === 'active' ? 'bg-emerald-400' :
-                            company.subscriptionStatus === 'trial' ? 'bg-yellow-400' :
-                            'bg-gray-400'
-                          }`} />
-                          <span className="text-sm text-white/80">Empresa #{company.companyId}</span>
-                        </div>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          company.subscriptionStatus === 'active' ? 'bg-emerald-500/20 text-emerald-400' :
-                          company.subscriptionStatus === 'trial' ? 'bg-yellow-500/20 text-yellow-400' :
-                          'bg-gray-500/20 text-gray-400'
-                        }`}>
-                          {company.subscriptionStatus === 'active' ? 'Pagando' :
-                           company.subscriptionStatus === 'trial' ? 'En Prueba' :
-                           company.subscriptionStatus || 'Desconocido'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
         ) : (
           <div className="py-12 text-center text-white/60">

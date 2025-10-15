@@ -8001,39 +8001,55 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  // Get campaign conversion statistics (emails → registrations → trials → paid subscriptions)
+  // Get campaign conversion statistics (emails → opened → clicks → registrations → paid subscriptions)
   app.get('/api/super-admin/email-campaigns/:id/conversions', authenticateSuperAdmin, async (req: any, res) => {
     try {
       const campaignId = parseInt(req.params.id);
       
-      // Get total sent and clicked counts from campaign sends
-      const sendStats = await db.select({
-        totalSent: sql<number>`COUNT(*)`,
-        totalClicked: sql<number>`COUNT(CASE WHEN ${schema.emailCampaignSends.clickedAt} IS NOT NULL THEN 1 END)`,
+      // Get all emails sent in this campaign with their tracking data
+      const allSends = await db.select({
+        email: schema.emailCampaignSends.recipientEmail,
+        name: schema.emailCampaignSends.recipientName,
+        sentAt: schema.emailCampaignSends.sentAt,
+        openedAt: schema.emailCampaignSends.openedAt,
+        clickedAt: schema.emailCampaignSends.clickedAt,
       })
         .from(schema.emailCampaignSends)
-        .where(eq(schema.emailCampaignSends.campaignId, campaignId));
+        .where(eq(schema.emailCampaignSends.campaignId, campaignId))
+        .orderBy(desc(schema.emailCampaignSends.sentAt));
       
-      // Get companies registered from this campaign
-      const registeredCompanies = await db.select({
+      // Get companies registered from this campaign with email
+      const registeredCompaniesRaw = await db.select({
         companyId: schema.companies.id,
+        email: schema.users.companyEmail,
         subscriptionStatus: schema.subscriptions.status,
       })
         .from(schema.companies)
         .leftJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId))
+        .leftJoin(schema.users, and(
+          eq(schema.users.companyId, schema.companies.id),
+          eq(schema.users.role, 'admin')
+        ))
         .where(eq(schema.companies.emailCampaignId, campaignId));
       
-      // Calculate conversion metrics
-      const totalSent = sendStats[0]?.totalSent || 0;
-      const totalClicked = sendStats[0]?.totalClicked || 0;
-      const totalRegistrations = registeredCompanies.length;
-      const totalTrials = registeredCompanies.filter(c => c.subscriptionStatus === 'trial').length;
-      const totalPaid = registeredCompanies.filter(c => c.subscriptionStatus === 'active').length;
+      // Organize emails by stage
+      const sentEmails = allSends.map(s => ({ email: s.email, name: s.name, timestamp: s.sentAt }));
+      const openedEmails = allSends.filter(s => s.openedAt).map(s => ({ email: s.email, name: s.name, timestamp: s.openedAt }));
+      const clickedEmails = allSends.filter(s => s.clickedAt).map(s => ({ email: s.email, name: s.name, timestamp: s.clickedAt }));
+      const registeredEmails = registeredCompaniesRaw.map(c => ({ email: c.email, name: null, companyId: c.companyId }));
+      const paidEmails = registeredCompaniesRaw.filter(c => c.subscriptionStatus === 'active').map(c => ({ email: c.email, name: null, companyId: c.companyId }));
+      
+      // Calculate metrics
+      const totalSent = sentEmails.length;
+      const totalOpened = openedEmails.length;
+      const totalClicked = clickedEmails.length;
+      const totalRegistrations = registeredEmails.length;
+      const totalPaid = paidEmails.length;
       
       // Calculate conversion rates
-      const clickRate = totalSent > 0 ? (totalClicked / totalSent * 100) : 0;
+      const openRate = totalSent > 0 ? (totalOpened / totalSent * 100) : 0;
+      const clickRate = totalOpened > 0 ? (totalClicked / totalOpened * 100) : 0;
       const registrationRate = totalClicked > 0 ? (totalRegistrations / totalClicked * 100) : 0;
-      const trialRate = totalRegistrations > 0 ? (totalTrials / totalRegistrations * 100) : 0;
       const paidRate = totalRegistrations > 0 ? (totalPaid / totalRegistrations * 100) : 0;
       const overallConversionRate = totalSent > 0 ? (totalPaid / totalSent * 100) : 0;
       
@@ -8041,22 +8057,25 @@ Responde directamente a este email para contactar con la persona.
         campaignId,
         funnel: {
           sent: totalSent,
+          opened: totalOpened,
           clicked: totalClicked,
           registered: totalRegistrations,
-          trials: totalTrials,
           paid: totalPaid,
         },
         rates: {
+          openRate: parseFloat(openRate.toFixed(2)),
           clickRate: parseFloat(clickRate.toFixed(2)),
           registrationRate: parseFloat(registrationRate.toFixed(2)),
-          trialRate: parseFloat(trialRate.toFixed(2)),
           paidRate: parseFloat(paidRate.toFixed(2)),
           overallConversionRate: parseFloat(overallConversionRate.toFixed(2)),
         },
-        companies: registeredCompanies.map(c => ({
-          companyId: c.companyId,
-          subscriptionStatus: c.subscriptionStatus,
-        })),
+        details: {
+          sent: sentEmails,
+          opened: openedEmails,
+          clicked: clickedEmails,
+          registered: registeredEmails,
+          paid: paidEmails,
+        },
       });
     } catch (error: any) {
       console.error('Error fetching conversion statistics:', error);
