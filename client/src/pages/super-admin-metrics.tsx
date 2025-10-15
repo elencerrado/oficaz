@@ -48,7 +48,7 @@ export default function SuperAdminMetrics() {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+          <Card className="!bg-white/10 backdrop-blur-xl !border-white/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white/80">
                 Empresas Totales
@@ -61,7 +61,7 @@ export default function SuperAdminMetrics() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+          <Card className="!bg-white/10 backdrop-blur-xl !border-white/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white/80">
                 Usuarios Totales
@@ -74,7 +74,7 @@ export default function SuperAdminMetrics() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+          <Card className="!bg-white/10 backdrop-blur-xl !border-white/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white/80">
                 Suscripciones Activas
@@ -87,7 +87,7 @@ export default function SuperAdminMetrics() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+          <Card className="!bg-white/10 backdrop-blur-xl !border-white/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white/80">
                 Suscripciones de Pago
@@ -103,7 +103,7 @@ export default function SuperAdminMetrics() {
 
         {/* Revenue Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 backdrop-blur-xl border-blue-400/30">
+          <Card className="!bg-gradient-to-br !from-blue-500/20 !to-blue-600/20 backdrop-blur-xl !border-blue-400/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white/90">
                 Ingresos Totales
@@ -116,7 +116,7 @@ export default function SuperAdminMetrics() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 backdrop-blur-xl border-emerald-400/30">
+          <Card className="!bg-gradient-to-br !from-emerald-500/20 !to-emerald-600/20 backdrop-blur-xl !border-emerald-400/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white/90">
                 Ingresos Mes Actual
@@ -129,7 +129,7 @@ export default function SuperAdminMetrics() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 backdrop-blur-xl border-purple-400/30">
+          <Card className="!bg-gradient-to-br !from-purple-500/20 !to-purple-600/20 backdrop-blur-xl !border-purple-400/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white/90">
                 Ingresos Anuales
@@ -144,7 +144,7 @@ export default function SuperAdminMetrics() {
         </div>
 
         {/* Plan Distribution */}
-        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+        <Card className="!bg-white/10 backdrop-blur-xl !border-white/20">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
