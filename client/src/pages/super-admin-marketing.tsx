@@ -476,7 +476,7 @@ export default function SuperAdminMarketing() {
                       <div className="flex items-center gap-1 bg-white/10 rounded-lg p-1">
                         <button
                           onClick={() => setIsTableView(true)}
-                          className={`p-2 rounded transition-all ${
+                          className={`p-2 rounded-md transition-all ${
                             isTableView 
                               ? 'bg-purple-600 text-white' 
                               : 'text-white/60 hover:text-white/90'
@@ -487,7 +487,7 @@ export default function SuperAdminMarketing() {
                         </button>
                         <button
                           onClick={() => setIsTableView(false)}
-                          className={`p-2 rounded transition-all ${
+                          className={`p-2 rounded-md transition-all ${
                             !isTableView 
                               ? 'bg-purple-600 text-white' 
                               : 'text-white/60 hover:text-white/90'
