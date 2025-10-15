@@ -343,40 +343,15 @@ export default function SuperAdminMarketing() {
                               </p>
                             )}
                           </div>
-                          {campaign.status === 'sent' && (
-                            <>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => setConversionsCampaign(campaign)}
-                                className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
-                                data-testid={`button-conversions-campaign-${campaign.id}`}
-                              >
-                                <TrendingUp className="w-4 h-4 mr-1" />
-                                Conversiones
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => setHistoryCampaign(campaign)}
-                                className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
-                                data-testid={`button-history-campaign-${campaign.id}`}
-                              >
-                                <History className="w-4 h-4 mr-1" />
-                                Historial
-                              </Button>
-                            </>
-                          )}
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => duplicateCampaignMutation.mutate(campaign.id)}
-                            disabled={duplicateCampaignMutation.isPending}
-                            className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
-                            data-testid={`button-duplicate-campaign-${campaign.id}`}
+                            onClick={() => sendCampaignMutation.mutate(campaign.id)}
+                            disabled={!campaign.hasNewRecipients || sendCampaignMutation.isPending}
+                            className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                            data-testid={`button-send-campaign-${campaign.id}`}
                           >
-                            <Copy className="w-4 h-4 mr-1" />
-                            Duplicar
+                            <Send className="w-4 h-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
@@ -385,21 +360,39 @@ export default function SuperAdminMarketing() {
                             className="text-white/70 hover:text-white hover:bg-white/10"
                             data-testid={`button-edit-campaign-${campaign.id}`}
                           >
-                            <Edit className="w-4 h-4 mr-1" />
-                            Editar
+                            <Edit className="w-4 h-4" />
                           </Button>
-                          {campaign.hasNewRecipients && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => sendCampaignMutation.mutate(campaign.id)}
-                              disabled={sendCampaignMutation.isPending}
-                              className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
-                              data-testid={`button-send-campaign-${campaign.id}`}
-                            >
-                              <Send className="w-4 h-4 mr-1" />
-                              {sendCampaignMutation.isPending ? 'Enviando...' : campaign.sentRecipientsCount > 0 ? 'Enviar a Nuevos' : 'Enviar'}
-                            </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => duplicateCampaignMutation.mutate(campaign.id)}
+                            disabled={duplicateCampaignMutation.isPending}
+                            className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                            data-testid={`button-duplicate-campaign-${campaign.id}`}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                          {campaign.status === 'sent' && (
+                            <>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => setHistoryCampaign(campaign)}
+                                className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
+                                data-testid={`button-history-campaign-${campaign.id}`}
+                              >
+                                <History className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => setConversionsCampaign(campaign)}
+                                className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                                data-testid={`button-conversions-campaign-${campaign.id}`}
+                              >
+                                <TrendingUp className="w-4 h-4" />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
