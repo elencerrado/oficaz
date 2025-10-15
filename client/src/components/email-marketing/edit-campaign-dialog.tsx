@@ -389,6 +389,47 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
               />
               <p className="text-xs text-white/50 mt-1">Este texto aparece como preview del email</p>
             </div>
+
+            <div>
+              <Label className="text-white mb-2 block">Tipo de Campaña</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, audienceType: 'subscribers' })}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    formData.audienceType === 'subscribers'
+                      ? 'border-blue-400 bg-blue-500/20'
+                      : 'border-white/20 bg-white/5 hover:border-white/40'
+                  }`}
+                  data-testid="button-edit-audience-subscribers"
+                >
+                  <div className="text-left">
+                    <div className="font-semibold text-white mb-1">Suscritos</div>
+                    <div className="text-xs text-white/60">
+                      Usuarios que aceptaron recibir emails comerciales. Incluye footer con opción de cancelar suscripción.
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, audienceType: 'one_time' })}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    formData.audienceType === 'one_time'
+                      ? 'border-blue-400 bg-blue-500/20'
+                      : 'border-white/20 bg-white/5 hover:border-white/40'
+                  }`}
+                  data-testid="button-edit-audience-onetime"
+                >
+                  <div className="text-left">
+                    <div className="font-semibold text-white mb-1">Campaña Puntual</div>
+                    <div className="text-xs text-white/60">
+                      Para prospectos y captación. Sin footer de cancelación.
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
