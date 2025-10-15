@@ -7,7 +7,8 @@ import {
   Mail, 
   Crown,
   LogOut,
-  Send
+  Send,
+  TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
@@ -55,6 +56,11 @@ export function SuperAdminSidebar({ isOpen, onClose }: SuperAdminSidebarProps) {
       name: 'Marketing', 
       href: '/super-admin/marketing', 
       icon: Send
+    },
+    { 
+      name: 'Métricas Web', 
+      href: '/super-admin/landing-metrics', 
+      icon: TrendingUp
     },
   ];
 

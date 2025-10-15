@@ -11,6 +11,7 @@ import fs from 'fs';
 import sharp from 'sharp';
 import rateLimit from 'express-rate-limit';
 import Stripe from 'stripe';
+import { subDays, startOfDay } from 'date-fns';
 import { storage } from "./storage";
 import { authenticateToken, requireRole, generateToken, AuthRequest } from './middleware/auth';
 import { withDatabaseRetry } from './utils';
@@ -2321,6 +2322,27 @@ Responde directamente a este email para contactar con la persona.
           console.warn('⚠️ Non-critical error applying promotional code after registration:', error);
           // Don't fail the registration for this - company was already created successfully
         }
+      }
+
+      // 📊 Mark landing page visit as converted (if applicable)
+      try {
+        const ipAddress = (req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '').split(',')[0].trim();
+        if (ipAddress) {
+          // Update the most recent landing visit from this IP (within last 24 hours) as converted
+          await db.execute(sql`
+            UPDATE landing_visits
+            SET registered = true, company_id = ${company.id}
+            WHERE ip_address = ${ipAddress}
+            AND visited_at >= NOW() - INTERVAL '24 hours'
+            AND registered = false
+            ORDER BY visited_at DESC
+            LIMIT 1
+          `);
+          console.log(`📊 Landing page conversion tracked for IP: ${ipAddress}`);
+        }
+      } catch (error) {
+        console.error('⚠️ Non-critical error tracking landing conversion:', error);
+        // Don't fail registration for this - it's just analytics
       }
 
       res.status(201).json({
@@ -8773,6 +8795,131 @@ Responde directamente a este email para contactar con la persona.
       });
     }
   });
+
+  // ==================== LANDING PAGE ANALYTICS ====================
+  
+  // Public endpoint to track landing page visits
+  app.post('/api/track/landing-visit', async (req, res) => {
+    try {
+      const { referrer } = req.body;
+      const ipAddress = (req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '').split(',')[0].trim();
+      const userAgent = req.headers['user-agent'] || '';
+
+      // Create landing visit record
+      const visitData: schema.InsertLandingVisit = {
+        ipAddress,
+        userAgent,
+        referrer,
+        visitedAt: new Date(),
+        registered: false,
+      };
+
+      await db.insert(schema.landingVisits).values(visitData);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error tracking landing visit:', error);
+      res.status(500).json({ success: false, message: 'Error al registrar visita' });
+    }
+  });
+
+  // Super admin endpoint to get landing metrics
+  app.get('/api/super-admin/landing-metrics', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const now = new Date();
+      const thirtyDaysAgo = subDays(now, 30);
+      const sevenDaysAgo = subDays(now, 7);
+      const today = startOfDay(now);
+
+      // Get total visits (last 30 days)
+      const totalVisitsResult = await db.execute(sql`
+        SELECT COUNT(*) as count 
+        FROM landing_visits 
+        WHERE visited_at >= ${thirtyDaysAgo.toISOString()}
+      `);
+      const totalVisits = Number((totalVisitsResult.rows[0] as any).count);
+
+      // Get total registrations (conversions)
+      const totalRegistrationsResult = await db.execute(sql`
+        SELECT COUNT(*) as count 
+        FROM landing_visits 
+        WHERE registered = true
+        AND visited_at >= ${thirtyDaysAgo.toISOString()}
+      `);
+      const totalRegistrations = Number((totalRegistrationsResult.rows[0] as any).count);
+
+      // Get today's visits
+      const todayVisitsResult = await db.execute(sql`
+        SELECT COUNT(*) as count 
+        FROM landing_visits 
+        WHERE visited_at >= ${today.toISOString()}
+      `);
+      const todayVisits = Number((todayVisitsResult.rows[0] as any).count);
+
+      // Get daily visits for last 7 days
+      const dailyVisitsResult = await db.execute(sql`
+        SELECT 
+          DATE(visited_at) as date,
+          COUNT(*) as count
+        FROM landing_visits
+        WHERE visited_at >= ${sevenDaysAgo.toISOString()}
+        GROUP BY DATE(visited_at)
+        ORDER BY date DESC
+      `);
+      const dailyVisits = dailyVisitsResult.rows.map((row: any) => ({
+        date: row.date,
+        count: Number(row.count)
+      }));
+
+      const maxDailyVisits = Math.max(...dailyVisits.map(d => d.count), 1);
+
+      // Get country distribution (top 10)
+      const countriesResult = await db.execute(sql`
+        SELECT 
+          COALESCE(country, 'Desconocido') as country,
+          COUNT(*) as visits
+        FROM landing_visits
+        WHERE visited_at >= ${thirtyDaysAgo.toISOString()}
+        GROUP BY country
+        ORDER BY visits DESC
+        LIMIT 10
+      `);
+      
+      const countryFlags: Record<string, string> = {
+        'Spain': '🇪🇸',
+        'España': '🇪🇸',
+        'United States': '🇺🇸',
+        'France': '🇫🇷',
+        'Germany': '🇩🇪',
+        'United Kingdom': '🇬🇧',
+        'Italy': '🇮🇹',
+        'Portugal': '🇵🇹',
+        'Mexico': '🇲🇽',
+        'Argentina': '🇦🇷',
+        'Colombia': '🇨🇴',
+      };
+
+      const countries = countriesResult.rows.map((row: any) => ({
+        country: row.country,
+        visits: Number(row.visits),
+        flag: countryFlags[row.country] || '🌍'
+      }));
+
+      res.json({
+        totalVisits,
+        totalRegistrations,
+        todayVisits,
+        dailyVisits,
+        maxDailyVisits,
+        countries,
+      });
+    } catch (error: any) {
+      console.error('Error fetching landing metrics:', error);
+      res.status(500).json({ success: false, message: 'Error al obtener métricas' });
+    }
+  });
+
+  // ==================== END LANDING PAGE ANALYTICS ====================
 
   // Public endpoint to validate invitation token
   app.get('/api/invitations/validate/:token', async (req, res) => {

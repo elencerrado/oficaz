@@ -51,6 +51,25 @@ export default function Landing() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Track landing page visit
+  useEffect(() => {
+    const trackVisit = async () => {
+      try {
+        await fetch('/api/track/landing-visit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            referrer: document.referrer || '',
+          }),
+        });
+      } catch (error) {
+        console.error('Failed to track visit:', error);
+      }
+    };
+    
+    trackVisit();
+  }, []);
+
   // Check if public registration is enabled - defer after critical content loads
   const { data: registrationSettings } = useQuery({
     queryKey: ['/api/registration-status'],

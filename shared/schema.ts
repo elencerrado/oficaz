@@ -927,3 +927,26 @@ export const insertEmailCampaignSendSchema = createInsertSchema(emailCampaignSen
 
 export type EmailCampaignSend = typeof emailCampaignSends.$inferSelect;
 export type InsertEmailCampaignSend = z.infer<typeof insertEmailCampaignSendSchema>;
+
+// Landing Page Analytics
+export const landingVisits = pgTable("landing_visits", {
+  id: serial("id").primaryKey(),
+  visitedAt: timestamp("visited_at").defaultNow().notNull(),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  country: varchar("country", { length: 100 }),
+  city: varchar("city", { length: 100 }),
+  userAgent: text("user_agent"),
+  referrer: text("referrer"),
+  registered: boolean("registered").default(false).notNull(),
+  companyId: integer("company_id").references(() => companies.id),
+}, (table) => ({
+  visitedAtIdx: index("visited_at_idx").on(table.visitedAt),
+  countryIdx: index("country_idx").on(table.country),
+}));
+
+export const insertLandingVisitSchema = createInsertSchema(landingVisits).omit({
+  id: true,
+});
+
+export type LandingVisit = typeof landingVisits.$inferSelect;
+export type InsertLandingVisit = z.infer<typeof insertLandingVisitSchema>;
