@@ -505,7 +505,39 @@ export default function SuperAdminMarketing() {
                         <TableBody>
                           {prospects.map((prospect: any) => (
                             <TableRow key={prospect.id} className="border-white/20 hover:bg-white/5">
-                              <TableCell className="text-white font-medium">{prospect.email}</TableCell>
+                              <TableCell
+                                className="text-white font-medium cursor-pointer hover:bg-white/10"
+                                onDoubleClick={() => setEditingCell({ id: prospect.id, field: 'email' })}
+                              >
+                                {editingCell?.id === prospect.id && editingCell?.field === 'email' ? (
+                                  <Input
+                                    defaultValue={prospect.email || ''}
+                                    autoFocus
+                                    type="email"
+                                    className="bg-white/10 border-white/20 text-white h-8"
+                                    onBlur={(e) => {
+                                      if (e.target.value !== prospect.email) {
+                                        updateProspectInlineMutation.mutate({
+                                          prospectId: prospect.id,
+                                          field: 'email',
+                                          value: e.target.value || null,
+                                        });
+                                      } else {
+                                        setEditingCell(null);
+                                      }
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.currentTarget.blur();
+                                      } else if (e.key === 'Escape') {
+                                        setEditingCell(null);
+                                      }
+                                    }}
+                                  />
+                                ) : (
+                                  prospect.email
+                                )}
+                              </TableCell>
                               <TableCell
                                 className="text-white cursor-pointer hover:bg-white/10"
                                 onDoubleClick={() => setEditingCell({ id: prospect.id, field: 'name' })}

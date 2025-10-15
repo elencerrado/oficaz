@@ -8578,8 +8578,21 @@ Responde directamente a este email para contactar con la persona.
         return res.status(404).json({ success: false, message: 'Prospect no encontrado' });
       }
 
+      // Check if email is being updated and if it already exists
+      if (updates.email !== undefined && updates.email !== currentProspect.email) {
+        const [existingProspect] = await db.select()
+          .from(schema.emailProspects)
+          .where(eq(schema.emailProspects.email, updates.email))
+          .limit(1);
+        
+        if (existingProspect) {
+          return res.status(400).json({ success: false, message: 'Este email ya existe en otro prospect' });
+        }
+      }
+
       // Update only provided fields
       const updatedData: any = {};
+      if (updates.email !== undefined) updatedData.email = updates.email;
       if (updates.name !== undefined) updatedData.name = updates.name;
       if (updates.company !== undefined) updatedData.company = updates.company;
       if (updates.phone !== undefined) updatedData.phone = updates.phone;
