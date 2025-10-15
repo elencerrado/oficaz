@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Mail, Eye, MousePointerClick, UserCheck, Calendar, BarChart3, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
+import { Mail, Eye, MousePointerClick, UserCheck, Calendar, BarChart3, CheckCircle, XCircle, ArrowRight, CreditCard, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -48,21 +48,36 @@ export function ProspectStatsDialog({ prospect, open, onOpenChange }: ProspectSt
             {/* Registration Status - Prominente */}
             <div className={`rounded-lg p-4 border-2 ${
               campaignHistory.registration 
-                ? 'bg-green-500/20 border-green-400/50' 
+                ? campaignHistory.registration.subscriptionStatus === 'active'
+                  ? 'bg-green-500/20 border-green-400/50' 
+                  : 'bg-yellow-500/20 border-yellow-400/50'
                 : 'bg-gray-500/20 border-gray-400/30'
             }`}>
               <div className="flex items-center gap-3">
                 {campaignHistory.registration ? (
-                  <>
-                    <CheckCircle className="w-6 h-6 text-green-400" />
-                    <div className="flex-1">
-                      <p className="text-green-300 font-semibold text-lg">✓ Cliente Registrado</p>
-                      <p className="text-white text-sm mt-1">Empresa: {campaignHistory.registration.companyName}</p>
-                      <p className="text-green-200/70 text-xs mt-0.5">
-                        {format(new Date(campaignHistory.registration.registeredAt), "dd/MM/yyyy 'a las' HH:mm", { locale: es })}
-                      </p>
-                    </div>
-                  </>
+                  campaignHistory.registration.subscriptionStatus === 'active' ? (
+                    <>
+                      <CreditCard className="w-6 h-6 text-green-400" />
+                      <div className="flex-1">
+                        <p className="text-green-300 font-semibold text-lg">✓ Cliente con Suscripción Activa</p>
+                        <p className="text-white text-sm mt-1">Empresa: {campaignHistory.registration.companyName}</p>
+                        <p className="text-green-200/70 text-xs mt-0.5">
+                          {format(new Date(campaignHistory.registration.registeredAt), "dd/MM/yyyy 'a las' HH:mm", { locale: es })}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="w-6 h-6 text-yellow-400" />
+                      <div className="flex-1">
+                        <p className="text-yellow-300 font-semibold text-lg">⏳ Cliente Registrado (Prueba)</p>
+                        <p className="text-white text-sm mt-1">Empresa: {campaignHistory.registration.companyName}</p>
+                        <p className="text-yellow-200/70 text-xs mt-0.5">
+                          {format(new Date(campaignHistory.registration.registeredAt), "dd/MM/yyyy 'a las' HH:mm", { locale: es })}
+                        </p>
+                      </div>
+                    </>
+                  )
                 ) : (
                   <>
                     <XCircle className="w-6 h-6 text-gray-400" />
@@ -84,10 +99,10 @@ export function ProspectStatsDialog({ prospect, open, onOpenChange }: ProspectSt
                 const totalOpened = campaignHistory.campaigns.filter((c: any) => c.openedAt).length;
                 const totalClicked = campaignHistory.campaigns.filter((c: any) => c.clickedAt).length;
                 const isRegistered = !!campaignHistory.registration;
+                const hasActiveSub = campaignHistory.registration?.subscriptionStatus === 'active';
                 
                 const openRate = totalCampaigns > 0 ? Math.round((totalOpened / totalCampaigns) * 100) : 0;
                 const clickRate = totalOpened > 0 ? Math.round((totalClicked / totalOpened) * 100) : 0;
-                const conversionRate = totalClicked > 0 && isRegistered ? 100 : 0;
                 
                 return (
                   <div className="space-y-3">
@@ -157,21 +172,43 @@ export function ProspectStatsDialog({ prospect, open, onOpenChange }: ProspectSt
                       <ArrowRight className="w-5 h-5 text-white/40 rotate-90" />
                     </div>
                     
-                    {/* Registrado */}
+                    {/* Registrado (Trial) */}
                     <div className="flex items-center gap-3">
                       <div className="flex-shrink-0 w-32">
-                        <div className="flex items-center gap-2 text-green-300">
+                        <div className="flex items-center gap-2 text-yellow-300">
                           <UserCheck className="w-4 h-4" />
                           <span className="text-sm font-medium">Registrado</span>
                         </div>
                       </div>
                       <div className="flex-1">
-                        <div className={`h-8 rounded flex items-center px-3 ${isRegistered ? 'bg-green-500/30' : 'bg-gray-500/20'}`} style={{ width: isRegistered ? '100%' : '20%', minWidth: '20%' }}>
+                        <div className={`h-8 rounded flex items-center px-3 ${isRegistered ? 'bg-yellow-500/30' : 'bg-gray-500/20'}`} style={{ width: isRegistered ? '100%' : '20%', minWidth: '20%' }}>
                           <span className="text-white font-bold">{isRegistered ? 1 : 0}</span>
                         </div>
                       </div>
                       <div className="w-16 text-right">
                         <span className="text-white font-semibold">{isRegistered ? '✓' : '-'}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-center">
+                      <ArrowRight className="w-5 h-5 text-white/40 rotate-90" />
+                    </div>
+                    
+                    {/* Suscripción Activa (Pagando) */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0 w-32">
+                        <div className="flex items-center gap-2 text-green-300">
+                          <CreditCard className="w-4 h-4" />
+                          <span className="text-sm font-medium">Suscripción</span>
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className={`h-8 rounded flex items-center px-3 ${hasActiveSub ? 'bg-green-500/30' : 'bg-gray-500/20'}`} style={{ width: hasActiveSub ? '100%' : '20%', minWidth: '20%' }}>
+                          <span className="text-white font-bold">{hasActiveSub ? 1 : 0}</span>
+                        </div>
+                      </div>
+                      <div className="w-16 text-right">
+                        <span className="text-white font-semibold">{hasActiveSub ? '✓' : '-'}</span>
                       </div>
                     </div>
                   </div>
