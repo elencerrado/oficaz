@@ -8561,6 +8561,43 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Update email prospect (inline editing)
+  app.patch('/api/super-admin/email-prospects/:id', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const prospectId = parseInt(req.params.id);
+      const updates = req.body;
+      
+      // Get current prospect
+      const [currentProspect] = await db.select()
+        .from(schema.emailProspects)
+        .where(eq(schema.emailProspects.id, prospectId))
+        .limit(1);
+
+      if (!currentProspect) {
+        return res.status(404).json({ success: false, message: 'Prospect no encontrado' });
+      }
+
+      // Update only provided fields
+      const updatedData: any = {};
+      if (updates.name !== undefined) updatedData.name = updates.name;
+      if (updates.company !== undefined) updatedData.company = updates.company;
+      if (updates.phone !== undefined) updatedData.phone = updates.phone;
+      if (updates.location !== undefined) updatedData.location = updates.location;
+      if (updates.notes !== undefined) updatedData.notes = updates.notes;
+      if (updates.tags !== undefined) updatedData.tags = updates.tags;
+      if (updates.status !== undefined) updatedData.status = updates.status;
+
+      await db.update(schema.emailProspects)
+        .set(updatedData)
+        .where(eq(schema.emailProspects.id, prospectId));
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Error updating email prospect:', error);
+      res.status(500).json({ success: false, message: 'Error al actualizar prospect' });
+    }
+  });
+
   // Endpoint to manage company custom features
   app.patch('/api/companies/custom-features', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
     try {
