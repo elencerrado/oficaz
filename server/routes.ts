@@ -8501,6 +8501,55 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Get prospect campaign history
+  app.get('/api/super-admin/email-prospects/:id/campaign-history', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const prospectId = parseInt(req.params.id);
+      
+      // Get prospect email
+      const [prospect] = await db.select()
+        .from(schema.emailProspects)
+        .where(eq(schema.emailProspects.id, prospectId));
+      
+      if (!prospect) {
+        return res.status(404).json({ success: false, message: 'Prospect no encontrado' });
+      }
+      
+      // Get all campaign sends for this prospect email
+      const sends = await db.select({
+        id: schema.emailCampaignSends.id,
+        campaignId: schema.emailCampaignSends.campaignId,
+        campaignName: schema.emailCampaigns.name,
+        sentAt: schema.emailCampaignSends.sentAt,
+        openedAt: schema.emailCampaignSends.openedAt,
+        clickedAt: schema.emailCampaignSends.clickedAt,
+        status: schema.emailCampaignSends.status,
+      })
+        .from(schema.emailCampaignSends)
+        .innerJoin(schema.emailCampaigns, eq(schema.emailCampaignSends.campaignId, schema.emailCampaigns.id))
+        .where(eq(schema.emailCampaignSends.recipientEmail, prospect.email))
+        .orderBy(desc(schema.emailCampaignSends.sentAt));
+      
+      // Check if prospect email led to registration
+      const [registration] = await db.select({
+        companyId: schema.companies.id,
+        companyName: schema.companies.name,
+        registeredAt: schema.companies.createdAt,
+        campaignId: schema.companies.emailCampaignId,
+      })
+        .from(schema.companies)
+        .where(eq(schema.companies.companyEmail, prospect.email));
+      
+      res.json({
+        campaigns: sends,
+        registration: registration || null,
+      });
+    } catch (error: any) {
+      console.error('Error fetching prospect campaign history:', error);
+      res.status(500).json({ success: false, message: 'Error al obtener historial de campañas' });
+    }
+  });
+
   // Delete email prospect
   app.delete('/api/super-admin/email-prospects/:id', authenticateSuperAdmin, async (req: any, res) => {
     try {
