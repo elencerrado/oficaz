@@ -189,6 +189,14 @@ export function RecipientSelector({ selectedEmails, onSelectionChange, audienceT
   const totalEmails = filteredActiveUsers.length + filteredTrialUsers.length + filteredBlockedUsers.length + filteredCancelledUsers.length + prospects.length;
   const allSelected = totalEmails > 0 && selectedEmails.length === totalEmails;
 
+  // Para tipo "subscribers", combinar todos los usuarios en una lista simple
+  const allSubscribers = [
+    ...filteredActiveUsers,
+    ...filteredTrialUsers,
+    ...filteredBlockedUsers,
+    ...filteredCancelledUsers
+  ];
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -206,67 +214,101 @@ export function RecipientSelector({ selectedEmails, onSelectionChange, audienceT
         </Button>
       </div>
       
-      <Accordion type="multiple" className="w-full space-y-2">
-        {categories.map(({ key, label, users, color }) => {
-          if (users.length === 0) return null;
-          
-          const categoryEmails = users.map(u => u.email);
-          const selectedCount = categoryEmails.filter(email => selectedEmails.includes(email)).length;
-          const allSelected = selectedCount === users.length;
-          const someSelected = selectedCount > 0 && selectedCount < users.length;
-          
-          return (
-            <AccordionItem 
-              key={key} 
-              value={key}
-              className="border border-white/20 rounded-lg bg-white/5 overflow-hidden"
-            >
-              <AccordionTrigger className="px-4 py-3 hover:bg-white/5 hover:no-underline">
-                <div className="flex items-center gap-3 w-full">
+      {audienceType === 'subscribers' ? (
+        // Lista plana para suscritos
+        <div className="border border-white/20 rounded-lg bg-white/5 p-4">
+          {allSubscribers.length === 0 ? (
+            <p className="text-white/60 text-center py-4">No hay usuarios suscritos disponibles</p>
+          ) : (
+            <div className="space-y-1.5">
+              {allSubscribers.map((user: any) => (
+                <div 
+                  key={user.email}
+                  className="flex items-center gap-3 p-2 rounded hover:bg-white/5"
+                >
                   <Checkbox
-                    checked={allSelected}
-                    data-state={someSelected ? 'indeterminate' : undefined}
-                    onCheckedChange={() => toggleCategory(users)}
-                    onClick={(e) => e.stopPropagation()}
+                    checked={selectedEmails.includes(user.email)}
+                    onCheckedChange={() => toggleEmail(user.email)}
                     className="border-white/30 data-[state=checked]:bg-blue-600"
                   />
-                  <div className="flex-1 text-left">
-                    <span className="text-white font-medium">{label}</span>
-                    <span className="text-white/60 text-sm ml-2">
-                      ({selectedCount}/{users.length})
-                    </span>
+                  <div 
+                    className="flex-1 min-w-0 cursor-pointer"
+                    onClick={() => toggleEmail(user.email)}
+                  >
+                    <p className="text-sm text-white truncate">{user.email}</p>
+                    {user.companyName && (
+                      <p className="text-xs text-white/50 truncate">{user.companyName}</p>
+                    )}
                   </div>
                 </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-3">
-                <div className="space-y-1.5 mt-2">
-                  {users.map((user: any) => (
-                    <div 
-                      key={user.email}
-                      className="flex items-center gap-3 p-2 rounded hover:bg-white/5"
-                    >
-                      <Checkbox
-                        checked={selectedEmails.includes(user.email)}
-                        onCheckedChange={() => toggleEmail(user.email)}
-                        className="border-white/30 data-[state=checked]:bg-blue-600"
-                      />
-                      <div 
-                        className="flex-1 min-w-0 cursor-pointer"
-                        onClick={() => toggleEmail(user.email)}
-                      >
-                        <p className="text-sm text-white truncate">{user.email}</p>
-                        {user.companyName && (
-                          <p className="text-xs text-white/50 truncate">{user.companyName}</p>
-                        )}
-                      </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        // Acordeones para campañas puntuales
+        <Accordion type="multiple" className="w-full space-y-2">
+          {categories.map(({ key, label, users, color }) => {
+            if (users.length === 0) return null;
+            
+            const categoryEmails = users.map(u => u.email);
+            const selectedCount = categoryEmails.filter(email => selectedEmails.includes(email)).length;
+            const allSelected = selectedCount === users.length;
+            const someSelected = selectedCount > 0 && selectedCount < users.length;
+            
+            return (
+              <AccordionItem 
+                key={key} 
+                value={key}
+                className="border border-white/20 rounded-lg bg-white/5 overflow-hidden"
+              >
+                <AccordionTrigger className="px-4 py-3 hover:bg-white/5 hover:no-underline">
+                  <div className="flex items-center gap-3 w-full">
+                    <Checkbox
+                      checked={allSelected}
+                      data-state={someSelected ? 'indeterminate' : undefined}
+                      onCheckedChange={() => toggleCategory(users)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="border-white/30 data-[state=checked]:bg-blue-600"
+                    />
+                    <div className="flex-1 text-left">
+                      <span className="text-white font-medium">{label}</span>
+                      <span className="text-white/60 text-sm ml-2">
+                        ({selectedCount}/{users.length})
+                      </span>
                     </div>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-3">
+                  <div className="space-y-1.5 mt-2">
+                    {users.map((user: any) => (
+                      <div 
+                        key={user.email}
+                        className="flex items-center gap-3 p-2 rounded hover:bg-white/5"
+                      >
+                        <Checkbox
+                          checked={selectedEmails.includes(user.email)}
+                          onCheckedChange={() => toggleEmail(user.email)}
+                          className="border-white/30 data-[state=checked]:bg-blue-600"
+                        />
+                        <div 
+                          className="flex-1 min-w-0 cursor-pointer"
+                          onClick={() => toggleEmail(user.email)}
+                        >
+                          <p className="text-sm text-white truncate">{user.email}</p>
+                          {user.companyName && (
+                            <p className="text-xs text-white/50 truncate">{user.companyName}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      )}
     </div>
   );
 }
