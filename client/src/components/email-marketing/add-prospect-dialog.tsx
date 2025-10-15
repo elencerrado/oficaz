@@ -25,7 +25,7 @@ export function AddProspectDialog() {
 
   const createProspectMutation = useMutation({
     mutationFn: async (data: any) => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const prospectData = {
         ...data,
         tags: data.tags ? data.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],

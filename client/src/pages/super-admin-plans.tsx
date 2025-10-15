@@ -89,7 +89,7 @@ export default function SuperAdminPlans() {
   const { data: plans } = useQuery({
     queryKey: ['/api/super-admin/subscription-plans'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/subscription-plans', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -106,7 +106,7 @@ export default function SuperAdminPlans() {
   const { data: dbFeatures } = useQuery({
     queryKey: ['/api/super-admin/features'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/features', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -126,7 +126,7 @@ export default function SuperAdminPlans() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('superAdminToken')}`,
+          'Authorization': `Bearer ${sessionStorage.getItem('superAdminToken')}`,
         },
         body: JSON.stringify(data),
       });
@@ -162,7 +162,7 @@ export default function SuperAdminPlans() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('superAdminToken')}`,
+          'Authorization': `Bearer ${sessionStorage.getItem('superAdminToken')}`,
         },
         body: JSON.stringify(data),
       });

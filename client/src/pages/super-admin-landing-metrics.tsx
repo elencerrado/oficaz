@@ -9,7 +9,7 @@ export default function SuperAdminLandingMetrics() {
   const { data: metrics } = useQuery({
     queryKey: ['/api/super-admin/landing-metrics'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/landing-metrics', {
         headers: {
           'Authorization': `Bearer ${token}`,

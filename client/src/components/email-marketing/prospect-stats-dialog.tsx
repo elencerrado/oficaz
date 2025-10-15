@@ -14,7 +14,7 @@ export function ProspectStatsDialog({ prospect, open, onOpenChange }: ProspectSt
   const { data: campaignHistory, isLoading } = useQuery({
     queryKey: ['/api/super-admin/email-prospects', prospect?.id, 'campaign-history'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-prospects/${prospect.id}/campaign-history`, {
         headers: {
           'Authorization': `Bearer ${token}`,

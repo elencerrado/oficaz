@@ -74,8 +74,8 @@ export default function SuperAdminSecurity() {
 
       const data = await response.json();
       
-      // Store super admin token
-      localStorage.setItem("superAdminToken", data.token);
+      // 🔒 SECURITY: Store super admin token in sessionStorage (expires when browser closes)
+      sessionStorage.setItem("superAdminToken", data.token);
       
       setCurrentStep({ step: "verified" });
       

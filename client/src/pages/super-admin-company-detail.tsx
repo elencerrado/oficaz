@@ -146,7 +146,7 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
   // Delete company mutation
   const deleteCompanyMutation = useMutation({
     mutationFn: async (confirmationText: string) => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/companies/${companyId}/delete-permanently`, {
         method: 'DELETE',
         headers: {

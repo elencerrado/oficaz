@@ -25,7 +25,7 @@ export function CampaignHistoryDialog({ campaignId, campaignName, open, onOpenCh
   const { data: sends = [], isLoading } = useQuery<EmailSend[]>({
     queryKey: ['/api/super-admin/email-campaigns', campaignId, 'history'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-campaigns/${campaignId}/history`, {
         headers: {
           'Authorization': `Bearer ${token}`,

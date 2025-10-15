@@ -34,7 +34,7 @@ export function EditProspectDialog({ prospect, open, onOpenChange }: EditProspec
   const { data: campaignHistory } = useQuery({
     queryKey: ['/api/super-admin/email-prospects', prospect?.id, 'campaign-history'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-prospects/${prospect.id}/campaign-history`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -62,7 +62,7 @@ export function EditProspectDialog({ prospect, open, onOpenChange }: EditProspec
 
   const updateProspectMutation = useMutation({
     mutationFn: async (data: any) => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const prospectData = {
         ...data,
         tags: data.tags ? data.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],

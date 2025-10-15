@@ -240,7 +240,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
 
   const updateCampaignMutation = useMutation({
     mutationFn: async (data: any) => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-campaigns/${campaign.id}`, {
         method: 'PATCH',
         headers: {
@@ -271,7 +271,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
 
   const deleteCampaignMutation = useMutation({
     mutationFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-campaigns/${campaign.id}`, {
         method: 'DELETE',
         headers: {

@@ -239,8 +239,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setAuthData(null);
     
-    // Clear auth data efficiently - only remove specific items instead of clearing everything
-    const superAdminToken = localStorage.getItem('superAdminToken');
+    // Preserve only theme (DO NOT preserve superAdminToken anymore - it's session-based)
     const theme = localStorage.getItem('theme');
     
     // Clear only auth-related items instead of localStorage.clear()
@@ -248,10 +247,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('company');
+    
+    // 🔒 SECURITY: Clear sessionStorage (includes superAdminToken)
     sessionStorage.clear();
     
-    // Restore preserved items
-    if (superAdminToken) localStorage.setItem('superAdminToken', superAdminToken);
+    // Restore only theme
     if (theme) localStorage.setItem('theme', theme);
     
     // Clear queries asynchronously to avoid blocking UI

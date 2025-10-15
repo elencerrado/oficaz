@@ -69,7 +69,8 @@ export function SuperAdminSidebar({ isOpen, onClose }: SuperAdminSidebarProps) {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('superAdminToken');
+    // 🔒 SECURITY: Clear sessionStorage token
+    sessionStorage.removeItem('superAdminToken');
     window.location.href = '/super-admin';
   };
 

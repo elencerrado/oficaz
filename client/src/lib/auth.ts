@@ -61,12 +61,11 @@ export function clearAuthData() {
 export function forceLogout() {
   // Clear all possible auth storage
   localStorage.removeItem('authData');
-  localStorage.removeItem('superAdminToken');
   localStorage.removeItem('token');
   localStorage.removeItem('user');
   localStorage.removeItem('company');
   
-  // Clear session storage as well
+  // Clear session storage as well (including superAdminToken)
   sessionStorage.clear();
   
   // Reload page to reset state completely
@@ -74,8 +73,8 @@ export function forceLogout() {
 }
 
 export function getAuthHeaders(): HeadersInit {
-  // Check for super admin token first (for super admin operations)
-  const superAdminToken = localStorage.getItem('superAdminToken');
+  // 🔒 SECURITY: Super admin token now stored in sessionStorage (closes on browser close)
+  const superAdminToken = sessionStorage.getItem('superAdminToken');
   if (superAdminToken) {
     console.log('🔑 Using super admin token');
     return { Authorization: `Bearer ${superAdminToken}` };
@@ -113,9 +112,14 @@ export function clearExpiredTokens() {
     clearAuthData();
   }
   
-  const superAdminToken = localStorage.getItem('superAdminToken');
+  // 🔒 SECURITY: Check sessionStorage for super admin token
+  const superAdminToken = sessionStorage.getItem('superAdminToken');
   if (superAdminToken && isTokenExpired(superAdminToken)) {
-    console.log('Clearing expired super admin token');
-    localStorage.removeItem('superAdminToken');
+    console.log('🔒 Clearing expired super admin token');
+    sessionStorage.removeItem('superAdminToken');
+    // Redirect to super admin login
+    if (window.location.pathname.startsWith('/super-admin')) {
+      window.location.href = '/super-admin';
+    }
   }
 }

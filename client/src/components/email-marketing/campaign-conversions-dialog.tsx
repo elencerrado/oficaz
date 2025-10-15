@@ -25,7 +25,7 @@ export function CampaignConversionsDialog({ campaign, open, onOpenChange }: Camp
   const { data: conversions, isLoading } = useQuery({
     queryKey: [`/api/super-admin/email-campaigns/${campaign?.id}/conversions`],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-campaigns/${campaign.id}/conversions`, {
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -5612,6 +5612,7 @@ Responde directamente a este email para contactar con la persona.
       }
 
       // Generate final super admin JWT token
+      // 🔒 SECURITY: Token expires in 2 hours for better security
       const superAdminToken = jwt.sign(
         { 
           type: 'super_admin_access',
@@ -5620,7 +5621,7 @@ Responde directamente a este email para contactar con la persona.
           accessGrantedAt: Date.now()
         },
         process.env.JWT_SECRET || 'secret',
-        { expiresIn: '24h' }
+        { expiresIn: '2h' }
       );
 
       console.log('✅ SuperAdmin login successful - Access granted');

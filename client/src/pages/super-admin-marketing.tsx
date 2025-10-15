@@ -44,7 +44,7 @@ export default function SuperAdminMarketing() {
   const { data: campaigns } = useQuery({
     queryKey: ['/api/super-admin/email-campaigns'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/email-campaigns', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -60,7 +60,7 @@ export default function SuperAdminMarketing() {
   const { data: prospects } = useQuery({
     queryKey: ['/api/super-admin/email-prospects'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/email-prospects', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -76,7 +76,7 @@ export default function SuperAdminMarketing() {
   const { data: registeredUsers } = useQuery({
     queryKey: ['/api/super-admin/registered-users-stats'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/registered-users-stats', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -92,7 +92,7 @@ export default function SuperAdminMarketing() {
   // Send campaign mutation
   const sendCampaignMutation = useMutation({
     mutationFn: async (campaignId: number) => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-campaigns/${campaignId}/send`, {
         method: 'POST',
         headers: {
@@ -124,7 +124,7 @@ export default function SuperAdminMarketing() {
   // Duplicate campaign mutation
   const duplicateCampaignMutation = useMutation({
     mutationFn: async (campaignId: number) => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-campaigns/${campaignId}/duplicate`, {
         method: 'POST',
         headers: {
@@ -156,7 +156,7 @@ export default function SuperAdminMarketing() {
   // Delete prospect mutation
   const deleteProspectMutation = useMutation({
     mutationFn: async (prospectId: number) => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-prospects/${prospectId}`, {
         method: 'DELETE',
         headers: {
@@ -185,7 +185,7 @@ export default function SuperAdminMarketing() {
   // Update prospect inline mutation
   const updateProspectInlineMutation = useMutation({
     mutationFn: async ({ prospectId, field, value }: { prospectId: number; field: string; value: any }) => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-prospects/${prospectId}`, {
         method: 'PATCH',
         headers: {

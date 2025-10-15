@@ -128,7 +128,7 @@ export function CreateCampaignDialog() {
 
   const createCampaignMutation = useMutation({
     mutationFn: async (data: any) => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/email-campaigns', {
         method: 'POST',
         headers: {

@@ -43,7 +43,7 @@ export default function SuperAdminInvitations() {
   const { data: settings } = useQuery<RegistrationSettings>({
     queryKey: ['/api/super-admin/registration-settings'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/registration-settings', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -58,7 +58,7 @@ export default function SuperAdminInvitations() {
   const { data: invitations = [], isLoading: isLoadingInvitations } = useQuery<Invitation[]>({
     queryKey: ['/api/super-admin/invitations'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/invitations', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -72,7 +72,7 @@ export default function SuperAdminInvitations() {
   // Toggle registration settings
   const toggleRegistrationMutation = useMutation({
     mutationFn: async (enabled: boolean) => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/registration-settings', {
         method: 'PATCH',
         headers: {

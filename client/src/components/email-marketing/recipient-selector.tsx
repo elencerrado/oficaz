@@ -16,7 +16,7 @@ export function RecipientSelector({ selectedEmails, onSelectionChange, audienceT
   const { data: activeUsers = [], isLoading: loadingActive } = useQuery({
     queryKey: ['/api/super-admin/recipients', 'active'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/recipients/active', {
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -33,7 +33,7 @@ export function RecipientSelector({ selectedEmails, onSelectionChange, audienceT
   const { data: trialUsers = [], isLoading: loadingTrial } = useQuery({
     queryKey: ['/api/super-admin/recipients', 'trial'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/recipients/trial', {
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -50,7 +50,7 @@ export function RecipientSelector({ selectedEmails, onSelectionChange, audienceT
   const { data: blockedUsers = [], isLoading: loadingBlocked } = useQuery({
     queryKey: ['/api/super-admin/recipients', 'blocked'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/recipients/blocked', {
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -67,7 +67,7 @@ export function RecipientSelector({ selectedEmails, onSelectionChange, audienceT
   const { data: cancelledUsers = [], isLoading: loadingCancelled } = useQuery({
     queryKey: ['/api/super-admin/recipients', 'cancelled'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/recipients/cancelled', {
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -84,7 +84,7 @@ export function RecipientSelector({ selectedEmails, onSelectionChange, audienceT
   const { data: prospects = [], isLoading: loadingProspects } = useQuery({
     queryKey: ['/api/super-admin/email-prospects'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
+      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/email-prospects', {
         headers: { 
           'Authorization': `Bearer ${token}`,

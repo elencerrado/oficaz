@@ -50,6 +50,7 @@ Preferred communication style: Simple, everyday language.
 - **File Uploads**: Multer with Sharp (image compression), with specific handling for iOS devices.
 - **Session Management**: Express sessions with PostgreSQL store.
 - **Security**: Helmet for CSP, CORS, rate limiting, HSTS, X-XSS-Protection, Referrer-Policy; SQL injection protection via parameterized queries. SuperAdmin access is exclusive via email verification (`soy@oficaz.es`).
+- **SuperAdmin Security**: JWT tokens expire in 2 hours (not 24h); tokens stored in `sessionStorage` (auto-logout on browser close); automatic token expiration check with redirect to login; no token persistence across browser sessions.
 - **Core Modules**: Authentication, Time Tracking, Vacation Management, Document Management, Messaging, Administrative Features, Subscription Management, Reminders, Email Marketing (SuperAdmin).
 - **Account Management**: Includes a 30-day grace period for account deletion with a recovery process that bypasses the registration wizard. Cancelled accounts are immediately blocked.
 - **Data Integrity**: Break periods must belong to the current work session. Orphaned documents (DB records without physical files) are automatically removed.
