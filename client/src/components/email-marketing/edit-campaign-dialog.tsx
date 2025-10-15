@@ -214,6 +214,15 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
           </tr>
           ` : ''}
           
+          <!-- WhatsApp Contact -->
+          <tr>
+            <td style="padding: 24px 40px; text-align: center; background-color: #ffffff;">
+              <a href="https://wa.me/34614028600" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #25D366; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-size: 16px; font-weight: 600; border: none;">
+                💬 Escríbenos por WhatsApp
+              </a>
+            </td>
+          </tr>
+          
           <!-- Footer -->
           <tr>
             <td style="background-color: #f8f9fa; padding: 30px 40px; border-top: 1px solid #e9ecef; text-align: center;">

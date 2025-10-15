@@ -330,6 +330,30 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
                 </td>
               </tr>
 
+              {/* WhatsApp Contact */}
+              <tr>
+                <td style={{ padding: '24px 40px', textAlign: 'center', backgroundColor: '#ffffff' }}>
+                  <a 
+                    href="https://wa.me/34614028600" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ 
+                      display: 'inline-block',
+                      backgroundColor: '#25D366', 
+                      color: '#ffffff', 
+                      padding: '14px 28px', 
+                      borderRadius: '8px', 
+                      textDecoration: 'none',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      border: 'none'
+                    }}
+                  >
+                    💬 Escríbenos por WhatsApp
+                  </a>
+                </td>
+              </tr>
+
               {/* Footer */}
               <tr>
                 <td
