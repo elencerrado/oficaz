@@ -37,7 +37,7 @@ export default function SuperAdminMarketing() {
   const [editingProspect, setEditingProspect] = useState<any>(null);
   const [statsProspect, setStatsProspect] = useState<any>(null);
   const [isTableView, setIsTableView] = useState(false);
-  const [editingCell, setEditingCell] = useState<{ id: number; field: string } | null>(null);
+  const [editingCell, setEditingCell] = useState<{ id: number | string; field: string } | null>(null);
   const [tagInput, setTagInput] = useState('');
   const { toast} = useToast();
   const queryClient = useQueryClient();
@@ -216,6 +216,42 @@ export default function SuperAdminMarketing() {
       toast({
         title: 'Error',
         description: 'No se pudo actualizar el prospect',
+        variant: 'destructive',
+      });
+      setEditingCell(null);
+    },
+  });
+
+  // Create prospect from empty row mutation
+  const createProspectFromRowMutation = useMutation({
+    mutationFn: async ({ field, value }: { field: string; value: any }) => {
+      const token = sessionStorage.getItem('superAdminToken');
+      const prospectData: any = { [field]: value };
+      
+      // If field is not email, we need a placeholder email
+      if (field !== 'email') {
+        prospectData.email = `temp-${Date.now()}@placeholder.com`;
+      }
+      
+      const response = await fetch('/api/super-admin/email-prospects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(prospectData),
+      });
+      if (!response.ok) throw new Error('Failed to create prospect');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-prospects'] });
+      setEditingCell(null);
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'No se pudo crear el prospect',
         variant: 'destructive',
       });
       setEditingCell(null);
@@ -514,24 +550,40 @@ export default function SuperAdminMarketing() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {prospects.map((prospect: any) => (
+                          {[...prospects, { id: 'new', email: '', name: '', company: '', phone: '', location: '', tags: [], notes: '' }].map((prospect: any) => (
                             <TableRow key={prospect.id} className="border-white/20 hover:bg-white/5">
                               <TableCell
                                 className="text-white font-medium cursor-pointer hover:bg-white/10"
-                                onDoubleClick={() => setEditingCell({ id: prospect.id, field: 'email' })}
+                                onClick={() => {
+                                  if (prospect.id === 'new') {
+                                    setEditingCell({ id: 'new', field: 'email' });
+                                  }
+                                }}
+                                onDoubleClick={() => {
+                                  if (prospect.id !== 'new') {
+                                    setEditingCell({ id: prospect.id, field: 'email' });
+                                  }
+                                }}
                               >
                                 {editingCell?.id === prospect.id && editingCell?.field === 'email' ? (
                                   <Input
                                     defaultValue={prospect.email || ''}
                                     autoFocus
                                     type="email"
+                                    placeholder={prospect.id === 'new' ? 'Email...' : ''}
                                     className="bg-white/10 border-white/20 text-white h-8"
                                     onBlur={(e) => {
-                                      if (e.target.value !== prospect.email) {
+                                      const value = e.target.value.trim();
+                                      if (prospect.id === 'new' && value) {
+                                        createProspectFromRowMutation.mutate({
+                                          field: 'email',
+                                          value,
+                                        });
+                                      } else if (prospect.id !== 'new' && value !== prospect.email) {
                                         updateProspectInlineMutation.mutate({
                                           prospectId: prospect.id,
                                           field: 'email',
-                                          value: e.target.value || null,
+                                          value: value || null,
                                         });
                                       } else {
                                         setEditingCell(null);
@@ -546,24 +598,40 @@ export default function SuperAdminMarketing() {
                                     }}
                                   />
                                 ) : (
-                                  prospect.email
+                                  prospect.email || (prospect.id === 'new' ? <span className="text-white/40 italic">Email...</span> : '')
                                 )}
                               </TableCell>
                               <TableCell
                                 className="text-white cursor-pointer hover:bg-white/10"
-                                onDoubleClick={() => setEditingCell({ id: prospect.id, field: 'name' })}
+                                onClick={() => {
+                                  if (prospect.id === 'new') {
+                                    setEditingCell({ id: 'new', field: 'name' });
+                                  }
+                                }}
+                                onDoubleClick={() => {
+                                  if (prospect.id !== 'new') {
+                                    setEditingCell({ id: prospect.id, field: 'name' });
+                                  }
+                                }}
                               >
                                 {editingCell?.id === prospect.id && editingCell?.field === 'name' ? (
                                   <Input
                                     defaultValue={prospect.name || ''}
                                     autoFocus
+                                    placeholder={prospect.id === 'new' ? 'Nombre...' : ''}
                                     className="bg-white/10 border-white/20 text-white h-8"
                                     onBlur={(e) => {
-                                      if (e.target.value !== prospect.name) {
+                                      const value = e.target.value.trim();
+                                      if (prospect.id === 'new' && value) {
+                                        createProspectFromRowMutation.mutate({
+                                          field: 'name',
+                                          value,
+                                        });
+                                      } else if (prospect.id !== 'new' && value !== prospect.name) {
                                         updateProspectInlineMutation.mutate({
                                           prospectId: prospect.id,
                                           field: 'name',
-                                          value: e.target.value || null,
+                                          value: value || null,
                                         });
                                       } else {
                                         setEditingCell(null);
@@ -578,24 +646,40 @@ export default function SuperAdminMarketing() {
                                     }}
                                   />
                                 ) : (
-                                  prospect.name || '-'
+                                  prospect.name || (prospect.id === 'new' ? <span className="text-white/40 italic">Nombre...</span> : '-')
                                 )}
                               </TableCell>
                               <TableCell
                                 className="text-white cursor-pointer hover:bg-white/10"
-                                onDoubleClick={() => setEditingCell({ id: prospect.id, field: 'company' })}
+                                onClick={() => {
+                                  if (prospect.id === 'new') {
+                                    setEditingCell({ id: 'new', field: 'company' });
+                                  }
+                                }}
+                                onDoubleClick={() => {
+                                  if (prospect.id !== 'new') {
+                                    setEditingCell({ id: prospect.id, field: 'company' });
+                                  }
+                                }}
                               >
                                 {editingCell?.id === prospect.id && editingCell?.field === 'company' ? (
                                   <Input
                                     defaultValue={prospect.company || ''}
                                     autoFocus
+                                    placeholder={prospect.id === 'new' ? 'Empresa...' : ''}
                                     className="bg-white/10 border-white/20 text-white h-8"
                                     onBlur={(e) => {
-                                      if (e.target.value !== prospect.company) {
+                                      const value = e.target.value.trim();
+                                      if (prospect.id === 'new' && value) {
+                                        createProspectFromRowMutation.mutate({
+                                          field: 'company',
+                                          value,
+                                        });
+                                      } else if (prospect.id !== 'new' && value !== prospect.company) {
                                         updateProspectInlineMutation.mutate({
                                           prospectId: prospect.id,
                                           field: 'company',
-                                          value: e.target.value || null,
+                                          value: value || null,
                                         });
                                       } else {
                                         setEditingCell(null);
@@ -610,24 +694,40 @@ export default function SuperAdminMarketing() {
                                     }}
                                   />
                                 ) : (
-                                  prospect.company || '-'
+                                  prospect.company || (prospect.id === 'new' ? <span className="text-white/40 italic">Empresa...</span> : '-')
                                 )}
                               </TableCell>
                               <TableCell
                                 className="text-white cursor-pointer hover:bg-white/10"
-                                onDoubleClick={() => setEditingCell({ id: prospect.id, field: 'phone' })}
+                                onClick={() => {
+                                  if (prospect.id === 'new') {
+                                    setEditingCell({ id: 'new', field: 'phone' });
+                                  }
+                                }}
+                                onDoubleClick={() => {
+                                  if (prospect.id !== 'new') {
+                                    setEditingCell({ id: prospect.id, field: 'phone' });
+                                  }
+                                }}
                               >
                                 {editingCell?.id === prospect.id && editingCell?.field === 'phone' ? (
                                   <Input
                                     defaultValue={prospect.phone || ''}
                                     autoFocus
+                                    placeholder={prospect.id === 'new' ? 'Teléfono...' : ''}
                                     className="bg-white/10 border-white/20 text-white h-8"
                                     onBlur={(e) => {
-                                      if (e.target.value !== prospect.phone) {
+                                      const value = e.target.value.trim();
+                                      if (prospect.id === 'new' && value) {
+                                        createProspectFromRowMutation.mutate({
+                                          field: 'phone',
+                                          value,
+                                        });
+                                      } else if (prospect.id !== 'new' && value !== prospect.phone) {
                                         updateProspectInlineMutation.mutate({
                                           prospectId: prospect.id,
                                           field: 'phone',
-                                          value: e.target.value || null,
+                                          value: value || null,
                                         });
                                       } else {
                                         setEditingCell(null);
@@ -642,24 +742,40 @@ export default function SuperAdminMarketing() {
                                     }}
                                   />
                                 ) : (
-                                  prospect.phone || '-'
+                                  prospect.phone || (prospect.id === 'new' ? <span className="text-white/40 italic">Teléfono...</span> : '-')
                                 )}
                               </TableCell>
                               <TableCell
                                 className="text-white cursor-pointer hover:bg-white/10"
-                                onDoubleClick={() => setEditingCell({ id: prospect.id, field: 'location' })}
+                                onClick={() => {
+                                  if (prospect.id === 'new') {
+                                    setEditingCell({ id: 'new', field: 'location' });
+                                  }
+                                }}
+                                onDoubleClick={() => {
+                                  if (prospect.id !== 'new') {
+                                    setEditingCell({ id: prospect.id, field: 'location' });
+                                  }
+                                }}
                               >
                                 {editingCell?.id === prospect.id && editingCell?.field === 'location' ? (
                                   <Input
                                     defaultValue={prospect.location || ''}
                                     autoFocus
+                                    placeholder={prospect.id === 'new' ? 'Localización...' : ''}
                                     className="bg-white/10 border-white/20 text-white h-8"
                                     onBlur={(e) => {
-                                      if (e.target.value !== prospect.location) {
+                                      const value = e.target.value.trim();
+                                      if (prospect.id === 'new' && value) {
+                                        createProspectFromRowMutation.mutate({
+                                          field: 'location',
+                                          value,
+                                        });
+                                      } else if (prospect.id !== 'new' && value !== prospect.location) {
                                         updateProspectInlineMutation.mutate({
                                           prospectId: prospect.id,
                                           field: 'location',
-                                          value: e.target.value || null,
+                                          value: value || null,
                                         });
                                       } else {
                                         setEditingCell(null);
@@ -674,14 +790,16 @@ export default function SuperAdminMarketing() {
                                     }}
                                   />
                                 ) : (
-                                  prospect.location || '-'
+                                  prospect.location || (prospect.id === 'new' ? <span className="text-white/40 italic">Localización...</span> : '-')
                                 )}
                               </TableCell>
                               <TableCell
-                                className="text-white cursor-pointer hover:bg-white/10"
+                                className={`text-white ${prospect.id !== 'new' ? 'cursor-pointer hover:bg-white/10' : 'opacity-40'}`}
                                 onDoubleClick={() => {
-                                  setEditingCell({ id: prospect.id, field: 'tags' });
-                                  setTagInput('');
+                                  if (prospect.id !== 'new') {
+                                    setEditingCell({ id: prospect.id, field: 'tags' });
+                                    setTagInput('');
+                                  }
                                 }}
                               >
                                 {editingCell?.id === prospect.id && editingCell?.field === 'tags' ? (
@@ -774,19 +892,35 @@ export default function SuperAdminMarketing() {
                               </TableCell>
                               <TableCell
                                 className="text-white text-xs cursor-pointer hover:bg-white/10 max-w-xs truncate"
-                                onDoubleClick={() => setEditingCell({ id: prospect.id, field: 'notes' })}
+                                onClick={() => {
+                                  if (prospect.id === 'new') {
+                                    setEditingCell({ id: 'new', field: 'notes' });
+                                  }
+                                }}
+                                onDoubleClick={() => {
+                                  if (prospect.id !== 'new') {
+                                    setEditingCell({ id: prospect.id, field: 'notes' });
+                                  }
+                                }}
                               >
                                 {editingCell?.id === prospect.id && editingCell?.field === 'notes' ? (
                                   <Input
                                     defaultValue={prospect.notes || ''}
                                     autoFocus
+                                    placeholder={prospect.id === 'new' ? 'Notas...' : ''}
                                     className="bg-white/10 border-white/20 text-white h-8"
                                     onBlur={(e) => {
-                                      if (e.target.value !== prospect.notes) {
+                                      const value = e.target.value.trim();
+                                      if (prospect.id === 'new' && value) {
+                                        createProspectFromRowMutation.mutate({
+                                          field: 'notes',
+                                          value,
+                                        });
+                                      } else if (prospect.id !== 'new' && value !== prospect.notes) {
                                         updateProspectInlineMutation.mutate({
                                           prospectId: prospect.id,
                                           field: 'notes',
-                                          value: e.target.value || null,
+                                          value: value || null,
                                         });
                                       } else {
                                         setEditingCell(null);
@@ -801,28 +935,30 @@ export default function SuperAdminMarketing() {
                                     }}
                                   />
                                 ) : (
-                                  prospect.notes || '-'
+                                  prospect.notes || (prospect.id === 'new' ? <span className="text-white/40 italic">Notas...</span> : '-')
                                 )}
                               </TableCell>
                               <TableCell>
-                                <div className="flex gap-1">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => setStatsProspect(prospect)}
-                                    className="h-7 w-7 p-0 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20"
-                                  >
-                                    <BarChart3 className="w-3.5 h-3.5" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => handleDeleteProspect(prospect.id)}
-                                    className="h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </Button>
-                                </div>
+                                {prospect.id !== 'new' && (
+                                  <div className="flex gap-1">
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => setStatsProspect(prospect)}
+                                      className="h-7 w-7 p-0 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20"
+                                    >
+                                      <BarChart3 className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleDeleteProspect(prospect.id)}
+                                      className="h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </div>
+                                )}
                               </TableCell>
                             </TableRow>
                           ))}
