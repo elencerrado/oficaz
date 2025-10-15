@@ -459,13 +459,14 @@ export default function SuperAdminMarketing() {
                                 ))}
                               </div>
                             )}
-                            <span className={`text-xs px-2 py-1 rounded ${
-                              prospect.status === 'active' ? 'bg-green-500/20 text-green-200' :
-                              prospect.status === 'unsubscribed' ? 'bg-gray-500/20 text-gray-200' :
-                              'bg-red-500/20 text-red-200'
-                            }`}>
-                              {prospect.status}
-                            </span>
+                            {prospect.status !== 'active' && (
+                              <span className={`text-xs px-2 py-1 rounded ${
+                                prospect.status === 'unsubscribed' ? 'bg-gray-500/20 text-gray-200' :
+                                'bg-red-500/20 text-red-200'
+                              }`}>
+                                {prospect.status === 'unsubscribed' ? 'Desuscrito' : prospect.status === 'bounced' ? 'Rebotado' : prospect.status}
+                              </span>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"
