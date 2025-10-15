@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,6 +38,7 @@ export default function SuperAdminMarketing() {
   const [statsProspect, setStatsProspect] = useState<any>(null);
   const [isTableView, setIsTableView] = useState(false);
   const [editingCell, setEditingCell] = useState<{ id: number; field: string } | null>(null);
+  const [tagInput, setTagInput] = useState('');
   const { toast} = useToast();
   const queryClient = useQueryClient();
 
@@ -88,6 +89,16 @@ export default function SuperAdminMarketing() {
     staleTime: 30000,
     refetchOnMount: false,
   });
+
+  // Get all unique tags from all prospects
+  const allTags = React.useMemo(() => {
+    if (!prospects) return [];
+    const tagsSet = new Set<string>();
+    prospects.forEach((prospect: any) => {
+      prospect.tags?.forEach((tag: string) => tagsSet.add(tag));
+    });
+    return Array.from(tagsSet).sort();
+  }, [prospects]);
 
   // Send campaign mutation
   const sendCampaignMutation = useMutation({
@@ -666,12 +677,100 @@ export default function SuperAdminMarketing() {
                                   prospect.location || '-'
                                 )}
                               </TableCell>
-                              <TableCell className="text-white">
-                                {prospect.tags?.map((tag: string) => (
-                                  <span key={tag} className="px-2 py-0.5 bg-purple-500/20 text-purple-200 text-xs rounded mr-1">
-                                    {tag}
-                                  </span>
-                                )) || '-'}
+                              <TableCell
+                                className="text-white cursor-pointer hover:bg-white/10"
+                                onDoubleClick={() => {
+                                  setEditingCell({ id: prospect.id, field: 'tags' });
+                                  setTagInput('');
+                                }}
+                              >
+                                {editingCell?.id === prospect.id && editingCell?.field === 'tags' ? (
+                                  <div className="flex flex-wrap gap-1 items-center min-h-[32px]">
+                                    {(prospect.tags || []).map((tag: string) => (
+                                      <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-500/20 text-purple-200 text-xs rounded">
+                                        {tag}
+                                        <button
+                                          onClick={() => {
+                                            const newTags = prospect.tags.filter((t: string) => t !== tag);
+                                            updateProspectInlineMutation.mutate({
+                                              prospectId: prospect.id,
+                                              field: 'tags',
+                                              value: newTags.length > 0 ? newTags : null,
+                                            });
+                                          }}
+                                          className="hover:text-purple-100"
+                                        >
+                                          ×
+                                        </button>
+                                      </span>
+                                    ))}
+                                    <div className="relative">
+                                      <Input
+                                        value={tagInput}
+                                        onChange={(e) => setTagInput(e.target.value)}
+                                        placeholder="Añadir tag..."
+                                        autoFocus
+                                        className="bg-white/10 border-white/20 text-white h-6 text-xs w-32"
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter' && tagInput.trim()) {
+                                            e.preventDefault();
+                                            const newTag = tagInput.trim();
+                                            const currentTags = prospect.tags || [];
+                                            if (!currentTags.includes(newTag)) {
+                                              updateProspectInlineMutation.mutate({
+                                                prospectId: prospect.id,
+                                                field: 'tags',
+                                                value: [...currentTags, newTag],
+                                              });
+                                            }
+                                            setTagInput('');
+                                          } else if (e.key === 'Escape') {
+                                            setEditingCell(null);
+                                            setTagInput('');
+                                          }
+                                        }}
+                                        onBlur={() => {
+                                          setTimeout(() => setEditingCell(null), 200);
+                                        }}
+                                      />
+                                      {tagInput && (
+                                        <div className="absolute top-full left-0 mt-1 bg-gray-800 border border-white/20 rounded shadow-lg z-50 max-h-32 overflow-y-auto">
+                                          {allTags
+                                            .filter(tag => 
+                                              tag.toLowerCase().includes(tagInput.toLowerCase()) &&
+                                              !(prospect.tags || []).includes(tag)
+                                            )
+                                            .map(tag => (
+                                              <button
+                                                key={tag}
+                                                className="block w-full text-left px-3 py-1.5 text-xs text-white hover:bg-white/10"
+                                                onMouseDown={(e) => {
+                                                  e.preventDefault();
+                                                  const currentTags = prospect.tags || [];
+                                                  updateProspectInlineMutation.mutate({
+                                                    prospectId: prospect.id,
+                                                    field: 'tags',
+                                                    value: [...currentTags, tag],
+                                                  });
+                                                  setTagInput('');
+                                                }}
+                                              >
+                                                {tag}
+                                              </button>
+                                            ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex flex-wrap gap-1">
+                                    {prospect.tags?.map((tag: string) => (
+                                      <span key={tag} className="px-2 py-0.5 bg-purple-500/20 text-purple-200 text-xs rounded">
+                                        {tag}
+                                      </span>
+                                    )) || '-'}
+                                  </div>
+                                )}
                               </TableCell>
                               <TableCell
                                 className="text-white text-xs cursor-pointer hover:bg-white/10 max-w-xs truncate"
