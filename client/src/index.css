@@ -1564,4 +1564,57 @@ body button[role="switch"] > span {
   background-color: rgba(255, 255, 255, 0.2) !important;
 }
 
+/* SuperAdmin Dialog/Modal components - Glassmorphism style */
+[data-radix-dialog-content] {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+}
+
+[data-radix-dialog-overlay] {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+
+/* SuperAdmin Dialog - Force all text and components to match theme */
+[data-radix-dialog-content] h2,
+[data-radix-dialog-content] h3,
+[data-radix-dialog-content] p,
+[data-radix-dialog-content] label,
+[data-radix-dialog-content] span {
+  color: rgb(255, 255, 255) !important;
+}
+
+[data-radix-dialog-content] input {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: rgb(255, 255, 255) !important;
+}
+
+[data-radix-dialog-content] input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+[data-radix-dialog-content] button[type="button"] {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: rgb(255, 255, 255) !important;
+}
+
+[data-radix-dialog-content] button[type="button"]:hover {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Keep primary action buttons with blue color */
+[data-radix-dialog-content] button.bg-blue-600 {
+  background-color: rgb(37, 99, 235) !important;
+  color: rgb(255, 255, 255) !important;
+}
+
+[data-radix-dialog-content] button.bg-blue-600:hover {
+  background-color: rgb(29, 78, 216) !important;
+}
+
 
