@@ -8538,7 +8538,7 @@ Responde directamente a este email para contactar con la persona.
         campaignId: schema.companies.emailCampaignId,
       })
         .from(schema.companies)
-        .where(eq(schema.companies.companyEmail, prospect.email));
+        .where(eq(schema.companies.email, prospect.email));
       
       res.json({
         campaigns: sends,
