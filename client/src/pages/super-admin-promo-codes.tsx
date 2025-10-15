@@ -303,22 +303,26 @@ const SuperAdminPromoCodes = () => {
               </div>
               
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Válido desde</label>
+                <div className="relative">
+                  <label className="text-sm font-medium block mb-1">Válido desde</label>
                   <Input
                     type="date"
                     value={formData.validFrom || ''}
                     onChange={(e) => setFormData({ ...formData, validFrom: e.target.value ? e.target.value : null })}
                     data-testid="input-valid-from"
+                    className="w-full"
+                    style={{ position: 'relative', zIndex: 1 }}
                   />
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Válido hasta</label>
+                <div className="relative">
+                  <label className="text-sm font-medium block mb-1">Válido hasta</label>
                   <Input
                     type="date"
                     value={formData.validUntil || ''}
                     onChange={(e) => setFormData({ ...formData, validUntil: e.target.value ? e.target.value : null })}
                     data-testid="input-valid-until"
+                    className="w-full"
+                    style={{ position: 'relative', zIndex: 1 }}
                   />
                 </div>
               </div>
@@ -519,22 +523,26 @@ const SuperAdminPromoCodes = () => {
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Válido desde</label>
+              <div className="relative">
+                <label className="text-sm font-medium block mb-1">Válido desde</label>
                 <Input
                   type="date"
                   value={formData.validFrom || ''}
                   onChange={(e) => setFormData({ ...formData, validFrom: e.target.value ? e.target.value : null })}
                   data-testid="input-edit-valid-from"
+                  className="w-full"
+                  style={{ position: 'relative', zIndex: 1 }}
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium">Válido hasta</label>
+              <div className="relative">
+                <label className="text-sm font-medium block mb-1">Válido hasta</label>
                 <Input
                   type="date"
                   value={formData.validUntil || ''}
                   onChange={(e) => setFormData({ ...formData, validUntil: e.target.value ? e.target.value : null })}
                   data-testid="input-edit-valid-until"
+                  className="w-full"
+                  style={{ position: 'relative', zIndex: 1 }}
                 />
               </div>
             </div>
