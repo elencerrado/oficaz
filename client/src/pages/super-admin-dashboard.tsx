@@ -157,7 +157,7 @@ export default function SuperAdminDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Metrics Viewer Card - Compact */}
           <Card 
-            className="!bg-gradient-to-br !from-white/10 !to-white/5 backdrop-blur-xl !border-white/20 !text-white cursor-pointer hover:!from-white/15 hover:!to-white/10 transition-all duration-300 group"
+            className="!bg-white/10 backdrop-blur-xl !border-white/20 cursor-pointer hover:!bg-white/15 transition-all duration-300 group"
             onClick={() => setLocation('/super-admin/metrics')}
           >
             <CardHeader className="pb-3">
@@ -244,7 +244,7 @@ export default function SuperAdminDashboard() {
 
           {/* Email Campaign Funnel Metrics Card */}
           <Card 
-            className="!bg-gradient-to-br !from-white/10 !to-white/5 backdrop-blur-xl !border-white/20 !text-white cursor-pointer hover:!from-white/15 hover:!to-white/10 transition-all duration-300 group"
+            className="!bg-white/10 backdrop-blur-xl !border-white/20 cursor-pointer hover:!bg-white/15 transition-all duration-300 group"
             onClick={() => setLocation('/super-admin/marketing')}
           >
             <CardHeader className="pb-3">
@@ -351,7 +351,7 @@ export default function SuperAdminDashboard() {
 
         {/* Pending Deletions Alert */}
         {pendingDeletions && pendingDeletions.length > 0 && (
-          <Card className="!bg-red-500/20 backdrop-blur-xl !border-red-500/30 !text-white mb-6">
+          <Card className="!bg-red-500/20 backdrop-blur-xl !border-red-500/30 mb-6">
             <CardHeader>
               <CardTitle className="text-red-300 flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5" />
