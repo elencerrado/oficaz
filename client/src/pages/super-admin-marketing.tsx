@@ -14,10 +14,6 @@ import { EditCampaignDialog } from '@/components/email-marketing/edit-campaign-d
 import { CampaignConversionsDialog } from '@/components/email-marketing/campaign-conversions-dialog';
 import { ProspectStatsDialog } from '@/components/email-marketing/prospect-stats-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { GripVertical } from 'lucide-react';
 import { 
   Send, 
   Users, 
@@ -345,77 +341,6 @@ export default function SuperAdminMarketing() {
   const openRate = totalSent > 0 ? Math.round((totalOpened / totalSent) * 100) : 0;
   const clickRate = totalSent > 0 ? Math.round((totalClicked / totalSent) * 100) : 0;
 
-  // Drag & Drop sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  // Reorder prospects mutation
-  const reorderProspectsMutation = useMutation({
-    mutationFn: async (orderedIds: number[]) => {
-      const token = sessionStorage.getItem('superAdminToken');
-      const response = await fetch('/api/super-admin/email-prospects/reorder', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ orderedIds }),
-      });
-      if (!response.ok) throw new Error('Failed to reorder prospects');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-prospects'] });
-    },
-  });
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (over && active.id !== over.id) {
-      const oldIndex = filteredProspects.findIndex((p: any) => p.id === active.id);
-      const newIndex = filteredProspects.findIndex((p: any) => p.id === over.id);
-      
-      const newOrder = arrayMove(filteredProspects, oldIndex, newIndex);
-      const orderedIds = newOrder.map((p: any) => p.id);
-      
-      reorderProspectsMutation.mutate(orderedIds);
-    }
-  };
-
-  // Sortable Row Component
-  const SortableRow = ({ prospect, children }: { prospect: any; children: React.ReactNode }) => {
-    const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      transition,
-      isDragging,
-    } = useSortable({ id: prospect.id });
-
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-      opacity: isDragging ? 0.5 : 1,
-    };
-
-    return (
-      <TableRow ref={setNodeRef} style={style} className="border-white/20 hover:bg-white/5">
-        <TableCell className="w-8">
-          <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-            <GripVertical className="w-4 h-4 text-white/40" />
-          </div>
-        </TableCell>
-        {children}
-      </TableRow>
-    );
-  };
-
   return (
     <SuperAdminLayout>
       <div className="max-w-7xl mx-auto px-6 py-8">
@@ -657,15 +582,13 @@ export default function SuperAdminMarketing() {
                     </div>
                   ) : isTableView ? (
                     <div className="overflow-x-auto">
-                      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="border-white/20 hover:bg-white/5">
-                              <TableHead className="w-8"></TableHead>
-                              <TableHead 
-                                className="text-white/90 cursor-pointer hover:text-white select-none"
-                                onClick={() => handleSort('email')}
-                              >
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="border-white/20 hover:bg-white/5">
+                            <TableHead 
+                              className="text-white/90 cursor-pointer hover:text-white select-none"
+                              onClick={() => handleSort('email')}
+                            >
                               <div className="flex items-center gap-1">
                                 Email
                                 {sortField === 'email' ? (
@@ -732,14 +655,21 @@ export default function SuperAdminMarketing() {
                             <TableHead className="text-white/90 w-24">Acciones</TableHead>
                           </TableRow>
                         </TableHeader>
-                        <SortableContext items={filteredProspects.map((p: any) => p.id)} strategy={verticalListSortingStrategy}>
-                          <TableBody>
-                            {/* Nueva fila (sin drag & drop) */}
-                            <TableRow className="border-white/20 hover:bg-white/5">
-                              <TableCell className="w-8"></TableCell>
+                        <TableBody>
+                          {[{ id: 'new', email: '', name: '', company: '', phone: '', location: '', tags: [], notes: '' }, ...filteredProspects].map((prospect: any) => (
+                            <TableRow key={prospect.id} className="border-white/20 hover:bg-white/5">
                               <TableCell
                                 className="text-white font-medium cursor-pointer hover:bg-white/10"
-                                onClick={() => setEditingCell({ id: 'new', field: 'email' })}
+                                onClick={() => {
+                                  if (prospect.id === 'new') {
+                                    setEditingCell({ id: 'new', field: 'email' });
+                                  }
+                                }}
+                                onDoubleClick={() => {
+                                  if (prospect.id !== 'new') {
+                                    setEditingCell({ id: prospect.id, field: 'email' });
+                                  }
+                                }}
                               >
                                 {editingCell?.id === prospect.id && editingCell?.field === 'email' ? (
                                   <Input
@@ -1140,8 +1070,7 @@ export default function SuperAdminMarketing() {
                           ))}
                         </TableBody>
                       </Table>
-                    </DndContext>
-                  </div>
+                    </div>
                   ) : (
                     <div className="space-y-2">
                       {filteredProspects.slice(0, 5).map((prospect: any) => (

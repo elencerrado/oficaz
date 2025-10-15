@@ -820,7 +820,6 @@ export const emailProspects = pgTable("email_prospects", {
   tags: text("tags").array().default([]), // Etiquetas para segmentación
   status: varchar("status", { length: 50 }).default("active").notNull(), // active, unsubscribed, bounced
   notes: text("notes"),
-  displayOrder: integer("display_order").default(0).notNull(), // Orden manual personalizado
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

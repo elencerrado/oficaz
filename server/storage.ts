@@ -2856,7 +2856,7 @@ export class DrizzleStorage implements IStorage {
   async getAllEmailProspects(): Promise<any[]> {
     return await db.select()
       .from(schema.emailProspects)
-      .orderBy(schema.emailProspects.displayOrder, desc(schema.emailProspects.createdAt));
+      .orderBy(desc(schema.emailProspects.createdAt));
   }
 
   async getRegisteredUsersStats(): Promise<{ total: number; active: number; trial: number; blocked: number; cancelled: number }> {
