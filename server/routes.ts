@@ -8614,6 +8614,31 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Reorder email prospects
+  app.post('/api/super-admin/email-prospects/reorder', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const { orderedIds } = req.body;
+      
+      if (!Array.isArray(orderedIds)) {
+        return res.status(400).json({ success: false, message: 'orderedIds debe ser un array' });
+      }
+      
+      // Update displayOrder for each prospect
+      await Promise.all(
+        orderedIds.map((id, index) => 
+          db.update(schema.emailProspects)
+            .set({ displayOrder: index })
+            .where(eq(schema.emailProspects.id, id))
+        )
+      );
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Error reordering email prospects:', error);
+      res.status(500).json({ success: false, message: 'Error al reordenar prospects' });
+    }
+  });
+
   // Endpoint to manage company custom features
   app.patch('/api/companies/custom-features', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
     try {
