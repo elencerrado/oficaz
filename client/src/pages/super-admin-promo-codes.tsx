@@ -234,7 +234,13 @@ const SuperAdminPromoCodes = () => {
 
   return (
     <SuperAdminLayout>
-      <div className="px-6 py-4 min-h-screen" style={{ overflowX: 'clip' }}>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-white">Códigos Promocionales</h1>
+          <p className="text-white/70 mt-1">Gestiona los códigos promocionales y sus beneficios</p>
+        </div>
+
       {/* Create Button */}
       <div className="mb-6">
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -351,35 +357,39 @@ const SuperAdminPromoCodes = () => {
       <div className="space-y-4">
         {isLoading ? (
           <div className="text-center py-8">
-            <div className="text-gray-500">Cargando códigos promocionales...</div>
+            <div className="text-white/60">Cargando códigos promocionales...</div>
           </div>
         ) : promoCodes.length === 0 ? (
-          <Card>
+          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
             <CardContent className="py-8 text-center">
-              <Tag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No hay códigos promocionales</h3>
-              <p className="text-gray-500 mb-4">Crea tu primer código promocional para empezar</p>
+              <Tag className="h-12 w-12 text-white/40 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-white mb-2">No hay códigos promocionales</h3>
+              <p className="text-white/60 mb-4">Crea tu primer código promocional para empezar</p>
             </CardContent>
           </Card>
         ) : (
           promoCodes.map((code: PromotionalCode) => (
-            <Card key={code.id}>
+            <Card key={code.id} className="bg-white/10 backdrop-blur-xl border-white/20">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="bg-blue-100 p-2 rounded-lg">
-                      <Tag className="h-5 w-5 text-blue-600" />
+                    <div className="bg-blue-500/20 p-2 rounded-lg border border-blue-400/30">
+                      <Tag className="h-5 w-5 text-blue-300" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">{code.code}</CardTitle>
-                      <CardDescription>{code.description}</CardDescription>
+                      <CardTitle className="text-lg text-white">{code.code}</CardTitle>
+                      <CardDescription className="text-white/60">{code.description}</CardDescription>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-2">
                     <Badge 
                       variant={code.isActive ? "default" : "secondary"}
-                      className="flex items-center gap-1"
+                      className={`flex items-center gap-1 ${
+                        code.isActive 
+                          ? 'bg-green-500/20 text-green-200 border-green-400/30' 
+                          : 'bg-gray-500/20 text-gray-300 border-gray-400/30'
+                      }`}
                     >
                       {code.isActive ? (
                         <CheckCircle className="h-3 w-3" />
@@ -393,6 +403,7 @@ const SuperAdminPromoCodes = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(code)}
+                      className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
                       data-testid={`button-edit-${code.id}`}
                     >
                       <Edit2 className="h-4 w-4" />
@@ -402,7 +413,7 @@ const SuperAdminPromoCodes = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(code.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                       data-testid={`button-delete-${code.id}`}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -414,36 +425,36 @@ const SuperAdminPromoCodes = () => {
               <CardContent className="pt-0">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-gray-400" />
+                    <Calendar className="h-4 w-4 text-white/40" />
                     <div>
-                      <div className="font-medium">{code.trialDurationDays} días</div>
-                      <div className="text-gray-500">Período de prueba</div>
+                      <div className="font-medium text-white">{code.trialDurationDays} días</div>
+                      <div className="text-white/60">Período de prueba</div>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-gray-400" />
+                    <Users className="h-4 w-4 text-white/40" />
                     <div>
-                      <div className="font-medium">
+                      <div className="font-medium text-white">
                         {code.currentUses}{code.maxUses ? `/${code.maxUses}` : ''}
                       </div>
-                      <div className="text-gray-500">Usos</div>
+                      <div className="text-white/60">Usos</div>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-gray-400" />
+                    <Activity className="h-4 w-4 text-white/40" />
                     <div>
-                      <div className="font-medium">{formatDate(code.validFrom)}</div>
-                      <div className="text-gray-500">Válido desde</div>
+                      <div className="font-medium text-white">{formatDate(code.validFrom)}</div>
+                      <div className="text-white/60">Válido desde</div>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-gray-400" />
+                    <Activity className="h-4 w-4 text-white/40" />
                     <div>
-                      <div className="font-medium">{formatDate(code.validUntil)}</div>
-                      <div className="text-gray-500">Válido hasta</div>
+                      <div className="font-medium text-white">{formatDate(code.validUntil)}</div>
+                      <div className="text-white/60">Válido hasta</div>
                     </div>
                   </div>
                 </div>
