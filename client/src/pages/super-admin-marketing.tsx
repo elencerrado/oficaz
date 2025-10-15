@@ -9,6 +9,7 @@ import { AddProspectDialog } from '@/components/email-marketing/add-prospect-dia
 import { EditProspectDialog } from '@/components/email-marketing/edit-prospect-dialog';
 import { EditCampaignDialog } from '@/components/email-marketing/edit-campaign-dialog';
 import { CampaignConversionsDialog } from '@/components/email-marketing/campaign-conversions-dialog';
+import { ProspectStatsDialog } from '@/components/email-marketing/prospect-stats-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Send, 
@@ -31,6 +32,7 @@ export default function SuperAdminMarketing() {
   const [editingCampaign, setEditingCampaign] = useState<any>(null);
   const [conversionsCampaign, setConversionsCampaign] = useState<any>(null);
   const [editingProspect, setEditingProspect] = useState<any>(null);
+  const [statsProspect, setStatsProspect] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -470,6 +472,15 @@ export default function SuperAdminMarketing() {
                             <Button
                               size="sm"
                               variant="ghost"
+                              onClick={() => setStatsProspect(prospect)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-purple-400 hover:text-purple-300 hover:bg-purple-500/20"
+                              data-testid={`button-stats-prospect-${prospect.id}`}
+                            >
+                              <BarChart3 className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
                               onClick={() => handleEditProspect(prospect)}
                               className="opacity-0 group-hover:opacity-100 transition-opacity text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
                               data-testid={`button-edit-prospect-${prospect.id}`}
@@ -579,6 +590,15 @@ export default function SuperAdminMarketing() {
           campaign={conversionsCampaign}
           open={!!conversionsCampaign}
           onOpenChange={(open) => !open && setConversionsCampaign(null)}
+        />
+      )}
+
+      {/* Prospect Stats Dialog */}
+      {statsProspect && (
+        <ProspectStatsDialog
+          prospect={statsProspect}
+          open={!!statsProspect}
+          onOpenChange={(open) => !open && setStatsProspect(null)}
         />
       )}
     </SuperAdminLayout>
