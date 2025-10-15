@@ -477,36 +477,6 @@ export default function SuperAdminMarketing() {
             <div>
               <h2 className="text-xl font-semibold text-white mb-4">Listas de Contactos</h2>
               
-              {/* Registered Users Section */}
-              <Card className="bg-white/10 backdrop-blur-xl border-white/20 mb-6">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Users className="w-5 h-5" />
-                    Usuarios Registrados
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="bg-blue-500/20 rounded-lg p-4 border border-blue-400/30">
-                      <p className="text-sm text-blue-200 mb-1">Activos</p>
-                      <p className="text-2xl font-bold text-white">{registeredUsers?.active || 0}</p>
-                    </div>
-                    <div className="bg-yellow-500/20 rounded-lg p-4 border border-yellow-400/30">
-                      <p className="text-sm text-yellow-200 mb-1">En Prueba</p>
-                      <p className="text-2xl font-bold text-white">{registeredUsers?.trial || 0}</p>
-                    </div>
-                    <div className="bg-red-500/20 rounded-lg p-4 border border-red-400/30">
-                      <p className="text-sm text-red-200 mb-1">Bloqueados</p>
-                      <p className="text-2xl font-bold text-white">{registeredUsers?.blocked || 0}</p>
-                    </div>
-                    <div className="bg-gray-500/20 rounded-lg p-4 border border-gray-400/30">
-                      <p className="text-sm text-gray-200 mb-1">Cancelados</p>
-                      <p className="text-2xl font-bold text-white">{registeredUsers?.cancelled || 0}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Prospects Section */}
               <Card className="bg-white/10 backdrop-blur-xl border-white/20">
                 <CardHeader>
