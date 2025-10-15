@@ -550,7 +550,7 @@ export default function SuperAdminMarketing() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {[...prospects, { id: 'new', email: '', name: '', company: '', phone: '', location: '', tags: [], notes: '' }].map((prospect: any) => (
+                          {[{ id: 'new', email: '', name: '', company: '', phone: '', location: '', tags: [], notes: '' }, ...prospects].map((prospect: any) => (
                             <TableRow key={prospect.id} className="border-white/20 hover:bg-white/5">
                               <TableCell
                                 className="text-white font-medium cursor-pointer hover:bg-white/10"
