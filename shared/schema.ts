@@ -816,7 +816,7 @@ export const emailProspects = pgTable("email_prospects", {
   name: varchar("name", { length: 255 }),
   company: varchar("company", { length: 255 }),
   phone: varchar("phone", { length: 50 }),
-  source: varchar("source", { length: 100 }), // "manual", "import", "landing_page", etc
+  location: varchar("location", { length: 100 }), // Ciudad/ubicación del contacto
   tags: text("tags").array().default([]), // Etiquetas para segmentación
   status: varchar("status", { length: 50 }).default("active").notNull(), // active, unsubscribed, bounced
   notes: text("notes"),

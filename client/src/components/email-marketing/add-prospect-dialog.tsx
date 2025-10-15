@@ -18,7 +18,7 @@ export function AddProspectDialog() {
     name: '',
     company: '',
     phone: '',
-    source: 'manual',
+    location: '',
     tags: '',
     notes: '',
   });
@@ -57,7 +57,7 @@ export function AddProspectDialog() {
         name: '',
         company: '',
         phone: '',
-        source: 'manual',
+        location: '',
         tags: '',
         notes: '',
       });
@@ -137,12 +137,12 @@ export function AddProspectDialog() {
               />
             </div>
             <div>
-              <Label htmlFor="source" className="text-white">Fuente</Label>
+              <Label htmlFor="location" className="text-white">Localización</Label>
               <Input
-                id="source"
-                value={formData.source}
-                onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-                placeholder="manual, landing_page, etc."
+                id="location"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                placeholder="Madrid, Barcelona, Valencia..."
                 className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
               />
             </div>

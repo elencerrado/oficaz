@@ -22,7 +22,7 @@ export function EditProspectDialog({ prospect, open, onOpenChange }: EditProspec
     name: '',
     company: '',
     phone: '',
-    source: '',
+    location: '',
     tags: '',
     notes: '',
   });
@@ -34,7 +34,7 @@ export function EditProspectDialog({ prospect, open, onOpenChange }: EditProspec
         name: prospect.name || '',
         company: prospect.company || '',
         phone: prospect.phone || '',
-        source: prospect.source || '',
+        location: prospect.location || '',
         tags: Array.isArray(prospect.tags) ? prospect.tags.join(', ') : '',
         notes: prospect.notes || '',
       });
@@ -144,14 +144,14 @@ export function EditProspectDialog({ prospect, open, onOpenChange }: EditProspec
               />
             </div>
             <div>
-              <Label htmlFor="edit-source" className="text-white">Fuente</Label>
+              <Label htmlFor="edit-location" className="text-white">Localización</Label>
               <Input
-                id="edit-source"
-                value={formData.source}
-                onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-                placeholder="manual, landing_page, etc."
+                id="edit-location"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                placeholder="Madrid, Barcelona, Valencia..."
                 className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                data-testid="input-edit-prospect-source"
+                data-testid="input-edit-prospect-location"
               />
             </div>
           </div>
