@@ -952,9 +952,9 @@ export default function SuperAdminMarketing() {
                                       <Input
                                         value={tagInput}
                                         onChange={(e) => setTagInput(e.target.value)}
-                                        placeholder="Añadir tag..."
+                                        placeholder="Escribe o selecciona..."
                                         autoFocus
-                                        className="bg-transparent border-0 text-white p-0 h-auto text-xs w-32 focus-visible:ring-0 focus-visible:ring-offset-0"
+                                        className="bg-transparent border-0 text-white p-0 h-auto text-xs w-40 focus-visible:ring-0 focus-visible:ring-offset-0"
                                         onKeyDown={(e) => {
                                           if (e.key === 'Enter' && tagInput.trim()) {
                                             e.preventDefault();
@@ -973,37 +973,74 @@ export default function SuperAdminMarketing() {
                                             setTagInput('');
                                           }
                                         }}
-                                        onBlur={() => {
-                                          setTimeout(() => setEditingCell(null), 200);
+                                        onBlur={(e) => {
+                                          // Check if we're clicking on a dropdown item
+                                          const relatedTarget = e.relatedTarget as HTMLElement;
+                                          if (!relatedTarget || !relatedTarget.closest('.tags-dropdown')) {
+                                            setTimeout(() => {
+                                              setEditingCell(null);
+                                              setTagInput('');
+                                            }, 200);
+                                          }
                                         }}
                                       />
-                                      {tagInput && (
-                                        <div className="absolute top-full left-0 mt-1 bg-gray-800 border border-white/20 rounded shadow-lg z-50 max-h-32 overflow-y-auto">
-                                          {allTags
-                                            .filter(tag => 
-                                              tag.toLowerCase().includes(tagInput.toLowerCase()) &&
-                                              !(prospect.tags || []).includes(tag)
-                                            )
-                                            .map(tag => (
-                                              <button
-                                                key={tag}
-                                                className="block w-full text-left px-3 py-1.5 text-xs text-white hover:bg-white/10"
-                                                onMouseDown={(e) => {
-                                                  e.preventDefault();
-                                                  const currentTags = prospect.tags || [];
-                                                  updateProspectInlineMutation.mutate({
-                                                    prospectId: prospect.id,
-                                                    field: 'tags',
-                                                    value: [...currentTags, tag],
-                                                  });
-                                                  setTagInput('');
-                                                }}
-                                              >
-                                                {tag}
-                                              </button>
-                                            ))}
-                                        </div>
-                                      )}
+                                      {/* Show dropdown always when editing, with all available tags */}
+                                      <div className="tags-dropdown absolute top-full left-0 mt-1 bg-gray-800 border border-white/20 rounded shadow-lg z-50 max-h-48 overflow-y-auto min-w-[150px]">
+                                        {/* Show filtered suggestions based on input */}
+                                        {allTags
+                                          .filter(tag => {
+                                            const matchesSearch = tagInput === '' || tag.toLowerCase().includes(tagInput.toLowerCase());
+                                            const notAlreadyAdded = !(prospect.tags || []).includes(tag);
+                                            return matchesSearch && notAlreadyAdded;
+                                          })
+                                          .map(tag => (
+                                            <button
+                                              key={tag}
+                                              type="button"
+                                              className="block w-full text-left px-3 py-1.5 text-xs text-white hover:bg-white/10 transition-colors"
+                                              onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                const currentTags = prospect.tags || [];
+                                                updateProspectInlineMutation.mutate({
+                                                  prospectId: prospect.id,
+                                                  field: 'tags',
+                                                  value: [...currentTags, tag],
+                                                });
+                                                setTagInput('');
+                                              }}
+                                            >
+                                              {tag}
+                                            </button>
+                                          ))}
+                                        {/* Show "Create new" option when typing */}
+                                        {tagInput.trim() && !allTags.some(tag => tag.toLowerCase() === tagInput.toLowerCase()) && (
+                                          <button
+                                            type="button"
+                                            className="block w-full text-left px-3 py-1.5 text-xs text-green-400 hover:bg-white/10 transition-colors border-t border-white/10"
+                                            onMouseDown={(e) => {
+                                              e.preventDefault();
+                                              const newTag = tagInput.trim();
+                                              const currentTags = prospect.tags || [];
+                                              if (!currentTags.includes(newTag)) {
+                                                updateProspectInlineMutation.mutate({
+                                                  prospectId: prospect.id,
+                                                  field: 'tags',
+                                                  value: [...currentTags, newTag],
+                                                });
+                                              }
+                                              setTagInput('');
+                                            }}
+                                          >
+                                            + Crear "{tagInput.trim()}"
+                                          </button>
+                                        )}
+                                        {/* Show empty state */}
+                                        {allTags.length === 0 && !tagInput && (
+                                          <div className="px-3 py-2 text-xs text-white/40 italic">
+                                            Escribe para crear el primer tag
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                 ) : (
