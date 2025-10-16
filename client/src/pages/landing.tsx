@@ -415,7 +415,7 @@ export default function Landing() {
               >
                 <Button 
                   size="sm" 
-                  className="bg-[#25D366] hover:bg-[#20BA5A] text-white font-semibold px-3 shadow-lg shadow-[#25D366]/25 border-0 rounded-lg transition-all duration-300 hover:scale-105"
+                  className="bg-[#25D366] hover:bg-[#20BA5A] text-white font-semibold px-3 py-1.5 shadow-lg shadow-[#25D366]/25 border-0 rounded-lg transition-all duration-300"
                 >
                   <FaWhatsapp className="w-5 h-5" />
                 </Button>
