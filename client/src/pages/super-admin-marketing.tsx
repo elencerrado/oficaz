@@ -677,7 +677,7 @@ export default function SuperAdminMarketing() {
                                     autoFocus
                                     type="email"
                                     placeholder={prospect.id === 'new' ? 'Email...' : ''}
-                                    className="bg-white/10 border-white/20 text-white h-8"
+                                    className="bg-transparent border-0 text-white p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
                                     onBlur={(e) => {
                                       const value = e.target.value.trim();
                                       if (prospect.id === 'new' && value) {
@@ -725,7 +725,7 @@ export default function SuperAdminMarketing() {
                                     defaultValue={prospect.name || ''}
                                     autoFocus
                                     placeholder={prospect.id === 'new' ? 'Nombre...' : ''}
-                                    className="bg-white/10 border-white/20 text-white h-8"
+                                    className="bg-transparent border-0 text-white p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
                                     onBlur={(e) => {
                                       const value = e.target.value.trim();
                                       if (prospect.id === 'new' && value) {
@@ -773,7 +773,7 @@ export default function SuperAdminMarketing() {
                                     defaultValue={prospect.company || ''}
                                     autoFocus
                                     placeholder={prospect.id === 'new' ? 'Empresa...' : ''}
-                                    className="bg-white/10 border-white/20 text-white h-8"
+                                    className="bg-transparent border-0 text-white p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
                                     onBlur={(e) => {
                                       const value = e.target.value.trim();
                                       if (prospect.id === 'new' && value) {
@@ -821,7 +821,7 @@ export default function SuperAdminMarketing() {
                                     defaultValue={prospect.phone || ''}
                                     autoFocus
                                     placeholder={prospect.id === 'new' ? 'Teléfono...' : ''}
-                                    className="bg-white/10 border-white/20 text-white h-8"
+                                    className="bg-transparent border-0 text-white p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
                                     onBlur={(e) => {
                                       const value = e.target.value.trim();
                                       if (prospect.id === 'new' && value) {
@@ -869,7 +869,7 @@ export default function SuperAdminMarketing() {
                                     defaultValue={prospect.location || ''}
                                     autoFocus
                                     placeholder={prospect.id === 'new' ? 'Localización...' : ''}
-                                    className="bg-white/10 border-white/20 text-white h-8"
+                                    className="bg-transparent border-0 text-white p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
                                     onBlur={(e) => {
                                       const value = e.target.value.trim();
                                       if (prospect.id === 'new' && value) {
@@ -934,7 +934,7 @@ export default function SuperAdminMarketing() {
                                         onChange={(e) => setTagInput(e.target.value)}
                                         placeholder="Añadir tag..."
                                         autoFocus
-                                        className="bg-white/10 border-white/20 text-white h-6 text-xs w-32"
+                                        className="bg-transparent border-0 text-white p-0 h-auto text-xs w-32 focus-visible:ring-0 focus-visible:ring-offset-0"
                                         onKeyDown={(e) => {
                                           if (e.key === 'Enter' && tagInput.trim()) {
                                             e.preventDefault();
@@ -1014,7 +1014,7 @@ export default function SuperAdminMarketing() {
                                     defaultValue={prospect.notes || ''}
                                     autoFocus
                                     placeholder={prospect.id === 'new' ? 'Notas...' : ''}
-                                    className="bg-white/10 border-white/20 text-white h-8"
+                                    className="bg-transparent border-0 text-white p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
                                     onBlur={(e) => {
                                       const value = e.target.value.trim();
                                       if (prospect.id === 'new' && value) {
