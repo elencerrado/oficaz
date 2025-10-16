@@ -535,51 +535,54 @@ export default function SuperAdminMarketing() {
               {/* Prospects Section */}
               <Card className="bg-white/10 backdrop-blur-xl border-white/20">
                 <CardHeader>
-                  <div className="flex items-center justify-between gap-4">
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <Send className="w-5 h-5" />
-                      Prospects Externos
-                      <span className="text-sm font-normal text-white/60">({totalProspects})</span>
-                    </CardTitle>
-                    <div className="flex-1 max-w-md">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
-                        <Input
-                          type="text"
-                          placeholder="Buscar por cualquier campo..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="bg-white/10 border-white/20 text-white placeholder:text-white/40 pl-10"
-                          data-testid="input-search-prospects"
-                        />
+                  <div className="space-y-4">
+                    {/* Title and Actions Row */}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <CardTitle className="text-white flex items-center gap-2">
+                        <Send className="w-5 h-5" />
+                        Prospects Externos
+                        <span className="text-sm font-normal text-white/60">({totalProspects})</span>
+                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 bg-white/10 rounded-lg p-1">
+                          <button
+                            onClick={() => setIsTableView(true)}
+                            className={`p-2 rounded-md transition-all ${
+                              isTableView 
+                                ? 'bg-purple-600 text-white' 
+                                : 'text-white/60 hover:text-white/90'
+                            }`}
+                            title="Vista Tabla"
+                          >
+                            <Table2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setIsTableView(false)}
+                            className={`p-2 rounded-md transition-all ${
+                              !isTableView 
+                                ? 'bg-purple-600 text-white' 
+                                : 'text-white/60 hover:text-white/90'
+                            }`}
+                            title="Vista Lista"
+                          >
+                            <LayoutList className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <AddProspectDialog />
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1 bg-white/10 rounded-lg p-1">
-                        <button
-                          onClick={() => setIsTableView(true)}
-                          className={`p-2 rounded-md transition-all ${
-                            isTableView 
-                              ? 'bg-purple-600 text-white' 
-                              : 'text-white/60 hover:text-white/90'
-                          }`}
-                          title="Vista Tabla"
-                        >
-                          <Table2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setIsTableView(false)}
-                          className={`p-2 rounded-md transition-all ${
-                            !isTableView 
-                              ? 'bg-purple-600 text-white' 
-                              : 'text-white/60 hover:text-white/90'
-                          }`}
-                          title="Vista Lista"
-                        >
-                          <LayoutList className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <AddProspectDialog />
+                    
+                    {/* Search Row */}
+                    <div className="relative w-full">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
+                      <Input
+                        type="text"
+                        placeholder="Buscar por cualquier campo..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-white/10 border-white/20 text-white placeholder:text-white/40 pl-10 w-full"
+                        data-testid="input-search-prospects"
+                      />
                     </div>
                   </div>
                 </CardHeader>
