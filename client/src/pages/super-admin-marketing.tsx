@@ -262,17 +262,20 @@ export default function SuperAdminMarketing() {
         },
         body: JSON.stringify({ [field]: value }),
       });
-      if (!response.ok) throw new Error('Failed to update prospect');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update prospect');
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-prospects'] });
       setEditingCell(null);
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: 'Error',
-        description: 'No se pudo actualizar el prospect',
+        description: error.message || 'No se pudo actualizar el prospect',
         variant: 'destructive',
       });
       setEditingCell(null);
@@ -298,17 +301,20 @@ export default function SuperAdminMarketing() {
         },
         body: JSON.stringify(prospectData),
       });
-      if (!response.ok) throw new Error('Failed to create prospect');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create prospect');
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-prospects'] });
       setEditingCell(null);
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: 'Error',
-        description: 'No se pudo crear el prospect',
+        description: error.message || 'No se pudo crear el prospect',
         variant: 'destructive',
       });
       setEditingCell(null);

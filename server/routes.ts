@@ -8240,6 +8240,36 @@ Responde directamente a este email para contactar con la persona.
     try {
       // Validate with Zod schema
       const prospectData = schema.insertEmailProspectSchema.parse(req.body);
+      
+      // Check for duplicates
+      if (prospectData.email && !prospectData.email.includes('@temp-')) {
+        const existingByEmail = await db.select()
+          .from(schema.emailProspects)
+          .where(eq(schema.emailProspects.email, prospectData.email))
+          .limit(1);
+        
+        if (existingByEmail.length > 0) {
+          return res.status(400).json({ 
+            success: false, 
+            message: `Ya existe un contacto con el email: ${prospectData.email}` 
+          });
+        }
+      }
+      
+      if (prospectData.phone) {
+        const existingByPhone = await db.select()
+          .from(schema.emailProspects)
+          .where(eq(schema.emailProspects.phone, prospectData.phone))
+          .limit(1);
+        
+        if (existingByPhone.length > 0) {
+          return res.status(400).json({ 
+            success: false, 
+            message: `Ya existe un contacto con el teléfono: ${prospectData.phone}` 
+          });
+        }
+      }
+      
       const prospect = await storage.createEmailProspect(prospectData);
       res.json(prospect);
     } catch (error: any) {
@@ -8480,29 +8510,6 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  // Update email prospect
-  app.patch('/api/super-admin/email-prospects/:id', authenticateSuperAdmin, async (req: any, res) => {
-    try {
-      const prospectId = parseInt(req.params.id);
-      const updateData = req.body;
-      
-      // Validate email if present
-      if (updateData.email) {
-        const emailSchema = z.string().email();
-        emailSchema.parse(updateData.email);
-      }
-      
-      await storage.updateEmailProspect(prospectId, updateData);
-      res.json({ success: true, message: 'Prospect actualizado correctamente' });
-    } catch (error: any) {
-      console.error('Error updating email prospect:', error);
-      if (error.name === 'ZodError') {
-        return res.status(400).json({ success: false, message: 'Email inválido' });
-      }
-      res.status(500).json({ success: false, message: 'Error al actualizar prospect' });
-    }
-  });
-
   // Get prospect campaign history
   app.get('/api/super-admin/email-prospects/:id/campaign-history', authenticateSuperAdmin, async (req: any, res) => {
     try {
@@ -8582,14 +8589,32 @@ Responde directamente a este email para contactar con la persona.
       }
 
       // Check if email is being updated and if it already exists
-      if (updates.email !== undefined && updates.email !== currentProspect.email) {
+      if (updates.email !== undefined && updates.email !== currentProspect.email && !updates.email.includes('@temp-')) {
         const [existingProspect] = await db.select()
           .from(schema.emailProspects)
           .where(eq(schema.emailProspects.email, updates.email))
           .limit(1);
         
         if (existingProspect) {
-          return res.status(400).json({ success: false, message: 'Este email ya existe en otro prospect' });
+          return res.status(400).json({ 
+            success: false, 
+            message: `Ya existe un contacto con el email: ${updates.email}` 
+          });
+        }
+      }
+      
+      // Check if phone is being updated and if it already exists
+      if (updates.phone !== undefined && updates.phone !== currentProspect.phone && updates.phone) {
+        const [existingProspect] = await db.select()
+          .from(schema.emailProspects)
+          .where(eq(schema.emailProspects.phone, updates.phone))
+          .limit(1);
+        
+        if (existingProspect) {
+          return res.status(400).json({ 
+            success: false, 
+            message: `Ya existe un contacto con el teléfono: ${updates.phone}` 
+          });
         }
       }
 
