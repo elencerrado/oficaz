@@ -358,56 +358,56 @@ export default function SuperAdminMarketing() {
     <SuperAdminLayout>
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
           <Card className="bg-white/10 backdrop-blur-xl border-white/20">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">
-                Campañas Totales
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
+              <CardTitle className="text-xs font-medium text-white/80">
+                Campañas
               </CardTitle>
-              <Mail className="h-4 w-4 text-blue-400" />
+              <Mail className="h-3 w-3 text-blue-400" />
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-white">{totalCampaigns}</div>
-              <p className="text-xs text-white/60 mt-1">{draftCampaigns} borradores, {sentCampaigns} enviadas</p>
+            <CardContent className="px-3 pb-3">
+              <div className="text-xl font-bold text-white">{totalCampaigns}</div>
+              <p className="text-[10px] text-white/60 mt-0.5">{draftCampaigns} borradores</p>
             </CardContent>
           </Card>
 
           <Card className="bg-white/10 backdrop-blur-xl border-white/20">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">
-                Prospects Externos
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
+              <CardTitle className="text-xs font-medium text-white/80">
+                Prospects
               </CardTitle>
-              <Send className="h-4 w-4 text-purple-400" />
+              <Send className="h-3 w-3 text-purple-400" />
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-white">{totalProspects}</div>
-              <p className="text-xs text-white/60 mt-1">{activeProspects} activos</p>
+            <CardContent className="px-3 pb-3">
+              <div className="text-xl font-bold text-white">{totalProspects}</div>
+              <p className="text-[10px] text-white/60 mt-0.5">{activeProspects} activos</p>
             </CardContent>
           </Card>
 
           <Card className="bg-white/10 backdrop-blur-xl border-white/20">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">
-                Tasa de Apertura
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
+              <CardTitle className="text-xs font-medium text-white/80">
+                Apertura
               </CardTitle>
-              <Eye className="h-4 w-4 text-green-400" />
+              <Eye className="h-3 w-3 text-green-400" />
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-white">{openRate}%</div>
-              <p className="text-xs text-white/60 mt-1">{totalOpened} de {totalSent} enviados</p>
+            <CardContent className="px-3 pb-3">
+              <div className="text-xl font-bold text-white">{openRate}%</div>
+              <p className="text-[10px] text-white/60 mt-0.5">{totalOpened} abiertos</p>
             </CardContent>
           </Card>
 
           <Card className="bg-white/10 backdrop-blur-xl border-white/20">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">
-                Tasa de Clics (CTR)
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
+              <CardTitle className="text-xs font-medium text-white/80">
+                Clics (CTR)
               </CardTitle>
-              <MousePointerClick className="h-4 w-4 text-blue-400" />
+              <MousePointerClick className="h-3 w-3 text-blue-400" />
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-white">{clickRate}%</div>
-              <p className="text-xs text-white/60 mt-1">{totalClicked} clics de {totalSent} enviados</p>
+            <CardContent className="px-3 pb-3">
+              <div className="text-xl font-bold text-white">{clickRate}%</div>
+              <p className="text-[10px] text-white/60 mt-0.5">{totalClicked} clics</p>
             </CardContent>
           </Card>
         </div>
