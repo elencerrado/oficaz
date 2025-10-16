@@ -4,6 +4,7 @@ import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -48,6 +49,7 @@ export default function SuperAdminMarketing() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [prospectToDelete, setProspectToDelete] = useState<number | null>(null);
   const { toast} = useToast();
   const queryClient = useQueryClient();
 
@@ -327,8 +329,13 @@ export default function SuperAdminMarketing() {
   };
 
   const handleDeleteProspect = (prospectId: number) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este prospect?')) {
-      deleteProspectMutation.mutate(prospectId);
+    setProspectToDelete(prospectId);
+  };
+
+  const confirmDeleteProspect = () => {
+    if (prospectToDelete) {
+      deleteProspectMutation.mutate(prospectToDelete);
+      setProspectToDelete(null);
     }
   };
 
@@ -1238,6 +1245,33 @@ export default function SuperAdminMarketing() {
           onOpenChange={(open) => !open && setStatsProspect(null)}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={prospectToDelete !== null} onOpenChange={(open) => !open && setProspectToDelete(null)}>
+        <DialogContent className="bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 border-white/20 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white">Confirmar eliminación</DialogTitle>
+            <DialogDescription className="text-white/70">
+              ¿Estás seguro de que quieres eliminar este contacto? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setProspectToDelete(null)}
+              className="bg-white/10 hover:bg-white/20 border-white/20 text-white"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={confirmDeleteProspect}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SuperAdminLayout>
   );
 }
