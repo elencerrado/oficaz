@@ -371,7 +371,7 @@ export default function Landing() {
                   href="https://wa.me/34614028600" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center"
+                  className="inline-flex items-center justify-center mr-2"
                 >
                   <Button 
                     size="sm" 
@@ -411,7 +411,7 @@ export default function Landing() {
                 href="https://wa.me/34614028600" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center"
+                className="inline-flex items-center justify-center mr-1"
               >
                 <Button 
                   size="sm" 
