@@ -358,7 +358,7 @@ export default function SuperAdminMarketing() {
     <SuperAdminLayout>
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Stats Overview */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+        <div className="grid grid-cols-4 gap-3 mb-8">
           <Card className="bg-white/10 backdrop-blur-xl border-white/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
               <CardTitle className="text-xs font-medium text-white/80">
