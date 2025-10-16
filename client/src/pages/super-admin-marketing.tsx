@@ -567,7 +567,9 @@ export default function SuperAdminMarketing() {
                       <CardTitle className="text-white flex items-center gap-2">
                         <Send className="w-5 h-5" />
                         Prospects Externos
-                        <span className="text-sm font-normal text-white/60">({totalProspects})</span>
+                        <span className="text-sm font-normal text-white/60">
+                          ({searchTerm ? `${filteredProspects.length} de ${totalProspects}` : totalProspects})
+                        </span>
                       </CardTitle>
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1 bg-white/10 rounded-lg p-1">
