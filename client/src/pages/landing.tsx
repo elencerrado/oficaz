@@ -35,6 +35,7 @@ import {
   Square,
   Eye
 } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
@@ -366,6 +367,20 @@ export default function Landing() {
               </div>
               
               <div className="flex items-center space-x-3">
+                <a 
+                  href="https://wa.me/34614028600" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center"
+                >
+                  <Button 
+                    size="sm" 
+                    className="bg-[#25D366] hover:bg-[#20BA5A] text-white font-semibold px-4 py-2 shadow-lg shadow-[#25D366]/25 border-0 rounded-lg hover:shadow-xl hover:shadow-[#25D366]/30 transition-all duration-300 hover:scale-105"
+                  >
+                    <FaWhatsapp className="w-5 h-5 mr-2" />
+                    WhatsApp
+                  </Button>
+                </a>
                 {registrationSettings?.publicRegistrationEnabled ? (
                   <Link href="/request-code">
                     <Button size="sm" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-6 py-2 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg hover:shadow-xl hover:shadow-[#007AFF]/30 transition-all duration-300 hover:scale-105">
@@ -391,7 +406,20 @@ export default function Landing() {
             </nav>
 
             {/* Mobile menu button */}
-            <div className="md:hidden flex items-center space-x-3">
+            <div className="md:hidden flex items-center space-x-2">
+              <a 
+                href="https://wa.me/34614028600" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center"
+              >
+                <Button 
+                  size="sm" 
+                  className="bg-[#25D366] hover:bg-[#20BA5A] text-white p-2 shadow-lg shadow-[#25D366]/25 border-0 rounded-lg"
+                >
+                  <FaWhatsapp className="w-5 h-5" />
+                </Button>
+              </a>
               {registrationSettings?.publicRegistrationEnabled ? (
                 <Link href="/request-code">
                   <Button size="sm" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-3 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg">
