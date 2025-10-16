@@ -16,6 +16,7 @@ import { storage } from "./storage";
 import { authenticateToken, requireRole, generateToken, AuthRequest } from './middleware/auth';
 import { withDatabaseRetry } from './utils';
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertWorkShiftSchema, insertMessageSchema, passwordResetRequestSchema, passwordResetSchema, contactFormSchema } from '@shared/schema';
+import { z } from 'zod';
 import { db } from './db';
 import { eq, and, or, desc, sql, not, inArray, count, gte, lt, isNotNull } from 'drizzle-orm';
 import * as schema from '@shared/schema';
