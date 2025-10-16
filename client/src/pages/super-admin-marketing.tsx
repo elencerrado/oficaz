@@ -663,6 +663,9 @@ export default function SuperAdminMarketing() {
                                 onClick={() => {
                                   if (prospect.id === 'new') {
                                     setEditingCell({ id: 'new', field: 'email' });
+                                  } else if (prospect.email?.includes('@temp-')) {
+                                    // Allow single click edit for temporary emails
+                                    setEditingCell({ id: prospect.id, field: 'email' });
                                   }
                                 }}
                                 onDoubleClick={() => {
