@@ -159,6 +159,32 @@ export default function SuperAdminMarketing() {
     }
   };
 
+  // Get consistent color for each tag based on its name
+  const getTagColor = (tag: string) => {
+    const colors = [
+      { bg: 'bg-purple-500/20', text: 'text-purple-200' },
+      { bg: 'bg-blue-500/20', text: 'text-blue-200' },
+      { bg: 'bg-green-500/20', text: 'text-green-200' },
+      { bg: 'bg-yellow-500/20', text: 'text-yellow-200' },
+      { bg: 'bg-pink-500/20', text: 'text-pink-200' },
+      { bg: 'bg-indigo-500/20', text: 'text-indigo-200' },
+      { bg: 'bg-red-500/20', text: 'text-red-200' },
+      { bg: 'bg-orange-500/20', text: 'text-orange-200' },
+      { bg: 'bg-teal-500/20', text: 'text-teal-200' },
+      { bg: 'bg-cyan-500/20', text: 'text-cyan-200' },
+      { bg: 'bg-emerald-500/20', text: 'text-emerald-200' },
+      { bg: 'bg-violet-500/20', text: 'text-violet-200' },
+    ];
+    
+    // Simple hash function to get consistent color for each tag
+    let hash = 0;
+    for (let i = 0; i < tag.length; i++) {
+      hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+  };
+
   // Send campaign mutation
   const sendCampaignMutation = useMutation({
     mutationFn: async (campaignId: number) => {
@@ -930,24 +956,27 @@ export default function SuperAdminMarketing() {
                               >
                                 {editingCell?.id === prospect.id && editingCell?.field === 'tags' ? (
                                   <div className="flex flex-wrap gap-1 items-center min-h-[32px]">
-                                    {(prospect.tags || []).map((tag: string) => (
-                                      <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-500/20 text-purple-200 text-xs rounded">
-                                        {tag}
-                                        <button
-                                          onClick={() => {
-                                            const newTags = prospect.tags.filter((t: string) => t !== tag);
-                                            updateProspectInlineMutation.mutate({
-                                              prospectId: prospect.id,
-                                              field: 'tags',
-                                              value: newTags.length > 0 ? newTags : null,
-                                            });
-                                          }}
-                                          className="hover:text-purple-100"
-                                        >
-                                          ×
-                                        </button>
-                                      </span>
-                                    ))}
+                                    {(prospect.tags || []).map((tag: string) => {
+                                      const tagColor = getTagColor(tag);
+                                      return (
+                                        <span key={tag} className={`inline-flex items-center gap-1 px-2 py-0.5 ${tagColor.bg} ${tagColor.text} text-xs rounded`}>
+                                          {tag}
+                                          <button
+                                            onClick={() => {
+                                              const newTags = prospect.tags.filter((t: string) => t !== tag);
+                                              updateProspectInlineMutation.mutate({
+                                                prospectId: prospect.id,
+                                                field: 'tags',
+                                                value: newTags.length > 0 ? newTags : null,
+                                              });
+                                            }}
+                                            className="hover:opacity-80"
+                                          >
+                                            ×
+                                          </button>
+                                        </span>
+                                      );
+                                    })}
                                     <div className="relative">
                                       <Input
                                         value={tagInput}
@@ -1045,11 +1074,14 @@ export default function SuperAdminMarketing() {
                                   </div>
                                 ) : (
                                   <div className="flex flex-wrap gap-1">
-                                    {prospect.tags?.map((tag: string) => (
-                                      <span key={tag} className="px-2 py-0.5 bg-purple-500/20 text-purple-200 text-xs rounded">
-                                        {tag}
-                                      </span>
-                                    )) || '-'}
+                                    {prospect.tags?.map((tag: string) => {
+                                      const tagColor = getTagColor(tag);
+                                      return (
+                                        <span key={tag} className={`px-2 py-0.5 ${tagColor.bg} ${tagColor.text} text-xs rounded`}>
+                                          {tag}
+                                        </span>
+                                      );
+                                    }) || '-'}
                                   </div>
                                 )}
                               </TableCell>
@@ -1139,11 +1171,14 @@ export default function SuperAdminMarketing() {
                           <div className="flex items-center gap-2">
                             {prospect.tags && prospect.tags.length > 0 && (
                               <div className="flex gap-1">
-                                {prospect.tags.slice(0, 2).map((tag: string) => (
-                                  <span key={tag} className="px-2 py-1 bg-purple-500/20 text-purple-200 text-xs rounded">
-                                    {tag}
-                                  </span>
-                                ))}
+                                {prospect.tags.slice(0, 2).map((tag: string) => {
+                                  const tagColor = getTagColor(tag);
+                                  return (
+                                    <span key={tag} className={`px-2 py-1 ${tagColor.bg} ${tagColor.text} text-xs rounded`}>
+                                      {tag}
+                                    </span>
+                                  );
+                                })}
                               </div>
                             )}
                             {prospect.status !== 'active' && (
