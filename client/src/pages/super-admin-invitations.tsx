@@ -384,42 +384,42 @@ export default function SuperAdminInvitations() {
                 <p className="text-white/50 text-sm">Crea la primera invitación para empezar</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {invitations.map((invitation) => (
                   <div
                     key={invitation.id}
-                    className="bg-white/5 rounded-lg p-4 border border-white/10 hover:bg-white/10 transition-colors"
+                    className="bg-white/5 rounded-lg p-3 md:p-4 border border-white/10 hover:bg-white/10 transition-colors"
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-xs md:text-sm flex-shrink-0">
                           {invitation.email[0].toUpperCase()}
                         </div>
-                        <div>
-                          <p className="text-white font-medium">{invitation.email}</p>
-                          <p className="text-white/70 text-sm">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-white font-medium text-sm md:text-base truncate">{invitation.email}</p>
+                          <p className="text-white/70 text-xs md:text-sm">
                             Invitado por {invitation.inviterName} • {formatDate(invitation.createdAt)}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap md:flex-nowrap">
                         {getStatusBadge(invitation)}
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => copyInvitationUrl(invitation.token)}
-                          className="border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                          className="border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs md:text-sm"
                           title={copiedToken === invitation.token ? "¡Enlace copiado!" : "Copiar enlace de invitación"}
                         >
                           {copiedToken === invitation.token ? (
                             <>
-                              <Check className="w-4 h-4 mr-1" />
-                              <span className="text-xs font-medium">Copiado</span>
+                              <Check className="w-3 h-3 md:w-4 md:h-4 md:mr-1" />
+                              <span className="hidden md:inline text-xs font-medium">Copiado</span>
                             </>
                           ) : (
                             <>
-                              <Copy className="w-4 h-4 mr-1" />
-                              <span className="text-xs font-medium">Copiar</span>
+                              <Copy className="w-3 h-3 md:w-4 md:h-4 md:mr-1" />
+                              <span className="hidden md:inline text-xs font-medium">Copiar</span>
                             </>
                           )}
                         </Button>
@@ -430,14 +430,14 @@ export default function SuperAdminInvitations() {
                           disabled={deleteInvitationMutation.isPending}
                           className="border-red-500/20 text-red-400 hover:bg-red-500/10"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
                         </Button>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-4 text-white/70">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between text-xs md:text-sm gap-2 md:gap-0">
+                      <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 text-white/70">
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
+                          <Calendar className="w-3 h-3 md:w-4 md:h-4" />
                           Expira: {formatDate(invitation.expiresAt)}
                         </span>
                         {invitation.companyName && (
