@@ -50,7 +50,7 @@ Preferred communication style: Simple, everyday language.
 - **File Uploads**: Multer with Sharp (image compression), with specific handling for iOS devices.
 - **Session Management**: Express sessions with PostgreSQL store.
 - **Security**: Helmet for CSP, CORS, rate limiting, HSTS, X-XSS-Protection, Referrer-Policy; SQL injection protection via parameterized queries. SuperAdmin access is exclusive via email verification (`soy@oficaz.es`).
-- **SuperAdmin Security**: JWT tokens expire in 2 hours (not 24h); tokens stored in `sessionStorage` (auto-logout on browser close); automatic token expiration check with redirect to login; no token persistence across browser sessions.
+- **SuperAdmin Security**: JWT tokens expire in 2 hours (not 24h); tokens stored in `sessionStorage` (auto-logout on browser close); automatic token expiration check with redirect to login; no token persistence across browser sessions. **Enterprise-grade audit logging**: All SuperAdmin actions persisted to PostgreSQL `audit_logs` table with timestamp, IP, action, email, success status, and details. Rate limiting (3 attempts access password, 5 attempts login per 15 min). Email notifications on successful login. Comprehensive security headers (X-Frame-Options: DENY, strict CSP, Referrer-Policy, Permissions-Policy) applied to all SuperAdmin endpoints. Audit logs accessible via GET `/api/super-admin/audit-logs` with pagination.
 - **Core Modules**: Authentication, Time Tracking, Vacation Management, Document Management, Messaging, Administrative Features, Subscription Management, Reminders, Email Marketing (SuperAdmin).
 - **Account Management**: Includes a 30-day grace period for account deletion with a recovery process that bypasses the registration wizard. Cancelled accounts are immediately blocked.
 - **Data Integrity**: Break periods must belong to the current work session. Orphaned documents (DB records without physical files) are automatically removed.
@@ -59,7 +59,7 @@ Preferred communication style: Simple, everyday language.
 ### Database Design
 - **ORM**: Drizzle with PostgreSQL dialect.
 - **Schema**: Type-safe schema definitions.
-- **Key Tables**: Companies, Users, Work Sessions, Vacation Requests, Documents, Messages, Subscriptions, Reminders, Notifications, Features, Email Campaigns, Email Prospects, Email Campaign Sends.
+- **Key Tables**: Companies, Users, Work Sessions, Vacation Requests, Documents, Messages, Subscriptions, Reminders, Notifications, Features, Email Campaigns, Email Prospects, Email Campaign Sends, **Audit Logs** (SuperAdmin security tracking with indexed columns for timestamp, action, email).
 
 ### Performance & Scalability
 - **High Concurrency Support**: Optimized for 1000+ simultaneous clock-ins during peak hours
