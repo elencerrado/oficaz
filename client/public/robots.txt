@@ -17,5 +17,6 @@ Crawl-delay: 1
 # Block private areas
 Disallow: /admin/
 Disallow: /employee/
+Disallow: /super-admin/
 Disallow: /api/
 Disallow: /uploads/private/

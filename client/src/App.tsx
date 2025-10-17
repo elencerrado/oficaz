@@ -235,6 +235,26 @@ function Router() {
   
   // Super admin routes handled separately - PROTECTED: Only if no regular user session exists
   if (location.startsWith('/super-admin')) {
+    // SEO PROTECTION: Prevent indexing of super admin pages
+    React.useEffect(() => {
+      // Add noindex meta tag
+      let metaRobots = document.querySelector('meta[name="robots"]');
+      if (!metaRobots) {
+        metaRobots = document.createElement('meta');
+        metaRobots.setAttribute('name', 'robots');
+        document.head.appendChild(metaRobots);
+      }
+      metaRobots.setAttribute('content', 'noindex, nofollow');
+
+      // Cleanup: remove noindex when leaving super-admin routes
+      return () => {
+        const robotsMeta = document.querySelector('meta[name="robots"]');
+        if (robotsMeta) {
+          robotsMeta.remove();
+        }
+      };
+    }, []);
+    
     // CRITICAL FIX: If user is logged in as regular user, redirect them out of SuperAdmin area
     if (user && company) {
       console.log('🚨 SECURITY: Regular user attempting to access SuperAdmin - redirecting');
