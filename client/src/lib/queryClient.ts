@@ -49,11 +49,22 @@ export async function apiRequest(
       if (errorText.includes('Invalid or expired token') || errorText.includes('Access token required')) {
         console.log('🚨 Auth error detected in API request:', url);
         
+        // Check if this is a super admin session
+        const isSuperAdmin = window.location.pathname.startsWith('/super-admin');
+        const hasSuperAdminToken = sessionStorage.getItem('superAdminToken');
+        
         // Only redirect if we're not already on login page or in login process
-        if (!window.location.pathname.includes('/login') && !url.includes('/api/auth/login')) {
-          console.log('🚨 Redirecting to login due to auth error');
-          localStorage.removeItem('authData');
-          window.location.href = '/login';
+        if (!window.location.pathname.includes('/login') && !url.includes('/api/auth/login') && !url.includes('/api/super-admin/login')) {
+          if (isSuperAdmin || hasSuperAdminToken) {
+            console.log('🚨 SuperAdmin session expired, redirecting to SuperAdmin login');
+            sessionStorage.removeItem('superAdminToken');
+            window.location.href = '/super-admin';
+          } else {
+            console.log('🚨 Regular session expired, redirecting to login');
+            localStorage.removeItem('authData');
+            sessionStorage.removeItem('authData');
+            window.location.href = '/login';
+          }
           return;
         } else {
           console.log('🚨 Auth error during login process, not redirecting');
@@ -61,10 +72,20 @@ export async function apiRequest(
       }
     } catch (e) {
       // If we can't read the error text, still handle as auth error but be more careful
-      if (!window.location.pathname.includes('/login') && !url.includes('/api/auth/login')) {
-        console.log('🚨 Auth error (unreadable), redirecting to login');
-        localStorage.removeItem('authData');
-        window.location.href = '/login';
+      if (!window.location.pathname.includes('/login') && !url.includes('/api/auth/login') && !url.includes('/api/super-admin/login')) {
+        const isSuperAdmin = window.location.pathname.startsWith('/super-admin');
+        const hasSuperAdminToken = sessionStorage.getItem('superAdminToken');
+        
+        if (isSuperAdmin || hasSuperAdminToken) {
+          console.log('🚨 SuperAdmin auth error (unreadable), redirecting to SuperAdmin login');
+          sessionStorage.removeItem('superAdminToken');
+          window.location.href = '/super-admin';
+        } else {
+          console.log('🚨 Auth error (unreadable), redirecting to login');
+          localStorage.removeItem('authData');
+          sessionStorage.removeItem('authData');
+          window.location.href = '/login';
+        }
         return;
       }
     }
@@ -102,19 +123,41 @@ export const getQueryFn: <T>(options: {
     }
 
     // Handle token expiration in queries too
-    if (res.status === 403) {
+    if (res.status === 403 || res.status === 401) {
       try {
         const errorText = await res.text();
-        if (errorText.includes('Invalid or expired token')) {
-          // Clear auth data and redirect to login
-          localStorage.removeItem('authData');
-          window.location.href = '/login';
+        if (errorText.includes('Invalid or expired token') || errorText.includes('Access token required')) {
+          // Check if this is a super admin session
+          const isSuperAdmin = window.location.pathname.startsWith('/super-admin');
+          const hasSuperAdminToken = sessionStorage.getItem('superAdminToken');
+          
+          if (isSuperAdmin || hasSuperAdminToken) {
+            console.log('🚨 SuperAdmin session expired in query, redirecting to SuperAdmin login');
+            sessionStorage.removeItem('superAdminToken');
+            window.location.href = '/super-admin';
+          } else {
+            console.log('🚨 Regular session expired in query, redirecting to login');
+            localStorage.removeItem('authData');
+            sessionStorage.removeItem('authData');
+            window.location.href = '/login';
+          }
           return null;
         }
       } catch (e) {
         // If we can't read the error text, still handle as auth error
-        localStorage.removeItem('authData');
-        window.location.href = '/login';
+        const isSuperAdmin = window.location.pathname.startsWith('/super-admin');
+        const hasSuperAdminToken = sessionStorage.getItem('superAdminToken');
+        
+        if (isSuperAdmin || hasSuperAdminToken) {
+          console.log('🚨 SuperAdmin auth error in query (unreadable), redirecting to SuperAdmin login');
+          sessionStorage.removeItem('superAdminToken');
+          window.location.href = '/super-admin';
+        } else {
+          console.log('🚨 Auth error in query (unreadable), redirecting to login');
+          localStorage.removeItem('authData');
+          sessionStorage.removeItem('authData');
+          window.location.href = '/login';
+        }
         return null;
       }
     }

@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { SuperAdminSidebar } from './super-admin-sidebar';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { isTokenExpired } from '@/lib/auth';
 
 interface SuperAdminLayoutProps {
   children: React.ReactNode;
@@ -15,9 +16,32 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
   useEffect(() => {
     const token = sessionStorage.getItem('superAdminToken');
     
+    // If no token exists, redirect to login
     if (!token) {
+      console.log('🚨 No SuperAdmin token found, redirecting to login');
       setLocation('/super-admin');
+      return;
     }
+    
+    // If token exists but is expired, clear it and redirect
+    if (isTokenExpired(token)) {
+      console.log('🚨 SuperAdmin token expired, redirecting to login');
+      sessionStorage.removeItem('superAdminToken');
+      setLocation('/super-admin');
+      return;
+    }
+    
+    // Token is valid, check expiration periodically
+    const intervalId = setInterval(() => {
+      const currentToken = sessionStorage.getItem('superAdminToken');
+      if (!currentToken || isTokenExpired(currentToken)) {
+        console.log('🚨 SuperAdmin token expired (periodic check), redirecting to login');
+        sessionStorage.removeItem('superAdminToken');
+        setLocation('/super-admin');
+      }
+    }, 60000); // Check every minute
+    
+    return () => clearInterval(intervalId);
   }, [setLocation]);
 
   return (
