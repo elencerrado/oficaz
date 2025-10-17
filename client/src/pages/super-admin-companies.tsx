@@ -1008,8 +1008,8 @@ export default function SuperAdminCompanies() {
                       <Building2 className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3">
-                        <h3 className="font-semibold !text-white truncate">{company.name}</h3>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-semibold !text-white">{company.name}</h3>
                         {editingCompany === company.id ? (
                           <div className="flex items-center gap-2">
                             <Select value={newPlan} onValueChange={setNewPlan}>
@@ -1040,7 +1040,7 @@ export default function SuperAdminCompanies() {
                             </Button>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2 flex-wrap lg:flex-nowrap">
+                          <>
                             <Badge 
                               className={`${planColors[company.subscription.plan as keyof typeof planColors]} text-white cursor-pointer hover:opacity-80`}
                               onClick={() => handlePlanChange(company.id, company.subscription.plan)}
@@ -1067,7 +1067,7 @@ export default function SuperAdminCompanies() {
                                 {company.promotionalCode.code}
                               </Badge>
                             )}
-                          </div>
+                          </>
                         )}
                       </div>
                       <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-1 sm:gap-4 text-sm !text-white/60 mt-1">
