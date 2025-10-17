@@ -9356,14 +9356,15 @@ Responde directamente a este email para contactar con la persona.
 
       const maxDailyVisits = Math.max(...dailyVisits.map(d => d.count), 1);
 
-      // Get country distribution (top 10)
-      const countriesResult = await db.execute(sql`
+      // Get city and country distribution (top 10)
+      const locationsResult = await db.execute(sql`
         SELECT 
+          COALESCE(city, '') as city,
           COALESCE(country, 'Desconocido') as country,
           COUNT(*) as visits
         FROM landing_visits
         WHERE visited_at >= ${thirtyDaysAgo.toISOString()}
-        GROUP BY country
+        GROUP BY city, country
         ORDER BY visits DESC
         LIMIT 10
       `);
@@ -9382,11 +9383,17 @@ Responde directamente a este email para contactar con la persona.
         'Colombia': '🇨🇴',
       };
 
-      const countries = countriesResult.rows.map((row: any) => ({
-        country: row.country,
-        visits: Number(row.visits),
-        flag: countryFlags[row.country] || '🌍'
-      }));
+      const countries = locationsResult.rows.map((row: any) => {
+        const city = row.city || '';
+        const country = row.country || 'Desconocido';
+        const location = city ? `${city}, ${country}` : country;
+        
+        return {
+          country: location,
+          visits: Number(row.visits),
+          flag: countryFlags[country] || '🌍'
+        };
+      });
 
       res.json({
         totalVisits,
