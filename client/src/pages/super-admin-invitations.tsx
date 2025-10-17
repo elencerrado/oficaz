@@ -236,58 +236,58 @@ export default function SuperAdminInvitations() {
         </Card>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
           <Card className="bg-white/5 backdrop-blur-xl border border-white/10">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white/70 text-sm">Invitaciones Activas</p>
-                  <p className="text-2xl font-bold text-white">{activeInvitations.length}</p>
+                  <p className="text-white/70 text-xs md:text-sm">Invitaciones Activas</p>
+                  <p className="text-xl md:text-2xl font-bold text-white">{activeInvitations.length}</p>
                 </div>
-                <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                  <Mail className="w-6 h-6 text-blue-400" />
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                  <Mail className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-white/5 backdrop-blur-xl border border-white/10">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white/70 text-sm">Utilizadas</p>
-                  <p className="text-2xl font-bold text-white">{usedInvitations.length}</p>
+                  <p className="text-white/70 text-xs md:text-sm">Utilizadas</p>
+                  <p className="text-xl md:text-2xl font-bold text-white">{usedInvitations.length}</p>
                 </div>
-                <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center">
-                  <Check className="w-6 h-6 text-green-400" />
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-green-500/20 flex items-center justify-center">
+                  <Check className="w-5 h-5 md:w-6 md:h-6 text-green-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-white/5 backdrop-blur-xl border border-white/10">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white/70 text-sm">Expiradas</p>
-                  <p className="text-2xl font-bold text-white">{expiredInvitations.length}</p>
+                  <p className="text-white/70 text-xs md:text-sm">Expiradas</p>
+                  <p className="text-xl md:text-2xl font-bold text-white">{expiredInvitations.length}</p>
                 </div>
-                <div className="w-12 h-12 rounded-lg bg-red-500/20 flex items-center justify-center">
-                  <X className="w-6 h-6 text-red-400" />
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-red-500/20 flex items-center justify-center">
+                  <X className="w-5 h-5 md:w-6 md:h-6 text-red-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-white/5 backdrop-blur-xl border border-white/10">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white/70 text-sm">Total</p>
-                  <p className="text-2xl font-bold text-white">{invitations?.length || 0}</p>
+                  <p className="text-white/70 text-xs md:text-sm">Total</p>
+                  <p className="text-xl md:text-2xl font-bold text-white">{invitations?.length || 0}</p>
                 </div>
-                <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                  <UserPlus className="w-6 h-6 text-purple-400" />
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                  <UserPlus className="w-5 h-5 md:w-6 md:h-6 text-purple-400" />
                 </div>
               </div>
             </CardContent>
