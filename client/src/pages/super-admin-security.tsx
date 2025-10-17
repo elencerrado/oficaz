@@ -106,14 +106,14 @@ export default function SuperAdminSecurity() {
 
   if (currentStep.step === "verified") {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-white/10 backdrop-blur-xl border-white/20">
           <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <Shield className="h-6 w-6 text-green-600" />
+            <div className="mx-auto w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center mb-4">
+              <Shield className="h-6 w-6 text-emerald-400" />
             </div>
-            <CardTitle className="text-2xl text-green-600">Acceso Autorizado</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl text-white">Acceso Autorizado</CardTitle>
+            <CardDescription className="text-white/60">
               Verificación completada. Redirigiendo al panel de administración...
             </CardDescription>
           </CardHeader>
@@ -123,14 +123,14 @@ export default function SuperAdminSecurity() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md bg-white/10 backdrop-blur-xl border-white/20">
         <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
-            <Shield className="h-6 w-6 text-red-600" />
+          <div className="mx-auto w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mb-4">
+            <Shield className="h-6 w-6 text-purple-400" />
           </div>
-          <CardTitle className="text-2xl text-gray-900">Acceso Superadmin</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl text-white">Acceso Superadmin</CardTitle>
+          <CardDescription className="text-white/60">
             {currentStep.step === "access-password" 
               ? "Verificación de seguridad" 
               : "Iniciar sesión"}
@@ -141,7 +141,7 @@ export default function SuperAdminSecurity() {
           {currentStep.step === "access-password" ? (
             <form onSubmit={handleAccessPasswordSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="accessPassword" className="flex items-center gap-2">
+                <Label htmlFor="accessPassword" className="flex items-center gap-2 text-white">
                   <Key className="h-4 w-4" />
                   Contraseña de acceso
                 </Label>
@@ -152,15 +152,15 @@ export default function SuperAdminSecurity() {
                   onChange={(e) => setAccessPassword(e.target.value)}
                   placeholder="Introduce la contraseña de acceso"
                   required
-                  className="text-center font-mono"
+                  className="text-center font-mono bg-white/10 border-white/20 text-white placeholder:text-white/40"
                 />
-                <p className="text-xs text-gray-500 text-center">
+                <p className="text-xs text-white/60 text-center">
                   Primera capa de seguridad
                 </p>
               </div>
 
               {error && (
-                <Alert variant="destructive">
+                <Alert className="bg-red-500/20 border-red-500/30 text-red-200">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
@@ -168,7 +168,7 @@ export default function SuperAdminSecurity() {
 
               <Button 
                 type="submit" 
-                className="w-full bg-red-600 hover:bg-red-700"
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                 disabled={isLoading}
               >
                 {isLoading ? "Verificando..." : "Continuar"}
@@ -177,7 +177,7 @@ export default function SuperAdminSecurity() {
           ) : (
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center gap-2">
+                <Label htmlFor="email" className="flex items-center gap-2 text-white">
                   <Mail className="h-4 w-4" />
                   Email
                 </Label>
@@ -189,11 +189,12 @@ export default function SuperAdminSecurity() {
                   placeholder="tu@email.com"
                   required
                   autoComplete="email"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="flex items-center gap-2">
+                <Label htmlFor="password" className="flex items-center gap-2 text-white">
                   <Lock className="h-4 w-4" />
                   Contraseña
                 </Label>
@@ -206,11 +207,12 @@ export default function SuperAdminSecurity() {
                     placeholder="••••••••"
                     required
                     autoComplete="current-password"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
                   >
                     {showPassword ? (
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -227,7 +229,7 @@ export default function SuperAdminSecurity() {
               </div>
 
               {error && (
-                <Alert variant="destructive">
+                <Alert className="bg-red-500/20 border-red-500/30 text-red-200">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
@@ -236,7 +238,7 @@ export default function SuperAdminSecurity() {
               <div className="space-y-2">
                 <Button 
                   type="submit" 
-                  className="w-full bg-red-600 hover:bg-red-700"
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                   disabled={isLoading}
                 >
                   {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
@@ -245,7 +247,7 @@ export default function SuperAdminSecurity() {
                 <Button 
                   type="button" 
                   variant="outline" 
-                  className="w-full"
+                  className="w-full border-white/20 text-white hover:bg-white/10"
                   onClick={() => {
                     setCurrentStep({ step: "access-password" });
                     setEmail("");
@@ -260,10 +262,10 @@ export default function SuperAdminSecurity() {
             </form>
           )}
 
-          <div className="mt-6 p-4 bg-red-50 rounded-lg">
+          <div className="mt-6 p-4 bg-red-500/20 border border-red-500/30 rounded-lg">
             <div className="flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-red-800">
+              <AlertCircle className="h-5 w-5 text-red-300 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-red-200">
                 <p className="font-medium">Acceso restringido</p>
                 <p>Solo personal autorizado de Oficaz puede acceder a este panel.</p>
               </div>
