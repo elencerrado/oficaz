@@ -133,28 +133,34 @@ export default function SuperAdminLandingMetrics() {
             <CardTitle className="text-white">Visitas Diarias (Últimos 7 Días)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-end justify-between gap-4 h-64">
-              {metrics?.dailyVisits?.map((day: any) => {
-                const heightPercentage = (day.count / (metrics.maxDailyVisits || 1)) * 100;
+            <div className="grid grid-cols-7 gap-4 h-64">
+              {Array.from({ length: 7 }).map((_, index) => {
+                const day = metrics?.dailyVisits?.[index];
+                const count = day?.count || 0;
+                const heightPercentage = count > 0 && metrics?.maxDailyVisits 
+                  ? (count / metrics.maxDailyVisits) * 100 
+                  : 0;
                 
                 return (
-                  <div key={day.date} className="flex-1 flex flex-col items-center gap-2">
+                  <div key={day?.date || `day-${index}`} className="flex flex-col items-center gap-2">
                     {/* Number at top */}
-                    <div className="text-sm font-semibold text-white mb-1">
-                      {day.count}
+                    <div className="text-sm font-semibold text-white mb-1 h-5">
+                      {count > 0 ? count : ''}
                     </div>
                     
                     {/* Vertical bar */}
                     <div className="w-full flex-1 flex items-end">
-                      <div 
-                        className="w-full bg-gradient-to-t from-blue-500 to-purple-500 rounded-t-lg transition-all duration-500 min-h-[20px]"
-                        style={{ height: `${Math.max(heightPercentage, 10)}%` }}
-                      />
+                      {count > 0 && (
+                        <div 
+                          className="w-full bg-gradient-to-t from-blue-500 to-purple-500 rounded-t-lg transition-all duration-500"
+                          style={{ height: `${heightPercentage}%` }}
+                        />
+                      )}
                     </div>
                     
                     {/* Date at bottom */}
-                    <div className="text-xs text-white/70 text-center whitespace-nowrap">
-                      {format(new Date(day.date), 'dd MMM', { locale: es })}
+                    <div className="text-xs text-white/70 text-center whitespace-nowrap h-5">
+                      {day?.date ? format(new Date(day.date), 'dd MMM', { locale: es }) : '-'}
                     </div>
                   </div>
                 );
