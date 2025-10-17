@@ -407,19 +407,6 @@ export default function Landing() {
 
             {/* Mobile menu button */}
             <div className="md:hidden flex items-center space-x-2">
-              <a 
-                href="https://wa.me/34614028600" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center mr-1"
-              >
-                <Button 
-                  size="sm" 
-                  className="bg-[#25D366] hover:bg-[#20BA5A] text-white font-semibold px-3 py-1.5 shadow-lg shadow-[#25D366]/25 border-0 rounded-lg transition-all duration-300"
-                >
-                  <FaWhatsapp className="w-5 h-5" />
-                </Button>
-              </a>
               {registrationSettings?.publicRegistrationEnabled ? (
                 <Link href="/request-code">
                   <Button size="sm" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-3 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg">
@@ -444,6 +431,18 @@ export default function Landing() {
           </div>
         </div>
       </header>
+
+      {/* Floating WhatsApp Button - Mobile Only */}
+      <a 
+        href="https://wa.me/34614028600" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="md:hidden fixed bottom-6 right-6 z-50 inline-flex items-center justify-center w-16 h-16 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-full shadow-2xl shadow-[#25D366]/40 transition-all duration-300 hover:scale-110 active:scale-95"
+        aria-label="Contactar por WhatsApp"
+      >
+        <FaWhatsapp className="w-8 h-8" />
+      </a>
+
       {/* Hero Section - Responsive Height */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 to-gray-900 min-h-screen flex items-center justify-center py-20 lg:py-24 pt-16"
                style={{ minHeight: '100vh' }}>
