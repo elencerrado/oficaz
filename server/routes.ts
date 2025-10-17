@@ -3568,6 +3568,15 @@ Responde directamente a este email para contactar con la persona.
       const limit = parseInt(req.query.limit as string) || 40; // Default 40 sessions
       const offset = parseInt(req.query.offset as string) || 0;
       
+      // Mark old sessions as incomplete for all employees before retrieving
+      // Get all employees from the company
+      const employees = await storage.getEmployeesByCompany(req.user!.companyId);
+      
+      // Mark incomplete sessions for each employee
+      await Promise.all(
+        employees.map(employee => storage.markOldSessionsAsIncomplete(employee.id))
+      );
+      
       const sessions = await storage.getWorkSessionsByCompany(req.user!.companyId, limit, offset);
       
       res.json(sessions);
