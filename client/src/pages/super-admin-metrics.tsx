@@ -39,8 +39,8 @@ export default function SuperAdminMetrics() {
       if (!response.ok) throw new Error('Failed to fetch stats');
       return response.json();
     },
-    staleTime: 30000, // Cache for 30 seconds
-    refetchOnMount: false,
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: true, // Refetch when component mounts
   });
 
   return (
