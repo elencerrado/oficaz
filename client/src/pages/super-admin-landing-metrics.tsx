@@ -18,7 +18,9 @@ export default function SuperAdminLandingMetrics() {
       if (!response.ok) throw new Error('Failed to fetch metrics');
       return response.json();
     },
-    refetchInterval: 60000, // Refetch every minute
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: true, // Refetch when component mounts
+    refetchInterval: 30000, // Refetch every 30 seconds
   });
 
   const conversionRate = metrics?.totalVisits > 0 

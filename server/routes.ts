@@ -3147,6 +3147,43 @@ Responde directamente a este email para contactar con la persona.
       // Get subscription data for immediate access to features
       const subscription = await storage.getSubscriptionByCompanyId(company.id);
 
+      // 📊 LANDING PAGE CONVERSION TRACKING
+      // Mark the most recent landing visit from this IP as registered
+      try {
+        const clientIp = req.ip || req.headers['x-forwarded-for']?.toString().split(',')[0] || req.socket.remoteAddress || '';
+        
+        // Find the most recent visit from this IP address
+        const recentVisit = await db
+          .select()
+          .from(schema.landingVisits)
+          .where(
+            and(
+              eq(schema.landingVisits.ipAddress, clientIp),
+              eq(schema.landingVisits.registered, false)
+            )
+          )
+          .orderBy(desc(schema.landingVisits.visitedAt))
+          .limit(1);
+
+        if (recentVisit.length > 0) {
+          await db
+            .update(schema.landingVisits)
+            .set({ 
+              registered: true,
+              companyId: company.id
+            })
+            .where(eq(schema.landingVisits.id, recentVisit[0].id));
+          
+          console.log(`✅ Landing visit ${recentVisit[0].id} marked as registered for company ${company.id}`);
+        } else {
+          // If no matching IP visit, just log it (user might have different IP now)
+          console.log(`⚠️ No matching landing visit found for IP ${clientIp}`);
+        }
+      } catch (trackingError) {
+        console.error('⚠️ Warning: Could not update landing visit tracking:', trackingError);
+        // Continue with registration even if tracking fails
+      }
+
       res.status(201).json({ 
         message: 'Registro de empresa exitoso',
         user: {
