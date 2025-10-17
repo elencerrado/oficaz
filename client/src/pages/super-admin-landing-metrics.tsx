@@ -18,6 +18,8 @@ export default function SuperAdminLandingMetrics() {
       const response = await fetch('/api/super-admin/landing-metrics', {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
         },
       });
       if (!response.ok) throw new Error('Failed to fetch metrics');
@@ -26,6 +28,7 @@ export default function SuperAdminLandingMetrics() {
     staleTime: 0, // Always fetch fresh data
     refetchOnMount: true, // Refetch when component mounts
     refetchInterval: 30000, // Refetch every 30 seconds
+    gcTime: 0, // Don't cache (garbage collection time)
   });
 
   const updateGeolocation = useMutation({
