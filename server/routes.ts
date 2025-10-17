@@ -18,7 +18,7 @@ import { withDatabaseRetry } from './utils';
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertWorkShiftSchema, insertMessageSchema, passwordResetRequestSchema, passwordResetSchema, contactFormSchema } from '@shared/schema';
 import { z } from 'zod';
 import { db } from './db';
-import { eq, and, or, desc, sql, not, inArray, count, gte, lt, isNotNull } from 'drizzle-orm';
+import { eq, and, or, desc, sql, not, inArray, count, gte, lt, isNotNull, isNull } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents, employeeActivationTokens, passwordResetTokens } from '@shared/schema';
 import { sendEmail, sendEmployeeWelcomeEmail, sendPasswordResetEmail, sendSuperAdminSecurityCode, sendNewCompanyRegistrationNotification } from './email';
@@ -9248,11 +9248,51 @@ Responde directamente a este email para contactar con la persona.
       const ipAddress = (req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '').split(',')[0].trim();
       const userAgent = req.headers['user-agent'] || '';
 
-      // Create landing visit record
+      // 🌍 GEOLOCATION DETECTION - Use ipapi.co for accurate location data
+      let country = null;
+      let city = null;
+      
+      // Don't geolocate localhost/private IPs
+      const isPrivateIp = !ipAddress || 
+        ipAddress === '::1' || 
+        ipAddress === '127.0.0.1' || 
+        ipAddress.startsWith('192.168.') || 
+        ipAddress.startsWith('10.') ||
+        ipAddress.startsWith('172.');
+
+      if (!isPrivateIp && ipAddress) {
+        try {
+          // Use ipapi.co for geolocation (1000 requests/day free)
+          const geoResponse = await fetch(`https://ipapi.co/${ipAddress}/json/`);
+          
+          if (geoResponse.ok) {
+            const geoData = await geoResponse.json();
+            
+            // Extract country and city from response
+            if (geoData && !geoData.error) {
+              country = geoData.country_name || null;
+              city = geoData.city || null;
+              
+              console.log(`🌍 Geolocation for ${ipAddress}: ${city || 'Unknown'}, ${country || 'Unknown'}`);
+            } else {
+              console.log(`⚠️ Geolocation API returned error for ${ipAddress}`);
+            }
+          }
+        } catch (geoError) {
+          console.error('⚠️ Geolocation lookup failed:', geoError);
+          // Continue without geolocation data
+        }
+      } else {
+        console.log(`⚠️ Skipping geolocation for private/local IP: ${ipAddress}`);
+      }
+
+      // Create landing visit record with geolocation data
       const visitData: schema.InsertLandingVisit = {
         ipAddress,
         userAgent,
         referrer,
+        country,
+        city,
         visitedAt: new Date(),
         registered: false,
       };
@@ -9359,6 +9399,87 @@ Responde directamente a este email para contactar con la persona.
     } catch (error: any) {
       console.error('Error fetching landing metrics:', error);
       res.status(500).json({ success: false, message: 'Error al obtener métricas' });
+    }
+  });
+
+  // SuperAdmin endpoint to retroactively update geolocation for existing visits
+  app.post('/api/super-admin/update-geolocation', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      // Get all visits without country data
+      const visitsWithoutGeo = await db
+        .select()
+        .from(schema.landingVisits)
+        .where(or(
+          isNull(schema.landingVisits.country),
+          eq(schema.landingVisits.country, '')
+        ))
+        .limit(100); // Process 100 at a time to avoid rate limits
+
+      console.log(`📍 Found ${visitsWithoutGeo.length} visits without geolocation data`);
+
+      let updated = 0;
+      let failed = 0;
+
+      for (const visit of visitsWithoutGeo) {
+        // Skip private/local IPs
+        const isPrivateIp = !visit.ipAddress || 
+          visit.ipAddress === '::1' || 
+          visit.ipAddress === '127.0.0.1' || 
+          visit.ipAddress.startsWith('192.168.') || 
+          visit.ipAddress.startsWith('10.') ||
+          visit.ipAddress.startsWith('172.');
+
+        if (isPrivateIp) {
+          console.log(`⚠️ Skipping private IP: ${visit.ipAddress}`);
+          continue;
+        }
+
+        try {
+          // Fetch geolocation data
+          const geoResponse = await fetch(`https://ipapi.co/${visit.ipAddress}/json/`);
+          
+          if (geoResponse.ok) {
+            const geoData = await geoResponse.json();
+            
+            if (geoData && !geoData.error && geoData.country_name) {
+              // Update the visit with geolocation data
+              await db
+                .update(schema.landingVisits)
+                .set({
+                  country: geoData.country_name,
+                  city: geoData.city || null,
+                })
+                .where(eq(schema.landingVisits.id, visit.id));
+
+              console.log(`✅ Updated visit ${visit.id}: ${geoData.city || 'Unknown'}, ${geoData.country_name}`);
+              updated++;
+            } else {
+              console.log(`⚠️ No geo data for IP ${visit.ipAddress}`);
+              failed++;
+            }
+          } else {
+            console.log(`⚠️ Geo API error for ${visit.ipAddress}`);
+            failed++;
+          }
+
+          // Rate limit: wait 1 second between requests (ipapi.co allows ~1 req/sec on free tier)
+          await new Promise(resolve => setTimeout(resolve, 1100));
+        } catch (error) {
+          console.error(`❌ Error updating visit ${visit.id}:`, error);
+          failed++;
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Actualización completada: ${updated} visitas actualizadas, ${failed} fallidas`,
+        updated,
+        failed,
+        remaining: visitsWithoutGeo.length - updated - failed,
+      });
+    } catch (error: any) {
+      console.error('Error updating geolocation:', error);
+      res.status(500).json({ success: false, message: 'Error al actualizar geolocalización' });
     }
   });
 
