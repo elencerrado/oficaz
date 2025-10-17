@@ -135,7 +135,9 @@ export default function SuperAdminLandingMetrics() {
           <CardContent>
             <div className="grid grid-cols-7 gap-4 h-64">
               {Array.from({ length: 7 }).map((_, index) => {
-                const day = metrics?.dailyVisits?.[index];
+                // Invertir el orden: día más antiguo a la izquierda (6) -> día más reciente a la derecha (0)
+                const reversedIndex = 6 - index;
+                const day = metrics?.dailyVisits?.[reversedIndex];
                 const count = day?.count || 0;
                 const heightPercentage = count > 0 && metrics?.maxDailyVisits 
                   ? (count / metrics.maxDailyVisits) * 100 
