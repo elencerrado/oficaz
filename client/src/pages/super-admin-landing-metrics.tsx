@@ -183,20 +183,34 @@ export default function SuperAdminLandingMetrics() {
               </div>
             ) : (
               <div className="space-y-3">
-                {metrics.countries.map((country: any) => (
-                  <div key={country.country || 'unknown'} className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="text-2xl">{country.flag || '🌍'}</div>
-                      <div>
-                        <p className="font-medium text-white">{country.country || 'Desconocido'}</p>
-                        <p className="text-sm text-white/60">{country.visits} visitas</p>
+                {metrics.countries.map((country: any) => {
+                  const maxVisits = Math.max(...metrics.countries.map((c: any) => c.visits), 1);
+                  const percentage = ((country.visits / metrics.totalVisits) * 100).toFixed(1);
+                  
+                  return (
+                    <div key={country.country || 'unknown'} className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 w-32">
+                        <div className="text-xl">{country.flag || '🌍'}</div>
+                        <div className="text-sm text-white/90 font-medium truncate">
+                          {country.country || 'Desconocido'}
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="h-8 bg-white/5 rounded-lg overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg transition-all duration-500 flex items-center justify-end pr-2"
+                            style={{ width: `${(country.visits / maxVisits) * 100}%` }}
+                          >
+                            <span className="text-xs font-semibold text-white">{percentage}%</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="w-16 text-right text-sm font-semibold text-white">
+                        {country.visits}
                       </div>
                     </div>
-                    <div className="text-sm font-semibold text-white/70">
-                      {((country.visits / metrics.totalVisits) * 100).toFixed(1)}%
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
