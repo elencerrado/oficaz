@@ -139,7 +139,7 @@ export default function SuperAdminSecurity() {
 
         <CardContent>
           {currentStep.step === "access-password" ? (
-            <form onSubmit={handleAccessPasswordSubmit} className="space-y-4">
+            <form onSubmit={handleAccessPasswordSubmit} className="space-y-4" autoComplete="off">
               <div className="space-y-2">
                 <Label htmlFor="accessPassword" className="flex items-center gap-2 text-white">
                   <Key className="h-4 w-4" />
@@ -152,6 +152,7 @@ export default function SuperAdminSecurity() {
                   onChange={(e) => setAccessPassword(e.target.value)}
                   placeholder="Introduce la contraseña de acceso"
                   required
+                  autoComplete="off"
                   className="text-center font-mono bg-white/10 border-white/20 text-white placeholder:text-white/40"
                 />
                 <p className="text-xs text-white/60 text-center">
@@ -183,13 +184,13 @@ export default function SuperAdminSecurity() {
                 </Label>
                 <Input
                   id="email"
-                  name="email"
+                  name="username"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@email.com"
                   required
-                  autoComplete="email"
+                  autoComplete="username"
                   className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                 />
               </div>
