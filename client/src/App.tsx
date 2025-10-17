@@ -244,12 +244,6 @@ function Router() {
     
     return (
       <Switch>
-        <Route path="/super-admin/security">
-          <Suspense fallback={<SuperAdminPageLoading />}>
-            <SuperAdminSecurity />
-          </Suspense>
-        </Route>
-
         <Route path="/super-admin/dashboard">
           <Suspense fallback={<SuperAdminPageLoading />}>
             <SuperAdminDashboard />
