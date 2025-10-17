@@ -133,25 +133,32 @@ export default function SuperAdminLandingMetrics() {
             <CardTitle className="text-white">Visitas Diarias (Últimos 7 Días)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {metrics?.dailyVisits?.map((day: any) => (
-                <div key={day.date} className="flex items-center gap-4">
-                  <div className="w-24 text-sm text-white/70">
-                    {format(new Date(day.date), 'dd MMM', { locale: es })}
-                  </div>
-                  <div className="flex-1">
-                    <div className="h-8 bg-white/5 rounded-lg overflow-hidden">
+            <div className="flex items-end justify-between gap-4 h-64">
+              {metrics?.dailyVisits?.map((day: any) => {
+                const heightPercentage = (day.count / (metrics.maxDailyVisits || 1)) * 100;
+                
+                return (
+                  <div key={day.date} className="flex-1 flex flex-col items-center gap-2">
+                    {/* Number at top */}
+                    <div className="text-sm font-semibold text-white mb-1">
+                      {day.count}
+                    </div>
+                    
+                    {/* Vertical bar */}
+                    <div className="w-full flex-1 flex items-end">
                       <div 
-                        className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg transition-all duration-500"
-                        style={{ width: `${Math.min((day.count / (metrics.maxDailyVisits || 1)) * 100, 100)}%` }}
+                        className="w-full bg-gradient-to-t from-blue-500 to-purple-500 rounded-t-lg transition-all duration-500 min-h-[20px]"
+                        style={{ height: `${Math.max(heightPercentage, 10)}%` }}
                       />
                     </div>
+                    
+                    {/* Date at bottom */}
+                    <div className="text-xs text-white/70 text-center whitespace-nowrap">
+                      {format(new Date(day.date), 'dd MMM', { locale: es })}
+                    </div>
                   </div>
-                  <div className="w-16 text-right text-sm font-semibold text-white">
-                    {day.count}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
