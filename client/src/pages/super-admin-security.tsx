@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,13 +15,15 @@ interface SecurityStep {
 export default function SuperAdminSecurity() {
   const [currentStep, setCurrentStep] = useState<SecurityStep>({ step: "access-password" });
   const [accessPassword, setAccessPassword] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  
+  // Refs for uncontrolled inputs (better Chrome autofill support)
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   // Check if already logged in on mount
   useEffect(() => {
@@ -62,6 +64,10 @@ export default function SuperAdminSecurity() {
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Read values from uncontrolled inputs
+    const email = emailRef.current?.value || "";
+    const password = passwordRef.current?.value || "";
     
     setIsLoading(true);
     setError("");
@@ -178,15 +184,15 @@ export default function SuperAdminSecurity() {
           ) : (
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="superadmin-email" className="flex items-center gap-2 text-white">
+                <Label htmlFor="email" className="flex items-center gap-2 text-white">
                   <Mail className="h-4 w-4" />
                   Email
                 </Label>
                 <Input
-                  id="superadmin-email"
+                  ref={emailRef}
+                  id="email"
+                  name="email"
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@email.com"
                   required
                   autoComplete="username"
@@ -195,16 +201,16 @@ export default function SuperAdminSecurity() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="superadmin-password" className="flex items-center gap-2 text-white">
+                <Label htmlFor="password" className="flex items-center gap-2 text-white">
                   <Lock className="h-4 w-4" />
                   Contraseña
                 </Label>
                 <div className="relative">
                   <Input
-                    id="superadmin-password"
+                    ref={passwordRef}
+                    id="password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
                     autoComplete="current-password"
@@ -251,8 +257,8 @@ export default function SuperAdminSecurity() {
                   className="w-full border-white/20 text-white hover:bg-white/10"
                   onClick={() => {
                     setCurrentStep({ step: "access-password" });
-                    setEmail("");
-                    setPassword("");
+                    if (emailRef.current) emailRef.current.value = "";
+                    if (passwordRef.current) passwordRef.current.value = "";
                     setError("");
                   }}
                   disabled={isLoading}
