@@ -157,38 +157,38 @@ export default function SuperAdminMetrics() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-blue-500/20 rounded-xl p-6 border border-blue-400/30">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-white font-semibold">Plan Basic</h3>
-                  <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                    <Building2 className="w-5 h-5 text-white" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+              <div className="bg-blue-500/20 rounded-xl p-4 md:p-6 border border-blue-400/30">
+                <div className="flex items-center justify-between mb-3 md:mb-4">
+                  <h3 className="text-white text-sm md:text-base font-semibold">Plan Basic</h3>
+                  <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <Building2 className="w-4 h-4 md:w-5 md:h-5 text-white" />
                   </div>
                 </div>
-                <div className="text-4xl font-bold text-white mb-2">{stats?.planDistribution?.basic || 0}</div>
-                <p className="text-sm text-blue-200">Empresas con plan básico</p>
+                <div className="text-2xl md:text-4xl font-bold text-white mb-1 md:mb-2">{stats?.planDistribution?.basic || 0}</div>
+                <p className="text-xs md:text-sm text-blue-200">Empresas con plan básico</p>
               </div>
 
-              <div className="bg-purple-500/20 rounded-xl p-6 border border-purple-400/30">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-white font-semibold">Plan Pro</h3>
-                  <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-white" />
+              <div className="bg-purple-500/20 rounded-xl p-4 md:p-6 border border-purple-400/30">
+                <div className="flex items-center justify-between mb-3 md:mb-4">
+                  <h3 className="text-white text-sm md:text-base font-semibold">Plan Pro</h3>
+                  <div className="w-8 h-8 md:w-10 md:h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-white" />
                   </div>
                 </div>
-                <div className="text-4xl font-bold text-white mb-2">{stats?.planDistribution?.pro || 0}</div>
-                <p className="text-sm text-purple-200">Empresas con plan profesional</p>
+                <div className="text-2xl md:text-4xl font-bold text-white mb-1 md:mb-2">{stats?.planDistribution?.pro || 0}</div>
+                <p className="text-xs md:text-sm text-purple-200">Empresas con plan profesional</p>
               </div>
 
-              <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 rounded-xl p-6 border border-yellow-400/30">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-white font-semibold">Plan Master</h3>
-                  <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center">
-                    <CreditCard className="w-5 h-5 text-white" />
+              <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 rounded-xl p-4 md:p-6 border border-yellow-400/30">
+                <div className="flex items-center justify-between mb-3 md:mb-4">
+                  <h3 className="text-white text-sm md:text-base font-semibold">Plan Master</h3>
+                  <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center">
+                    <CreditCard className="w-4 h-4 md:w-5 md:h-5 text-white" />
                   </div>
                 </div>
-                <div className="text-4xl font-bold text-white mb-2">{stats?.planDistribution?.master || 0}</div>
-                <p className="text-sm text-yellow-200">Empresas con plan master</p>
+                <div className="text-2xl md:text-4xl font-bold text-white mb-1 md:mb-2">{stats?.planDistribution?.master || 0}</div>
+                <p className="text-xs md:text-sm text-yellow-200">Empresas con plan master</p>
               </div>
             </div>
           </CardContent>
