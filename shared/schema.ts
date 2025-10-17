@@ -71,6 +71,29 @@ export const superAdmins = pgTable("super_admins", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// 🔒 SECURITY: Audit logs table for complete security tracking
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  ip: varchar("ip", { length: 100 }).notNull(),
+  action: varchar("action", { length: 100 }).notNull(),
+  email: varchar("email", { length: 255 }),
+  success: boolean("success").notNull(),
+  details: text("details"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  timestampIdx: index("audit_logs_timestamp_idx").on(table.timestamp),
+  actionIdx: index("audit_logs_action_idx").on(table.action),
+  emailIdx: index("audit_logs_email_idx").on(table.email),
+}));
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
+
 // Features table - cada funcionalidad es una fila independiente
 export const features = pgTable("features", {
   id: serial("id").primaryKey(),

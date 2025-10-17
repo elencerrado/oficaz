@@ -126,28 +126,33 @@ const contactLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// 🔒 SUPER ADMIN SECURITY: Audit logging system
-interface AuditLog {
+// 🔒 SUPER ADMIN SECURITY: Audit logging system with database persistence
+async function logAudit(log: {
   timestamp: Date;
   ip: string;
   action: string;
   email?: string;
   success: boolean;
   details?: string;
-}
-
-const auditLogs: AuditLog[] = [];
-const MAX_AUDIT_LOGS = 1000; // Keep last 1000 logs in memory
-
-function logAudit(log: AuditLog) {
-  auditLogs.unshift(log);
-  if (auditLogs.length > MAX_AUDIT_LOGS) {
-    auditLogs.pop();
-  }
-  
+}) {
   // Console log for immediate visibility
   const emoji = log.success ? '✅' : '🚨';
   console.log(`${emoji} AUDIT [${log.timestamp.toISOString()}] IP: ${log.ip} | Action: ${log.action} | ${log.details || ''}`);
+  
+  // Persist to database for enterprise-grade audit trail
+  try {
+    await storage.createAuditLog({
+      timestamp: log.timestamp,
+      ip: log.ip,
+      action: log.action,
+      email: log.email,
+      success: log.success,
+      details: log.details,
+    });
+  } catch (error) {
+    // Critical: Log errors should never break the application
+    console.error('🚨 CRITICAL: Failed to persist audit log to database:', error);
+  }
 }
 
 // 🔒 SUPER ADMIN SECURITY: Very strict rate limiting for super admin endpoints
@@ -5657,7 +5662,7 @@ Responde directamente a este email para contactar con la persona.
   const tempTokens = new Map(); // In-memory storage for temporary tokens
 
   // Endpoint to clear corrupted SuperAdmin token
-  app.post('/api/super-admin/clear-token', async (req, res) => {
+  app.post('/api/super-admin/clear-token', superAdminSecurityHeaders, async (req, res) => {
     res.json({ 
       success: true, 
       message: 'SuperAdmin token cleared. Please login again.' 
@@ -5786,7 +5791,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // OLD EMAIL-BASED SYSTEM (deprecated but kept for backward compatibility)
-  app.post('/api/super-admin/verify-access-code', async (req, res) => {
+  app.post('/api/super-admin/verify-access-code', superAdminSecurityHeaders, async (req, res) => {
     try {
       const { accessCode } = req.body;
       
@@ -5872,7 +5877,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.post('/api/super-admin/verify-verification-code', async (req, res) => {
+  app.post('/api/super-admin/verify-verification-code', superAdminSecurityHeaders, async (req, res) => {
     try {
       const { token, code } = req.body;
       
@@ -7476,9 +7481,26 @@ Responde directamente a este email para contactar con la persona.
         isActive: true
       });
       
+      logAudit({
+        timestamp: new Date(),
+        ip: req.ip || 'unknown',
+        action: 'SUBSCRIPTION_PLAN_CREATED',
+        email: req.superAdmin?.email,
+        success: true,
+        details: `Created plan: ${displayName} (${name}) - €${monthlyPrice}/month`
+      });
+      
       res.status(201).json(plan);
     } catch (error) {
       console.error('Error creating subscription plan:', error);
+      logAudit({
+        timestamp: new Date(),
+        ip: req.ip || 'unknown',
+        action: 'SUBSCRIPTION_PLAN_CREATE_FAILED',
+        email: req.superAdmin?.email,
+        success: false,
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
       res.status(500).json({ message: 'Error interno del servidor' });
     }
   });
@@ -7498,6 +7520,15 @@ Responde directamente a este email para contactar con la persona.
         return res.status(404).json({ message: 'Plan no encontrado' });
       }
       
+      logAudit({
+        timestamp: new Date(),
+        ip: req.ip || 'unknown',
+        action: 'SUBSCRIPTION_PLAN_UPDATED',
+        email: req.superAdmin?.email,
+        success: true,
+        details: `Updated plan ID ${planId}: ${JSON.stringify(updates)}`
+      });
+      
       res.json(plan);
     } catch (error) {
       console.error('Error updating subscription plan:', error);
@@ -7513,6 +7544,15 @@ Responde directamente a este email para contactar con la persona.
       if (!success) {
         return res.status(404).json({ message: 'Plan no encontrado' });
       }
+      
+      logAudit({
+        timestamp: new Date(),
+        ip: req.ip || 'unknown',
+        action: 'SUBSCRIPTION_PLAN_DELETED',
+        email: req.superAdmin?.email,
+        success: true,
+        details: `Deleted plan ID ${planId}`
+      });
       
       res.json({ message: 'Plan eliminado correctamente' });
     } catch (error) {
@@ -7542,6 +7582,15 @@ Responde directamente a este email para contactar con la persona.
       if (!feature) {
         return res.status(404).json({ message: 'Feature no encontrada' });
       }
+      
+      logAudit({
+        timestamp: new Date(),
+        ip: req.ip || 'unknown',
+        action: 'FEATURE_UPDATED',
+        email: req.superAdmin?.email,
+        success: true,
+        details: `Updated feature ID ${featureId}: ${JSON.stringify(updates)}`
+      });
       
       res.json(feature);
     } catch (error) {
@@ -7689,12 +7738,52 @@ Responde directamente a este email para contactar con la persona.
       // Get updated company information to include in response
       const updatedCompany = await storage.getCompany(companyId);
       
+      logAudit({
+        timestamp: new Date(),
+        ip: req.ip || 'unknown',
+        action: 'COMPANY_SUBSCRIPTION_UPDATED',
+        email: req.superAdmin?.email,
+        success: true,
+        details: `Updated subscription for company ID ${companyId}: ${JSON.stringify(updates)}`
+      });
+      
       res.json({
         subscription,
         trialDurationDays: updatedCompany?.trialDurationDays
       });
     } catch (error: any) {
       console.error('Error updating company subscription:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // 🔒 SECURITY: Audit logs endpoint (view-only) with pagination
+  app.get('/api/super-admin/audit-logs', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      // Get audit logs from database (most recent first)
+      const logs = await storage.getAuditLogs(limit, offset);
+      
+      // Log the access to audit logs for meta-security
+      await logAudit({
+        timestamp: new Date(),
+        ip: req.ip || 'unknown',
+        action: 'AUDIT_LOGS_ACCESSED',
+        email: req.superAdmin?.email,
+        success: true,
+        details: `Accessed audit logs (limit: ${limit}, offset: ${offset})`
+      });
+      
+      res.json({
+        logs,
+        limit,
+        offset,
+        count: logs.length
+      });
+    } catch (error) {
+      console.error('Error fetching audit logs:', error);
       res.status(500).json({ message: 'Error interno del servidor' });
     }
   });
@@ -7717,6 +7806,16 @@ Responde directamente a este email para contactar con la persona.
         publicRegistrationEnabled,
         updatedAt: new Date()
       });
+      
+      logAudit({
+        timestamp: new Date(),
+        ip: req.ip || 'unknown',
+        action: 'REGISTRATION_SETTINGS_UPDATED',
+        email: req.superAdmin?.email,
+        success: true,
+        details: `Public registration ${publicRegistrationEnabled ? 'enabled' : 'disabled'}`
+      });
+      
       res.json(settings);
     } catch (error) {
       console.error('Error updating registration settings:', error);
@@ -7847,6 +7946,15 @@ Responde directamente a este email para contactar con la persona.
         // Don't fail the invitation creation if email fails
       }
       
+      logAudit({
+        timestamp: new Date(),
+        ip: req.ip || 'unknown',
+        action: 'INVITATION_CREATED',
+        email: req.superAdmin?.email,
+        success: true,
+        details: `Invitation created for ${email}`
+      });
+      
       res.status(201).json({
         ...invitation,
         invitationUrl
@@ -7911,6 +8019,15 @@ Responde directamente a este email para contactar con la persona.
       if (!success) {
         return res.status(404).json({ message: 'Invitación no encontrada' });
       }
+      
+      logAudit({
+        timestamp: new Date(),
+        ip: req.ip || 'unknown',
+        action: 'INVITATION_DELETED',
+        email: req.superAdmin?.email,
+        success: true,
+        details: `Deleted invitation ID ${invitationId}`
+      });
       
       res.json({ message: 'Invitación eliminada correctamente' });
     } catch (error) {
@@ -9888,7 +10005,7 @@ Responde directamente a este email para contactar con la persona.
   }
 
   // Send security verification code
-  app.post('/api/super-admin/request-code', async (req, res) => {
+  app.post('/api/super-admin/request-code', superAdminSecurityHeaders, async (req, res) => {
     try {
       const { email } = req.body;
       
@@ -9933,7 +10050,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Verify security code and grant access
-  app.post('/api/super-admin/verify-code', async (req, res) => {
+  app.post('/api/super-admin/verify-code', superAdminSecurityHeaders, async (req, res) => {
     try {
       const { email, code } = req.body;
       

@@ -163,6 +163,12 @@ export interface IStorage {
   getSubscriptionByCompanyId(companyId: number): Promise<Subscription | undefined>;
   updateCompanySubscription(companyId: number, updates: any): Promise<any | undefined>;
 
+  // 🔒 SECURITY: Audit logs operations
+  createAuditLog(log: schema.InsertAuditLog): Promise<schema.AuditLog>;
+  getAuditLogs(limit?: number, offset?: number): Promise<schema.AuditLog[]>;
+  getAuditLogsByAction(action: string, limit?: number): Promise<schema.AuditLog[]>;
+  getAuditLogsByEmail(email: string, limit?: number): Promise<schema.AuditLog[]>;
+
   // Subscription Plans operations
   getAllSubscriptionPlans(): Promise<SubscriptionPlan[]>;
   getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined>;
@@ -1136,6 +1142,36 @@ export class DrizzleStorage implements IStorage {
       activeSubscriptions: activePaidSubscriptions,
       revenue: monthlyRevenue,
     };
+  }
+
+  // 🔒 SECURITY: Audit logs operations
+  async createAuditLog(log: schema.InsertAuditLog): Promise<schema.AuditLog> {
+    const [newLog] = await db.insert(schema.auditLogs).values(log).returning();
+    return newLog;
+  }
+
+  async getAuditLogs(limit: number = 100, offset: number = 0): Promise<schema.AuditLog[]> {
+    return await db.select()
+      .from(schema.auditLogs)
+      .orderBy(desc(schema.auditLogs.timestamp))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async getAuditLogsByAction(action: string, limit: number = 100): Promise<schema.AuditLog[]> {
+    return await db.select()
+      .from(schema.auditLogs)
+      .where(eq(schema.auditLogs.action, action))
+      .orderBy(desc(schema.auditLogs.timestamp))
+      .limit(limit);
+  }
+
+  async getAuditLogsByEmail(email: string, limit: number = 100): Promise<schema.AuditLog[]> {
+    return await db.select()
+      .from(schema.auditLogs)
+      .where(eq(schema.auditLogs.email, email))
+      .orderBy(desc(schema.auditLogs.timestamp))
+      .limit(limit);
   }
 
   async createSubscription(subscription: any): Promise<any> {
