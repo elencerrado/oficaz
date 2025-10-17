@@ -102,7 +102,7 @@ export default function SuperAdminMetrics() {
         </div>
 
         {/* Revenue Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-3 gap-3 md:gap-6 mb-8">
           <Card className="!bg-gradient-to-br !from-blue-500/20 !to-blue-600/20 backdrop-blur-xl !border-blue-400/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white/90">
