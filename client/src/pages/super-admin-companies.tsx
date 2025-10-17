@@ -1069,6 +1069,29 @@ export default function SuperAdminCompanies() {
                             )}
                           </>
                         )}
+                        
+                        {editingCompany !== company.id && (
+                          <div className="flex items-center gap-2 ml-auto">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => openEditMode(company)}
+                              className="!text-white/60 hover:!text-white hover:!bg-white/10"
+                              title="Editar empresa"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setLocation(`/super-admin/companies/${company.id}`)}
+                              className="!text-white/60 hover:!text-white hover:!bg-white/10"
+                              title="Ver detalles"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                       <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-1 sm:gap-4 text-sm !text-white/60 mt-1">
                         <span className="truncate">{company.cif}</span>
@@ -1082,29 +1105,6 @@ export default function SuperAdminCompanies() {
                       </div>
                     </div>
                   </div>
-                  
-                  {editingCompany !== company.id && (
-                    <div className="flex items-center gap-2 ml-auto">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => openEditMode(company)}
-                        className="!text-white/60 hover:!text-white hover:!bg-white/10"
-                        title="Editar empresa"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setLocation(`/super-admin/companies/${company.id}`)}
-                        className="!text-white/60 hover:!text-white hover:!bg-white/10"
-                        title="Ver detalles"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  )}
                 </div>
               ))}
               
