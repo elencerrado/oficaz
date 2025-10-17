@@ -1008,7 +1008,68 @@ export default function SuperAdminCompanies() {
                       <Building2 className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold !text-white truncate">{company.name}</h3>
+                      <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3">
+                        <h3 className="font-semibold !text-white truncate">{company.name}</h3>
+                        {editingCompany === company.id ? (
+                          <div className="flex items-center gap-2">
+                            <Select value={newPlan} onValueChange={setNewPlan}>
+                              <SelectTrigger className="w-32 !bg-white/10 !border-white/20 !text-white">
+                                <SelectValue placeholder="Seleccionar plan" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="basic">Basic</SelectItem>
+                                <SelectItem value="pro">Pro</SelectItem>
+                                <SelectItem value="master">Master</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              size="sm"
+                              onClick={() => savePlanChange(company.id)}
+                              disabled={updateSubscriptionMutation.isPending}
+                              className="bg-emerald-600 hover:bg-emerald-700"
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={cancelPlanChange}
+                              className="!text-white/60 hover:!text-white hover:!bg-white/10"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 flex-wrap lg:flex-nowrap">
+                            <Badge 
+                              className={`${planColors[company.subscription.plan as keyof typeof planColors]} text-white cursor-pointer hover:opacity-80`}
+                              onClick={() => handlePlanChange(company.id, company.subscription.plan)}
+                            >
+                              {planLabels[company.subscription.plan as keyof typeof planLabels]}
+                            </Badge>
+                            {(() => {
+                              const badge = getSubscriptionBadge(company);
+                              return (
+                                <Badge 
+                                  variant={badge.variant}
+                                  className={badge.className}
+                                >
+                                  {badge.text}
+                                </Badge>
+                              );
+                            })()}
+                            {company.promotionalCode && (
+                              <Badge 
+                                variant="secondary" 
+                                className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 flex items-center gap-1"
+                              >
+                                <Tag className="w-3 h-3" />
+                                {company.promotionalCode.code}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </div>
                       <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-1 sm:gap-4 text-sm !text-white/60 mt-1">
                         <span className="truncate">{company.cif}</span>
                         <span className="hidden sm:inline">•</span>
@@ -1018,104 +1079,32 @@ export default function SuperAdminCompanies() {
                           <Users className="w-3 h-3" />
                           {company.userCount} usuarios
                         </span>
-                        {company.promotionalCode && (
-                          <>
-                            <span className="hidden sm:inline">•</span>
-                            <span className="flex items-center gap-1 text-sm">
-                              <Tag className="w-3 h-3 text-yellow-400" />
-                              <span className="text-yellow-400">{company.promotionalCode.code}</span>
-                            </span>
-                          </>
-                        )}
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between lg:justify-end w-full lg:w-auto">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {company.promotionalCode && (
-                        <Badge 
-                          variant="secondary" 
-                          className="hidden lg:flex bg-yellow-500/20 text-yellow-400 border-yellow-500/30 items-center gap-1"
-                        >
-                          <Tag className="w-3 h-3" />
-                          {company.promotionalCode.code}
-                        </Badge>
-                      )}
-                      {editingCompany === company.id ? (
-                        <div className="flex items-center gap-2">
-                          <Select value={newPlan} onValueChange={setNewPlan}>
-                            <SelectTrigger className="w-32 !bg-white/10 !border-white/20 !text-white">
-                              <SelectValue placeholder="Seleccionar plan" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="basic">Basic</SelectItem>
-                              <SelectItem value="pro">Pro</SelectItem>
-                              <SelectItem value="master">Master</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            size="sm"
-                            onClick={() => savePlanChange(company.id)}
-                            disabled={updateSubscriptionMutation.isPending}
-                            className="bg-emerald-600 hover:bg-emerald-700"
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={cancelPlanChange}
-                            className="!text-white/60 hover:!text-white hover:!bg-white/10"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <Badge 
-                            className={`${planColors[company.subscription.plan as keyof typeof planColors]} text-white cursor-pointer hover:opacity-80`}
-                            onClick={() => handlePlanChange(company.id, company.subscription.plan)}
-                          >
-                            {planLabels[company.subscription.plan as keyof typeof planLabels]}
-                          </Badge>
-                          {(() => {
-                            const badge = getSubscriptionBadge(company);
-                            return (
-                              <Badge 
-                                variant={badge.variant}
-                                className={badge.className}
-                              >
-                                {badge.text}
-                              </Badge>
-                            );
-                          })()}
-                        </>
-                      )}
+                  
+                  {editingCompany !== company.id && (
+                    <div className="flex items-center gap-2 ml-auto">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => openEditMode(company)}
+                        className="!text-white/60 hover:!text-white hover:!bg-white/10"
+                        title="Editar empresa"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setLocation(`/super-admin/companies/${company.id}`)}
+                        className="!text-white/60 hover:!text-white hover:!bg-white/10"
+                        title="Ver detalles"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
                     </div>
-                    
-                    {editingCompany !== company.id && (
-                      <div className="flex items-center gap-2 ml-auto">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => openEditMode(company)}
-                          className="!text-white/60 hover:!text-white hover:!bg-white/10"
-                          title="Editar empresa"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setLocation(`/super-admin/companies/${company.id}`)}
-                          className="!text-white/60 hover:!text-white hover:!bg-white/10"
-                          title="Ver detalles"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
               ))}
               
