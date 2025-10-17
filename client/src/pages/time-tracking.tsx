@@ -2451,9 +2451,10 @@ export default function TimeTracking() {
                           ) : (
                             // Check session status to show appropriate button
                             (() => {
-                              // When there are multiple sessions in a day, find the active one or use the first one for completed sessions
+                              // When there are multiple sessions in a day, prioritize incomplete session, then active, then first
+                              const incompleteSession = dayData.sessions.find((s: any) => s.status === 'incomplete');
                               const activeSession = dayData.sessions.find((s: any) => !s.clockOut);
-                              const session = activeSession || dayData.sessions[0];
+                              const session = incompleteSession || activeSession || dayData.sessions[0];
                               const sessionIsIncomplete = isSessionIncomplete(session);
                               const sessionIsActiveToday = !session.clockOut && isToday(new Date(session.clockIn)); // Active session means no clockOut AND is today
                               
@@ -2680,9 +2681,10 @@ export default function TimeTracking() {
                 }, 0);
                 
                 const isEditing = editingSession === dayData.sessions[0]?.id;
-                // When there are multiple sessions in a day, find the active one or use the first one for completed sessions
+                // When there are multiple sessions in a day, prioritize incomplete session, then active, then first
+                const incompleteSession = dayData.sessions.find((s: any) => s.status === 'incomplete');
                 const activeSession = dayData.sessions.find((s: any) => !s.clockOut);
-                const session = activeSession || dayData.sessions[0];
+                const session = incompleteSession || activeSession || dayData.sessions[0];
                 const sessionIsIncomplete = isSessionIncomplete(session);
                 
                 result.push(
