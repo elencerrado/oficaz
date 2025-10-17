@@ -1030,53 +1030,71 @@ export default function SuperAdminCompanies() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-wrap lg:flex-nowrap">
-                    {company.promotionalCode && (
-                      <Badge 
-                        variant="secondary" 
-                        className="hidden lg:flex bg-yellow-500/20 text-yellow-400 border-yellow-500/30 items-center gap-1"
-                      >
-                        <Tag className="w-3 h-3" />
-                        {company.promotionalCode.code}
-                      </Badge>
-                    )}
-                    {editingCompany === company.id ? (
-                      <div className="flex items-center gap-2 w-full lg:w-auto">
-                        <Select value={newPlan} onValueChange={setNewPlan}>
-                          <SelectTrigger className="flex-1 lg:w-32 !bg-white/10 !border-white/20 !text-white">
-                            <SelectValue placeholder="Seleccionar plan" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="basic">Basic</SelectItem>
-                            <SelectItem value="pro">Pro</SelectItem>
-                            <SelectItem value="master">Master</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          size="sm"
-                          onClick={() => savePlanChange(company.id)}
-                          disabled={updateSubscriptionMutation.isPending}
-                          className="bg-emerald-600 hover:bg-emerald-700"
-                        >
-                          <Check className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={cancelPlanChange}
-                          className="!text-white/60 hover:!text-white hover:!bg-white/10"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between lg:justify-end w-full lg:w-auto">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {company.promotionalCode && (
                         <Badge 
-                          className={`${planColors[company.subscription.plan as keyof typeof planColors]} text-white cursor-pointer hover:opacity-80`}
-                          onClick={() => handlePlanChange(company.id, company.subscription.plan)}
+                          variant="secondary" 
+                          className="hidden lg:flex bg-yellow-500/20 text-yellow-400 border-yellow-500/30 items-center gap-1"
                         >
-                          {planLabels[company.subscription.plan as keyof typeof planLabels]}
+                          <Tag className="w-3 h-3" />
+                          {company.promotionalCode.code}
                         </Badge>
+                      )}
+                      {editingCompany === company.id ? (
+                        <div className="flex items-center gap-2">
+                          <Select value={newPlan} onValueChange={setNewPlan}>
+                            <SelectTrigger className="w-32 !bg-white/10 !border-white/20 !text-white">
+                              <SelectValue placeholder="Seleccionar plan" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="basic">Basic</SelectItem>
+                              <SelectItem value="pro">Pro</SelectItem>
+                              <SelectItem value="master">Master</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            size="sm"
+                            onClick={() => savePlanChange(company.id)}
+                            disabled={updateSubscriptionMutation.isPending}
+                            className="bg-emerald-600 hover:bg-emerald-700"
+                          >
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={cancelPlanChange}
+                            className="!text-white/60 hover:!text-white hover:!bg-white/10"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <Badge 
+                            className={`${planColors[company.subscription.plan as keyof typeof planColors]} text-white cursor-pointer hover:opacity-80`}
+                            onClick={() => handlePlanChange(company.id, company.subscription.plan)}
+                          >
+                            {planLabels[company.subscription.plan as keyof typeof planLabels]}
+                          </Badge>
+                          {(() => {
+                            const badge = getSubscriptionBadge(company);
+                            return (
+                              <Badge 
+                                variant={badge.variant}
+                                className={badge.className}
+                              >
+                                {badge.text}
+                              </Badge>
+                            );
+                          })()}
+                        </>
+                      )}
+                    </div>
+                    
+                    {editingCompany !== company.id && (
+                      <div className="flex items-center gap-2 ml-auto">
                         <Button
                           size="sm"
                           variant="ghost"
@@ -1095,19 +1113,8 @@ export default function SuperAdminCompanies() {
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                      </>
+                      </div>
                     )}
-                    {(() => {
-                      const badge = getSubscriptionBadge(company);
-                      return (
-                        <Badge 
-                          variant={badge.variant}
-                          className={badge.className}
-                        >
-                          {badge.text}
-                        </Badge>
-                      );
-                    })()}
                   </div>
                 </div>
               ))}
