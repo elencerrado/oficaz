@@ -944,7 +944,7 @@ export default function SuperAdminCompanies() {
   // Default: show companies list
   return (
     <SuperAdminLayout>
-      <div className="container mx-auto px-6 py-8">
+      <div className="px-6 py-8">
         {/* Filters */}
         <Card className="!bg-white/10 backdrop-blur-xl !border-white/20 mb-6">
           <CardContent className="pt-6">
