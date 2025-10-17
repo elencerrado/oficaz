@@ -1221,14 +1221,56 @@ export default function TimeTracking() {
       return <div className="text-gray-400">Sin datos</div>;
     }
 
-    // Check for active sessions (sessions without clockOut)
-    const hasActiveSessions = dayData.sessions.some((session: any) => !session.clockOut);
+    // PRIORITY 1: Check for incomplete sessions first (most important to show)
+    const hasIncompleteSession = dayData.sessions.some((session: any) => session.status === 'incomplete');
+    
+    // PRIORITY 2: Check for active sessions (sessions without clockOut)
+    const hasActiveSessions = dayData.sessions.some((session: any) => !session.clockOut && session.status !== 'incomplete');
     
     // Only show "Trabajando" status for TODAY's active sessions
-    // For past days with incomplete sessions, use the normal completed view + badge
+    // For past days with incomplete sessions, use the incomplete view
     const isTodaySession = dayData.sessions.some((session: any) => 
       session.clockIn && isToday(new Date(session.clockIn))
     );
+    
+    // Handle incomplete sessions FIRST (highest priority)
+    if (hasIncompleteSession) {
+      const incompleteSession = dayData.sessions.find((session: any) => session.status === 'incomplete');
+      const sessionStart = new Date(incompleteSession.clockIn);
+      const formatTime = (date: Date) => format(date, 'HH:mm');
+
+      return (
+        <div className="space-y-0">
+          {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
+          <div className="relative h-4"></div>
+          
+          {/* Simple timeline showing incomplete session */}
+          <div className="relative h-5">
+            <div className="h-5 bg-gray-200 rounded-sm relative overflow-hidden">
+              {/* Red bar indicating incomplete session */}
+              <div className="absolute top-0 h-5 bg-red-400 rounded-sm w-full opacity-60" />
+            </div>
+          </div>
+
+          {/* Time labels showing start time and "Incompleto" status */}
+          <div className="relative h-4">
+            {/* Start time with green circle */}
+            <div className="absolute flex items-center" style={{ left: '0%', top: '0px' }}>
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+              <span className="text-xs font-medium text-green-700 whitespace-nowrap">{formatTime(sessionStart)}</span>
+            </div>
+            
+            {/* "Incompleto" status with red circle */}
+            <div className="absolute flex items-center" style={{ left: '100%', top: '0px', transform: 'translateX(-100%)' }}>
+              <span className="text-xs font-medium text-red-600 whitespace-nowrap mr-1">
+                Incompleto
+              </span>
+              <div className="w-2 h-2 rounded-full bg-red-500"></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
     
     if (hasActiveSessions && isTodaySession) {
       // Handle TODAY's active sessions - show current status with same visual style
@@ -1393,46 +1435,6 @@ export default function TimeTracking() {
                 {activeBreakPeriod ? 'En descanso' : 'Trabajando'}
               </span>
               <div className={`w-2 h-2 rounded-full ${activeBreakPeriod ? 'bg-orange-500 animate-pulse' : 'bg-blue-500 animate-pulse'}`}></div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // Handle incomplete sessions - check database status
-    const hasIncompleteSession = dayData.sessions.some((session: any) => session.status === 'incomplete');
-    if (hasIncompleteSession) {
-      const incompleteSession = dayData.sessions.find((session: any) => session.status === 'incomplete');
-      const sessionStart = new Date(incompleteSession.clockIn);
-      const formatTime = (date: Date) => format(date, 'HH:mm');
-
-      return (
-        <div className="space-y-0">
-          {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
-          <div className="relative h-4"></div>
-          
-          {/* Simple timeline showing incomplete session */}
-          <div className="relative h-5">
-            <div className="h-5 bg-gray-200 rounded-sm relative overflow-hidden">
-              {/* Red bar indicating incomplete session */}
-              <div className="absolute top-0 h-5 bg-red-400 rounded-sm w-full opacity-60" />
-            </div>
-          </div>
-
-          {/* Time labels showing start time and "Incompleto" status */}
-          <div className="relative h-4">
-            {/* Start time with green circle */}
-            <div className="absolute flex items-center" style={{ left: '0%', top: '0px' }}>
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-              <span className="text-xs font-medium text-green-700 whitespace-nowrap">{formatTime(sessionStart)}</span>
-            </div>
-            
-            {/* "Incompleto" status with red circle */}
-            <div className="absolute flex items-center" style={{ left: '100%', top: '0px', transform: 'translateX(-100%)' }}>
-              <span className="text-xs font-medium text-red-600 whitespace-nowrap mr-1">
-                Incompleto
-              </span>
-              <div className="w-2 h-2 rounded-full bg-red-500"></div>
             </div>
           </div>
         </div>
