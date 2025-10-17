@@ -126,6 +126,30 @@ const contactLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// 🔒 SUPER ADMIN SECURITY: Audit logging system
+interface AuditLog {
+  timestamp: Date;
+  ip: string;
+  action: string;
+  email?: string;
+  success: boolean;
+  details?: string;
+}
+
+const auditLogs: AuditLog[] = [];
+const MAX_AUDIT_LOGS = 1000; // Keep last 1000 logs in memory
+
+function logAudit(log: AuditLog) {
+  auditLogs.unshift(log);
+  if (auditLogs.length > MAX_AUDIT_LOGS) {
+    auditLogs.pop();
+  }
+  
+  // Console log for immediate visibility
+  const emoji = log.success ? '✅' : '🚨';
+  console.log(`${emoji} AUDIT [${log.timestamp.toISOString()}] IP: ${log.ip} | Action: ${log.action} | ${log.details || ''}`);
+}
+
 // 🔒 SUPER ADMIN SECURITY: Very strict rate limiting for super admin endpoints
 const superAdminLoginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -5550,6 +5574,41 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Super Admin endpoints
+  // 🔒 SECURITY: Enhanced security headers middleware for Super Admin
+  const superAdminSecurityHeaders = (req: any, res: any, next: any) => {
+    // Prevent clickjacking attacks
+    res.setHeader('X-Frame-Options', 'DENY');
+    
+    // Prevent MIME type sniffing
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    
+    // Enable XSS protection
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    
+    // Strict Content Security Policy for Super Admin
+    res.setHeader('Content-Security-Policy', 
+      "default-src 'self'; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; " +
+      "style-src 'self' 'unsafe-inline'; " +
+      "img-src 'self' data: https:; " +
+      "font-src 'self' data:; " +
+      "connect-src 'self' https://api.stripe.com; " +
+      "frame-ancestors 'none'; " +
+      "base-uri 'self'; " +
+      "form-action 'self';"
+    );
+    
+    // Referrer policy - don't leak information
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    
+    // Permissions policy - disable unnecessary features
+    res.setHeader('Permissions-Policy', 
+      'camera=(), microphone=(), geolocation=(), payment=()'
+    );
+    
+    next();
+  };
+
   const authenticateSuperAdmin = (req: any, res: any, next: any) => {
     console.log('🔐 SuperAdmin auth middleware - Headers:', req.headers.authorization ? 'present' : 'missing');
     
@@ -5619,13 +5678,23 @@ Responde directamente a este email para contactar con la persona.
       }
       
       if (accessPassword !== SUPER_ADMIN_ACCESS_PASSWORD) {
-        console.log('🚨 SuperAdmin access denied: Invalid access password');
-        // 🔒 AUDIT: Log failed access attempts for security monitoring
-        console.log(`🚨 SECURITY AUDIT: Failed Super Admin access attempt - IP: ${req.ip}, Time: ${new Date().toISOString()}`);
+        logAudit({
+          timestamp: new Date(),
+          ip: req.ip || 'unknown',
+          action: 'SUPER_ADMIN_ACCESS_PASSWORD_FAILED',
+          success: false,
+          details: 'Invalid access password'
+        });
         return res.status(401).json({ message: "Contraseña de acceso incorrecta" });
       }
 
-      console.log('✅ SuperAdmin access password verified - Step 1 complete');
+      logAudit({
+        timestamp: new Date(),
+        ip: req.ip || 'unknown',
+        action: 'SUPER_ADMIN_ACCESS_PASSWORD_VERIFIED',
+        success: true,
+        details: 'Access password verified successfully'
+      });
       res.json({ success: true, message: "Contraseña verificada correctamente" });
     } catch (error) {
       console.error("Error in access password verification:", error);
@@ -5648,9 +5717,14 @@ Responde directamente a este email para contactar con la persona.
       }
       
       if (email !== SUPER_ADMIN_EMAIL || password !== SUPER_ADMIN_PASSWORD) {
-        console.log('🚨 SuperAdmin login denied: Invalid credentials');
-        // 🔒 AUDIT: Log failed login attempts for security monitoring
-        console.log(`🚨 SECURITY AUDIT: Failed Super Admin login attempt - Email: ${email}, IP: ${req.ip}, Time: ${new Date().toISOString()}`);
+        logAudit({
+          timestamp: new Date(),
+          ip: req.ip || 'unknown',
+          action: 'SUPER_ADMIN_LOGIN_FAILED',
+          email,
+          success: false,
+          details: `Invalid credentials for email: ${email}`
+        });
         return res.status(401).json({ message: "Email o contraseña incorrectos" });
       }
 
@@ -5667,7 +5741,43 @@ Responde directamente a este email para contactar con la persona.
         { expiresIn: '2h' }
       );
 
-      console.log('✅ SuperAdmin login successful - Access granted');
+      logAudit({
+        timestamp: new Date(),
+        ip: req.ip || 'unknown',
+        action: 'SUPER_ADMIN_LOGIN_SUCCESS',
+        email: SUPER_ADMIN_EMAIL,
+        success: true,
+        details: 'Super Admin login successful - access granted'
+      });
+
+      // 🔒 SECURITY: Send email notification on successful login
+      try {
+        await sendEmail({
+          to: SUPER_ADMIN_EMAIL,
+          subject: '🔒 Alerta de Seguridad: Acceso SuperAdmin Detectado',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #ef4444;">🔒 Alerta de Seguridad</h2>
+              <p>Se ha detectado un acceso exitoso al panel de SuperAdmin.</p>
+              <div style="background-color: #fee2e2; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <p><strong>Detalles del acceso:</strong></p>
+                <ul style="list-style: none; padding: 0;">
+                  <li>📅 Fecha y hora: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })}</li>
+                  <li>🌐 IP: ${req.ip || 'Desconocida'}</li>
+                  <li>📧 Email: ${SUPER_ADMIN_EMAIL}</li>
+                </ul>
+              </div>
+              <p style="color: #6b7280; font-size: 14px;">
+                Si no has sido tú quien ha accedido, cambia inmediatamente las credenciales de acceso.
+              </p>
+            </div>
+          `
+        });
+      } catch (emailError) {
+        console.error('Error sending security alert email:', emailError);
+        // Don't fail the login if email fails
+      }
+
       res.json({ token: superAdminToken, message: "Acceso autorizado" });
     } catch (error) {
       console.error("Error in superadmin login:", error);
@@ -5804,7 +5914,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.get('/api/super-admin/stats', authenticateSuperAdmin, async (req, res) => {
+  app.get('/api/super-admin/stats', superAdminSecurityHeaders, superAdminSecurityHeaders, authenticateSuperAdmin, async (req, res) => {
     try {
       const stats = await storage.getSuperAdminStats();
       res.json(stats);
@@ -5814,7 +5924,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.get('/api/super-admin/companies', authenticateSuperAdmin, async (req, res) => {
+  app.get('/api/super-admin/companies', superAdminSecurityHeaders, authenticateSuperAdmin, async (req, res) => {
     try {
       const companies = await storage.getAllCompaniesWithStats();
       res.json(companies);
@@ -7343,7 +7453,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Super Admin - Subscription Plans Management
-  app.get('/api/super-admin/subscription-plans', authenticateSuperAdmin, async (req: any, res) => {
+  app.get('/api/super-admin/subscription-plans', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const plans = await storage.getAllSubscriptionPlans();
       res.json(plans);
@@ -7353,7 +7463,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.post('/api/super-admin/subscription-plans', authenticateSuperAdmin, async (req: any, res) => {
+  app.post('/api/super-admin/subscription-plans', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const { name, displayName, monthlyPrice, maxUsers, features } = req.body;
       
@@ -7373,7 +7483,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.patch('/api/super-admin/subscription-plans/:id', authenticateSuperAdmin, async (req: any, res) => {
+  app.patch('/api/super-admin/subscription-plans/:id', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const planId = parseInt(req.params.id);
       const updates = req.body;
@@ -7395,7 +7505,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.delete('/api/super-admin/subscription-plans/:id', authenticateSuperAdmin, async (req: any, res) => {
+  app.delete('/api/super-admin/subscription-plans/:id', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const planId = parseInt(req.params.id);
       const success = await storage.deleteSubscriptionPlan(planId);
@@ -7412,7 +7522,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Features endpoints
-  app.get('/api/super-admin/features', authenticateSuperAdmin, async (req: any, res) => {
+  app.get('/api/super-admin/features', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const features = await storage.getAllFeatures();
       res.json(features);
@@ -7422,7 +7532,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.patch('/api/super-admin/features/:id', authenticateSuperAdmin, async (req: any, res) => {
+  app.patch('/api/super-admin/features/:id', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const featureId = parseInt(req.params.id);
       const updates = req.body;
@@ -7443,7 +7553,7 @@ Responde directamente a este email para contactar con la persona.
 
 
   // Super admin route to get individual company details
-  app.get('/api/super-admin/companies/:id', authenticateSuperAdmin, async (req: any, res) => {
+  app.get('/api/super-admin/companies/:id', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const { id } = req.params;
       const companyId = parseInt(id);
@@ -7495,7 +7605,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Super admin route to update company subscription
-  app.patch('/api/super-admin/companies/:id/subscription', authenticateSuperAdmin, async (req: any, res) => {
+  app.patch('/api/super-admin/companies/:id/subscription', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const { id } = req.params;
       const companyId = parseInt(id);
@@ -7590,7 +7700,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Super Admin - Registration Settings Management
-  app.get('/api/super-admin/registration-settings', authenticateSuperAdmin, async (req: any, res) => {
+  app.get('/api/super-admin/registration-settings', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const settings = await storage.getRegistrationSettings();
       res.json(settings);
@@ -7600,7 +7710,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.patch('/api/super-admin/registration-settings', authenticateSuperAdmin, async (req: any, res) => {
+  app.patch('/api/super-admin/registration-settings', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const { publicRegistrationEnabled } = req.body;
       const settings = await storage.updateRegistrationSettings({
@@ -7615,7 +7725,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Super Admin - Invitation Links Management  
-  app.post('/api/super-admin/invitations', authenticateSuperAdmin, async (req: any, res) => {
+  app.post('/api/super-admin/invitations', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const { email, inviterName, companyName } = req.body;
       
@@ -7783,7 +7893,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.get('/api/super-admin/invitations', authenticateSuperAdmin, async (req: any, res) => {
+  app.get('/api/super-admin/invitations', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const invitations = await storage.getAllInvitationLinks();
       res.json(invitations);
@@ -7793,7 +7903,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.delete('/api/super-admin/invitations/:id', authenticateSuperAdmin, async (req: any, res) => {
+  app.delete('/api/super-admin/invitations/:id', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const invitationId = parseInt(req.params.id);
       const success = await storage.deleteInvitationLink(invitationId);
@@ -7810,7 +7920,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Super Admin - Promotional Codes Management
-  app.get('/api/super-admin/promotional-codes', authenticateSuperAdmin, async (req: any, res) => {
+  app.get('/api/super-admin/promotional-codes', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const promoCodes = await storage.getAllPromotionalCodes();
       res.json(promoCodes);
@@ -7823,7 +7933,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.post('/api/super-admin/promotional-codes', authenticateSuperAdmin, async (req: any, res) => {
+  app.post('/api/super-admin/promotional-codes', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const { code, description, trialDurationDays, isActive, maxUses, validFrom, validUntil } = req.body;
       
@@ -7863,7 +7973,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.patch('/api/super-admin/promotional-codes/:id', authenticateSuperAdmin, async (req: any, res) => {
+  app.patch('/api/super-admin/promotional-codes/:id', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const { id } = req.params;
       const updates = req.body;
@@ -7910,7 +8020,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.delete('/api/super-admin/promotional-codes/:id', authenticateSuperAdmin, async (req: any, res) => {
+  app.delete('/api/super-admin/promotional-codes/:id', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const { id } = req.params;
       await storage.deletePromotionalCode(parseInt(id));
@@ -8038,7 +8148,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Get all email campaigns
-  app.get('/api/super-admin/email-campaigns', authenticateSuperAdmin, async (req: any, res) => {
+  app.get('/api/super-admin/email-campaigns', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const campaigns = await storage.getAllEmailCampaigns();
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -8052,7 +8162,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Get campaign send history
-  app.get('/api/super-admin/email-campaigns/:id/history', authenticateSuperAdmin, async (req: any, res) => {
+  app.get('/api/super-admin/email-campaigns/:id/history', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const campaignId = parseInt(req.params.id);
       const sends = await db.select()
@@ -8068,7 +8178,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Get campaign conversion statistics (emails → opened → clicks → registrations → paid subscriptions)
-  app.get('/api/super-admin/email-campaigns/:id/conversions', authenticateSuperAdmin, async (req: any, res) => {
+  app.get('/api/super-admin/email-campaigns/:id/conversions', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const campaignId = parseInt(req.params.id);
       
@@ -8182,7 +8292,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Get all email prospects
-  app.get('/api/super-admin/email-prospects', authenticateSuperAdmin, async (req: any, res) => {
+  app.get('/api/super-admin/email-prospects', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const prospects = await storage.getAllEmailProspects();
       res.json(prospects);
@@ -8193,7 +8303,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Get registered users stats for email marketing
-  app.get('/api/super-admin/registered-users-stats', authenticateSuperAdmin, async (req: any, res) => {
+  app.get('/api/super-admin/registered-users-stats', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const stats = await storage.getRegisteredUsersStats();
       res.json(stats);
@@ -8204,7 +8314,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Get recipients by category (active, trial, blocked, cancelled)
-  app.get('/api/super-admin/recipients/:category', authenticateSuperAdmin, async (req: any, res) => {
+  app.get('/api/super-admin/recipients/:category', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const { category } = req.params;
       
@@ -8278,7 +8388,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Create email prospect
-  app.post('/api/super-admin/email-prospects', authenticateSuperAdmin, async (req: any, res) => {
+  app.post('/api/super-admin/email-prospects', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       // Validate with Zod schema
       const prospectData = schema.insertEmailProspectSchema.parse(req.body);
@@ -8327,7 +8437,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Create email campaign
-  app.post('/api/super-admin/email-campaigns', authenticateSuperAdmin, async (req: any, res) => {
+  app.post('/api/super-admin/email-campaigns', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       // Validate with Zod schema
       const campaignData = schema.insertEmailCampaignSchema.parse(req.body);
@@ -8343,7 +8453,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Update email campaign
-  app.patch('/api/super-admin/email-campaigns/:id', authenticateSuperAdmin, async (req: any, res) => {
+  app.patch('/api/super-admin/email-campaigns/:id', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const campaign = await storage.updateEmailCampaign(parseInt(req.params.id), req.body);
       res.json(campaign);
@@ -8354,7 +8464,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Delete email campaign
-  app.delete('/api/super-admin/email-campaigns/:id', authenticateSuperAdmin, async (req: any, res) => {
+  app.delete('/api/super-admin/email-campaigns/:id', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const campaignId = parseInt(req.params.id);
       console.log('🗑️ Attempting to delete campaign ID:', campaignId);
@@ -8373,7 +8483,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Duplicate email campaign
-  app.post('/api/super-admin/email-campaigns/:id/duplicate', authenticateSuperAdmin, async (req: any, res) => {
+  app.post('/api/super-admin/email-campaigns/:id/duplicate', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const campaignId = parseInt(req.params.id);
       
@@ -8415,7 +8525,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Send email campaign
-  app.post('/api/super-admin/email-campaigns/:id/send', authenticateSuperAdmin, async (req: any, res) => {
+  app.post('/api/super-admin/email-campaigns/:id/send', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const campaignId = parseInt(req.params.id);
       
@@ -8553,7 +8663,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Get prospect campaign history
-  app.get('/api/super-admin/email-prospects/:id/campaign-history', authenticateSuperAdmin, async (req: any, res) => {
+  app.get('/api/super-admin/email-prospects/:id/campaign-history', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const prospectId = parseInt(req.params.id);
       
@@ -8604,7 +8714,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Delete email prospect
-  app.delete('/api/super-admin/email-prospects/:id', authenticateSuperAdmin, async (req: any, res) => {
+  app.delete('/api/super-admin/email-prospects/:id', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       await storage.deleteEmailProspect(parseInt(req.params.id));
       res.json({ success: true });
@@ -8615,7 +8725,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Update email prospect (inline editing)
-  app.patch('/api/super-admin/email-prospects/:id', authenticateSuperAdmin, async (req: any, res) => {
+  app.patch('/api/super-admin/email-prospects/:id', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const prospectId = parseInt(req.params.id);
       const updates = req.body;
@@ -8857,7 +8967,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Super Admin: Delete company permanently
-  app.delete('/api/super-admin/companies/:id/delete-permanently', authenticateSuperAdmin, async (req: any, res) => {
+  app.delete('/api/super-admin/companies/:id/delete-permanently', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const companyId = parseInt(req.params.id);
       const { confirmationText } = req.body;
@@ -8994,7 +9104,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Super admin endpoint to get landing metrics
-  app.get('/api/super-admin/landing-metrics', authenticateSuperAdmin, async (req: any, res) => {
+  app.get('/api/super-admin/landing-metrics', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const now = new Date();
       const thirtyDaysAgo = subDays(now, 30);
