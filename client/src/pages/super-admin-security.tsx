@@ -184,13 +184,13 @@ export default function SuperAdminSecurity() {
                 </Label>
                 <Input
                   id="email"
-                  name="username"
+                  name="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@email.com"
                   required
-                  autoComplete="username"
+                  autoComplete="email"
                   className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                 />
               </div>
