@@ -126,6 +126,48 @@ const contactLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// 🔒 SUPER ADMIN SECURITY: Very strict rate limiting for super admin endpoints
+const superAdminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Maximum 5 login attempts per 15 minutes per IP
+  skipSuccessfulRequests: false,
+  skipFailedRequests: false,
+  message: {
+    success: false,
+    message: '🚨 Demasiados intentos de acceso. IP bloqueada temporalmente por seguridad. Intenta de nuevo en 15 minutos.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Log all blocked requests for security audit
+  handler: (req, res) => {
+    console.log(`🚨 SECURITY ALERT: Super Admin rate limit exceeded - IP: ${req.ip}, Time: ${new Date().toISOString()}`);
+    res.status(429).json({
+      success: false,
+      message: '🚨 Demasiados intentos de acceso. IP bloqueada temporalmente por seguridad. Intenta de nuevo en 15 minutos.',
+    });
+  },
+});
+
+const superAdminAccessLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3, // Maximum 3 access password attempts per 15 minutes per IP - even stricter
+  skipSuccessfulRequests: false,
+  skipFailedRequests: false,
+  message: {
+    success: false,
+    message: '🚨 Demasiados intentos de verificación. IP bloqueada temporalmente. Intenta de nuevo en 15 minutos.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    console.log(`🚨 SECURITY ALERT: Super Admin access password rate limit exceeded - IP: ${req.ip}, Time: ${new Date().toISOString()}`);
+    res.status(429).json({
+      success: false,
+      message: '🚨 Demasiados intentos de verificación. IP bloqueada temporalmente. Intenta de nuevo en 15 minutos.',
+    });
+  },
+});
+
 // ⚠️ PROTECTED - DO NOT MODIFY
 // Demo data generation for new companies
 async function generateDemoData(companyId: number) {
@@ -5564,7 +5606,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // New simplified superadmin authentication - Step 1: Access Password
-  app.post('/api/super-admin/verify-access-password', async (req, res) => {
+  app.post('/api/super-admin/verify-access-password', superAdminAccessLimiter, async (req, res) => {
     try {
       const { accessPassword } = req.body;
       
@@ -5592,7 +5634,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // New simplified superadmin authentication - Step 2: Login
-  app.post('/api/super-admin/login', async (req, res) => {
+  app.post('/api/super-admin/login', superAdminLoginLimiter, async (req, res) => {
     try {
       const { email, password } = req.body;
       
