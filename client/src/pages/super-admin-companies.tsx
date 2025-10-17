@@ -1001,46 +1001,49 @@ export default function SuperAdminCompanies() {
               {filteredCompanies.map((company: Company) => (
                 <div
                   key={company.id}
-                  className="flex items-center justify-between p-4 !bg-white/5 rounded-xl border !border-white/10 hover:!bg-white/10 transition-colors"
+                  className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-4 !bg-white/5 rounded-xl border !border-white/10 hover:!bg-white/10 transition-colors"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                      <Building2 className="w-6 h-6 text-white" />
+                  <div className="flex items-start gap-3 lg:gap-4 min-w-0 flex-1">
+                    <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Building2 className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
                     </div>
-                    <div>
-                      <h3 className="font-semibold !text-white">{company.name}</h3>
-                      <div className="flex items-center gap-4 text-sm !text-white/60">
-                        <span>{company.cif}</span>
-                        <span>•</span>
-                        <span>{company.email}</span>
-                        <span>•</span>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold !text-white truncate">{company.name}</h3>
+                      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-1 sm:gap-4 text-sm !text-white/60 mt-1">
+                        <span className="truncate">{company.cif}</span>
+                        <span className="hidden sm:inline">•</span>
+                        <span className="truncate">{company.email}</span>
+                        <span className="hidden sm:inline">•</span>
                         <span className="flex items-center gap-1">
                           <Users className="w-3 h-3" />
                           {company.userCount} usuarios
                         </span>
                         {company.promotionalCode && (
-                          <span className="flex items-center gap-1 text-sm">
-                            <Tag className="w-3 h-3 text-yellow-400" />
-                            <span className="text-yellow-400">{company.promotionalCode.code}</span>
-                          </span>
+                          <>
+                            <span className="hidden sm:inline">•</span>
+                            <span className="flex items-center gap-1 text-sm">
+                              <Tag className="w-3 h-3 text-yellow-400" />
+                              <span className="text-yellow-400">{company.promotionalCode.code}</span>
+                            </span>
+                          </>
                         )}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 flex-wrap lg:flex-nowrap">
                     {company.promotionalCode && (
                       <Badge 
                         variant="secondary" 
-                        className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 flex items-center gap-1"
+                        className="hidden lg:flex bg-yellow-500/20 text-yellow-400 border-yellow-500/30 items-center gap-1"
                       >
                         <Tag className="w-3 h-3" />
                         {company.promotionalCode.code}
                       </Badge>
                     )}
                     {editingCompany === company.id ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 w-full lg:w-auto">
                         <Select value={newPlan} onValueChange={setNewPlan}>
-                          <SelectTrigger className="w-32 !bg-white/10 !border-white/20 !text-white">
+                          <SelectTrigger className="flex-1 lg:w-32 !bg-white/10 !border-white/20 !text-white">
                             <SelectValue placeholder="Seleccionar plan" />
                           </SelectTrigger>
                           <SelectContent>
