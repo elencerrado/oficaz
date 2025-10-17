@@ -159,8 +159,8 @@ async function logAudit(log: {
 const superAdminLoginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // Maximum 5 login attempts per 15 minutes per IP
-  skipSuccessfulRequests: false,
-  skipFailedRequests: false,
+  skipSuccessfulRequests: true, // ✅ Don't count successful logins
+  skipFailedRequests: false, // ❌ Count failed attempts
   message: {
     success: false,
     message: '🚨 Demasiados intentos de acceso. IP bloqueada temporalmente por seguridad. Intenta de nuevo en 15 minutos.',
@@ -180,8 +180,8 @@ const superAdminLoginLimiter = rateLimit({
 const superAdminAccessLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 3, // Maximum 3 access password attempts per 15 minutes per IP - even stricter
-  skipSuccessfulRequests: false,
-  skipFailedRequests: false,
+  skipSuccessfulRequests: true, // ✅ Don't count successful verifications
+  skipFailedRequests: false, // ❌ Count failed attempts
   message: {
     success: false,
     message: '🚨 Demasiados intentos de verificación. IP bloqueada temporalmente. Intenta de nuevo en 15 minutos.',
