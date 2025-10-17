@@ -357,7 +357,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-10">
             <div className="flex items-center">
-              <img src={oficazLogo} alt="Oficaz" className="h-10 w-auto" loading="eager" />
+              <img src={oficazLogo} alt="Oficaz" className="h-8 md:h-10 w-auto object-contain" loading="eager" style={{ minWidth: '120px' }} />
             </div>
             
             <nav className="hidden md:flex items-center justify-between flex-1 ml-8">
