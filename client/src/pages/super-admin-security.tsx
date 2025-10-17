@@ -176,40 +176,38 @@ export default function SuperAdminSecurity() {
               </Button>
             </form>
           ) : (
-            <form onSubmit={handleLoginSubmit} className="space-y-4">
+            <form onSubmit={handleLoginSubmit} className="space-y-4" autoComplete="on">
               <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center gap-2 text-white">
+                <Label htmlFor="login-email" className="flex items-center gap-2 text-white">
                   <Mail className="h-4 w-4" />
                   Email
                 </Label>
                 <Input
-                  id="email"
+                  id="login-email"
                   name="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@email.com"
                   required
-                  autoComplete="email"
                   className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="flex items-center gap-2 text-white">
+                <Label htmlFor="login-password" className="flex items-center gap-2 text-white">
                   <Lock className="h-4 w-4" />
                   Contraseña
                 </Label>
                 <div className="relative">
                   <Input
-                    id="password"
+                    id="login-password"
                     name="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    autoComplete="current-password"
                     className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                   />
                   <button
