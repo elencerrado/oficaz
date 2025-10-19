@@ -1,16 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { BarChart, Users, Globe, TrendingUp, MousePointerClick, RefreshCw } from 'lucide-react';
+import { BarChart, Users, Globe, TrendingUp, MousePointerClick } from 'lucide-react';
 import { format, subDays, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useToast } from '@/hooks/use-toast';
 
 export default function SuperAdminLandingMetrics() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
   const { data: metrics } = useQuery({
     queryKey: ['/api/super-admin/landing-metrics'],
     queryFn: async () => {
@@ -50,34 +45,6 @@ export default function SuperAdminLandingMetrics() {
   });
 
   const maxDailyVisits = Math.max(...completeDailyVisits.map(d => d.count), 1);
-
-  const updateGeolocation = useMutation({
-    mutationFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
-      const response = await fetch('/api/super-admin/update-geolocation', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) throw new Error('Failed to update geolocation');
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Geolocalización actualizada",
-        description: data.message,
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/landing-metrics'] });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar la geolocalización",
-        variant: "destructive",
-      });
-    },
-  });
 
   const conversionRate = metrics?.totalVisits > 0 
     ? ((metrics.totalRegistrations / metrics.totalVisits) * 100).toFixed(2)
@@ -191,22 +158,10 @@ export default function SuperAdminLandingMetrics() {
         {/* Geographic Distribution */}
         <Card className="bg-white/10 backdrop-blur-xl border-white/20">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-white flex items-center gap-2">
-                <Globe className="w-5 h-5" />
-                Distribución Geográfica
-              </CardTitle>
-              <Button
-                onClick={() => updateGeolocation.mutate()}
-                disabled={updateGeolocation.isPending}
-                variant="outline"
-                size="sm"
-                className="bg-blue-500/20 hover:bg-blue-500/30 border-blue-400/30 text-white"
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${updateGeolocation.isPending ? 'animate-spin' : ''}`} />
-                {updateGeolocation.isPending ? 'Actualizando...' : 'Actualizar Geolocalización'}
-              </Button>
-            </div>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Globe className="w-5 h-5" />
+              Distribución Geográfica
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {!metrics?.countries || metrics.countries.length === 0 ? (
