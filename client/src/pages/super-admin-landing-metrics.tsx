@@ -31,6 +31,26 @@ export default function SuperAdminLandingMetrics() {
     gcTime: 0, // Don't cache (garbage collection time)
   });
 
+  // Generate complete last 7 days array
+  const last7Days = Array.from({ length: 7 }).map((_, index) => {
+    const date = startOfDay(subDays(new Date(), 6 - index)); // Start from 6 days ago to today
+    return format(date, 'yyyy-MM-dd');
+  });
+
+  // Map backend data to complete 7 days
+  const completeDailyVisits = last7Days.map(dateStr => {
+    const backendData = metrics?.dailyVisits?.find((d: any) => {
+      const backendDate = format(new Date(d.date), 'yyyy-MM-dd');
+      return backendDate === dateStr;
+    });
+    return {
+      date: dateStr,
+      count: backendData?.count || 0
+    };
+  });
+
+  const maxDailyVisits = Math.max(...completeDailyVisits.map(d => d.count), 1);
+
   const updateGeolocation = useMutation({
     mutationFn: async () => {
       const token = sessionStorage.getItem('superAdminToken');
@@ -134,17 +154,14 @@ export default function SuperAdminLandingMetrics() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-7 gap-4 h-64">
-              {Array.from({ length: 7 }).map((_, index) => {
-                // Invertir el orden: día más antiguo a la izquierda (6) -> día más reciente a la derecha (0)
-                const reversedIndex = 6 - index;
-                const day = metrics?.dailyVisits?.[reversedIndex];
-                const count = day?.count || 0;
-                const heightPercentage = count > 0 && metrics?.maxDailyVisits 
-                  ? (count / metrics.maxDailyVisits) * 100 
+              {completeDailyVisits.map((day, index) => {
+                const count = day.count;
+                const heightPercentage = count > 0 && maxDailyVisits 
+                  ? (count / maxDailyVisits) * 100 
                   : 0;
                 
                 return (
-                  <div key={day?.date || `day-${index}`} className="flex flex-col items-center gap-2">
+                  <div key={day.date} className="flex flex-col items-center gap-2">
                     {/* Number at top */}
                     <div className="text-sm font-semibold text-white mb-1 h-5">
                       {count > 0 ? count : ''}
@@ -162,7 +179,7 @@ export default function SuperAdminLandingMetrics() {
                     
                     {/* Date at bottom */}
                     <div className="text-xs text-white/70 text-center whitespace-nowrap h-5">
-                      {day?.date ? format(new Date(day.date), 'dd MMM', { locale: es }) : '-'}
+                      {format(new Date(day.date), 'dd MMM', { locale: es })}
                     </div>
                   </div>
                 );
