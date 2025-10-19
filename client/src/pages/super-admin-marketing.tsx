@@ -441,14 +441,17 @@ export default function SuperAdminMarketing() {
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 bg-white/10">
-            <TabsTrigger value="campaigns" className="data-[state=active]:bg-white/20">
-              Campañas
+            <TabsTrigger value="campaigns" className="data-[state=active]:bg-white/20 text-xs md:text-sm px-2 md:px-3">
+              <span className="hidden sm:inline">Campañas</span>
+              <span className="sm:hidden">Campañas</span>
             </TabsTrigger>
-            <TabsTrigger value="contacts" className="data-[state=active]:bg-white/20">
-              Listas de Contactos
+            <TabsTrigger value="contacts" className="data-[state=active]:bg-white/20 text-xs md:text-sm px-2 md:px-3">
+              <span className="hidden sm:inline">Listas de Contactos</span>
+              <span className="sm:hidden">Contactos</span>
             </TabsTrigger>
-            <TabsTrigger value="stats" className="data-[state=active]:bg-white/20">
-              Estadísticas
+            <TabsTrigger value="stats" className="data-[state=active]:bg-white/20 text-xs md:text-sm px-2 md:px-3">
+              <span className="hidden sm:inline">Estadísticas</span>
+              <span className="sm:hidden">Stats</span>
             </TabsTrigger>
           </TabsList>
 
