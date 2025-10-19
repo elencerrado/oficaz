@@ -458,10 +458,7 @@ export default function SuperAdminMarketing() {
           {/* Campaigns Tab */}
           <TabsContent value="campaigns" className="space-y-4">
             <div className="flex justify-between items-center mb-4">
-              <div>
-                <h2 className="text-xl font-semibold text-white">Campañas de Email</h2>
-                <p className="text-white/60 text-sm">Crea y gestiona tus campañas de marketing</p>
-              </div>
+              <h2 className="text-xl font-semibold text-white">Campañas de Email</h2>
               <CreateCampaignDialog />
             </div>
 
