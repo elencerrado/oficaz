@@ -164,7 +164,7 @@ export default function SuperAdminLandingMetrics() {
                   <div key={day.date} className="flex flex-col items-center gap-2">
                     {/* Number at top */}
                     <div className="text-sm font-semibold text-white mb-1 h-5">
-                      {count > 0 ? count : ''}
+                      {count}
                     </div>
                     
                     {/* Vertical bar */}
