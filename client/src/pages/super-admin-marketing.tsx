@@ -476,74 +476,76 @@ export default function SuperAdminMarketing() {
                     {campaigns.map((campaign: any) => (
                       <div 
                         key={campaign.id}
-                        className="flex items-center justify-between p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                        className="flex flex-col md:flex-row md:items-center justify-between p-3 md:p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors gap-3"
                       >
-                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                          <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                             campaign.status === 'sent' ? 'bg-green-500/20' :
                             campaign.status === 'scheduled' ? 'bg-yellow-500/20' :
                             'bg-gray-500/20'
                           }`}>
-                            {campaign.status === 'sent' ? <CheckCircle className="w-5 h-5 text-green-400" /> :
-                             campaign.status === 'scheduled' ? <Clock className="w-5 h-5 text-yellow-400" /> :
-                             <Mail className="w-5 h-5 text-gray-400" />}
+                            {campaign.status === 'sent' ? <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-green-400" /> :
+                             campaign.status === 'scheduled' ? <Clock className="w-4 h-4 md:w-5 md:h-5 text-yellow-400" /> :
+                             <Mail className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />}
                           </div>
-                          <div>
-                            <h4 className="font-semibold text-white">{campaign.name}</h4>
-                            <p className="text-sm text-white/60">{campaign.subject}</p>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-semibold text-white text-sm md:text-base truncate">{campaign.name}</h4>
+                            <p className="text-xs md:text-sm text-white/60 truncate">{campaign.subject}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <div className="text-right mr-4">
-                            <p className="text-sm text-white/80">
+                        <div className="flex items-center justify-between md:justify-end gap-2 md:gap-3">
+                          <div className="text-left md:text-right md:mr-4">
+                            <p className="text-xs md:text-sm text-white/80">
                               {campaign.selectedEmails?.length || 0} seleccionados
                             </p>
                             {campaign.status === 'sent' && (
-                              <p className="text-xs text-white/60">
+                              <p className="text-xs text-white/60 hidden md:block">
                                 {campaign.sentRecipientsCount || 0} enviados · {campaign.openedCount || 0} aperturas · {campaign.clickedCount || 0} clics
                               </p>
                             )}
                           </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => sendCampaignMutation.mutate(campaign.id)}
-                            disabled={!campaign.hasNewRecipients || sendCampaignMutation.isPending}
-                            className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 disabled:opacity-30 disabled:cursor-not-allowed"
-                            data-testid={`button-send-campaign-${campaign.id}`}
-                          >
-                            <Send className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => setEditingCampaign(campaign)}
-                            className="text-white/70 hover:text-white hover:bg-white/10"
-                            data-testid={`button-edit-campaign-${campaign.id}`}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => duplicateCampaignMutation.mutate(campaign.id)}
-                            disabled={duplicateCampaignMutation.isPending}
-                            className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
-                            data-testid={`button-duplicate-campaign-${campaign.id}`}
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
-                          {campaign.status === 'sent' && (
+                          <div className="flex items-center gap-1 md:gap-2">
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={() => setConversionsCampaign(campaign)}
-                              className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
-                              data-testid={`button-conversions-campaign-${campaign.id}`}
+                              onClick={() => sendCampaignMutation.mutate(campaign.id)}
+                              disabled={!campaign.hasNewRecipients || sendCampaignMutation.isPending}
+                              className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 disabled:opacity-30 disabled:cursor-not-allowed h-8 w-8 md:h-9 md:w-9 p-0"
+                              data-testid={`button-send-campaign-${campaign.id}`}
                             >
-                              <TrendingUp className="w-4 h-4" />
+                              <Send className="w-3.5 h-3.5 md:w-4 md:h-4" />
                             </Button>
-                          )}
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => setEditingCampaign(campaign)}
+                              className="text-white/70 hover:text-white hover:bg-white/10 h-8 w-8 md:h-9 md:w-9 p-0"
+                              data-testid={`button-edit-campaign-${campaign.id}`}
+                            >
+                              <Edit className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => duplicateCampaignMutation.mutate(campaign.id)}
+                              disabled={duplicateCampaignMutation.isPending}
+                              className="text-green-400 hover:text-green-300 hover:bg-green-500/10 h-8 w-8 md:h-9 md:w-9 p-0 hidden md:flex"
+                              data-testid={`button-duplicate-campaign-${campaign.id}`}
+                            >
+                              <Copy className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                            </Button>
+                            {campaign.status === 'sent' && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => setConversionsCampaign(campaign)}
+                                className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 h-8 w-8 md:h-9 md:w-9 p-0 hidden md:flex"
+                                data-testid={`button-conversions-campaign-${campaign.id}`}
+                              >
+                                <TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
