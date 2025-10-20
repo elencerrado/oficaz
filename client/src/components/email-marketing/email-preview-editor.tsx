@@ -51,20 +51,27 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
       const formData = new FormData();
       formData.append('image', file);
 
+      // Get super admin token
+      const token = sessionStorage.getItem('super_admin_token');
+
       const response = await fetch('/api/super-admin/email-marketing/upload-image', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Error al subir la imagen');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al subir la imagen');
       }
 
       const data = await response.json();
       handleContentChange('imageUrl', data.imageUrl);
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('Error al subir la imagen. Por favor intenta de nuevo.');
+      alert(error instanceof Error ? error.message : 'Error al subir la imagen. Por favor intenta de nuevo.');
     }
   };
 

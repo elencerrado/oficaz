@@ -8687,20 +8687,22 @@ Responde directamente a este email para contactar con la persona.
         });
       }
 
-      // Generate unique filename
+      // Generate unique filename - always use .jpg for email compatibility
       const timestamp = Date.now();
-      const ext = path.extname(file.originalname);
-      const filename = `email-${timestamp}${ext}`;
+      const filename = `email-${timestamp}.jpg`;
       const finalPath = path.join(uploadDir, filename);
 
-      // Process image with sharp (compress and resize if needed)
+      // Process image with sharp (compress, resize, and convert to JPG for email compatibility)
+      // WEBP and other formats are automatically converted to JPG for maximum email client support
       await sharp(file.path)
         .resize(800, null, { // Max width 800px, maintain aspect ratio
           fit: 'inside',
           withoutEnlargement: true
         })
-        .jpeg({ quality: 85 })
-        .png({ quality: 85 })
+        .jpeg({ 
+          quality: 85,
+          mozjpeg: true // Better compression
+        })
         .toFile(finalPath);
 
       // Delete temp file
