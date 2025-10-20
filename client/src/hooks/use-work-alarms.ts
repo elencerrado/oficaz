@@ -17,15 +17,16 @@ interface WorkAlarm {
 
 export function useWorkAlarms() {
   const { toast } = useToast();
+  
+  // All hooks at the top - maintain consistent order
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+  const [isIOS] = useState(() => /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+  const [isSafari] = useState(() => /^((?!chrome|android).)*safari/i.test(navigator.userAgent));
+  
   const lastCheckRef = useRef<number>(Date.now());
   const activeIntervalsRef = useRef<number[]>([]);
-
-  // Detect if we're on iOS/Safari
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
   // Request notification permission on mount (only on supported browsers)
   useEffect(() => {
