@@ -771,7 +771,7 @@ export default function EmployeeDashboard() {
   // Work alarms are now handled automatically by PWA push notifications
 
   return (
-    <div className="dark h-screen bg-employee-gradient text-white flex flex-col overflow-hidden">
+    <div className="h-screen bg-employee-gradient text-gray-900 flex flex-col overflow-hidden">
       {/* Fixed Content Container - Sin scroll */}
       <div className="flex-1 flex flex-col p-4">
         {/* Header - Compacto */}
@@ -781,7 +781,7 @@ export default function EmployeeDashboard() {
               variant="ghost"
               size="sm"
               onClick={() => setIsAlarmModalOpen(true)}
-              className="text-white hover:bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg px-3 py-2"
+              className="text-gray-700 hover:bg-gray-200 border border-gray-300 rounded-lg px-3 py-2"
               title="Configurar alarmas de trabajo"
             >
               <AlarmClock className="h-4 w-4 mr-2" />
@@ -793,7 +793,7 @@ export default function EmployeeDashboard() {
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2">
                   <div>
-                    <h1 className="text-xs font-medium text-white drop-shadow-lg">{user?.fullName}</h1>
+                    <h1 className="text-xs font-medium text-gray-900">{user?.fullName}</h1>
                   </div>
                   <UserAvatar
                     fullName={user?.fullName || ''}
@@ -803,11 +803,11 @@ export default function EmployeeDashboard() {
                   />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-white/10 backdrop-blur-xl border border-white/20 text-white" align="end" forceMount>
+              <DropdownMenuContent className="w-56 bg-white border border-gray-300 text-gray-900" align="end" forceMount>
                 <div className="flex flex-col space-y-1 p-2">
-                  <p className="text-sm font-medium text-white">{user?.fullName}</p>
-                  <p className="text-xs text-white/70">{user?.companyEmail || user?.personalEmail || 'Sin email'}</p>
-                  <p className="text-xs text-white/60 capitalize">{translateRole(user?.role) || 'Empleado'}</p>
+                  <p className="text-sm font-medium text-gray-900">{user?.fullName}</p>
+                  <p className="text-xs text-gray-600">{user?.companyEmail || user?.personalEmail || 'Sin email'}</p>
+                  <p className="text-xs text-gray-500 capitalize">{translateRole(user?.role) || 'Empleado'}</p>
                 </div>
                 <DropdownMenuItem 
                   onClick={() => {
@@ -815,12 +815,12 @@ export default function EmployeeDashboard() {
                     const currentCompanyAlias = urlParts[0] || company?.alias || 'test';
                     handleNavigation(`/${currentCompanyAlias}/usuario`);
                   }} 
-                  className="text-white hover:text-blue-300 hover:bg-blue-500/20 cursor-pointer"
+                  className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 cursor-pointer"
                 >
                   <User className="mr-2 h-4 w-4" />
                   Mi Perfil
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={logout} className="text-white hover:text-red-300 hover:bg-red-500/20 cursor-pointer">
+                <DropdownMenuItem onClick={logout} className="text-gray-700 hover:text-red-600 hover:bg-red-50 cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   Cerrar sesión
                 </DropdownMenuItem>
@@ -839,10 +839,10 @@ export default function EmployeeDashboard() {
                   <img 
                     src={company.logoUrl} 
                     alt={company.name} 
-                    className="h-10 w-auto mx-auto object-contain filter brightness-0 invert drop-shadow-lg"
+                    className="h-10 w-auto mx-auto object-contain"
                   />
                 ) : (
-                  <div className="text-white text-base font-medium drop-shadow-lg">
+                  <div className="text-gray-900 text-base font-medium">
                     {company?.name || 'Mi Empresa'}
                   </div>
                 )}
@@ -957,10 +957,10 @@ export default function EmployeeDashboard() {
                       
                       handleNavigation(item.route);
                     }}
-                    className={`relative w-24 h-24 transition-all duration-200 rounded-2xl flex items-center justify-center mb-2 backdrop-blur-xl border ${
+                    className={`relative w-24 h-24 transition-all duration-200 rounded-2xl flex items-center justify-center mb-2 border ${
                       isFeatureDisabled 
-                        ? 'bg-gray-500/20 border-gray-400/30 cursor-not-allowed opacity-40' 
-                        : 'bg-[#007AFF]/20 border-[#007AFF]/30 hover:bg-[#007AFF]/30 hover:border-[#007AFF]/50'
+                        ? 'bg-gray-200 border-gray-300 cursor-not-allowed opacity-40' 
+                        : 'bg-white border-gray-300 hover:bg-gray-50 shadow-sm'
                     }`}
                     disabled={isFeatureDisabled}
                   >
@@ -984,8 +984,8 @@ export default function EmployeeDashboard() {
                   </button>
                   <span className={`text-sm font-medium text-center leading-tight transition-all duration-300 ${
                     isFeatureDisabled 
-                      ? 'text-white/30' 
-                      : 'text-white/90 group-hover:text-white group-hover:scale-105'
+                      ? 'text-gray-400' 
+                      : 'text-gray-700 group-hover:text-gray-900 group-hover:scale-105'
                   }`}>
                     {item.title}
                   </span>
@@ -997,7 +997,7 @@ export default function EmployeeDashboard() {
 
         {/* Status Line and Last Clock In Info / Temporary Message - Compacto */}
         <div className="text-center mb-2 mt-6 flex justify-center">
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-2 w-[304px]">
+          <div className="bg-white rounded-xl border border-gray-300 p-2 w-[304px] shadow-sm">
             {/* Status Line */}
             <div className={`text-xs mb-2 font-medium ${
               sessionStatus.isActive 
@@ -1037,15 +1037,15 @@ export default function EmployeeDashboard() {
             
             {temporaryMessage ? (
               <>
-                <div className="text-green-400 text-xs mb-1 font-medium">✓ Fichaje exitoso</div>
-                <div className="text-white text-sm font-medium">
+                <div className="text-green-600 text-xs mb-1 font-medium">✓ Fichaje exitoso</div>
+                <div className="text-gray-900 text-sm font-medium">
                   {temporaryMessage}
                 </div>
               </>
             ) : (
               <>
-                <div className="text-white/60 text-xs mb-1 font-medium">Tu último fichaje</div>
-                <div className="text-white text-sm font-medium">
+                <div className="text-gray-600 text-xs mb-1 font-medium">Tu último fichaje</div>
+                <div className="text-gray-900 text-sm font-medium">
                   {formatLastClockDate() || 'Sin fichajes previos'}
                 </div>
               </>
@@ -1060,7 +1060,7 @@ export default function EmployeeDashboard() {
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 flex items-center justify-center mb-3 shadow-lg">
                 <Palmtree className="w-12 h-12 text-white" />
               </div>
-              <p className="text-sm font-bold text-white text-center">
+              <p className="text-sm font-bold text-gray-900 text-center">
                 ¡Disfruta de tus vacaciones!
               </p>
             </div>
@@ -1134,8 +1134,8 @@ export default function EmployeeDashboard() {
 
       {/* Small Oficaz logo at bottom */}
       <div className="text-center pb-3">
-        <div className="flex items-center justify-center space-x-1 text-gray-400 text-xs">
-          <span className="font-semibold text-blue-400">Oficaz</span>
+        <div className="flex items-center justify-center space-x-1 text-gray-500 text-xs">
+          <span className="font-semibold text-blue-600">Oficaz</span>
           <span>© {currentYear}</span>
         </div>
       </div>
