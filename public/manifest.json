@@ -4,7 +4,7 @@
   "description": "Sistema completo de gestión de empleados: fichaje, vacaciones, documentos y más",
   "start_url": "/login",
   "display": "standalone",
-  "background_color": "#f9fafb",
+  "background_color": "#2A3441",
   "theme_color": "#007AFF",
   "orientation": "portrait-primary",
   "icons": [
