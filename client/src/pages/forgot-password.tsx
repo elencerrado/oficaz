@@ -165,12 +165,6 @@ export default function ForgotPassword() {
               )}
             </div>
 
-            {/* Spacer to match login form height */}
-            <div className="space-y-4">
-              <div className="h-12"></div> {/* Equivalent to password field */}
-              <div className="h-6"></div>  {/* Equivalent to checkbox */}
-            </div>
-
             {/* Submit Button */}
             <Button 
               type="submit" 

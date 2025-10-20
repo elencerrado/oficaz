@@ -345,12 +345,6 @@ export default function RequestCode() {
               </p>
             </div>
 
-            {/* Spacer to match login form height (password field + checkbox) */}
-            <div className="space-y-4">
-              <div className="h-12"></div> {/* Equivalent to password field */}
-              <div className="h-6"></div>  {/* Equivalent to checkbox */}
-            </div>
-
             <Button 
               type="submit" 
               className={`w-full rounded-xl py-3 text-white font-medium ${
