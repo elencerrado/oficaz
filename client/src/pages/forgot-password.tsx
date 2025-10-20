@@ -190,7 +190,7 @@ export default function ForgotPassword() {
               )}
             </Button>
 
-            {/* Back to Login Link - with spacing to match login layout */}
+            {/* Back to Login Link */}
             <div className="text-center mt-4">
               <Link 
                 href={companyAlias ? `/${companyAlias}/login` : '/login'}
@@ -199,11 +199,6 @@ export default function ForgotPassword() {
                 <ArrowLeft className="h-3 w-3 mr-1" />
                 Volver al login
               </Link>
-            </div>
-            
-            {/* Extra spacer to match login's second link */}
-            <div className="text-center mt-6">
-              <div className="h-4"></div>
             </div>
           </form>
         </CardContent>
