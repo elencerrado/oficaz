@@ -262,15 +262,23 @@ export default function RequestCode() {
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email del administrador</Label>
               <div className="relative">
-                <Input
+                <input
                   id="email"
                   type="email"
-                  className={`rounded-xl bg-white border-2 ${
-                    emailStatus === 'available' ? 'border-green-500' :
-                    emailStatus === 'unavailable' ? 'border-red-500' :
-                    emailStatus === 'cancelled' ? 'border-orange-500' :
-                    'border-gray-300'
-                  } py-3 px-4 pr-20 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
+                  style={{
+                    border: emailStatus === 'available' ? '2px solid #22c55e' :
+                           emailStatus === 'unavailable' ? '2px solid #ef4444' :
+                           emailStatus === 'cancelled' ? '2px solid #f97316' :
+                           '2px solid #d1d5db',
+                    borderRadius: '0.75rem',
+                    padding: '0.75rem 1rem',
+                    paddingRight: '5rem',
+                    fontSize: '0.875rem',
+                    backgroundColor: 'white',
+                    color: '#111827',
+                    width: '100%',
+                    outline: 'none'
+                  }}
                   {...form.register('email')}
                   placeholder="admin@miempresa.com"
                 />
