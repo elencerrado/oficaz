@@ -9212,14 +9212,24 @@ Responde directamente a este email para contactar con la persona.
         .where(eq(passwordResetTokens.companyId, companyId));
       console.log('✅ Deleted password reset tokens');
 
-      // 9. Delete all users
+      // 9. Delete employee activation tokens (CRITICAL: Must be deleted before users)
+      if (userIdsForAdmin.length > 0) {
+        await db.delete(employeeActivationTokens)
+          .where(or(
+            inArray(employeeActivationTokens.userId, userIdsForAdmin),
+            inArray(employeeActivationTokens.createdBy, userIdsForAdmin)
+          ));
+        console.log('✅ Deleted employee activation tokens');
+      }
+
+      // 10. Delete all users
       if (userIdsForAdmin.length > 0) {
         await db.delete(users)
           .where(eq(users.companyId, companyId));
         console.log('✅ Deleted users');
       }
 
-      // 10. Finally, delete the company
+      // 11. Finally, delete the company
       await db.delete(companies)
         .where(eq(companies.id, companyId));
       console.log('✅ Deleted company');
