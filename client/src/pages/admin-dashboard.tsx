@@ -58,6 +58,7 @@ export default function AdminDashboard() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const hasCheckedWelcomeModal = useRef(false);
   
   // ⚠️ PROTECTED - DO NOT MODIFY - Message system states identical to employee system
   const [temporaryMessage, setTemporaryMessage] = useState<string | null>(null);
@@ -163,12 +164,15 @@ export default function AdminDashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  // Check for welcome modal display
+  // Check for welcome modal display (only once per session)
   useEffect(() => {
+    if (hasCheckedWelcomeModal.current) return;
+    
     const shouldShowWelcome = localStorage.getItem('showWelcomeModal');
     if (shouldShowWelcome === 'true') {
       setShowWelcomeModal(true);
       localStorage.removeItem('showWelcomeModal');
+      hasCheckedWelcomeModal.current = true;
     }
   }, []);
 
