@@ -345,6 +345,12 @@ export default function RequestCode() {
               </p>
             </div>
 
+            {/* Spacer to match login form height (password field + checkbox) */}
+            <div className="space-y-4">
+              <div className="h-12"></div> {/* Equivalent to password field */}
+              <div className="h-6"></div>  {/* Equivalent to checkbox */}
+            </div>
+
             <Button 
               type="submit" 
               className={`w-full rounded-xl py-3 text-white font-medium ${
@@ -366,11 +372,19 @@ export default function RequestCode() {
                 </>
               )}
             </Button>
+
+            {/* Link inside form to match login height */}
+            <div className="text-center mt-4">
+              <Link href="/login" className="text-sm text-blue-600 hover:text-blue-700 hover:underline">
+                ¿Ya tienes una cuenta? Iniciar sesión
+              </Link>
+            </div>
           </form>
 
+          {/* Second link outside form to match login height */}
           <div className="text-center mt-6">
-            <Link href="/login" className="text-sm text-blue-600 hover:text-blue-700 hover:underline">
-              ¿Ya tienes una cuenta? Iniciar sesión
+            <Link href="/register" className="text-sm text-blue-600 hover:text-blue-700 hover:underline">
+              Registra tu empresa
             </Link>
           </div>
         </CardContent>
