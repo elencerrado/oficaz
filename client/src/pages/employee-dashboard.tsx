@@ -4,6 +4,7 @@ import { useWorkAlarms } from '@/hooks/use-work-alarms';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
@@ -1157,6 +1158,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingAlarm, setEditingAlarm] = useState<any>(null);
+  const [alarmToDelete, setAlarmToDelete] = useState<number | null>(null);
   
   // Form states
   const [formData, setFormData] = useState({
@@ -1279,15 +1281,18 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
     }
   };
 
-  // Handle delete alarm
-  const handleDelete = async (alarmId: number) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta alarma?')) {
-      return;
-    }
+  // Handle delete alarm - show confirmation dialog
+  const handleDelete = (alarmId: number) => {
+    setAlarmToDelete(alarmId);
+  };
+
+  // Confirm delete alarm
+  const confirmDelete = async () => {
+    if (!alarmToDelete) return;
 
     try {
       setIsLoading(true);
-      await apiRequest('DELETE', `/api/work-alarms/${alarmId}`);
+      await apiRequest('DELETE', `/api/work-alarms/${alarmToDelete}`);
       toast({
         title: 'Éxito',
         description: 'Alarma eliminada correctamente'
@@ -1302,6 +1307,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
       });
     } finally {
       setIsLoading(false);
+      setAlarmToDelete(null);
     }
   };
 
@@ -1554,6 +1560,32 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
             )}
           </div>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={alarmToDelete !== null} onOpenChange={(open) => !open && setAlarmToDelete(null)}>
+          <AlertDialogContent className="bg-gray-900 border-gray-700">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-white">¿Eliminar alarma?</AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-400">
+                Esta acción no se puede deshacer. La alarma será eliminada permanentemente.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel 
+                onClick={() => setAlarmToDelete(null)}
+                className="bg-gray-700 text-white border-gray-600 hover:bg-gray-600"
+              >
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={confirmDelete}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
       
       {/* PWA Install Prompt - solo en dashboard de empleados */}
