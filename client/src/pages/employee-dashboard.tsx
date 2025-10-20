@@ -1153,7 +1153,6 @@ export default function EmployeeDashboard() {
 
 // Work Alarms Modal Component
 function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const { toast } = useToast();
   const [alarms, setAlarms] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -1176,11 +1175,6 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
       setAlarms(response || []);
     } catch (error) {
       console.error('Error loading alarms:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudieron cargar las alarmas',
-        variant: 'destructive'
-      });
     } finally {
       setIsLoading(false);
     }
@@ -1222,11 +1216,6 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
     e.preventDefault();
     
     if (!formData.time || formData.weekdays.length === 0) {
-      toast({
-        title: 'Error',
-        description: 'Por favor completa todos los campos',
-        variant: 'destructive'
-      });
       return;
     }
 
@@ -1246,17 +1235,9 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
       if (editingAlarm) {
         // Update existing alarm
         await apiRequest('PUT', `/api/work-alarms/${editingAlarm.id}`, alarmData);
-        toast({
-          title: 'Éxito',
-          description: 'Alarma actualizada correctamente'
-        });
       } else {
         // Create new alarm
         await apiRequest('POST', '/api/work-alarms', alarmData);
-        toast({
-          title: 'Éxito',
-          description: 'Alarma creada correctamente'
-        });
       }
       
       // Reset form
@@ -1271,11 +1252,6 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
       loadAlarms();
     } catch (error) {
       console.error('Error saving alarm:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo guardar la alarma',
-        variant: 'destructive'
-      });
     } finally {
       setIsLoading(false);
     }
@@ -1293,18 +1269,9 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
     try {
       setIsLoading(true);
       await apiRequest('DELETE', `/api/work-alarms/${alarmToDelete}`);
-      toast({
-        title: 'Éxito',
-        description: 'Alarma eliminada correctamente'
-      });
       loadAlarms();
     } catch (error) {
       console.error('Error deleting alarm:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo eliminar la alarma',
-        variant: 'destructive'
-      });
     } finally {
       setIsLoading(false);
       setAlarmToDelete(null);
@@ -1385,16 +1352,6 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                         body: 'Si ves esto, las notificaciones funcionan correctamente',
                         icon: '/apple-touch-icon.png',
                         vibrate: [200, 100, 200]
-                      });
-                      toast({
-                        title: '✅ Notificación enviada',
-                        description: 'Deberías verla ahora'
-                      });
-                    } else {
-                      toast({
-                        title: '⚠️ Permisos denegados',
-                        description: 'Activa los permisos de notificación en tu navegador',
-                        variant: 'destructive'
                       });
                     }
                   }

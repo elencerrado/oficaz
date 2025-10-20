@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
 
 interface WorkAlarm {
   id: number;
@@ -16,8 +15,6 @@ interface WorkAlarm {
 }
 
 export function useWorkAlarms() {
-  const { toast } = useToast();
-  
   const [pushSubscription, setPushSubscription] = useState<PushSubscription | null>(null);
   const [serviceWorkerRegistration, setServiceWorkerRegistration] = useState<ServiceWorkerRegistration | null>(null);
   const [pushPermission, setPushPermission] = useState<'granted' | 'denied' | 'default'>('default');
@@ -82,11 +79,6 @@ export function useWorkAlarms() {
         
         if (permission !== 'granted') {
           console.log('📢 Push notification permission denied');
-          toast({
-            title: '📱 Instala Oficaz como App',
-            description: 'Para recibir notificaciones de alarmas con el móvil bloqueado, instala Oficaz desde el menú de tu navegador.',
-            duration: 10000,
-          });
           return;
         }
 
@@ -116,24 +108,9 @@ export function useWorkAlarms() {
         
         // Mark as subscribed in localStorage to prevent showing toast again
         localStorage.setItem('pwa-push-subscribed', 'true');
-        
-        toast({
-          title: '✅ Notificaciones activadas',
-          description: 'Recibirás alertas de tus alarmas incluso con el móvil bloqueado.',
-          duration: 5000,
-        });
 
       } catch (error: any) {
         console.error('❌ Error setting up push notifications:', error);
-        
-        // User-friendly error message
-        if (error.message?.includes('not configured')) {
-          toast({
-            title: '⚠️  Configuración pendiente',
-            description: 'Las notificaciones push están en configuración. Mientras tanto, mantén la app abierta para recibir alarmas.',
-            duration: 5000,
-          });
-        }
       }
     };
 
