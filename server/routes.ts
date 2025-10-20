@@ -1201,7 +1201,7 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
   nextWeek.setHours(14, 0, 0, 0);
   
   const demoReminders = [
-    // 1. Individual reminder - assigned to specific employee
+    // 1. ADMIN CREATED - Shared with multiple employees (María García)
     {
       title: 'Reunión de equipo semanal',
       description: 'Reunión para revisar el progreso del proyecto y planificar la próxima semana',
@@ -1211,7 +1211,7 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
       color: '#FFFFCC', // Light yellow
       priority: 'high' as const,
     },
-    // 2. Multiple employees - assigned to 2 people
+    // 2. ADMIN CREATED - Shared with multiple employees (María y Carlos)
     {
       title: 'Entrega de documentación técnica',
       description: 'Completar y revisar toda la documentación del sistema antes de la presentación',
@@ -1221,17 +1221,17 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
       color: '#C8E6C9', // Soft green
       priority: 'medium' as const,
     },
-    // 3. Individual reminder - different employee
+    // 3. EMPLOYEE CREATED - Ana creates her own reminder
     {
       title: 'Revisión de diseños con cliente',
       description: 'Presentar los nuevos mockups y recoger feedback del cliente',
       dueDateTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-      assignedEmployees: [employees[2]], // Solo Ana Fernández
-      createdBy: admin,
+      assignedEmployees: [employees[2]], // Solo Ana Fernández (auto-asignado)
+      createdBy: employees[2], // Creado por Ana
       color: '#BBDEFB', // Sky blue
       priority: 'high' as const,
     },
-    // 4. Group task - assigned to 3 employees
+    // 4. ADMIN CREATED - Group task assigned to 3 employees
     {
       title: 'Preparación presentación trimestral',
       description: 'Recopilar datos y preparar la presentación de resultados del trimestre',
@@ -1241,17 +1241,17 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
       color: '#FFE4B5', // Warm peach
       priority: 'medium' as const,
     },
-    // 5. Individual personal reminder
+    // 5. EMPLOYEE CREATED - David creates his own reminder
     {
       title: 'Formación en nuevas herramientas',
       description: 'Completar el curso online de certificación en la nueva plataforma',
       dueDateTime: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
-      assignedEmployees: [employees[3]], // Solo David López
-      createdBy: admin,
+      assignedEmployees: [employees[3]], // Solo David López (auto-asignado)
+      createdBy: employees[3], // Creado por David
       color: '#F8BBD9', // Rose pink
       priority: 'low' as const,
     },
-    // 6. Unassigned company reminder (admin only)
+    // 6. ADMIN CREATED - Company-wide reminder (admin only)
     {
       title: 'Revisión mensual de objetivos',
       description: 'Evaluar el cumplimiento de objetivos del mes y planificar acciones correctivas',
@@ -1260,6 +1260,16 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
       createdBy: admin,
       color: '#E1BEE7', // Lavender purple
       priority: 'medium' as const,
+    },
+    // 7. EMPLOYEE CREATED - Carlos (manager) creates reminder shared with María
+    {
+      title: 'Revisión de código frontend',
+      description: 'Revisar pull requests pendientes y asegurar calidad del código',
+      dueDateTime: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
+      assignedEmployees: [employees[0], employees[1]], // María y Carlos
+      createdBy: employees[1], // Creado por Carlos (manager)
+      color: '#C8E6C9', // Soft green
+      priority: 'high' as const,
     }
   ];
   
