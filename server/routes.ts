@@ -8667,6 +8667,71 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Upload email marketing image
+  app.post('/api/super-admin/email-marketing/upload-image', superAdminSecurityHeaders, authenticateSuperAdmin, upload.single('image'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, message: 'No se proporcionó ninguna imagen' });
+      }
+
+      const file = req.file;
+      
+      // Validate file type
+      const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedMimeTypes.includes(file.mimetype)) {
+        // Delete invalid file
+        fs.unlinkSync(file.path);
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Tipo de archivo no permitido. Solo se aceptan: JPG, PNG, GIF, WEBP' 
+        });
+      }
+
+      // Generate unique filename
+      const timestamp = Date.now();
+      const ext = path.extname(file.originalname);
+      const filename = `email-${timestamp}${ext}`;
+      const finalPath = path.join(uploadDir, filename);
+
+      // Process image with sharp (compress and resize if needed)
+      await sharp(file.path)
+        .resize(800, null, { // Max width 800px, maintain aspect ratio
+          fit: 'inside',
+          withoutEnlargement: true
+        })
+        .jpeg({ quality: 85 })
+        .png({ quality: 85 })
+        .toFile(finalPath);
+
+      // Delete temp file
+      fs.unlinkSync(file.path);
+
+      // Return public URL
+      const domain = process.env.NODE_ENV === 'production'
+        ? 'https://oficaz.es'
+        : `https://${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}`;
+      
+      const imageUrl = `${domain}/uploads/${filename}`;
+
+      console.log(`✅ Email marketing image uploaded: ${imageUrl}`);
+
+      res.json({ 
+        success: true, 
+        imageUrl,
+        filename 
+      });
+    } catch (error: any) {
+      console.error('Error uploading email marketing image:', error);
+      
+      // Clean up file if it exists
+      if (req.file?.path && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      
+      res.status(500).json({ success: false, message: 'Error al subir la imagen' });
+    }
+  });
+
   // Create email campaign
   app.post('/api/super-admin/email-campaigns', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {

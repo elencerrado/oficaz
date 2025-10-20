@@ -36,14 +36,35 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
     signature: 'Saludos cordiales',
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        handleContentChange('imageUrl', reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('La imagen es demasiado grande. El tamaño máximo es 2MB.');
+      return;
+    }
+
+    try {
+      // Upload to server
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('/api/super-admin/email-marketing/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al subir la imagen');
+      }
+
+      const data = await response.json();
+      handleContentChange('imageUrl', data.imageUrl);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Error al subir la imagen. Por favor intenta de nuevo.');
     }
   };
 
