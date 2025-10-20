@@ -1024,9 +1024,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
             <form onSubmit={step4Form.handleSubmit(handleStep4Submit)} className="space-y-6">
               <div className="text-center mb-6">
                 <Crown className="h-12 w-12 text-oficaz-primary mx-auto mb-3" />
-                <h3 className="text-lg font-semibold mb-1">Elige tu plan</h3>
+                <h3 className="text-lg font-semibold mb-1">Selecciona un plan</h3>
                 <div className="text-sm text-gray-600">
-                  Basado en tus respuestas, te recomendamos el plan{' '}
+                  Basado en tu equipo y necesidades, te recomendamos{' '}
                   <Badge variant="secondary" className="mx-1 capitalize">{recommendedPlan}</Badge>
                 </div>
               </div>
@@ -1047,7 +1047,11 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       onClick={() => step4Form.setValue('selectedPlan', plan.name)}
                     >
                       {isRecommended && (
-                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <div className={`absolute -top-3 ${
+                          step4Form.watch('selectedPlan') === plan.name 
+                            ? 'left-4' 
+                            : 'left-1/2 transform -translate-x-1/2'
+                        }`}>
                           <Badge className="bg-orange-500 text-white shadow-md">
                             <Star className="h-3 w-3 mr-1 fill-current" />
                             Recomendado
