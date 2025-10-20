@@ -44,7 +44,7 @@ self.addEventListener('push', (event) => {
         icon: data.icon || '/icon-192.png',
         badge: '/icon-192.png',
         data: data.data || {},
-        vibrate: [200, 100, 200, 100, 200],
+        vibrate: data.vibrate || [200, 100, 200, 100, 200],
         requireInteraction: true,
         tag: data.tag || 'oficaz-notification',
         actions: data.actions || []
@@ -60,13 +60,74 @@ self.addEventListener('push', (event) => {
   );
 });
 
-// Notification click event
+// Notification click event - Handle both notification and action clicks
 self.addEventListener('notificationclick', (event) => {
   console.log('[SW] Notification clicked:', event);
   
   event.notification.close();
 
-  // Open or focus the app
+  // Get notification data
+  const notificationData = event.notification.data || {};
+  const action = event.action; // Empty string if notification body clicked, otherwise action id
+
+  // Handle action button clicks
+  if (action && action !== 'open') {
+    console.log('[SW] Action button clicked:', action);
+    
+    // Perform the work action via API
+    event.waitUntil(
+      fetch('/api/push/work-action', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: notificationData.userId,
+          action: action,
+          sessionId: notificationData.sessionId,
+          breakId: notificationData.breakId
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('[SW] Action completed:', data);
+        
+        // Show confirmation notification
+        const messages = {
+          'clock_in': '✅ Fichado entrada correctamente',
+          'clock_out': '✅ Fichado salida correctamente',
+          'start_break': '☕ Descanso iniciado',
+          'end_break': '✅ Descanso finalizado'
+        };
+        
+        return self.registration.showNotification('Oficaz', {
+          body: messages[action] || data.message || 'Acción completada',
+          icon: '/icon-192.png',
+          badge: '/icon-192.png',
+          tag: 'oficaz-action-confirmation',
+          requireInteraction: false,
+          vibrate: [100, 50, 100]
+        });
+      })
+      .catch(error => {
+        console.error('[SW] Error performing action:', error);
+        
+        // Show error notification
+        return self.registration.showNotification('Oficaz', {
+          body: '❌ Error al realizar la acción. Abre la app para intentarlo de nuevo.',
+          icon: '/icon-192.png',
+          badge: '/icon-192.png',
+          tag: 'oficaz-action-error',
+          requireInteraction: false,
+          vibrate: [100, 50, 100, 50, 100]
+        });
+      })
+    );
+    
+    return; // Don't open app when action button clicked
+  }
+
+  // If notification body clicked (not an action button), open/focus the app
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
@@ -79,7 +140,7 @@ self.addEventListener('notificationclick', (event) => {
         
         // Otherwise, open a new window
         if (clients.openWindow) {
-          const url = event.notification.data?.url || '/employee';
+          const url = notificationData.url || '/employee';
           return clients.openWindow(url);
         }
       })

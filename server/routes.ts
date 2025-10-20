@@ -10799,6 +10799,113 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Get current work status for push notifications
+  app.get('/api/push/work-status/:userId', async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      // Get active work session
+      const activeSession = await storage.getActiveWorkSession(userId);
+      
+      if (!activeSession) {
+        // Not clocked in
+        return res.json({
+          status: 'not_clocked_in',
+          buttons: [
+            { action: 'clock_in', title: 'Fichar entrada', icon: '⏱️' }
+          ]
+        });
+      }
+
+      // Check if currently on break
+      const activeBreak = await db.select()
+        .from(schema.breakPeriods)
+        .where(and(
+          eq(schema.breakPeriods.workSessionId, activeSession.id),
+          eq(schema.breakPeriods.status, 'active'),
+          isNull(schema.breakPeriods.breakEnd)
+        ))
+        .limit(1);
+
+      if (activeBreak.length > 0) {
+        // On break
+        return res.json({
+          status: 'on_break',
+          sessionId: activeSession.id,
+          breakId: activeBreak[0].id,
+          buttons: [
+            { action: 'end_break', title: 'Terminar descanso', icon: '✅' }
+          ]
+        });
+      }
+
+      // Clocked in, not on break
+      return res.json({
+        status: 'clocked_in',
+        sessionId: activeSession.id,
+        buttons: [
+          { action: 'start_break', title: 'Iniciar descanso', icon: '☕' },
+          { action: 'clock_out', title: 'Fichar salida', icon: '🚪' }
+        ]
+      });
+
+    } catch (error) {
+      console.error('Error getting work status:', error);
+      res.status(500).json({ message: 'Failed to get work status' });
+    }
+  });
+
+  // Handle work action from push notification
+  app.post('/api/push/work-action', async (req, res) => {
+    try {
+      const { userId, action, sessionId, breakId } = req.body;
+      
+      console.log(`🔔 Push action: ${action} for user ${userId}`);
+
+      if (action === 'clock_in') {
+        // Clock in
+        const result = await storage.clockIn(userId);
+        return res.json({ success: true, message: 'Fichado entrada', data: result });
+      }
+
+      if (action === 'clock_out') {
+        // Clock out
+        if (!sessionId) {
+          return res.status(400).json({ success: false, message: 'Session ID required' });
+        }
+        const result = await storage.clockOut(sessionId);
+        return res.json({ success: true, message: 'Fichado salida', data: result });
+      }
+
+      if (action === 'start_break') {
+        // Start break
+        if (!sessionId) {
+          return res.status(400).json({ success: false, message: 'Session ID required' });
+        }
+        const result = await storage.startBreak(sessionId);
+        return res.json({ success: true, message: 'Descanso iniciado', data: result });
+      }
+
+      if (action === 'end_break') {
+        // End break
+        if (!breakId) {
+          return res.status(400).json({ success: false, message: 'Break ID required' });
+        }
+        const result = await storage.endBreak(breakId);
+        return res.json({ success: true, message: 'Descanso finalizado', data: result });
+      }
+
+      return res.status(400).json({ success: false, message: 'Invalid action' });
+
+    } catch (error: any) {
+      console.error('Error handling work action:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || 'Failed to perform action' 
+      });
+    }
+  });
+
   // 🧪 TEMPORARY TEST ENDPOINT - Apply promotional code to a company
   app.post('/api/test/apply-promotional-code', async (req, res) => {
     try {

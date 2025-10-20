@@ -1,7 +1,7 @@
 import webpush from 'web-push';
 import { db } from './db';
-import { eq, and } from 'drizzle-orm';
-import { workAlarms, pushSubscriptions } from '@shared/schema';
+import { eq, and, isNull } from 'drizzle-orm';
+import { workAlarms, pushSubscriptions, workSessions, breakPeriods } from '@shared/schema';
 
 interface AlarmCheck {
   alarmId: number;
@@ -10,6 +10,19 @@ interface AlarmCheck {
   type: 'clock_in' | 'clock_out';
   time: string;
   lastChecked: Date;
+}
+
+interface WorkStatusButton {
+  action: string;
+  title: string;
+  icon?: string;
+}
+
+interface WorkStatus {
+  status: string;
+  sessionId?: number;
+  breakId?: number;
+  buttons: WorkStatusButton[];
 }
 
 const checkedAlarms = new Map<string, Date>();
@@ -34,8 +47,75 @@ function shouldTriggerAlarm(alarmTime: string, weekdays: number[]): boolean {
   return currentHour === alarmHour && currentMinute === alarmMinute;
 }
 
+// Get current work status for user
+async function getWorkStatus(userId: number): Promise<WorkStatus> {
+  try {
+    // Get active work session
+    const [activeSession] = await db.select()
+      .from(workSessions)
+      .where(and(
+        eq(workSessions.userId, userId),
+        eq(workSessions.status, 'active'),
+        isNull(workSessions.clockOut)
+      ))
+      .limit(1);
+    
+    if (!activeSession) {
+      // Not clocked in
+      return {
+        status: 'not_clocked_in',
+        buttons: [
+          { action: 'clock_in', title: '⏱️ Fichar entrada' }
+        ]
+      };
+    }
+
+    // Check if currently on break
+    const [activeBreak] = await db.select()
+      .from(breakPeriods)
+      .where(and(
+        eq(breakPeriods.workSessionId, activeSession.id),
+        eq(breakPeriods.status, 'active'),
+        isNull(breakPeriods.breakEnd)
+      ))
+      .limit(1);
+
+    if (activeBreak) {
+      // On break
+      return {
+        status: 'on_break',
+        sessionId: activeSession.id,
+        breakId: activeBreak.id,
+        buttons: [
+          { action: 'end_break', title: '✅ Terminar descanso' }
+        ]
+      };
+    }
+
+    // Clocked in, not on break
+    return {
+      status: 'clocked_in',
+      sessionId: activeSession.id,
+      buttons: [
+        { action: 'start_break', title: '☕ Iniciar descanso' },
+        { action: 'clock_out', title: '🚪 Fichar salida' }
+      ]
+    };
+
+  } catch (error) {
+    console.error('Error getting work status:', error);
+    // Fallback to basic clock in button
+    return {
+      status: 'unknown',
+      buttons: [
+        { action: 'clock_in', title: '⏱️ Fichar entrada' }
+      ]
+    };
+  }
+}
+
 // Function to send push notification to user
-async function sendPushNotification(userId: number, title: string, body: string, alarmType: 'clock_in' | 'clock_out') {
+async function sendPushNotification(userId: number, title: string, alarmType: 'clock_in' | 'clock_out') {
   try {
     // Get all push subscriptions for this user
     const subscriptions = await db.select()
@@ -47,26 +127,35 @@ async function sendPushNotification(userId: number, title: string, body: string,
       return;
     }
 
+    // Get current work status to determine available actions
+    const workStatus = await getWorkStatus(userId);
+    console.log(`📊 User ${userId} work status:`, workStatus.status);
+
+    // Build notification actions from work status buttons
+    const actions = workStatus.buttons.map(btn => ({
+      action: btn.action,
+      title: btn.title
+    }));
+
     const payload = JSON.stringify({
-      title,
-      body,
-      icon: '/apple-touch-icon.png',
-      badge: '/apple-touch-icon.png',
+      title: 'Oficaz',
+      body: '🔔 Hora de fichar',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
       vibrate: [200, 100, 200, 100, 200, 100, 200],
       requireInteraction: true,
       renotify: true,
-      tag: `work-alarm-${alarmType}-${Date.now()}`, // Unique tag forces new notification
+      tag: `work-alarm-${alarmType}-${Date.now()}`,
       data: {
         url: '/employee',
         type: alarmType,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        userId,
+        sessionId: workStatus.sessionId,
+        breakId: workStatus.breakId,
+        workStatus: workStatus.status
       },
-      actions: [
-        {
-          action: 'open',
-          title: 'Abrir Oficaz'
-        }
-      ]
+      actions
     });
 
     // Send to all user's devices
@@ -82,7 +171,7 @@ async function sendPushNotification(userId: number, title: string, body: string,
           },
           payload
         );
-        console.log(`✅ Push notification sent to user ${userId} (${alarmType})`);
+        console.log(`✅ Push notification sent to user ${userId} with ${actions.length} action(s)`);
       } catch (error: any) {
         // If subscription is invalid, remove it
         if (error.statusCode === 410 || error.statusCode === 404) {
@@ -132,15 +221,7 @@ export async function checkWorkAlarms() {
       if (shouldTrigger) {
         console.log(`⏰ TRIGGERING ALARM: ${alarm.title} for user ${alarm.userId} at ${currentTime}`);
         
-        const body = alarm.type === 'clock_in' 
-          ? '¡Hora de fichar entrada!'
-          : alarm.type === 'clock_out'
-          ? '¡Hora de fichar salida!'
-          : alarm.type === 'break_start'
-          ? '¡Hora de iniciar descanso!'
-          : '¡Hora de terminar descanso!';
-        
-        await sendPushNotification(alarm.userId, alarm.title, body, alarm.type as 'clock_in' | 'clock_out');
+        await sendPushNotification(alarm.userId, alarm.title, alarm.type as 'clock_in' | 'clock_out');
         
         // Mark as sent for this specific minute
         checkedAlarms.set(checkKey, now);
