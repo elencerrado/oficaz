@@ -1379,7 +1379,8 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                   type="time"
                   value={formData.time}
                   onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-[#007AFF] text-sm sm:text-base"
+                  className="w-full max-w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-[#007AFF] text-sm sm:text-base box-border"
+                  style={{ WebkitAppearance: 'none' }}
                   required
                 />
               </div>
