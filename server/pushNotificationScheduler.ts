@@ -140,6 +140,10 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
 
     console.log(`🔔 Preparing notification with ${actions.length} action(s):`, actions.map(a => a.action));
 
+    // Use unique tag per notification to avoid replacement on iOS
+    // But include userId in tag for tracking
+    const notificationTag = `work-alarm-${userId}-${Date.now()}`;
+    
     const payload = JSON.stringify({
       title: 'Oficaz',
       body: '🔔 Hora de fichar',
@@ -147,8 +151,7 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
       badge: '/icon-192.png',
       vibrate: [200, 100, 200, 100, 200, 100, 200],
       requireInteraction: true,
-      renotify: true,
-      tag: `work-alarm-${userId}`, // Same tag per user = replace previous notification
+      tag: notificationTag,
       data: {
         url: '/employee',
         type: alarmType,

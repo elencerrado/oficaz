@@ -81,7 +81,7 @@ self.addEventListener('notificationclick', (event) => {
 
   // Handle action button clicks
   if (action && action !== 'open') {
-    console.log('[SW] Action button clicked:', action);
+    console.log('[SW] Action button clicked:', action, 'userId:', notificationData.userId);
     
     // Perform the work action via API
     event.waitUntil(
@@ -90,6 +90,7 @@ self.addEventListener('notificationclick', (event) => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include cookies for auth
         body: JSON.stringify({
           userId: notificationData.userId,
           action: action,
@@ -97,9 +98,15 @@ self.addEventListener('notificationclick', (event) => {
           breakId: notificationData.breakId
         })
       })
-      .then(response => response.json())
+      .then(response => {
+        console.log('[SW] Response status:', response.status);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+      })
       .then(data => {
-        console.log('[SW] Action completed:', data);
+        console.log('[SW] Action completed successfully:', data);
         
         // Show confirmation notification
         const messages = {
@@ -113,7 +120,7 @@ self.addEventListener('notificationclick', (event) => {
           body: messages[action] || data.message || 'Acción completada',
           icon: '/icon-192.png',
           badge: '/icon-192.png',
-          tag: 'oficaz-action-confirmation',
+          tag: 'oficaz-action-' + Date.now(),
           requireInteraction: false,
           vibrate: [100, 50, 100]
         });
@@ -123,10 +130,10 @@ self.addEventListener('notificationclick', (event) => {
         
         // Show error notification
         return self.registration.showNotification('Oficaz', {
-          body: '❌ Error al realizar la acción. Abre la app para intentarlo de nuevo.',
+          body: '❌ Error: ' + error.message + '. Abre la app para intentarlo de nuevo.',
           icon: '/icon-192.png',
           badge: '/icon-192.png',
-          tag: 'oficaz-action-error',
+          tag: 'oficaz-action-error-' + Date.now(),
           requireInteraction: false,
           vibrate: [100, 50, 100, 50, 100]
         });
