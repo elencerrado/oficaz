@@ -88,10 +88,11 @@ async function sendPushNotification(userId: number, title: string, body: string,
   }
 }
 
-// Main scheduler function - runs every minute
+// Main scheduler function - runs every 30 seconds
 export async function checkWorkAlarms() {
   try {
     const now = new Date();
+    const currentMinute = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${now.getHours()}:${now.getMinutes()}`;
     
     // Get all active alarms
     const activeAlarms = await db.select()
@@ -99,32 +100,32 @@ export async function checkWorkAlarms() {
       .where(eq(workAlarms.isActive, true));
 
     for (const alarm of activeAlarms) {
-      const checkKey = `${alarm.id}-${alarm.time}`;
-      const lastCheck = checkedAlarms.get(checkKey);
+      // Create unique key for this alarm in this specific minute
+      const checkKey = `${alarm.id}-${currentMinute}`;
       
-      // Only check each alarm once per minute
-      if (lastCheck && (now.getTime() - lastCheck.getTime()) < 60000) {
+      // Skip if already sent in this exact minute
+      if (checkedAlarms.has(checkKey)) {
         continue;
       }
 
       // Check if alarm should trigger
       if (shouldTriggerAlarm(alarm.time, alarm.weekdays)) {
-        console.log(`⏰ Triggering alarm: ${alarm.title} for user ${alarm.userId}`);
+        console.log(`⏰ Triggering alarm: ${alarm.title} for user ${alarm.userId} at ${currentMinute}`);
         
         const body = alarm.type === 'clock_in' 
           ? '¡Hora de fichar entrada!'
           : '¡Hora de fichar salida!';
         
-        await sendPushNotification(alarm.userId, alarm.title, body, alarm.type);
+        await sendPushNotification(alarm.userId, alarm.title, body, alarm.type as 'clock_in' | 'clock_out');
         
-        // Mark as checked
+        // Mark as sent for this specific minute
         checkedAlarms.set(checkKey, now);
       }
     }
 
     // Clean up old entries (older than 2 hours)
     const twoHoursAgo = now.getTime() - (2 * 60 * 60 * 1000);
-    for (const [key, date] of checkedAlarms.entries()) {
+    for (const [key, date] of Array.from(checkedAlarms.entries())) {
       if (date.getTime() < twoHoursAgo) {
         checkedAlarms.delete(key);
       }
