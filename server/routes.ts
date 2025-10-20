@@ -10860,41 +10860,53 @@ Responde directamente a este email para contactar con la persona.
     try {
       const { userId, action, sessionId, breakId } = req.body;
       
-      console.log(`🔔 Push action: ${action} for user ${userId}`);
+      console.log(`🔔 Push action received:`, { userId, action, sessionId, breakId });
 
       if (action === 'clock_in') {
         // Clock in
+        console.log(`⏰ Clocking in user ${userId} from push notification`);
         const result = await storage.clockIn(userId);
+        console.log(`✅ Clock in successful for user ${userId}`);
         return res.json({ success: true, message: 'Fichado entrada', data: result });
       }
 
       if (action === 'clock_out') {
         // Clock out
         if (!sessionId) {
+          console.log(`❌ Clock out failed: No session ID for user ${userId}`);
           return res.status(400).json({ success: false, message: 'Session ID required' });
         }
+        console.log(`🚪 Clocking out user ${userId}, session ${sessionId}`);
         const result = await storage.clockOut(sessionId);
+        console.log(`✅ Clock out successful for user ${userId}`);
         return res.json({ success: true, message: 'Fichado salida', data: result });
       }
 
       if (action === 'start_break') {
         // Start break
         if (!sessionId) {
+          console.log(`❌ Start break failed: No session ID for user ${userId}`);
           return res.status(400).json({ success: false, message: 'Session ID required' });
         }
+        console.log(`☕ Starting break for user ${userId}, session ${sessionId}`);
         const result = await storage.startBreak(sessionId);
+        console.log(`✅ Break started for user ${userId}`);
         return res.json({ success: true, message: 'Descanso iniciado', data: result });
       }
 
       if (action === 'end_break') {
         // End break
         if (!breakId) {
+          console.log(`❌ End break failed: No break ID for user ${userId}`);
           return res.status(400).json({ success: false, message: 'Break ID required' });
         }
+        console.log(`✅ Ending break ${breakId} for user ${userId}`);
         const result = await storage.endBreak(breakId);
+        console.log(`✅ Break ended for user ${userId}`);
         return res.json({ success: true, message: 'Descanso finalizado', data: result });
       }
 
+      console.log(`❌ Invalid action received: ${action}`);
       return res.status(400).json({ success: false, message: 'Invalid action' });
 
     } catch (error: any) {
