@@ -65,7 +65,7 @@ async function getWorkStatus(userId: number): Promise<WorkStatus> {
       return {
         status: 'not_clocked_in',
         buttons: [
-          { action: 'clock_in', title: '⏱️ Fichar entrada' }
+          { action: 'clock_in', title: 'Fichar entrada' }
         ]
       };
     }
@@ -87,7 +87,7 @@ async function getWorkStatus(userId: number): Promise<WorkStatus> {
         sessionId: activeSession.id,
         breakId: activeBreak.id,
         buttons: [
-          { action: 'end_break', title: '✅ Terminar descanso' }
+          { action: 'end_break', title: 'Terminar descanso' }
         ]
       };
     }
@@ -97,8 +97,8 @@ async function getWorkStatus(userId: number): Promise<WorkStatus> {
       status: 'clocked_in',
       sessionId: activeSession.id,
       buttons: [
-        { action: 'start_break', title: '☕ Iniciar descanso' },
-        { action: 'clock_out', title: '🚪 Fichar salida' }
+        { action: 'start_break', title: 'Iniciar descanso' },
+        { action: 'clock_out', title: 'Fichar salida' }
       ]
     };
 
@@ -129,13 +129,16 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
 
     // Get current work status to determine available actions
     const workStatus = await getWorkStatus(userId);
-    console.log(`📊 User ${userId} work status:`, workStatus.status);
+    console.log(`📊 User ${userId} work status: ${workStatus.status}, ${workStatus.buttons.length} button(s)`);
 
     // Build notification actions from work status buttons
     const actions = workStatus.buttons.map(btn => ({
       action: btn.action,
-      title: btn.title
+      title: btn.title,
+      icon: '/icon-192.png'
     }));
+
+    console.log(`🔔 Preparing notification with ${actions.length} action(s):`, actions.map(a => a.action));
 
     const payload = JSON.stringify({
       title: 'Oficaz',
@@ -145,7 +148,7 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
       vibrate: [200, 100, 200, 100, 200, 100, 200],
       requireInteraction: true,
       renotify: true,
-      tag: `work-alarm-${alarmType}-${Date.now()}`,
+      tag: `work-alarm-${userId}`, // Same tag per user = replace previous notification
       data: {
         url: '/employee',
         type: alarmType,

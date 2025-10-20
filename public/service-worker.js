@@ -38,6 +38,13 @@ self.addEventListener('push', (event) => {
   if (event.data) {
     try {
       const data = event.data.json();
+      console.log('[SW] Push data received:', {
+        title: data.title,
+        body: data.body,
+        actionsCount: data.actions?.length || 0,
+        actions: data.actions
+      });
+      
       notificationData = {
         title: data.title || 'Oficaz',
         body: data.body || data.message || 'Nueva notificación',
@@ -49,6 +56,8 @@ self.addEventListener('push', (event) => {
         tag: data.tag || 'oficaz-notification',
         actions: data.actions || []
       };
+      
+      console.log('[SW] Notification will show with', notificationData.actions.length, 'action(s)');
     } catch (e) {
       console.error('[SW] Error parsing push data:', e);
       notificationData.body = event.data.text();
