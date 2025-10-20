@@ -93,11 +93,14 @@ export async function checkWorkAlarms() {
   try {
     const now = new Date();
     const currentMinute = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${now.getHours()}:${now.getMinutes()}`;
+    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     
     // Get all active alarms
     const activeAlarms = await db.select()
       .from(workAlarms)
       .where(eq(workAlarms.isActive, true));
+    
+    console.log(`📱 Checking alarms at ${currentTime} (${activeAlarms.length} active alarms)`);
 
     for (const alarm of activeAlarms) {
       // Create unique key for this alarm in this specific minute
@@ -141,10 +144,18 @@ export function startPushNotificationScheduler() {
   console.log('🚀 Starting Push Notification Scheduler...');
   
   // Check every 30 seconds for more responsive notifications
-  const interval = setInterval(checkWorkAlarms, 30000);
+  const interval = setInterval(() => {
+    checkWorkAlarms().catch(err => {
+      console.error('❌ Error in scheduled alarm check:', err);
+    });
+  }, 30000);
   
   // Run immediately on start
-  checkWorkAlarms();
+  checkWorkAlarms().catch(err => {
+    console.error('❌ Error in initial alarm check:', err);
+  });
+  
+  console.log('✅ Push Notification Scheduler started - checking every 30 seconds');
   
   return interval;
 }
