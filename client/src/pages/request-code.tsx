@@ -170,8 +170,8 @@ export default function RequestCode() {
     return (
       <div className="h-screen flex items-center justify-center px-4 bg-gradient-to-br from-slate-900 to-slate-800">
         <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
-          <CardHeader className="text-center pt-8 pb-6">
-            <div className="flex justify-center mb-6">
+          <CardHeader className="text-center pt-6 pb-4">
+            <div className="flex justify-center mb-4">
               <Link href="/">
                 <img
                   src={oficazLogo}
@@ -197,8 +197,8 @@ export default function RequestCode() {
     return (
       <div className="h-screen flex items-center justify-center px-4 bg-gradient-to-br from-slate-900 to-slate-800">
         <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
-          <CardHeader className="text-center pt-8 pb-2">
-            <div className="flex justify-center mb-6">
+          <CardHeader className="text-center pt-6 pb-4">
+            <div className="flex justify-center mb-4">
               <Link href="/">
                 <img
                   src={oficazLogo}
@@ -217,7 +217,7 @@ export default function RequestCode() {
               El registro público está temporalmente deshabilitado. Solo se puede acceder mediante invitación.
             </p>
           </CardHeader>
-          <CardContent className="px-8 pb-8">
+          <CardContent className="px-6 pb-6">
             <div className="space-y-3">
               <Link href="/">
                 <Button variant="outline" className="w-full rounded-xl py-3 border-gray-300">
@@ -239,8 +239,8 @@ export default function RequestCode() {
   return (
     <div className="h-screen flex items-center justify-center px-4 bg-gradient-to-br from-slate-900 to-slate-800">
       <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
-        <CardHeader className="text-center pt-8 pb-6">
-          <div className="flex justify-center mb-6">
+        <CardHeader className="text-center pt-6 pb-4">
+          <div className="flex justify-center mb-4">
             <Link href="/">
               <img 
                 src={oficazLogo} 
@@ -257,7 +257,7 @@ export default function RequestCode() {
           </p>
         </CardHeader>
 
-        <CardContent className="px-8 pb-8">
+        <CardContent className="px-6 pb-6">
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email del administrador</Label>
