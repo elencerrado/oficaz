@@ -1,6 +1,21 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { getAuthHeaders } from "./auth";
 
+// Track auth errors to avoid redirecting on transient failures
+let consecutiveAuthErrors = 0;
+const MAX_AUTH_ERRORS_BEFORE_REDIRECT = 3;
+let lastAuthErrorTime = 0;
+
+// Reset counter if it's been more than 10 seconds since last error
+function shouldResetAuthErrorCounter() {
+  const now = Date.now();
+  if (now - lastAuthErrorTime > 10000) {
+    consecutiveAuthErrors = 0;
+    return true;
+  }
+  return false;
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -49,23 +64,36 @@ export async function apiRequest(
       if (errorText.includes('Invalid or expired token') || errorText.includes('Access token required')) {
         console.log('🚨 Auth error detected in API request:', url);
         
+        // Reset counter if enough time has passed
+        shouldResetAuthErrorCounter();
+        
+        // Increment error counter
+        consecutiveAuthErrors++;
+        lastAuthErrorTime = Date.now();
+        console.log(`⚠️ Auth error count: ${consecutiveAuthErrors}/${MAX_AUTH_ERRORS_BEFORE_REDIRECT}`);
+        
         // Check if this is a super admin session
         const isSuperAdmin = window.location.pathname.startsWith('/super-admin');
         const hasSuperAdminToken = sessionStorage.getItem('superAdminToken');
         
         // Only redirect if we're not already on login page or in login process
+        // AND we've had multiple consecutive errors
         if (!window.location.pathname.includes('/login') && !url.includes('/api/auth/login') && !url.includes('/api/super-admin/login')) {
-          if (isSuperAdmin || hasSuperAdminToken) {
-            console.log('🚨 SuperAdmin session expired, redirecting to SuperAdmin login');
-            sessionStorage.removeItem('superAdminToken');
-            window.location.href = '/super-admin';
+          if (consecutiveAuthErrors >= MAX_AUTH_ERRORS_BEFORE_REDIRECT) {
+            if (isSuperAdmin || hasSuperAdminToken) {
+              console.log('🚨 SuperAdmin session expired after multiple errors, redirecting to SuperAdmin login');
+              sessionStorage.removeItem('superAdminToken');
+              window.location.href = '/super-admin';
+            } else {
+              console.log('🚨 Regular session expired after multiple errors, redirecting to login');
+              localStorage.removeItem('authData');
+              sessionStorage.removeItem('authData');
+              window.location.href = '/login';
+            }
+            return;
           } else {
-            console.log('🚨 Regular session expired, redirecting to login');
-            localStorage.removeItem('authData');
-            sessionStorage.removeItem('authData');
-            window.location.href = '/login';
+            console.log('⏳ Transient auth error, allowing retry...');
           }
-          return;
         } else {
           console.log('🚨 Auth error during login process, not redirecting');
         }
@@ -73,22 +101,31 @@ export async function apiRequest(
     } catch (e) {
       // If we can't read the error text, still handle as auth error but be more careful
       if (!window.location.pathname.includes('/login') && !url.includes('/api/auth/login') && !url.includes('/api/super-admin/login')) {
-        const isSuperAdmin = window.location.pathname.startsWith('/super-admin');
-        const hasSuperAdminToken = sessionStorage.getItem('superAdminToken');
+        shouldResetAuthErrorCounter();
+        consecutiveAuthErrors++;
+        lastAuthErrorTime = Date.now();
         
-        if (isSuperAdmin || hasSuperAdminToken) {
-          console.log('🚨 SuperAdmin auth error (unreadable), redirecting to SuperAdmin login');
-          sessionStorage.removeItem('superAdminToken');
-          window.location.href = '/super-admin';
-        } else {
-          console.log('🚨 Auth error (unreadable), redirecting to login');
-          localStorage.removeItem('authData');
-          sessionStorage.removeItem('authData');
-          window.location.href = '/login';
+        if (consecutiveAuthErrors >= MAX_AUTH_ERRORS_BEFORE_REDIRECT) {
+          const isSuperAdmin = window.location.pathname.startsWith('/super-admin');
+          const hasSuperAdminToken = sessionStorage.getItem('superAdminToken');
+          
+          if (isSuperAdmin || hasSuperAdminToken) {
+            console.log('🚨 SuperAdmin auth error (unreadable) after multiple errors, redirecting to SuperAdmin login');
+            sessionStorage.removeItem('superAdminToken');
+            window.location.href = '/super-admin';
+          } else {
+            console.log('🚨 Auth error (unreadable) after multiple errors, redirecting to login');
+            localStorage.removeItem('authData');
+            sessionStorage.removeItem('authData');
+            window.location.href = '/login';
+          }
+          return;
         }
-        return;
       }
     }
+  } else if (res.ok) {
+    // Reset error counter on successful request
+    consecutiveAuthErrors = 0;
   }
   
   await throwIfResNotOk(res);
@@ -127,39 +164,61 @@ export const getQueryFn: <T>(options: {
       try {
         const errorText = await res.text();
         if (errorText.includes('Invalid or expired token') || errorText.includes('Access token required')) {
+          // Reset counter if enough time has passed
+          shouldResetAuthErrorCounter();
+          
+          // Increment error counter
+          consecutiveAuthErrors++;
+          lastAuthErrorTime = Date.now();
+          console.log(`⚠️ Auth error in query count: ${consecutiveAuthErrors}/${MAX_AUTH_ERRORS_BEFORE_REDIRECT}`);
+          
           // Check if this is a super admin session
           const isSuperAdmin = window.location.pathname.startsWith('/super-admin');
           const hasSuperAdminToken = sessionStorage.getItem('superAdminToken');
           
-          if (isSuperAdmin || hasSuperAdminToken) {
-            console.log('🚨 SuperAdmin session expired in query, redirecting to SuperAdmin login');
-            sessionStorage.removeItem('superAdminToken');
-            window.location.href = '/super-admin';
+          // Only redirect after multiple consecutive errors
+          if (consecutiveAuthErrors >= MAX_AUTH_ERRORS_BEFORE_REDIRECT) {
+            if (isSuperAdmin || hasSuperAdminToken) {
+              console.log('🚨 SuperAdmin session expired in query after multiple errors, redirecting to SuperAdmin login');
+              sessionStorage.removeItem('superAdminToken');
+              window.location.href = '/super-admin';
+            } else {
+              console.log('🚨 Regular session expired in query after multiple errors, redirecting to login');
+              localStorage.removeItem('authData');
+              sessionStorage.removeItem('authData');
+              window.location.href = '/login';
+            }
           } else {
-            console.log('🚨 Regular session expired in query, redirecting to login');
-            localStorage.removeItem('authData');
-            sessionStorage.removeItem('authData');
-            window.location.href = '/login';
+            console.log('⏳ Transient auth error in query, allowing retry...');
           }
           return null;
         }
       } catch (e) {
         // If we can't read the error text, still handle as auth error
-        const isSuperAdmin = window.location.pathname.startsWith('/super-admin');
-        const hasSuperAdminToken = sessionStorage.getItem('superAdminToken');
+        shouldResetAuthErrorCounter();
+        consecutiveAuthErrors++;
+        lastAuthErrorTime = Date.now();
         
-        if (isSuperAdmin || hasSuperAdminToken) {
-          console.log('🚨 SuperAdmin auth error in query (unreadable), redirecting to SuperAdmin login');
-          sessionStorage.removeItem('superAdminToken');
-          window.location.href = '/super-admin';
-        } else {
-          console.log('🚨 Auth error in query (unreadable), redirecting to login');
-          localStorage.removeItem('authData');
-          sessionStorage.removeItem('authData');
-          window.location.href = '/login';
+        if (consecutiveAuthErrors >= MAX_AUTH_ERRORS_BEFORE_REDIRECT) {
+          const isSuperAdmin = window.location.pathname.startsWith('/super-admin');
+          const hasSuperAdminToken = sessionStorage.getItem('superAdminToken');
+          
+          if (isSuperAdmin || hasSuperAdminToken) {
+            console.log('🚨 SuperAdmin auth error in query (unreadable) after multiple errors, redirecting to SuperAdmin login');
+            sessionStorage.removeItem('superAdminToken');
+            window.location.href = '/super-admin';
+          } else {
+            console.log('🚨 Auth error in query (unreadable) after multiple errors, redirecting to login');
+            localStorage.removeItem('authData');
+            sessionStorage.removeItem('authData');
+            window.location.href = '/login';
+          }
         }
         return null;
       }
+    } else if (res.ok) {
+      // Reset error counter on successful query
+      consecutiveAuthErrors = 0;
     }
 
     await throwIfResNotOk(res);
