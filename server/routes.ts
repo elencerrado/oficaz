@@ -1613,7 +1613,8 @@ Responde directamente a este email para contactar con la persona.
     const logoHtml = `
       <a href="${websiteUrl}" style="text-decoration: none;" target="_blank">
         <img src="${logoUrl}" alt="Oficaz - Sistema de Gestión Empresarial" 
-             style="height: 45px; width: auto; max-width: 200px; display: block; margin: 0 auto; border: none; outline: none;" />
+             height="45"
+             style="width: auto; max-width: 200px; display: block; margin: 0 auto; border: none; outline: none;" />
       </a>
     `;
 
@@ -1664,15 +1665,19 @@ Responde directamente a este email para contactar con la persona.
                 ${descriptionText}
               </p>
 
-              <!-- Compact verification code box -->
-              <div style="background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%); border-radius: 12px; padding: 20px 15px; text-align: center; margin: 15px 0; box-shadow: 0 4px 15px rgba(0, 122, 255, 0.2);">
-                <div style="color: white; font-size: 28px; font-weight: 700; letter-spacing: 6px; margin-bottom: 8px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
-                  ${code}
-                </div>
-                <div style="color: rgba(255,255,255,0.9); font-size: 12px; font-weight: 500;">
-                  Válido por 10 minutos
-                </div>
-              </div>
+              <!-- Compact verification code box - Outlook compatible -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 15px 0;">
+                <tr>
+                  <td style="background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%); background-color: #007AFF; border-radius: 12px; padding: 20px 15px; text-align: center; box-shadow: 0 4px 15px rgba(0, 122, 255, 0.2);">
+                    <div style="color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: 6px; margin-bottom: 8px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); mso-line-height-rule: exactly;">
+                      ${code}
+                    </div>
+                    <div style="color: #ffffff; font-size: 12px; font-weight: 500; mso-line-height-rule: exactly;">
+                      Válido por 10 minutos
+                    </div>
+                  </td>
+                </tr>
+              </table>
 
               <!-- Compact instructions -->
               <div style="background: ${isRecovery ? '#E3F2FD' : '#FFF3CD'}; border-left: 4px solid ${isRecovery ? '#2196F3' : '#FFD43B'}; padding: 10px 12px; margin: 15px 0; border-radius: 4px;">
