@@ -265,11 +265,11 @@ export default function RequestCode() {
                 <Input
                   id="email"
                   type="email"
-                  className={`rounded-xl border py-3 px-4 pr-20 text-sm focus:ring-1 ${
-                    emailStatus === 'available' ? 'border-green-500 focus:border-green-500 focus:ring-green-500' :
-                    emailStatus === 'unavailable' ? 'border-red-500 focus:border-red-500 focus:ring-red-500' :
-                    emailStatus === 'cancelled' ? 'border-orange-500 focus:border-orange-500 focus:ring-orange-500' :
-                    'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                  className={`rounded-xl py-3 px-4 pr-20 text-sm focus:ring-1 ${
+                    emailStatus === 'available' ? 'border border-green-500 focus:border-green-500 focus:ring-green-500' :
+                    emailStatus === 'unavailable' ? 'border border-red-500 focus:border-red-500 focus:ring-red-500' :
+                    emailStatus === 'cancelled' ? 'border border-orange-500 focus:border-orange-500 focus:ring-orange-500' :
+                    'border border-gray-300 focus:border-blue-500 focus:ring-blue-500'
                   }`}
                   {...form.register('email')}
                   placeholder="admin@miempresa.com"
