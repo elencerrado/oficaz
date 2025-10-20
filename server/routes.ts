@@ -323,13 +323,9 @@ async function generateComprehensiveDemoData(companyId: number, employees: any[]
   // Generate activity for company registration date
   await generateRegistrationDayActivity(employees, registrationDate);
   
-  // Generate current day activity - only if different from registration date to avoid duplicates
-  const isRegistrationToday = registrationDate.toDateString() === now.toDateString();
-  if (!isRegistrationToday) {
-    await generateCurrentDayActivity(employees, now);
-  } else {
-    console.log('📅 Registration date is today - skipping duplicate current day activity');
-  }
+  // Generate current day activity - ALWAYS generate for today to populate current week quadrant
+  // The generateCurrentDayActivity function checks for duplicates internally
+  await generateCurrentDayActivity(employees, now);
   
   // Generate vacation requests (approved and pending)
   await generateRealisticVacationRequests(companyId, employees, registrationDate);
@@ -740,11 +736,26 @@ async function generateIncompleteSessions(employees: any[], companyId: number) {
 async function generateDemoWorkShifts(companyId: number, employees: any[], registrationDate: Date) {
   console.log('📅 Generating demo work shifts for current week + 3 upcoming weeks...');
   
-  // Find admin user to be the creator of shifts
-  const adminEmployee = employees.find(emp => emp.role === 'admin');
+  // Find admin user to be the creator of shifts - check both admin and manager roles
+  let adminEmployee = employees.find(emp => emp.role === 'admin');
+  
+  // If no admin in demo employees, find the actual company admin from database
   if (!adminEmployee) {
-    console.log('⚠️ No admin found, skipping work shifts generation');
-    return;
+    const companyAdmins = await db.select()
+      .from(users)
+      .where(and(
+        eq(users.companyId, companyId),
+        eq(users.role, 'admin')
+      ))
+      .limit(1);
+    
+    if (companyAdmins.length > 0) {
+      adminEmployee = companyAdmins[0];
+      console.log(`✅ Using company admin: ${adminEmployee.fullName}`);
+    } else {
+      console.log('⚠️ No admin found, skipping work shifts generation');
+      return;
+    }
   }
   
   // Get employees excluding admin
