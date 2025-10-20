@@ -69,8 +69,8 @@ export default function ForgotPassword() {
     return (
       <div className="h-screen flex items-center justify-center px-4 bg-gradient-to-br from-slate-900 to-slate-800">
         <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
-          <CardHeader className="text-center pt-8 pb-6">
-            <div className="flex justify-center mb-6">
+          <CardHeader className="text-center pt-6 pb-4">
+            <div className="flex justify-center mb-4">
               <Link href="/">
                 <img 
                   src={oficazLogo} 
@@ -90,7 +90,7 @@ export default function ForgotPassword() {
             </p>
           </CardHeader>
 
-          <CardContent className="px-8 pb-8">
+          <CardContent className="px-6 pb-6">
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
               <p className="text-sm text-green-700">
                 Revisa tu bandeja de entrada y haz clic en el enlace para cambiar tu contraseña. 
@@ -117,8 +117,8 @@ export default function ForgotPassword() {
   return (
     <div className="h-screen flex items-center justify-center px-4 bg-gradient-to-br from-slate-900 to-slate-800">
       <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
-        <CardHeader className="text-center pt-8 pb-6">
-          <div className="flex justify-center mb-6">
+        <CardHeader className="text-center pt-6 pb-4">
+          <div className="flex justify-center mb-4">
             <Link href="/">
               <img 
                 src={oficazLogo} 
@@ -135,7 +135,7 @@ export default function ForgotPassword() {
           </p>
         </CardHeader>
 
-        <CardContent className="px-8 pb-8">
+        <CardContent className="px-6 pb-6">
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             {/* Error Message */}
             {error && (
