@@ -1333,12 +1333,44 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
 
           {/* Add alarm button */}
           {!showForm && (
-            <Button
-              onClick={() => setShowForm(true)}
-              className="w-full mb-4 bg-[#007AFF] hover:bg-[#0056CC] text-white"
-            >
-              + Nueva Alarma
-            </Button>
+            <>
+              <Button
+                onClick={() => setShowForm(true)}
+                className="w-full mb-2 bg-[#007AFF] hover:bg-[#0056CC] text-white"
+              >
+                + Nueva Alarma
+              </Button>
+              
+              {/* Test notification button */}
+              <Button
+                onClick={async () => {
+                  if ('Notification' in window) {
+                    const permission = await Notification.requestPermission();
+                    if (permission === 'granted') {
+                      new Notification('🔔 Test de Notificación', {
+                        body: 'Si ves esto, las notificaciones funcionan correctamente',
+                        icon: '/apple-touch-icon.png',
+                        vibrate: [200, 100, 200]
+                      });
+                      toast({
+                        title: '✅ Notificación enviada',
+                        description: 'Deberías verla ahora'
+                      });
+                    } else {
+                      toast({
+                        title: '⚠️ Permisos denegados',
+                        description: 'Activa los permisos de notificación en tu navegador',
+                        variant: 'destructive'
+                      });
+                    }
+                  }
+                }}
+                variant="outline"
+                className="w-full mb-4 border-gray-600 text-gray-300 hover:bg-gray-800"
+              >
+                🧪 Test de Notificación
+              </Button>
+            </>
           )}
 
           {/* Alarm form */}
