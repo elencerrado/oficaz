@@ -11,6 +11,7 @@ import fs from 'fs';
 import sharp from 'sharp';
 import rateLimit from 'express-rate-limit';
 import Stripe from 'stripe';
+import webpush from 'web-push';
 import { subDays, startOfDay } from 'date-fns';
 import { storage } from "./storage";
 import { authenticateToken, requireRole, generateToken, AuthRequest } from './middleware/auth';
@@ -20,9 +21,10 @@ import { z } from 'zod';
 import { db } from './db';
 import { eq, and, or, desc, sql, not, inArray, count, gte, lt, isNotNull, isNull } from 'drizzle-orm';
 import * as schema from '@shared/schema';
-import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents, employeeActivationTokens, passwordResetTokens } from '@shared/schema';
+import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents, employeeActivationTokens, passwordResetTokens, pushSubscriptions } from '@shared/schema';
 import { sendEmail, sendEmployeeWelcomeEmail, sendPasswordResetEmail, sendSuperAdminSecurityCode, sendNewCompanyRegistrationNotification } from './email';
 import { backgroundImageProcessor } from './backgroundWorker.js';
+import { startPushNotificationScheduler } from './pushNotificationScheduler.js';
 
 // Initialize Stripe with intelligent key detection
 // Priority: Use production keys if available, otherwise fall back to test keys
@@ -39,6 +41,21 @@ console.log('Stripe key type:', stripeSecretKey.startsWith('sk_live') ? 'sk_live
 const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2025-05-28.basil',
 });
+
+// Configure web-push for PWA notifications
+const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+
+if (!vapidPublicKey || !vapidPrivateKey) {
+  console.warn('⚠️  VAPID keys not configured. Push notifications will not work.');
+} else {
+  webpush.setVapidDetails(
+    'mailto:soy@oficaz.es',
+    vapidPublicKey,
+    vapidPrivateKey
+  );
+  console.log('✓ Web Push configured successfully');
+}
 
 // Configure multer for file uploads
 const uploadDir = path.join(process.cwd(), 'uploads');
@@ -10608,6 +10625,84 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // 📱 Push Notifications API Routes (PWA)
+  
+  // Get VAPID public key for push subscription
+  app.get('/api/push/vapid-public-key', (req, res) => {
+    if (!vapidPublicKey) {
+      return res.status(503).json({ message: 'Push notifications not configured' });
+    }
+    res.json({ publicKey: vapidPublicKey });
+  });
+
+  // Subscribe to push notifications
+  app.post('/api/push/subscribe', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const { endpoint, keys } = req.body;
+
+      if (!endpoint || !keys || !keys.p256dh || !keys.auth) {
+        return res.status(400).json({ message: 'Invalid subscription data' });
+      }
+
+      // Check if subscription already exists
+      const existing = await db.select()
+        .from(pushSubscriptions)
+        .where(eq(pushSubscriptions.endpoint, endpoint))
+        .limit(1);
+
+      if (existing.length > 0) {
+        // Update existing subscription
+        await db.update(pushSubscriptions)
+          .set({
+            userId,
+            p256dh: keys.p256dh,
+            auth: keys.auth,
+            userAgent: req.headers['user-agent'] || null,
+            updatedAt: new Date()
+          })
+          .where(eq(pushSubscriptions.endpoint, endpoint));
+        
+        return res.json({ message: 'Subscription updated', subscription: existing[0] });
+      }
+
+      // Create new subscription
+      const [newSubscription] = await db.insert(pushSubscriptions)
+        .values({
+          userId,
+          endpoint,
+          p256dh: keys.p256dh,
+          auth: keys.auth,
+          userAgent: req.headers['user-agent'] || null
+        })
+        .returning();
+
+      res.status(201).json({ message: 'Subscribed successfully', subscription: newSubscription });
+    } catch (error) {
+      console.error('Error subscribing to push notifications:', error);
+      res.status(500).json({ message: 'Failed to subscribe to push notifications' });
+    }
+  });
+
+  // Unsubscribe from push notifications
+  app.post('/api/push/unsubscribe', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { endpoint } = req.body;
+
+      if (!endpoint) {
+        return res.status(400).json({ message: 'Endpoint is required' });
+      }
+
+      await db.delete(pushSubscriptions)
+        .where(eq(pushSubscriptions.endpoint, endpoint));
+
+      res.json({ message: 'Unsubscribed successfully' });
+    } catch (error) {
+      console.error('Error unsubscribing from push notifications:', error);
+      res.status(500).json({ message: 'Failed to unsubscribe' });
+    }
+  });
+
   // 🧪 TEMPORARY TEST ENDPOINT - Apply promotional code to a company
   app.post('/api/test/apply-promotional-code', async (req, res) => {
     try {
@@ -10851,6 +10946,11 @@ Responde directamente a este email para contactar con la persona.
       `);
     }
   });
+
+  // Start push notification scheduler for work alarms
+  if (vapidPublicKey && vapidPrivateKey) {
+    startPushNotificationScheduler();
+  }
 
   const httpServer = createServer(app);
   return httpServer;
