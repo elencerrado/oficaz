@@ -89,7 +89,7 @@ Preferred communication style: Simple, everyday language.
 - **Automatic Demo Data Generation**: Comprehensive demo data is generated for new company registrations, including incomplete sessions.
 - **Test-to-Production Migration**: System detects and resolves hybrid Stripe subscription states, with an alert system and data cleanup endpoint.
 - **Registration Wizard**: Plan recommendation algorithm adjusted to be more conservative, prioritizing Basic plan for smaller teams. Master plan temporarily hidden.
-- **Work Alarms System**: Employee alarm notifications optimized for iOS/Safari compatibility with multi-strategy checking (30s + 60s intervals), toast notifications as primary method (iOS doesn't support Web Notifications API), page visibility detection for mobile browsers, and comprehensive debug logging. Checks occur on page visibility changes to handle mobile background limitations.
+- **Work Alarms PWA System**: **Complete PWA implementation for locked-phone notifications**. Server-side scheduler checks work alarms every 30 seconds and sends push notifications via Web Push API. Automatic service worker registration, push subscription management, and VAPID authentication (keys in environment). Backend endpoints: `/api/push/vapid-public-key` (GET), `/api/push/subscribe` (POST), `/api/push/unsubscribe` (POST). Frontend: `useWorkAlarms` hook auto-subscribes users to push notifications. `PWAInstallPrompt` component guides iOS/Android users through installation. Database table `push_subscriptions` stores endpoint, keys, and user_agent. **iOS Support**: Requires PWA installation ("Add to Home Screen" in Safari) to enable locked-screen notifications per Apple requirements. Scheduler (`pushNotificationScheduler.ts`) runs in background, detects alarm times, and sends push to all user devices. Push notifications work even when browser/app is closed. Full manifest.json configuration with 192x192 and 512x512 icons. Service worker (`public/service-worker.js`) handles push events, notification display, and click actions. System automatically removes invalid subscriptions (410/404 errors).
 
 ## External Dependencies
 
@@ -109,3 +109,4 @@ Preferred communication style: Simple, everyday language.
 - **Email Services**: Nodemailer
 - **Payment Processing**: Stripe API
 - **Avatar Generation**: UI Avatars API
+- **Push Notifications**: web-push (VAPID-based PWA notifications)

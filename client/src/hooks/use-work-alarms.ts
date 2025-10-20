@@ -86,8 +86,8 @@ export function useWorkAlarms() {
         await apiRequest('POST', '/api/push/subscribe', {
           endpoint: subscription.endpoint,
           keys: {
-            p256dh: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh')!))),
-            auth: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')!)))
+            p256dh: btoa(String.fromCharCode(...Array.from(new Uint8Array(subscription.getKey('p256dh')!)))),
+            auth: btoa(String.fromCharCode(...Array.from(new Uint8Array(subscription.getKey('auth')!))))
           }
         });
 

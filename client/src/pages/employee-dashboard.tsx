@@ -42,7 +42,7 @@ export default function EmployeeDashboard() {
   const { user, logout, company } = useAuth();
   const { hasAccess } = useFeatureCheck();
   const { toast } = useToast();
-  const { startAlarmService, notificationPermission } = useWorkAlarms();
+  useWorkAlarms(); // Initialize PWA push notifications
   
   // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
   const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
@@ -766,13 +766,7 @@ export default function EmployeeDashboard() {
     });
   }, [hasAccess]);
 
-  // Initialize work alarms service
-  useEffect(() => {
-    if (user) {
-      const cleanup = startAlarmService();
-      return cleanup;
-    }
-  }, [user, startAlarmService]);
+  // Work alarms are now handled automatically by PWA push notifications
 
   return (
     <div className="dark h-screen bg-employee-gradient text-white flex flex-col overflow-hidden">
