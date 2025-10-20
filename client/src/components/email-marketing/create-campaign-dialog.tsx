@@ -16,6 +16,7 @@ interface EmailContent {
   paragraph: string;
   buttonText: string;
   buttonUrl: string;
+  imageUrl?: string;
   signature: string;
 }
 
@@ -39,6 +40,7 @@ export function CreateCampaignDialog() {
     paragraph: '',
     buttonText: '',
     buttonUrl: '',
+    imageUrl: '',
     signature: '',
   });
 
@@ -92,6 +94,15 @@ export function CreateCampaignDialog() {
             </td>
           </tr>
           ` : '<tr><td style="padding-bottom: 20px;"></td></tr>'}
+          
+          <!-- Optional Image -->
+          ${content.imageUrl ? `
+          <tr>
+            <td style="padding: 0 40px 30px; text-align: center;">
+              <img src="${content.imageUrl}" alt="Email content" style="max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 0 auto;" />
+            </td>
+          </tr>
+          ` : ''}
           
           <!-- Signature -->
           ${content.signature ? `

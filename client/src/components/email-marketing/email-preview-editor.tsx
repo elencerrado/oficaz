@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Monitor, Smartphone } from 'lucide-react';
+import { Monitor, Smartphone, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface EmailContent {
@@ -8,6 +8,7 @@ interface EmailContent {
   paragraph: string;
   buttonText: string;
   buttonUrl: string;
+  imageUrl?: string;
   signature: string;
 }
 
@@ -25,46 +26,62 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
   const buttonTextRef = useRef<HTMLAnchorElement>(null);
   const signatureRef = useRef<HTMLParagraphElement>(null);
 
-  const placeholders: Record<keyof EmailContent, string> = {
+  const placeholders: Partial<Record<keyof EmailContent, string>> = {
     subtitle: 'APP de gestión empresarial para los que lo quieren FÁCIL',
     heading: 'Haz clic para añadir el encabezado...',
     paragraph: 'Haz clic para añadir el contenido principal...',
     buttonText: 'Texto del botón',
     buttonUrl: '',
+    imageUrl: '',
     signature: 'Saludos cordiales',
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        handleContentChange('imageUrl', reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    handleContentChange('imageUrl', '');
   };
 
   // Update contentEditable elements when content changes externally
   useEffect(() => {
     if (subtitleRef.current) {
-      const displayText = content.subtitle || placeholders.subtitle;
+      const displayText = content.subtitle || placeholders.subtitle || '';
       const displayHtml = displayText.replace(/\n/g, '<br>');
       if (subtitleRef.current.innerHTML !== displayHtml) {
         subtitleRef.current.innerHTML = displayHtml;
       }
     }
     if (headingRef.current) {
-      const displayText = content.heading || placeholders.heading;
+      const displayText = content.heading || placeholders.heading || '';
       const displayHtml = displayText.replace(/\n/g, '<br>');
       if (headingRef.current.innerHTML !== displayHtml) {
         headingRef.current.innerHTML = displayHtml;
       }
     }
     if (paragraphRef.current) {
-      const displayText = content.paragraph || placeholders.paragraph;
+      const displayText = content.paragraph || placeholders.paragraph || '';
       const displayHtml = displayText.replace(/\n/g, '<br>');
       if (paragraphRef.current.innerHTML !== displayHtml) {
         paragraphRef.current.innerHTML = displayHtml;
       }
     }
     if (buttonTextRef.current) {
-      const displayText = content.buttonText || placeholders.buttonText;
+      const displayText = content.buttonText || placeholders.buttonText || '';
       if (buttonTextRef.current.textContent !== displayText) {
         buttonTextRef.current.textContent = displayText;
       }
     }
     if (signatureRef.current) {
-      const displayText = content.signature || placeholders.signature;
+      const displayText = content.signature || placeholders.signature || '';
       const displayHtml = displayText.replace(/\n/g, '<br>');
       if (signatureRef.current.innerHTML !== displayHtml) {
         signatureRef.current.innerHTML = displayHtml;
@@ -102,7 +119,7 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
       const newValue = tempDiv.textContent || '';
       
       // Don't save placeholder text as actual content
-      if (newValue.trim() === placeholders[field]) {
+      if (newValue.trim() === (placeholders[field] || '')) {
         handleContentChange(field, '');
       } else if (newValue !== content[field]) {
         handleContentChange(field, newValue);
@@ -162,6 +179,47 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
           className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
           data-testid="input-button-url-preview"
         />
+      </div>
+
+      {/* Image Upload */}
+      <div className="bg-white/5 rounded-lg p-4">
+        <label className="text-sm text-white/70 block mb-2">Imagen (opcional)</label>
+        {content.imageUrl ? (
+          <div className="space-y-2">
+            <div className="relative inline-block">
+              <img 
+                src={content.imageUrl} 
+                alt="Preview" 
+                className="max-w-full h-auto max-h-48 rounded border border-white/20"
+              />
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors"
+                data-testid="button-remove-image"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-blue-400/50 hover:bg-white/5 transition-colors">
+            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+              <Upload className="w-8 h-8 text-white/50 mb-2" />
+              <p className="text-sm text-white/70">
+                <span className="font-semibold">Haz clic para subir</span> o arrastra una imagen
+              </p>
+              <p className="text-xs text-white/50 mt-1">PNG, JPG, GIF (máx. 2MB)</p>
+            </div>
+            <input
+              type="file"
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageUpload}
+              data-testid="input-image-upload"
+            />
+          </label>
+        )}
       </div>
 
       {/* Email Preview */}
@@ -303,6 +361,25 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
                   </a>
                 </td>
               </tr>
+
+              {/* Optional Image */}
+              {content.imageUrl && (
+                <tr>
+                  <td style={{ padding: '0 40px 30px', textAlign: 'center' }}>
+                    <img
+                      src={content.imageUrl}
+                      alt="Email content"
+                      style={{
+                        maxWidth: '100%',
+                        height: 'auto',
+                        borderRadius: '8px',
+                        display: 'block',
+                        margin: '0 auto',
+                      }}
+                    />
+                  </td>
+                </tr>
+              )}
 
               {/* Signature/Farewell - Editable */}
               <tr>
