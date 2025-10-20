@@ -81,7 +81,7 @@ Preferred communication style: Simple, everyday language.
 - **Manager Role Permissions System**: Backend API supports manager role assignment with restricted access.
 - **Navigation Performance Optimization**: Eliminated full page reloads and implemented `useScrollReset` hook; SuperAdmin uses `window.history.back()`.
 - **Performance Optimization**: Database optimizations, frontend caching, reduced network overhead, lazy loading, code splitting, async resource loading, critical CSS, resource hints.
-- **Mobile-Responsive Interfaces**: Dual-layout system for time tracking (desktop table, mobile card views).
+- **Mobile-Responsive Interfaces**: Dual-layout system for time tracking (desktop table, mobile card views). Employee schedule includes day/week view toggle with compact vertical week display.
 - **Error Monitoring**: Integrated Sentry.
 - **SEO Optimization**: Direct file serving of `robots.txt` and `sitemap.xml`.
 - **Reminder System**: Uses 7 harmonious colors with optimal text contrast. Supports three-state individual completion logic, requiring all assigned users to complete.
@@ -89,6 +89,7 @@ Preferred communication style: Simple, everyday language.
 - **Automatic Demo Data Generation**: Comprehensive demo data is generated for new company registrations, including incomplete sessions.
 - **Test-to-Production Migration**: System detects and resolves hybrid Stripe subscription states, with an alert system and data cleanup endpoint.
 - **Registration Wizard**: Plan recommendation algorithm adjusted to be more conservative, prioritizing Basic plan for smaller teams. Master plan temporarily hidden.
+- **Work Alarms System**: Employee alarm notifications optimized for iOS/Safari compatibility with multi-strategy checking (30s + 60s intervals), toast notifications as primary method (iOS doesn't support Web Notifications API), page visibility detection for mobile browsers, and comprehensive debug logging. Checks occur on page visibility changes to handle mobile background limitations.
 
 ## External Dependencies
 

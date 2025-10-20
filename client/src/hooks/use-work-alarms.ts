@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,10 +19,18 @@ export function useWorkAlarms() {
   const { toast } = useToast();
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+  const lastCheckRef = useRef<number>(Date.now());
+  const activeIntervalsRef = useRef<number[]>([]);
 
-  // Request notification permission on mount
+  // Detect if we're on iOS/Safari
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  // Request notification permission on mount (only on supported browsers)
   useEffect(() => {
-    if ('Notification' in window) {
+    // iOS Safari doesn't support Web Notifications API
+    if ('Notification' in window && !isIOS) {
       setNotificationPermission(Notification.permission);
       
       if (Notification.permission === 'default') {
@@ -30,8 +38,11 @@ export function useWorkAlarms() {
           setNotificationPermission(permission);
         });
       }
+    } else {
+      // On iOS, we'll use toast notifications exclusively
+      setNotificationPermission('denied');
     }
-  }, []);
+  }, [isIOS]);
 
   // Initialize audio context
   useEffect(() => {
@@ -50,7 +61,7 @@ export function useWorkAlarms() {
     if (!audioContext) return;
     
     try {
-      // Resume audio context if suspended (required by browsers)
+      // Resume audio context if suspended (required by browsers, especially iOS)
       if (audioContext.state === 'suspended') {
         await audioContext.resume();
       }
@@ -113,46 +124,58 @@ export function useWorkAlarms() {
     };
     const body = `Es hora de ${getNotificationText(alarm.type)} - ${alarm.time}`;
     
-    if (notificationPermission === 'granted') {
-      const notification = new Notification(title, {
-        body,
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
-        tag: `work-alarm-${alarm.id}`,
-        requireInteraction: true // Keep notification visible until user interacts
-      });
+    // Always show toast notification (works on all platforms including iOS)
+    toast({
+      title: `🚨 ${alarm.title}`,
+      description: body,
+      duration: 30000, // 30 seconds for better visibility
+    });
 
-      // Auto-close notification after 30 seconds
-      setTimeout(() => {
-        notification.close();
-      }, 30000);
+    // Also try browser notification if supported (won't work on iOS)
+    if (notificationPermission === 'granted' && !isIOS) {
+      try {
+        const notification = new Notification(title, {
+          body,
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          tag: `work-alarm-${alarm.id}`,
+          requireInteraction: true // Keep notification visible until user interacts
+        });
 
-      // Handle notification click
-      notification.onclick = () => {
-        window.focus();
-        notification.close();
-        // You could navigate to time tracking page here
-      };
-    } else {
-      // Fallback to toast notification
-      toast({
-        title: `🚨 ${alarm.title}`,
-        description: body,
-        duration: 10000, // 10 seconds
-      });
+        // Auto-close notification after 30 seconds
+        setTimeout(() => {
+          notification.close();
+        }, 30000);
+
+        // Handle notification click
+        notification.onclick = () => {
+          window.focus();
+          notification.close();
+        };
+      } catch (error) {
+        console.error('Error showing browser notification:', error);
+      }
     }
 
     // Play sound if enabled
     if (alarm.soundEnabled) {
       playNotificationSound();
     }
-  }, [notificationPermission, playNotificationSound, toast]);
+
+    // Log for debugging
+    console.log('🔔 Alarm triggered:', {
+      title: alarm.title,
+      time: alarm.time,
+      type: alarm.type,
+      platform: isIOS ? 'iOS' : isSafari ? 'Safari' : 'Other',
+      notificationMethod: isIOS ? 'Toast only' : notificationPermission === 'granted' ? 'Browser + Toast' : 'Toast only'
+    });
+  }, [notificationPermission, playNotificationSound, toast, isIOS, isSafari]);
 
   // Check if it's time for an alarm
   const checkAlarmTime = useCallback((alarm: WorkAlarm): boolean => {
     const now = new Date();
     const currentDay = now.getDay() || 7; // Convert Sunday (0) to 7
-    const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
     
     // Check if today is in the alarm's weekdays
     if (!alarm.weekdays.includes(currentDay)) {
@@ -175,6 +198,14 @@ export function useWorkAlarms() {
   // Get active alarms and check them
   const checkActiveAlarms = useCallback(async () => {
     try {
+      const now = Date.now();
+      
+      // Log check for debugging (only every 60 seconds to avoid spam)
+      if (now - lastCheckRef.current >= 60000) {
+        console.log('⏰ Checking alarms at', new Date().toLocaleTimeString());
+        lastCheckRef.current = now;
+      }
+
       const activeAlarms: WorkAlarm[] = await apiRequest('GET', '/api/work-alarms/active');
       
       for (const alarm of activeAlarms) {
@@ -195,15 +226,57 @@ export function useWorkAlarms() {
     }
   }, [checkAlarmTime, showNotification]);
 
-  // Start alarm checking service
+  // Handle page visibility changes (important for mobile browsers)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Page became visible, check alarms immediately
+        console.log('📱 Page visible, checking alarms...');
+        checkActiveAlarms();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [checkActiveAlarms]);
+
+  // Start alarm checking service with multiple strategies
   const startAlarmService = useCallback(() => {
     // Check immediately
     checkActiveAlarms();
     
-    // Check every minute
-    const interval = setInterval(checkActiveAlarms, 60000);
+    // Clear any existing intervals
+    activeIntervalsRef.current.forEach(id => clearInterval(id));
+    activeIntervalsRef.current = [];
     
-    return () => clearInterval(interval);
+    // Strategy 1: Check every 30 seconds (more frequent for better reliability)
+    const interval1 = window.setInterval(checkActiveAlarms, 30000);
+    activeIntervalsRef.current.push(interval1);
+    
+    // Strategy 2: Check every minute on the minute mark (for precision)
+    const checkOnMinute = () => {
+      const now = new Date();
+      const secondsUntilNextMinute = 60 - now.getSeconds();
+      
+      setTimeout(() => {
+        checkActiveAlarms();
+        // Set up recurring check every minute
+        const interval2 = window.setInterval(checkActiveAlarms, 60000);
+        activeIntervalsRef.current.push(interval2);
+      }, secondsUntilNextMinute * 1000);
+    };
+    checkOnMinute();
+    
+    console.log('✅ Alarm service started with multi-strategy checking');
+    
+    return () => {
+      activeIntervalsRef.current.forEach(id => clearInterval(id));
+      activeIntervalsRef.current = [];
+      console.log('❌ Alarm service stopped');
+    };
   }, [checkActiveAlarms]);
 
   return {
@@ -211,6 +284,8 @@ export function useWorkAlarms() {
     showNotification,
     checkActiveAlarms,
     startAlarmService,
-    playNotificationSound
+    playNotificationSound,
+    isIOS, // Expose for debugging
+    isSafari
   };
 }
