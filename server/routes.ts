@@ -221,7 +221,7 @@ async function generateDemoData(companyId: number) {
     // Generate unique identifiers to avoid conflicts
     const uniqueId = Date.now();
     
-    // Demo employees data - 4 realistic employees
+    // Demo employees data - 4 realistic employees with avatar assignments
     const demoEmployees = [
       {
         fullName: "María García López",
@@ -231,6 +231,7 @@ async function generateDemoData(companyId: number) {
         role: "employee" as const,
         status: "working", // Currently working
         startDate: new Date(registrationDate.getTime() - 365 * 24 * 60 * 60 * 1000), // 1 year before company registration
+        avatarSource: "mujer01_1760949930548.jpg", // Assigned avatar
       },
       {
         fullName: "Carlos Rodríguez Martín",
@@ -240,6 +241,7 @@ async function generateDemoData(companyId: number) {
         role: "manager" as const,
         status: "working", // Currently working
         startDate: new Date(registrationDate.getTime() - 200 * 24 * 60 * 60 * 1000), // 200 days before
+        avatarSource: "hombre02_1760949930547.jpg", // Assigned avatar
       },
       {
         fullName: "Ana Fernández Silva",
@@ -249,6 +251,7 @@ async function generateDemoData(companyId: number) {
         role: "employee" as const,
         status: "vacation", // Currently on vacation
         startDate: new Date(registrationDate.getTime() - 180 * 24 * 60 * 60 * 1000), // 180 days before
+        avatarSource: "mujer02_1760949930549.jpg", // Assigned avatar
       },
       {
         fullName: "David López Ruiz",
@@ -258,13 +261,34 @@ async function generateDemoData(companyId: number) {
         role: "employee" as const,
         status: "working", // Currently working
         startDate: new Date(registrationDate.getTime() - 90 * 24 * 60 * 60 * 1000), // 90 days before
+        avatarSource: "hombre01_1760949930545.jpg", // Assigned avatar
       }
     ];
 
-    // Create demo employees
+    // Create demo employees with avatars
     const createdEmployees = [];
     for (const employeeData of demoEmployees) {
       const hashedPassword = await bcrypt.hash('Demo123!', 10);
+      
+      // Copy avatar from attached_assets to uploads
+      let profilePicturePath = null;
+      if (employeeData.avatarSource) {
+        const sourceAvatarPath = path.join(process.cwd(), 'attached_assets', employeeData.avatarSource);
+        const destFileName = `demo_avatar_${companyId}_${uniqueId}_${employeeData.avatarSource}`;
+        const destAvatarPath = path.join(uploadDir, destFileName);
+        
+        try {
+          if (fs.existsSync(sourceAvatarPath)) {
+            fs.copyFileSync(sourceAvatarPath, destAvatarPath);
+            profilePicturePath = `/uploads/${destFileName}`;
+            console.log(`📸 Copied demo avatar: ${employeeData.avatarSource} -> ${destFileName}`);
+          } else {
+            console.warn(`⚠️ Avatar source not found: ${sourceAvatarPath}`);
+          }
+        } catch (error) {
+          console.error(`❌ Error copying avatar for ${employeeData.fullName}:`, error);
+        }
+      }
       
       const employee = await storage.createUser({
         companyEmail: employeeData.companyEmail,
@@ -278,10 +302,11 @@ async function generateDemoData(companyId: number) {
         isActive: true,
         totalVacationDays: "25.0",
         createdBy: null,
+        profilePicture: profilePicturePath, // Assign avatar to employee
       });
       
       createdEmployees.push({ ...employee, status: employeeData.status });
-      console.log(`👤 Created demo employee: ${employee.fullName} (${employeeData.status})`);
+      console.log(`👤 Created demo employee: ${employee.fullName} (${employeeData.status}) with avatar: ${profilePicturePath || 'none'}`);
       
       // Update employee status if needed (for vacation status)
       if (employeeData.status === 'vacation') {
@@ -10100,6 +10125,21 @@ Responde directamente a este email para contactar con la persona.
 
       if (demoEmployeeIds.length > 0) {
         console.log('🗑️ Deleting demo data for employee IDs:', demoEmployeeIds);
+        
+        // Delete demo avatar files from filesystem
+        for (const employee of demoEmployees) {
+          if (employee.profilePicture && employee.profilePicture.includes('demo_avatar_')) {
+            const avatarPath = path.join(process.cwd(), employee.profilePicture.replace(/^\//, ''));
+            try {
+              if (fs.existsSync(avatarPath)) {
+                fs.unlinkSync(avatarPath);
+                console.log(`🗑️ Deleted demo avatar: ${employee.profilePicture}`);
+              }
+            } catch (error) {
+              console.error(`❌ Error deleting avatar ${employee.profilePicture}:`, error);
+            }
+          }
+        }
         
         // Delete ALL data in proper cascade order to handle foreign key constraints
         // Must delete in this exact order to avoid constraint violations
