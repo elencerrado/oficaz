@@ -247,7 +247,7 @@ export default function VerifyCode() {
                 <Input
                   id="code"
                   type="text"
-                  className="rounded-xl border-gray-300 py-3 px-4 text-center text-lg tracking-widest focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="rounded-xl border border-gray-300 py-3 px-4 text-center text-lg tracking-widest focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   {...form.register('code')}
                   placeholder="123456"
                   maxLength={6}

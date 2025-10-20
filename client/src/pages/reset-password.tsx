@@ -229,7 +229,7 @@ export default function ResetPassword() {
                   type={showPassword ? 'text' : 'password'}
                   {...form.register('password')}
                   placeholder="Nueva contraseña"
-                  className="rounded-xl border-gray-300 py-3 px-4 pr-16 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="rounded-xl border border-gray-300 py-3 px-4 pr-16 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   onChange={(e) => {
                     form.setValue('password', e.target.value);
                     setError(null);
@@ -264,7 +264,7 @@ export default function ResetPassword() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   {...form.register('confirmPassword')}
                   placeholder="Confirmar contraseña"
-                  className="rounded-xl border-gray-300 py-3 px-4 pr-16 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="rounded-xl border border-gray-300 py-3 px-4 pr-16 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   onChange={(e) => {
                     form.setValue('confirmPassword', e.target.value);
                     setError(null);

@@ -151,7 +151,7 @@ export default function ForgotPassword() {
                 {...form.register('email')}
                 type="email"
                 placeholder="tu.email@empresa.com"
-                className="rounded-xl border-gray-300 py-3 px-4 pr-12 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="rounded-xl border border-gray-300 py-3 px-4 pr-12 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 onChange={(e) => {
                   form.setValue('email', e.target.value);
                   setError(null);

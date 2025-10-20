@@ -258,7 +258,7 @@ export default function Login() {
               <Input
                 {...form.register('dniOrEmail')}
                 placeholder="DNI/NIE o email"
-                className="rounded-xl border-gray-300 py-3 px-4 pr-12 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="rounded-xl border border-gray-300 py-3 px-4 pr-12 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 onChange={(e) => {
                   form.setValue('dniOrEmail', e.target.value);
                   setLoginError(null);
@@ -278,7 +278,7 @@ export default function Login() {
                 type={showPassword ? 'text' : 'password'}
                 {...form.register('password')}
                 placeholder="Contraseña"
-                className="rounded-xl border-gray-300 py-3 px-4 pr-16 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="rounded-xl border border-gray-300 py-3 px-4 pr-16 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 onChange={(e) => {
                   form.setValue('password', e.target.value);
                   setLoginError(null);
