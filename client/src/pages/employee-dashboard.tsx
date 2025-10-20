@@ -6,6 +6,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
 import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard, AlarmClock, CalendarDays } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -1494,6 +1495,9 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
           </div>
         </div>
       </div>
+      
+      {/* PWA Install Prompt - solo en dashboard de empleados */}
+      <PWAInstallPrompt />
     </div>
   );
 }
