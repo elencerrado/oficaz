@@ -265,12 +265,12 @@ export default function RequestCode() {
                 <Input
                   id="email"
                   type="email"
-                  className={`rounded-xl border ${
+                  className={`rounded-xl bg-white border-2 ${
                     emailStatus === 'available' ? 'border-green-500' :
                     emailStatus === 'unavailable' ? 'border-red-500' :
                     emailStatus === 'cancelled' ? 'border-orange-500' :
                     'border-gray-300'
-                  } py-3 px-4 pr-20 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
+                  } py-3 px-4 pr-20 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
                   {...form.register('email')}
                   placeholder="admin@miempresa.com"
                 />
