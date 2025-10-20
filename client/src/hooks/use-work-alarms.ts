@@ -56,6 +56,13 @@ export function useWorkAlarms() {
     const setupPushNotifications = async () => {
       if (!serviceWorkerRegistration || hasSetup) return;
       
+      // Check if already subscribed in this session or previously
+      const alreadySubscribed = localStorage.getItem('pwa-push-subscribed');
+      if (alreadySubscribed) {
+        setHasSetup(true);
+        return;
+      }
+      
       setHasSetup(true); // Mark as setup to prevent multiple runs
       
       try {
@@ -96,6 +103,9 @@ export function useWorkAlarms() {
 
         console.log('✅ Push subscription saved to server');
         
+        // Mark as subscribed in localStorage to prevent showing toast again
+        localStorage.setItem('pwa-push-subscribed', 'true');
+        
         toast({
           title: '✅ Notificaciones activadas',
           description: 'Recibirás alertas de tus alarmas incluso con el móvil bloqueado.',
@@ -129,6 +139,8 @@ export function useWorkAlarms() {
         endpoint: pushSubscription.endpoint
       });
       setPushSubscription(null);
+      // Remove from localStorage to allow re-subscription
+      localStorage.removeItem('pwa-push-subscribed');
       console.log('✅ Unsubscribed from push notifications');
     } catch (error) {
       console.error('❌ Error unsubscribing:', error);
