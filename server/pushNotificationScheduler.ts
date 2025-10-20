@@ -18,15 +18,20 @@ const checkedAlarms = new Map<string, Date>();
 function shouldTriggerAlarm(alarmTime: string, weekdays: number[]): boolean {
   const now = new Date();
   const currentDay = now.getDay() === 0 ? 7 : now.getDay(); // Convert Sunday from 0 to 7
-  const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
   
   // Check if today is in the alarm's weekdays
   if (!weekdays.includes(currentDay)) {
     return false;
   }
   
-  // Check if current time matches alarm time
-  return currentTime === alarmTime;
+  // Parse alarm time
+  const [alarmHour, alarmMinute] = alarmTime.split(':').map(Number);
+  
+  // Check if we're in the same hour and minute (within the current minute window)
+  // This handles the 30-second check interval properly
+  return currentHour === alarmHour && currentMinute === alarmMinute;
 }
 
 // Function to send push notification to user
@@ -45,15 +50,23 @@ async function sendPushNotification(userId: number, title: string, body: string,
     const payload = JSON.stringify({
       title,
       body,
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      icon: '/apple-touch-icon.png',
+      badge: '/apple-touch-icon.png',
       vibrate: [200, 100, 200, 100, 200, 100, 200],
       requireInteraction: true,
-      tag: `work-alarm-${alarmType}`,
+      renotify: true,
+      tag: `work-alarm-${alarmType}-${Date.now()}`, // Unique tag forces new notification
       data: {
         url: '/employee',
-        type: alarmType
-      }
+        type: alarmType,
+        timestamp: Date.now()
+      },
+      actions: [
+        {
+          action: 'open',
+          title: 'Abrir Oficaz'
+        }
+      ]
     });
 
     // Send to all user's devices
@@ -108,21 +121,30 @@ export async function checkWorkAlarms() {
       
       // Skip if already sent in this exact minute
       if (checkedAlarms.has(checkKey)) {
+        console.log(`⏭️  Alarm ${alarm.id} already sent this minute`);
         continue;
       }
 
       // Check if alarm should trigger
-      if (shouldTriggerAlarm(alarm.time, alarm.weekdays)) {
-        console.log(`⏰ Triggering alarm: ${alarm.title} for user ${alarm.userId} at ${currentMinute}`);
+      const shouldTrigger = shouldTriggerAlarm(alarm.time, alarm.weekdays);
+      console.log(`🔍 Alarm ${alarm.id} (${alarm.title}) at ${alarm.time}: shouldTrigger=${shouldTrigger}`);
+      
+      if (shouldTrigger) {
+        console.log(`⏰ TRIGGERING ALARM: ${alarm.title} for user ${alarm.userId} at ${currentTime}`);
         
         const body = alarm.type === 'clock_in' 
           ? '¡Hora de fichar entrada!'
-          : '¡Hora de fichar salida!';
+          : alarm.type === 'clock_out'
+          ? '¡Hora de fichar salida!'
+          : alarm.type === 'break_start'
+          ? '¡Hora de iniciar descanso!'
+          : '¡Hora de terminar descanso!';
         
         await sendPushNotification(alarm.userId, alarm.title, body, alarm.type as 'clock_in' | 'clock_out');
         
         // Mark as sent for this specific minute
         checkedAlarms.set(checkKey, now);
+        console.log(`✅ Alarm ${alarm.id} marked as sent for minute ${currentMinute}`);
       }
     }
 
