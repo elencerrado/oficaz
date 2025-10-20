@@ -8670,11 +8670,22 @@ Responde directamente a este email para contactar con la persona.
   // Upload email marketing image
   app.post('/api/super-admin/email-marketing/upload-image', superAdminSecurityHeaders, authenticateSuperAdmin, upload.single('image'), async (req: any, res) => {
     try {
+      console.log('📤 Upload request received. File:', req.file ? 'YES' : 'NO');
+      console.log('📤 Request body:', req.body);
+      console.log('📤 Content-Type:', req.headers['content-type']);
+      
       if (!req.file) {
+        console.log('❌ No file in request');
         return res.status(400).json({ success: false, message: 'No se proporcionó ninguna imagen' });
       }
 
       const file = req.file;
+      console.log('📤 File details:', { 
+        originalname: file.originalname, 
+        mimetype: file.mimetype, 
+        size: file.size,
+        path: file.path
+      });
       
       // Validate file type
       const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
