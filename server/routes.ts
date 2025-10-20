@@ -1277,14 +1277,14 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
     // Create base reminder
     const createdReminder = await storage.createReminder({
       title: reminder.title,
-      description: reminder.description,
-      dueDateTime: reminder.dueDateTime,
+      content: reminder.description, // ✅ FIXED: Use 'content' field from schema
+      reminderDate: reminder.dueDateTime, // ✅ FIXED: Use 'reminderDate' field from schema
       userId: reminder.createdBy.id, // Creator
-      companyId: companyId, // Add missing company ID
+      companyId: companyId,
       createdBy: reminder.createdBy.id,
       color: reminder.color,
       priority: reminder.priority,
-      assignedTo: reminder.assignedEmployees.length > 0 ? reminder.assignedEmployees.map(emp => emp.id) : null,
+      assignedUserIds: reminder.assignedEmployees.length > 0 ? reminder.assignedEmployees.map(emp => emp.id) : [], // ✅ FIXED: Use 'assignedUserIds' array field
     });
     
     console.log(`⏰ Created reminder "${reminder.title}" assigned to ${reminder.assignedEmployees.length > 0 ? reminder.assignedEmployees.map(emp => emp.fullName).join(', ') : 'admin only'}`);
