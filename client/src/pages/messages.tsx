@@ -1047,9 +1047,13 @@ export default function Messages() {
               {/* Scroll to bottom button - Mobile Admin with smooth transition */}
               <button
                 onClick={scrollToBottom}
-                className={`fixed bottom-24 right-4 bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg hover:scale-110 z-20 transition-all duration-300 ${
+                className={`fixed bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg hover:scale-110 z-20 transition-all duration-300 ${
                   showScrollButton ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
                 }`}
+                style={{
+                  bottom: `calc(80px + env(safe-area-inset-bottom))`,
+                  right: '16px'
+                }}
                 data-testid="button-scroll-to-bottom-mobile"
               >
                 <ArrowDown className="h-5 w-5" />
@@ -1057,19 +1061,15 @@ export default function Messages() {
 
               {/* Message Input - Fixed at bottom */}
               <div 
-                className="flex space-x-2 p-4 border-t border-border bg-background"
+                className="flex space-x-2 px-4 border-t border-border bg-background"
                 style={{
                   position: 'fixed',
-                  bottom: isKeyboardOpen && keyboardOffset > 0 
-                    ? `${keyboardOffset}px` // Above keyboard
-                    : isPWA ? '0px' : '0px',
+                  bottom: '0',
                   left: 0,
                   right: 0,
                   zIndex: 10,
-                  height: '80px',
-                  paddingBottom: isPWA 
-                    ? `calc(env(safe-area-inset-bottom, 0px) + 16px)` 
-                    : '16px'
+                  paddingTop: '16px',
+                  paddingBottom: `max(16px, env(safe-area-inset-bottom))`
                 }}
               >
                 <Input
@@ -1407,21 +1407,22 @@ export default function Messages() {
                 bottom: 0,
                 height: '100vh',
                 minHeight: '-webkit-fill-available',
-                overflow: 'hidden', // Prevent scrolling on main container
+                overflow: 'hidden',
                 zIndex: 9999
               }}
             >
-              {/* Chat Header with Back Button - Position fixed within container */}
+              {/* Chat Header with Back Button */}
               <div 
-                className="flex items-center space-x-3 p-4 border-b border-border bg-background"
+                className="flex items-center space-x-3 px-4 border-b border-border bg-background"
                 style={{
                   position: 'fixed',
-                  top: showBanner ? `${bannerHeight}px` : '0',
+                  top: '0',
                   left: 0,
                   right: 0,
                   zIndex: 10000,
-                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`, // Padding normal + espacio del notch
-                  height: '72px' // Fixed header height
+                  paddingTop: `max(16px, env(safe-area-inset-top))`,
+                  paddingBottom: '16px',
+                  height: 'auto'
                 }}
               >
                 <Button
@@ -1447,18 +1448,16 @@ export default function Messages() {
                   </div>
                 </div>
               </div>
-              {/* Messages - Fixed positioning with exact dimensions */}
+              {/* Messages - Scrollable area */}
               <div 
                 ref={mobileMessagesContainerRef}
                 className="overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
                 style={{ 
-                  position: 'fixed',
-                  top: '72px', // Below header
+                  position: 'absolute',
+                  top: `calc(56px + env(safe-area-inset-top))`,
                   left: 0,
                   right: 0,
-                  bottom: isKeyboardOpen && keyboardOffset > 0 
-                    ? `${keyboardOffset + 80}px` // Above keyboard + input height
-                    : '80px', // Above input (80px = input height)
+                  bottom: `calc(72px + env(safe-area-inset-bottom))`,
                   paddingBottom: '16px',
                   paddingTop: '8px',
                   touchAction: 'pan-y',
@@ -1537,9 +1536,13 @@ export default function Messages() {
               {/* Scroll to bottom button - Employee with smooth transition */}
               <button
                 onClick={scrollToBottom}
-                className={`fixed bottom-24 right-4 bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg hover:scale-110 z-20 transition-all duration-300 ${
+                className={`fixed bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg hover:scale-110 z-20 transition-all duration-300 ${
                   showScrollButton ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
                 }`}
+                style={{
+                  bottom: `calc(80px + env(safe-area-inset-bottom))`,
+                  right: '16px'
+                }}
                 data-testid="button-scroll-to-bottom-employee"
               >
                 <ArrowDown className="h-5 w-5" />
@@ -1547,19 +1550,15 @@ export default function Messages() {
 
               {/* Message Input - Fixed at bottom */}
               <div 
-                className="flex space-x-2 p-4 border-t border-border bg-background"
+                className="flex space-x-2 px-4 border-t border-border bg-background"
                 style={{
                   position: 'fixed',
-                  bottom: isKeyboardOpen && keyboardOffset > 0 
-                    ? `${keyboardOffset}px` // Above keyboard
-                    : isPWA ? '0px' : '0px',
+                  bottom: '0',
                   left: 0,
                   right: 0,
                   zIndex: 10,
-                  height: '80px',
-                  paddingBottom: isPWA 
-                    ? `calc(env(safe-area-inset-bottom, 0px) + 16px)` 
-                    : '16px'
+                  paddingTop: '16px',
+                  paddingBottom: `max(16px, env(safe-area-inset-bottom))`
                 }}
               >
                 <Input
