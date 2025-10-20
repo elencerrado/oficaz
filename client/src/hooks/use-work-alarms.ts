@@ -21,6 +21,7 @@ export function useWorkAlarms() {
   const [pushSubscription, setPushSubscription] = useState<PushSubscription | null>(null);
   const [serviceWorkerRegistration, setServiceWorkerRegistration] = useState<ServiceWorkerRegistration | null>(null);
   const [pushPermission, setPushPermission] = useState<'granted' | 'denied' | 'default'>('default');
+  const [hasSetup, setHasSetup] = useState(false);
 
   // Convert base64 to Uint8Array for VAPID key
   const urlBase64ToUint8Array = (base64String: string) => {
@@ -53,7 +54,9 @@ export function useWorkAlarms() {
   // Request push notification permission and subscribe
   useEffect(() => {
     const setupPushNotifications = async () => {
-      if (!serviceWorkerRegistration) return;
+      if (!serviceWorkerRegistration || hasSetup) return;
+      
+      setHasSetup(true); // Mark as setup to prevent multiple runs
       
       try {
         // Request notification permission
@@ -114,7 +117,7 @@ export function useWorkAlarms() {
     };
 
     setupPushNotifications();
-  }, [serviceWorkerRegistration, toast]);
+  }, [serviceWorkerRegistration, hasSetup]);
 
   // Unsubscribe from push notifications
   const unsubscribe = useCallback(async () => {
