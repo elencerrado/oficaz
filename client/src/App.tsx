@@ -13,6 +13,7 @@ import { ReminderBanner } from "@/components/ui/reminder-banner";
 import { GlobalDemoBanner } from "@/components/global-demo-banner";
 import { TestBanner } from "@/components/test-banner";
 import CookieBanner from "@/components/CookieBanner";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PageLoading } from "@/components/ui/page-loading";
 import { PageWrapper } from "@/components/ui/page-wrapper";
 import { useState } from "react";
@@ -592,6 +593,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router />
+            <PWAInstallPrompt />
             <CookieBanner />
           </TooltipProvider>
         </AuthProvider>
