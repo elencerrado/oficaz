@@ -9263,14 +9263,19 @@ Responde directamente a este email para contactar con la persona.
         console.log('✅ Deleted employee activation tokens');
       }
 
-      // 10. Delete all users
+      // 10. Delete all work shifts (CRITICAL: Must be deleted before users due to created_by FK)
+      await db.delete(schema.workShifts)
+        .where(eq(schema.workShifts.companyId, companyId));
+      console.log('✅ Deleted work shifts');
+
+      // 11. Delete all users
       if (userIdsForAdmin.length > 0) {
         await db.delete(users)
           .where(eq(users.companyId, companyId));
         console.log('✅ Deleted users');
       }
 
-      // 11. Finally, delete the company
+      // 12. Finally, delete the company
       await db.delete(companies)
         .where(eq(companies.id, companyId));
       console.log('✅ Deleted company');
