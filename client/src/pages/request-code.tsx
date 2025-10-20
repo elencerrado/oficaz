@@ -339,8 +339,8 @@ export default function RequestCode() {
               
               <p className="text-xs text-gray-500 mt-1">
                 {canRecover 
-                  ? 'Te enviaremos un código de recuperación para restaurar tu cuenta cancelada.'
-                  : 'Te enviaremos un código de verificación. Mantendremos tu sesión activa mientras verificas.'
+                  ? 'Te enviaremos un código de recuperación para restaurar tu cuenta cancelada. Revisa tu carpeta de SPAM.'
+                  : 'Te enviaremos un código de verificación. Revisa tu carpeta de SPAM si no lo recibes.'
                 }
               </p>
             </div>
