@@ -51,6 +51,16 @@ export function useWorkAlarms() {
     }
   }, []);
 
+  // Get or create a stable device ID
+  const getDeviceId = (): string => {
+    let deviceId = localStorage.getItem('oficaz-device-id');
+    if (!deviceId) {
+      deviceId = `device-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      localStorage.setItem('oficaz-device-id', deviceId);
+    }
+    return deviceId;
+  };
+
   // Request push notification permission and subscribe
   useEffect(() => {
     const setupPushNotifications = async () => {
@@ -92,13 +102,14 @@ export function useWorkAlarms() {
         console.log('✅ Push subscription created:', subscription);
         setPushSubscription(subscription);
 
-        // Send subscription to server
+        // Send subscription to server with device ID
         await apiRequest('POST', '/api/push/subscribe', {
           endpoint: subscription.endpoint,
           keys: {
             p256dh: btoa(String.fromCharCode(...Array.from(new Uint8Array(subscription.getKey('p256dh')!)))),
             auth: btoa(String.fromCharCode(...Array.from(new Uint8Array(subscription.getKey('auth')!))))
-          }
+          },
+          deviceId: getDeviceId()
         });
 
         console.log('✅ Push subscription saved to server');

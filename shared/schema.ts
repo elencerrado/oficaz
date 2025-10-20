@@ -981,11 +981,13 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   endpoint: text("endpoint").notNull().unique(),
   p256dh: text("p256dh").notNull(),
   auth: text("auth").notNull(),
+  deviceId: varchar("device_id", { length: 100 }), // Stable client-generated device identifier
   userAgent: text("user_agent"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => ({
   userIdIdx: index("push_subscriptions_user_id_idx").on(table.userId),
+  deviceIdIdx: index("push_subscriptions_device_id_idx").on(table.deviceId),
 }));
 
 export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({

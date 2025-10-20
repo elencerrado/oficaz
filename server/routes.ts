@@ -10639,13 +10639,14 @@ Responde directamente a este email para contactar con la persona.
   app.post('/api/push/subscribe', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const userId = req.user!.id;
-      const { endpoint, keys } = req.body;
+      const { endpoint, keys, deviceId } = req.body;
+      const userAgent = req.headers['user-agent'] || null;
 
       if (!endpoint || !keys || !keys.p256dh || !keys.auth) {
         return res.status(400).json({ message: 'Invalid subscription data' });
       }
 
-      // Check if subscription already exists
+      // Check if subscription already exists for this endpoint
       const existing = await db.select()
         .from(pushSubscriptions)
         .where(eq(pushSubscriptions.endpoint, endpoint))
@@ -10658,12 +10659,28 @@ Responde directamente a este email para contactar con la persona.
             userId,
             p256dh: keys.p256dh,
             auth: keys.auth,
-            userAgent: req.headers['user-agent'] || null,
+            deviceId: deviceId || null,
+            userAgent,
             updatedAt: new Date()
           })
           .where(eq(pushSubscriptions.endpoint, endpoint));
         
         return res.json({ message: 'Subscription updated', subscription: existing[0] });
+      }
+
+      // Remove old subscriptions from the same device (same user + deviceId)
+      // This prevents duplicate notifications when user reopens the app
+      if (deviceId) {
+        const deleted = await db.delete(pushSubscriptions)
+          .where(and(
+            eq(pushSubscriptions.userId, userId),
+            eq(pushSubscriptions.deviceId, deviceId)
+          ))
+          .returning();
+        
+        if (deleted.length > 0) {
+          console.log(`🗑️  Removed ${deleted.length} old subscription(s) for user ${userId} from device ${deviceId}`);
+        }
       }
 
       // Create new subscription
@@ -10673,7 +10690,8 @@ Responde directamente a este email para contactar con la persona.
           endpoint,
           p256dh: keys.p256dh,
           auth: keys.auth,
-          userAgent: req.headers['user-agent'] || null
+          deviceId: deviceId || null,
+          userAgent
         })
         .returning();
 
