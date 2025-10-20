@@ -59,9 +59,11 @@ export async function apiRequest(
   // Handle token expiration, malformed tokens or 401 unauthorized
   // BUT DON'T redirect during login process
   if (res.status === 403 || res.status === 401) {
+    let isAuthError = false;
     try {
       const errorText = await res.text();
       if (errorText.includes('Invalid or expired token') || errorText.includes('Access token required')) {
+        isAuthError = true;
         console.log('🚨 Auth error detected in API request:', url);
         
         // Reset counter if enough time has passed
@@ -81,18 +83,21 @@ export async function apiRequest(
         if (!window.location.pathname.includes('/login') && !url.includes('/api/auth/login') && !url.includes('/api/super-admin/login')) {
           if (consecutiveAuthErrors >= MAX_AUTH_ERRORS_BEFORE_REDIRECT) {
             if (isSuperAdmin || hasSuperAdminToken) {
-              console.log('🚨 SuperAdmin session expired after multiple errors, redirecting to SuperAdmin login');
+              console.log('🔄 Redirecting to SuperAdmin login silently...');
               sessionStorage.removeItem('superAdminToken');
               window.location.href = '/super-admin';
             } else {
-              console.log('🚨 Regular session expired after multiple errors, redirecting to login');
+              console.log('🔄 Redirecting to login silently...');
               localStorage.removeItem('authData');
               sessionStorage.removeItem('authData');
               window.location.href = '/login';
             }
-            return;
+            // Return null to prevent error from being thrown
+            return null;
           } else {
-            console.log('⏳ Transient auth error, allowing retry...');
+            console.log('⏳ Transient auth error, retrying silently...');
+            // Return null to prevent error from being thrown
+            return null;
           }
         } else {
           console.log('🚨 Auth error during login process, not redirecting');
@@ -104,24 +109,33 @@ export async function apiRequest(
         shouldResetAuthErrorCounter();
         consecutiveAuthErrors++;
         lastAuthErrorTime = Date.now();
+        isAuthError = true;
         
         if (consecutiveAuthErrors >= MAX_AUTH_ERRORS_BEFORE_REDIRECT) {
           const isSuperAdmin = window.location.pathname.startsWith('/super-admin');
           const hasSuperAdminToken = sessionStorage.getItem('superAdminToken');
           
           if (isSuperAdmin || hasSuperAdminToken) {
-            console.log('🚨 SuperAdmin auth error (unreadable) after multiple errors, redirecting to SuperAdmin login');
+            console.log('🔄 Redirecting to SuperAdmin login silently...');
             sessionStorage.removeItem('superAdminToken');
             window.location.href = '/super-admin';
           } else {
-            console.log('🚨 Auth error (unreadable) after multiple errors, redirecting to login');
+            console.log('🔄 Redirecting to login silently...');
             localStorage.removeItem('authData');
             sessionStorage.removeItem('authData');
             window.location.href = '/login';
           }
-          return;
+          return null;
+        } else {
+          // Transient error, return null silently
+          return null;
         }
       }
+    }
+    
+    // If it's an auth error, don't throw - we've handled it silently above
+    if (isAuthError) {
+      return null;
     }
   } else if (res.ok) {
     // Reset error counter on successful request
@@ -159,11 +173,13 @@ export const getQueryFn: <T>(options: {
       return null;
     }
 
-    // Handle token expiration in queries too
+    // Handle token expiration in queries too - SILENTLY
     if (res.status === 403 || res.status === 401) {
+      let isAuthError = false;
       try {
         const errorText = await res.text();
         if (errorText.includes('Invalid or expired token') || errorText.includes('Access token required')) {
+          isAuthError = true;
           // Reset counter if enough time has passed
           shouldResetAuthErrorCounter();
           
@@ -179,18 +195,19 @@ export const getQueryFn: <T>(options: {
           // Only redirect after multiple consecutive errors
           if (consecutiveAuthErrors >= MAX_AUTH_ERRORS_BEFORE_REDIRECT) {
             if (isSuperAdmin || hasSuperAdminToken) {
-              console.log('🚨 SuperAdmin session expired in query after multiple errors, redirecting to SuperAdmin login');
+              console.log('🔄 Redirecting to SuperAdmin login silently...');
               sessionStorage.removeItem('superAdminToken');
               window.location.href = '/super-admin';
             } else {
-              console.log('🚨 Regular session expired in query after multiple errors, redirecting to login');
+              console.log('🔄 Redirecting to login silently...');
               localStorage.removeItem('authData');
               sessionStorage.removeItem('authData');
               window.location.href = '/login';
             }
           } else {
-            console.log('⏳ Transient auth error in query, allowing retry...');
+            console.log('⏳ Transient auth error in query, retrying silently...');
           }
+          // Always return null to prevent error from being thrown to user
           return null;
         }
       } catch (e) {
@@ -198,22 +215,29 @@ export const getQueryFn: <T>(options: {
         shouldResetAuthErrorCounter();
         consecutiveAuthErrors++;
         lastAuthErrorTime = Date.now();
+        isAuthError = true;
         
         if (consecutiveAuthErrors >= MAX_AUTH_ERRORS_BEFORE_REDIRECT) {
           const isSuperAdmin = window.location.pathname.startsWith('/super-admin');
           const hasSuperAdminToken = sessionStorage.getItem('superAdminToken');
           
           if (isSuperAdmin || hasSuperAdminToken) {
-            console.log('🚨 SuperAdmin auth error in query (unreadable) after multiple errors, redirecting to SuperAdmin login');
+            console.log('🔄 Redirecting to SuperAdmin login silently...');
             sessionStorage.removeItem('superAdminToken');
             window.location.href = '/super-admin';
           } else {
-            console.log('🚨 Auth error in query (unreadable) after multiple errors, redirecting to login');
+            console.log('🔄 Redirecting to login silently...');
             localStorage.removeItem('authData');
             sessionStorage.removeItem('authData');
             window.location.href = '/login';
           }
         }
+        // Always return null to prevent error from being thrown to user
+        return null;
+      }
+      
+      // If it's an auth error, return null silently - don't throw
+      if (isAuthError) {
         return null;
       }
     } else if (res.ok) {

@@ -46,7 +46,7 @@ Preferred communication style: Simple, everyday language.
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
 - **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: JWT-based with role-based access control (DNI/NIE or email login), bcrypt hashing.
+- **Authentication**: JWT-based with role-based access control (DNI/NIE or email login), bcrypt hashing. **Silent auth error handling**: System tolerates up to 3 consecutive auth errors in 10 seconds before redirecting to login, preventing user-facing error screens from transient network issues.
 - **File Uploads**: Multer with Sharp (image compression), with specific handling for iOS devices.
 - **Session Management**: Express sessions with PostgreSQL store.
 - **Security**: Helmet for CSP, CORS, rate limiting, HSTS, X-XSS-Protection, Referrer-Policy; SQL injection protection via parameterized queries. SuperAdmin access is exclusive via email verification (`soy@oficaz.es`).
