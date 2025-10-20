@@ -2,7 +2,7 @@
   "name": "Oficaz - Gestión de Empleados",
   "short_name": "Oficaz",
   "description": "Sistema completo de gestión de empleados: fichaje, vacaciones, documentos y más",
-  "start_url": "/",
+  "start_url": "/login",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#007AFF",
