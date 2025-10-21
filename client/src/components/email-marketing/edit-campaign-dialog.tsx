@@ -115,8 +115,8 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
       const imageMatch = html.match(/<!-- Optional Image -->[\s\S]*?<img[^>]*src="([^"]+)"/);
       const imageUrl = imageMatch ? imageMatch[1] : '';
       
-      // Extract image width from parent div style
-      const imageWidthMatch = html.match(/<!-- Optional Image -->[\s\S]*?<div[^>]*style="[^"]*width:\s*([^;"]+)/);
+      // Extract image width from parent div style - specifically match "width:" not "max-width:"
+      const imageWidthMatch = html.match(/<!-- Optional Image -->[\s\S]*?<div[^>]*style="[^"]*(?:^|;|\s)width:\s*([^;}"]+)/);
       const imageWidth = imageWidthMatch ? imageWidthMatch[1].trim() : '100%';
 
       return {
