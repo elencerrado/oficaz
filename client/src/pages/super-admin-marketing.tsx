@@ -14,6 +14,7 @@ import { EditProspectDialog } from '@/components/email-marketing/edit-prospect-d
 import { EditCampaignDialog } from '@/components/email-marketing/edit-campaign-dialog';
 import { CampaignConversionsDialog } from '@/components/email-marketing/campaign-conversions-dialog';
 import { ProspectStatsDialog } from '@/components/email-marketing/prospect-stats-dialog';
+import { SendingProgressDialog } from '@/components/email-marketing/sending-progress-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Send, 
@@ -50,6 +51,23 @@ export default function SuperAdminMarketing() {
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [prospectToDelete, setProspectToDelete] = useState<number | null>(null);
+  
+  // Sending progress dialog states
+  const [sendingProgress, setSendingProgress] = useState<{
+    isOpen: boolean;
+    status: 'preparing' | 'sending' | 'success' | 'error';
+    totalEmails: number;
+    successCount: number;
+    failCount: number;
+    errorMessage?: string;
+  }>({
+    isOpen: false,
+    status: 'preparing',
+    totalEmails: 0,
+    successCount: 0,
+    failCount: 0,
+  });
+  
   const { toast} = useToast();
   const queryClient = useQueryClient();
 
@@ -188,6 +206,28 @@ export default function SuperAdminMarketing() {
   // Send campaign mutation
   const sendCampaignMutation = useMutation({
     mutationFn: async (campaignId: number) => {
+      // Get campaign to show number of emails
+      const campaign = campaigns?.find((c: any) => c.id === campaignId);
+      const totalEmails = campaign?.selectedEmails?.length || 0;
+      
+      // Show preparing dialog
+      setSendingProgress({
+        isOpen: true,
+        status: 'preparing',
+        totalEmails,
+        successCount: 0,
+        failCount: 0,
+      });
+      
+      // Small delay to show preparing state
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Update to sending state
+      setSendingProgress(prev => ({
+        ...prev,
+        status: 'sending',
+      }));
+      
       const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-campaigns/${campaignId}/send`, {
         method: 'POST',
@@ -202,6 +242,14 @@ export default function SuperAdminMarketing() {
       return response.json();
     },
     onSuccess: (data) => {
+      // Update to success state with counts
+      setSendingProgress(prev => ({
+        ...prev,
+        status: 'success',
+        successCount: data.successCount || 0,
+        failCount: data.failCount || 0,
+      }));
+      
       toast({
         title: 'Campaña enviada',
         description: data.message || 'La campaña se envió correctamente',
@@ -209,6 +257,13 @@ export default function SuperAdminMarketing() {
       queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-campaigns'] });
     },
     onError: (error: any) => {
+      // Update to error state
+      setSendingProgress(prev => ({
+        ...prev,
+        status: 'error',
+        errorMessage: error.message || 'Error al enviar la campaña',
+      }));
+      
       toast({
         title: 'Error',
         description: error.message || 'No se pudo enviar la campaña',
@@ -1352,6 +1407,17 @@ export default function SuperAdminMarketing() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Sending Progress Dialog */}
+      <SendingProgressDialog
+        isOpen={sendingProgress.isOpen}
+        status={sendingProgress.status}
+        totalEmails={sendingProgress.totalEmails}
+        successCount={sendingProgress.successCount}
+        failCount={sendingProgress.failCount}
+        errorMessage={sendingProgress.errorMessage}
+        onClose={() => setSendingProgress(prev => ({ ...prev, isOpen: false }))}
+      />
     </SuperAdminLayout>
   );
 }
