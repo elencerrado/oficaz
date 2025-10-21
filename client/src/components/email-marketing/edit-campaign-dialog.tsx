@@ -109,12 +109,17 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
         }
       }
 
+      // Extract image URL - look for img tag in Optional Image section
+      const imageMatch = html.match(/<!-- Optional Image -->[\s\S]*?<img[^>]*src="([^"]+)"/);
+      const imageUrl = imageMatch ? imageMatch[1] : '';
+
       return {
         subtitle: subtitleMatch ? cleanHtml(subtitleMatch[1]) : '',
         heading: headingMatch ? cleanHtml(headingMatch[1]) : '',
         paragraph: paragraphMatch ? cleanHtml(paragraphMatch[1]) : '',
         buttonText: buttonTextMatch ? buttonTextMatch[1].trim() : '',
         buttonUrl: buttonUrlMatch ? buttonUrlMatch[1].trim() : '',
+        imageUrl: imageUrl,
         signature: signatureMatch ? cleanHtml(signatureMatch[1]) : '',
       };
     } catch (e) {
