@@ -23,6 +23,7 @@ interface EmailContent {
   buttonText: string;
   buttonUrl: string;
   imageUrl?: string;
+  imageWidth?: string;
   signature: string;
 }
 
@@ -52,6 +53,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
     buttonText: '',
     buttonUrl: '',
     imageUrl: '',
+    imageWidth: '100%',
     signature: '',
   });
 
@@ -109,9 +111,13 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
         }
       }
 
-      // Extract image URL - look for img tag in Optional Image section
+      // Extract image URL and width - look for img tag and parent div in Optional Image section
       const imageMatch = html.match(/<!-- Optional Image -->[\s\S]*?<img[^>]*src="([^"]+)"/);
       const imageUrl = imageMatch ? imageMatch[1] : '';
+      
+      // Extract image width from parent div style
+      const imageWidthMatch = html.match(/<!-- Optional Image -->[\s\S]*?<div[^>]*style="[^"]*width:\s*([^;"]+)/);
+      const imageWidth = imageWidthMatch ? imageWidthMatch[1].trim() : '100%';
 
       return {
         subtitle: subtitleMatch ? cleanHtml(subtitleMatch[1]) : '',
@@ -120,6 +126,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
         buttonText: buttonTextMatch ? buttonTextMatch[1].trim() : '',
         buttonUrl: buttonUrlMatch ? buttonUrlMatch[1].trim() : '',
         imageUrl: imageUrl,
+        imageWidth: imageWidth,
         signature: signatureMatch ? cleanHtml(signatureMatch[1]) : '',
       };
     } catch (e) {
@@ -216,7 +223,9 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
           ${content.imageUrl ? `
           <tr>
             <td style="padding: 0 40px 30px; text-align: center;">
-              <img src="${content.imageUrl}" alt="Email content" style="max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 0 auto;" />
+              <div style="display: inline-block; width: ${content.imageWidth || '100%'}; max-width: 100%;">
+                <img src="${content.imageUrl}" alt="Email content" style="width: 100%; height: auto; border-radius: 8px; display: block;" />
+              </div>
             </td>
           </tr>
           ` : ''}
@@ -340,6 +349,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
         buttonUrl: emailContent.buttonUrl || defaultPlaceholders.buttonUrl,
         signature: emailContent.signature || defaultPlaceholders.signature,
         imageUrl: emailContent.imageUrl, // Include the uploaded image URL
+        imageWidth: emailContent.imageWidth || '100%', // Include the image display width
       };
       
       htmlContent = generateHtmlContent(contentWithDefaults, formData.audienceType);

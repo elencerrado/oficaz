@@ -18,6 +18,7 @@ interface EmailContent {
   buttonText: string;
   buttonUrl: string;
   imageUrl?: string;
+  imageWidth?: string; // Visual width in email (e.g., '50%', '75%', '100%')
   signature: string;
 }
 
@@ -432,18 +433,45 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
               {/* Optional Image */}
               {content.imageUrl && (
                 <tr>
-                  <td style={{ padding: '0 40px 30px', textAlign: 'center' }}>
-                    <img
-                      src={content.imageUrl}
-                      alt="Email content"
-                      style={{
-                        maxWidth: '100%',
-                        height: 'auto',
-                        borderRadius: '8px',
-                        display: 'block',
-                        margin: '0 auto',
-                      }}
-                    />
+                  <td style={{ padding: '0 40px 10px', textAlign: 'center' }}>
+                    <div style={{ position: 'relative', display: 'inline-block', width: content.imageWidth || '100%' }}>
+                      <img
+                        src={content.imageUrl}
+                        alt="Email content"
+                        style={{
+                          width: '100%',
+                          height: 'auto',
+                          borderRadius: '8px',
+                          display: 'block',
+                        }}
+                      />
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={handleRemoveImage}
+                        className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full shadow-lg"
+                        data-testid="button-remove-image"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="mt-3 flex items-center justify-center gap-2">
+                      <span className="text-xs text-gray-400">Tamaño:</span>
+                      {['50%', '75%', '100%'].map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => handleContentChange('imageWidth', size)}
+                          className={`px-3 py-1 text-xs rounded transition-colors ${
+                            (content.imageWidth || '100%') === size
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                          }`}
+                          data-testid={`button-image-width-${size}`}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
                   </td>
                 </tr>
               )}
