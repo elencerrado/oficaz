@@ -1,6 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
 import { Monitor, Smartphone, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface EmailContent {
   subtitle: string;
@@ -20,6 +29,9 @@ interface EmailPreviewEditorProps {
 
 export function EmailPreviewEditor({ content, onChange, audienceType = 'subscribers' }: EmailPreviewEditorProps) {
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
+  const [showSizeDialog, setShowSizeDialog] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<'small' | 'medium' | 'large'>('medium');
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const paragraphRef = useRef<HTMLParagraphElement>(null);
@@ -43,13 +55,32 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
     // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       alert('La imagen es demasiado grande. El tamaño máximo es 2MB.');
+      e.target.value = ''; // Reset input
       return;
     }
 
+    // Show size selection dialog
+    setPendingFile(file);
+    setShowSizeDialog(true);
+    e.target.value = ''; // Reset input
+  };
+
+  const handleConfirmUpload = async () => {
+    if (!pendingFile) return;
+
     try {
+      // Map size to pixel width
+      const widthMap = {
+        small: 400,
+        medium: 600,
+        large: 800,
+      };
+      const width = widthMap[selectedSize];
+
       // Upload to server
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append('image', pendingFile);
+      formData.append('width', width.toString());
 
       // Get super admin token
       const token = sessionStorage.getItem('superAdminToken');
@@ -73,6 +104,10 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
 
       const data = await response.json();
       handleContentChange('imageUrl', data.imageUrl);
+      
+      // Close dialog and reset
+      setShowSizeDialog(false);
+      setPendingFile(null);
     } catch (error) {
       console.error('Error uploading image:', error);
       alert(error instanceof Error ? error.message : 'Error al subir la imagen. Por favor intenta de nuevo.');
@@ -496,6 +531,57 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
           💡 <strong>Tip:</strong> El botón siempre está visible para que puedas editarlo. Si dejas el texto vacío, no aparecerá en el email final.
         </p>
       </div>
+
+      {/* Image Size Selection Dialog */}
+      <Dialog open={showSizeDialog} onOpenChange={setShowSizeDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Selecciona el tamaño de la imagen</DialogTitle>
+            <DialogDescription>
+              Elige el tamaño en el que se mostrará la imagen en el correo. Las imágenes más pequeñas cargan más rápido.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <RadioGroup value={selectedSize} onValueChange={(value: any) => setSelectedSize(value)}>
+              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <RadioGroupItem value="small" id="small" />
+                <Label htmlFor="small" className="flex-1 cursor-pointer">
+                  <div className="font-semibold">Pequeña (400px)</div>
+                  <div className="text-sm text-gray-500">Ideal para iconos o imágenes secundarias</div>
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <RadioGroupItem value="medium" id="medium" />
+                <Label htmlFor="medium" className="flex-1 cursor-pointer">
+                  <div className="font-semibold">Mediana (600px) - Recomendada</div>
+                  <div className="text-sm text-gray-500">Equilibrio perfecto entre calidad y velocidad</div>
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <RadioGroupItem value="large" id="large" />
+                <Label htmlFor="large" className="flex-1 cursor-pointer">
+                  <div className="font-semibold">Grande (800px)</div>
+                  <div className="text-sm text-gray-500">Máxima calidad, archivo más grande</div>
+                </Label>
+              </div>
+            </RadioGroup>
+            <div className="flex gap-2 justify-end">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowSizeDialog(false);
+                  setPendingFile(null);
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleConfirmUpload} data-testid="button-confirm-upload">
+                Subir imagen
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

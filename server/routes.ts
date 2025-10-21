@@ -8709,6 +8709,10 @@ Responde directamente a este email para contactar con la persona.
         });
       }
 
+      // Get desired width from request body (default: 600px for better email size)
+      const maxWidth = parseInt(req.body.width) || 600;
+      console.log('📏 Resizing image to max width:', maxWidth);
+
       // Generate unique filename - always use .jpg for email compatibility
       const timestamp = Date.now();
       const filename = `email-${timestamp}.jpg`;
@@ -8717,7 +8721,7 @@ Responde directamente a este email para contactar con la persona.
       // Process image with sharp (compress, resize, and convert to JPG for email compatibility)
       // WEBP and other formats are automatically converted to JPG for maximum email client support
       await sharp(file.path)
-        .resize(800, null, { // Max width 800px, maintain aspect ratio
+        .resize(maxWidth, null, { // Max width based on user selection, maintain aspect ratio
           fit: 'inside',
           withoutEnlargement: true
         })
