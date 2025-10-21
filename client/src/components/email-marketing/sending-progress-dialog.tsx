@@ -66,7 +66,6 @@ export function SendingProgressDialog({
     <Dialog open={isOpen} onOpenChange={status === 'success' || status === 'error' ? onClose : undefined}>
       <DialogContent 
         className="sm:max-w-md bg-gradient-to-br from-purple-900/95 to-blue-900/95 backdrop-blur-xl border-white/20 text-white"
-        hideCloseButton={status === 'sending' || status === 'preparing'}
       >
         <div className="flex flex-col items-center justify-center py-6 space-y-6">
           {/* Icon */}
