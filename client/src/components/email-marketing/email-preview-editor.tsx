@@ -54,6 +54,10 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
       // Get super admin token
       const token = sessionStorage.getItem('super_admin_token');
 
+      if (!token) {
+        throw new Error('Sesión expirada. Por favor, vuelve a iniciar sesión.');
+      }
+
       const response = await fetch('/api/super-admin/email-marketing/upload-image', {
         method: 'POST',
         headers: {
