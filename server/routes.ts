@@ -9395,7 +9395,12 @@ Responde directamente a este email para contactar con la persona.
         console.log('✅ Deleted users');
       }
 
-      // 12. Finally, delete the company
+      // 12. Delete landing visits (CRITICAL: Must be deleted before company)
+      await db.delete(schema.landingVisits)
+        .where(eq(schema.landingVisits.companyId, companyId));
+      console.log('✅ Deleted landing visits');
+
+      // 13. Finally, delete the company
       await db.delete(companies)
         .where(eq(companies.id, companyId));
       console.log('✅ Deleted company');
