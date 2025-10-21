@@ -52,7 +52,7 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
       formData.append('image', file);
 
       // Get super admin token
-      const token = sessionStorage.getItem('super_admin_token');
+      const token = sessionStorage.getItem('superAdminToken');
 
       if (!token) {
         throw new Error('Sesión expirada. Por favor, vuelve a iniciar sesión.');
