@@ -334,6 +334,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
         buttonText: emailContent.buttonText || defaultPlaceholders.buttonText,
         buttonUrl: emailContent.buttonUrl || defaultPlaceholders.buttonUrl,
         signature: emailContent.signature || defaultPlaceholders.signature,
+        imageUrl: emailContent.imageUrl, // Include the uploaded image URL
       };
       
       htmlContent = generateHtmlContent(contentWithDefaults, formData.audienceType);
