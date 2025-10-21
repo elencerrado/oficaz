@@ -5729,18 +5729,29 @@ Responde directamente a este email para contactar con la persona.
   };
 
   const authenticateSuperAdmin = (req: any, res: any, next: any) => {
-    console.log('🔐 SuperAdmin auth middleware - Headers:', req.headers.authorization ? 'present' : 'missing');
+    const authHeader = req.headers.authorization;
+    console.log('🔐 SuperAdmin auth middleware - Auth header:', authHeader ? `present (${authHeader.substring(0, 20)}...)` : 'missing');
     
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    if (!token) {
-      console.log('🚨 SuperAdmin auth failed: No token provided');
+    if (!authHeader) {
+      console.log('🚨 SuperAdmin auth failed: No authorization header');
       return res.status(401).json({ message: "No token provided" });
     }
 
+    const parts = authHeader.split(' ');
+    console.log('🔐 Auth header parts:', parts.length, 'Bearer:', parts[0]);
+    
+    const token = parts[1];
+    
+    if (!token) {
+      console.log('🚨 SuperAdmin auth failed: No token in header');
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    console.log('🔐 Token length:', token.length, 'Has dot:', token.includes('.'));
+
     // Check for malformed token
     if (token.length < 10 || !token.includes('.')) {
-      console.log('🚨 SuperAdmin auth failed: Malformed token');
+      console.log('🚨 SuperAdmin auth failed: Malformed token. Token:', token.substring(0, 20) + '...');
       return res.status(401).json({ message: "Invalid token format" });
     }
 
