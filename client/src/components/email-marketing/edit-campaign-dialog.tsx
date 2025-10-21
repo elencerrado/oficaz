@@ -111,13 +111,20 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
         }
       }
 
-      // Extract image URL and width - look for img tag and parent div in Optional Image section
+      // Extract image URL and width from img tag
       const imageMatch = html.match(/<!-- Optional Image -->[\s\S]*?<img[^>]*src="([^"]+)"/);
       const imageUrl = imageMatch ? imageMatch[1] : '';
       
-      // Extract image width from parent div style - specifically match "width:" not "max-width:"
-      const imageWidthMatch = html.match(/<!-- Optional Image -->[\s\S]*?<div[^>]*style="[^"]*(?:^|;|\s)width:\s*([^;}"]+)/);
-      const imageWidth = imageWidthMatch ? imageWidthMatch[1].trim() : '100%';
+      // Extract width attribute from img tag and convert pixels to percentage
+      const imageWidthMatch = html.match(/<!-- Optional Image -->[\s\S]*?<img[^>]*width="(\d+)"/);
+      let imageWidth = '100%';
+      if (imageWidthMatch) {
+        const widthPx = parseInt(imageWidthMatch[1]);
+        // Convert pixels to percentage: 300px = 50%, 450px = 75%, 600px = 100%
+        if (widthPx === 300) imageWidth = '50%';
+        else if (widthPx === 450) imageWidth = '75%';
+        else imageWidth = '100%';
+      }
 
       return {
         subtitle: subtitleMatch ? cleanHtml(subtitleMatch[1]) : '',
@@ -223,9 +230,11 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
           ${content.imageUrl ? `
           <tr>
             <td style="padding: 0 40px 30px; text-align: center;">
-              <div style="display: inline-block; width: ${content.imageWidth || '100%'}; max-width: 100%;">
-                <img src="${content.imageUrl}" alt="Email content" style="width: 100%; height: auto; border-radius: 8px; display: block;" />
-              </div>
+              <img src="${content.imageUrl}" 
+                   width="${content.imageWidth === '50%' ? '300' : content.imageWidth === '75%' ? '450' : '600'}" 
+                   alt="Email content" 
+                   border="0"
+                   style="display: block; max-width: 100%; height: auto; border-radius: 8px; margin: 0 auto;" />
             </td>
           </tr>
           ` : ''}

@@ -434,15 +434,17 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
               {content.imageUrl && (
                 <tr>
                   <td style={{ padding: '0 40px 10px', textAlign: 'center' }}>
-                    <div style={{ position: 'relative', display: 'inline-block', width: content.imageWidth || '100%' }}>
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
                       <img
                         src={content.imageUrl}
+                        width={content.imageWidth === '50%' ? '300' : content.imageWidth === '75%' ? '450' : '600'}
                         alt="Email content"
                         style={{
-                          width: '100%',
+                          display: 'block',
+                          maxWidth: '100%',
                           height: 'auto',
                           borderRadius: '8px',
-                          display: 'block',
+                          margin: '0 auto',
                         }}
                       />
                       <Button
