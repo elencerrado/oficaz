@@ -523,7 +523,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
               <Label className="text-white">Destinatarios</Label>
               <RecipientSelector
                 selectedEmails={formData.selectedEmails}
-                onSelectionChange={(emails) => setFormData({ ...formData, selectedEmails: emails })}
+                onSelectionChange={(emails) => setFormData({ ...formData, selectedEmails: Array.from(new Set(emails)) })}
                 audienceType={formData.audienceType}
               />
             </div>

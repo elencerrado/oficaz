@@ -8859,8 +8859,8 @@ Responde directamente a este email para contactar con la persona.
         return res.status(404).json({ success: false, message: 'Campaña no encontrada' });
       }
 
-      // Use selected_emails array from campaign
-      const selectedEmails = campaign.selectedEmails || [];
+      // Use selected_emails array from campaign and remove duplicates
+      const selectedEmails = Array.from(new Set(campaign.selectedEmails || []));
       
       if (selectedEmails.length === 0) {
         return res.status(400).json({ success: false, message: 'No hay destinatarios seleccionados' });
