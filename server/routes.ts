@@ -9675,7 +9675,41 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  // Super admin endpoint to get landing metrics
+  // Super admin endpoint to clean development/testing visits
+  app.post('/api/super-admin/landing-metrics/clean-test-visits', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      // Delete localhost visits (127.0.0.1, ::1)
+      const localhostResult = await db.delete(schema.landingVisits)
+        .where(
+          sql`${schema.landingVisits.ipAddress} IN ('127.0.0.1', '::1', 'localhost')`
+        )
+        .returning();
+      
+      // Delete private IP visits (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+      const privateIpResult = await db.delete(schema.landingVisits)
+        .where(
+          sql`${schema.landingVisits.ipAddress} LIKE '192.168.%' OR 
+              ${schema.landingVisits.ipAddress} LIKE '10.%' OR 
+              ${schema.landingVisits.ipAddress} LIKE '172.%'`
+        )
+        .returning();
+      
+      const deletedCount = localhostResult.length + privateIpResult.length;
+      
+      console.log(`🧹 Cleaned ${deletedCount} development/testing visits`);
+      
+      res.json({
+        success: true,
+        message: `Eliminadas ${deletedCount} visitas de desarrollo/testing`,
+        deletedCount
+      });
+    } catch (error: any) {
+      console.error('Error cleaning test visits:', error);
+      res.status(500).json({ success: false, message: 'Error al limpiar visitas: ' + error.message });
+    }
+  });
+
+  // Super admin endpoint to get landing metrics (FILTERING OUT TEST/INVALID VISITS)
   app.get('/api/super-admin/landing-metrics', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const now = new Date();
@@ -9683,11 +9717,20 @@ Responde directamente a este email para contactar con la persona.
       const sevenDaysAgo = subDays(now, 7);
       const today = startOfDay(now);
 
-      // Get total visits (last 30 days)
+      // FILTER: Exclude localhost and private IPs from all metrics
+      const validVisitCondition = sql`
+        ip_address NOT IN ('127.0.0.1', '::1', 'localhost')
+        AND ip_address NOT LIKE '192.168.%'
+        AND ip_address NOT LIKE '10.%'
+        AND ip_address NOT LIKE '172.%'
+      `;
+
+      // Get total visits (last 30 days, EXCLUDING TEST VISITS)
       const totalVisitsResult = await db.execute(sql`
         SELECT COUNT(*) as count 
         FROM landing_visits 
         WHERE visited_at >= ${thirtyDaysAgo.toISOString()}
+        AND ${validVisitCondition}
       `);
       const totalVisits = Number((totalVisitsResult.rows[0] as any).count);
 
@@ -9697,6 +9740,7 @@ Responde directamente a este email para contactar con la persona.
         FROM landing_visits 
         WHERE registered = true
         AND visited_at >= ${thirtyDaysAgo.toISOString()}
+        AND ${validVisitCondition}
       `);
       const totalRegistrations = Number((totalRegistrationsResult.rows[0] as any).count);
 
@@ -9705,16 +9749,18 @@ Responde directamente a este email para contactar con la persona.
         SELECT COUNT(*) as count 
         FROM landing_visits 
         WHERE visited_at >= ${today.toISOString()}
+        AND ${validVisitCondition}
       `);
       const todayVisits = Number((todayVisitsResult.rows[0] as any).count);
 
-      // Get daily visits for last 7 days
+      // Get daily visits for last 7 days (EXCLUDING TEST VISITS)
       const dailyVisitsResult = await db.execute(sql`
         SELECT 
           DATE(visited_at) as date,
           COUNT(*) as count
         FROM landing_visits
         WHERE visited_at >= ${sevenDaysAgo.toISOString()}
+        AND ${validVisitCondition}
         GROUP BY DATE(visited_at)
         ORDER BY date DESC
       `);
@@ -9725,14 +9771,17 @@ Responde directamente a este email para contactar con la persona.
 
       const maxDailyVisits = Math.max(...dailyVisits.map(d => d.count), 1);
 
-      // Get city and country distribution (top 10)
+      // Get city and country distribution (top 10, ONLY VALID VISITS WITH GEOLOCATION)
       const locationsResult = await db.execute(sql`
         SELECT 
           COALESCE(city, '') as city,
-          COALESCE(country, 'Desconocido') as country,
+          COALESCE(country, '') as country,
           COUNT(*) as visits
         FROM landing_visits
         WHERE visited_at >= ${thirtyDaysAgo.toISOString()}
+        AND ${validVisitCondition}
+        AND country IS NOT NULL
+        AND country != ''
         GROUP BY city, country
         ORDER BY visits DESC
         LIMIT 10

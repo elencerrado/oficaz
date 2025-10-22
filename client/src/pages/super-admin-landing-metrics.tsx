@@ -1,11 +1,16 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Users, Globe, TrendingUp, MousePointerClick } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { BarChart, Users, Globe, TrendingUp, MousePointerClick, Trash2 } from 'lucide-react';
 import { format, subDays, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
+import { queryClient } from '@/lib/queryClient';
 
 export default function SuperAdminLandingMetrics() {
+  const { toast } = useToast();
+
   const { data: metrics } = useQuery({
     queryKey: ['/api/super-admin/landing-metrics'],
     queryFn: async () => {
@@ -50,13 +55,56 @@ export default function SuperAdminLandingMetrics() {
     ? ((metrics.totalRegistrations / metrics.totalVisits) * 100).toFixed(2)
     : '0.00';
 
+  // Mutation to clean test visits
+  const cleanTestVisitsMutation = useMutation({
+    mutationFn: async () => {
+      const token = sessionStorage.getItem('superAdminToken');
+      const response = await fetch('/api/super-admin/landing-metrics/clean-test-visits', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) throw new Error('Failed to clean test visits');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: '✅ Visitas de testing eliminadas',
+        description: data.message,
+      });
+      // Refresh metrics
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/landing-metrics'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: '❌ Error',
+        description: error.message || 'No se pudieron eliminar las visitas de testing',
+        variant: 'destructive',
+      });
+    },
+  });
+
   return (
     <SuperAdminLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-white">Métricas de Landing Page</h1>
-          <p className="text-white/70 mt-1">Análisis de visitas y conversiones</p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-white">Métricas de Landing Page</h1>
+            <p className="text-white/70 mt-1">Análisis de visitas y conversiones (solo visitas reales)</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => cleanTestVisitsMutation.mutate()}
+            disabled={cleanTestVisitsMutation.isPending}
+            className="bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20 hover:text-red-300"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            {cleanTestVisitsMutation.isPending ? 'Limpiando...' : 'Limpiar Testing'}
+          </Button>
         </div>
 
         {/* Overview Cards */}
