@@ -9008,7 +9008,10 @@ Responde directamente a este email para contactar con la persona.
       const alreadySentEmails = new Set(alreadySent.map(s => s.email));
       
       // Filter only new emails (not already sent)
-      const newEmails = selectedEmails.filter(email => !alreadySentEmails.has(email));
+      // EXCEPTION: soy@oficaz.es always receives the email to monitor campaigns
+      const newEmails = selectedEmails.filter(email => 
+        email === 'soy@oficaz.es' || !alreadySentEmails.has(email)
+      );
       
       if (newEmails.length === 0) {
         return res.status(400).json({ 
