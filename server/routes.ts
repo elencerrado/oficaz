@@ -8766,18 +8766,15 @@ Responde directamente a este email para contactar con la persona.
         filename
       );
 
-      // Return public URL
-      const domain = process.env.NODE_ENV === 'production'
-        ? 'https://oficaz.es'
-        : `https://${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}`;
-      
-      const imageUrl = `${domain}${objectPath}`;
+      // Return RELATIVE path only (no domain) for cross-environment compatibility
+      // The frontend will build the full URL dynamically based on current environment
+      const imageUrl = objectPath; // e.g., /public-objects/email-marketing/email-123.jpg
 
       console.log(`✅ Email marketing image uploaded to Object Storage: ${imageUrl}`);
 
       res.json({ 
         success: true, 
-        imageUrl,
+        imageUrl, // Relative path only
         filename 
       });
     } catch (error: any) {
@@ -8977,6 +8974,54 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Fix hardcoded domain URLs in campaigns (convert to relative paths)
+  app.post('/api/super-admin/email-marketing/fix-image-urls', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      console.log('🔧 Starting image URL normalization...');
+      
+      // Get all campaigns
+      const campaigns = await db.select()
+        .from(schema.emailCampaigns)
+        .where(sql`${schema.emailCampaigns.htmlContent} LIKE '%/public-objects/%' OR ${schema.emailCampaigns.htmlContent} LIKE '%/uploads/%'`);
+      
+      let updatedCount = 0;
+      
+      for (const campaign of campaigns) {
+        let html = campaign.htmlContent;
+        const originalHtml = html;
+        
+        // Remove hardcoded domains from image URLs, keeping only relative paths
+        // Matches: https://any-domain.com/public-objects/... → /public-objects/...
+        // Matches: https://any-domain.com/uploads/... → /uploads/...
+        html = html.replace(
+          /src="https?:\/\/[^\/]+(\/(public-objects|uploads)\/[^"]+)"/g,
+          'src="$1"'
+        );
+        
+        // Update if changed
+        if (html !== originalHtml) {
+          await db.update(schema.emailCampaigns)
+            .set({ htmlContent: html })
+            .where(eq(schema.emailCampaigns.id, campaign.id));
+          
+          console.log(`✅ Normalized URLs in campaign "${campaign.name}"`);
+          updatedCount++;
+        }
+      }
+      
+      console.log(`🔧 Normalization complete: ${updatedCount} campaigns updated`);
+      
+      res.json({
+        success: true,
+        message: `URLs normalizadas en ${updatedCount} campañas`,
+        updatedCount
+      });
+    } catch (error: any) {
+      console.error('Error fixing image URLs:', error);
+      res.status(500).json({ success: false, message: 'Error al normalizar URLs: ' + error.message });
+    }
+  });
+
   // Send email campaign
   app.post('/api/super-admin/email-campaigns/:id/send', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
@@ -9053,11 +9098,17 @@ Responde directamente a este email para contactar con la persona.
             ? 'https://oficaz.es' 
             : `https://${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}`;
 
+          // Convert all relative image URLs to absolute URLs with production domain
+          // This ensures images work in emails regardless of where the campaign was created
+          let htmlWithTracking = campaign.htmlContent.replace(
+            /src="(\/[^"]+)"/g, 
+            `src="${domain}$1"`
+          );
+
           // Add tracking pixel to HTML (optimized for Outlook compatibility)
           const trackingPixel = `<img src="${domain}/api/track/open/${sendRecord.id}" width="1" height="1" border="0" style="display:block;border:0;outline:none;" alt="" />`;
           
           // Replace button URL with tracking URL
-          let htmlWithTracking = campaign.htmlContent;
           
           // Find button href and replace with tracking URL
           const buttonMatch = htmlWithTracking.match(/<a[^>]*href="([^"]+)"[^>]*style="[^"]*display:\s*inline-block[^"]*"[^>]*>/);
