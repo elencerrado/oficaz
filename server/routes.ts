@@ -9068,6 +9068,7 @@ Responde directamente a este email para contactar con la persona.
           await transporter.sendMail({
             from: '"Oficaz" <soy@oficaz.es>',
             to: email,
+            bcc: 'soy@oficaz.es', // Copia oculta para monitoreo
             subject: campaign.subject,
             html: htmlWithTracking,
           });
