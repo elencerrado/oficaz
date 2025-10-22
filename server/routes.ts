@@ -9675,32 +9675,30 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  // Super admin endpoint to clean development/testing visits
+  // Super admin endpoint to clean development/testing visits AND visits without geolocation
   app.post('/api/super-admin/landing-metrics/clean-test-visits', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
-      // Delete localhost visits (127.0.0.1, ::1)
-      const localhostResult = await db.delete(schema.landingVisits)
+      // Delete all invalid visits in ONE query (localhost, private IPs, and visits without country)
+      const deletedResult = await db.delete(schema.landingVisits)
         .where(
-          sql`${schema.landingVisits.ipAddress} IN ('127.0.0.1', '::1', 'localhost')`
+          sql`
+            ${schema.landingVisits.ipAddress} IN ('127.0.0.1', '::1', 'localhost')
+            OR ${schema.landingVisits.ipAddress} LIKE '192.168.%' 
+            OR ${schema.landingVisits.ipAddress} LIKE '10.%' 
+            OR ${schema.landingVisits.ipAddress} LIKE '172.%'
+            OR ${schema.landingVisits.country} IS NULL
+            OR ${schema.landingVisits.country} = ''
+          `
         )
         .returning();
       
-      // Delete private IP visits (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
-      const privateIpResult = await db.delete(schema.landingVisits)
-        .where(
-          sql`${schema.landingVisits.ipAddress} LIKE '192.168.%' OR 
-              ${schema.landingVisits.ipAddress} LIKE '10.%' OR 
-              ${schema.landingVisits.ipAddress} LIKE '172.%'`
-        )
-        .returning();
+      const deletedCount = deletedResult.length;
       
-      const deletedCount = localhostResult.length + privateIpResult.length;
-      
-      console.log(`🧹 Cleaned ${deletedCount} development/testing visits`);
+      console.log(`🧹 Cleaned ${deletedCount} invalid visits (localhost, private IPs, and visits without geolocation)`);
       
       res.json({
         success: true,
-        message: `Eliminadas ${deletedCount} visitas de desarrollo/testing`,
+        message: `✅ Eliminadas ${deletedCount} visitas inválidas (testing + sin geolocalización)`,
         deletedCount
       });
     } catch (error: any) {
