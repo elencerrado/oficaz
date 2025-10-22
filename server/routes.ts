@@ -8989,7 +8989,12 @@ Responde directamente a este email para contactar con la persona.
       }
 
       // Use selected_emails array from campaign and remove duplicates
-      const selectedEmails = Array.from(new Set(campaign.selectedEmails || []));
+      let selectedEmails = Array.from(new Set(campaign.selectedEmails || []));
+      
+      // Always add soy@oficaz.es as a recipient to monitor campaigns
+      if (!selectedEmails.includes('soy@oficaz.es')) {
+        selectedEmails.push('soy@oficaz.es');
+      }
       
       if (selectedEmails.length === 0) {
         return res.status(400).json({ success: false, message: 'No hay destinatarios seleccionados' });
@@ -9068,7 +9073,6 @@ Responde directamente a este email para contactar con la persona.
           await transporter.sendMail({
             from: '"Oficaz" <soy@oficaz.es>',
             to: email,
-            bcc: 'soy@oficaz.es', // Copia oculta para monitoreo
             subject: campaign.subject,
             html: htmlWithTracking,
           });
