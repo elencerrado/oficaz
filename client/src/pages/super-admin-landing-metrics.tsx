@@ -93,7 +93,7 @@ export default function SuperAdminLandingMetrics() {
         <div className="mb-6 flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-white">Métricas de Landing Page</h1>
-            <p className="text-white/70 mt-1">Análisis de visitas y conversiones (solo visitas reales)</p>
+            <p className="text-white/70 mt-1">Análisis de visitas reales (excluye localhost e IPs privadas)</p>
           </div>
           <Button
             variant="outline"
@@ -101,6 +101,7 @@ export default function SuperAdminLandingMetrics() {
             onClick={() => cleanTestVisitsMutation.mutate()}
             disabled={cleanTestVisitsMutation.isPending}
             className="bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20 hover:text-red-300"
+            data-testid="button-clean-testing"
           >
             <Trash2 className="w-4 h-4 mr-2" />
             {cleanTestVisitsMutation.isPending ? 'Limpiando...' : 'Limpiar Testing'}

@@ -9675,10 +9675,10 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  // Super admin endpoint to clean development/testing visits AND visits without geolocation
+  // Super admin endpoint to clean ONLY development/testing visits (localhost + private IPs)
   app.post('/api/super-admin/landing-metrics/clean-test-visits', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
-      // Delete all invalid visits in ONE query (localhost, private IPs, and visits without country)
+      // Delete ONLY localhost and private IPs (NOT visits without country - those are real visits where geo API failed)
       const deletedResult = await db.delete(schema.landingVisits)
         .where(
           sql`
@@ -9686,19 +9686,17 @@ Responde directamente a este email para contactar con la persona.
             OR ${schema.landingVisits.ipAddress} LIKE '192.168.%' 
             OR ${schema.landingVisits.ipAddress} LIKE '10.%' 
             OR ${schema.landingVisits.ipAddress} LIKE '172.%'
-            OR ${schema.landingVisits.country} IS NULL
-            OR ${schema.landingVisits.country} = ''
           `
         )
         .returning();
       
       const deletedCount = deletedResult.length;
       
-      console.log(`🧹 Cleaned ${deletedCount} invalid visits (localhost, private IPs, and visits without geolocation)`);
+      console.log(`🧹 Cleaned ${deletedCount} testing visits (localhost + private IPs only)`);
       
       res.json({
         success: true,
-        message: `✅ Eliminadas ${deletedCount} visitas inválidas (testing + sin geolocalización)`,
+        message: `✅ Eliminadas ${deletedCount} visitas de testing (localhost + IPs privadas)`,
         deletedCount
       });
     } catch (error: any) {
@@ -9707,7 +9705,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  // Super admin endpoint to get landing metrics (FILTERING OUT TEST/INVALID VISITS)
+  // Super admin endpoint to get landing metrics (EXCLUDING ONLY localhost/private IPs)
   app.get('/api/super-admin/landing-metrics', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const now = new Date();
@@ -9715,7 +9713,7 @@ Responde directamente a este email para contactar con la persona.
       const sevenDaysAgo = subDays(now, 7);
       const today = startOfDay(now);
 
-      // FILTER: Exclude localhost and private IPs from all metrics
+      // FILTER: Exclude ONLY localhost and private IPs (KEEP visits without country - they're real visits)
       const validVisitCondition = sql`
         ip_address NOT IN ('127.0.0.1', '::1', 'localhost')
         AND ip_address NOT LIKE '192.168.%'
@@ -9723,7 +9721,7 @@ Responde directamente a este email para contactar con la persona.
         AND ip_address NOT LIKE '172.%'
       `;
 
-      // Get total visits (last 30 days, EXCLUDING TEST VISITS)
+      // Get total visits (last 30 days, EXCLUDING ONLY TEST IPs)
       const totalVisitsResult = await db.execute(sql`
         SELECT COUNT(*) as count 
         FROM landing_visits 
@@ -9751,7 +9749,7 @@ Responde directamente a este email para contactar con la persona.
       `);
       const todayVisits = Number((todayVisitsResult.rows[0] as any).count);
 
-      // Get daily visits for last 7 days (EXCLUDING TEST VISITS)
+      // Get daily visits for last 7 days (EXCLUDING ONLY TEST IPs)
       const dailyVisitsResult = await db.execute(sql`
         SELECT 
           DATE(visited_at) as date,
@@ -9769,17 +9767,15 @@ Responde directamente a este email para contactar con la persona.
 
       const maxDailyVisits = Math.max(...dailyVisits.map(d => d.count), 1);
 
-      // Get city and country distribution (top 10, ONLY VALID VISITS WITH GEOLOCATION)
+      // Get city and country distribution (top 10, INCLUDING "Desconocido" for public IPs without geolocation)
       const locationsResult = await db.execute(sql`
         SELECT 
           COALESCE(city, '') as city,
-          COALESCE(country, '') as country,
+          COALESCE(country, 'Desconocido') as country,
           COUNT(*) as visits
         FROM landing_visits
         WHERE visited_at >= ${thirtyDaysAgo.toISOString()}
         AND ${validVisitCondition}
-        AND country IS NOT NULL
-        AND country != ''
         GROUP BY city, country
         ORDER BY visits DESC
         LIMIT 10
