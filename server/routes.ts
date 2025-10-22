@@ -8733,9 +8733,13 @@ Responde directamente a este email para contactar con la persona.
       const maxWidth = parseInt(req.body.width) || 600;
       console.log('📏 Resizing image to max width:', maxWidth);
 
-      // Generate unique filename - always use .jpg for email compatibility
-      const timestamp = Date.now();
-      const filename = `email-${timestamp}.jpg`;
+      // Generate filename - use forceFilename if provided (for recovery), otherwise generate new
+      // This allows recovering lost images with their original filename
+      const filename = req.body.forceFilename || `email-${Date.now()}.jpg`;
+      
+      if (req.body.forceFilename) {
+        console.log('🔄 Recovery mode: Using forced filename:', filename);
+      }
 
       // Process image with sharp (compress, resize, and convert to JPG for email compatibility)
       // WEBP and other formats are automatically converted to JPG for maximum email client support

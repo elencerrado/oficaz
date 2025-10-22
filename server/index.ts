@@ -139,8 +139,35 @@ function validateObjectStorageConfig() {
 
 validateObjectStorageConfig();
 
-// Serve uploaded files statically
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+// Serve uploaded files with fallback to Object Storage
+// This allows old email links to work even if files were lost from local filesystem
+app.get("/uploads/:filename", async (req, res, next) => {
+  const filename = req.params.filename;
+  const localPath = path.join(process.cwd(), "uploads", filename);
+  
+  // First, try to serve from local filesystem
+  if (fs.existsSync(localPath)) {
+    return res.sendFile(localPath);
+  }
+  
+  // If not found locally, try Object Storage (for recovered images)
+  try {
+    const { SimpleObjectStorageService } = await import('./objectStorageSimple.js');
+    const objectStorage = new SimpleObjectStorageService();
+    const objectPath = `email-marketing/${filename}`;
+    const file = await objectStorage.searchPublicObject(objectPath);
+    
+    if (file) {
+      console.log(`📦 Serving ${filename} from Object Storage (fallback)`);
+      return await objectStorage.downloadObject(file, res);
+    }
+  } catch (error) {
+    console.error(`Error searching Object Storage for ${filename}:`, error);
+  }
+  
+  // If not found anywhere, return 404
+  res.status(404).send('File not found');
+});
 
 // Serve public files (like email logo) statically
 app.use(express.static(path.join(process.cwd(), "public")));

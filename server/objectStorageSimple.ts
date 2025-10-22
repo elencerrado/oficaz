@@ -115,6 +115,8 @@ export class SimpleObjectStorageService {
       },
     });
 
+    console.log(`📦 Uploaded to Object Storage: ${filename}`);
+
     // Return the public URL path
     return `/public-objects/email-marketing/${filename}`;
   }
