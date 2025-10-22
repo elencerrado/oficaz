@@ -120,6 +120,25 @@ app.use(globalLimiter);
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
+// 📦 Object Storage: Validate configuration on startup
+function validateObjectStorageConfig() {
+  const pathsStr = process.env.PUBLIC_OBJECT_SEARCH_PATHS || "";
+  const paths = pathsStr.split(",").map(p => p.trim()).filter(p => p.length > 0);
+  
+  if (paths.length === 0) {
+    console.warn('⚠️  PUBLIC_OBJECT_SEARCH_PATHS not configured. Object Storage will not work.');
+    console.warn('   Create a bucket in "Object Storage" tool to enable persistent file storage.');
+    return false;
+  }
+  
+  console.log('✓ Object Storage configured:');
+  console.log(`  • Search paths: ${paths.join(', ')}`);
+  console.log(`  • Write path: ${paths[0]} (first entry)`);
+  return true;
+}
+
+validateObjectStorageConfig();
+
 // Serve uploaded files statically
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
