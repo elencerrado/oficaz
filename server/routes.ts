@@ -8876,6 +8876,103 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Migrate email marketing images from filesystem to Object Storage
+  app.post('/api/super-admin/email-marketing/migrate-images', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      console.log('📦 Starting migration of email marketing images to Object Storage...');
+      
+      const uploadDir = path.join(process.cwd(), 'uploads');
+      const { SimpleObjectStorageService } = await import('./objectStorageSimple.js');
+      const objectStorage = new SimpleObjectStorageService();
+      
+      // Get all campaigns
+      const campaigns = await db.select().from(schema.emailCampaigns);
+      console.log(`📦 Found ${campaigns.length} campaigns to check`);
+      
+      let migratedCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
+      
+      for (const campaign of campaigns) {
+        if (!campaign.htmlContent) continue;
+        
+        // Find all image URLs in the campaign HTML that point to /uploads/
+        const uploadImageRegex = /https?:\/\/[^"'\s]+\/uploads\/([^"'\s]+\.(jpg|jpeg|png|gif|webp))/gi;
+        const matches = [...campaign.htmlContent.matchAll(uploadImageRegex)];
+        
+        if (matches.length === 0) continue;
+        
+        console.log(`📦 Campaign "${campaign.name}" (ID: ${campaign.id}) has ${matches.length} images to migrate`);
+        
+        let updatedHtml = campaign.htmlContent;
+        
+        for (const match of matches) {
+          const fullUrl = match[0];
+          const filename = match[1];
+          const filePath = path.join(uploadDir, filename);
+          
+          try {
+            // Check if file exists on filesystem
+            if (!fs.existsSync(filePath)) {
+              console.warn(`⚠️  File not found on filesystem: ${filename}`);
+              errors.push(`File not found: ${filename}`);
+              errorCount++;
+              continue;
+            }
+            
+            // Read the file
+            const fileBuffer = fs.readFileSync(filePath);
+            
+            // Upload to Object Storage
+            const objectPath = await objectStorage.uploadPublicImage(
+              fileBuffer,
+              'image/jpeg', // All email images are JPEGs
+              filename
+            );
+            
+            // Generate new URL
+            const domain = process.env.NODE_ENV === 'production'
+              ? 'https://oficaz.es'
+              : `https://${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}`;
+            const newUrl = `${domain}${objectPath}`;
+            
+            // Replace old URL with new URL in HTML
+            updatedHtml = updatedHtml.replace(fullUrl, newUrl);
+            
+            console.log(`✅ Migrated: ${filename} → ${newUrl}`);
+            migratedCount++;
+            
+          } catch (error: any) {
+            console.error(`❌ Error migrating ${filename}:`, error.message);
+            errors.push(`Error migrating ${filename}: ${error.message}`);
+            errorCount++;
+          }
+        }
+        
+        // Update campaign if HTML changed
+        if (updatedHtml !== campaign.htmlContent) {
+          await db.update(schema.emailCampaigns)
+            .set({ htmlContent: updatedHtml })
+            .where(eq(schema.emailCampaigns.id, campaign.id));
+          console.log(`✅ Updated campaign "${campaign.name}" with new image URLs`);
+        }
+      }
+      
+      console.log(`📦 Migration complete: ${migratedCount} images migrated, ${errorCount} errors`);
+      
+      res.json({
+        success: true,
+        message: 'Migration completed',
+        migratedCount,
+        errorCount,
+        errors: errors.length > 0 ? errors : undefined
+      });
+    } catch (error: any) {
+      console.error('Error migrating email marketing images:', error);
+      res.status(500).json({ success: false, message: 'Error al migrar imágenes: ' + error.message });
+    }
+  });
+
   // Send email campaign
   app.post('/api/super-admin/email-campaigns/:id/send', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
