@@ -1311,6 +1311,26 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // 📦 Object Storage: Serve public objects (email marketing images)
+  // Reference: blueprint:javascript_object_storage
+  app.get("/public-objects/:filePath(*)", async (req, res) => {
+    const filePath = req.params.filePath;
+    try {
+      const { SimpleObjectStorageService } = await import('./objectStorageSimple.js');
+      const objectStorage = new SimpleObjectStorageService();
+      const file = await objectStorage.searchPublicObject(filePath);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      
+      await objectStorage.downloadObject(file, res);
+    } catch (error) {
+      console.error("Error searching for public object:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Company validation endpoints
   app.post('/api/validate-company', async (req, res) => {
     try {
@@ -8678,7 +8698,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  // Upload email marketing image
+  // Upload email marketing image (using Object Storage for persistence)
   app.post('/api/super-admin/email-marketing/upload-image', superAdminSecurityHeaders, authenticateSuperAdmin, upload.single('image'), async (req: any, res) => {
     try {
       console.log('📤 Upload request received. File:', req.file ? 'YES' : 'NO');
@@ -8716,11 +8736,10 @@ Responde directamente a este email para contactar con la persona.
       // Generate unique filename - always use .jpg for email compatibility
       const timestamp = Date.now();
       const filename = `email-${timestamp}.jpg`;
-      const finalPath = path.join(uploadDir, filename);
 
       // Process image with sharp (compress, resize, and convert to JPG for email compatibility)
       // WEBP and other formats are automatically converted to JPG for maximum email client support
-      await sharp(file.path)
+      const processedBuffer = await sharp(file.path)
         .resize(maxWidth, null, { // Max width based on user selection, maintain aspect ratio
           fit: 'inside',
           withoutEnlargement: true
@@ -8729,19 +8748,28 @@ Responde directamente a este email para contactar con la persona.
           quality: 85,
           mozjpeg: true // Better compression
         })
-        .toFile(finalPath);
+        .toBuffer();
 
       // Delete temp file
       fs.unlinkSync(file.path);
+
+      // Upload to Object Storage for persistence
+      const { SimpleObjectStorageService } = await import('./objectStorageSimple.js');
+      const objectStorage = new SimpleObjectStorageService();
+      const objectPath = await objectStorage.uploadPublicImage(
+        processedBuffer,
+        'image/jpeg',
+        filename
+      );
 
       // Return public URL
       const domain = process.env.NODE_ENV === 'production'
         ? 'https://oficaz.es'
         : `https://${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}`;
       
-      const imageUrl = `${domain}/uploads/${filename}`;
+      const imageUrl = `${domain}${objectPath}`;
 
-      console.log(`✅ Email marketing image uploaded: ${imageUrl}`);
+      console.log(`✅ Email marketing image uploaded to Object Storage: ${imageUrl}`);
 
       res.json({ 
         success: true, 
@@ -8756,7 +8784,7 @@ Responde directamente a este email para contactar con la persona.
         fs.unlinkSync(req.file.path);
       }
       
-      res.status(500).json({ success: false, message: 'Error al subir la imagen' });
+      res.status(500).json({ success: false, message: 'Error al subir la imagen: ' + error.message });
     }
   });
 
