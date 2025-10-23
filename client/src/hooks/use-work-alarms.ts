@@ -19,6 +19,7 @@ export function useWorkAlarms() {
   const [serviceWorkerRegistration, setServiceWorkerRegistration] = useState<ServiceWorkerRegistration | null>(null);
   const [pushPermission, setPushPermission] = useState<'granted' | 'denied' | 'default'>('default');
   const [hasSetup, setHasSetup] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   // Convert base64 to Uint8Array for VAPID key
   const urlBase64ToUint8Array = (base64String: string) => {
@@ -70,14 +71,30 @@ export function useWorkAlarms() {
   // Request push notification permission and subscribe
   useEffect(() => {
     const setupPushNotifications = async () => {
-      if (!serviceWorkerRegistration || hasSetup) return;
+      if (!serviceWorkerRegistration) return;
       
-      // Check if already subscribed in this session or previously
-      const alreadySubscribed = localStorage.getItem('pwa-push-subscribed');
-      if (alreadySubscribed) {
-        setHasSetup(true);
-        return;
+      // Get current user ID from auth
+      const authData = localStorage.getItem('authData') || sessionStorage.getItem('authData');
+      if (!authData) return;
+      
+      const parsedAuth = JSON.parse(authData);
+      const userId = parsedAuth?.user?.id;
+      
+      if (!userId) return;
+      
+      // Reset setup if user changed
+      if (currentUserId !== null && currentUserId !== userId) {
+        console.log(`🔄 User changed (${currentUserId} → ${userId}), resetting push setup`);
+        setHasSetup(false);
+        setCurrentUserId(userId);
+        // Remove old subscription flag
+        localStorage.removeItem('pwa-push-subscribed');
+      } else if (currentUserId === null) {
+        setCurrentUserId(userId);
       }
+      
+      // Check if already set up for this user
+      if (hasSetup) return;
       
       setHasSetup(true); // Mark as setup to prevent multiple runs
       
@@ -124,7 +141,7 @@ export function useWorkAlarms() {
     };
 
     setupPushNotifications();
-  }, [serviceWorkerRegistration, hasSetup]);
+  }, [serviceWorkerRegistration, hasSetup, currentUserId]);
 
   // Unsubscribe from push notifications
   const unsubscribe = useCallback(async () => {
