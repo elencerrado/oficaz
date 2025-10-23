@@ -1,5 +1,7 @@
-// Oficaz PWA Service Worker
-const CACHE_NAME = 'oficaz-v1';
+// Oficaz PWA Service Worker - v2.0 (FIXED DUPLICATE NOTIFICATIONS)
+const CACHE_NAME = 'oficaz-v2';
+const SW_INSTANCE_ID = `SW-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+console.log(`[${SW_INSTANCE_ID}] Service Worker v2.0 initializing...`);
 
 // Install event
 self.addEventListener('install', (event) => {
@@ -23,7 +25,7 @@ self.addEventListener('activate', (event) => {
 
 // Push event - Receive push notifications
 self.addEventListener('push', (event) => {
-  console.log('[SW] Push notification received:', event);
+  console.log(`[${SW_INSTANCE_ID}] Push notification received:`, event);
   
   let notificationData = {
     title: 'Oficaz',
@@ -64,15 +66,15 @@ self.addEventListener('push', (event) => {
     }
   }
 
-  console.log('[SW] 🔔 Showing notification with tag:', notificationData.tag);
+  console.log(`[${SW_INSTANCE_ID}] 🔔 About to show notification with tag:`, notificationData.tag);
   
   event.waitUntil(
     self.registration.showNotification(notificationData.title, notificationData)
       .then(() => {
-        console.log('[SW] ✅ Notification displayed successfully with tag:', notificationData.tag);
+        console.log(`[${SW_INSTANCE_ID}] ✅ Notification displayed successfully with tag:`, notificationData.tag);
       })
       .catch(err => {
-        console.error('[SW] ❌ Error showing notification:', err);
+        console.error(`[${SW_INSTANCE_ID}] ❌ Error showing notification:`, err);
       })
   );
 });
