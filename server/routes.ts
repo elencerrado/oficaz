@@ -11092,6 +11092,59 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // List push subscriptions for current user
+  app.get('/api/push/subscriptions', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      const subs = await db.select({
+        id: pushSubscriptions.id,
+        deviceId: pushSubscriptions.deviceId,
+        userAgent: pushSubscriptions.userAgent,
+        createdAt: pushSubscriptions.createdAt,
+        updatedAt: pushSubscriptions.updatedAt,
+        endpoint: pushSubscriptions.endpoint
+      })
+        .from(pushSubscriptions)
+        .where(eq(pushSubscriptions.userId, userId))
+        .orderBy(desc(pushSubscriptions.updatedAt));
+
+      res.json(subs);
+    } catch (error) {
+      console.error('Error fetching push subscriptions:', error);
+      res.status(500).json({ message: 'Failed to fetch subscriptions' });
+    }
+  });
+
+  // Delete specific push subscription
+  app.delete('/api/push/subscriptions/:id', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const subscriptionId = parseInt(req.params.id);
+
+      // Verify ownership before deleting
+      const [subscription] = await db.select()
+        .from(pushSubscriptions)
+        .where(and(
+          eq(pushSubscriptions.id, subscriptionId),
+          eq(pushSubscriptions.userId, userId)
+        ))
+        .limit(1);
+
+      if (!subscription) {
+        return res.status(404).json({ message: 'Subscription not found' });
+      }
+
+      await db.delete(pushSubscriptions)
+        .where(eq(pushSubscriptions.id, subscriptionId));
+
+      res.json({ message: 'Subscription deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting push subscription:', error);
+      res.status(500).json({ message: 'Failed to delete subscription' });
+    }
+  });
+
   // Unsubscribe from push notifications
   app.post('/api/push/unsubscribe', authenticateToken, async (req: AuthRequest, res) => {
     try {

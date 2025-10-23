@@ -60,6 +60,7 @@ import EmployeesSimple from "@/pages/employees-simple";
 import Settings from "@/pages/settings";
 import EmployeeProfile from "@/pages/employee-profile";
 import EmployeeSchedule from "@/pages/employee-schedule";
+import NotificationDevices from "@/pages/notification-devices";
 
 // Super admin pages - lazy loaded (rarely accessed)
 const SuperAdminSecurity = lazy(() => import("@/pages/super-admin-security"));
@@ -474,6 +475,14 @@ function Router() {
         <ProtectedRoute>
           <AppLayout>
             <EmployeeProfile />
+          </AppLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/:companyAlias/dispositivos">
+        <ProtectedRoute>
+          <AppLayout>
+            <NotificationDevices />
           </AppLayout>
         </ProtectedRoute>
       </Route>
