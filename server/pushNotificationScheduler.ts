@@ -123,7 +123,7 @@ async function getWorkStatus(userId: number): Promise<WorkStatus> {
 }
 
 // Function to send push notification to user
-async function sendPushNotification(userId: number, title: string, alarmType: 'clock_in' | 'clock_out') {
+async function sendPushNotification(userId: number, title: string, alarmType: 'clock_in' | 'clock_out', alarmId: number) {
   try {
     // Get all push subscriptions for this user
     const allSubscriptions = await db.select()
@@ -190,9 +190,10 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
 
     console.log(`🔔 Preparing notification with ${actions.length} action(s):`, actions.map(a => a.action));
 
-    // 🔒 CRITICAL: Use SAME tag for all devices to deduplicate notifications
-    // Tag format: work-alarm-{userId}-{type} - OS will show only ONE notification across all devices
-    const notificationTag = `work-alarm-${userId}-${alarmType}`;
+    // 🔒 CRITICAL: Use alarm-specific tag to deduplicate across multiple service workers
+    // Tag format: alarm-{alarmId}-{minute} - iOS will show only ONE notification even with duplicate SWs
+    const currentMinute = `${new Date().getFullYear()}-${new Date().getMonth()}-${new Date().getDate()}-${new Date().getHours()}:${new Date().getMinutes()}`;
+    const notificationTag = `alarm-${alarmId}-${currentMinute}`;
     
     const payload = JSON.stringify({
       title: 'Oficaz',
@@ -217,7 +218,6 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
 
     // Send to all user's devices
     const now = Date.now();
-    const currentMinute = `${new Date().getFullYear()}-${new Date().getMonth()}-${new Date().getDate()}-${new Date().getHours()}:${new Date().getMinutes()}`;
     
     const promises = subscriptions.map(async (sub) => {
       // 🔒 CRITICAL: Prevent duplicate sends to same endpoint within throttle period
@@ -459,7 +459,7 @@ export async function checkWorkAlarms() {
       if (shouldTrigger) {
         console.log(`⏰ TRIGGERING ALARM: ${alarm.title} for user ${alarm.userId} at ${currentTime}`);
         
-        await sendPushNotification(alarm.userId, alarm.title, alarm.type as 'clock_in' | 'clock_out');
+        await sendPushNotification(alarm.userId, alarm.title, alarm.type as 'clock_in' | 'clock_out', alarm.id);
         
         // Mark as sent for this specific minute
         checkedAlarms.set(checkKey, now);
