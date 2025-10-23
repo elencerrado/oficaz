@@ -53,6 +53,8 @@ export default function SuperAdminMarketing() {
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [prospectToDelete, setProspectToDelete] = useState<number | null>(null);
+  const [whatsappFilter, setWhatsappFilter] = useState<string>('all');
+  const [instagramFilter, setInstagramFilter] = useState<string>('all');
   
   // Sending progress dialog states
   const [sendingProgress, setSendingProgress] = useState<{
@@ -153,6 +155,20 @@ export default function SuperAdminMarketing() {
       });
     }
     
+    // Apply WhatsApp filter
+    if (whatsappFilter !== 'all') {
+      result = result.filter((prospect: any) => {
+        return prospect.whatsappConversationStatus === whatsappFilter;
+      });
+    }
+    
+    // Apply Instagram filter
+    if (instagramFilter !== 'all') {
+      result = result.filter((prospect: any) => {
+        return prospect.instagramConversationStatus === instagramFilter;
+      });
+    }
+    
     // Apply sorting
     if (sortField) {
       result.sort((a: any, b: any) => {
@@ -168,7 +184,7 @@ export default function SuperAdminMarketing() {
     }
     
     return result;
-  }, [prospects, searchTerm, sortField, sortDirection]);
+  }, [prospects, searchTerm, whatsappFilter, instagramFilter, sortField, sortDirection]);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -681,17 +697,73 @@ export default function SuperAdminMarketing() {
                       </div>
                     </div>
                     
-                    {/* Search Row */}
-                    <div className="relative w-full">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
-                      <Input
-                        type="text"
-                        placeholder="Buscar por cualquier campo..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="bg-white/10 border-white/20 text-white placeholder:text-white/40 pl-10 w-full"
-                        data-testid="input-search-prospects"
-                      />
+                    {/* Search and Filters Row */}
+                    <div className="space-y-3">
+                      <div className="relative w-full">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
+                        <Input
+                          type="text"
+                          placeholder="Buscar por cualquier campo..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="bg-white/10 border-white/20 text-white placeholder:text-white/40 pl-10 w-full"
+                          data-testid="input-search-prospects"
+                        />
+                      </div>
+                      
+                      {/* Conversation Status Filters */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-white/70 text-sm">Filtrar por estado:</span>
+                        
+                        {/* WhatsApp Filter */}
+                        <div className="flex items-center gap-1.5">
+                          <FaWhatsapp className="w-4 h-4 text-green-400" />
+                          <select
+                            value={whatsappFilter}
+                            onChange={(e) => setWhatsappFilter(e.target.value)}
+                            className="text-xs px-2 py-1.5 rounded bg-white/10 border border-white/20 text-white cursor-pointer"
+                            data-testid="select-filter-whatsapp"
+                          >
+                            <option value="all" className="bg-gray-800">Todos</option>
+                            <option value="not_contacted" className="bg-gray-800">Sin hablar</option>
+                            <option value="no_response" className="bg-gray-800">Sin respuesta</option>
+                            <option value="in_conversation" className="bg-gray-800">Hablando</option>
+                            <option value="not_interested" className="bg-gray-800">No interesa</option>
+                            <option value="closed" className="bg-gray-800">Cerrado</option>
+                          </select>
+                        </div>
+                        
+                        {/* Instagram Filter */}
+                        <div className="flex items-center gap-1.5">
+                          <FaInstagram className="w-4 h-4 text-pink-400" />
+                          <select
+                            value={instagramFilter}
+                            onChange={(e) => setInstagramFilter(e.target.value)}
+                            className="text-xs px-2 py-1.5 rounded bg-white/10 border border-white/20 text-white cursor-pointer"
+                            data-testid="select-filter-instagram"
+                          >
+                            <option value="all" className="bg-gray-800">Todos</option>
+                            <option value="not_contacted" className="bg-gray-800">Sin hablar</option>
+                            <option value="no_response" className="bg-gray-800">Sin respuesta</option>
+                            <option value="in_conversation" className="bg-gray-800">Hablando</option>
+                            <option value="not_interested" className="bg-gray-800">No interesa</option>
+                            <option value="closed" className="bg-gray-800">Cerrado</option>
+                          </select>
+                        </div>
+                        
+                        {/* Clear filters button */}
+                        {(whatsappFilter !== 'all' || instagramFilter !== 'all') && (
+                          <button
+                            onClick={() => {
+                              setWhatsappFilter('all');
+                              setInstagramFilter('all');
+                            }}
+                            className="text-xs px-2 py-1.5 rounded bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-colors"
+                          >
+                            Limpiar filtros
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardHeader>
