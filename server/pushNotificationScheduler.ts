@@ -611,7 +611,8 @@ export async function sendPayrollNotification(userId: number, documentName: stri
     // Send to all unique devices
     for (const sub of uniqueSubscriptions) {
       try {
-        await webpush.sendNotification(
+        console.log(`📤 Attempting to send payroll notification to device: ${sub.endpoint.substring(0, 50)}...`);
+        const result = await webpush.sendNotification(
           {
             endpoint: sub.endpoint,
             keys: {
@@ -621,14 +622,17 @@ export async function sendPayrollNotification(userId: number, documentName: stri
           },
           payload
         );
-        console.log(`✅ Payroll notification sent to user ${userId}`);
+        console.log(`✅ Payroll notification successfully sent to user ${userId}, status: ${result.statusCode}`);
       } catch (error: any) {
         if (error.statusCode === 410 || error.statusCode === 404) {
-          console.log(`🗑️  Removing invalid subscription for user ${userId}`);
+          console.log(`🗑️  Removing invalid subscription for user ${userId} (status: ${error.statusCode})`);
           await db.delete(pushSubscriptions)
             .where(eq(pushSubscriptions.endpoint, sub.endpoint));
         } else {
-          console.error(`❌ Error sending payroll notification to user ${userId}:`, error);
+          console.error(`❌ Error sending payroll notification to user ${userId}:`);
+          console.error(`   Status Code: ${error.statusCode}`);
+          console.error(`   Message: ${error.message}`);
+          console.error(`   Body: ${error.body}`);
         }
       }
     }
