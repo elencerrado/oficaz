@@ -3949,7 +3949,8 @@ Responde directamente a este email para contactar con la persona.
           await sendVacationNotification(request.userId, status, {
             startDate: request.startDate,
             endDate: request.endDate,
-            adminComment
+            adminComment,
+            requestId: request.id
           });
           console.log(`📱 Vacation ${status} notification sent to user ${request.userId}`);
         } catch (error) {

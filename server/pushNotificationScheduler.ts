@@ -185,9 +185,9 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
 
     console.log(`🔔 Preparing notification with ${actions.length} action(s):`, actions.map(a => a.action));
 
-    // Use unique tag per notification to avoid replacement on iOS
-    // But include userId in tag for tracking
-    const notificationTag = `work-alarm-${userId}-${Date.now()}`;
+    // 🔒 CRITICAL: Use SAME tag for all devices to deduplicate notifications
+    // Tag format: work-alarm-{userId}-{type} - OS will show only ONE notification across all devices
+    const notificationTag = `work-alarm-${userId}-${alarmType}`;
     
     const payload = JSON.stringify({
       title: 'Oficaz',
@@ -460,6 +460,7 @@ export async function sendVacationNotification(
     startDate: Date;
     endDate: Date;
     adminComment?: string;
+    requestId?: number;
   }
 ) {
   try {
@@ -515,7 +516,7 @@ export async function sendVacationNotification(
       badge: '/icon-192.png',
       vibrate: [200, 100, 200],
       requireInteraction: true,
-      tag: `vacation-${status}-${userId}-${Date.now()}`,
+      tag: details.requestId ? `vacation-${status}-${details.requestId}` : `vacation-${status}-${userId}`,
       data: {
         url: '/employee/vacaciones',
         type: 'vacation_update',
@@ -584,9 +585,9 @@ export async function sendPayrollNotification(userId: number, documentName: stri
     
     const uniqueSubscriptions = Array.from(deviceMap.values());
     
-    // Use document ID for unique tag to prevent duplicate notifications for same document
-    // This allows multiple notifications for different documents but deduplicates same document
-    const notificationTag = documentId ? `payroll-${documentId}` : `payroll-${userId}-${Date.now()}`;
+    // 🔒 CRITICAL: Use document ID for tag to deduplicate across all devices
+    // Same document = same tag = only ONE notification shown across all devices
+    const notificationTag = documentId ? `payroll-${documentId}` : `payroll-${userId}`;
     
     const payload = JSON.stringify({
       title: '📄 Nueva Nómina Pendiente',
@@ -668,8 +669,9 @@ export async function sendNewDocumentNotification(userId: number, documentName: 
     
     const uniqueSubscriptions = Array.from(deviceMap.values());
     
-    // Use document ID for unique tag to prevent duplicate notifications for same document
-    const notificationTag = documentId ? `document-${documentId}` : `document-new-${userId}-${Date.now()}`;
+    // 🔒 CRITICAL: Use document ID for tag to deduplicate across all devices
+    // Same document = same tag = only ONE notification shown across all devices
+    const notificationTag = documentId ? `document-${documentId}` : `document-new-${userId}`;
     
     const payload = JSON.stringify({
       title: '📎 Nuevo Documento',
@@ -754,7 +756,7 @@ export async function sendDocumentRequestNotification(userId: number, documentTy
       badge: '/icon-192.png',
       vibrate: [200, 100, 200],
       requireInteraction: true,
-      tag: `document-request-${userId}-${Date.now()}`,
+      tag: `document-request-${userId}-${documentType}`,
       data: {
         url: '/employee/documentos',
         type: 'document_request',
