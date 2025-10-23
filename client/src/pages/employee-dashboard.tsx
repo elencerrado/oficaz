@@ -205,14 +205,6 @@ export default function EmployeeDashboard() {
     if (hasUpdates) {
       console.log('Dashboard setting vacation notification flag for', newlyProcessedRequests.length, 'requests');
       localStorage.setItem('hasVacationUpdates', 'true');
-      
-      // Show browser notification if supported
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Oficaz - Vacaciones', {
-          body: `Tienes ${newlyProcessedRequests.length} solicitud(es) de vacaciones procesada(s)`,
-          icon: '/favicon.ico'
-        });
-      }
     } else {
       setHasVacationUpdates(false);
     }
