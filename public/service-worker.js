@@ -83,16 +83,23 @@ self.addEventListener('notificationclick', (event) => {
   if (action && action !== 'open') {
     console.log('[SW] Action button clicked:', action, 'userId:', notificationData.userId);
     
+    // Get auth token from notification data
+    const authToken = notificationData.authToken;
+    if (!authToken) {
+      console.error('[SW] No auth token in notification data');
+      return;
+    }
+    
     // Perform the work action via API
     event.waitUntil(
       fetch('/api/push/work-action', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
         },
         credentials: 'include', // Include cookies for auth
         body: JSON.stringify({
-          userId: notificationData.userId,
           action: action,
           sessionId: notificationData.sessionId,
           breakId: notificationData.breakId

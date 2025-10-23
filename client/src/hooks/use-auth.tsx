@@ -230,8 +230,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data;
   };
 
-  const logout = () => {
+  const logout = async () => {
     console.log('🚪 LOGOUT - CLEARING ALL CACHE AND AUTH DATA');
+    
+    // Unsubscribe from push notifications before logout
+    try {
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        
+        if (subscription && token) {
+          console.log('📱 Unsubscribing from push notifications...');
+          // Unsubscribe from server
+          await fetch('/api/push/unsubscribe', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ endpoint: subscription.endpoint })
+          });
+          
+          // Unsubscribe from browser
+          await subscription.unsubscribe();
+          console.log('✅ Push notifications unsubscribed');
+        }
+      }
+    } catch (error) {
+      console.error('⚠️ Error unsubscribing from push notifications:', error);
+      // Continue with logout even if unsubscribe fails
+    }
     
     // Clear state immediately
     setUser(null);

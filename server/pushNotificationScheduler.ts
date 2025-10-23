@@ -1,7 +1,9 @@
 import webpush from 'web-push';
+import jwt from 'jsonwebtoken';
 import { db } from './db';
 import { eq, and, isNull } from 'drizzle-orm';
-import { workAlarms, pushSubscriptions, workSessions, breakPeriods } from '@shared/schema';
+import { workAlarms, pushSubscriptions, workSessions, breakPeriods, users } from '@shared/schema';
+import { JWT_SECRET } from './utils/jwt-secret.js';
 
 interface AlarmCheck {
   alarmId: number;
@@ -127,6 +129,26 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
       return;
     }
 
+    // Get user info for token generation
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      console.error(`❌ User ${userId} not found`);
+      return;
+    }
+
+    // Generate temporary JWT token valid for 5 minutes (for push notification actions)
+    const tempToken = jwt.sign({
+      id: user.id,
+      email: user.personalEmail || user.companyEmail || `user_${user.id}@temp.com`,
+      role: user.role,
+      companyId: user.companyId,
+      pushAction: true // Mark as push action token
+    }, JWT_SECRET, { expiresIn: '5m' });
+
     // Get current work status to determine available actions
     const workStatus = await getWorkStatus(userId);
     console.log(`📊 User ${userId} work status: ${workStatus.status}, ${workStatus.buttons.length} button(s)`);
@@ -159,7 +181,8 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
         userId,
         sessionId: workStatus.sessionId,
         breakId: workStatus.breakId,
-        workStatus: workStatus.status
+        workStatus: workStatus.status,
+        authToken: tempToken // Include temporary auth token
       },
       actions
     });

@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+import { JWT_SECRET } from '../utils/jwt-secret.js';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -9,6 +8,7 @@ export interface AuthRequest extends Request {
     email: string;
     role: string;
     companyId: number;
+    pushAction?: boolean; // Flag for push notification action tokens
   };
 }
 
@@ -40,6 +40,7 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
       email: decoded.email || decoded.username, // Support both for transition
       role: decoded.role,
       companyId: decoded.companyId,
+      pushAction: decoded.pushAction || false, // Include pushAction flag if present
     };
     next();
   });

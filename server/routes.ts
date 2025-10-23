@@ -11112,10 +11112,17 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  // Handle work action from push notification
-  app.post('/api/push/work-action', async (req, res) => {
+  // Handle work action from push notification - SECURED WITH JWT
+  app.post('/api/push/work-action', authenticateToken, async (req: AuthRequest, res) => {
     try {
-      const { userId, action, sessionId, breakId } = req.body;
+      // 🔒 SECURITY: Verify this is a push action token (not a regular session token)
+      if (!req.user!.pushAction) {
+        console.log(`❌ Rejected work action: Not a push action token for user ${req.user!.id}`);
+        return res.status(403).json({ success: false, message: 'Invalid token type' });
+      }
+      
+      const { action, sessionId, breakId } = req.body;
+      const userId = req.user!.id; // Get userId from authenticated token
       
       console.log(`🔔 Push action received:`, { userId, action, sessionId, breakId });
 
