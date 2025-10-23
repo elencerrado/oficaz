@@ -30,6 +30,11 @@ interface WorkStatus {
 const checkedAlarms = new Map<string, Date>();
 const sentIncompleteSessionNotifications = new Map<string, Date>(); // Track daily incomplete session notifications
 
+// 🔒 CRITICAL iOS SAFARI BUG WORKAROUND: Prevent duplicate push sends within 10 seconds
+// Maps "userId-endpoint-notificationType-minute" -> timestamp of last send
+const recentPushSends = new Map<string, number>();
+const PUSH_SEND_THROTTLE_MS = 10000; // 10 seconds
+
 // Helper function to check if alarm should trigger now
 function shouldTriggerAlarm(alarmTime: string, weekdays: number[]): boolean {
   const now = new Date();
@@ -211,7 +216,19 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
     });
 
     // Send to all user's devices
+    const now = Date.now();
+    const currentMinute = `${new Date().getFullYear()}-${new Date().getMonth()}-${new Date().getDate()}-${new Date().getHours()}:${new Date().getMinutes()}`;
+    
     const promises = subscriptions.map(async (sub) => {
+      // 🔒 CRITICAL: Prevent duplicate sends to same endpoint within throttle period
+      const throttleKey = `${userId}-${sub.endpoint}-${alarmType}-${currentMinute}`;
+      const lastSend = recentPushSends.get(throttleKey);
+      
+      if (lastSend && (now - lastSend) < PUSH_SEND_THROTTLE_MS) {
+        console.log(`⏭️  SKIPPING duplicate push send to endpoint (last sent ${now - lastSend}ms ago)`);
+        return;
+      }
+      
       try {
         await webpush.sendNotification(
           {
@@ -223,6 +240,17 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
           },
           payload
         );
+        
+        // Mark this send in the throttle cache
+        recentPushSends.set(throttleKey, now);
+        
+        // Clean up old entries (older than throttle period)
+        for (const [key, timestamp] of Array.from(recentPushSends.entries())) {
+          if (now - timestamp > PUSH_SEND_THROTTLE_MS) {
+            recentPushSends.delete(key);
+          }
+        }
+        
         console.log(`✅ Push notification sent to user ${userId} with ${actions.length} action(s)`);
       } catch (error: any) {
         // If subscription is invalid, remove it
