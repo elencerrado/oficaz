@@ -4255,7 +4255,7 @@ Responde directamente a este email para contactar con la persona.
         fileName: req.file.filename,
         originalName: finalOriginalName,
         fileSize: req.file.size,
-        filePath: req.file.path,
+        filePath: req.file.filename, // Store only filename, not full path
         mimeType: req.file.mimetype || null,
         uploadedBy: req.user!.id,
       });
@@ -4372,7 +4372,7 @@ Responde directamente a este email para contactar con la persona.
         fileName: req.file.filename,
         originalName: originalName,
         fileSize: req.file.size,
-        filePath: req.file.path,
+        filePath: req.file.filename, // Store only filename, not full path
         mimeType: req.file.mimetype || null,
         uploadedBy: req.user!.id,
       });
