@@ -4391,11 +4391,11 @@ Responde directamente a este email para contactar con la persona.
                          originalName.toLowerCase().includes('nómina');
         
         if (isPayroll) {
-          await sendPayrollNotification(targetEmployeeId, originalName);
-          console.log(`📱 Payroll notification sent for document: ${originalName}`);
+          await sendPayrollNotification(targetEmployeeId, originalName, document.id);
+          console.log(`📱 Payroll notification sent for document ID ${document.id}: ${originalName}`);
         } else {
-          await sendNewDocumentNotification(targetEmployeeId, originalName);
-          console.log(`📱 New document notification sent for: ${originalName}`);
+          await sendNewDocumentNotification(targetEmployeeId, originalName, document.id);
+          console.log(`📱 New document notification sent for document ID ${document.id}: ${originalName}`);
         }
       } catch (error) {
         console.error('Error sending document push notification:', error);

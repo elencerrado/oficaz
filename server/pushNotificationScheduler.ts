@@ -558,9 +558,9 @@ export async function sendVacationNotification(
 }
 
 // Function to send payroll document notification (pending signature)
-export async function sendPayrollNotification(userId: number, documentName: string) {
+export async function sendPayrollNotification(userId: number, documentName: string, documentId?: number) {
   try {
-    console.log(`📱 Sending payroll notification to user ${userId}`);
+    console.log(`📱 Sending payroll notification to user ${userId} for document ${documentId || 'unknown'}`);
     
     // Get push subscriptions for the user
     const subscriptions = await db.select()
@@ -584,6 +584,10 @@ export async function sendPayrollNotification(userId: number, documentName: stri
     
     const uniqueSubscriptions = Array.from(deviceMap.values());
     
+    // Use document ID for unique tag to prevent duplicate notifications for same document
+    // This allows multiple notifications for different documents but deduplicates same document
+    const notificationTag = documentId ? `payroll-${documentId}` : `payroll-${userId}-${Date.now()}`;
+    
     const payload = JSON.stringify({
       title: '📄 Nueva Nómina Pendiente',
       body: 'Tienes una nueva nómina pendiente de firmar',
@@ -591,12 +595,13 @@ export async function sendPayrollNotification(userId: number, documentName: stri
       badge: '/icon-192.png',
       vibrate: [200, 100, 200],
       requireInteraction: true,
-      tag: `payroll-${userId}-${Date.now()}`,
+      tag: notificationTag,
       data: {
         url: '/employee/documentos',
         type: 'payroll_pending',
         timestamp: Date.now(),
-        userId
+        userId,
+        documentId
       },
       actions: [
         { action: 'view', title: 'Ver nómina', icon: '/icon-192.png' }
@@ -633,9 +638,9 @@ export async function sendPayrollNotification(userId: number, documentName: stri
 }
 
 // Function to send new document notification
-export async function sendNewDocumentNotification(userId: number, documentName: string) {
+export async function sendNewDocumentNotification(userId: number, documentName: string, documentId?: number) {
   try {
-    console.log(`📱 Sending new document notification to user ${userId}`);
+    console.log(`📱 Sending new document notification to user ${userId} for document ${documentId || 'unknown'}`);
     
     // Get push subscriptions for the user
     const subscriptions = await db.select()
@@ -659,6 +664,9 @@ export async function sendNewDocumentNotification(userId: number, documentName: 
     
     const uniqueSubscriptions = Array.from(deviceMap.values());
     
+    // Use document ID for unique tag to prevent duplicate notifications for same document
+    const notificationTag = documentId ? `document-${documentId}` : `document-new-${userId}-${Date.now()}`;
+    
     const payload = JSON.stringify({
       title: '📎 Nuevo Documento',
       body: 'Tienes un nuevo documento disponible',
@@ -666,12 +674,13 @@ export async function sendNewDocumentNotification(userId: number, documentName: 
       badge: '/icon-192.png',
       vibrate: [200, 100, 200],
       requireInteraction: true,
-      tag: `document-new-${userId}-${Date.now()}`,
+      tag: notificationTag,
       data: {
         url: '/employee/documentos',
         type: 'document_new',
         timestamp: Date.now(),
-        userId
+        userId,
+        documentId
       },
       actions: [
         { action: 'view', title: 'Ver documentos', icon: '/icon-192.png' }
