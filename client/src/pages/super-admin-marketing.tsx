@@ -172,6 +172,32 @@ export default function SuperAdminMarketing() {
     // Apply sorting
     if (sortField) {
       result.sort((a: any, b: any) => {
+        // Special handling for tags (array field)
+        if (sortField === 'tags') {
+          const aTagCount = (a.tags || []).length;
+          const bTagCount = (b.tags || []).length;
+          
+          // Sort by number of tags first
+          if (aTagCount !== bTagCount) {
+            if (sortDirection === 'asc') {
+              return aTagCount - bTagCount;
+            } else {
+              return bTagCount - aTagCount;
+            }
+          }
+          
+          // If same number of tags, sort alphabetically by first tag
+          const aFirstTag = (a.tags && a.tags[0]) ? a.tags[0].toLowerCase() : '';
+          const bFirstTag = (b.tags && b.tags[0]) ? b.tags[0].toLowerCase() : '';
+          
+          if (sortDirection === 'asc') {
+            return aFirstTag > bFirstTag ? 1 : aFirstTag < bFirstTag ? -1 : 0;
+          } else {
+            return aFirstTag < bFirstTag ? 1 : aFirstTag > bFirstTag ? -1 : 0;
+          }
+        }
+        
+        // Standard sorting for other fields
         const aVal = a[sortField] || '';
         const bVal = b[sortField] || '';
         
@@ -854,7 +880,19 @@ export default function SuperAdminMarketing() {
                                 )}
                               </div>
                             </TableHead>
-                            <TableHead className="text-white/90">Tags</TableHead>
+                            <TableHead 
+                              className="text-white/90 cursor-pointer hover:text-white select-none"
+                              onClick={() => handleSort('tags')}
+                            >
+                              <div className="flex items-center gap-1">
+                                Tags
+                                {sortField === 'tags' ? (
+                                  sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                                ) : (
+                                  <ArrowUpDown className="w-3 h-3 opacity-40" />
+                                )}
+                              </div>
+                            </TableHead>
                             <TableHead className="text-white/90">Notas</TableHead>
                             <TableHead className="text-white/90 w-24">Acciones</TableHead>
                           </TableRow>
