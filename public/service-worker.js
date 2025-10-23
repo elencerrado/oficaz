@@ -64,8 +64,16 @@ self.addEventListener('push', (event) => {
     }
   }
 
+  console.log('[SW] 🔔 Showing notification with tag:', notificationData.tag);
+  
   event.waitUntil(
     self.registration.showNotification(notificationData.title, notificationData)
+      .then(() => {
+        console.log('[SW] ✅ Notification displayed successfully with tag:', notificationData.tag);
+      })
+      .catch(err => {
+        console.error('[SW] ❌ Error showing notification:', err);
+      })
   );
 });
 
