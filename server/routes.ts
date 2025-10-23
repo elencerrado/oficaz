@@ -4288,13 +4288,14 @@ Responde directamente a este email para contactar con la persona.
         }
       }
       
+      // ⚠️ CLEANUP TEMPORARILY DISABLED FOR DEBUGGING
       // Clean up orphaned documents from database
       if (orphanedDocuments.length > 0) {
-        console.log(`CLEANUP: User ${req.user!.id} - Removing ${orphanedDocuments.length} orphaned document records`);
+        console.log(`⚠️ CLEANUP DISABLED: User ${req.user!.id} - Would have removed ${orphanedDocuments.length} orphaned document records`);
         for (const orphanDoc of orphanedDocuments) {
-          await storage.deleteDocument(orphanDoc.id);
-          console.log(`CLEANUP: User ${req.user!.id} - Deleted orphaned document record ${orphanDoc.id} - ${orphanDoc.originalName}`);
+          console.log(`⚠️ CLEANUP DISABLED: User ${req.user!.id} - Would have deleted document ${orphanDoc.id} - ${orphanDoc.originalName}`);
         }
+        // TEMPORARILY DISABLED: await storage.deleteDocument(orphanDoc.id);
       }
       
       res.json(validDocuments);
@@ -4323,13 +4324,14 @@ Responde directamente a este email para contactar con la persona.
         }
       }
       
+      // ⚠️ CLEANUP TEMPORARILY DISABLED FOR DEBUGGING
       // Clean up orphaned documents from database
       if (orphanedDocuments.length > 0) {
-        console.log(`CLEANUP: Removing ${orphanedDocuments.length} orphaned document records from database`);
+        console.log(`⚠️ CLEANUP DISABLED: Would have removed ${orphanedDocuments.length} orphaned document records`);
         for (const orphanDoc of orphanedDocuments) {
-          await storage.deleteDocument(orphanDoc.id);
-          console.log(`CLEANUP: Deleted orphaned document record ${orphanDoc.id} - ${orphanDoc.originalName}`);
+          console.log(`⚠️ CLEANUP DISABLED: Would have deleted document ${orphanDoc.id} - ${orphanDoc.originalName}`);
         }
+        // TEMPORARILY DISABLED: await storage.deleteDocument(orphanDoc.id);
       }
       
       res.json(validDocuments);
