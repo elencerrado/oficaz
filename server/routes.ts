@@ -4314,6 +4314,7 @@ Responde directamente a este email para contactar con la persona.
       
       for (const document of allDocuments) {
         const filePath = path.join(uploadDir, document.fileName);
+        console.log(`🔍 CLEANUP DEBUG: Doc ${document.id} | fileName: ${document.fileName} | filePath DB: ${document.filePath} | looking for: ${filePath} | exists: ${fs.existsSync(filePath)}`);
         if (fs.existsSync(filePath)) {
           validDocuments.push(document);
         } else {
