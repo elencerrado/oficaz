@@ -843,6 +843,10 @@ export const emailProspects = pgTable("email_prospects", {
   tags: text("tags").array().default([]), // Etiquetas para segmentación
   status: varchar("status", { length: 50 }).default("active").notNull(), // active, unsubscribed, bounced
   notes: text("notes"),
+  // Contact tracking fields
+  whatsappContacted: boolean("whatsapp_contacted").default(false).notNull(),
+  instagramContacted: boolean("instagram_contacted").default(false).notNull(),
+  conversationStatus: varchar("conversation_status", { length: 50 }).default("not_contacted").notNull(), // not_contacted, no_response, in_conversation, not_interested, closed
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
