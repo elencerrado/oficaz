@@ -732,14 +732,8 @@ export default function AdminDocuments() {
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
       
-      // Crear enlace de visualización sin salir del modo standalone
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.target = '_self'; // Abrir en la misma ventana para mantener standalone
-      link.rel = 'noopener noreferrer';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Open in new tab to avoid Chrome blocking
+      window.open(blobUrl, '_blank');
       
       // Clean up blob URL after opening
       setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
