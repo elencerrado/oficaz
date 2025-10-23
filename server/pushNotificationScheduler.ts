@@ -806,26 +806,42 @@ declare global {
   var pushSchedulerRunning: boolean | undefined;
 }
 
+// Call counter for debugging
+let startCallCount = 0;
+
 // Start the scheduler
 export function startPushNotificationScheduler() {
-  console.log('🚀 Starting Push Notification Scheduler...');
+  startCallCount++;
+  const processId = `PID-${process.pid}`;
+  const callNum = startCallCount;
+  console.log(`🚀 [CALL #${callNum}] Starting Push Notification Scheduler... [${processId}]`);
+  console.log(`📊 [CALL #${callNum}] Call stack:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
+  
+  // 🔒 CRITICAL: Only ONE instance should run - prevent duplicates
+  if (global.pushSchedulerRunning) {
+    console.log(`⚠️  [CALL #${callNum}] Push Notification Scheduler already running - skipping [${processId}]`);
+    return {
+      alarmInterval: global.pushSchedulerAlarmInterval,
+      incompleteSessionInterval: global.pushSchedulerIncompleteInterval
+    };
+  }
   
   // 🔒 CRITICAL: ALWAYS clear existing intervals (prevents duplicates from hot reloads)
   // This is MORE important than checking if scheduler is running, because hot reloads
   // can leave orphaned intervals running even after the module reloads
   if (global.pushSchedulerAlarmInterval) {
-    console.log('🧹 Forcefully clearing old alarm interval (hot reload cleanup)');
+    console.log(`🧹 Forcefully clearing old alarm interval (hot reload cleanup) [${processId}]`);
     clearInterval(global.pushSchedulerAlarmInterval);
     global.pushSchedulerAlarmInterval = undefined;
   }
   if (global.pushSchedulerIncompleteInterval) {
-    console.log('🧹 Forcefully clearing old incomplete session interval (hot reload cleanup)');
+    console.log(`🧹 Forcefully clearing old incomplete session interval (hot reload cleanup) [${processId}]`);
     clearInterval(global.pushSchedulerIncompleteInterval);
     global.pushSchedulerIncompleteInterval = undefined;
   }
   
-  // Reset running flag
-  global.pushSchedulerRunning = false;
+  // Mark as running BEFORE creating intervals
+  global.pushSchedulerRunning = true;
   
   // Check every 30 seconds for work alarms
   const intervalId = Math.random().toString(36).substring(7);
@@ -847,13 +863,8 @@ export function startPushNotificationScheduler() {
   // Mark as running
   global.pushSchedulerRunning = true;
   
-  // Run immediately on start
-  checkWorkAlarms().catch(err => {
-    console.error('❌ Error in initial alarm check:', err);
-  });
-  checkIncompleteSessions().catch(err => {
-    console.error('❌ Error in initial incomplete session check:', err);
-  });
+  // ⚠️ DO NOT run immediately on start to avoid duplicate notifications
+  // Let the interval handle all checks consistently
   
   console.log('✅ Push Notification Scheduler started - checking alarms every 30s, incomplete sessions every 5min');
   
