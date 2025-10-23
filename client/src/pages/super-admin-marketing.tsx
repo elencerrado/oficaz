@@ -172,6 +172,18 @@ export default function SuperAdminMarketing() {
     // Apply sorting
     if (sortField) {
       result.sort((a: any, b: any) => {
+        // Special handling for WhatsApp availability
+        if (sortField === 'whatsappAvailable') {
+          const aHasWhatsApp = a.phone && !a.phone.trim().startsWith('9') ? 1 : 0;
+          const bHasWhatsApp = b.phone && !b.phone.trim().startsWith('9') ? 1 : 0;
+          
+          if (sortDirection === 'asc') {
+            return aHasWhatsApp - bHasWhatsApp;
+          } else {
+            return bHasWhatsApp - aHasWhatsApp;
+          }
+        }
+        
         // Special handling for tags (array field)
         if (sortField === 'tags') {
           const aTagCount = (a.tags || []).length;
@@ -877,10 +889,18 @@ export default function SuperAdminMarketing() {
                                 )}
                               </div>
                             </TableHead>
-                            <TableHead className="text-white/90">
+                            <TableHead 
+                              className="text-white/90 cursor-pointer hover:text-white select-none"
+                              onClick={() => handleSort('whatsappAvailable')}
+                            >
                               <div className="flex items-center gap-1">
                                 <MessageCircle className="w-3.5 h-3.5" />
                                 Contacto
+                                {sortField === 'whatsappAvailable' ? (
+                                  sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                                ) : (
+                                  <ArrowUpDown className="w-3 h-3 opacity-40" />
+                                )}
                               </div>
                             </TableHead>
                             <TableHead 
