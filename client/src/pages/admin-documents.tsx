@@ -678,8 +678,8 @@ export default function AdminDocuments() {
   const handleViewDocument = async (docId: number) => {
     // Only mark as viewed if the document belongs to the current user
     // Admins viewing employee documents should not mark them as viewed
-    const document = allDocuments?.find((d: any) => d.id === docId);
-    if (document && document.userId === user?.id) {
+    const docToView = allDocuments?.find((d: any) => d.id === docId);
+    if (docToView && docToView.userId === user?.id) {
       markViewedMutation.mutate(docId);
     }
     
