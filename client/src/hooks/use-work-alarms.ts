@@ -84,10 +84,44 @@ export function useWorkAlarms() {
       
       // Reset setup if user changed
       if (currentUserId !== null && currentUserId !== userId) {
-        console.log(`🔄 User changed (${currentUserId} → ${userId}), resetting push setup`);
+        console.log(`🔄 User changed (${currentUserId} → ${userId}), cleaning old subscription`);
+        
+        // Unsubscribe old user's push subscription from this device
+        try {
+          const oldSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
+          if (oldSubscription) {
+            console.log('🗑️  Removing old user push subscription...');
+            // Try to unsubscribe from server (may fail if token expired, that's OK)
+            try {
+              const authData = localStorage.getItem('authData') || sessionStorage.getItem('authData');
+              if (authData) {
+                const parsedAuth = JSON.parse(authData);
+                const oldToken = parsedAuth?.token;
+                if (oldToken) {
+                  await fetch('/api/push/unsubscribe', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${oldToken}`
+                    },
+                    body: JSON.stringify({ endpoint: oldSubscription.endpoint })
+                  });
+                }
+              }
+            } catch (e) {
+              console.log('⚠️ Could not unsubscribe from server (token expired), continuing...');
+            }
+            
+            // Unsubscribe from browser
+            await oldSubscription.unsubscribe();
+            console.log('✅ Old subscription removed from browser');
+          }
+        } catch (e) {
+          console.error('⚠️ Error removing old subscription:', e);
+        }
+        
         setHasSetup(false);
         setCurrentUserId(userId);
-        // Remove old subscription flag
         localStorage.removeItem('pwa-push-subscribed');
       } else if (currentUserId === null) {
         setCurrentUserId(userId);
