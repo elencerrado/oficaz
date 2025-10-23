@@ -1119,55 +1119,70 @@ export default function SuperAdminMarketing() {
                                   <div className="flex items-center gap-3 min-w-[200px]">
                                     {/* WhatsApp Column */}
                                     <div className="flex flex-col gap-1 items-center">
-                                      <button
-                                        onClick={() => {
-                                          if (prospect.phone) {
-                                            const cleanPhone = prospect.phone.replace(/\s+/g, '');
-                                            window.open(`https://wa.me/${cleanPhone}`, '_blank');
-                                          }
-                                          updateProspectInlineMutation.mutate({
-                                            prospectId: prospect.id,
-                                            field: 'whatsappContacted',
-                                            value: !prospect.whatsappContacted,
-                                          });
-                                        }}
-                                        disabled={!prospect.phone}
-                                        className={`p-1 rounded transition-colors ${
-                                          prospect.whatsappContacted 
-                                            ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30' 
-                                            : 'bg-white/5 text-white/40 hover:bg-white/10'
-                                        } ${!prospect.phone ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`}
-                                        title={prospect.phone ? `${prospect.whatsappContacted ? 'Contactado' : 'No contactado'} - Click para abrir WhatsApp` : 'Sin número de teléfono'}
-                                        data-testid={`button-whatsapp-${prospect.id}`}
-                                      >
-                                        <FaWhatsapp className="w-4 h-4" />
-                                      </button>
-                                      <select
-                                        value={prospect.whatsappConversationStatus || 'not_contacted'}
-                                        onChange={(e) => {
-                                          updateProspectInlineMutation.mutate({
-                                            prospectId: prospect.id,
-                                            field: 'whatsappConversationStatus',
-                                            value: e.target.value,
-                                          });
-                                        }}
-                                        onClick={(e) => e.stopPropagation()}
-                                        disabled={!prospect.phone}
-                                        className={`text-[10px] px-1.5 py-0.5 rounded cursor-pointer border-0 w-20 ${
-                                          prospect.whatsappConversationStatus === 'in_conversation' ? 'bg-green-500/20 text-green-300' :
-                                          prospect.whatsappConversationStatus === 'no_response' ? 'bg-yellow-500/20 text-yellow-300' :
-                                          prospect.whatsappConversationStatus === 'not_interested' ? 'bg-red-500/20 text-red-300' :
-                                          prospect.whatsappConversationStatus === 'closed' ? 'bg-gray-500/20 text-gray-300' :
-                                          'bg-white/10 text-white/60'
-                                        } ${!prospect.phone ? 'opacity-30 cursor-not-allowed' : ''}`}
-                                        data-testid={`select-whatsapp-status-${prospect.id}`}
-                                      >
-                                        <option value="not_contacted" className="bg-gray-800">Sin hablar</option>
-                                        <option value="no_response" className="bg-gray-800">Sin resp.</option>
-                                        <option value="in_conversation" className="bg-gray-800">Hablando</option>
-                                        <option value="not_interested" className="bg-gray-800">No interesa</option>
-                                        <option value="closed" className="bg-gray-800">Cerrado</option>
-                                      </select>
+                                      {(() => {
+                                        const hasWhatsApp = prospect.phone && !prospect.phone.trim().startsWith('9');
+                                        const isLandline = prospect.phone && prospect.phone.trim().startsWith('9');
+                                        
+                                        return (
+                                          <>
+                                            <button
+                                              onClick={() => {
+                                                if (hasWhatsApp) {
+                                                  const cleanPhone = prospect.phone.replace(/\s+/g, '');
+                                                  window.open(`https://wa.me/${cleanPhone}`, '_blank');
+                                                }
+                                                updateProspectInlineMutation.mutate({
+                                                  prospectId: prospect.id,
+                                                  field: 'whatsappContacted',
+                                                  value: !prospect.whatsappContacted,
+                                                });
+                                              }}
+                                              disabled={!hasWhatsApp}
+                                              className={`p-1 rounded transition-colors ${
+                                                prospect.whatsappContacted 
+                                                  ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30' 
+                                                  : 'bg-white/5 text-white/40 hover:bg-white/10'
+                                              } ${!hasWhatsApp ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`}
+                                              title={
+                                                !prospect.phone 
+                                                  ? 'Sin número de teléfono' 
+                                                  : isLandline 
+                                                    ? 'Teléfono fijo (sin WhatsApp)' 
+                                                    : `${prospect.whatsappContacted ? 'Contactado' : 'No contactado'} - Click para abrir WhatsApp`
+                                              }
+                                              data-testid={`button-whatsapp-${prospect.id}`}
+                                            >
+                                              <FaWhatsapp className="w-4 h-4" />
+                                            </button>
+                                            <select
+                                              value={prospect.whatsappConversationStatus || 'not_contacted'}
+                                              onChange={(e) => {
+                                                updateProspectInlineMutation.mutate({
+                                                  prospectId: prospect.id,
+                                                  field: 'whatsappConversationStatus',
+                                                  value: e.target.value,
+                                                });
+                                              }}
+                                              onClick={(e) => e.stopPropagation()}
+                                              disabled={!hasWhatsApp}
+                                              className={`text-[10px] px-1.5 py-0.5 rounded cursor-pointer border-0 w-20 ${
+                                                prospect.whatsappConversationStatus === 'in_conversation' ? 'bg-green-500/20 text-green-300' :
+                                                prospect.whatsappConversationStatus === 'no_response' ? 'bg-yellow-500/20 text-yellow-300' :
+                                                prospect.whatsappConversationStatus === 'not_interested' ? 'bg-red-500/20 text-red-300' :
+                                                prospect.whatsappConversationStatus === 'closed' ? 'bg-gray-500/20 text-gray-300' :
+                                                'bg-white/10 text-white/60'
+                                              } ${!hasWhatsApp ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                              data-testid={`select-whatsapp-status-${prospect.id}`}
+                                            >
+                                              <option value="not_contacted" className="bg-gray-800">Sin hablar</option>
+                                              <option value="no_response" className="bg-gray-800">Sin resp.</option>
+                                              <option value="in_conversation" className="bg-gray-800">Hablando</option>
+                                              <option value="not_interested" className="bg-gray-800">No interesa</option>
+                                              <option value="closed" className="bg-gray-800">Cerrado</option>
+                                            </select>
+                                          </>
+                                        );
+                                      })()}
                                     </div>
                                     
                                     {/* Instagram Column */}
