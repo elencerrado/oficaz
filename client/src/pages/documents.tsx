@@ -121,7 +121,8 @@ export default function Documents() {
   const { data: documents, isLoading, refetch } = useQuery({
     queryKey: ['/api/documents'],
     enabled: !!user,
-    staleTime: 30000,
+    staleTime: 0, // No cache - always fetch fresh data
+    refetchOnWindowFocus: true, // Refetch when user returns to app (e.g., from push notification)
   });
 
   // Create demo documents mutation
