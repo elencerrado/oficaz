@@ -796,23 +796,46 @@ export async function sendDocumentRequestNotification(userId: number, documentTy
   }
 }
 
+// 🔒 PROTECTED: Global scheduler instances to prevent duplicates
+// DO NOT MODIFY - This prevents duplicate notifications from multiple scheduler instances
+let alarmIntervalInstance: NodeJS.Timeout | null = null;
+let incompleteSessionIntervalInstance: NodeJS.Timeout | null = null;
+let isSchedulerRunning = false;
+
 // Start the scheduler
 export function startPushNotificationScheduler() {
+  // 🔒 CRITICAL: Prevent multiple scheduler instances
+  if (isSchedulerRunning) {
+    console.log('⚠️  Push Notification Scheduler already running, skipping duplicate initialization');
+    return { alarmInterval: alarmIntervalInstance, incompleteSessionInterval: incompleteSessionIntervalInstance };
+  }
+  
   console.log('🚀 Starting Push Notification Scheduler...');
   
+  // Clear any existing intervals (safety measure)
+  if (alarmIntervalInstance) {
+    clearInterval(alarmIntervalInstance);
+  }
+  if (incompleteSessionIntervalInstance) {
+    clearInterval(incompleteSessionIntervalInstance);
+  }
+  
   // Check every 30 seconds for work alarms
-  const alarmInterval = setInterval(() => {
+  alarmIntervalInstance = setInterval(() => {
     checkWorkAlarms().catch(err => {
       console.error('❌ Error in scheduled alarm check:', err);
     });
   }, 30000);
   
   // Check every 5 minutes for incomplete sessions (will only notify at 9 AM)
-  const incompleteSessionInterval = setInterval(() => {
+  incompleteSessionIntervalInstance = setInterval(() => {
     checkIncompleteSessions().catch(err => {
       console.error('❌ Error checking incomplete sessions:', err);
     });
   }, 5 * 60 * 1000); // Every 5 minutes
+  
+  // Mark as running
+  isSchedulerRunning = true;
   
   // Run immediately on start
   checkWorkAlarms().catch(err => {
@@ -824,5 +847,5 @@ export function startPushNotificationScheduler() {
   
   console.log('✅ Push Notification Scheduler started - checking alarms every 30s, incomplete sessions every 5min');
   
-  return { alarmInterval, incompleteSessionInterval };
+  return { alarmInterval: alarmIntervalInstance, incompleteSessionInterval: incompleteSessionIntervalInstance };
 }
