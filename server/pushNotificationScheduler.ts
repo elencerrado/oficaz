@@ -452,6 +452,111 @@ export async function checkWorkAlarms() {
   }
 }
 
+// Function to send vacation approval/denial notifications
+export async function sendVacationNotification(
+  userId: number, 
+  status: 'approved' | 'denied',
+  details: {
+    startDate: Date;
+    endDate: Date;
+    adminComment?: string;
+  }
+) {
+  try {
+    console.log(`📱 Sending vacation ${status} notification to user ${userId}`);
+    
+    // Get push subscriptions for the user
+    const subscriptions = await db.select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, userId));
+    
+    if (subscriptions.length === 0) {
+      console.log(`📱 No push subscriptions found for user ${userId}`);
+      return;
+    }
+    
+    // Filter to unique devices
+    const deviceMap = new Map<string, typeof subscriptions[0]>();
+    for (const sub of subscriptions) {
+      const deviceKey = sub.deviceId || sub.endpoint;
+      const existing = deviceMap.get(deviceKey);
+      if (!existing || new Date(sub.updatedAt) > new Date(existing.updatedAt)) {
+        deviceMap.set(deviceKey, sub);
+      }
+    }
+    
+    const uniqueSubscriptions = Array.from(deviceMap.values());
+    
+    // Format dates for display
+    const formatDate = (date: Date) => {
+      return new Date(date).toLocaleDateString('es-ES', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric' 
+      });
+    };
+    
+    const startDateStr = formatDate(details.startDate);
+    const endDateStr = formatDate(details.endDate);
+    
+    // Create notification content
+    const title = status === 'approved' 
+      ? '✅ Vacaciones Aprobadas' 
+      : '❌ Vacaciones Rechazadas';
+    
+    const body = status === 'approved'
+      ? `Tu solicitud de vacaciones del ${startDateStr} al ${endDateStr} ha sido aprobada`
+      : `Tu solicitud de vacaciones del ${startDateStr} al ${endDateStr} ha sido rechazada${details.adminComment ? ': ' + details.adminComment : ''}`;
+    
+    const payload = JSON.stringify({
+      title,
+      body,
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      vibrate: [200, 100, 200],
+      requireInteraction: true,
+      tag: `vacation-${status}-${userId}-${Date.now()}`,
+      data: {
+        url: '/employee/vacaciones',
+        type: 'vacation_update',
+        status,
+        timestamp: Date.now(),
+        userId
+      },
+      actions: [
+        { action: 'view', title: 'Ver vacaciones', icon: '/icon-192.png' }
+      ]
+    });
+    
+    // Send to all unique devices
+    for (const sub of uniqueSubscriptions) {
+      try {
+        await webpush.sendNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.p256dh,
+              auth: sub.auth
+            }
+          },
+          payload
+        );
+        console.log(`✅ Vacation ${status} notification sent to user ${userId}`);
+      } catch (error: any) {
+        if (error.statusCode === 410 || error.statusCode === 404) {
+          console.log(`🗑️  Removing invalid subscription for user ${userId}`);
+          await db.delete(pushSubscriptions)
+            .where(eq(pushSubscriptions.endpoint, sub.endpoint));
+        } else {
+          console.error(`❌ Error sending vacation notification to user ${userId}:`, error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in sendVacationNotification:', error);
+  }
+}
+
 // Start the scheduler
 export function startPushNotificationScheduler() {
   console.log('🚀 Starting Push Notification Scheduler...');

@@ -3941,6 +3941,23 @@ Responde directamente a este email para contactar con la persona.
       }
 
       console.log('Update successful:', request);
+      
+      // 📱 Send push notification to employee when vacation request is reviewed
+      if (status === 'approved' || status === 'denied') {
+        try {
+          const { sendVacationNotification } = await import('./pushNotificationScheduler.js');
+          await sendVacationNotification(request.userId, status, {
+            startDate: request.startDate,
+            endDate: request.endDate,
+            adminComment
+          });
+          console.log(`📱 Vacation ${status} notification sent to user ${request.userId}`);
+        } catch (error) {
+          console.error('Error sending vacation push notification:', error);
+          // Don't fail the request if push notification fails
+        }
+      }
+      
       res.json(request);
     } catch (error: any) {
       console.error('Error updating vacation request:', error);
