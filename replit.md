@@ -1,7 +1,7 @@
 # Oficaz - Employee Management System
 
 ## Overview
-Oficaz is a comprehensive employee management system designed to streamline employee management for companies. It provides features such as time tracking, vacation management, document handling, messaging, and various administrative tools. The project aims to automate tedious tasks, boost productivity, and allow businesses to focus on their core operations through a modern, full-stack application, ready for official publication.
+Oficaz is a comprehensive employee management system designed to streamline employee management for companies. It provides features such as time tracking, vacation management, document handling, messaging, and various administrative tools. The project aims to automate tedious tasks, boost productivity, and allow businesses to focus on their core operations through a modern, full-stack application.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -40,58 +40,41 @@ Preferred communication style: Simple, everyday language.
 - **Styling**: Tailwind CSS with shadcn/ui
 - **State Management**: TanStack Query (React Query)
 - **Form Handling**: React Hook Form with Zod validation
-- **Build Tool**: Vite
-- **UI/UX Decisions**: Consistent header layouts (px-6 py-4, no custom containers), modern aesthetic (glassmorphism, shadows, rounded borders), responsive design, professional color scheme (Oficaz primary color #007AFF), animated elements, unified avatar system. Full dark mode support with `localStorage` persistence. Logo uses `dark:brightness-0 dark:invert` for dark mode compatibility.
+- **UI/UX Decisions**: Consistent header layouts (px-6 py-4, no custom containers), modern aesthetic (glassmorphism, shadows, rounded borders), responsive design, professional color scheme, animated elements, unified avatar system. Full dark mode support with `localStorage` persistence. Logo uses `dark:brightness-0 dark:invert` for dark mode compatibility.
 
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
 - **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: JWT-based with role-based access control (DNI/NIE or email login), bcrypt hashing. **Silent auth error handling**: System tolerates up to 3 consecutive auth errors in 10 seconds before redirecting to login, preventing user-facing error screens from transient network issues.
+- **Authentication**: JWT-based with role-based access control, bcrypt hashing. Silent auth error handling prevents user-facing errors from transient network issues.
 - **File Uploads**: Multer with Sharp (image compression), with specific handling for iOS devices.
 - **Session Management**: Express sessions with PostgreSQL store.
-- **Security**: Helmet for CSP, CORS, rate limiting, HSTS, X-XSS-Protection, Referrer-Policy; SQL injection protection via parameterized queries. SuperAdmin access is exclusive via email verification (`soy@oficaz.es`).
-- **SuperAdmin Security**: JWT tokens expire in 2 hours (not 24h); tokens stored in `sessionStorage` (auto-logout on browser close); automatic token expiration check with redirect to login; no token persistence across browser sessions. **Enterprise-grade audit logging**: All SuperAdmin actions persisted to PostgreSQL `audit_logs` table with timestamp, IP, action, email, success status, and details. Rate limiting (3 attempts access password, 5 attempts login per 15 min). Email notifications on successful login. Comprehensive security headers (X-Frame-Options: DENY, strict CSP, Referrer-Policy, Permissions-Policy) applied to all SuperAdmin endpoints. Audit logs accessible via GET `/api/super-admin/audit-logs` with pagination.
+- **Security**: Helmet for CSP, CORS, rate limiting, HSTS, X-XSS-Protection, Referrer-Policy; SQL injection protection. SuperAdmin access is exclusive via email verification with enhanced security (short-lived tokens in `sessionStorage`, automatic logout, enterprise-grade audit logging, rate limiting, comprehensive security headers).
 - **Core Modules**: Authentication, Time Tracking, Vacation Management, Document Management, Messaging, Administrative Features, Subscription Management, Reminders, Email Marketing (SuperAdmin).
-- **Object Storage**: Replit Object Storage integration for persistent file storage. Email marketing images stored in Object Storage (not local filesystem) to ensure persistence across server restarts. Service: `objectStorageSimple.ts`. Public endpoint: `/public-objects/:filePath(*)` for serving images. Migration endpoint: `POST /api/super-admin/email-marketing/migrate-images` for one-time migration of existing images from filesystem to Object Storage. Startup validation ensures `PUBLIC_OBJECT_SEARCH_PATHS` is configured correctly.
-- **Account Management**: Includes a 30-day grace period for account deletion with a recovery process that bypasses the registration wizard. Cancelled accounts are immediately blocked.
-- **Data Integrity**: Break periods must belong to the current work session. Orphaned documents (DB records without physical files) are automatically removed.
-- **Email Marketing System** (SuperAdmin): Complete email marketing module with campaign management, prospect database, and user segmentation by subscription status (active, trial, blocked, cancelled). Includes SendGrid integration structure for transactional/marketing emails. Campaign creation with HTML content, audience targeting, and tracking infrastructure (sends, opens, clicks). Zod validation on backend endpoints ensures data integrity. **Marketing Consent & Audience Types**: Registration wizard includes optional marketing consent checkbox (step 4); campaigns support two audience types: "subscribers" (opted-in users, includes unsubscribe footer) and "one-time campaigns" (prospecting, copyright-only footer); conditional email footer generation based on audienceType; complete conversion tracking from email to paid subscription. **Unsubscribe System**: Public endpoint `/api/email/unsubscribe?email=XXX` updates `marketingEmailsConsent` to false; renders HTML confirmation page; users automatically filtered from "subscribers" campaigns; link included in email footer with `{{{recipient_email}}}` placeholder.
+- **Object Storage**: Replit Object Storage integration for persistent file storage of email marketing images, served via `/public-objects/:filePath(*)`.
+- **Account Management**: 30-day grace period for account deletion with recovery, immediate blocking of cancelled accounts.
+- **Data Integrity**: Break periods belong to current work session. Orphaned documents are removed.
+- **Email Marketing System** (SuperAdmin): Campaign management, prospect database, user segmentation by subscription status. Includes SendGrid integration structure, HTML content, audience targeting, and tracking (sends, opens, clicks). Zod validation ensures data integrity. Marketing Consent & Audience Types (subscribers vs. one-time campaigns) with conditional email footer generation. Unsubscribe system with public endpoint and user filtering. Contact Tracking System for WhatsApp/Instagram outreach with visual status indicators and conversation status dropdown.
+- **PWA System**: Complete PWA implementation for locked-phone notifications with interactive action buttons via Web Push API. Server-side scheduler for work alarms, dynamic action buttons based on employee status (clock in/out, start/end break), and service worker handling button clicks. Supports iOS PWA installation for locked-screen notifications.
 
 ### Database Design
 - **ORM**: Drizzle with PostgreSQL dialect.
 - **Schema**: Type-safe schema definitions.
-- **Key Tables**: Companies, Users, Work Sessions, Vacation Requests, Documents, Messages, Subscriptions, Reminders, Notifications, Features, Email Campaigns, Email Prospects, Email Campaign Sends, **Audit Logs** (SuperAdmin security tracking with indexed columns for timestamp, action, email).
+- **Key Tables**: Companies, Users, Work Sessions, Vacation Requests, Documents, Messages, Subscriptions, Reminders, Notifications, Features, Email Campaigns, Email Prospects, Email Campaign Sends, Audit Logs.
 
 ### Performance & Scalability
-- **High Concurrency Support**: Optimized for 1000+ simultaneous clock-ins during peak hours
-- **Connection Pool**: Configured with max 20 connections, min 2, 30s idle timeout, 3s connection timeout
-- **Database Indexes**: Performance indexes on work_sessions (user_id+status, clock_in, user_id+clock_in) and break_periods (user_id+status, work_session_id)
-- **Retry Logic**: Database operations use exponential backoff retry (3 attempts, 50ms-200ms delays) for timeout resilience
-- **Query Optimization**: Clock-in endpoint uses 3 optimized indexed queries for maximum performance
-- **Scalability Considerations**: Current architecture handles 500-1000 simultaneous users; further scaling requires Neon Scale plan (~200 connections) and appropriate Replit plan
-- **Automatic Session Cleanup**: Sessions exceeding maxWorkingHoursPerDay + 4 hours margin are automatically marked as 'incomplete' during next clock-in attempt, preventing blocking issues
+- **High Concurrency Support**: Optimized for 1000+ simultaneous clock-ins.
+- **Connection Pool**: Configured with max 20 connections, min 2, 30s idle timeout, 3s connection timeout.
+- **Database Indexes**: Performance indexes on `work_sessions` and `break_periods`.
+- **Retry Logic**: Exponential backoff retry for database operations (3 attempts, 50ms-200ms delays).
+- **Query Optimization**: Clock-in endpoint uses 3 optimized indexed queries.
+- **Scalability Considerations**: Current architecture handles 500-1000 simultaneous users; further scaling requires Neon Scale plan and appropriate Replit plan.
+- **Automatic Session Cleanup**: Sessions exceeding `maxWorkingHoursPerDay + 4` hours margin are automatically marked as 'incomplete' during next clock-in attempt.
 
 ### Deployment Strategy
 - **Development Environment**: Node.js 20, PostgreSQL 16 (Replit managed), Vite dev server.
 - **Production Build**: Vite for frontend, esbuild for backend.
 - **Replit Configuration**: `nodejs-20`, `web`, `postgresql-16` modules.
-
-### Key Features & Implementations
-- **Dynamic Work Hours Configuration**: Replaced hardcoded 8-hour limits with company-specific settings.
-- **Incomplete Sessions Management**: Sessions exceeding maxWorkingHoursPerDay + 4 hours margin are automatically marked as 'incomplete' by backend during clock-in; frontend displays status based on database value, not calculations; `getActiveWorkSession` excludes 'incomplete' sessions to allow new clock-ins; orphaned break periods are automatically closed.
-- **Manager Role Permissions System**: Backend API supports manager role assignment with restricted access.
-- **Navigation Performance Optimization**: Eliminated full page reloads and implemented `useScrollReset` hook; SuperAdmin uses `window.history.back()`.
-- **Performance Optimization**: Database optimizations, frontend caching, reduced network overhead, lazy loading, code splitting, async resource loading, critical CSS, resource hints.
-- **Mobile-Responsive Interfaces**: Dual-layout system for time tracking (desktop table, mobile card views). Employee schedule includes day/week view toggle with compact vertical week display.
-- **Error Monitoring**: Integrated Sentry.
-- **SEO Optimization**: Direct file serving of `robots.txt` and `sitemap.xml`.
-- **Reminder System**: Uses 7 harmonious colors with optimal text contrast. Supports three-state individual completion logic, requiring all assigned users to complete.
-- **Invoice System**: Displays all Stripe invoice statuses (paid, open, draft, void, uncollectible) without filtering.
-- **Automatic Demo Data Generation**: Comprehensive demo data is generated for new company registrations, including incomplete sessions.
-- **Test-to-Production Migration**: System detects and resolves hybrid Stripe subscription states, with an alert system and data cleanup endpoint.
-- **Registration Wizard**: Plan recommendation algorithm adjusted to be more conservative, prioritizing Basic plan for smaller teams. Master plan temporarily hidden.
-- **Work Alarms PWA System**: **Complete PWA implementation for locked-phone notifications with interactive action buttons**. Server-side scheduler checks work alarms every 30 seconds and sends push notifications via Web Push API. Automatic service worker registration, push subscription management, and VAPID authentication (keys in environment). Backend endpoints: `/api/push/vapid-public-key` (GET), `/api/push/subscribe` (POST), `/api/push/unsubscribe` (POST), `/api/push/work-status/:userId` (GET - obtiene estado actual del empleado), `/api/push/work-action` (POST - ejecuta acciones desde notificación). Frontend: `useWorkAlarms` hook auto-subscribes users to push notifications. `PWAInstallPrompt` component guides iOS/Android users through installation. Database table `push_subscriptions` stores endpoint, keys, and user_agent. **iOS Support**: Requires PWA installation ("Add to Home Screen" in Safari) to enable locked-screen notifications per Apple requirements. Scheduler (`pushNotificationScheduler.ts`) runs in background, detects alarm times, queries employee work status (clocked in, on break, etc.), and sends push with dynamic action buttons. **Interactive Action Buttons**: Notifications include 1-2 action buttons based on current state: "⏱️ Fichar entrada" (not clocked in), "☕ Iniciar descanso" + "🚪 Fichar salida" (clocked in), "✅ Terminar descanso" (on break). Service worker (`public/service-worker.js`) handles button clicks via `/api/push/work-action` endpoint, executes actions (clock in/out, start/end break), and displays confirmation notifications. Simplified notification text: "Oficaz" title + "🔔 Hora de fichar" body. System automatically removes invalid subscriptions (410/404 errors). Full manifest.json configuration with 192x192 and 512x512 icons, `start_url` set to `/login` for direct access.
 
 ## External Dependencies
 
@@ -107,9 +90,9 @@ Preferred communication style: Simple, everyday language.
 - **ORM**: Drizzle ORM
 - **Authentication**: JWT, bcrypt
 - **File Handling**: Multer, Sharp
-- **Object Storage**: @google-cloud/storage (Replit Object Storage for persistent file storage)
-- **Session Storage**: connect-pg-simple
+- **Object Storage**: @google-cloud/storage (Replit Object Storage)
+- **Session Store**: connect-pg-simple
 - **Email Services**: Nodemailer
 - **Payment Processing**: Stripe API
 - **Avatar Generation**: UI Avatars API
-- **Push Notifications**: web-push (VAPID-based PWA notifications)
+- **Push Notifications**: web-push
