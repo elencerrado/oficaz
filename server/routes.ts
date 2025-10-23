@@ -4379,6 +4379,26 @@ Responde directamente a este email para contactar con la persona.
 
       console.log(`Document uploaded: ${originalName} for user ${targetEmployeeId}`);
 
+      // 📱 Send push notification based on document type
+      try {
+        const { sendPayrollNotification, sendNewDocumentNotification } = await import('./pushNotificationScheduler.js');
+        
+        // Check if it's a payroll document (nómina)
+        const isPayroll = originalName.toLowerCase().includes('nomina') || 
+                         originalName.toLowerCase().includes('nómina');
+        
+        if (isPayroll) {
+          await sendPayrollNotification(targetEmployeeId, originalName);
+          console.log(`📱 Payroll notification sent for document: ${originalName}`);
+        } else {
+          await sendNewDocumentNotification(targetEmployeeId, originalName);
+          console.log(`📱 New document notification sent for: ${originalName}`);
+        }
+      } catch (error) {
+        console.error('Error sending document push notification:', error);
+        // Don't fail the request if push notification fails
+      }
+
       res.status(201).json(document);
     } catch (error) {
       console.error("Error uploading admin document:", error);
@@ -4419,6 +4439,20 @@ Responde directamente a este email para contactar con la persona.
           dueDate ? new Date(dueDate) : undefined // dueDate
         );
         notifications.push(notification);
+        
+        // 📱 Send push notification for document request
+        try {
+          const { sendDocumentRequestNotification } = await import('./pushNotificationScheduler.js');
+          await sendDocumentRequestNotification(
+            employeeId, 
+            documentType, 
+            message || `Por favor, sube tu ${documentType}`
+          );
+          console.log(`📱 Document request notification sent to user ${employeeId}`);
+        } catch (error) {
+          console.error(`Error sending document request push notification to user ${employeeId}:`, error);
+          // Don't fail the request if push notification fails
+        }
       }
 
       res.status(201).json({ 

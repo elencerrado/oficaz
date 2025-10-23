@@ -557,6 +557,232 @@ export async function sendVacationNotification(
   }
 }
 
+// Function to send payroll document notification (pending signature)
+export async function sendPayrollNotification(userId: number, documentName: string) {
+  try {
+    console.log(`📱 Sending payroll notification to user ${userId}`);
+    
+    // Get push subscriptions for the user
+    const subscriptions = await db.select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, userId));
+    
+    if (subscriptions.length === 0) {
+      console.log(`📱 No push subscriptions found for user ${userId}`);
+      return;
+    }
+    
+    // Filter to unique devices
+    const deviceMap = new Map<string, typeof subscriptions[0]>();
+    for (const sub of subscriptions) {
+      const deviceKey = sub.deviceId || sub.endpoint;
+      const existing = deviceMap.get(deviceKey);
+      if (!existing || new Date(sub.updatedAt) > new Date(existing.updatedAt)) {
+        deviceMap.set(deviceKey, sub);
+      }
+    }
+    
+    const uniqueSubscriptions = Array.from(deviceMap.values());
+    
+    const payload = JSON.stringify({
+      title: '📄 Nueva Nómina Pendiente',
+      body: 'Tienes una nueva nómina pendiente de firmar',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      vibrate: [200, 100, 200],
+      requireInteraction: true,
+      tag: `payroll-${userId}-${Date.now()}`,
+      data: {
+        url: '/employee/documentos',
+        type: 'payroll_pending',
+        timestamp: Date.now(),
+        userId
+      },
+      actions: [
+        { action: 'view', title: 'Ver nómina', icon: '/icon-192.png' }
+      ]
+    });
+    
+    // Send to all unique devices
+    for (const sub of uniqueSubscriptions) {
+      try {
+        await webpush.sendNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.p256dh,
+              auth: sub.auth
+            }
+          },
+          payload
+        );
+        console.log(`✅ Payroll notification sent to user ${userId}`);
+      } catch (error: any) {
+        if (error.statusCode === 410 || error.statusCode === 404) {
+          console.log(`🗑️  Removing invalid subscription for user ${userId}`);
+          await db.delete(pushSubscriptions)
+            .where(eq(pushSubscriptions.endpoint, sub.endpoint));
+        } else {
+          console.error(`❌ Error sending payroll notification to user ${userId}:`, error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in sendPayrollNotification:', error);
+  }
+}
+
+// Function to send new document notification
+export async function sendNewDocumentNotification(userId: number, documentName: string) {
+  try {
+    console.log(`📱 Sending new document notification to user ${userId}`);
+    
+    // Get push subscriptions for the user
+    const subscriptions = await db.select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, userId));
+    
+    if (subscriptions.length === 0) {
+      console.log(`📱 No push subscriptions found for user ${userId}`);
+      return;
+    }
+    
+    // Filter to unique devices
+    const deviceMap = new Map<string, typeof subscriptions[0]>();
+    for (const sub of subscriptions) {
+      const deviceKey = sub.deviceId || sub.endpoint;
+      const existing = deviceMap.get(deviceKey);
+      if (!existing || new Date(sub.updatedAt) > new Date(existing.updatedAt)) {
+        deviceMap.set(deviceKey, sub);
+      }
+    }
+    
+    const uniqueSubscriptions = Array.from(deviceMap.values());
+    
+    const payload = JSON.stringify({
+      title: '📎 Nuevo Documento',
+      body: 'Tienes un nuevo documento disponible',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      vibrate: [200, 100, 200],
+      requireInteraction: true,
+      tag: `document-new-${userId}-${Date.now()}`,
+      data: {
+        url: '/employee/documentos',
+        type: 'document_new',
+        timestamp: Date.now(),
+        userId
+      },
+      actions: [
+        { action: 'view', title: 'Ver documentos', icon: '/icon-192.png' }
+      ]
+    });
+    
+    // Send to all unique devices
+    for (const sub of uniqueSubscriptions) {
+      try {
+        await webpush.sendNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.p256dh,
+              auth: sub.auth
+            }
+          },
+          payload
+        );
+        console.log(`✅ New document notification sent to user ${userId}`);
+      } catch (error: any) {
+        if (error.statusCode === 410 || error.statusCode === 404) {
+          console.log(`🗑️  Removing invalid subscription for user ${userId}`);
+          await db.delete(pushSubscriptions)
+            .where(eq(pushSubscriptions.endpoint, sub.endpoint));
+        } else {
+          console.error(`❌ Error sending document notification to user ${userId}:`, error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in sendNewDocumentNotification:', error);
+  }
+}
+
+// Function to send document upload request notification
+export async function sendDocumentRequestNotification(userId: number, documentType: string, message: string) {
+  try {
+    console.log(`📱 Sending document request notification to user ${userId}`);
+    
+    // Get push subscriptions for the user
+    const subscriptions = await db.select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, userId));
+    
+    if (subscriptions.length === 0) {
+      console.log(`📱 No push subscriptions found for user ${userId}`);
+      return;
+    }
+    
+    // Filter to unique devices
+    const deviceMap = new Map<string, typeof subscriptions[0]>();
+    for (const sub of subscriptions) {
+      const deviceKey = sub.deviceId || sub.endpoint;
+      const existing = deviceMap.get(deviceKey);
+      if (!existing || new Date(sub.updatedAt) > new Date(existing.updatedAt)) {
+        deviceMap.set(deviceKey, sub);
+      }
+    }
+    
+    const uniqueSubscriptions = Array.from(deviceMap.values());
+    
+    const payload = JSON.stringify({
+      title: '📤 Solicitud de Documento',
+      body: message || `Por favor, sube tu ${documentType}`,
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      vibrate: [200, 100, 200],
+      requireInteraction: true,
+      tag: `document-request-${userId}-${Date.now()}`,
+      data: {
+        url: '/employee/documentos',
+        type: 'document_request',
+        documentType,
+        timestamp: Date.now(),
+        userId
+      },
+      actions: [
+        { action: 'view', title: 'Subir documento', icon: '/icon-192.png' }
+      ]
+    });
+    
+    // Send to all unique devices
+    for (const sub of uniqueSubscriptions) {
+      try {
+        await webpush.sendNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.p256dh,
+              auth: sub.auth
+            }
+          },
+          payload
+        );
+        console.log(`✅ Document request notification sent to user ${userId}`);
+      } catch (error: any) {
+        if (error.statusCode === 410 || error.statusCode === 404) {
+          console.log(`🗑️  Removing invalid subscription for user ${userId}`);
+          await db.delete(pushSubscriptions)
+            .where(eq(pushSubscriptions.endpoint, sub.endpoint));
+        } else {
+          console.error(`❌ Error sending document request notification to user ${userId}:`, error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in sendDocumentRequestNotification:', error);
+  }
+}
+
 // Start the scheduler
 export function startPushNotificationScheduler() {
   console.log('🚀 Starting Push Notification Scheduler...');
