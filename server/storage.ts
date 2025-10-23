@@ -694,7 +694,16 @@ export class DrizzleStorage implements IStorage {
   }
 
   async deleteDocument(id: number): Promise<boolean> {
+    // 🚨 CRITICAL AUDIT LOG - Track all document deletions
+    const stackTrace = new Error().stack;
+    console.log('🚨🚨🚨 DELETE DOCUMENT CALLED 🚨🚨🚨');
+    console.log(`🗑️  Document ID: ${id}`);
+    console.log(`📍 Stack trace:`);
+    console.log(stackTrace);
+    console.log('🚨🚨🚨 END DELETE DOCUMENT LOG 🚨🚨🚨');
+    
     const result = await db.delete(schema.documents).where(eq(schema.documents.id, id));
+    console.log(`🗑️  Delete result for document ${id}: ${result.rowCount > 0 ? 'SUCCESS' : 'FAILED (not found)'}`);
     return result.rowCount > 0;
   }
 
