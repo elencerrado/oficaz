@@ -4507,7 +4507,7 @@ Responde directamente a este email para contactar con la persona.
       }
 
       // Check if it's a view request (preview) or download
-      const isPreview = req.query.view === 'true';
+      const isPreview = req.query.view === 'true' || req.query.preview === 'true';
       console.log(`Document ${id} request - isPreview: ${isPreview}, query:`, req.query);
 
       // CRITICAL SECURITY: Multi-layer document access validation
