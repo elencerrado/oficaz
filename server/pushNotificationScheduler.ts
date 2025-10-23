@@ -120,12 +120,34 @@ async function getWorkStatus(userId: number): Promise<WorkStatus> {
 async function sendPushNotification(userId: number, title: string, alarmType: 'clock_in' | 'clock_out') {
   try {
     // Get all push subscriptions for this user
-    const subscriptions = await db.select()
+    const allSubscriptions = await db.select()
       .from(pushSubscriptions)
       .where(eq(pushSubscriptions.userId, userId));
 
-    if (subscriptions.length === 0) {
+    if (allSubscriptions.length === 0) {
       console.log(`📱 No push subscriptions found for user ${userId}`);
+      return;
+    }
+
+    // 🔒 CRITICAL: Send only ONE notification per unique device
+    // Group by deviceId and keep only the most recent subscription for each device
+    const deviceMap = new Map<string, typeof allSubscriptions[0]>();
+    
+    for (const sub of allSubscriptions) {
+      const deviceKey = sub.deviceId || sub.endpoint; // Use deviceId if available, otherwise endpoint
+      const existing = deviceMap.get(deviceKey);
+      
+      // Keep the most recent subscription for this device
+      if (!existing || new Date(sub.updatedAt) > new Date(existing.updatedAt)) {
+        deviceMap.set(deviceKey, sub);
+      }
+    }
+
+    const subscriptions = Array.from(deviceMap.values());
+    console.log(`📱 Sending to ${subscriptions.length} unique device(s) (filtered from ${allSubscriptions.length} total subscriptions)`);
+
+    if (subscriptions.length === 0) {
+      console.log(`📱 No unique devices found for user ${userId}`);
       return;
     }
 
