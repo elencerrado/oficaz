@@ -35,14 +35,23 @@ export function useWorkAlarms() {
   // Register service worker
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js')
-        .then((registration) => {
-          console.log('✅ Service Worker registered:', registration);
-          setServiceWorkerRegistration(registration);
-        })
-        .catch((error) => {
-          console.error('❌ Service Worker registration failed:', error);
-        });
+      // 🔒 CRITICAL: Unregister ALL old service workers first
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        console.log(`🧹 Found ${registrations.length} existing service worker(s)`);
+        Promise.all(registrations.map(reg => reg.unregister()))
+          .then(() => {
+            console.log('✅ All old service workers unregistered');
+            // Now register the new one
+            return navigator.serviceWorker.register('/service-worker.js');
+          })
+          .then((registration) => {
+            console.log('✅ Service Worker registered:', registration);
+            setServiceWorkerRegistration(registration);
+          })
+          .catch((error) => {
+            console.error('❌ Service Worker registration failed:', error);
+          });
+      });
     } else {
       console.warn('⚠️  Service Workers not supported');
     }
