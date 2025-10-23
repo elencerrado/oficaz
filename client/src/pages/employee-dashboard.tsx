@@ -427,6 +427,24 @@ export default function EmployeeDashboard() {
     queryKey: ['/api/work-sessions'],
   });
 
+  // Check if user has any incomplete sessions from previous days
+  const hasIncompleteSessions = useMemo(() => {
+    if (!recentSessions || recentSessions.length === 0) return false;
+    
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // Check if any session is from before today and has no clockOut
+    return recentSessions.some(session => {
+      if (session.clockOut) return false; // Has clockOut, so it's complete
+      
+      const sessionDate = new Date(session.clockIn);
+      const sessionDay = new Date(sessionDate.getFullYear(), sessionDate.getMonth(), sessionDate.getDate());
+      
+      return sessionDay < today; // Session is from before today and has no clockOut
+    });
+  }, [recentSessions]);
+
   // Clock in/out mutations
   const clockInMutation = useMutation({
     mutationFn: async () => {
@@ -690,7 +708,7 @@ export default function EmployeeDashboard() {
       icon: Clock, 
       title: 'Fichajes', 
       route: `/${companyAlias}/misfichajes`,
-      notification: sessionStatus.isIncomplete,
+      notification: hasIncompleteSessions || sessionStatus.isIncomplete,
       notificationType: 'red',
       feature: 'timeTracking'
     },
