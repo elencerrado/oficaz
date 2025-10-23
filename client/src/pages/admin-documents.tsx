@@ -676,8 +676,12 @@ export default function AdminDocuments() {
   };
 
   const handleViewDocument = async (docId: number) => {
-    // Mark document as viewed first
-    markViewedMutation.mutate(docId);
+    // Only mark as viewed if the document belongs to the current user
+    // Admins viewing employee documents should not mark them as viewed
+    const document = allDocuments?.find((d: any) => d.id === docId);
+    if (document && document.userId === user?.id) {
+      markViewedMutation.mutate(docId);
+    }
     
     try {
       const authData = localStorage.getItem('authData');
