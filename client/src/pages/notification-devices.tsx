@@ -60,9 +60,7 @@ export default function NotificationDevices() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest(`/api/push/subscriptions/${id}`, {
-        method: "DELETE",
-      });
+      await apiRequest("DELETE", `/api/push/subscriptions/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/push/subscriptions"] });
