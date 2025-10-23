@@ -335,7 +335,7 @@ export default function SuperAdminMarketing() {
     },
   });
 
-  // Update prospect inline mutation
+  // Update prospect inline mutation with optimistic updates
   const updateProspectInlineMutation = useMutation({
     mutationFn: async ({ prospectId, field, value }: { prospectId: number; field: string; value: any }) => {
       const token = sessionStorage.getItem('superAdminToken');
@@ -353,11 +353,33 @@ export default function SuperAdminMarketing() {
       }
       return response.json();
     },
+    onMutate: async ({ prospectId, field, value }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['/api/super-admin/email-prospects'] });
+      
+      // Snapshot previous value
+      const previousProspects = queryClient.getQueryData(['/api/super-admin/email-prospects']);
+      
+      // Optimistically update to the new value
+      queryClient.setQueryData(['/api/super-admin/email-prospects'], (old: any) => {
+        if (!old) return old;
+        return old.map((prospect: any) => 
+          prospect.id === prospectId 
+            ? { ...prospect, [field]: value }
+            : prospect
+        );
+      });
+      
+      return { previousProspects };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-prospects'] });
       setEditingCell(null);
     },
-    onError: (error: Error) => {
+    onError: (error: Error, variables, context: any) => {
+      // Rollback to previous value on error
+      if (context?.previousProspects) {
+        queryClient.setQueryData(['/api/super-admin/email-prospects'], context.previousProspects);
+      }
       toast({
         title: 'Error',
         description: error.message || 'No se pudo actualizar el prospect',
