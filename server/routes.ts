@@ -9293,10 +9293,11 @@ Responde directamente a este email para contactar con la persona.
       if (updates.notes !== undefined) updatedData.notes = updates.notes;
       if (updates.tags !== undefined) updatedData.tags = updates.tags;
       if (updates.status !== undefined) updatedData.status = updates.status;
-      // Contact tracking fields
+      // Contact tracking fields - separate status for each channel
       if (updates.whatsappContacted !== undefined) updatedData.whatsappContacted = updates.whatsappContacted;
+      if (updates.whatsappConversationStatus !== undefined) updatedData.whatsappConversationStatus = updates.whatsappConversationStatus;
       if (updates.instagramContacted !== undefined) updatedData.instagramContacted = updates.instagramContacted;
-      if (updates.conversationStatus !== undefined) updatedData.conversationStatus = updates.conversationStatus;
+      if (updates.instagramConversationStatus !== undefined) updatedData.instagramConversationStatus = updates.instagramConversationStatus;
 
       await db.update(schema.emailProspects)
         .set(updatedData)

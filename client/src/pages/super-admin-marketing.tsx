@@ -965,21 +965,18 @@ export default function SuperAdminMarketing() {
                                 )}
                               </TableCell>
                               
-                              {/* CONTACT TRACKING CELL */}
+                              {/* CONTACT TRACKING CELL - Separate status for each channel */}
                               <TableCell className="text-white">
                                 {prospect.id !== 'new' ? (
-                                  <div className="flex flex-col gap-1.5">
-                                    {/* WhatsApp & Instagram Icons */}
-                                    <div className="flex items-center gap-2">
-                                      {/* WhatsApp Icon */}
+                                  <div className="flex items-center gap-3 min-w-[200px]">
+                                    {/* WhatsApp Column */}
+                                    <div className="flex flex-col gap-1 items-center">
                                       <button
                                         onClick={() => {
                                           if (prospect.phone) {
-                                            // Open WhatsApp Web
                                             const cleanPhone = prospect.phone.replace(/\s+/g, '');
                                             window.open(`https://wa.me/${cleanPhone}`, '_blank');
                                           }
-                                          // Toggle contacted status
                                           updateProspectInlineMutation.mutate({
                                             prospectId: prospect.id,
                                             field: 'whatsappContacted',
@@ -997,8 +994,36 @@ export default function SuperAdminMarketing() {
                                       >
                                         <FaWhatsapp className="w-4 h-4" />
                                       </button>
-                                      
-                                      {/* Instagram Icon */}
+                                      <select
+                                        value={prospect.whatsappConversationStatus || 'not_contacted'}
+                                        onChange={(e) => {
+                                          updateProspectInlineMutation.mutate({
+                                            prospectId: prospect.id,
+                                            field: 'whatsappConversationStatus',
+                                            value: e.target.value,
+                                          });
+                                        }}
+                                        onClick={(e) => e.stopPropagation()}
+                                        disabled={!prospect.phone}
+                                        className={`text-[10px] px-1.5 py-0.5 rounded cursor-pointer border-0 w-20 ${
+                                          prospect.whatsappConversationStatus === 'in_conversation' ? 'bg-green-500/20 text-green-300' :
+                                          prospect.whatsappConversationStatus === 'no_response' ? 'bg-yellow-500/20 text-yellow-300' :
+                                          prospect.whatsappConversationStatus === 'not_interested' ? 'bg-red-500/20 text-red-300' :
+                                          prospect.whatsappConversationStatus === 'closed' ? 'bg-gray-500/20 text-gray-300' :
+                                          'bg-white/10 text-white/60'
+                                        } ${!prospect.phone ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                        data-testid={`select-whatsapp-status-${prospect.id}`}
+                                      >
+                                        <option value="not_contacted" className="bg-gray-800">Sin hablar</option>
+                                        <option value="no_response" className="bg-gray-800">Sin resp.</option>
+                                        <option value="in_conversation" className="bg-gray-800">Hablando</option>
+                                        <option value="not_interested" className="bg-gray-800">No interesa</option>
+                                        <option value="closed" className="bg-gray-800">Cerrado</option>
+                                      </select>
+                                    </div>
+                                    
+                                    {/* Instagram Column */}
+                                    <div className="flex flex-col gap-1 items-center">
                                       <button
                                         onClick={() => {
                                           updateProspectInlineMutation.mutate({
@@ -1017,33 +1042,32 @@ export default function SuperAdminMarketing() {
                                       >
                                         <FaInstagram className="w-4 h-4" />
                                       </button>
+                                      <select
+                                        value={prospect.instagramConversationStatus || 'not_contacted'}
+                                        onChange={(e) => {
+                                          updateProspectInlineMutation.mutate({
+                                            prospectId: prospect.id,
+                                            field: 'instagramConversationStatus',
+                                            value: e.target.value,
+                                          });
+                                        }}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className={`text-[10px] px-1.5 py-0.5 rounded cursor-pointer border-0 w-20 ${
+                                          prospect.instagramConversationStatus === 'in_conversation' ? 'bg-green-500/20 text-green-300' :
+                                          prospect.instagramConversationStatus === 'no_response' ? 'bg-yellow-500/20 text-yellow-300' :
+                                          prospect.instagramConversationStatus === 'not_interested' ? 'bg-red-500/20 text-red-300' :
+                                          prospect.instagramConversationStatus === 'closed' ? 'bg-gray-500/20 text-gray-300' :
+                                          'bg-white/10 text-white/60'
+                                        }`}
+                                        data-testid={`select-instagram-status-${prospect.id}`}
+                                      >
+                                        <option value="not_contacted" className="bg-gray-800">Sin hablar</option>
+                                        <option value="no_response" className="bg-gray-800">Sin resp.</option>
+                                        <option value="in_conversation" className="bg-gray-800">Hablando</option>
+                                        <option value="not_interested" className="bg-gray-800">No interesa</option>
+                                        <option value="closed" className="bg-gray-800">Cerrado</option>
+                                      </select>
                                     </div>
-                                    
-                                    {/* Conversation Status Badge */}
-                                    <select
-                                      value={prospect.conversationStatus || 'not_contacted'}
-                                      onChange={(e) => {
-                                        updateProspectInlineMutation.mutate({
-                                          prospectId: prospect.id,
-                                          field: 'conversationStatus',
-                                          value: e.target.value,
-                                        });
-                                      }}
-                                      className={`text-xs px-2 py-0.5 rounded cursor-pointer border-0 ${
-                                        prospect.conversationStatus === 'in_conversation' ? 'bg-green-500/20 text-green-300' :
-                                        prospect.conversationStatus === 'no_response' ? 'bg-yellow-500/20 text-yellow-300' :
-                                        prospect.conversationStatus === 'not_interested' ? 'bg-red-500/20 text-red-300' :
-                                        prospect.conversationStatus === 'closed' ? 'bg-gray-500/20 text-gray-300' :
-                                        'bg-white/10 text-white/60'
-                                      }`}
-                                      data-testid={`select-status-${prospect.id}`}
-                                    >
-                                      <option value="not_contacted" className="bg-gray-800">Sin escribir</option>
-                                      <option value="no_response" className="bg-gray-800">Sin respuesta</option>
-                                      <option value="in_conversation" className="bg-gray-800">En conversación</option>
-                                      <option value="not_interested" className="bg-gray-800">No interesado</option>
-                                      <option value="closed" className="bg-gray-800">Cerrado</option>
-                                    </select>
                                   </div>
                                 ) : (
                                   <span className="text-white/40 text-xs">-</span>
