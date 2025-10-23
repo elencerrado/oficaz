@@ -1,7 +1,7 @@
 import webpush from 'web-push';
 import jwt from 'jsonwebtoken';
 import { db } from './db';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, sql } from 'drizzle-orm';
 import { workAlarms, pushSubscriptions, workSessions, breakPeriods, users } from '@shared/schema';
 import { JWT_SECRET } from './utils/jwt-secret.js';
 
@@ -28,6 +28,7 @@ interface WorkStatus {
 }
 
 const checkedAlarms = new Map<string, Date>();
+const sentIncompleteSessionNotifications = new Map<string, Date>(); // Track daily incomplete session notifications
 
 // Helper function to check if alarm should trigger now
 function shouldTriggerAlarm(alarmTime: string, weekdays: number[]): boolean {
@@ -241,6 +242,164 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
   }
 }
 
+// Function to check for incomplete work sessions and send notifications
+async function checkIncompleteSessions() {
+  try {
+    const now = new Date();
+    const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+    const currentHour = now.getHours();
+    
+    // Only check at 9 AM
+    if (currentHour !== 9) {
+      return;
+    }
+    
+    // Skip if already checked today
+    if (sentIncompleteSessionNotifications.has(todayKey)) {
+      return;
+    }
+    
+    console.log('🔍 Checking for incomplete work sessions...');
+    
+    // Find all incomplete sessions (sessions from previous days without clock out)
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(23, 59, 59, 999);
+    
+    const incompleteSessions = await db.select({
+      id: workSessions.id,
+      userId: workSessions.userId,
+      clockIn: workSessions.clockIn,
+      user: {
+        id: users.id,
+        fullName: users.fullName,
+        personalEmail: users.personalEmail,
+        companyEmail: users.companyEmail,
+        role: users.role,
+        companyId: users.companyId
+      }
+    })
+      .from(workSessions)
+      .innerJoin(users, eq(workSessions.userId, users.id))
+      .where(and(
+        isNull(workSessions.clockOut),
+        sql`${workSessions.clockIn} < ${yesterday}`
+      ));
+    
+    console.log(`📊 Found ${incompleteSessions.length} incomplete session(s)`);
+    
+    // Group by user to send only one notification per user
+    const userSessionsMap = new Map<number, typeof incompleteSessions>();
+    for (const session of incompleteSessions) {
+      const existing = userSessionsMap.get(session.userId) || [];
+      existing.push(session);
+      userSessionsMap.set(session.userId, existing);
+    }
+    
+    // Send notifications to users with incomplete sessions
+    for (const [userId, sessions] of Array.from(userSessionsMap.entries())) {
+      const user = sessions[0].user;
+      const sessionCount = sessions.length;
+      
+      console.log(`📱 Sending incomplete session notification to user ${userId} (${sessionCount} session(s))`);
+      
+      // Get push subscriptions
+      const subscriptions = await db.select()
+        .from(pushSubscriptions)
+        .where(eq(pushSubscriptions.userId, userId));
+      
+      if (subscriptions.length === 0) {
+        console.log(`📱 No push subscriptions found for user ${userId}`);
+        continue;
+      }
+      
+      // Filter to unique devices
+      const deviceMap = new Map<string, typeof subscriptions[0]>();
+      for (const sub of subscriptions) {
+        const deviceKey = sub.deviceId || sub.endpoint;
+        const existing = deviceMap.get(deviceKey);
+        if (!existing || new Date(sub.updatedAt) > new Date(existing.updatedAt)) {
+          deviceMap.set(deviceKey, sub);
+        }
+      }
+      
+      const uniqueSubscriptions = Array.from(deviceMap.values());
+      
+      // Generate temporary JWT token
+      const tempToken = jwt.sign({
+        id: user.id,
+        email: user.personalEmail || user.companyEmail || `user_${user.id}@temp.com`,
+        role: user.role,
+        companyId: user.companyId,
+        pushAction: true
+      }, JWT_SECRET, { expiresIn: '24h' }); // 24 hours for incomplete session notifications
+      
+      const payload = JSON.stringify({
+        title: 'Sesión Incompleta',
+        body: sessionCount === 1 
+          ? '⚠️ Tienes una sesión de trabajo sin cerrar' 
+          : `⚠️ Tienes ${sessionCount} sesiones de trabajo sin cerrar`,
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        vibrate: [200, 100, 200],
+        requireInteraction: true,
+        tag: `incomplete-session-${userId}-${todayKey}`,
+        data: {
+          url: '/employee/misfichajes',
+          type: 'incomplete_session',
+          timestamp: Date.now(),
+          userId,
+          sessionCount,
+          authToken: tempToken
+        },
+        actions: [
+          { action: 'view', title: 'Ver fichajes', icon: '/icon-192.png' }
+        ]
+      });
+      
+      // Send to all unique devices
+      for (const sub of uniqueSubscriptions) {
+        try {
+          await webpush.sendNotification(
+            {
+              endpoint: sub.endpoint,
+              keys: {
+                p256dh: sub.p256dh,
+                auth: sub.auth
+              }
+            },
+            payload
+          );
+          console.log(`✅ Incomplete session notification sent to user ${userId}`);
+        } catch (error: any) {
+          if (error.statusCode === 410 || error.statusCode === 404) {
+            console.log(`🗑️  Removing invalid subscription for user ${userId}`);
+            await db.delete(pushSubscriptions)
+              .where(eq(pushSubscriptions.endpoint, sub.endpoint));
+          } else {
+            console.error(`❌ Error sending notification to user ${userId}:`, error);
+          }
+        }
+      }
+    }
+    
+    // Mark as checked for today
+    sentIncompleteSessionNotifications.set(todayKey, now);
+    console.log(`✅ Incomplete sessions checked for ${todayKey}`);
+    
+    // Clean up old entries (older than 7 days)
+    const sevenDaysAgo = now.getTime() - (7 * 24 * 60 * 60 * 1000);
+    for (const [key, date] of Array.from(sentIncompleteSessionNotifications.entries())) {
+      if (date.getTime() < sevenDaysAgo) {
+        sentIncompleteSessionNotifications.delete(key);
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ Error checking incomplete sessions:', error);
+  }
+}
+
 // Main scheduler function - runs every 30 seconds
 export async function checkWorkAlarms() {
   try {
@@ -297,19 +456,29 @@ export async function checkWorkAlarms() {
 export function startPushNotificationScheduler() {
   console.log('🚀 Starting Push Notification Scheduler...');
   
-  // Check every 30 seconds for more responsive notifications
-  const interval = setInterval(() => {
+  // Check every 30 seconds for work alarms
+  const alarmInterval = setInterval(() => {
     checkWorkAlarms().catch(err => {
       console.error('❌ Error in scheduled alarm check:', err);
     });
   }, 30000);
   
+  // Check every 5 minutes for incomplete sessions (will only notify at 9 AM)
+  const incompleteSessionInterval = setInterval(() => {
+    checkIncompleteSessions().catch(err => {
+      console.error('❌ Error checking incomplete sessions:', err);
+    });
+  }, 5 * 60 * 1000); // Every 5 minutes
+  
   // Run immediately on start
   checkWorkAlarms().catch(err => {
     console.error('❌ Error in initial alarm check:', err);
   });
+  checkIncompleteSessions().catch(err => {
+    console.error('❌ Error in initial incomplete session check:', err);
+  });
   
-  console.log('✅ Push Notification Scheduler started - checking every 30 seconds');
+  console.log('✅ Push Notification Scheduler started - checking alarms every 30s, incomplete sessions every 5min');
   
-  return interval;
+  return { alarmInterval, incompleteSessionInterval };
 }

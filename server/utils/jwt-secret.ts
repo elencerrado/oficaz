@@ -1,7 +1,7 @@
 // 🔒 SECURITY: Centralized JWT_SECRET management
 // This ensures all modules use the SAME secret (critical for token verification)
 
-let JWT_SECRET = process.env.JWT_SECRET;
+let JWT_SECRET: string = process.env.JWT_SECRET || '';
 
 if (!JWT_SECRET) {
   if (process.env.NODE_ENV === 'production') {

@@ -83,7 +83,27 @@ self.addEventListener('notificationclick', (event) => {
   if (action && action !== 'open') {
     console.log('[SW] Action button clicked:', action, 'userId:', notificationData.userId);
     
-    // Get auth token from notification data
+    // Handle 'view' action for incomplete sessions (just open the app)
+    if (action === 'view') {
+      const urlToOpen = notificationData.url || '/employee';
+      event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+          // Try to focus existing window
+          for (const client of clientList) {
+            if (client.url.includes(urlToOpen) && 'focus' in client) {
+              return client.focus();
+            }
+          }
+          // Open new window
+          if (clients.openWindow) {
+            return clients.openWindow(urlToOpen);
+          }
+        })
+      );
+      return;
+    }
+    
+    // Get auth token from notification data for work actions
     const authToken = notificationData.authToken;
     if (!authToken) {
       console.error('[SW] No auth token in notification data');
