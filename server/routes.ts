@@ -9241,6 +9241,7 @@ Responde directamente a este email para contactar con la persona.
     try {
       const prospectId = parseInt(req.params.id);
       const updates = req.body;
+      console.log('📝 Updating prospect:', prospectId, 'with data:', JSON.stringify(updates));
       
       // Get current prospect
       const [currentProspect] = await db.select()
