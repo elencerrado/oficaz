@@ -785,8 +785,24 @@ export default function SuperAdminMarketing() {
                               setInstagramFilter('all');
                             }}
                             className="text-xs px-2 py-1.5 rounded bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-colors"
+                            data-testid="button-clear-filters"
                           >
                             Limpiar filtros
+                          </button>
+                        )}
+                        
+                        {/* Clear sorting button */}
+                        {sortField && (
+                          <button
+                            onClick={() => {
+                              setSortField(null);
+                              setSortDirection('asc');
+                            }}
+                            className="text-xs px-2 py-1.5 rounded bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 transition-colors flex items-center gap-1"
+                            data-testid="button-clear-sorting"
+                          >
+                            <ArrowUpDown className="w-3 h-3" />
+                            Limpiar ordenación
                           </button>
                         )}
                       </div>
