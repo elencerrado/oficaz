@@ -826,6 +826,90 @@ export async function sendDocumentRequestNotification(userId: number, documentTy
   }
 }
 
+// Function to send new message notification
+export async function sendMessageNotification(
+  receiverId: number, 
+  senderName: string, 
+  subject: string,
+  messageId: number
+) {
+  try {
+    console.log(`📱 Sending message notification to user ${receiverId} from ${senderName}`);
+    
+    // Get push subscriptions for the receiver
+    const subscriptions = await db.select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, receiverId));
+    
+    if (subscriptions.length === 0) {
+      console.log(`📱 No push subscriptions found for user ${receiverId}`);
+      return;
+    }
+    
+    // Filter to unique devices
+    const deviceMap = new Map<string, typeof subscriptions[0]>();
+    for (const sub of subscriptions) {
+      const deviceKey = sub.deviceId || sub.endpoint;
+      const existing = deviceMap.get(deviceKey);
+      if (!existing || new Date(sub.updatedAt) > new Date(existing.updatedAt)) {
+        deviceMap.set(deviceKey, sub);
+      }
+    }
+    
+    const uniqueSubscriptions = Array.from(deviceMap.values());
+    
+    // 🔒 CRITICAL: Use message ID for tag to deduplicate across all devices
+    const notificationTag = `message-${messageId}`;
+    
+    const payload = JSON.stringify({
+      title: `💬 Mensaje de ${senderName}`,
+      body: subject || 'Tienes un nuevo mensaje',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      vibrate: [200, 100, 200],
+      requireInteraction: true,
+      tag: notificationTag,
+      data: {
+        url: '/employee/mensajes',
+        type: 'message',
+        messageId,
+        timestamp: Date.now(),
+        userId: receiverId
+      },
+      actions: [
+        { action: 'view', title: 'Ver mensaje', icon: '/icon-192.png' }
+      ]
+    });
+    
+    // Send to all unique devices
+    for (const sub of uniqueSubscriptions) {
+      try {
+        await webpush.sendNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.p256dh,
+              auth: sub.auth
+            }
+          },
+          payload
+        );
+        console.log(`✅ Message notification sent to user ${receiverId}`);
+      } catch (error: any) {
+        if (error.statusCode === 410 || error.statusCode === 404) {
+          console.log(`🗑️  Removing invalid subscription for user ${receiverId}`);
+          await db.delete(pushSubscriptions)
+            .where(eq(pushSubscriptions.endpoint, sub.endpoint));
+        } else {
+          console.error(`❌ Error sending message notification to user ${receiverId}:`, error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in sendMessageNotification:', error);
+  }
+}
+
 // 🔒 PROTECTED: Use global process to persist scheduler state across hot reloads
 // DO NOT MODIFY - This prevents duplicate notifications from module reloads
 declare global {

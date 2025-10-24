@@ -4723,6 +4723,43 @@ Responde directamente a este email para contactar con la persona.
       });
 
       const message = await storage.createMessage(data);
+      
+      // 📱 Send push notification to receiver(s)
+      try {
+        const { sendMessageNotification } = await import('./pushNotificationScheduler.js');
+        const sender = await storage.getUser(req.user!.id);
+        const senderName = sender?.fullName || 'Usuario';
+        
+        if (data.isToAllEmployees) {
+          // Send to all employees in the company
+          const employees = await storage.getUsersByCompany(req.user!.companyId);
+          for (const employee of employees) {
+            // Don't send notification to the sender
+            if (employee.id !== req.user!.id) {
+              await sendMessageNotification(
+                employee.id,
+                senderName,
+                data.subject || 'Nuevo mensaje',
+                message.id
+              );
+            }
+          }
+          console.log(`📱 Message notifications sent to all employees in company ${req.user!.companyId}`);
+        } else if (data.receiverId) {
+          // Send to specific receiver
+          await sendMessageNotification(
+            data.receiverId,
+            senderName,
+            data.subject || 'Nuevo mensaje',
+            message.id
+          );
+          console.log(`📱 Message notification sent to user ${data.receiverId}`);
+        }
+      } catch (error) {
+        console.error('Error sending message push notification:', error);
+        // Don't fail the request if push notification fails
+      }
+      
       res.status(201).json(message);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
