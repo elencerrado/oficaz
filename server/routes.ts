@@ -3942,21 +3942,20 @@ Responde directamente a este email para contactar con la persona.
 
       console.log('Update successful:', request);
       
-      // 📱 Send push notification to employee when vacation request is reviewed
+      // 📱 Send push notification to employee when vacation request is reviewed - ASYNC (no bloquea endpoint)
       if (status === 'approved' || status === 'denied') {
-        try {
-          const { sendVacationNotification } = await import('./pushNotificationScheduler.js');
-          await sendVacationNotification(request.userId, status, {
+        import('./pushNotificationScheduler.js').then(({ sendVacationNotification }) => {
+          sendVacationNotification(request.userId, status, {
             startDate: request.startDate,
             endDate: request.endDate,
             adminComment,
             requestId: request.id
+          }).then(() => {
+            console.log(`📱 Vacation ${status} notification sent to user ${request.userId}`);
+          }).catch(error => {
+            console.error('Error sending vacation push notification:', error);
           });
-          console.log(`📱 Vacation ${status} notification sent to user ${request.userId}`);
-        } catch (error) {
-          console.error('Error sending vacation push notification:', error);
-          // Don't fail the request if push notification fails
-        }
+        }).catch(err => console.error('Failed to load push notification module:', err));
       }
       
       res.json(request);
@@ -4724,41 +4723,42 @@ Responde directamente a este email para contactar con la persona.
 
       const message = await storage.createMessage(data);
       
-      // 📱 Send push notification to receiver(s)
-      try {
-        const { sendMessageNotification } = await import('./pushNotificationScheduler.js');
-        const sender = await storage.getUser(req.user!.id);
-        const senderName = sender?.fullName || 'Usuario';
-        
-        if (data.isToAllEmployees) {
-          // Send to all employees in the company
-          const employees = await storage.getUsersByCompany(req.user!.companyId);
-          for (const employee of employees) {
-            // Don't send notification to the sender
-            if (employee.id !== req.user!.id) {
-              await sendMessageNotification(
-                employee.id,
-                senderName,
-                data.subject || 'Nuevo mensaje',
-                message.id
-              );
-            }
+      // 📱 Send push notification to receiver(s) - ASYNC (no bloquea endpoint)
+      import('./pushNotificationScheduler.js').then(async ({ sendMessageNotification }) => {
+        try {
+          const sender = await storage.getUser(req.user!.id);
+          const senderName = sender?.fullName || 'Usuario';
+          
+          if (data.isToAllEmployees) {
+            // Send to all employees in the company in parallel
+            const employees = await storage.getUsersByCompany(req.user!.companyId);
+            await Promise.allSettled(
+              employees
+                .filter(employee => employee.id !== req.user!.id)
+                .map(employee => 
+                  sendMessageNotification(
+                    employee.id,
+                    senderName,
+                    data.subject || 'Nuevo mensaje',
+                    message.id
+                  )
+                )
+            );
+            console.log(`📱 Message notifications sent to all employees in company ${req.user!.companyId}`);
+          } else if (data.receiverId) {
+            // Send to specific receiver
+            await sendMessageNotification(
+              data.receiverId,
+              senderName,
+              data.subject || 'Nuevo mensaje',
+              message.id
+            );
+            console.log(`📱 Message notification sent to user ${data.receiverId}`);
           }
-          console.log(`📱 Message notifications sent to all employees in company ${req.user!.companyId}`);
-        } else if (data.receiverId) {
-          // Send to specific receiver
-          await sendMessageNotification(
-            data.receiverId,
-            senderName,
-            data.subject || 'Nuevo mensaje',
-            message.id
-          );
-          console.log(`📱 Message notification sent to user ${data.receiverId}`);
+        } catch (error) {
+          console.error('Error sending message push notification:', error);
         }
-      } catch (error) {
-        console.error('Error sending message push notification:', error);
-        // Don't fail the request if push notification fails
-      }
+      }).catch(err => console.error('Failed to load push notification module:', err));
       
       res.status(201).json(message);
     } catch (error: any) {
