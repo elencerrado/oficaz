@@ -1041,13 +1041,13 @@ export default function Messages() {
                     </div>
                   )}
                 </div>
-                <div ref={messagesEndRef} style={{ height: '60px' }} />
+                <div ref={messagesEndRef} style={{ height: '16px' }} />
               </div>
 
               {/* Scroll to bottom button - Mobile Admin with smooth transition */}
               <button
                 onClick={scrollToBottom}
-                className={`fixed bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg hover:scale-110 z-20 transition-all duration-300 ${
+                className={`absolute bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg hover:scale-110 z-20 transition-all duration-300 ${
                   showScrollButton ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
                 }`}
                 style={{
@@ -1059,15 +1059,10 @@ export default function Messages() {
                 <ArrowDown className="h-5 w-5" />
               </button>
 
-              {/* Message Input - Fixed at bottom */}
+              {/* Message Input - Part of flex layout */}
               <div 
-                className="flex space-x-2 px-4 border-t border-border bg-background"
+                className="flex space-x-2 px-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  position: 'fixed',
-                  bottom: '0',
-                  left: 0,
-                  right: 0,
-                  zIndex: 10,
                   paddingTop: '16px',
                   paddingBottom: `max(16px, env(safe-area-inset-bottom))`
                 }}
@@ -1396,7 +1391,7 @@ export default function Messages() {
               }
             `}</style>
             <div 
-              className="fixed bg-background"
+              className="fixed bg-background flex flex-col"
               style={{ 
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
@@ -1407,22 +1402,17 @@ export default function Messages() {
                 bottom: 0,
                 height: '100vh',
                 minHeight: '-webkit-fill-available',
-                overflow: 'hidden',
                 zIndex: 9999
               }}
             >
               {/* Chat Header with Back Button */}
               <div 
-                className="flex items-center space-x-3 px-4 border-b border-border bg-background"
+                className="flex items-center space-x-3 px-4 border-b border-border bg-background flex-shrink-0"
                 style={{
-                  position: 'fixed',
-                  top: '0',
-                  left: 0,
-                  right: 0,
-                  zIndex: 10000,
-                  paddingTop: `max(16px, env(safe-area-inset-top))`,
+                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`,
                   paddingBottom: '16px',
-                  height: 'auto'
+                  position: 'relative',
+                  zIndex: 10000
                 }}
               >
                 <Button
@@ -1451,18 +1441,14 @@ export default function Messages() {
               {/* Messages - Scrollable area */}
               <div 
                 ref={mobileMessagesContainerRef}
-                className="overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
+                className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
                 style={{ 
-                  position: 'absolute',
-                  top: `calc(56px + env(safe-area-inset-top))`,
-                  left: 0,
-                  right: 0,
-                  bottom: `calc(72px + env(safe-area-inset-bottom))`,
-                  paddingBottom: '24px',
+                  paddingBottom: '16px',
                   paddingTop: '8px',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
-                  WebkitOverflowScrolling: 'touch'
+                  WebkitOverflowScrolling: 'touch',
+                  position: 'relative'
                 }}
               >
                 <div className="flex-1"></div>
@@ -1530,13 +1516,13 @@ export default function Messages() {
                     </div>
                   )}
                 </div>
-                <div ref={messagesEndRef} style={{ height: '60px' }} />
+                <div ref={messagesEndRef} style={{ height: '16px' }} />
               </div>
 
               {/* Scroll to bottom button - Employee with smooth transition */}
               <button
                 onClick={scrollToBottom}
-                className={`fixed bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg hover:scale-110 z-20 transition-all duration-300 ${
+                className={`absolute bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg hover:scale-110 z-20 transition-all duration-300 ${
                   showScrollButton ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
                 }`}
                 style={{
@@ -1548,15 +1534,10 @@ export default function Messages() {
                 <ArrowDown className="h-5 w-5" />
               </button>
 
-              {/* Message Input - Fixed at bottom */}
+              {/* Message Input - Part of flex layout */}
               <div 
-                className="flex space-x-2 px-4 border-t border-border bg-background"
+                className="flex space-x-2 px-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  position: 'fixed',
-                  bottom: '0',
-                  left: 0,
-                  right: 0,
-                  zIndex: 10,
                   paddingTop: '16px',
                   paddingBottom: `max(16px, env(safe-area-inset-bottom))`
                 }}
