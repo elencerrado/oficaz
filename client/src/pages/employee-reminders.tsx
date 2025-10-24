@@ -247,11 +247,14 @@ export default function EmployeeReminders() {
     
     try {
       // ⚠️ CRITICAL: Parse date as Spain timezone since DB stores dates in Spain time
-      // Without timezone info in the string, JavaScript interprets as UTC, causing +2 hour offset
-      const utcDate = new Date(dateString + 'Z'); // Force UTC interpretation
+      // DB format: "2025-10-24 12:13:00" or "2025-10-24 12:13:00.123456"
+      // Convert to ISO format by replacing space with 'T' and adding 'Z' for UTC
+      const isoString = dateString.replace(' ', 'T') + 'Z';
+      const utcDate = new Date(isoString);
       
       // Check if date is valid
       if (isNaN(utcDate.getTime())) {
+        console.error('Invalid date after parsing:', dateString, '->', isoString);
         return 'Fecha inválida';
       }
       
@@ -262,7 +265,7 @@ export default function EmployeeReminders() {
       if (isTomorrow(spainDate)) return `Mañana ${timeStr}`;
       return format(spainDate, 'dd/MM/yyyy HH:mm', { locale: es });
     } catch (error) {
-      console.error('Error formatting reminder date:', error);
+      console.error('Error formatting reminder date:', error, 'Input:', dateString);
       return 'Fecha inválida';
     }
   };
