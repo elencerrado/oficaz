@@ -58,6 +58,7 @@ const featureIcons = {
   logoUpload: Upload,
   api: Zap,
   reminders: Bell,
+  notifications: Bell,
   employee_time_edit: Settings,
   employee_time_edit_permission: Settings,
 };
@@ -74,6 +75,7 @@ const featureLabels = {
   logoUpload: 'Subida de Logo',
   api: 'API',
   reminders: 'Recordatorios',
+  notifications: 'Notificaciones Push',
   employee_time_edit: 'Edición de Tiempos',
   employee_time_edit_permission: 'Permisos de Edición',
 };
