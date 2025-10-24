@@ -6203,6 +6203,25 @@ Responde directamente a este email para contactar con la persona.
         assignedAt: new Date()
       });
       
+      // Send push notifications to assigned users (except creator)
+      if (assignedUserIds && assignedUserIds.length > 0) {
+        try {
+          const { sendReminderSharedNotification } = await import('./pushNotificationScheduler.js');
+          const creator = await storage.getUser(userId);
+          const creatorName = creator?.fullName || 'Admin';
+          
+          // Send notification to each assigned user (except the creator)
+          for (const assignedUserId of assignedUserIds) {
+            if (assignedUserId !== userId) {
+              await sendReminderSharedNotification(assignedUserId, title, creatorName, reminder.id);
+            }
+          }
+        } catch (error) {
+          console.error('Error sending reminder shared notifications:', error);
+          // Don't fail the request if notifications fail
+        }
+      }
+      
       res.json(reminder);
     } catch (error) {
       console.error("Error creating reminder:", error);
@@ -6518,6 +6537,27 @@ Responde directamente a este email para contactar con la persona.
       
       // Assign reminder to users using new array-based structure
       const updatedReminder = await storage.assignReminderToUsers(reminderId, assignedUserIds, assignedBy);
+      
+      // Send push notifications to newly assigned users
+      try {
+        const { sendReminderSharedNotification } = await import('./pushNotificationScheduler.js');
+        const assigner = await storage.getUser(assignedBy);
+        const assignerName = assigner?.fullName || 'Admin';
+        
+        // Get previous assignments to determine which users are new
+        const previousAssignedIds = existingReminder.assignedUserIds || [];
+        const newAssignedIds = assignedUserIds.filter((id: number) => !previousAssignedIds.includes(id));
+        
+        // Send notification to each newly assigned user
+        for (const newUserId of newAssignedIds) {
+          if (newUserId !== assignedBy) {
+            await sendReminderSharedNotification(newUserId, existingReminder.title, assignerName, reminderId);
+          }
+        }
+      } catch (error) {
+        console.error('Error sending reminder assignment notifications:', error);
+        // Don't fail the request if notifications fail
+      }
       
       res.json({ message: "Reminder assigned successfully", reminder: updatedReminder });
     } catch (error) {

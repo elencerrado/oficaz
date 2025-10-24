@@ -1,8 +1,8 @@
 import webpush from 'web-push';
 import jwt from 'jsonwebtoken';
 import { db } from './db';
-import { eq, and, isNull, sql } from 'drizzle-orm';
-import { workAlarms, pushSubscriptions, workSessions, breakPeriods, users } from '@shared/schema';
+import { eq, and, isNull, sql, lte } from 'drizzle-orm';
+import { workAlarms, pushSubscriptions, workSessions, breakPeriods, users, reminders } from '@shared/schema';
 import { JWT_SECRET } from './utils/jwt-secret.js';
 
 interface AlarmCheck {
@@ -910,11 +910,210 @@ export async function sendMessageNotification(
   }
 }
 
+// Function to send notification when reminder is shared
+export async function sendReminderSharedNotification(
+  userId: number,
+  reminderTitle: string,
+  sharedByName: string,
+  reminderId: number
+) {
+  try {
+    console.log(`📱 Sending reminder shared notification to user ${userId}`);
+    
+    // Get push subscriptions for the user
+    const subscriptions = await db.select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, userId));
+    
+    if (subscriptions.length === 0) {
+      console.log(`📱 No push subscriptions found for user ${userId}`);
+      return;
+    }
+    
+    // Filter to unique devices
+    const deviceMap = new Map<string, typeof subscriptions[0]>();
+    for (const sub of subscriptions) {
+      const deviceKey = sub.deviceId || sub.endpoint;
+      const existing = deviceMap.get(deviceKey);
+      if (!existing || new Date(sub.updatedAt) > new Date(existing.updatedAt)) {
+        deviceMap.set(deviceKey, sub);
+      }
+    }
+    
+    const uniqueSubscriptions = Array.from(deviceMap.values());
+    
+    const payload = JSON.stringify({
+      title: `Recordatorio compartido por ${sharedByName}`,
+      body: reminderTitle,
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      vibrate: [200, 100, 200],
+      requireInteraction: true,
+      tag: `reminder-shared-${reminderId}`,
+      data: {
+        url: '/employee',
+        type: 'reminder_shared',
+        timestamp: Date.now(),
+        userId,
+        reminderId
+      },
+      actions: [
+        { action: 'view', title: 'Ver recordatorio', icon: '/icon-192.png' }
+      ]
+    });
+    
+    // Send to all unique devices
+    for (const sub of uniqueSubscriptions) {
+      try {
+        await webpush.sendNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.p256dh,
+              auth: sub.auth
+            }
+          },
+          payload
+        );
+        console.log(`✅ Reminder shared notification sent to user ${userId}`);
+      } catch (error: any) {
+        if (error.statusCode === 410 || error.statusCode === 404) {
+          console.log(`🗑️  Removing invalid subscription for user ${userId}`);
+          await db.delete(pushSubscriptions)
+            .where(eq(pushSubscriptions.endpoint, sub.endpoint));
+        } else {
+          console.error(`❌ Error sending reminder shared notification to user ${userId}:`, error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in sendReminderSharedNotification:', error);
+  }
+}
+
+// Function to check and send reminder notifications when reminderDate arrives
+async function checkReminders() {
+  try {
+    const now = new Date();
+    console.log(`🔔 Checking reminders at ${now.toLocaleTimeString()}`);
+    
+    // Get all reminders that:
+    // 1. Have enableNotifications = true
+    // 2. Have not been notified yet (notificationShown = false)
+    // 3. reminderDate is in the past or within next minute
+    // 4. Are not completed or archived
+    const oneMinuteFromNow = new Date(now.getTime() + 60000);
+    
+    const remindersToNotify = await db.select()
+      .from(reminders)
+      .where(
+        and(
+          eq(reminders.enableNotifications, true),
+          eq(reminders.notificationShown, false),
+          eq(reminders.isCompleted, false),
+          eq(reminders.isArchived, false),
+          lte(reminders.reminderDate, oneMinuteFromNow)
+        )
+      );
+    
+    console.log(`📋 Found ${remindersToNotify.length} reminder(s) to notify`);
+    
+    for (const reminder of remindersToNotify) {
+      // Get all assigned users (or just creator if no assignments)
+      const userIds = reminder.assignedUserIds && reminder.assignedUserIds.length > 0
+        ? reminder.assignedUserIds
+        : [reminder.userId];
+      
+      console.log(`📌 Processing reminder "${reminder.title}" for ${userIds.length} user(s)`);
+      
+      // Send notification to each assigned user
+      for (const userId of userIds) {
+        // Get push subscriptions
+        const subscriptions = await db.select()
+          .from(pushSubscriptions)
+          .where(eq(pushSubscriptions.userId, userId));
+        
+        if (subscriptions.length === 0) {
+          console.log(`📱 No push subscriptions found for user ${userId}`);
+          continue;
+        }
+        
+        // Filter to unique devices
+        const deviceMap = new Map<string, typeof subscriptions[0]>();
+        for (const sub of subscriptions) {
+          const deviceKey = sub.deviceId || sub.endpoint;
+          const existing = deviceMap.get(deviceKey);
+          if (!existing || new Date(sub.updatedAt) > new Date(existing.updatedAt)) {
+            deviceMap.set(deviceKey, sub);
+          }
+        }
+        
+        const uniqueSubscriptions = Array.from(deviceMap.values());
+        
+        const payload = JSON.stringify({
+          title: 'Recordatorio',
+          body: reminder.title,
+          icon: '/icon-192.png',
+          badge: '/icon-192.png',
+          vibrate: [200, 100, 200],
+          requireInteraction: true,
+          tag: `reminder-due-${reminder.id}`,
+          data: {
+            url: '/employee',
+            type: 'reminder_due',
+            timestamp: Date.now(),
+            userId,
+            reminderId: reminder.id
+          },
+          actions: [
+            { action: 'view', title: 'Ver recordatorio', icon: '/icon-192.png' }
+          ]
+        });
+        
+        // Send to all unique devices
+        for (const sub of uniqueSubscriptions) {
+          try {
+            await webpush.sendNotification(
+              {
+                endpoint: sub.endpoint,
+                keys: {
+                  p256dh: sub.p256dh,
+                  auth: sub.auth
+                }
+              },
+              payload
+            );
+            console.log(`✅ Reminder notification sent to user ${userId}`);
+          } catch (error: any) {
+            if (error.statusCode === 410 || error.statusCode === 404) {
+              console.log(`🗑️  Removing invalid subscription for user ${userId}`);
+              await db.delete(pushSubscriptions)
+                .where(eq(pushSubscriptions.endpoint, sub.endpoint));
+            } else {
+              console.error(`❌ Error sending reminder notification to user ${userId}:`, error);
+            }
+          }
+        }
+      }
+      
+      // Mark reminder as notified
+      await db.update(reminders)
+        .set({ notificationShown: true })
+        .where(eq(reminders.id, reminder.id));
+      
+      console.log(`✅ Marked reminder ${reminder.id} as notified`);
+    }
+  } catch (error) {
+    console.error('Error in checkReminders:', error);
+  }
+}
+
 // 🔒 PROTECTED: Use global process to persist scheduler state across hot reloads
 // DO NOT MODIFY - This prevents duplicate notifications from module reloads
 declare global {
   var pushSchedulerAlarmInterval: NodeJS.Timeout | undefined;
   var pushSchedulerIncompleteInterval: NodeJS.Timeout | undefined;
+  var pushSchedulerReminderInterval: NodeJS.Timeout | undefined;
   var pushSchedulerRunning: boolean | undefined;
 }
 
@@ -934,7 +1133,8 @@ export function startPushNotificationScheduler() {
     console.log(`⚠️  [CALL #${callNum}] Push Notification Scheduler already running - skipping [${processId}]`);
     return {
       alarmInterval: global.pushSchedulerAlarmInterval,
-      incompleteSessionInterval: global.pushSchedulerIncompleteInterval
+      incompleteSessionInterval: global.pushSchedulerIncompleteInterval,
+      reminderInterval: global.pushSchedulerReminderInterval
     };
   }
   
@@ -950,6 +1150,11 @@ export function startPushNotificationScheduler() {
     console.log(`🧹 Forcefully clearing old incomplete session interval (hot reload cleanup) [${processId}]`);
     clearInterval(global.pushSchedulerIncompleteInterval);
     global.pushSchedulerIncompleteInterval = undefined;
+  }
+  if (global.pushSchedulerReminderInterval) {
+    console.log(`🧹 Forcefully clearing old reminder interval (hot reload cleanup) [${processId}]`);
+    clearInterval(global.pushSchedulerReminderInterval);
+    global.pushSchedulerReminderInterval = undefined;
   }
   
   // Mark as running BEFORE creating intervals
@@ -972,16 +1177,24 @@ export function startPushNotificationScheduler() {
     });
   }, 5 * 60 * 1000); // Every 5 minutes
   
+  // Check every minute for reminders
+  global.pushSchedulerReminderInterval = setInterval(() => {
+    checkReminders().catch(err => {
+      console.error('❌ Error checking reminders:', err);
+    });
+  }, 60000); // Every 1 minute
+  
   // Mark as running
   global.pushSchedulerRunning = true;
   
   // ⚠️ DO NOT run immediately on start to avoid duplicate notifications
   // Let the interval handle all checks consistently
   
-  console.log('✅ Push Notification Scheduler started - checking alarms every 30s, incomplete sessions every 5min');
+  console.log('✅ Push Notification Scheduler started - checking alarms every 30s, incomplete sessions every 5min, reminders every 1min');
   
   return { 
     alarmInterval: global.pushSchedulerAlarmInterval, 
-    incompleteSessionInterval: global.pushSchedulerIncompleteInterval 
+    incompleteSessionInterval: global.pushSchedulerIncompleteInterval,
+    reminderInterval: global.pushSchedulerReminderInterval
   };
 }
