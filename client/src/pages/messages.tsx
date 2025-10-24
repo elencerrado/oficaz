@@ -923,6 +923,7 @@ export default function Messages() {
                 overscrollBehavior: 'none',
                 position: 'fixed',
                 inset: 0,
+                overflow: 'hidden',
                 zIndex: 9999
               }}
             >
@@ -1392,6 +1393,7 @@ export default function Messages() {
                 overscrollBehavior: 'none',
                 position: 'fixed',
                 inset: 0,
+                overflow: 'hidden',
                 zIndex: 9999
               }}
             >
