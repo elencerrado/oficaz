@@ -196,8 +196,8 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
     const notificationTag = `alarm-${alarmId}-${currentMinute}`;
     
     const payload = JSON.stringify({
-      title: 'Oficaz',
-      body: '🔔 Hora de fichar',
+      title: 'Alarma',
+      body: 'Es hora de fichar',
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       vibrate: [200, 100, 200, 100, 200, 100, 200],
@@ -862,7 +862,7 @@ export async function sendMessageNotification(
     const notificationTag = `message-${messageId}`;
     
     const payload = JSON.stringify({
-      title: `💬 Mensaje de ${senderName}`,
+      title: `Mensaje de ${senderName}`,
       body: subject || 'Tienes un nuevo mensaje',
       icon: '/icon-192.png',
       badge: '/icon-192.png',
