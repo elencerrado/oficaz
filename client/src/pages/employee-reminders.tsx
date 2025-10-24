@@ -240,15 +240,31 @@ export default function EmployeeReminders() {
   };
 
   const formatReminderDate = (dateString: string) => {
-    // ⚠️ CRITICAL: Parse date as Spain timezone since DB stores dates in Spain time
-    // Without timezone info in the string, JavaScript interprets as UTC, causing +2 hour offset
-    const utcDate = new Date(dateString + 'Z'); // Force UTC interpretation
-    const spainDate = toZonedTime(utcDate, 'Europe/Madrid'); // Convert back to Spain time
+    // Validate date string
+    if (!dateString || dateString.trim() === '') {
+      return 'Sin fecha';
+    }
     
-    const timeStr = format(spainDate, 'HH:mm');
-    if (isToday(spainDate)) return `Hoy ${timeStr}`;
-    if (isTomorrow(spainDate)) return `Mañana ${timeStr}`;
-    return format(spainDate, 'dd/MM/yyyy HH:mm', { locale: es });
+    try {
+      // ⚠️ CRITICAL: Parse date as Spain timezone since DB stores dates in Spain time
+      // Without timezone info in the string, JavaScript interprets as UTC, causing +2 hour offset
+      const utcDate = new Date(dateString + 'Z'); // Force UTC interpretation
+      
+      // Check if date is valid
+      if (isNaN(utcDate.getTime())) {
+        return 'Fecha inválida';
+      }
+      
+      const spainDate = toZonedTime(utcDate, 'Europe/Madrid'); // Convert back to Spain time
+      
+      const timeStr = format(spainDate, 'HH:mm');
+      if (isToday(spainDate)) return `Hoy ${timeStr}`;
+      if (isTomorrow(spainDate)) return `Mañana ${timeStr}`;
+      return format(spainDate, 'dd/MM/yyyy HH:mm', { locale: es });
+    } catch (error) {
+      console.error('Error formatting reminder date:', error);
+      return 'Fecha inválida';
+    }
   };
 
   // Filter reminders - protect against null data
