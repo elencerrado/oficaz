@@ -1480,16 +1480,10 @@ export default function AdminDocuments() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => {
-                                  // TODO: Implementar cancelación de solicitud
-                                  toast({
-                                    title: "Funcionalidad pendiente",
-                                    description: "La cancelación de solicitudes estará disponible pronto",
-                                    variant: "default"
-                                  });
-                                }}
+                                onClick={() => handleDeleteRequest(request.id, request.documentType)}
                                 className="text-orange-600 hover:text-orange-700"
                               >
+                                <X className="h-4 w-4 mr-1" />
                                 Cancelar
                               </Button>
                             ) : request.document ? (
