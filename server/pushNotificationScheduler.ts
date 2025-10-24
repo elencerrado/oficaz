@@ -4,6 +4,7 @@ import { db } from './db';
 import { eq, and, isNull, sql, lte } from 'drizzle-orm';
 import { workAlarms, pushSubscriptions, workSessions, breakPeriods, users, reminders } from '@shared/schema';
 import { JWT_SECRET } from './utils/jwt-secret.js';
+import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 
 interface AlarmCheck {
   alarmId: number;
@@ -35,9 +36,17 @@ const sentIncompleteSessionNotifications = new Map<string, Date>(); // Track dai
 const recentPushSends = new Map<string, number>();
 const PUSH_SEND_THROTTLE_MS = 10000; // 10 seconds
 
+// ⚠️ CRITICAL: Spain timezone constant - ALL time comparisons must use this
+const SPAIN_TZ = 'Europe/Madrid';
+
+// Helper: Get current time in Spain timezone
+function getSpainTime(): Date {
+  return toZonedTime(new Date(), SPAIN_TZ);
+}
+
 // Helper function to check if alarm should trigger now
 function shouldTriggerAlarm(alarmTime: string, weekdays: number[]): boolean {
-  const now = new Date();
+  const now = getSpainTime(); // ⚠️ CRITICAL: Use Spain time, not server UTC
   const currentDay = now.getDay() === 0 ? 7 : now.getDay(); // Convert Sunday from 0 to 7
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
