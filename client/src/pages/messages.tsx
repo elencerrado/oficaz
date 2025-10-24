@@ -1458,7 +1458,7 @@ export default function Messages() {
                   left: 0,
                   right: 0,
                   bottom: `calc(72px + env(safe-area-inset-bottom))`,
-                  paddingBottom: '16px',
+                  paddingBottom: '24px',
                   paddingTop: '8px',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
