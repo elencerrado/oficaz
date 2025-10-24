@@ -1041,7 +1041,7 @@ export default function Messages() {
                     </div>
                   )}
                 </div>
-                <div ref={messagesEndRef} style={{ height: '8px' }} />
+                <div ref={messagesEndRef} style={{ height: '60px' }} />
               </div>
 
               {/* Scroll to bottom button - Mobile Admin with smooth transition */}
@@ -1530,7 +1530,7 @@ export default function Messages() {
                     </div>
                   )}
                 </div>
-                <div ref={messagesEndRef} style={{ height: '8px' }} />
+                <div ref={messagesEndRef} style={{ height: '60px' }} />
               </div>
 
               {/* Scroll to bottom button - Employee with smooth transition */}
