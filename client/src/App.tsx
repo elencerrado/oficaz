@@ -133,8 +133,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   // Reset scroll position on route changes
   useScrollReset();
   
-  // Enable reminder notifications for all authenticated users
-  // useReminderNotifications(); // Disabled - using ReminderBanner instead
+  // Enable reminder notifications (toasts) for all authenticated users
+  useReminderNotifications();
 
   // Calculate padding-top dynamically with safe area support for iOS PWA
   // Header is positioned at top-[60px] when banner is shown, plus header height (60px) = 120px total
