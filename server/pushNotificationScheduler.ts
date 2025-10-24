@@ -282,11 +282,11 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
 // Function to check for incomplete work sessions and send notifications
 async function checkIncompleteSessions() {
   try {
-    const now = new Date();
+    const now = getSpainTime(); // ⚠️ CRITICAL: Use Spain time, not server UTC
     const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
     const currentHour = now.getHours();
     
-    // Only check at 9 AM
+    // Only check at 9 AM (Spain time)
     if (currentHour !== 9) {
       return;
     }
@@ -299,7 +299,7 @@ async function checkIncompleteSessions() {
     console.log('🔍 Checking for incomplete work sessions...');
     
     // Find all incomplete sessions (sessions from previous days without clock out)
-    const yesterday = new Date();
+    const yesterday = getSpainTime();
     yesterday.setDate(yesterday.getDate() - 1);
     yesterday.setHours(23, 59, 59, 999);
     
@@ -440,7 +440,7 @@ async function checkIncompleteSessions() {
 // Main scheduler function - runs every 30 seconds
 export async function checkWorkAlarms() {
   try {
-    const now = new Date();
+    const now = getSpainTime(); // ⚠️ CRITICAL: Use Spain time, not server UTC
     const currentMinute = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${now.getHours()}:${now.getMinutes()}`;
     const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     
