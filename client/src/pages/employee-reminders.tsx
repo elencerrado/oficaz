@@ -23,6 +23,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -168,9 +169,9 @@ export default function EmployeeReminders() {
     },
   });
 
-  // Update status mutation (for archiving only)
+  // Update status mutation (for archiving and completing)
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: number; updates: { isArchived?: boolean } }) => {
+    mutationFn: async ({ id, updates }: { id: number; updates: { isArchived?: boolean; isCompleted?: boolean } }) => {
       return await apiRequest('PATCH', `/api/reminders/${id}`, updates);
     },
     onSuccess: () => {
@@ -239,11 +240,15 @@ export default function EmployeeReminders() {
   };
 
   const formatReminderDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const timeStr = format(date, 'HH:mm');
-    if (isToday(date)) return `Hoy ${timeStr}`;
-    if (isTomorrow(date)) return `Mañana ${timeStr}`;
-    return format(date, 'dd/MM/yyyy HH:mm', { locale: es });
+    // ⚠️ CRITICAL: Parse date as Spain timezone since DB stores dates in Spain time
+    // Without timezone info in the string, JavaScript interprets as UTC, causing +2 hour offset
+    const utcDate = new Date(dateString + 'Z'); // Force UTC interpretation
+    const spainDate = toZonedTime(utcDate, 'Europe/Madrid'); // Convert back to Spain time
+    
+    const timeStr = format(spainDate, 'HH:mm');
+    if (isToday(spainDate)) return `Hoy ${timeStr}`;
+    if (isTomorrow(spainDate)) return `Mañana ${timeStr}`;
+    return format(spainDate, 'dd/MM/yyyy HH:mm', { locale: es });
   };
 
   // Filter reminders - protect against null data
