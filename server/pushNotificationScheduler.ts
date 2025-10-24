@@ -1014,6 +1014,8 @@ async function checkReminders() {
     // 4. Are not completed or archived
     const oneMinuteFromNow = new Date(nowSpain.getTime() + 60000);
     
+    console.log(`🔍 Debug - nowSpain: ${nowSpain.toISOString()}, oneMinuteFromNow: ${oneMinuteFromNow.toISOString()}`);
+    
     const remindersToNotify = await db.select()
       .from(reminders)
       .where(
@@ -1025,6 +1027,27 @@ async function checkReminders() {
           lte(reminders.reminderDate, oneMinuteFromNow)
         )
       );
+    
+    // Debug: Check all active reminders
+    const allActiveReminders = await db.select()
+      .from(reminders)
+      .where(
+        and(
+          eq(reminders.enableNotifications, true),
+          eq(reminders.notificationShown, false),
+          eq(reminders.isCompleted, false),
+          eq(reminders.isArchived, false)
+        )
+      );
+    
+    console.log(`📋 All active reminders with notifications enabled: ${allActiveReminders.length}`);
+    for (const r of allActiveReminders) {
+      if (r.reminderDate) {
+        console.log(`  - ID ${r.id}: "${r.title}" at ${r.reminderDate.toISOString()}, should notify: ${r.reminderDate <= oneMinuteFromNow}`);
+      } else {
+        console.log(`  - ID ${r.id}: "${r.title}" - NO DATE SET`);
+      }
+    }
     
     console.log(`📋 Found ${remindersToNotify.length} reminder(s) to notify`);
     

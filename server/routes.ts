@@ -6293,6 +6293,8 @@ Responde directamente a este email para contactar con la persona.
       const updateData = { ...req.body };
       if (updateData.reminderDate && typeof updateData.reminderDate === 'string') {
         updateData.reminderDate = new Date(updateData.reminderDate);
+        // ⚠️ CRITICAL: Reset notification_shown when date changes so user gets notified again
+        updateData.notificationShown = false;
       }
       if (updateData.reminderDate === null || updateData.reminderDate === '') {
         updateData.reminderDate = null;
