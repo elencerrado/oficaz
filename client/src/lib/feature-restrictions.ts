@@ -93,10 +93,11 @@ export const getRequiredPlanForFeature = (feature: keyof SubscriptionFeatures): 
 };
 
 export const getFeatureRestrictionMessage = (feature: keyof SubscriptionFeatures): string => {
-  const featureNames = {
+  const featureNames: Record<keyof SubscriptionFeatures, string> = {
     messages: 'Mensajes',
     documents: 'Documentos',
     vacation: 'Vacaciones',
+    schedules: 'Cuadrante de horarios',
     timeTracking: 'Fichajes',
     timeEditingPermissions: 'Editar horas empleados',
     analytics: 'Analíticas',
