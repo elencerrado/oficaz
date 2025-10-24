@@ -246,24 +246,36 @@ export default function EmployeeReminders() {
     }
     
     try {
-      // ⚠️ CRITICAL: Backend sends dates in ISO format with 'Z' (UTC)
-      // Example: "2025-10-24T12:13:00.000Z"
-      // We need to interpret this UTC time as Spain time
-      const utcDate = new Date(dateString);
+      // ⚠️ CRITICAL TIMEZONE HANDLING:
+      // Backend stores dates in DB as Spain time: "2025-10-24 12:32:00"
+      // When serialized to JSON, it becomes: "2025-10-24T12:32:00.000Z"
+      // The "Z" is misleading - the time is actually Spain time, NOT UTC
+      // So we must parse and display directly WITHOUT timezone conversion
+      
+      // Parse the ISO string but ignore the Z (treat as local Spain time)
+      const date = new Date(dateString);
       
       // Check if date is valid
-      if (isNaN(utcDate.getTime())) {
+      if (isNaN(date.getTime())) {
         console.error('Invalid date:', dateString);
         return 'Fecha inválida';
       }
       
-      // Convert from UTC to Spain timezone
-      const spainDate = toZonedTime(utcDate, 'Europe/Madrid');
+      // Format directly - the hours in the date object are already Spain time
+      // We use UTC methods to avoid browser's local timezone conversion
+      const year = date.getUTCFullYear();
+      const month = date.getUTCMonth();
+      const day = date.getUTCDate();
+      const hours = date.getUTCHours();
+      const minutes = date.getUTCMinutes();
       
-      const timeStr = format(spainDate, 'HH:mm');
+      // Create a date for comparison (today/tomorrow in Spain time)
+      const spainDate = new Date(year, month, day, hours, minutes);
+      const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      
       if (isToday(spainDate)) return `Hoy ${timeStr}`;
       if (isTomorrow(spainDate)) return `Mañana ${timeStr}`;
-      return format(spainDate, 'dd/MM/yyyy HH:mm', { locale: es });
+      return `${day.toString().padStart(2, '0')}/${(month + 1).toString().padStart(2, '0')}/${year} ${timeStr}`;
     } catch (error) {
       console.error('Error formatting reminder date:', error, 'Input:', dateString);
       return 'Fecha inválida';
