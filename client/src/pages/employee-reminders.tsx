@@ -246,19 +246,19 @@ export default function EmployeeReminders() {
     }
     
     try {
-      // ⚠️ CRITICAL: Parse date as Spain timezone since DB stores dates in Spain time
-      // DB format: "2025-10-24 12:13:00" or "2025-10-24 12:13:00.123456"
-      // Convert to ISO format by replacing space with 'T' and adding 'Z' for UTC
-      const isoString = dateString.replace(' ', 'T') + 'Z';
-      const utcDate = new Date(isoString);
+      // ⚠️ CRITICAL: Backend sends dates in ISO format with 'Z' (UTC)
+      // Example: "2025-10-24T12:13:00.000Z"
+      // We need to interpret this UTC time as Spain time
+      const utcDate = new Date(dateString);
       
       // Check if date is valid
       if (isNaN(utcDate.getTime())) {
-        console.error('Invalid date after parsing:', dateString, '->', isoString);
+        console.error('Invalid date:', dateString);
         return 'Fecha inválida';
       }
       
-      const spainDate = toZonedTime(utcDate, 'Europe/Madrid'); // Convert back to Spain time
+      // Convert from UTC to Spain timezone
+      const spainDate = toZonedTime(utcDate, 'Europe/Madrid');
       
       const timeStr = format(spainDate, 'HH:mm');
       if (isToday(spainDate)) return `Hoy ${timeStr}`;
