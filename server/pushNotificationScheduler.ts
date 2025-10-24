@@ -1003,15 +1003,16 @@ export async function sendReminderSharedNotification(
 // Function to check and send reminder notifications when reminderDate arrives
 async function checkReminders() {
   try {
-    const now = new Date();
-    console.log(`🔔 Checking reminders at ${now.toLocaleTimeString()}`);
+    // ⚠️ CRITICAL: Get Spain time for comparison
+    const nowSpain = getSpainTime();
+    console.log(`🔔 Checking reminders at ${formatInTimeZone(nowSpain, SPAIN_TZ, 'HH:mm:ss')} (Spain time)`);
     
     // Get all reminders that:
     // 1. Have enableNotifications = true
     // 2. Have not been notified yet (notificationShown = false)
-    // 3. reminderDate is in the past or within next minute
+    // 3. reminderDate is in the past or within next minute (Spain time)
     // 4. Are not completed or archived
-    const oneMinuteFromNow = new Date(now.getTime() + 60000);
+    const oneMinuteFromNow = new Date(nowSpain.getTime() + 60000);
     
     const remindersToNotify = await db.select()
       .from(reminders)
