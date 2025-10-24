@@ -922,12 +922,7 @@ export default function Messages() {
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
                 position: 'fixed',
-                top: '0',
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: '100vh',
-                minHeight: '-webkit-fill-available',
+                inset: 0,
                 zIndex: 9999
               }}
             >
@@ -1396,12 +1391,7 @@ export default function Messages() {
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
                 position: 'fixed',
-                top: '0',
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: '100vh',
-                minHeight: '-webkit-fill-available',
+                inset: 0,
                 zIndex: 9999
               }}
             >
