@@ -21,11 +21,7 @@ export function useReminderNotifications() {
   // Mutation to mark reminder as completed
   const completeMutation = useMutation({
     mutationFn: async (reminderId: number) => {
-      return apiRequest(`/api/reminders/${reminderId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isCompleted: true }),
-      });
+      return apiRequest('PATCH', `/api/reminders/${reminderId}`, { isCompleted: true });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
@@ -61,8 +57,7 @@ export function useReminderNotifications() {
         
         // Show toast notification with action buttons
         const toastId = `reminder-${reminder.id}`;
-        const { id } = toast({
-          id: toastId, // Provide stable ID for dismiss to work
+        toast({
           title: `📅 ${reminder.title}`,
           description: description,
           duration: Infinity, // Don't auto-dismiss
