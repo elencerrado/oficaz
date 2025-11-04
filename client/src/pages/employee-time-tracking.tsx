@@ -20,7 +20,9 @@ import {
   X,
   RefreshCw,
   ArrowLeft,
-  LogOut
+  LogOut,
+  Edit,
+  Plus
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, addMonths, subMonths, startOfWeek, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -85,6 +87,14 @@ export default function EmployeeTimeTracking() {
   const [incompleteDialogOpen, setIncompleteDialogOpen] = useState(false);
   const [incompleteSessionId, setIncompleteSessionId] = useState<number | null>(null);
   const [clockOutTime, setClockOutTime] = useState('');
+  const [showRequestDialog, setShowRequestDialog] = useState(false);
+  const [requestData, setRequestData] = useState({
+    requestType: 'forgotten_checkin' as 'forgotten_checkin' | 'modify_time',
+    date: '',
+    clockIn: '',
+    clockOut: '',
+    reason: ''
+  });
   
   // Touch handling for mobile swipe
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -212,6 +222,41 @@ export default function EmployeeTimeTracking() {
       toast({
         title: "Error",
         description: `No se pudo cerrar la sesión: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Request modification mutation
+  const requestModificationMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest('POST', '/api/work-sessions/request-modification', {
+        workSessionId: null,
+        requestType: data.requestType,
+        requestedDate: data.date,
+        requestedClockIn: new Date(`${data.date}T${data.clockIn}:00`).toISOString(),
+        requestedClockOut: data.clockOut ? new Date(`${data.date}T${data.clockOut}:00`).toISOString() : null,
+        reason: data.reason
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Solicitud enviada",
+        description: "Tu solicitud de modificación ha sido enviada al administrador.",
+      });
+      setShowRequestDialog(false);
+      setRequestData({
+        requestType: 'forgotten_checkin',
+        date: '',
+        clockIn: '',
+        clockOut: '',
+        reason: ''
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo enviar la solicitud.",
         variant: "destructive",
       });
     },
@@ -1085,6 +1130,93 @@ export default function EmployeeTimeTracking() {
           <span>© {currentYear}</span>
         </div>
       </div>
+      
+      {/* Floating action button for requesting modifications */}
+      <button
+        onClick={() => setShowRequestDialog(true)}
+        className="fixed bottom-6 right-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg transition-all duration-200 transform hover:scale-110 z-50"
+        data-testid="button-request-modification"
+      >
+        <Edit className="h-6 w-6" />
+      </button>
+      
+      {/* Dialog for requesting modifications */}
+      <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
+        <DialogContent className="sm:max-w-md max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center">Solicitar Cambio de Fichaje</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-center text-sm text-gray-600">
+              ¿Olvidaste fichar o necesitas corregir un horario? Solicita el cambio aquí.
+            </div>
+            
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Fecha</label>
+              <Input
+                type="date"
+                value={requestData.date}
+                onChange={(e) => setRequestData({...requestData, date: e.target.value})}
+                max={format(new Date(), 'yyyy-MM-dd')}
+                data-testid="input-request-date"
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Entrada</label>
+                <Input
+                  type="time"
+                  value={requestData.clockIn}
+                  onChange={(e) => setRequestData({...requestData, clockIn: e.target.value})}
+                  data-testid="input-request-clockin"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Salida</label>
+                <Input
+                  type="time"
+                  value={requestData.clockOut}
+                  onChange={(e) => setRequestData({...requestData, clockOut: e.target.value})}
+                  data-testid="input-request-clockout"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Motivo</label>
+              <Input
+                value={requestData.reason}
+                onChange={(e) => setRequestData({...requestData, reason: e.target.value})}
+                placeholder="Ej: Olvidé fichar, error en registro..."
+                data-testid="input-request-reason"
+              />
+            </div>
+            
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowRequestDialog(false)}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => requestModificationMutation.mutate(requestData)}
+                disabled={!requestData.date || !requestData.clockIn || !requestData.reason || requestModificationMutation.isPending}
+                className="flex-1"
+                data-testid="button-submit-request"
+              >
+                {requestModificationMutation.isPending ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Enviar Solicitud'
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       
       {/* Dialog for incomplete session clock out */}
       <Dialog open={incompleteDialogOpen} onOpenChange={setIncompleteDialogOpen}>
