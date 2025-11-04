@@ -854,6 +854,7 @@ export default function TimeTracking() {
         doc.text('SALIDA', colPositions[2], headerY);
         doc.text('DESCANSOS', colPositions[3], headerY);
         doc.text('HORAS', colPositions[4], headerY);
+        doc.text('MODIFICACIONES', colPositions[5], headerY);
         
         return headerY + 5; // Return starting Y position for content
       };
@@ -892,15 +893,16 @@ export default function TimeTracking() {
         }
       };
       
-      // Table setup for individual employee (no employee column needed)
-      const tableStartX = 50;
-      const colWidths = [30, 22, 22, 30, 20];
+      // Table setup for individual employee (added audit column on the right)
+      const tableStartX = 20;
+      const colWidths = [25, 18, 18, 28, 16, 60];
       const colPositions = [
         tableStartX, 
         tableStartX + colWidths[0], 
         tableStartX + colWidths[0] + colWidths[1], 
         tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
-        tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]
+        tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3],
+        tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4]
       ];
       
       // Add header to first page
@@ -998,11 +1000,59 @@ export default function TimeTracking() {
           doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
           doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
           
+          // Build audit info for the modifications column
+          let auditInfo: string[] = [];
+          
+          // Check if manually created
+          if (session.isManuallyCreated) {
+            const registeredBy = session.lastModifiedByName || 'Admin';
+            auditInfo.push(`Reg: ${registeredBy}`);
+          }
+          
+          // Check for modifications from audit logs
+          const auditLogs = session.auditLogs || [];
+          auditLogs.forEach((log: any) => {
+            // Extract just the reason without prefix
+            let cleanReason = log.reason || '';
+            cleanReason = cleanReason.replace(/^Employee request approved:\s*/i, '');
+            cleanReason = cleanReason.replace(/^Admin modification:\s*/i, '');
+            
+            if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') {
+              const oldVal = log.oldValue || {};
+              if (oldVal.clockIn) {
+                const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
+                auditInfo.push(`Entrada anterior: ${oldTime}`);
+              }
+            }
+            
+            if (log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
+              const oldVal = log.oldValue || {};
+              if (oldVal.clockOut) {
+                const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
+                auditInfo.push(`Salida anterior: ${oldTime}`);
+              }
+            }
+            
+            if (cleanReason) {
+              auditInfo.push(`Motivo: ${cleanReason}`);
+            }
+          });
+          
           // Handle break periods - create separate rows for each break
           const breakPeriods = session.breakPeriods || [];
           if (breakPeriods.length === 0) {
             doc.text('Sin descansos', colPositions[3], currentY);
             doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
+            
+            // Show audit info in modifications column
+            if (auditInfo.length > 0) {
+              doc.setFontSize(7);
+              doc.setFont('helvetica', 'normal');
+              doc.setTextColor(100, 100, 100);
+              const auditText = auditInfo.join(' | ');
+              doc.text(auditText, colPositions[5], currentY, { maxWidth: colWidths[5] });
+            }
+            
             currentY += 6;
           } else {
             // First break on main row
@@ -1020,6 +1070,16 @@ export default function TimeTracking() {
               doc.text('Descanso (datos inválidos)', colPositions[3], currentY);
             }
             doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
+            
+            // Show audit info in modifications column
+            if (auditInfo.length > 0) {
+              doc.setFontSize(7);
+              doc.setFont('helvetica', 'normal');
+              doc.setTextColor(100, 100, 100);
+              const auditText = auditInfo.join(' | ');
+              doc.text(auditText, colPositions[5], currentY, { maxWidth: colWidths[5] });
+            }
+            
             currentY += 6;
             
             // Additional breaks in separate rows (empty cells except for break info)
@@ -1046,84 +1106,6 @@ export default function TimeTracking() {
               }
               currentY += 6;
             }
-          }
-          
-          // Add audit info row if manually created or has modifications
-          if (session.isManuallyCreated || (session.auditLogs && session.auditLogs.length > 0)) {
-            // Check if we need a new page
-            if (currentY > maxContentY) {
-              addFooter();
-              doc.addPage();
-              currentY = addPageHeader();
-            }
-            
-            // Show who registered if manually created
-            if (session.isManuallyCreated) {
-              doc.setFontSize(7);
-              doc.setFont('helvetica', 'italic');
-              doc.setTextColor(100, 100, 100);
-              const registeredBy = session.lastModifiedByName || 'Admin';
-              doc.text(`  Registrado por: ${registeredBy} (fichaje manual)`, colPositions[0], currentY);
-              currentY += 5;
-            }
-            
-            // Show modification history from audit logs
-            const auditLogs = session.auditLogs || [];
-            auditLogs.forEach((log: any) => {
-              // Check if we need a new page for audit log
-              if (currentY > maxContentY) {
-                addFooter();
-                doc.addPage();
-                currentY = addPageHeader();
-              }
-              
-              doc.setFontSize(7);
-              doc.setFont('helvetica', 'italic');
-              doc.setTextColor(180, 50, 50);
-              
-              // Format the modification message
-              let modificationMsg = '  Modificación: ';
-              if (log.modificationType === 'created_manual') {
-                modificationMsg += 'Creado manualmente';
-              } else if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
-                const oldVal = log.oldValue || {};
-                const newVal = log.newValue || {};
-                
-                if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') {
-                  if (oldVal.clockIn && newVal.clockIn) {
-                    const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
-                    const newTime = format(new Date(newVal.clockIn), 'HH:mm');
-                    modificationMsg += `Entrada: ${oldTime} → ${newTime}`;
-                  }
-                }
-                
-                if (log.modificationType === 'modified_both') {
-                  modificationMsg += ' | ';
-                }
-                
-                if (log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
-                  if (oldVal.clockOut && newVal.clockOut) {
-                    const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
-                    const newTime = format(new Date(newVal.clockOut), 'HH:mm');
-                    modificationMsg += `Salida: ${oldTime} → ${newTime}`;
-                  }
-                }
-              }
-              
-              doc.text(modificationMsg, colPositions[0], currentY);
-              currentY += 5;
-              
-              // Show who approved and reason
-              doc.setTextColor(100, 100, 100);
-              const modifiedDate = log.modifiedAt ? format(new Date(log.modifiedAt), 'dd/MM/yyyy HH:mm') : '';
-              doc.text(`  Aprobado por: ${log.modifiedByName || 'Admin'} - ${modifiedDate}`, colPositions[0], currentY);
-              currentY += 5;
-              
-              if (log.reason) {
-                doc.text(`  Motivo: ${log.reason}`, colPositions[0], currentY);
-                currentY += 5;
-              }
-            });
           }
           
           weekHours += hours;
@@ -1191,11 +1173,59 @@ export default function TimeTracking() {
           doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
           doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
           
+          // Build audit info for the modifications column
+          let auditInfo: string[] = [];
+          
+          // Check if manually created
+          if (session.isManuallyCreated) {
+            const registeredBy = session.lastModifiedByName || 'Admin';
+            auditInfo.push(`Reg: ${registeredBy}`);
+          }
+          
+          // Check for modifications from audit logs
+          const auditLogs = session.auditLogs || [];
+          auditLogs.forEach((log: any) => {
+            // Extract just the reason without prefix
+            let cleanReason = log.reason || '';
+            cleanReason = cleanReason.replace(/^Employee request approved:\s*/i, '');
+            cleanReason = cleanReason.replace(/^Admin modification:\s*/i, '');
+            
+            if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') {
+              const oldVal = log.oldValue || {};
+              if (oldVal.clockIn) {
+                const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
+                auditInfo.push(`Entrada anterior: ${oldTime}`);
+              }
+            }
+            
+            if (log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
+              const oldVal = log.oldValue || {};
+              if (oldVal.clockOut) {
+                const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
+                auditInfo.push(`Salida anterior: ${oldTime}`);
+              }
+            }
+            
+            if (cleanReason) {
+              auditInfo.push(`Motivo: ${cleanReason}`);
+            }
+          });
+          
           // Handle break periods - create separate rows for each break
           const breakPeriods = session.breakPeriods || [];
           if (breakPeriods.length === 0) {
             doc.text('Sin descansos', colPositions[3], currentY);
             doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
+            
+            // Show audit info in modifications column
+            if (auditInfo.length > 0) {
+              doc.setFontSize(7);
+              doc.setFont('helvetica', 'normal');
+              doc.setTextColor(100, 100, 100);
+              const auditText = auditInfo.join(' | ');
+              doc.text(auditText, colPositions[5], currentY, { maxWidth: colWidths[5] });
+            }
+            
             currentY += 6;
           } else {
             // First break on main row
@@ -1213,6 +1243,16 @@ export default function TimeTracking() {
               doc.text('Descanso (datos inválidos)', colPositions[3], currentY);
             }
             doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
+            
+            // Show audit info in modifications column
+            if (auditInfo.length > 0) {
+              doc.setFontSize(7);
+              doc.setFont('helvetica', 'normal');
+              doc.setTextColor(100, 100, 100);
+              const auditText = auditInfo.join(' | ');
+              doc.text(auditText, colPositions[5], currentY, { maxWidth: colWidths[5] });
+            }
+            
             currentY += 6;
             
             // Additional breaks in separate rows (empty cells except for break info)
@@ -1239,84 +1279,6 @@ export default function TimeTracking() {
               }
               currentY += 6;
             }
-          }
-          
-          // Add audit info row if manually created or has modifications
-          if (session.isManuallyCreated || (session.auditLogs && session.auditLogs.length > 0)) {
-            // Check if we need a new page
-            if (currentY > maxContentY) {
-              addFooter();
-              doc.addPage();
-              currentY = addPageHeader();
-            }
-            
-            // Show who registered if manually created
-            if (session.isManuallyCreated) {
-              doc.setFontSize(7);
-              doc.setFont('helvetica', 'italic');
-              doc.setTextColor(100, 100, 100);
-              const registeredBy = session.lastModifiedByName || 'Admin';
-              doc.text(`  Registrado por: ${registeredBy} (fichaje manual)`, colPositions[0], currentY);
-              currentY += 5;
-            }
-            
-            // Show modification history from audit logs
-            const auditLogs = session.auditLogs || [];
-            auditLogs.forEach((log: any) => {
-              // Check if we need a new page for audit log
-              if (currentY > maxContentY) {
-                addFooter();
-                doc.addPage();
-                currentY = addPageHeader();
-              }
-              
-              doc.setFontSize(7);
-              doc.setFont('helvetica', 'italic');
-              doc.setTextColor(180, 50, 50);
-              
-              // Format the modification message
-              let modificationMsg = '  Modificación: ';
-              if (log.modificationType === 'created_manual') {
-                modificationMsg += 'Creado manualmente';
-              } else if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
-                const oldVal = log.oldValue || {};
-                const newVal = log.newValue || {};
-                
-                if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') {
-                  if (oldVal.clockIn && newVal.clockIn) {
-                    const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
-                    const newTime = format(new Date(newVal.clockIn), 'HH:mm');
-                    modificationMsg += `Entrada: ${oldTime} → ${newTime}`;
-                  }
-                }
-                
-                if (log.modificationType === 'modified_both') {
-                  modificationMsg += ' | ';
-                }
-                
-                if (log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
-                  if (oldVal.clockOut && newVal.clockOut) {
-                    const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
-                    const newTime = format(new Date(newVal.clockOut), 'HH:mm');
-                    modificationMsg += `Salida: ${oldTime} → ${newTime}`;
-                  }
-                }
-              }
-              
-              doc.text(modificationMsg, colPositions[0], currentY);
-              currentY += 5;
-              
-              // Show who approved and reason
-              doc.setTextColor(100, 100, 100);
-              const modifiedDate = log.modifiedAt ? format(new Date(log.modifiedAt), 'dd/MM/yyyy HH:mm') : '';
-              doc.text(`  Aprobado por: ${log.modifiedByName || 'Admin'} - ${modifiedDate}`, colPositions[0], currentY);
-              currentY += 5;
-              
-              if (log.reason) {
-                doc.text(`  Motivo: ${log.reason}`, colPositions[0], currentY);
-                currentY += 5;
-              }
-            });
           }
         });
       }
