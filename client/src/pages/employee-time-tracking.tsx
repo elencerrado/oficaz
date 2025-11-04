@@ -463,10 +463,14 @@ export default function EmployeeTimeTracking() {
         return total + calculateSessionHours(session);
       }, 0);
       
+      // Check if any session in this month is incomplete
+      const hasIncomplete = monthSessions.some((session: any) => !session.clockOut);
+      
       months.push({
         month: format(date, 'MMM', { locale: es }),
         hours: totalHours,
-        isCurrentMonth: format(date, 'yyyy-MM') === format(new Date(), 'yyyy-MM')
+        isCurrentMonth: format(date, 'yyyy-MM') === format(new Date(), 'yyyy-MM'),
+        hasIncomplete
       });
     }
     return months;
@@ -853,7 +857,7 @@ export default function EmployeeTimeTracking() {
                 <div 
                   key={monthData.month}
                   onClick={handleMonthClick}
-                  className={`bg-white/5 backdrop-blur-sm rounded-lg p-3 border transition-all duration-500 cursor-pointer hover:scale-105 ${
+                  className={`relative bg-white/5 backdrop-blur-sm rounded-lg p-3 border transition-all duration-500 cursor-pointer hover:scale-105 ${
                     isViewingThisMonth 
                       ? 'ring-2 ring-blue-400 bg-blue-500/20 border-blue-400/50' 
                       : monthData.isCurrentMonth 
@@ -866,6 +870,14 @@ export default function EmployeeTimeTracking() {
                     opacity: 0
                   }}
                 >
+                  {/* Red dot indicator for incomplete sessions */}
+                  {monthData.hasIncomplete && (
+                    <div 
+                      className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"
+                      title="Este mes tiene fichajes incompletos"
+                    />
+                  )}
+                  
                   <div className="text-center">
                     <p className={`text-xs mb-1 font-medium ${
                       isViewingThisMonth ? 'text-blue-300' : 'text-white/60'
