@@ -524,12 +524,20 @@ export class DrizzleStorage implements IStorage {
     }
 
     // Combine sessions with their break periods, audit logs, and modifier names efficiently
-    return sessions.map(session => ({
-      ...session,
-      breakPeriods: breakPeriodsMap.get(session.id) || [],
-      auditLogs: auditLogsMap.get(session.id) || [],
-      lastModifiedByName: session.lastModifiedBy ? modifiersMap.get(session.lastModifiedBy) : null,
-    }));
+    return sessions.map(session => {
+      const sessionAuditLogs = auditLogsMap.get(session.id) || [];
+      const enrichedAuditLogs = sessionAuditLogs.map(log => ({
+        ...log,
+        modifiedByName: log.modifiedBy ? modifiersMap.get(log.modifiedBy) : null,
+      }));
+      
+      return {
+        ...session,
+        breakPeriods: breakPeriodsMap.get(session.id) || [],
+        auditLogs: enrichedAuditLogs,
+        lastModifiedByName: session.lastModifiedBy ? modifiersMap.get(session.lastModifiedBy) : null,
+      };
+    });
   }
 
   // Break Periods

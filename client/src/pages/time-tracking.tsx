@@ -1047,6 +1047,85 @@ export default function TimeTracking() {
               currentY += 6;
             }
           }
+          
+          // Add audit info row if manually created or has modifications
+          if (session.isManuallyCreated || (session.auditLogs && session.auditLogs.length > 0)) {
+            // Check if we need a new page
+            if (currentY > maxContentY) {
+              addFooter();
+              doc.addPage();
+              currentY = addPageHeader();
+            }
+            
+            // Show who registered if manually created
+            if (session.isManuallyCreated) {
+              doc.setFontSize(7);
+              doc.setFont('helvetica', 'italic');
+              doc.setTextColor(100, 100, 100);
+              const registeredBy = session.lastModifiedByName || 'Admin';
+              doc.text(`  Registrado por: ${registeredBy} (fichaje manual)`, colPositions[0], currentY);
+              currentY += 5;
+            }
+            
+            // Show modification history from audit logs
+            const auditLogs = session.auditLogs || [];
+            auditLogs.forEach((log: any) => {
+              // Check if we need a new page for audit log
+              if (currentY > maxContentY) {
+                addFooter();
+                doc.addPage();
+                currentY = addPageHeader();
+              }
+              
+              doc.setFontSize(7);
+              doc.setFont('helvetica', 'italic');
+              doc.setTextColor(180, 50, 50);
+              
+              // Format the modification message
+              let modificationMsg = '  Modificación: ';
+              if (log.modificationType === 'created_manual') {
+                modificationMsg += 'Creado manualmente';
+              } else if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
+                const oldVal = log.oldValue || {};
+                const newVal = log.newValue || {};
+                
+                if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') {
+                  if (oldVal.clockIn && newVal.clockIn) {
+                    const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
+                    const newTime = format(new Date(newVal.clockIn), 'HH:mm');
+                    modificationMsg += `Entrada: ${oldTime} → ${newTime}`;
+                  }
+                }
+                
+                if (log.modificationType === 'modified_both') {
+                  modificationMsg += ' | ';
+                }
+                
+                if (log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
+                  if (oldVal.clockOut && newVal.clockOut) {
+                    const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
+                    const newTime = format(new Date(newVal.clockOut), 'HH:mm');
+                    modificationMsg += `Salida: ${oldTime} → ${newTime}`;
+                  }
+                }
+              }
+              
+              doc.text(modificationMsg, colPositions[0], currentY);
+              currentY += 5;
+              
+              // Show who approved and reason
+              doc.setTextColor(100, 100, 100);
+              const modifiedDate = log.modifiedAt ? format(new Date(log.modifiedAt), 'dd/MM/yyyy HH:mm') : '';
+              doc.text(`  Aprobado por: ${log.modifiedByName || 'Admin'} - ${modifiedDate}`, colPositions[0], currentY);
+              currentY += 5;
+              
+              if (log.reason) {
+                doc.text(`  Motivo: ${log.reason}`, colPositions[0], currentY);
+                currentY += 5;
+              }
+            });
+          }
+          
           weekHours += hours;
           monthHours += hours;
           
@@ -1160,6 +1239,84 @@ export default function TimeTracking() {
               }
               currentY += 6;
             }
+          }
+          
+          // Add audit info row if manually created or has modifications
+          if (session.isManuallyCreated || (session.auditLogs && session.auditLogs.length > 0)) {
+            // Check if we need a new page
+            if (currentY > maxContentY) {
+              addFooter();
+              doc.addPage();
+              currentY = addPageHeader();
+            }
+            
+            // Show who registered if manually created
+            if (session.isManuallyCreated) {
+              doc.setFontSize(7);
+              doc.setFont('helvetica', 'italic');
+              doc.setTextColor(100, 100, 100);
+              const registeredBy = session.lastModifiedByName || 'Admin';
+              doc.text(`  Registrado por: ${registeredBy} (fichaje manual)`, colPositions[0], currentY);
+              currentY += 5;
+            }
+            
+            // Show modification history from audit logs
+            const auditLogs = session.auditLogs || [];
+            auditLogs.forEach((log: any) => {
+              // Check if we need a new page for audit log
+              if (currentY > maxContentY) {
+                addFooter();
+                doc.addPage();
+                currentY = addPageHeader();
+              }
+              
+              doc.setFontSize(7);
+              doc.setFont('helvetica', 'italic');
+              doc.setTextColor(180, 50, 50);
+              
+              // Format the modification message
+              let modificationMsg = '  Modificación: ';
+              if (log.modificationType === 'created_manual') {
+                modificationMsg += 'Creado manualmente';
+              } else if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
+                const oldVal = log.oldValue || {};
+                const newVal = log.newValue || {};
+                
+                if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') {
+                  if (oldVal.clockIn && newVal.clockIn) {
+                    const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
+                    const newTime = format(new Date(newVal.clockIn), 'HH:mm');
+                    modificationMsg += `Entrada: ${oldTime} → ${newTime}`;
+                  }
+                }
+                
+                if (log.modificationType === 'modified_both') {
+                  modificationMsg += ' | ';
+                }
+                
+                if (log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
+                  if (oldVal.clockOut && newVal.clockOut) {
+                    const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
+                    const newTime = format(new Date(newVal.clockOut), 'HH:mm');
+                    modificationMsg += `Salida: ${oldTime} → ${newTime}`;
+                  }
+                }
+              }
+              
+              doc.text(modificationMsg, colPositions[0], currentY);
+              currentY += 5;
+              
+              // Show who approved and reason
+              doc.setTextColor(100, 100, 100);
+              const modifiedDate = log.modifiedAt ? format(new Date(log.modifiedAt), 'dd/MM/yyyy HH:mm') : '';
+              doc.text(`  Aprobado por: ${log.modifiedByName || 'Admin'} - ${modifiedDate}`, colPositions[0], currentY);
+              currentY += 5;
+              
+              if (log.reason) {
+                doc.text(`  Motivo: ${log.reason}`, colPositions[0], currentY);
+                currentY += 5;
+              }
+            });
           }
         });
       }
