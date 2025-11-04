@@ -3999,22 +3999,35 @@ Responde directamente a este email para contactar con la persona.
       // Enrich with employee names and ensure proper date serialization
       const enrichedRequests = await Promise.all(requests.map(async (request) => {
         const employee = await storage.getUser(request.employeeId);
+        
+        // Helper to safely convert to ISO string
+        const toISOSafe = (date: any) => {
+          if (!date) return null;
+          try {
+            if (typeof date === 'string') return new Date(date).toISOString();
+            if (date instanceof Date) return date.toISOString();
+            return null;
+          } catch (e) {
+            console.error('Error converting date:', date, e);
+            return null;
+          }
+        };
+        
         return {
           ...request,
           // Ensure dates are properly serialized as ISO strings
-          requestedDate: request.requestedDate?.toISOString() || null,
-          requestedClockIn: request.requestedClockIn?.toISOString() || null,
-          requestedClockOut: request.requestedClockOut?.toISOString() || null,
-          currentClockIn: request.currentClockIn?.toISOString() || null,
-          currentClockOut: request.currentClockOut?.toISOString() || null,
-          reviewedAt: request.reviewedAt?.toISOString() || null,
-          createdAt: request.createdAt?.toISOString() || null,
+          requestedDate: toISOSafe(request.requestedDate),
+          requestedClockIn: toISOSafe(request.requestedClockIn),
+          requestedClockOut: toISOSafe(request.requestedClockOut),
+          currentClockIn: toISOSafe(request.currentClockIn),
+          currentClockOut: toISOSafe(request.currentClockOut),
+          reviewedAt: toISOSafe(request.reviewedAt),
+          createdAt: toISOSafe(request.createdAt),
           employeeName: employee?.fullName || 'Unknown',
           employeeProfilePicture: employee?.profilePicture || null,
         };
       }));
 
-      console.log('🔍 DEBUG - Modification request data:', JSON.stringify(enrichedRequests[0], null, 2));
       res.json(enrichedRequests);
     } catch (error: any) {
       console.error('Error fetching modification requests:', error);
