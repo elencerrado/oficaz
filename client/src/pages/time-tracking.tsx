@@ -1100,10 +1100,10 @@ export default function TimeTracking() {
             
             currentY += 6;
             
-            // Add subtle separator line between work sessions
+            // Add subtle separator line between work sessions (centered in the gap)
             doc.setDrawColor(220, 220, 220);
             doc.setLineWidth(0.1);
-            doc.line(tableStartX, currentY - 2, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 2);
+            doc.line(tableStartX, currentY - 3, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 3);
           } else {
             // First break on main row
             const firstBreak = breakPeriods[0];
@@ -1167,10 +1167,10 @@ export default function TimeTracking() {
             
             currentY += 6;
             
-            // Add subtle separator line between work sessions
+            // Add subtle separator line between work sessions (centered in the gap)
             doc.setDrawColor(220, 220, 220);
             doc.setLineWidth(0.1);
-            doc.line(tableStartX, currentY - 2, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 2);
+            doc.line(tableStartX, currentY - 3, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 3);
             
             // Additional breaks in separate rows (empty cells except for break info)
             for (let i = 1; i < breakPeriods.length; i++) {
@@ -1368,10 +1368,10 @@ export default function TimeTracking() {
             
             currentY += 6;
             
-            // Add subtle separator line between work sessions
+            // Add subtle separator line between work sessions (centered in the gap)
             doc.setDrawColor(220, 220, 220);
             doc.setLineWidth(0.1);
-            doc.line(tableStartX, currentY - 2, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 2);
+            doc.line(tableStartX, currentY - 3, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 3);
           } else {
             // First break on main row
             const firstBreak = breakPeriods[0];
@@ -1435,10 +1435,10 @@ export default function TimeTracking() {
             
             currentY += 6;
             
-            // Add subtle separator line between work sessions
+            // Add subtle separator line between work sessions (centered in the gap)
             doc.setDrawColor(220, 220, 220);
             doc.setLineWidth(0.1);
-            doc.line(tableStartX, currentY - 2, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 2);
+            doc.line(tableStartX, currentY - 3, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 3);
             
             // Additional breaks in separate rows (empty cells except for break info)
             for (let i = 1; i < breakPeriods.length; i++) {
