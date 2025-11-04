@@ -134,7 +134,7 @@ export default function TimeTracking() {
   });
 
   // Employees with ultra-aggressive caching 
-  const { data: employees = [] } = useQuery({
+  const { data: employees = [] } = useQuery<any[]>({
     queryKey: ['/api/employees'],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
     staleTime: 30 * 60 * 1000, // 30 minutes cache
@@ -152,7 +152,7 @@ export default function TimeTracking() {
   });
   
   // Modification requests count
-  const { data: pendingRequestsData } = useQuery({
+  const { data: pendingRequestsData } = useQuery<{ count: number }>({
     queryKey: ['/api/admin/work-sessions/modification-requests/count'],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
     refetchInterval: 30 * 1000, // Refresh every 30 seconds
@@ -160,13 +160,13 @@ export default function TimeTracking() {
   const pendingRequestsCount = pendingRequestsData?.count || 0;
   
   // Modification requests (when dialog is open)
-  const { data: modificationRequests = [] } = useQuery({
+  const { data: modificationRequests = [] } = useQuery<any[]>({
     queryKey: ['/api/admin/work-sessions/modification-requests'],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager') && showRequestsDialog,
   });
   
   // Audit logs for selected session
-  const { data: auditLogs = [] } = useQuery({
+  const { data: auditLogs = [] } = useQuery<any[]>({
     queryKey: ['/api/admin/work-sessions', selectedSessionForAudit, 'audit-log'],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager') && selectedSessionForAudit !== null,
   });
@@ -3129,9 +3129,15 @@ export default function TimeTracking() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Fecha</label>
               <Input
-                type="date"
+                type="text"
                 value={manualEntryData.date}
-                onChange={(e) => setManualEntryData({...manualEntryData, date: e.target.value})}
+                onChange={(e) => {
+                  // Allow only numbers and dashes
+                  const value = e.target.value.replace(/[^\d-]/g, '');
+                  setManualEntryData({...manualEntryData, date: value});
+                }}
+                placeholder="AAAA-MM-DD (ej: 2025-11-04)"
+                maxLength={10}
                 data-testid="input-date-manual"
               />
             </div>
@@ -3193,8 +3199,8 @@ export default function TimeTracking() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <UserAvatar
-                        name={request.employeeName}
-                        src={request.employeeProfilePicture}
+                        fullName={request.employeeName}
+                        profilePicture={request.employeeProfilePicture}
                         size="sm"
                       />
                       <div>

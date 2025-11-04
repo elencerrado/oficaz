@@ -1154,10 +1154,15 @@ export default function EmployeeTimeTracking() {
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Fecha</label>
               <Input
-                type="date"
+                type="text"
                 value={requestData.date}
-                onChange={(e) => setRequestData({...requestData, date: e.target.value})}
-                max={format(new Date(), 'yyyy-MM-dd')}
+                onChange={(e) => {
+                  // Allow only numbers and dashes
+                  const value = e.target.value.replace(/[^\d-]/g, '');
+                  setRequestData({...requestData, date: value});
+                }}
+                placeholder="AAAA-MM-DD (ej: 2025-11-04)"
+                maxLength={10}
                 data-testid="input-request-date"
               />
             </div>
