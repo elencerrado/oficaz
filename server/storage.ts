@@ -488,10 +488,47 @@ export class DrizzleStorage implements IStorage {
       breakPeriodsMap.get(bp.workSessionId)!.push(bp);
     });
 
-    // Combine sessions with their break periods efficiently
+    // Get audit logs for all sessions
+    const allAuditLogs = await db.select().from(schema.workSessionAuditLog)
+      .where(inArray(schema.workSessionAuditLog.workSessionId, sessionIds))
+      .orderBy(schema.workSessionAuditLog.modifiedAt);
+
+    // Group audit logs by session ID
+    const auditLogsMap = new Map<number, any[]>();
+    allAuditLogs.forEach(log => {
+      if (!auditLogsMap.has(log.workSessionId)) {
+        auditLogsMap.set(log.workSessionId, []);
+      }
+      auditLogsMap.get(log.workSessionId)!.push(log);
+    });
+
+    // Get all unique modifier IDs
+    const modifierIds = new Set<number>();
+    sessions.forEach(s => {
+      if (s.lastModifiedBy) modifierIds.add(s.lastModifiedBy);
+    });
+    allAuditLogs.forEach(log => {
+      if (log.modifiedBy) modifierIds.add(log.modifiedBy);
+    });
+
+    // Get modifier user info
+    const modifiersMap = new Map<number, string>();
+    if (modifierIds.size > 0) {
+      const modifiers = await db.select({
+        id: schema.users.id,
+        fullName: schema.users.fullName,
+      }).from(schema.users)
+        .where(inArray(schema.users.id, Array.from(modifierIds)));
+      
+      modifiers.forEach(m => modifiersMap.set(m.id, m.fullName));
+    }
+
+    // Combine sessions with their break periods, audit logs, and modifier names efficiently
     return sessions.map(session => ({
       ...session,
-      breakPeriods: breakPeriodsMap.get(session.id) || []
+      breakPeriods: breakPeriodsMap.get(session.id) || [],
+      auditLogs: auditLogsMap.get(session.id) || [],
+      lastModifiedByName: session.lastModifiedBy ? modifiersMap.get(session.lastModifiedBy) : null,
     }));
   }
 
