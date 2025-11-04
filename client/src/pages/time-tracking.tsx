@@ -1003,34 +1003,44 @@ export default function TimeTracking() {
           // Build audit info for the modifications column
           let auditInfo: string[] = [];
           
-          // Check if manually created
-          if (session.isManuallyCreated) {
-            const registeredBy = session.lastModifiedByName || 'Admin';
-            auditInfo.push(`Reg: ${registeredBy}`);
-          }
-          
           // Check for modifications from audit logs
           const auditLogs = session.auditLogs || [];
           auditLogs.forEach((log: any) => {
             // Extract just the reason without prefix
             let cleanReason = log.reason || '';
+            const isEmployeeRequest = /^Employee request approved:/i.test(log.reason || '');
             cleanReason = cleanReason.replace(/^Employee request approved:\s*/i, '');
             cleanReason = cleanReason.replace(/^Admin modification:\s*/i, '');
             
-            if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') {
-              const oldVal = log.oldValue || {};
-              if (oldVal.clockIn) {
-                const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
-                auditInfo.push(`Entrada anterior: ${oldTime}`);
-              }
-            }
+            const approvedBy = log.modifiedByName || 'Admin';
             
-            if (log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
-              const oldVal = log.oldValue || {};
-              if (oldVal.clockOut) {
-                const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
-                auditInfo.push(`Salida anterior: ${oldTime}`);
+            if (log.modificationType === 'created_manual') {
+              // Manual work session created from employee request
+              auditInfo.push(`Fichaje solicitado por empleado`);
+              auditInfo.push(`Aprobado por: ${approvedBy}`);
+            } else if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
+              // Modified work session
+              if (isEmployeeRequest) {
+                auditInfo.push(`Cambio solicitado por empleado`);
               }
+              
+              if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') {
+                const oldVal = log.oldValue || {};
+                if (oldVal.clockIn) {
+                  const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
+                  auditInfo.push(`Entrada anterior: ${oldTime}`);
+                }
+              }
+              
+              if (log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
+                const oldVal = log.oldValue || {};
+                if (oldVal.clockOut) {
+                  const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
+                  auditInfo.push(`Salida anterior: ${oldTime}`);
+                }
+              }
+              
+              auditInfo.push(`Aprobado por: ${approvedBy}`);
             }
             
             if (cleanReason) {
@@ -1176,34 +1186,44 @@ export default function TimeTracking() {
           // Build audit info for the modifications column
           let auditInfo: string[] = [];
           
-          // Check if manually created
-          if (session.isManuallyCreated) {
-            const registeredBy = session.lastModifiedByName || 'Admin';
-            auditInfo.push(`Reg: ${registeredBy}`);
-          }
-          
           // Check for modifications from audit logs
           const auditLogs = session.auditLogs || [];
           auditLogs.forEach((log: any) => {
             // Extract just the reason without prefix
             let cleanReason = log.reason || '';
+            const isEmployeeRequest = /^Employee request approved:/i.test(log.reason || '');
             cleanReason = cleanReason.replace(/^Employee request approved:\s*/i, '');
             cleanReason = cleanReason.replace(/^Admin modification:\s*/i, '');
             
-            if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') {
-              const oldVal = log.oldValue || {};
-              if (oldVal.clockIn) {
-                const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
-                auditInfo.push(`Entrada anterior: ${oldTime}`);
-              }
-            }
+            const approvedBy = log.modifiedByName || 'Admin';
             
-            if (log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
-              const oldVal = log.oldValue || {};
-              if (oldVal.clockOut) {
-                const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
-                auditInfo.push(`Salida anterior: ${oldTime}`);
+            if (log.modificationType === 'created_manual') {
+              // Manual work session created from employee request
+              auditInfo.push(`Fichaje solicitado por empleado`);
+              auditInfo.push(`Aprobado por: ${approvedBy}`);
+            } else if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
+              // Modified work session
+              if (isEmployeeRequest) {
+                auditInfo.push(`Cambio solicitado por empleado`);
               }
+              
+              if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') {
+                const oldVal = log.oldValue || {};
+                if (oldVal.clockIn) {
+                  const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
+                  auditInfo.push(`Entrada anterior: ${oldTime}`);
+                }
+              }
+              
+              if (log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
+                const oldVal = log.oldValue || {};
+                if (oldVal.clockOut) {
+                  const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
+                  auditInfo.push(`Salida anterior: ${oldTime}`);
+                }
+              }
+              
+              auditInfo.push(`Aprobado por: ${approvedBy}`);
             }
             
             if (cleanReason) {
