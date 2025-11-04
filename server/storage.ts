@@ -21,6 +21,15 @@ import type {
 } from '@shared/schema';
 import Stripe from 'stripe';
 
+// Extended type for work sessions with audit trail information
+export type WorkSessionWithAudit = WorkSession & {
+  userName?: string;
+  profilePicture?: string | null;
+  breakPeriods?: BreakPeriod[];
+  auditLogs?: Array<WorkSessionAuditLog & { modifiedByName?: string | null }>;
+  lastModifiedByName?: string | null;
+};
+
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL must be set");
 }
@@ -67,7 +76,7 @@ export interface IStorage {
   getWorkSession(id: number): Promise<WorkSession | undefined>;
   updateWorkSession(id: number, updates: Partial<InsertWorkSession>): Promise<WorkSession | undefined>;
   getWorkSessionsByUser(userId: number, limit?: number): Promise<WorkSession[]>;
-  getWorkSessionsByCompany(companyId: number): Promise<WorkSession[]>;
+  getWorkSessionsByCompany(companyId: number, limit?: number, offset?: number): Promise<WorkSessionWithAudit[]>;
   markOldSessionsAsIncomplete(userId: number): Promise<void>;
 
   // Break periods
@@ -442,7 +451,7 @@ export class DrizzleStorage implements IStorage {
       .limit(limit);
   }
 
-  async getWorkSessionsByCompany(companyId: number, limit: number = 50, offset: number = 0): Promise<WorkSession[]> {
+  async getWorkSessionsByCompany(companyId: number, limit: number = 50, offset: number = 0): Promise<WorkSessionWithAudit[]> {
     // First, get all work sessions for the company with user info
     const sessions = await db.select({
       id: schema.workSessions.id,
