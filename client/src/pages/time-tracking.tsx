@@ -1016,12 +1016,12 @@ export default function TimeTracking() {
             
             if (log.modificationType === 'created_manual') {
               // Manual work session created from employee request
-              auditInfo.push(`Fichaje solicitado por empleado`);
+              auditInfo.push(`Fichaje solicitado por: empleado`);
               auditInfo.push(`Aprobado por: ${approvedBy}`);
             } else if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
               // Modified work session
               if (isEmployeeRequest) {
-                auditInfo.push(`Cambio solicitado por empleado`);
+                auditInfo.push(`Cambio solicitado por: empleado`);
               }
               
               if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') {
@@ -1054,13 +1054,48 @@ export default function TimeTracking() {
             doc.text('Sin descansos', colPositions[3], currentY);
             doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
             
-            // Show audit info in modifications column
+            // Show audit info in modifications column with mixed font weights
             if (auditInfo.length > 0) {
               doc.setFontSize(7);
-              doc.setFont('helvetica', 'normal');
               doc.setTextColor(100, 100, 100);
-              const auditText = auditInfo.join(' | ');
-              doc.text(auditText, colPositions[5], currentY, { maxWidth: colWidths[5] });
+              
+              let xOffset = colPositions[5];
+              const lineHeight = 3;
+              let yOffset = currentY;
+              
+              auditInfo.forEach((info, idx) => {
+                // Reset to start of column for each line if text wraps
+                if (idx > 0 && info.includes(':')) {
+                  yOffset += lineHeight;
+                  xOffset = colPositions[5];
+                }
+                
+                // Check if this is a label:value pair
+                if (info.includes(':')) {
+                  const [label, value] = info.split(':').map(s => s.trim());
+                  
+                  // Draw label in normal font
+                  doc.setFont('helvetica', 'normal');
+                  doc.text(label + ':', xOffset, yOffset);
+                  const labelWidth = doc.getTextWidth(label + ': ');
+                  
+                  // Draw value in bold font
+                  doc.setFont('helvetica', 'bold');
+                  doc.text(value, xOffset + labelWidth, yOffset);
+                } else {
+                  // No colon, just draw in bold (like "Fichaje solicitado por empleado")
+                  doc.setFont('helvetica', 'bold');
+                  doc.text(info, xOffset, yOffset);
+                }
+                
+                // Add separator if not last item
+                if (idx < auditInfo.length - 1) {
+                  const textWidth = doc.getTextWidth(info);
+                  doc.setFont('helvetica', 'normal');
+                  doc.text(' | ', xOffset + textWidth, yOffset);
+                  xOffset += textWidth + doc.getTextWidth(' | ');
+                }
+              });
             }
             
             currentY += 6;
@@ -1086,13 +1121,48 @@ export default function TimeTracking() {
             }
             doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
             
-            // Show audit info in modifications column
+            // Show audit info in modifications column with mixed font weights
             if (auditInfo.length > 0) {
               doc.setFontSize(7);
-              doc.setFont('helvetica', 'normal');
               doc.setTextColor(100, 100, 100);
-              const auditText = auditInfo.join(' | ');
-              doc.text(auditText, colPositions[5], currentY, { maxWidth: colWidths[5] });
+              
+              let xOffset = colPositions[5];
+              const lineHeight = 3;
+              let yOffset = currentY;
+              
+              auditInfo.forEach((info, idx) => {
+                // Reset to start of column for each line if text wraps
+                if (idx > 0 && info.includes(':')) {
+                  yOffset += lineHeight;
+                  xOffset = colPositions[5];
+                }
+                
+                // Check if this is a label:value pair
+                if (info.includes(':')) {
+                  const [label, value] = info.split(':').map(s => s.trim());
+                  
+                  // Draw label in normal font
+                  doc.setFont('helvetica', 'normal');
+                  doc.text(label + ':', xOffset, yOffset);
+                  const labelWidth = doc.getTextWidth(label + ': ');
+                  
+                  // Draw value in bold font
+                  doc.setFont('helvetica', 'bold');
+                  doc.text(value, xOffset + labelWidth, yOffset);
+                } else {
+                  // No colon, just draw in bold (like "Fichaje solicitado por empleado")
+                  doc.setFont('helvetica', 'bold');
+                  doc.text(info, xOffset, yOffset);
+                }
+                
+                // Add separator if not last item
+                if (idx < auditInfo.length - 1) {
+                  const textWidth = doc.getTextWidth(info);
+                  doc.setFont('helvetica', 'normal');
+                  doc.text(' | ', xOffset + textWidth, yOffset);
+                  xOffset += textWidth + doc.getTextWidth(' | ');
+                }
+              });
             }
             
             currentY += 6;
@@ -1214,12 +1284,12 @@ export default function TimeTracking() {
             
             if (log.modificationType === 'created_manual') {
               // Manual work session created from employee request
-              auditInfo.push(`Fichaje solicitado por empleado`);
+              auditInfo.push(`Fichaje solicitado por: empleado`);
               auditInfo.push(`Aprobado por: ${approvedBy}`);
             } else if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
               // Modified work session
               if (isEmployeeRequest) {
-                auditInfo.push(`Cambio solicitado por empleado`);
+                auditInfo.push(`Cambio solicitado por: empleado`);
               }
               
               if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') {
@@ -1252,13 +1322,48 @@ export default function TimeTracking() {
             doc.text('Sin descansos', colPositions[3], currentY);
             doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
             
-            // Show audit info in modifications column
+            // Show audit info in modifications column with mixed font weights
             if (auditInfo.length > 0) {
               doc.setFontSize(7);
-              doc.setFont('helvetica', 'normal');
               doc.setTextColor(100, 100, 100);
-              const auditText = auditInfo.join(' | ');
-              doc.text(auditText, colPositions[5], currentY, { maxWidth: colWidths[5] });
+              
+              let xOffset = colPositions[5];
+              const lineHeight = 3;
+              let yOffset = currentY;
+              
+              auditInfo.forEach((info, idx) => {
+                // Reset to start of column for each line if text wraps
+                if (idx > 0 && info.includes(':')) {
+                  yOffset += lineHeight;
+                  xOffset = colPositions[5];
+                }
+                
+                // Check if this is a label:value pair
+                if (info.includes(':')) {
+                  const [label, value] = info.split(':').map(s => s.trim());
+                  
+                  // Draw label in normal font
+                  doc.setFont('helvetica', 'normal');
+                  doc.text(label + ':', xOffset, yOffset);
+                  const labelWidth = doc.getTextWidth(label + ': ');
+                  
+                  // Draw value in bold font
+                  doc.setFont('helvetica', 'bold');
+                  doc.text(value, xOffset + labelWidth, yOffset);
+                } else {
+                  // No colon, just draw in bold (like "Fichaje solicitado por empleado")
+                  doc.setFont('helvetica', 'bold');
+                  doc.text(info, xOffset, yOffset);
+                }
+                
+                // Add separator if not last item
+                if (idx < auditInfo.length - 1) {
+                  const textWidth = doc.getTextWidth(info);
+                  doc.setFont('helvetica', 'normal');
+                  doc.text(' | ', xOffset + textWidth, yOffset);
+                  xOffset += textWidth + doc.getTextWidth(' | ');
+                }
+              });
             }
             
             currentY += 6;
@@ -1284,13 +1389,48 @@ export default function TimeTracking() {
             }
             doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
             
-            // Show audit info in modifications column
+            // Show audit info in modifications column with mixed font weights
             if (auditInfo.length > 0) {
               doc.setFontSize(7);
-              doc.setFont('helvetica', 'normal');
               doc.setTextColor(100, 100, 100);
-              const auditText = auditInfo.join(' | ');
-              doc.text(auditText, colPositions[5], currentY, { maxWidth: colWidths[5] });
+              
+              let xOffset = colPositions[5];
+              const lineHeight = 3;
+              let yOffset = currentY;
+              
+              auditInfo.forEach((info, idx) => {
+                // Reset to start of column for each line if text wraps
+                if (idx > 0 && info.includes(':')) {
+                  yOffset += lineHeight;
+                  xOffset = colPositions[5];
+                }
+                
+                // Check if this is a label:value pair
+                if (info.includes(':')) {
+                  const [label, value] = info.split(':').map(s => s.trim());
+                  
+                  // Draw label in normal font
+                  doc.setFont('helvetica', 'normal');
+                  doc.text(label + ':', xOffset, yOffset);
+                  const labelWidth = doc.getTextWidth(label + ': ');
+                  
+                  // Draw value in bold font
+                  doc.setFont('helvetica', 'bold');
+                  doc.text(value, xOffset + labelWidth, yOffset);
+                } else {
+                  // No colon, just draw in bold (like "Fichaje solicitado por empleado")
+                  doc.setFont('helvetica', 'bold');
+                  doc.text(info, xOffset, yOffset);
+                }
+                
+                // Add separator if not last item
+                if (idx < auditInfo.length - 1) {
+                  const textWidth = doc.getTextWidth(info);
+                  doc.setFont('helvetica', 'normal');
+                  doc.text(' | ', xOffset + textWidth, yOffset);
+                  xOffset += textWidth + doc.getTextWidth(' | ');
+                }
+              });
             }
             
             currentY += 6;
