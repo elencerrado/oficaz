@@ -1197,30 +1197,6 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
     }
   }, [isOpen]);
 
-  // Convert local time to UTC for backend storage
-  const convertLocalTimeToUTC = (localTime: string): string => {
-    const [hours, minutes] = localTime.split(':').map(Number);
-    const localDate = new Date();
-    localDate.setHours(hours, minutes, 0, 0);
-    
-    const utcHours = localDate.getUTCHours();
-    const utcMinutes = localDate.getUTCMinutes();
-    
-    return `${utcHours.toString().padStart(2, '0')}:${utcMinutes.toString().padStart(2, '0')}`;
-  };
-
-  // Convert UTC time to local for display
-  const convertUTCToLocalTime = (utcTime: string): string => {
-    const [hours, minutes] = utcTime.split(':').map(Number);
-    const utcDate = new Date();
-    utcDate.setUTCHours(hours, minutes, 0, 0);
-    
-    const localHours = utcDate.getHours();
-    const localMinutes = utcDate.getMinutes();
-    
-    return `${localHours.toString().padStart(2, '0')}:${localMinutes.toString().padStart(2, '0')}`;
-  };
-
   // Handle form submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1232,13 +1208,10 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
     try {
       setIsLoading(true);
       
-      // Convert local time to UTC before sending to backend
-      const utcTime = convertLocalTimeToUTC(formData.time);
-      
       // Generate title based on type
       const alarmData = {
         ...formData,
-        time: utcTime, // Send UTC time to backend
+        time: formData.time, // Send local time (Spain timezone) to backend
         title: getAlarmTitle(formData.type)
       };
       
@@ -1293,7 +1266,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
     setEditingAlarm(alarm);
     setFormData({
       type: alarm.type,
-      time: convertUTCToLocalTime(alarm.time), // Convert UTC to local for editing
+      time: alarm.time, // Time is already in local format (Spain timezone)
       weekdays: alarm.weekdays,
       soundEnabled: alarm.soundEnabled
     });
