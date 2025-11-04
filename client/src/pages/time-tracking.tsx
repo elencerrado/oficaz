@@ -1064,6 +1064,11 @@ export default function TimeTracking() {
             }
             
             currentY += 6;
+            
+            // Add subtle separator line between work sessions
+            doc.setDrawColor(220, 220, 220);
+            doc.setLineWidth(0.1);
+            doc.line(tableStartX, currentY - 2, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 2);
           } else {
             // First break on main row
             const firstBreak = breakPeriods[0];
@@ -1092,6 +1097,11 @@ export default function TimeTracking() {
             
             currentY += 6;
             
+            // Add subtle separator line between work sessions
+            doc.setDrawColor(220, 220, 220);
+            doc.setLineWidth(0.1);
+            doc.line(tableStartX, currentY - 2, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 2);
+            
             // Additional breaks in separate rows (empty cells except for break info)
             for (let i = 1; i < breakPeriods.length; i++) {
               // Check if we need a new page for additional break row
@@ -1116,6 +1126,11 @@ export default function TimeTracking() {
               }
               currentY += 6;
             }
+            
+            // Add subtle separator line after all breaks
+            doc.setDrawColor(220, 220, 220);
+            doc.setLineWidth(0.1);
+            doc.line(tableStartX, currentY - 2, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 2);
           }
           
           weekHours += hours;
@@ -1247,6 +1262,11 @@ export default function TimeTracking() {
             }
             
             currentY += 6;
+            
+            // Add subtle separator line between work sessions
+            doc.setDrawColor(220, 220, 220);
+            doc.setLineWidth(0.1);
+            doc.line(tableStartX, currentY - 2, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 2);
           } else {
             // First break on main row
             const firstBreak = breakPeriods[0];
@@ -1275,6 +1295,11 @@ export default function TimeTracking() {
             
             currentY += 6;
             
+            // Add subtle separator line between work sessions
+            doc.setDrawColor(220, 220, 220);
+            doc.setLineWidth(0.1);
+            doc.line(tableStartX, currentY - 2, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 2);
+            
             // Additional breaks in separate rows (empty cells except for break info)
             for (let i = 1; i < breakPeriods.length; i++) {
               // Check if we need a new page for additional break row
@@ -1299,6 +1324,11 @@ export default function TimeTracking() {
               }
               currentY += 6;
             }
+            
+            // Add subtle separator line after all breaks
+            doc.setDrawColor(220, 220, 220);
+            doc.setLineWidth(0.1);
+            doc.line(tableStartX, currentY - 2, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 2);
           }
         });
       }
