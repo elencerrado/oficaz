@@ -1453,7 +1453,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                     <div className="flex-1">
                       <h4 className="font-medium text-white">{getAlarmTitle(alarm.type)}</h4>
                       <p className="text-sm text-gray-300">
-                        a las {convertUTCToLocalTime(alarm.time)}
+                        a las {alarm.time}
                       </p>
                       <p className="text-xs text-gray-400">
                         {alarm.weekdays.map((day: number) => weekdayFullNames[day - 1]).join(', ')}
