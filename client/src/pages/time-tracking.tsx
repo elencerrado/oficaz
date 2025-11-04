@@ -31,7 +31,11 @@ import {
   Clock,
   AlertTriangle,
   AlertCircle,
-  LogOut
+  LogOut,
+  Plus,
+  Bell,
+  FileText,
+  History
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, startOfWeek, addDays, subDays, differenceInMinutes, startOfDay, endOfDay, endOfWeek, startOfMonth, endOfMonth, isToday } from 'date-fns';

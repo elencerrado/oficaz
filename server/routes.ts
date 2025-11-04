@@ -3762,6 +3762,362 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Work Session Modification & Audit (Legal Compliance RD-ley 8/2019)
+  
+  // Admin: Create manual work session (forgotten check-in)
+  app.post('/api/admin/work-sessions/create-manual', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const { employeeId, date, clockIn, clockOut, reason } = req.body;
+
+      // Validate required fields
+      if (!employeeId || !date || !clockIn || !clockOut || !reason) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+
+      // Verify employee belongs to same company
+      const employee = await storage.getUser(employeeId);
+      if (!employee || employee.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'Employee not found or unauthorized' });
+      }
+
+      // Create date objects for the specific date
+      const targetDate = new Date(date);
+      const clockInTime = clockIn.split(':');
+      const clockOutTime = clockOut.split(':');
+      
+      const clockInDate = new Date(targetDate);
+      clockInDate.setHours(parseInt(clockInTime[0]), parseInt(clockInTime[1]), 0, 0);
+      
+      const clockOutDate = new Date(targetDate);
+      clockOutDate.setHours(parseInt(clockOutTime[0]), parseInt(clockOutTime[1]), 0, 0);
+
+      // Calculate total hours
+      const totalHours = ((clockOutDate.getTime() - clockInDate.getTime()) / (1000 * 60 * 60)).toFixed(2);
+
+      // Create work session marked as manually created
+      const workSession = await storage.createWorkSession({
+        userId: employeeId,
+        clockIn: clockInDate,
+        clockOut: clockOutDate,
+        totalHours,
+        totalBreakTime: '0.00',
+        status: 'completed',
+        autoCompleted: false,
+        isManuallyCreated: true,
+        lastModifiedBy: req.user!.id,
+        lastModifiedAt: new Date(),
+      });
+
+      // Create audit log entry
+      await storage.createWorkSessionAuditLog({
+        workSessionId: workSession.id,
+        companyId: req.user!.companyId,
+        modificationType: 'created_manual',
+        oldValue: null,
+        newValue: {
+          clockIn: clockInDate.toISOString(),
+          clockOut: clockOutDate.toISOString(),
+        },
+        reason,
+        modifiedBy: req.user!.id,
+      });
+
+      res.status(201).json(workSession);
+    } catch (error: any) {
+      console.error('Error creating manual work session:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin: Modify existing work session
+  app.patch('/api/admin/work-sessions/:id/modify', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { clockIn, clockOut, reason } = req.body;
+
+      if (!reason) {
+        return res.status(400).json({ message: 'Reason is required for modification' });
+      }
+
+      // Get existing session
+      const session = await storage.getWorkSession(id);
+      if (!session) {
+        return res.status(404).json({ message: 'Work session not found' });
+      }
+
+      // Verify session belongs to same company
+      const employee = await storage.getUser(session.userId);
+      if (!employee || employee.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+
+      // Store old values for audit log
+      const oldValue = {
+        clockIn: session.clockIn.toISOString(),
+        clockOut: session.clockOut?.toISOString() || null,
+      };
+
+      // Prepare updates
+      const updates: any = {
+        lastModifiedBy: req.user!.id,
+        lastModifiedAt: new Date(),
+      };
+
+      if (clockIn) updates.clockIn = new Date(clockIn);
+      if (clockOut) updates.clockOut = new Date(clockOut);
+
+      // Recalculate total hours if times changed
+      if (updates.clockIn || updates.clockOut) {
+        const finalClockIn = updates.clockIn || session.clockIn;
+        const finalClockOut = updates.clockOut || session.clockOut;
+        if (finalClockOut) {
+          updates.totalHours = ((finalClockOut.getTime() - finalClockIn.getTime()) / (1000 * 60 * 60)).toFixed(2);
+        }
+      }
+
+      // Update session
+      const updatedSession = await storage.updateWorkSession(id, updates);
+
+      // Determine modification type
+      let modificationType = 'modified_both';
+      if (clockIn && !clockOut) modificationType = 'modified_clockin';
+      if (!clockIn && clockOut) modificationType = 'modified_clockout';
+
+      // Create audit log entry
+      await storage.createWorkSessionAuditLog({
+        workSessionId: id,
+        companyId: req.user!.companyId,
+        modificationType,
+        oldValue,
+        newValue: {
+          clockIn: updatedSession!.clockIn.toISOString(),
+          clockOut: updatedSession!.clockOut?.toISOString() || null,
+        },
+        reason,
+        modifiedBy: req.user!.id,
+      });
+
+      res.json(updatedSession);
+    } catch (error: any) {
+      console.error('Error modifying work session:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin: Get audit log for a work session
+  app.get('/api/admin/work-sessions/:id/audit-log', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+
+      // Verify session exists and belongs to same company
+      const session = await storage.getWorkSession(id);
+      if (!session) {
+        return res.status(404).json({ message: 'Work session not found' });
+      }
+
+      const employee = await storage.getUser(session.userId);
+      if (!employee || employee.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+
+      const auditLogs = await storage.getWorkSessionAuditLogs(id);
+      res.json(auditLogs);
+    } catch (error: any) {
+      console.error('Error fetching audit log:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Employee: Request work session modification
+  app.post('/api/work-sessions/request-modification', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { workSessionId, requestType, requestedDate, requestedClockIn, requestedClockOut, reason } = req.body;
+
+      if (!requestType || !requestedDate || !requestedClockIn || !reason) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+
+      // Prepare request data
+      const requestData: any = {
+        workSessionId: workSessionId || null,
+        employeeId: req.user!.id,
+        companyId: req.user!.companyId,
+        requestType, // 'forgotten_checkin' or 'modify_time'
+        requestedDate: new Date(requestedDate),
+        requestedClockIn: new Date(requestedClockIn),
+        requestedClockOut: requestedClockOut ? new Date(requestedClockOut) : null,
+        reason,
+        status: 'pending',
+      };
+
+      // If modifying existing session, get current values
+      if (workSessionId) {
+        const session = await storage.getWorkSession(workSessionId);
+        if (!session) {
+          return res.status(404).json({ message: 'Work session not found' });
+        }
+        if (session.userId !== req.user!.id) {
+          return res.status(403).json({ message: 'Unauthorized' });
+        }
+
+        requestData.currentClockIn = session.clockIn;
+        requestData.currentClockOut = session.clockOut;
+      }
+
+      const request = await storage.createModificationRequest(requestData);
+      res.status(201).json(request);
+    } catch (error: any) {
+      console.error('Error creating modification request:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin: Get pending modification requests count
+  app.get('/api/admin/work-sessions/modification-requests/count', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const count = await storage.getPendingModificationRequestsCount(req.user!.companyId);
+      res.json({ count });
+    } catch (error: any) {
+      console.error('Error getting pending requests count:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin: Get modification requests
+  app.get('/api/admin/work-sessions/modification-requests', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const status = req.query.status as string | undefined;
+      const requests = await storage.getCompanyModificationRequests(req.user!.companyId, status);
+      
+      // Enrich with employee names
+      const enrichedRequests = await Promise.all(requests.map(async (request) => {
+        const employee = await storage.getUser(request.employeeId);
+        return {
+          ...request,
+          employeeName: employee?.fullName || 'Unknown',
+          employeeProfilePicture: employee?.profilePicture || null,
+        };
+      }));
+
+      res.json(enrichedRequests);
+    } catch (error: any) {
+      console.error('Error fetching modification requests:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin: Approve or reject modification request
+  app.patch('/api/admin/work-sessions/modification-requests/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status, adminResponse } = req.body;
+
+      if (!status || !['approved', 'rejected'].includes(status)) {
+        return res.status(400).json({ message: 'Invalid status' });
+      }
+
+      // Get the request
+      const request = await storage.getModificationRequest(id);
+      if (!request) {
+        return res.status(404).json({ message: 'Request not found' });
+      }
+
+      if (request.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+
+      if (request.status !== 'pending') {
+        return res.status(400).json({ message: 'Request already processed' });
+      }
+
+      // If approved, create or modify the work session
+      if (status === 'approved') {
+        if (request.requestType === 'forgotten_checkin') {
+          // Create new work session
+          const totalHours = request.requestedClockOut 
+            ? ((request.requestedClockOut.getTime() - request.requestedClockIn.getTime()) / (1000 * 60 * 60)).toFixed(2)
+            : null;
+
+          const workSession = await storage.createWorkSession({
+            userId: request.employeeId,
+            clockIn: request.requestedClockIn,
+            clockOut: request.requestedClockOut || undefined,
+            totalHours: totalHours || undefined,
+            totalBreakTime: '0.00',
+            status: request.requestedClockOut ? 'completed' : 'active',
+            autoCompleted: false,
+            isManuallyCreated: true,
+            lastModifiedBy: req.user!.id,
+            lastModifiedAt: new Date(),
+          });
+
+          // Create audit log
+          await storage.createWorkSessionAuditLog({
+            workSessionId: workSession.id,
+            companyId: req.user!.companyId,
+            modificationType: 'created_manual',
+            oldValue: null,
+            newValue: {
+              clockIn: request.requestedClockIn.toISOString(),
+              clockOut: request.requestedClockOut?.toISOString() || null,
+            },
+            reason: `Employee request approved: ${request.reason}`,
+            modifiedBy: req.user!.id,
+          });
+        } else if (request.requestType === 'modify_time' && request.workSessionId) {
+          // Modify existing session
+          const session = await storage.getWorkSession(request.workSessionId);
+          if (session) {
+            const oldValue = {
+              clockIn: session.clockIn.toISOString(),
+              clockOut: session.clockOut?.toISOString() || null,
+            };
+
+            const updates: any = {
+              clockIn: request.requestedClockIn,
+              lastModifiedBy: req.user!.id,
+              lastModifiedAt: new Date(),
+            };
+
+            if (request.requestedClockOut) {
+              updates.clockOut = request.requestedClockOut;
+              updates.totalHours = ((request.requestedClockOut.getTime() - request.requestedClockIn.getTime()) / (1000 * 60 * 60)).toFixed(2);
+            }
+
+            await storage.updateWorkSession(request.workSessionId, updates);
+
+            // Create audit log
+            await storage.createWorkSessionAuditLog({
+              workSessionId: request.workSessionId,
+              companyId: req.user!.companyId,
+              modificationType: 'modified_both',
+              oldValue,
+              newValue: {
+                clockIn: request.requestedClockIn.toISOString(),
+                clockOut: request.requestedClockOut?.toISOString() || null,
+              },
+              reason: `Employee request approved: ${request.reason}`,
+              modifiedBy: req.user!.id,
+            });
+          }
+        }
+      }
+
+      // Update request status
+      const updatedRequest = await storage.updateModificationRequest(id, {
+        status,
+        adminResponse: adminResponse || null,
+        reviewedBy: req.user!.id,
+        reviewedAt: new Date(),
+      });
+
+      res.json(updatedRequest);
+    } catch (error: any) {
+      console.error('Error processing modification request:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Break periods routes
   app.post('/api/break-periods/start', authenticateToken, async (req: AuthRequest, res) => {
     try {

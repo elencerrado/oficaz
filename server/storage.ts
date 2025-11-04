@@ -5,6 +5,8 @@ import * as schema from '@shared/schema';
 import type {
   Company, User, WorkSession, BreakPeriod, VacationRequest, Document, Message, SystemNotification,
   InsertCompany, InsertUser, InsertWorkSession, InsertBreakPeriod, InsertVacationRequest, InsertDocument, InsertMessage, InsertSystemNotification,
+  WorkSessionAuditLog, InsertWorkSessionAuditLog,
+  WorkSessionModificationRequest, InsertWorkSessionModificationRequest,
   Reminder, InsertReminder, SuperAdmin, InsertSuperAdmin, 
   Subscription, InsertSubscription, SubscriptionPlan, InsertSubscriptionPlan,
   EmployeeActivationToken, InsertEmployeeActivationToken,
@@ -245,6 +247,19 @@ export interface IStorage {
   updateEmailCampaign(id: number, updates: any): Promise<any>;
   deleteEmailCampaign(id: number): Promise<boolean>;
   deleteEmailProspect(id: number): Promise<boolean>;
+
+  // Work Session Audit Log (Legal compliance RD-ley 8/2019)
+  createWorkSessionAuditLog(log: InsertWorkSessionAuditLog): Promise<WorkSessionAuditLog>;
+  getWorkSessionAuditLogs(workSessionId: number): Promise<WorkSessionAuditLog[]>;
+  getCompanyAuditLogs(companyId: number, limit?: number): Promise<WorkSessionAuditLog[]>;
+
+  // Work Session Modification Requests (Employee-initiated)
+  createModificationRequest(request: InsertWorkSessionModificationRequest): Promise<WorkSessionModificationRequest>;
+  getModificationRequest(id: number): Promise<WorkSessionModificationRequest | undefined>;
+  getEmployeeModificationRequests(employeeId: number): Promise<WorkSessionModificationRequest[]>;
+  getCompanyModificationRequests(companyId: number, status?: string): Promise<WorkSessionModificationRequest[]>;
+  updateModificationRequest(id: number, updates: Partial<InsertWorkSessionModificationRequest>): Promise<WorkSessionModificationRequest | undefined>;
+  getPendingModificationRequestsCount(companyId: number): Promise<number>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -438,6 +453,9 @@ export class DrizzleStorage implements IStorage {
       totalBreakTime: schema.workSessions.totalBreakTime,
       status: schema.workSessions.status,
       autoCompleted: schema.workSessions.autoCompleted,
+      isManuallyCreated: schema.workSessions.isManuallyCreated,
+      lastModifiedAt: schema.workSessions.lastModifiedAt,
+      lastModifiedBy: schema.workSessions.lastModifiedBy,
       createdAt: schema.workSessions.createdAt,
       userName: schema.users.fullName,
       profilePicture: schema.users.profilePicture,
@@ -2969,6 +2987,90 @@ export class DrizzleStorage implements IStorage {
       .where(eq(schema.emailProspects.id, id))
       .returning();
     return result.length > 0;
+  }
+
+  // Work Session Audit Log Implementation
+  async createWorkSessionAuditLog(log: InsertWorkSessionAuditLog): Promise<WorkSessionAuditLog> {
+    const [created] = await db.insert(schema.workSessionAuditLog)
+      .values(log)
+      .returning();
+    return created;
+  }
+
+  async getWorkSessionAuditLogs(workSessionId: number): Promise<WorkSessionAuditLog[]> {
+    return db.select()
+      .from(schema.workSessionAuditLog)
+      .where(eq(schema.workSessionAuditLog.workSessionId, workSessionId))
+      .orderBy(desc(schema.workSessionAuditLog.modifiedAt));
+  }
+
+  async getCompanyAuditLogs(companyId: number, limit: number = 100): Promise<WorkSessionAuditLog[]> {
+    return db.select()
+      .from(schema.workSessionAuditLog)
+      .where(eq(schema.workSessionAuditLog.companyId, companyId))
+      .orderBy(desc(schema.workSessionAuditLog.modifiedAt))
+      .limit(limit);
+  }
+
+  // Work Session Modification Requests Implementation
+  async createModificationRequest(request: InsertWorkSessionModificationRequest): Promise<WorkSessionModificationRequest> {
+    const [created] = await db.insert(schema.workSessionModificationRequests)
+      .values(request)
+      .returning();
+    return created;
+  }
+
+  async getModificationRequest(id: number): Promise<WorkSessionModificationRequest | undefined> {
+    const [request] = await db.select()
+      .from(schema.workSessionModificationRequests)
+      .where(eq(schema.workSessionModificationRequests.id, id));
+    return request;
+  }
+
+  async getEmployeeModificationRequests(employeeId: number): Promise<WorkSessionModificationRequest[]> {
+    return db.select()
+      .from(schema.workSessionModificationRequests)
+      .where(eq(schema.workSessionModificationRequests.employeeId, employeeId))
+      .orderBy(desc(schema.workSessionModificationRequests.createdAt));
+  }
+
+  async getCompanyModificationRequests(companyId: number, status?: string): Promise<WorkSessionModificationRequest[]> {
+    if (status) {
+      return db.select()
+        .from(schema.workSessionModificationRequests)
+        .where(
+          and(
+            eq(schema.workSessionModificationRequests.companyId, companyId),
+            eq(schema.workSessionModificationRequests.status, status)
+          )
+        )
+        .orderBy(desc(schema.workSessionModificationRequests.createdAt));
+    }
+    
+    return db.select()
+      .from(schema.workSessionModificationRequests)
+      .where(eq(schema.workSessionModificationRequests.companyId, companyId))
+      .orderBy(desc(schema.workSessionModificationRequests.createdAt));
+  }
+
+  async updateModificationRequest(id: number, updates: Partial<InsertWorkSessionModificationRequest>): Promise<WorkSessionModificationRequest | undefined> {
+    const [updated] = await db.update(schema.workSessionModificationRequests)
+      .set(updates)
+      .where(eq(schema.workSessionModificationRequests.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getPendingModificationRequestsCount(companyId: number): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)::int` })
+      .from(schema.workSessionModificationRequests)
+      .where(
+        and(
+          eq(schema.workSessionModificationRequests.companyId, companyId),
+          eq(schema.workSessionModificationRequests.status, 'pending')
+        )
+      );
+    return result[0]?.count || 0;
   }
 }
 

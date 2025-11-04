@@ -303,6 +303,12 @@ export const workSessions = pgTable("work_sessions", {
   totalBreakTime: decimal("total_break_time", { precision: 4, scale: 2 }).default("0.00"), // Total break time in hours
   status: text("status").notNull().default("active"), // active, completed
   autoCompleted: boolean("auto_completed").notNull().default(false), // true if automatically closed due to missed clock out
+  
+  // Audit fields for legal compliance (RD-ley 8/2019)
+  isManuallyCreated: boolean("is_manually_created").notNull().default(false), // true if created by admin (forgotten check-in)
+  lastModifiedAt: timestamp("last_modified_at"), // timestamp of last modification
+  lastModifiedBy: integer("last_modified_by").references(() => users.id), // admin who made the last modification
+  
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => ({
   // Performance indexes for high-concurrency clock-ins (1000+ simultaneous users)
@@ -325,6 +331,53 @@ export const breakPeriods = pgTable("break_periods", {
   // Performance indexes for orphaned break cleanup during clock-in
   userStatusIdx: index("break_periods_user_status_idx").on(table.userId, table.status),
   sessionIdx: index("break_periods_session_idx").on(table.workSessionId),
+}));
+
+// Work session audit log - Legal compliance (RD-ley 8/2019) - Required by Spanish law
+export const workSessionAuditLog = pgTable("work_session_audit_log", {
+  id: serial("id").primaryKey(),
+  workSessionId: integer("work_session_id").references(() => workSessions.id).notNull(),
+  companyId: integer("company_id").references(() => companies.id).notNull(),
+  modificationType: text("modification_type").notNull(), // created_manual, modified_clockin, modified_clockout, modified_both, deleted
+  oldValue: jsonb("old_value"), // {clockIn: "2024-11-04T08:00:00Z", clockOut: "2024-11-04T17:00:00Z"}
+  newValue: jsonb("new_value").notNull(), // {clockIn: "2024-11-04T08:30:00Z", clockOut: "2024-11-04T17:00:00Z"}
+  reason: text("reason").notNull(), // Mandatory reason for modification
+  modifiedBy: integer("modified_by").references(() => users.id).notNull(), // Admin who made the change
+  modifiedAt: timestamp("modified_at").defaultNow().notNull(),
+}, (table) => ({
+  workSessionIdx: index("audit_log_work_session_idx").on(table.workSessionId),
+  companyIdx: index("audit_log_company_idx").on(table.companyId),
+  modifiedAtIdx: index("audit_log_modified_at_idx").on(table.modifiedAt),
+}));
+
+// Work session modification requests - Employees can request changes
+export const workSessionModificationRequests = pgTable("work_session_modification_requests", {
+  id: serial("id").primaryKey(),
+  workSessionId: integer("work_session_id").references(() => workSessions.id), // nullable for new/forgotten check-ins
+  employeeId: integer("employee_id").references(() => users.id).notNull(),
+  companyId: integer("company_id").references(() => companies.id).notNull(),
+  requestType: text("request_type").notNull(), // forgotten_checkin, modify_time
+  
+  // Current values (for modifications)
+  currentClockIn: timestamp("current_clock_in"),
+  currentClockOut: timestamp("current_clock_out"),
+  
+  // Requested values
+  requestedDate: timestamp("requested_date").notNull(), // Date of the work session
+  requestedClockIn: timestamp("requested_clock_in").notNull(),
+  requestedClockOut: timestamp("requested_clock_out"),
+  
+  reason: text("reason").notNull(), // Employee's reason for the request
+  status: text("status").notNull().default("pending"), // pending, approved, rejected
+  adminResponse: text("admin_response"), // Admin's comment when reviewing
+  reviewedBy: integer("reviewed_by").references(() => users.id), // Admin who reviewed
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  employeeIdx: index("mod_requests_employee_idx").on(table.employeeId),
+  companyIdx: index("mod_requests_company_idx").on(table.companyId),
+  statusIdx: index("mod_requests_status_idx").on(table.status),
+  companyStatusIdx: index("mod_requests_company_status_idx").on(table.companyId, table.status),
 }));
 
 // Vacation requests table
@@ -466,6 +519,18 @@ export const insertWorkSessionSchema = createInsertSchema(workSessions).omit({
 export const insertBreakPeriodSchema = createInsertSchema(breakPeriods).omit({
   id: true,
   createdAt: true,
+});
+
+export const insertWorkSessionAuditLogSchema = createInsertSchema(workSessionAuditLog).omit({
+  id: true,
+  modifiedAt: true,
+});
+
+export const insertWorkSessionModificationRequestSchema = createInsertSchema(workSessionModificationRequests).omit({
+  id: true,
+  createdAt: true,
+  reviewedBy: true,
+  reviewedAt: true,
 });
 
 export const insertVacationRequestSchema = createInsertSchema(vacationRequests).omit({
@@ -687,6 +752,8 @@ export type Company = typeof companies.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type WorkSession = typeof workSessions.$inferSelect;
 export type BreakPeriod = typeof breakPeriods.$inferSelect;
+export type WorkSessionAuditLog = typeof workSessionAuditLog.$inferSelect;
+export type WorkSessionModificationRequest = typeof workSessionModificationRequests.$inferSelect;
 export type VacationRequest = typeof vacationRequests.$inferSelect;
 export type Document = typeof documents.$inferSelect;
 export type Message = typeof messages.$inferSelect;
@@ -698,6 +765,8 @@ export type InsertCompany = z.infer<typeof insertCompanySchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertWorkSession = z.infer<typeof insertWorkSessionSchema>;
 export type InsertBreakPeriod = z.infer<typeof insertBreakPeriodSchema>;
+export type InsertWorkSessionAuditLog = z.infer<typeof insertWorkSessionAuditLogSchema>;
+export type InsertWorkSessionModificationRequest = z.infer<typeof insertWorkSessionModificationRequestSchema>;
 export type InsertVacationRequest = z.infer<typeof insertVacationRequestSchema>;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
