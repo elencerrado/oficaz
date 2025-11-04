@@ -1201,9 +1201,9 @@ export default function EmployeeTimeTracking() {
           setExistingSession(null);
         }
       }}>
-        <DialogContent className="sm:max-w-md max-w-sm">
+        <DialogContent className="sm:max-w-md max-w-sm bg-gray-900 border-gray-700">
           <DialogHeader>
-            <DialogTitle className="text-center">
+            <DialogTitle className="text-center text-white">
               {wizardStep === 'date' ? 'Seleccionar Fecha' : 
                requestData.requestType === 'modify_time' ? 'Modificar Fichaje' : 'Añadir Fichaje Olvidado'}
             </DialogTitle>
@@ -1212,7 +1212,7 @@ export default function EmployeeTimeTracking() {
           {wizardStep === 'date' ? (
             // STEP 1: Select date
             <div className="space-y-4">
-              <div className="text-center text-sm text-gray-600">
+              <div className="text-center text-sm text-gray-400">
                 Selecciona la fecha del fichaje que quieres modificar o añadir
               </div>
               
@@ -1224,7 +1224,7 @@ export default function EmployeeTimeTracking() {
                   disabled={(date) => date > new Date()}
                   locale={es}
                   initialFocus
-                  className="rounded-md border"
+                  className="rounded-md border border-gray-700 bg-gray-800 text-white"
                 />
               </div>
               
@@ -1232,7 +1232,7 @@ export default function EmployeeTimeTracking() {
                 <Button
                   variant="outline"
                   onClick={() => setShowRequestDialog(false)}
-                  className="w-full"
+                  className="w-full bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
                 >
                   Cancelar
                 </Button>
@@ -1242,20 +1242,20 @@ export default function EmployeeTimeTracking() {
             // STEP 2: Fill details
             <div className="space-y-4">
               {requestData.requestType === 'modify_time' ? (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <div className="text-sm text-blue-800 font-medium mb-1">
+                <div className="bg-blue-900/30 border border-blue-700/50 rounded-lg p-3">
+                  <div className="text-sm text-blue-300 font-medium mb-1">
                     📝 Modificar fichaje del {format(new Date(requestData.date), 'dd/MM/yyyy', { locale: es })}
                   </div>
-                  <div className="text-xs text-blue-600">
+                  <div className="text-xs text-blue-400">
                     Horas actuales: {requestData.clockIn} {requestData.clockOut && `- ${requestData.clockOut}`}
                   </div>
                 </div>
               ) : (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <div className="text-sm text-amber-800 font-medium mb-1">
+                <div className="bg-amber-900/30 border border-amber-700/50 rounded-lg p-3">
+                  <div className="text-sm text-amber-300 font-medium mb-1">
                     ➕ Añadir fichaje del {format(new Date(requestData.date), 'dd/MM/yyyy', { locale: es })}
                   </div>
-                  <div className="text-xs text-amber-600">
+                  <div className="text-xs text-amber-400">
                     No hay registro de fichaje en esta fecha
                   </div>
                 </div>
@@ -1263,47 +1263,50 @@ export default function EmployeeTimeTracking() {
               
               <div className="space-y-2">
                 {requestData.requestType === 'modify_time' ? (
-                  <div className="text-xs text-gray-500 text-center mb-2">
+                  <div className="text-xs text-gray-400 text-center mb-2">
                     Modifica solo los campos que necesites cambiar
                   </div>
                 ) : (
-                  <div className="text-xs text-gray-500 text-center mb-2">
+                  <div className="text-xs text-gray-400 text-center mb-2">
                     Ambos campos son opcionales si no completaste el fichaje
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Entrada {requestData.requestType === 'modify_time' && <span className="text-gray-400 text-xs">(opcional)</span>}
+                    <label className="block text-sm font-medium text-gray-300">
+                      Entrada {requestData.requestType === 'modify_time' && <span className="text-gray-500 text-xs">(opcional)</span>}
                     </label>
                     <Input
                       type="time"
                       value={requestData.clockIn}
                       onChange={(e) => setRequestData({...requestData, clockIn: e.target.value})}
                       data-testid="input-request-clockin"
+                      className="bg-gray-800 border-gray-600 text-white"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Salida <span className="text-gray-400 text-xs">(opcional)</span>
+                    <label className="block text-sm font-medium text-gray-300">
+                      Salida <span className="text-gray-500 text-xs">(opcional)</span>
                     </label>
                     <Input
                       type="time"
                       value={requestData.clockOut}
                       onChange={(e) => setRequestData({...requestData, clockOut: e.target.value})}
                       data-testid="input-request-clockout"
+                      className="bg-gray-800 border-gray-600 text-white"
                     />
                   </div>
                 </div>
               </div>
               
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Motivo</label>
+                <label className="block text-sm font-medium text-gray-300">Motivo</label>
                 <Input
                   value={requestData.reason}
                   onChange={(e) => setRequestData({...requestData, reason: e.target.value})}
                   placeholder="Ej: Olvidé fichar, error en registro..."
                   data-testid="input-request-reason"
+                  className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-500"
                 />
               </div>
               
@@ -1311,14 +1314,14 @@ export default function EmployeeTimeTracking() {
                 <Button
                   variant="outline"
                   onClick={() => setWizardStep('date')}
-                  className="flex-1"
+                  className="flex-1 bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
                 >
                   Atrás
                 </Button>
                 <Button
                   onClick={() => requestModificationMutation.mutate(requestData)}
                   disabled={(!requestData.clockIn && !requestData.clockOut) || !requestData.reason || requestModificationMutation.isPending}
-                  className="flex-1"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                   data-testid="button-submit-request"
                 >
                   {requestModificationMutation.isPending ? (
@@ -1335,16 +1338,16 @@ export default function EmployeeTimeTracking() {
       
       {/* Dialog for incomplete session clock out */}
       <Dialog open={incompleteDialogOpen} onOpenChange={setIncompleteDialogOpen}>
-        <DialogContent className="sm:max-w-xs max-w-sm">
+        <DialogContent className="sm:max-w-xs max-w-sm bg-gray-900 border-gray-700">
           <DialogHeader>
-            <DialogTitle className="text-center">Cerrar Sesión Incompleta</DialogTitle>
+            <DialogTitle className="text-center text-white">Cerrar Sesión Incompleta</DialogTitle>
           </DialogHeader>
           <div className="space-y-6">
-            <div className="text-center text-sm text-gray-600">
+            <div className="text-center text-sm text-gray-400">
               Introduce la hora de salida para cerrar esta sesión incompleta:
             </div>
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700 text-center">
+              <label className="block text-sm font-medium text-gray-300 text-center">
                 Hora de salida
               </label>
               <div className="flex justify-center">
@@ -1352,7 +1355,7 @@ export default function EmployeeTimeTracking() {
                   type="time"
                   value={clockOutTime}
                   onChange={(e) => setClockOutTime(e.target.value)}
-                  className="text-center w-32 text-lg font-mono"
+                  className="text-center w-32 text-lg font-mono bg-gray-800 border-gray-600 text-white"
                   placeholder="HH:MM"
                 />
               </div>
@@ -1361,14 +1364,14 @@ export default function EmployeeTimeTracking() {
               <Button
                 variant="outline"
                 onClick={() => setIncompleteDialogOpen(false)}
-                className="flex-1"
+                className="flex-1 bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
               >
                 Cancelar
               </Button>
               <Button
                 onClick={submitClockOut}
                 disabled={clockOutMutation.isPending || !clockOutTime}
-                className="flex-1"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
               >
                 {clockOutMutation.isPending ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
