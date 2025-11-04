@@ -1055,12 +1055,19 @@ export default function TimeTracking() {
             doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
             
             // Show audit info in modifications column with mixed font weights
+            let auditHeight = 6; // Default height
             if (auditInfo.length > 0) {
               doc.setFontSize(7);
               doc.setTextColor(100, 100, 100);
               
-              let xOffset = colPositions[5];
+              // Calculate how many lines the audit text will occupy
+              const auditText = auditInfo.join(' | ');
+              const wrappedLines = doc.splitTextToSize(auditText, colWidths[5]);
+              const numLines = wrappedLines.length;
               const lineHeight = 3;
+              auditHeight = Math.max(6, numLines * lineHeight + 3); // At least 6, or calculated height + padding
+              
+              let xOffset = colPositions[5];
               let yOffset = currentY;
               
               auditInfo.forEach((info, idx) => {
@@ -1098,7 +1105,7 @@ export default function TimeTracking() {
               });
             }
             
-            currentY += 6;
+            currentY += auditHeight;
             
             // Add subtle separator line between work sessions (centered in the gap)
             doc.setDrawColor(220, 220, 220);
@@ -1122,12 +1129,19 @@ export default function TimeTracking() {
             doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
             
             // Show audit info in modifications column with mixed font weights
+            let auditHeight = 6; // Default height
             if (auditInfo.length > 0) {
               doc.setFontSize(7);
               doc.setTextColor(100, 100, 100);
               
-              let xOffset = colPositions[5];
+              // Calculate how many lines the audit text will occupy
+              const auditText = auditInfo.join(' | ');
+              const wrappedLines = doc.splitTextToSize(auditText, colWidths[5]);
+              const numLines = wrappedLines.length;
               const lineHeight = 3;
+              auditHeight = Math.max(6, numLines * lineHeight + 3); // At least 6, or calculated height + padding
+              
+              let xOffset = colPositions[5];
               let yOffset = currentY;
               
               auditInfo.forEach((info, idx) => {
@@ -1165,7 +1179,7 @@ export default function TimeTracking() {
               });
             }
             
-            currentY += 6;
+            currentY += auditHeight;
             
             // Add subtle separator line between work sessions (centered in the gap)
             doc.setDrawColor(220, 220, 220);
@@ -1323,12 +1337,19 @@ export default function TimeTracking() {
             doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
             
             // Show audit info in modifications column with mixed font weights
+            let auditHeight = 6; // Default height
             if (auditInfo.length > 0) {
               doc.setFontSize(7);
               doc.setTextColor(100, 100, 100);
               
-              let xOffset = colPositions[5];
+              // Calculate how many lines the audit text will occupy
+              const auditText = auditInfo.join(' | ');
+              const wrappedLines = doc.splitTextToSize(auditText, colWidths[5]);
+              const numLines = wrappedLines.length;
               const lineHeight = 3;
+              auditHeight = Math.max(6, numLines * lineHeight + 3); // At least 6, or calculated height + padding
+              
+              let xOffset = colPositions[5];
               let yOffset = currentY;
               
               auditInfo.forEach((info, idx) => {
@@ -1366,7 +1387,7 @@ export default function TimeTracking() {
               });
             }
             
-            currentY += 6;
+            currentY += auditHeight;
             
             // Add subtle separator line between work sessions (centered in the gap)
             doc.setDrawColor(220, 220, 220);
@@ -1390,12 +1411,19 @@ export default function TimeTracking() {
             doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
             
             // Show audit info in modifications column with mixed font weights
+            let auditHeight = 6; // Default height
             if (auditInfo.length > 0) {
               doc.setFontSize(7);
               doc.setTextColor(100, 100, 100);
               
-              let xOffset = colPositions[5];
+              // Calculate how many lines the audit text will occupy
+              const auditText = auditInfo.join(' | ');
+              const wrappedLines = doc.splitTextToSize(auditText, colWidths[5]);
+              const numLines = wrappedLines.length;
               const lineHeight = 3;
+              auditHeight = Math.max(6, numLines * lineHeight + 3); // At least 6, or calculated height + padding
+              
+              let xOffset = colPositions[5];
               let yOffset = currentY;
               
               auditInfo.forEach((info, idx) => {
@@ -1433,7 +1461,7 @@ export default function TimeTracking() {
               });
             }
             
-            currentY += 6;
+            currentY += auditHeight;
             
             // Add subtle separator line between work sessions (centered in the gap)
             doc.setDrawColor(220, 220, 220);
