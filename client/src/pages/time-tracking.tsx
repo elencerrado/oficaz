@@ -3128,18 +3128,32 @@ export default function TimeTracking() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Fecha</label>
-              <Input
-                type="text"
-                value={manualEntryData.date}
-                onChange={(e) => {
-                  // Allow only numbers and dashes
-                  const value = e.target.value.replace(/[^\d-]/g, '');
-                  setManualEntryData({...manualEntryData, date: value});
-                }}
-                placeholder="AAAA-MM-DD (ej: 2025-11-04)"
-                maxLength={10}
-                data-testid="input-date-manual"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                    data-testid="button-select-date-manual"
+                  >
+                    <CalendarDays className="mr-2 h-4 w-4" />
+                    {manualEntryData.date ? format(new Date(manualEntryData.date), 'dd/MM/yyyy', { locale: es }) : 'Seleccionar fecha'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={manualEntryData.date ? new Date(manualEntryData.date) : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        setManualEntryData({...manualEntryData, date: format(date, 'yyyy-MM-dd')});
+                      }
+                    }}
+                    disabled={(date) => date > new Date()}
+                    locale={es}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

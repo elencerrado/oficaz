@@ -10,6 +10,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -22,7 +24,8 @@ import {
   ArrowLeft,
   LogOut,
   Edit,
-  Plus
+  Plus,
+  Calendar as CalendarIcon
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, addMonths, subMonths, startOfWeek, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -1153,18 +1156,32 @@ export default function EmployeeTimeTracking() {
             
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Fecha</label>
-              <Input
-                type="text"
-                value={requestData.date}
-                onChange={(e) => {
-                  // Allow only numbers and dashes
-                  const value = e.target.value.replace(/[^\d-]/g, '');
-                  setRequestData({...requestData, date: value});
-                }}
-                placeholder="AAAA-MM-DD (ej: 2025-11-04)"
-                maxLength={10}
-                data-testid="input-request-date"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                    data-testid="button-select-date"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {requestData.date ? format(new Date(requestData.date), 'dd/MM/yyyy', { locale: es }) : 'Seleccionar fecha'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={requestData.date ? new Date(requestData.date) : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        setRequestData({...requestData, date: format(date, 'yyyy-MM-dd')});
+                      }
+                    }}
+                    disabled={(date) => date > new Date()}
+                    locale={es}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
