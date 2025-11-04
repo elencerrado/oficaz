@@ -91,8 +91,11 @@ export default function EmployeeTimeTracking() {
   const [incompleteSessionId, setIncompleteSessionId] = useState<number | null>(null);
   const [clockOutTime, setClockOutTime] = useState('');
   const [showRequestDialog, setShowRequestDialog] = useState(false);
+  const [wizardStep, setWizardStep] = useState<'date' | 'details'>('date');
+  const [existingSession, setExistingSession] = useState<WorkSession | null>(null);
   const [requestData, setRequestData] = useState({
     requestType: 'forgotten_checkin' as 'forgotten_checkin' | 'modify_time',
+    workSessionId: null as number | null,
     date: '',
     clockIn: '',
     clockOut: '',
@@ -230,11 +233,51 @@ export default function EmployeeTimeTracking() {
     },
   });
   
+  // Function to handle date selection and detect existing session
+  const handleDateSelect = (date: Date | undefined) => {
+    if (!date) return;
+    
+    const selectedDate = format(date, 'yyyy-MM-dd');
+    
+    // Find if there's a session on this date
+    const sessionOnDate = sessions.find((s: WorkSession) => {
+      const sessionDate = format(new Date(s.clockIn), 'yyyy-MM-dd');
+      return sessionDate === selectedDate;
+    });
+    
+    if (sessionOnDate) {
+      // Modify existing session
+      setExistingSession(sessionOnDate);
+      setRequestData({
+        requestType: 'modify_time',
+        workSessionId: sessionOnDate.id,
+        date: selectedDate,
+        clockIn: format(new Date(sessionOnDate.clockIn), 'HH:mm'),
+        clockOut: sessionOnDate.clockOut ? format(new Date(sessionOnDate.clockOut), 'HH:mm') : '',
+        reason: ''
+      });
+    } else {
+      // Add forgotten check-in
+      setExistingSession(null);
+      setRequestData({
+        requestType: 'forgotten_checkin',
+        workSessionId: null,
+        date: selectedDate,
+        clockIn: '',
+        clockOut: '',
+        reason: ''
+      });
+    }
+    
+    // Move to step 2
+    setWizardStep('details');
+  };
+
   // Request modification mutation
   const requestModificationMutation = useMutation({
     mutationFn: async (data: any) => {
       return apiRequest('POST', '/api/work-sessions/request-modification', {
-        workSessionId: null,
+        workSessionId: data.workSessionId,
         requestType: data.requestType,
         requestedDate: new Date(`${data.date}T12:00:00`).toISOString(),
         requestedClockIn: data.clockIn ? new Date(`${data.date}T${data.clockIn}:00`).toISOString() : null,
@@ -248,8 +291,11 @@ export default function EmployeeTimeTracking() {
         description: "Tu solicitud de modificación ha sido enviada al administrador.",
       });
       setShowRequestDialog(false);
+      setWizardStep('date');
+      setExistingSession(null);
       setRequestData({
         requestType: 'forgotten_checkin',
+        workSessionId: null,
         date: '',
         clockIn: '',
         clockOut: '',
@@ -1136,116 +1182,154 @@ export default function EmployeeTimeTracking() {
       
       {/* Floating action button for requesting modifications */}
       <button
-        onClick={() => setShowRequestDialog(true)}
+        onClick={() => {
+          setShowRequestDialog(true);
+          setWizardStep('date');
+          setExistingSession(null);
+        }}
         className="fixed bottom-6 right-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg transition-all duration-200 transform hover:scale-110 z-50"
         data-testid="button-request-modification"
       >
         <Edit className="h-6 w-6" />
       </button>
       
-      {/* Dialog for requesting modifications */}
-      <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
+      {/* Dialog for requesting modifications - 2 Step Wizard */}
+      <Dialog open={showRequestDialog} onOpenChange={(open) => {
+        setShowRequestDialog(open);
+        if (!open) {
+          setWizardStep('date');
+          setExistingSession(null);
+        }
+      }}>
         <DialogContent className="sm:max-w-md max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-center">Solicitar Cambio de Fichaje</DialogTitle>
+            <DialogTitle className="text-center">
+              {wizardStep === 'date' ? 'Seleccionar Fecha' : 
+               requestData.requestType === 'modify_time' ? 'Modificar Fichaje' : 'Añadir Fichaje Olvidado'}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="text-center text-sm text-gray-600">
-              ¿Olvidaste fichar o necesitas corregir un horario? Solicita el cambio aquí.
-            </div>
-            
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Fecha</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal"
-                    data-testid="button-select-date"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {requestData.date ? format(new Date(requestData.date), 'dd/MM/yyyy', { locale: es }) : 'Seleccionar fecha'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={requestData.date ? new Date(requestData.date) : undefined}
-                    onSelect={(date) => {
-                      if (date) {
-                        setRequestData({...requestData, date: format(date, 'yyyy-MM-dd')});
-                      }
-                    }}
-                    disabled={(date) => date > new Date()}
-                    locale={es}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="text-xs text-gray-500 text-center mb-2">
-                Puedes dejar vacío uno de los campos si solo quieres modificar entrada o salida
+          
+          {wizardStep === 'date' ? (
+            // STEP 1: Select date
+            <div className="space-y-4">
+              <div className="text-center text-sm text-gray-600">
+                Selecciona la fecha del fichaje que quieres modificar o añadir
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Entrada <span className="text-gray-400 text-xs">(opcional)</span>
-                  </label>
-                  <Input
-                    type="time"
-                    value={requestData.clockIn}
-                    onChange={(e) => setRequestData({...requestData, clockIn: e.target.value})}
-                    data-testid="input-request-clockin"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Salida <span className="text-gray-400 text-xs">(opcional)</span>
-                  </label>
-                  <Input
-                    type="time"
-                    value={requestData.clockOut}
-                    onChange={(e) => setRequestData({...requestData, clockOut: e.target.value})}
-                    data-testid="input-request-clockout"
-                  />
-                </div>
+              
+              <div className="flex justify-center">
+                <Calendar
+                  mode="single"
+                  selected={undefined}
+                  onSelect={handleDateSelect}
+                  disabled={(date) => date > new Date()}
+                  locale={es}
+                  initialFocus
+                  className="rounded-md border"
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowRequestDialog(false)}
+                  className="w-full"
+                >
+                  Cancelar
+                </Button>
               </div>
             </div>
-            
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Motivo</label>
-              <Input
-                value={requestData.reason}
-                onChange={(e) => setRequestData({...requestData, reason: e.target.value})}
-                placeholder="Ej: Olvidé fichar, error en registro..."
-                data-testid="input-request-reason"
-              />
-            </div>
-            
-            <div className="flex gap-3 pt-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowRequestDialog(false)}
-                className="flex-1"
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={() => requestModificationMutation.mutate(requestData)}
-                disabled={!requestData.date || (!requestData.clockIn && !requestData.clockOut) || !requestData.reason || requestModificationMutation.isPending}
-                className="flex-1"
-                data-testid="button-submit-request"
-              >
-                {requestModificationMutation.isPending ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+          ) : (
+            // STEP 2: Fill details
+            <div className="space-y-4">
+              {requestData.requestType === 'modify_time' ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="text-sm text-blue-800 font-medium mb-1">
+                    📝 Modificar fichaje del {format(new Date(requestData.date), 'dd/MM/yyyy', { locale: es })}
+                  </div>
+                  <div className="text-xs text-blue-600">
+                    Horas actuales: {requestData.clockIn} {requestData.clockOut && `- ${requestData.clockOut}`}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <div className="text-sm text-amber-800 font-medium mb-1">
+                    ➕ Añadir fichaje del {format(new Date(requestData.date), 'dd/MM/yyyy', { locale: es })}
+                  </div>
+                  <div className="text-xs text-amber-600">
+                    No hay registro de fichaje en esta fecha
+                  </div>
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                {requestData.requestType === 'modify_time' ? (
+                  <div className="text-xs text-gray-500 text-center mb-2">
+                    Modifica solo los campos que necesites cambiar
+                  </div>
                 ) : (
-                  'Enviar Solicitud'
+                  <div className="text-xs text-gray-500 text-center mb-2">
+                    Ambos campos son opcionales si no completaste el fichaje
+                  </div>
                 )}
-              </Button>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Entrada {requestData.requestType === 'modify_time' && <span className="text-gray-400 text-xs">(opcional)</span>}
+                    </label>
+                    <Input
+                      type="time"
+                      value={requestData.clockIn}
+                      onChange={(e) => setRequestData({...requestData, clockIn: e.target.value})}
+                      data-testid="input-request-clockin"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Salida <span className="text-gray-400 text-xs">(opcional)</span>
+                    </label>
+                    <Input
+                      type="time"
+                      value={requestData.clockOut}
+                      onChange={(e) => setRequestData({...requestData, clockOut: e.target.value})}
+                      data-testid="input-request-clockout"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Motivo</label>
+                <Input
+                  value={requestData.reason}
+                  onChange={(e) => setRequestData({...requestData, reason: e.target.value})}
+                  placeholder="Ej: Olvidé fichar, error en registro..."
+                  data-testid="input-request-reason"
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setWizardStep('date')}
+                  className="flex-1"
+                >
+                  Atrás
+                </Button>
+                <Button
+                  onClick={() => requestModificationMutation.mutate(requestData)}
+                  disabled={(!requestData.clockIn && !requestData.clockOut) || !requestData.reason || requestModificationMutation.isPending}
+                  className="flex-1"
+                  data-testid="button-submit-request"
+                >
+                  {requestModificationMutation.isPending ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    'Enviar Solicitud'
+                  )}
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
       
