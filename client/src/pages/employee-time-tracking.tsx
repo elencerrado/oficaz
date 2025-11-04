@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -93,6 +94,7 @@ export default function EmployeeTimeTracking() {
   const [showRequestDialog, setShowRequestDialog] = useState(false);
   const [wizardStep, setWizardStep] = useState<'date' | 'details'>('date');
   const [existingSession, setExistingSession] = useState<WorkSession | null>(null);
+  const [crossesMidnight, setCrossesMidnight] = useState(false);
   const [requestData, setRequestData] = useState({
     requestType: 'forgotten_checkin' as 'forgotten_checkin' | 'modify_time',
     workSessionId: null as number | null,
@@ -276,12 +278,26 @@ export default function EmployeeTimeTracking() {
   // Request modification mutation
   const requestModificationMutation = useMutation({
     mutationFn: async (data: any) => {
+      // Build clock-in date
+      const clockInDate = data.clockIn ? new Date(`${data.date}T${data.clockIn}:00`) : null;
+      
+      // Build clock-out date, adding 1 day if it's an overnight shift
+      let clockOutDate = null;
+      if (data.clockOut) {
+        clockOutDate = new Date(`${data.date}T${data.clockOut}:00`);
+        
+        // If crosses midnight, add 1 day to clock-out
+        if (crossesMidnight) {
+          clockOutDate.setDate(clockOutDate.getDate() + 1);
+        }
+      }
+      
       return apiRequest('POST', '/api/work-sessions/request-modification', {
         workSessionId: data.workSessionId,
         requestType: data.requestType,
         requestedDate: new Date(`${data.date}T12:00:00`).toISOString(),
-        requestedClockIn: data.clockIn ? new Date(`${data.date}T${data.clockIn}:00`).toISOString() : null,
-        requestedClockOut: data.clockOut ? new Date(`${data.date}T${data.clockOut}:00`).toISOString() : null,
+        requestedClockIn: clockInDate?.toISOString() || null,
+        requestedClockOut: clockOutDate?.toISOString() || null,
         reason: data.reason
       });
     },
@@ -293,6 +309,7 @@ export default function EmployeeTimeTracking() {
       setShowRequestDialog(false);
       setWizardStep('date');
       setExistingSession(null);
+      setCrossesMidnight(false);
       setRequestData({
         requestType: 'forgotten_checkin',
         workSessionId: null,
@@ -1279,7 +1296,21 @@ export default function EmployeeTimeTracking() {
                     <Input
                       type="time"
                       value={requestData.clockIn}
-                      onChange={(e) => setRequestData({...requestData, clockIn: e.target.value})}
+                      onChange={(e) => {
+                        setRequestData({...requestData, clockIn: e.target.value});
+                        // Auto-detect overnight shift when both times are present
+                        if (requestData.clockOut && e.target.value) {
+                          const [inHour, inMin] = e.target.value.split(':').map(Number);
+                          const [outHour, outMin] = requestData.clockOut.split(':').map(Number);
+                          const inMinutes = inHour * 60 + inMin;
+                          const outMinutes = outHour * 60 + outMin;
+                          if (outMinutes <= inMinutes) {
+                            setCrossesMidnight(true);
+                          } else {
+                            setCrossesMidnight(false);
+                          }
+                        }
+                      }}
                       data-testid="input-request-clockin"
                       className="bg-gray-800 border-gray-600 text-white"
                     />
@@ -1291,12 +1322,58 @@ export default function EmployeeTimeTracking() {
                     <Input
                       type="time"
                       value={requestData.clockOut}
-                      onChange={(e) => setRequestData({...requestData, clockOut: e.target.value})}
+                      onChange={(e) => {
+                        setRequestData({...requestData, clockOut: e.target.value});
+                        // Auto-detect overnight shift when both times are present
+                        if (requestData.clockIn && e.target.value) {
+                          const [inHour, inMin] = requestData.clockIn.split(':').map(Number);
+                          const [outHour, outMin] = e.target.value.split(':').map(Number);
+                          const inMinutes = inHour * 60 + inMin;
+                          const outMinutes = outHour * 60 + outMin;
+                          if (outMinutes <= inMinutes) {
+                            setCrossesMidnight(true);
+                          } else {
+                            setCrossesMidnight(false);
+                          }
+                        }
+                      }}
                       data-testid="input-request-clockout"
                       className="bg-gray-800 border-gray-600 text-white"
                     />
                   </div>
                 </div>
+                
+                {/* Overnight shift indicator/toggle */}
+                {requestData.clockIn && requestData.clockOut && (() => {
+                  const [inHour, inMin] = requestData.clockIn.split(':').map(Number);
+                  const [outHour, outMin] = requestData.clockOut.split(':').map(Number);
+                  const inMinutes = inHour * 60 + inMin;
+                  const outMinutes = outHour * 60 + outMin;
+                  return outMinutes <= inMinutes;
+                })() && (
+                  <div className="mt-3 p-3 bg-yellow-900/30 border border-yellow-700/50 rounded-lg">
+                    <div className="flex items-start space-x-3">
+                      <Checkbox
+                        id="crosses-midnight"
+                        checked={crossesMidnight}
+                        onCheckedChange={(checked) => setCrossesMidnight(checked as boolean)}
+                        className="mt-0.5 border-yellow-600 data-[state=checked]:bg-yellow-600"
+                        data-testid="checkbox-crosses-midnight"
+                      />
+                      <div className="flex-1">
+                        <label
+                          htmlFor="crosses-midnight"
+                          className="text-sm font-medium text-yellow-300 cursor-pointer"
+                        >
+                          🌙 La salida es al día siguiente
+                        </label>
+                        <p className="text-xs text-yellow-400/80 mt-1">
+                          Marca esta casilla si el turno cruza medianoche (ej: entrada 20:00, salida 07:00 del día siguiente)
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div className="space-y-2">
