@@ -236,7 +236,7 @@ export default function EmployeeTimeTracking() {
       return apiRequest('POST', '/api/work-sessions/request-modification', {
         workSessionId: null,
         requestType: data.requestType,
-        requestedDate: data.date,
+        requestedDate: new Date(`${data.date}T12:00:00`).toISOString(),
         requestedClockIn: new Date(`${data.date}T${data.clockIn}:00`).toISOString(),
         requestedClockOut: data.clockOut ? new Date(`${data.date}T${data.clockOut}:00`).toISOString() : null,
         reason: data.reason

@@ -333,7 +333,13 @@ export default function TimeTracking() {
   
   // Create manual work session mutation
   const createManualSessionMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('POST', '/api/admin/work-sessions/create-manual', data),
+    mutationFn: (data: any) => apiRequest('POST', '/api/admin/work-sessions/create-manual', {
+      employeeId: parseInt(data.employeeId),
+      date: new Date(`${data.date}T12:00:00`).toISOString(),
+      clockIn: new Date(`${data.date}T${data.clockIn}:00`).toISOString(),
+      clockOut: new Date(`${data.date}T${data.clockOut}:00`).toISOString(),
+      reason: data.reason
+    }),
     onSuccess: () => {
       toast({
         title: 'Fichaje Creado',
