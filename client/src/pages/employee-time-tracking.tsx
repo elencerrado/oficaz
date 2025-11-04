@@ -237,7 +237,7 @@ export default function EmployeeTimeTracking() {
         workSessionId: null,
         requestType: data.requestType,
         requestedDate: new Date(`${data.date}T12:00:00`).toISOString(),
-        requestedClockIn: new Date(`${data.date}T${data.clockIn}:00`).toISOString(),
+        requestedClockIn: data.clockIn ? new Date(`${data.date}T${data.clockIn}:00`).toISOString() : null,
         requestedClockOut: data.clockOut ? new Date(`${data.date}T${data.clockOut}:00`).toISOString() : null,
         reason: data.reason
       });
@@ -1184,24 +1184,33 @@ export default function EmployeeTimeTracking() {
               </Popover>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Entrada</label>
-                <Input
-                  type="time"
-                  value={requestData.clockIn}
-                  onChange={(e) => setRequestData({...requestData, clockIn: e.target.value})}
-                  data-testid="input-request-clockin"
-                />
+            <div className="space-y-2">
+              <div className="text-xs text-gray-500 text-center mb-2">
+                Puedes dejar vacío uno de los campos si solo quieres modificar entrada o salida
               </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Salida</label>
-                <Input
-                  type="time"
-                  value={requestData.clockOut}
-                  onChange={(e) => setRequestData({...requestData, clockOut: e.target.value})}
-                  data-testid="input-request-clockout"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Entrada <span className="text-gray-400 text-xs">(opcional)</span>
+                  </label>
+                  <Input
+                    type="time"
+                    value={requestData.clockIn}
+                    onChange={(e) => setRequestData({...requestData, clockIn: e.target.value})}
+                    data-testid="input-request-clockin"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Salida <span className="text-gray-400 text-xs">(opcional)</span>
+                  </label>
+                  <Input
+                    type="time"
+                    value={requestData.clockOut}
+                    onChange={(e) => setRequestData({...requestData, clockOut: e.target.value})}
+                    data-testid="input-request-clockout"
+                  />
+                </div>
               </div>
             </div>
             
@@ -1225,7 +1234,7 @@ export default function EmployeeTimeTracking() {
               </Button>
               <Button
                 onClick={() => requestModificationMutation.mutate(requestData)}
-                disabled={!requestData.date || !requestData.clockIn || !requestData.reason || requestModificationMutation.isPending}
+                disabled={!requestData.date || (!requestData.clockIn && !requestData.clockOut) || !requestData.reason || requestModificationMutation.isPending}
                 className="flex-1"
                 data-testid="button-submit-request"
               >

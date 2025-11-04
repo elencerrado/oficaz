@@ -4102,28 +4102,41 @@ Responde directamente a este email para contactar con la persona.
               clockOut: session.clockOut?.toISOString() || null,
             };
 
+            // CRITICAL: Preserve original values when employee only modifies one field
+            const finalClockIn = request.requestedClockIn || session.clockIn;
+            const finalClockOut = request.requestedClockOut || session.clockOut;
+
             const updates: any = {
-              clockIn: request.requestedClockIn,
+              clockIn: finalClockIn,
               lastModifiedBy: req.user!.id,
               lastModifiedAt: new Date(),
             };
 
-            if (request.requestedClockOut) {
-              updates.clockOut = request.requestedClockOut;
-              updates.totalHours = ((request.requestedClockOut.getTime() - request.requestedClockIn.getTime()) / (1000 * 60 * 60)).toFixed(2);
+            if (finalClockOut) {
+              updates.clockOut = finalClockOut;
+              updates.totalHours = ((finalClockOut.getTime() - finalClockIn.getTime()) / (1000 * 60 * 60)).toFixed(2);
+              updates.status = 'completed';
             }
 
             await storage.updateWorkSession(request.workSessionId, updates);
+
+            // Determine modification type
+            let modificationType = 'modified_both';
+            if (!request.requestedClockIn && request.requestedClockOut) {
+              modificationType = 'modified_clockout';
+            } else if (request.requestedClockIn && !request.requestedClockOut) {
+              modificationType = 'modified_clockin';
+            }
 
             // Create audit log
             await storage.createWorkSessionAuditLog({
               workSessionId: request.workSessionId,
               companyId: req.user!.companyId,
-              modificationType: 'modified_both',
+              modificationType,
               oldValue,
               newValue: {
-                clockIn: request.requestedClockIn.toISOString(),
-                clockOut: request.requestedClockOut?.toISOString() || null,
+                clockIn: finalClockIn.toISOString(),
+                clockOut: finalClockOut?.toISOString() || null,
               },
               reason: `Employee request approved: ${request.reason}`,
               modifiedBy: req.user!.id,
