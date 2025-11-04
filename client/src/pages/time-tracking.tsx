@@ -100,6 +100,26 @@ export default function TimeTracking() {
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [tooltipContent, setTooltipContent] = useState('');
   const [activeStatsFilter, setActiveStatsFilter] = useState<'today' | 'week' | 'month' | 'incomplete' | null>(null);
+  
+  // Modification & Audit states
+  const [showManualEntryDialog, setShowManualEntryDialog] = useState(false);
+  const [showModifyDialog, setShowModifyDialog] = useState(false);
+  const [showRequestsDialog, setShowRequestsDialog] = useState(false);
+  const [showAuditDialog, setShowAuditDialog] = useState(false);
+  const [selectedSessionForAudit, setSelectedSessionForAudit] = useState<number | null>(null);
+  const [manualEntryData, setManualEntryData] = useState({
+    employeeId: '',
+    date: '',
+    clockIn: '',
+    clockOut: '',
+    reason: ''
+  });
+  const [modifyData, setModifyData] = useState({
+    sessionId: null as number | null,
+    clockIn: '',
+    clockOut: '',
+    reason: ''
+  });
 
   // Optimized query with real-time updates
   const { data: sessions = [], isLoading } = useQuery({
@@ -129,6 +149,26 @@ export default function TimeTracking() {
     staleTime: 60 * 60 * 1000, // 1 hour cache
     gcTime: 4 * 60 * 60 * 1000, // 4 hours
     retry: 1,
+  });
+  
+  // Modification requests count
+  const { data: pendingRequestsData } = useQuery({
+    queryKey: ['/api/admin/work-sessions/modification-requests/count'],
+    enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
+    refetchInterval: 30 * 1000, // Refresh every 30 seconds
+  });
+  const pendingRequestsCount = pendingRequestsData?.count || 0;
+  
+  // Modification requests (when dialog is open)
+  const { data: modificationRequests = [] } = useQuery({
+    queryKey: ['/api/admin/work-sessions/modification-requests'],
+    enabled: !!user && (user.role === 'admin' || user.role === 'manager') && showRequestsDialog,
+  });
+  
+  // Audit logs for selected session
+  const { data: auditLogs = [] } = useQuery({
+    queryKey: ['/api/admin/work-sessions', selectedSessionForAudit, 'audit-log'],
+    enabled: !!user && (user.role === 'admin' || user.role === 'manager') && selectedSessionForAudit !== null,
   });
 
   // Helper function to check if a specific session is incomplete
@@ -286,6 +326,71 @@ export default function TimeTracking() {
       toast({
         title: 'Error',
         description: error.message || 'No se pudo completar la sesión.',
+        variant: 'destructive',
+      });
+    },
+  });
+  
+  // Create manual work session mutation
+  const createManualSessionMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('POST', '/api/admin/work-sessions/create-manual', data),
+    onSuccess: () => {
+      toast({
+        title: 'Fichaje Creado',
+        description: 'El fichaje manual se ha creado exitosamente.',
+      });
+      setShowManualEntryDialog(false);
+      setManualEntryData({ employeeId: '', date: '', clockIn: '', clockOut: '', reason: '' });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company?limit=40'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo crear el fichaje.',
+        variant: 'destructive',
+      });
+    },
+  });
+  
+  // Modify work session mutation
+  const modifySessionMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => 
+      apiRequest('PATCH', `/api/admin/work-sessions/${id}/modify`, data),
+    onSuccess: () => {
+      toast({
+        title: 'Fichaje Modificado',
+        description: 'El fichaje se ha modificado exitosamente.',
+      });
+      setShowModifyDialog(false);
+      setModifyData({ sessionId: null, clockIn: '', clockOut: '', reason: '' });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company?limit=40'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo modificar el fichaje.',
+        variant: 'destructive',
+      });
+    },
+  });
+  
+  // Approve/reject modification request mutation
+  const processRequestMutation = useMutation({
+    mutationFn: ({ id, status, adminResponse }: { id: number; status: string; adminResponse?: string }) =>
+      apiRequest('PATCH', `/api/admin/work-sessions/modification-requests/${id}`, { status, adminResponse }),
+    onSuccess: () => {
+      toast({
+        title: 'Solicitud Procesada',
+        description: 'La solicitud se ha procesado exitosamente.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/work-sessions/modification-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/work-sessions/modification-requests/count'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company?limit=40'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo procesar la solicitud.',
         variant: 'destructive',
       });
     },
@@ -1801,6 +1906,29 @@ export default function TimeTracking() {
             {/* Desktop: buttons grouped together */}
             <div className="hidden sm:flex items-center gap-2">
               <Button 
+                variant="default" 
+                size="sm" 
+                onClick={() => setShowManualEntryDialog(true)}
+                className="flex items-center gap-2"
+                data-testid="button-create-manual-entry"
+              >
+                <Plus className="w-4 h-4" />
+                Fichaje Olvidado
+              </Button>
+              <Button 
+                variant={pendingRequestsCount > 0 ? "default" : "outline"}
+                size="sm" 
+                onClick={() => setShowRequestsDialog(true)}
+                className="flex items-center gap-2 relative"
+                data-testid="button-view-requests"
+              >
+                <Bell className={cn("w-4 h-4", pendingRequestsCount > 0 && "animate-pulse")} />
+                Solicitudes
+                {pendingRequestsCount > 0 && (
+                  <Badge className="ml-1 bg-orange-500 text-white">{pendingRequestsCount}</Badge>
+                )}
+              </Button>
+              <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={() => setShowFilters(!showFilters)}
@@ -1820,27 +1948,54 @@ export default function TimeTracking() {
               </Button>
             </div>
 
-            {/* Mobile: buttons full width */}
-            <div className="sm:hidden grid grid-cols-2 gap-2 w-full">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center justify-center gap-2 w-full"
-              >
-                <Filter className="w-4 h-4" />
-                Filtros
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleExportPDF}
-                title="Exporta en PDF la vista actual de fichajes"
-                className="flex items-center justify-center gap-2 w-full"
-              >
-                <Download className="w-4 h-4" />
-                Exportar
-              </Button>
+            {/* Mobile: buttons in 2 rows */}
+            <div className="sm:hidden flex flex-col gap-2 w-full">
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  onClick={() => setShowManualEntryDialog(true)}
+                  className="flex items-center justify-center gap-2"
+                  data-testid="button-create-manual-entry"
+                >
+                  <Plus className="w-4 h-4" />
+                  Fichaje
+                </Button>
+                <Button 
+                  variant={pendingRequestsCount > 0 ? "default" : "outline"}
+                  size="sm" 
+                  onClick={() => setShowRequestsDialog(true)}
+                  className="flex items-center justify-center gap-2"
+                  data-testid="button-view-requests"
+                >
+                  <Bell className={cn("w-4 h-4", pendingRequestsCount > 0 && "animate-pulse")} />
+                  Solicitudes
+                  {pendingRequestsCount > 0 && (
+                    <Badge className="ml-1 text-xs">{pendingRequestsCount}</Badge>
+                  )}
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center justify-center gap-2 w-full"
+                >
+                  <Filter className="w-4 h-4" />
+                  Filtros
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleExportPDF}
+                  title="Exporta en PDF la vista actual de fichajes"
+                  className="flex items-center justify-center gap-2 w-full"
+                >
+                  <Download className="w-4 h-4" />
+                  Exportar
+                </Button>
+              </div>
             </div>
           </CardTitle>
         </CardHeader>
@@ -2947,6 +3102,206 @@ export default function TimeTracking() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Manual Entry Dialog */}
+      <Dialog open={showManualEntryDialog} onOpenChange={setShowManualEntryDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Crear Fichaje Manual</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Empleado</label>
+              <Select 
+                value={manualEntryData.employeeId} 
+                onValueChange={(value) => setManualEntryData({...manualEntryData, employeeId: value})}
+              >
+                <SelectTrigger data-testid="select-employee-manual">
+                  <SelectValue placeholder="Seleccionar empleado" />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.map((emp: any) => (
+                    <SelectItem key={emp.id} value={emp.id.toString()}>{emp.fullName}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Fecha</label>
+              <Input
+                type="date"
+                value={manualEntryData.date}
+                onChange={(e) => setManualEntryData({...manualEntryData, date: e.target.value})}
+                data-testid="input-date-manual"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Entrada</label>
+                <Input
+                  type="time"
+                  value={manualEntryData.clockIn}
+                  onChange={(e) => setManualEntryData({...manualEntryData, clockIn: e.target.value})}
+                  data-testid="input-clockin-manual"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Salida</label>
+                <Input
+                  type="time"
+                  value={manualEntryData.clockOut}
+                  onChange={(e) => setManualEntryData({...manualEntryData, clockOut: e.target.value})}
+                  data-testid="input-clockout-manual"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Motivo (obligatorio)</label>
+              <Input
+                value={manualEntryData.reason}
+                onChange={(e) => setManualEntryData({...manualEntryData, reason: e.target.value})}
+                placeholder="Ej: Fichaje olvidado, error en registro..."
+                data-testid="input-reason-manual"
+              />
+            </div>
+            <Button
+              onClick={() => createManualSessionMutation.mutate(manualEntryData)}
+              disabled={!manualEntryData.employeeId || !manualEntryData.date || !manualEntryData.clockIn || !manualEntryData.clockOut || !manualEntryData.reason}
+              className="w-full"
+              data-testid="button-submit-manual"
+            >
+              Crear Fichaje
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modification Requests Dialog */}
+      <Dialog open={showRequestsDialog} onOpenChange={setShowRequestsDialog}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Solicitudes de Modificación</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {modificationRequests.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No hay solicitudes pendientes
+              </div>
+            ) : (
+              modificationRequests.map((request: any) => (
+                <div key={request.id} className="border rounded-lg p-4 space-y-3 bg-card">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <UserAvatar
+                        name={request.employeeName}
+                        src={request.employeeProfilePicture}
+                        size="sm"
+                      />
+                      <div>
+                        <div className="font-medium">{request.employeeName}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {request.requestType === 'forgotten_checkin' ? 'Fichaje Olvidado' : 'Modificar Horario'}
+                        </div>
+                      </div>
+                    </div>
+                    <Badge variant={request.status === 'pending' ? 'default' : request.status === 'approved' ? 'default' : 'destructive'}>
+                      {request.status === 'pending' ? 'Pendiente' : request.status === 'approved' ? 'Aprobada' : 'Rechazada'}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Fecha:</span> {format(new Date(request.requestedDate), 'dd/MM/yyyy', { locale: es })}
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Entrada:</span> {format(new Date(request.requestedClockIn), 'HH:mm')}
+                    </div>
+                    {request.requestedClockOut && (
+                      <div>
+                        <span className="text-muted-foreground">Salida:</span> {format(new Date(request.requestedClockOut), 'HH:mm')}
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Motivo:</span> {request.reason}
+                  </div>
+                  {request.status === 'pending' && (
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        size="sm"
+                        onClick={() => processRequestMutation.mutate({ id: request.id, status: 'approved' })}
+                        className="flex-1"
+                        data-testid={`button-approve-${request.id}`}
+                      >
+                        <Check className="w-4 h-4 mr-1" />
+                        Aprobar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => processRequestMutation.mutate({ id: request.id, status: 'rejected' })}
+                        className="flex-1"
+                        data-testid={`button-reject-${request.id}`}
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        Rechazar
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Audit History Dialog */}
+      <Dialog open={showAuditDialog} onOpenChange={setShowAuditDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Historial de Auditoría</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {auditLogs.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No hay registros de auditoría para este fichaje
+              </div>
+            ) : (
+              auditLogs.map((log: any) => (
+                <div key={log.id} className="border-l-4 border-blue-500 pl-4 py-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium text-sm">
+                      {log.modificationType === 'created_manual' ? 'Creado Manualmente' :
+                       log.modificationType === 'modified_clockin' ? 'Entrada Modificada' :
+                       log.modificationType === 'modified_clockout' ? 'Salida Modificada' :
+                       'Modificación Completa'}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {format(new Date(log.modifiedAt), 'dd/MM/yyyy HH:mm', { locale: es })}
+                    </div>
+                  </div>
+                  {log.oldValue && (
+                    <div className="text-sm text-muted-foreground">
+                      <span className="font-medium">Anterior:</span>{' '}
+                      {log.oldValue.clockIn && format(new Date(log.oldValue.clockIn), 'HH:mm')}{' '}
+                      {log.oldValue.clockOut && `- ${format(new Date(log.oldValue.clockOut), 'HH:mm')}`}
+                    </div>
+                  )}
+                  {log.newValue && (
+                    <div className="text-sm">
+                      <span className="font-medium">Nuevo:</span>{' '}
+                      {log.newValue.clockIn && format(new Date(log.newValue.clockIn), 'HH:mm')}{' '}
+                      {log.newValue.clockOut && `- ${format(new Date(log.newValue.clockOut), 'HH:mm')}`}
+                    </div>
+                  )}
+                  <div className="text-sm italic text-muted-foreground">
+                    "{log.reason}"
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
