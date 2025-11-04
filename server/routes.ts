@@ -3933,6 +3933,13 @@ Responde directamente a este email para contactar con la persona.
     try {
       const { workSessionId, requestType, requestedDate, requestedClockIn, requestedClockOut, reason } = req.body;
 
+      console.log('🔍 DEBUG - Request modification body:', {
+        requestedDate,
+        requestedDateType: typeof requestedDate,
+        requestedClockIn,
+        requestedClockOut
+      });
+
       if (!requestType || !requestedDate || !requestedClockIn || !reason) {
         return res.status(400).json({ message: 'Missing required fields' });
       }
@@ -3989,16 +3996,25 @@ Responde directamente a este email para contactar con la persona.
       const status = req.query.status as string | undefined;
       const requests = await storage.getCompanyModificationRequests(req.user!.companyId, status);
       
-      // Enrich with employee names
+      // Enrich with employee names and ensure proper date serialization
       const enrichedRequests = await Promise.all(requests.map(async (request) => {
         const employee = await storage.getUser(request.employeeId);
         return {
           ...request,
+          // Ensure dates are properly serialized as ISO strings
+          requestedDate: request.requestedDate?.toISOString() || null,
+          requestedClockIn: request.requestedClockIn?.toISOString() || null,
+          requestedClockOut: request.requestedClockOut?.toISOString() || null,
+          currentClockIn: request.currentClockIn?.toISOString() || null,
+          currentClockOut: request.currentClockOut?.toISOString() || null,
+          reviewedAt: request.reviewedAt?.toISOString() || null,
+          createdAt: request.createdAt?.toISOString() || null,
           employeeName: employee?.fullName || 'Unknown',
           employeeProfilePicture: employee?.profilePicture || null,
         };
       }));
 
+      console.log('🔍 DEBUG - Modification request data:', JSON.stringify(enrichedRequests[0], null, 2));
       res.json(enrichedRequests);
     } catch (error: any) {
       console.error('Error fetching modification requests:', error);
