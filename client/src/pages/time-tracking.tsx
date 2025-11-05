@@ -1024,20 +1024,23 @@ export default function TimeTracking() {
                 auditInfo.push(`Cambio solicitado por: empleado`);
               }
               
-              if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') {
-                const oldVal = log.oldValue || {};
-                if (oldVal.clockIn) {
-                  const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
-                  auditInfo.push(`Entrada anterior: ${oldTime}`);
-                }
+              // Combine entrada/salida anterior on same line
+              const oldVal = log.oldValue || {};
+              let previousTimes: string[] = [];
+              
+              if ((log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') && oldVal.clockIn) {
+                const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
+                previousTimes.push(`Entrada anterior: ${oldTime}`);
               }
               
-              if (log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
-                const oldVal = log.oldValue || {};
-                if (oldVal.clockOut) {
-                  const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
-                  auditInfo.push(`Salida anterior: ${oldTime}`);
-                }
+              if ((log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') && oldVal.clockOut) {
+                const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
+                previousTimes.push(`Salida anterior: ${oldTime}`);
+              }
+              
+              // Combine both times on same line
+              if (previousTimes.length > 0) {
+                auditInfo.push(previousTimes.join(', '));
               }
               
               auditInfo.push(`Aprobado por: ${approvedBy}`);
@@ -1060,57 +1063,68 @@ export default function TimeTracking() {
               doc.setFontSize(7);
               doc.setTextColor(100, 100, 100);
               
-              // Calculate how many lines the audit text will occupy
-              const auditText = auditInfo.join(' | ');
-              const wrappedLines = doc.splitTextToSize(auditText, colWidths[5]);
-              const numLines = wrappedLines.length;
               const lineHeight = 3;
-              auditHeight = Math.max(6, numLines * lineHeight + 3); // At least 6, or calculated height + padding
-              
               let xOffset = colPositions[5];
               let yOffset = currentY;
+              let linesDrawn = 1; // Start with 1 line
               
               auditInfo.forEach((info, idx) => {
-                // Reset to start of column for each line if text wraps
-                if (idx > 0 && info.includes(':')) {
-                  yOffset += lineHeight;
-                  xOffset = colPositions[5];
-                }
+                // Check if we need to wrap to next line
+                const currentLineWidth = xOffset - colPositions[5];
+                const remainingWidth = colWidths[5] - currentLineWidth;
                 
-                // Check if this is a label:value pair
+                // Calculate width of current item
+                let itemWidth = 0;
                 if (info.includes(':')) {
                   const [label, value] = info.split(':').map(s => s.trim());
-                  
-                  // Draw label in normal font
+                  doc.setFont('helvetica', 'normal');
+                  const labelWidth = doc.getTextWidth(label + ': ');
+                  doc.setFont('helvetica', 'bold');
+                  const valueWidth = doc.getTextWidth(value);
+                  itemWidth = labelWidth + valueWidth;
+                } else {
+                  doc.setFont('helvetica', 'bold');
+                  itemWidth = doc.getTextWidth(info);
+                }
+                
+                // Add separator width if not last item
+                const separatorWidth = (idx < auditInfo.length - 1) ? doc.getTextWidth(' | ') : 0;
+                
+                // Wrap to next line if needed
+                if (currentLineWidth > 0 && itemWidth + separatorWidth > remainingWidth) {
+                  yOffset += lineHeight;
+                  xOffset = colPositions[5];
+                  linesDrawn++;
+                }
+                
+                // Draw the item
+                if (info.includes(':')) {
+                  const [label, value] = info.split(':').map(s => s.trim());
                   doc.setFont('helvetica', 'normal');
                   doc.text(label + ':', xOffset, yOffset);
                   const labelWidth = doc.getTextWidth(label + ': ');
-                  
-                  // Draw value in bold font
                   doc.setFont('helvetica', 'bold');
                   doc.text(value, xOffset + labelWidth, yOffset);
                 } else {
-                  // No colon, just draw in bold (like "Fichaje solicitado por empleado")
                   doc.setFont('helvetica', 'bold');
                   doc.text(info, xOffset, yOffset);
                 }
                 
-                // Add separator if not last item
+                xOffset += itemWidth;
+                
+                // Add separator if not last item (NO separator at end)
                 if (idx < auditInfo.length - 1) {
-                  const textWidth = doc.getTextWidth(info);
                   doc.setFont('helvetica', 'normal');
-                  doc.text(' | ', xOffset + textWidth, yOffset);
-                  xOffset += textWidth + doc.getTextWidth(' | ');
+                  doc.text(' | ', xOffset, yOffset);
+                  xOffset += separatorWidth;
                 }
               });
+              
+              // Calculate height based on actual lines drawn
+              auditHeight = Math.max(6, linesDrawn * lineHeight + 3);
             }
             
             currentY += auditHeight;
-            
-            // Add subtle separator line between work sessions (centered in the gap)
-            doc.setDrawColor(220, 220, 220);
-            doc.setLineWidth(0.1);
-            doc.line(tableStartX, currentY - 3, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 3);
           } else {
             // First break on main row
             const firstBreak = breakPeriods[0];
@@ -1134,49 +1148,65 @@ export default function TimeTracking() {
               doc.setFontSize(7);
               doc.setTextColor(100, 100, 100);
               
-              // Calculate how many lines the audit text will occupy
-              const auditText = auditInfo.join(' | ');
-              const wrappedLines = doc.splitTextToSize(auditText, colWidths[5]);
-              const numLines = wrappedLines.length;
               const lineHeight = 3;
-              auditHeight = Math.max(6, numLines * lineHeight + 3); // At least 6, or calculated height + padding
-              
               let xOffset = colPositions[5];
               let yOffset = currentY;
+              let linesDrawn = 1; // Start with 1 line
               
               auditInfo.forEach((info, idx) => {
-                // Reset to start of column for each line if text wraps
-                if (idx > 0 && info.includes(':')) {
-                  yOffset += lineHeight;
-                  xOffset = colPositions[5];
-                }
+                // Check if we need to wrap to next line
+                const currentLineWidth = xOffset - colPositions[5];
+                const remainingWidth = colWidths[5] - currentLineWidth;
                 
-                // Check if this is a label:value pair
+                // Calculate width of current item
+                let itemWidth = 0;
                 if (info.includes(':')) {
                   const [label, value] = info.split(':').map(s => s.trim());
-                  
-                  // Draw label in normal font
+                  doc.setFont('helvetica', 'normal');
+                  const labelWidth = doc.getTextWidth(label + ': ');
+                  doc.setFont('helvetica', 'bold');
+                  const valueWidth = doc.getTextWidth(value);
+                  itemWidth = labelWidth + valueWidth;
+                } else {
+                  doc.setFont('helvetica', 'bold');
+                  itemWidth = doc.getTextWidth(info);
+                }
+                
+                // Add separator width if not last item
+                const separatorWidth = (idx < auditInfo.length - 1) ? doc.getTextWidth(' | ') : 0;
+                
+                // Wrap to next line if needed
+                if (currentLineWidth > 0 && itemWidth + separatorWidth > remainingWidth) {
+                  yOffset += lineHeight;
+                  xOffset = colPositions[5];
+                  linesDrawn++;
+                }
+                
+                // Draw the item
+                if (info.includes(':')) {
+                  const [label, value] = info.split(':').map(s => s.trim());
                   doc.setFont('helvetica', 'normal');
                   doc.text(label + ':', xOffset, yOffset);
                   const labelWidth = doc.getTextWidth(label + ': ');
-                  
-                  // Draw value in bold font
                   doc.setFont('helvetica', 'bold');
                   doc.text(value, xOffset + labelWidth, yOffset);
                 } else {
-                  // No colon, just draw in bold (like "Fichaje solicitado por empleado")
                   doc.setFont('helvetica', 'bold');
                   doc.text(info, xOffset, yOffset);
                 }
                 
-                // Add separator if not last item
+                xOffset += itemWidth;
+                
+                // Add separator if not last item (NO separator at end)
                 if (idx < auditInfo.length - 1) {
-                  const textWidth = doc.getTextWidth(info);
                   doc.setFont('helvetica', 'normal');
-                  doc.text(' | ', xOffset + textWidth, yOffset);
-                  xOffset += textWidth + doc.getTextWidth(' | ');
+                  doc.text(' | ', xOffset, yOffset);
+                  xOffset += separatorWidth;
                 }
               });
+              
+              // Calculate height based on actual lines drawn
+              auditHeight = Math.max(6, linesDrawn * lineHeight + 3);
             }
             
             currentY += auditHeight;
@@ -1210,12 +1240,12 @@ export default function TimeTracking() {
               }
               currentY += 6;
             }
-            
-            // Add subtle separator line after all breaks
-            doc.setDrawColor(220, 220, 220);
-            doc.setLineWidth(0.1);
-            doc.line(tableStartX, currentY - 2, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 2);
           }
+          
+          // Add subtle separator line after each work session (centered in the gap)
+          doc.setDrawColor(220, 220, 220);
+          doc.setLineWidth(0.1);
+          doc.line(tableStartX, currentY - 3, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 3);
           
           weekHours += hours;
           monthHours += hours;
@@ -1306,20 +1336,23 @@ export default function TimeTracking() {
                 auditInfo.push(`Cambio solicitado por: empleado`);
               }
               
-              if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') {
-                const oldVal = log.oldValue || {};
-                if (oldVal.clockIn) {
-                  const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
-                  auditInfo.push(`Entrada anterior: ${oldTime}`);
-                }
+              // Combine entrada/salida anterior on same line
+              const oldVal = log.oldValue || {};
+              let previousTimes: string[] = [];
+              
+              if ((log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') && oldVal.clockIn) {
+                const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
+                previousTimes.push(`Entrada anterior: ${oldTime}`);
               }
               
-              if (log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
-                const oldVal = log.oldValue || {};
-                if (oldVal.clockOut) {
-                  const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
-                  auditInfo.push(`Salida anterior: ${oldTime}`);
-                }
+              if ((log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') && oldVal.clockOut) {
+                const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
+                previousTimes.push(`Salida anterior: ${oldTime}`);
+              }
+              
+              // Combine both times on same line
+              if (previousTimes.length > 0) {
+                auditInfo.push(previousTimes.join(', '));
               }
               
               auditInfo.push(`Aprobado por: ${approvedBy}`);
@@ -1342,57 +1375,68 @@ export default function TimeTracking() {
               doc.setFontSize(7);
               doc.setTextColor(100, 100, 100);
               
-              // Calculate how many lines the audit text will occupy
-              const auditText = auditInfo.join(' | ');
-              const wrappedLines = doc.splitTextToSize(auditText, colWidths[5]);
-              const numLines = wrappedLines.length;
               const lineHeight = 3;
-              auditHeight = Math.max(6, numLines * lineHeight + 3); // At least 6, or calculated height + padding
-              
               let xOffset = colPositions[5];
               let yOffset = currentY;
+              let linesDrawn = 1; // Start with 1 line
               
               auditInfo.forEach((info, idx) => {
-                // Reset to start of column for each line if text wraps
-                if (idx > 0 && info.includes(':')) {
-                  yOffset += lineHeight;
-                  xOffset = colPositions[5];
-                }
+                // Check if we need to wrap to next line
+                const currentLineWidth = xOffset - colPositions[5];
+                const remainingWidth = colWidths[5] - currentLineWidth;
                 
-                // Check if this is a label:value pair
+                // Calculate width of current item
+                let itemWidth = 0;
                 if (info.includes(':')) {
                   const [label, value] = info.split(':').map(s => s.trim());
-                  
-                  // Draw label in normal font
+                  doc.setFont('helvetica', 'normal');
+                  const labelWidth = doc.getTextWidth(label + ': ');
+                  doc.setFont('helvetica', 'bold');
+                  const valueWidth = doc.getTextWidth(value);
+                  itemWidth = labelWidth + valueWidth;
+                } else {
+                  doc.setFont('helvetica', 'bold');
+                  itemWidth = doc.getTextWidth(info);
+                }
+                
+                // Add separator width if not last item
+                const separatorWidth = (idx < auditInfo.length - 1) ? doc.getTextWidth(' | ') : 0;
+                
+                // Wrap to next line if needed
+                if (currentLineWidth > 0 && itemWidth + separatorWidth > remainingWidth) {
+                  yOffset += lineHeight;
+                  xOffset = colPositions[5];
+                  linesDrawn++;
+                }
+                
+                // Draw the item
+                if (info.includes(':')) {
+                  const [label, value] = info.split(':').map(s => s.trim());
                   doc.setFont('helvetica', 'normal');
                   doc.text(label + ':', xOffset, yOffset);
                   const labelWidth = doc.getTextWidth(label + ': ');
-                  
-                  // Draw value in bold font
                   doc.setFont('helvetica', 'bold');
                   doc.text(value, xOffset + labelWidth, yOffset);
                 } else {
-                  // No colon, just draw in bold (like "Fichaje solicitado por empleado")
                   doc.setFont('helvetica', 'bold');
                   doc.text(info, xOffset, yOffset);
                 }
                 
-                // Add separator if not last item
+                xOffset += itemWidth;
+                
+                // Add separator if not last item (NO separator at end)
                 if (idx < auditInfo.length - 1) {
-                  const textWidth = doc.getTextWidth(info);
                   doc.setFont('helvetica', 'normal');
-                  doc.text(' | ', xOffset + textWidth, yOffset);
-                  xOffset += textWidth + doc.getTextWidth(' | ');
+                  doc.text(' | ', xOffset, yOffset);
+                  xOffset += separatorWidth;
                 }
               });
+              
+              // Calculate height based on actual lines drawn
+              auditHeight = Math.max(6, linesDrawn * lineHeight + 3);
             }
             
             currentY += auditHeight;
-            
-            // Add subtle separator line between work sessions (centered in the gap)
-            doc.setDrawColor(220, 220, 220);
-            doc.setLineWidth(0.1);
-            doc.line(tableStartX, currentY - 3, tableStartX + colWidths.reduce((a, b) => a + b, 0), currentY - 3);
           } else {
             // First break on main row
             const firstBreak = breakPeriods[0];
@@ -1416,49 +1460,65 @@ export default function TimeTracking() {
               doc.setFontSize(7);
               doc.setTextColor(100, 100, 100);
               
-              // Calculate how many lines the audit text will occupy
-              const auditText = auditInfo.join(' | ');
-              const wrappedLines = doc.splitTextToSize(auditText, colWidths[5]);
-              const numLines = wrappedLines.length;
               const lineHeight = 3;
-              auditHeight = Math.max(6, numLines * lineHeight + 3); // At least 6, or calculated height + padding
-              
               let xOffset = colPositions[5];
               let yOffset = currentY;
+              let linesDrawn = 1; // Start with 1 line
               
               auditInfo.forEach((info, idx) => {
-                // Reset to start of column for each line if text wraps
-                if (idx > 0 && info.includes(':')) {
-                  yOffset += lineHeight;
-                  xOffset = colPositions[5];
-                }
+                // Check if we need to wrap to next line
+                const currentLineWidth = xOffset - colPositions[5];
+                const remainingWidth = colWidths[5] - currentLineWidth;
                 
-                // Check if this is a label:value pair
+                // Calculate width of current item
+                let itemWidth = 0;
                 if (info.includes(':')) {
                   const [label, value] = info.split(':').map(s => s.trim());
-                  
-                  // Draw label in normal font
+                  doc.setFont('helvetica', 'normal');
+                  const labelWidth = doc.getTextWidth(label + ': ');
+                  doc.setFont('helvetica', 'bold');
+                  const valueWidth = doc.getTextWidth(value);
+                  itemWidth = labelWidth + valueWidth;
+                } else {
+                  doc.setFont('helvetica', 'bold');
+                  itemWidth = doc.getTextWidth(info);
+                }
+                
+                // Add separator width if not last item
+                const separatorWidth = (idx < auditInfo.length - 1) ? doc.getTextWidth(' | ') : 0;
+                
+                // Wrap to next line if needed
+                if (currentLineWidth > 0 && itemWidth + separatorWidth > remainingWidth) {
+                  yOffset += lineHeight;
+                  xOffset = colPositions[5];
+                  linesDrawn++;
+                }
+                
+                // Draw the item
+                if (info.includes(':')) {
+                  const [label, value] = info.split(':').map(s => s.trim());
                   doc.setFont('helvetica', 'normal');
                   doc.text(label + ':', xOffset, yOffset);
                   const labelWidth = doc.getTextWidth(label + ': ');
-                  
-                  // Draw value in bold font
                   doc.setFont('helvetica', 'bold');
                   doc.text(value, xOffset + labelWidth, yOffset);
                 } else {
-                  // No colon, just draw in bold (like "Fichaje solicitado por empleado")
                   doc.setFont('helvetica', 'bold');
                   doc.text(info, xOffset, yOffset);
                 }
                 
-                // Add separator if not last item
+                xOffset += itemWidth;
+                
+                // Add separator if not last item (NO separator at end)
                 if (idx < auditInfo.length - 1) {
-                  const textWidth = doc.getTextWidth(info);
                   doc.setFont('helvetica', 'normal');
-                  doc.text(' | ', xOffset + textWidth, yOffset);
-                  xOffset += textWidth + doc.getTextWidth(' | ');
+                  doc.text(' | ', xOffset, yOffset);
+                  xOffset += separatorWidth;
                 }
               });
+              
+              // Calculate height based on actual lines drawn
+              auditHeight = Math.max(6, linesDrawn * lineHeight + 3);
             }
             
             currentY += auditHeight;
