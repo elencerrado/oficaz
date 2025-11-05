@@ -310,19 +310,17 @@ export default function AdminDashboard() {
     },
   });
 
-  // Fetch vacation requests for calendar
+  // Fetch vacation requests for calendar (no polling - WebSocket updates)
   const { data: vacationRequests } = useQuery({
     queryKey: ['/api/vacation-requests/company'],
-    staleTime: 0, // Always consider data potentially stale for real-time updates
-    refetchInterval: 10000, // Refetch every 10 seconds
-    refetchIntervalInBackground: true, // Continue refetching when tab is not active
+    staleTime: 0,
     select: (data: any[]) => data || [],
   });
 
   const approvedVacations = vacationRequests?.filter((req: any) => req.status === 'approved') || [];
   const pendingVacations = vacationRequests?.filter((req: any) => req.status === 'pending') || [];
 
-  // Fetch pending items for quick summary card
+  // Fetch pending items for quick summary card (no polling - WebSocket updates)
   const { data: incompleteSessions = [] } = useQuery({
     queryKey: ['/api/work-sessions/company?status=incomplete'],
     enabled: hasAccess('timeTracking'),
@@ -332,6 +330,60 @@ export default function AdminDashboard() {
     queryKey: ['/api/admin/work-sessions/modification-requests?status=pending'],
     enabled: hasAccess('timeTracking'),
   });
+  
+  // WebSocket connection for real-time updates
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token || (user?.role !== 'admin' && user?.role !== 'manager')) {
+      return;
+    }
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    const ws = new WebSocket(`${protocol}//${host}/ws/work-sessions?token=${token}`);
+
+    ws.onopen = () => {
+      console.log('✅ WebSocket connected for real-time updates');
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        console.log('📡 WebSocket message received:', message);
+
+        // Invalidate queries based on message type
+        if (message.type === 'vacation_request_created' || message.type === 'vacation_request_updated') {
+          queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
+        }
+        
+        if (message.type === 'modification_request_created' || message.type === 'modification_request_updated') {
+          queryClient.invalidateQueries({ queryKey: ['/api/admin/work-sessions/modification-requests?status=pending'] });
+        }
+        
+        if (message.type === 'work_session_created' || message.type === 'work_session_updated' || message.type === 'work_session_deleted') {
+          queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company?status=incomplete'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+    };
+
+    // Cleanup on unmount
+    return () => {
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+        ws.close();
+      }
+    };
+  }, [user, queryClient]);
 
   const { data: unreadMessagesData } = useQuery({
     queryKey: ['/api/messages/unread-count'],
@@ -369,16 +421,11 @@ export default function AdminDashboard() {
 
   // Track previous vacation requests to detect new ones for toast notifications
   const previousVacationRequestsRef = useRef<any[]>([]);
+  const previousModificationRequestsRef = useRef<any[]>([]);
   
   // Detect new vacation requests and show toast notification
   useEffect(() => {
-    console.log('🔔 [AdminDashboard] Toast effect triggered:', { 
-      vacationRequestsLength: vacationRequests?.length,
-      previousLength: previousVacationRequestsRef.current.length 
-    });
-    
     if (!vacationRequests || vacationRequests.length === 0) {
-      console.log('🔔 [AdminDashboard] No vacation requests, skipping...');
       return;
     }
     
@@ -387,7 +434,6 @@ export default function AdminDashboard() {
     
     // On first load, just store current requests without showing notifications
     if (previousRequests.length === 0) {
-      console.log('🔔 [AdminDashboard] First load, storing current requests:', currentRequests.length);
       previousVacationRequestsRef.current = [...currentRequests];
       return;
     }
@@ -398,11 +444,9 @@ export default function AdminDashboard() {
       !previousRequests.some((prev: any) => prev.id === current.id)
     );
     
-    console.log('🔔 [AdminDashboard] New pending requests found:', newPendingRequests.length, newPendingRequests);
-    
     // Show notification for each new pending request
     newPendingRequests.forEach((request: any) => {
-      const employeeName = request.user?.fullName || 'Un empleado';
+      const employeeName = request.userName || 'Un empleado';
       const startDateObj = startOfDay(parseISO(request.startDate));
       const endDateObj = startOfDay(parseISO(request.endDate));
       const days = differenceInCalendarDays(endDateObj, startDateObj) + 1;
@@ -410,18 +454,53 @@ export default function AdminDashboard() {
       const startDate = format(startDateObj, 'd \'de\' MMMM', { locale: es });
       const endDate = format(endDateObj, 'd \'de\' MMMM', { locale: es });
       
-      console.log('🔔 [AdminDashboard] Showing toast for request:', request.id, employeeName, 'Days:', days);
-      
       toast({
         title: "📋 Nueva solicitud de vacaciones",
         description: `${employeeName} ha solicitado vacaciones del ${startDate} al ${endDate} (${days} ${days === 1 ? 'día' : 'días'})`,
-        duration: 8000, // Show for 8 seconds
+        duration: 8000,
       });
     });
     
     // Update the reference with current requests
     previousVacationRequestsRef.current = [...currentRequests];
   }, [vacationRequests, toast]);
+
+  // Detect new modification requests and show toast notification
+  useEffect(() => {
+    if (!modificationRequests || modificationRequests.length === 0) {
+      return;
+    }
+    
+    const previousRequests = previousModificationRequestsRef.current;
+    const currentRequests = modificationRequests;
+    
+    // On first load, just store current requests without showing notifications
+    if (previousRequests.length === 0) {
+      previousModificationRequestsRef.current = [...currentRequests];
+      return;
+    }
+    
+    // Find new pending requests
+    const newPendingRequests = currentRequests.filter((current: any) => 
+      current.status === 'pending' && 
+      !previousRequests.some((prev: any) => prev.id === current.id)
+    );
+    
+    // Show notification for each new pending request
+    newPendingRequests.forEach((request: any) => {
+      const employeeName = request.employeeName || 'Un empleado';
+      const requestTypeText = request.requestType === 'forgotten_checkin' ? 'fichaje olvidado' : 'modificación de horario';
+      
+      toast({
+        title: "🕐 Nueva solicitud de fichaje",
+        description: `${employeeName} ha solicitado un ${requestTypeText}`,
+        duration: 8000,
+      });
+    });
+    
+    // Update the reference with current requests
+    previousModificationRequestsRef.current = [...currentRequests];
+  }, [modificationRequests, toast]);
 
   // ⚠️ PROTECTED - DO NOT MODIFY - Fichaje mutations identical to employee system
   const clockInMutation = useMutation({

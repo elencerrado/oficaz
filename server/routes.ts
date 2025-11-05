@@ -4037,6 +4037,17 @@ Responde directamente a este email para contactar con la persona.
       }
 
       const request = await storage.createModificationRequest(requestData);
+      
+      // Broadcast to company admins via WebSocket
+      const wsServer = getWebSocketServer();
+      if (wsServer) {
+        wsServer.broadcastToCompany(req.user!.companyId, {
+          type: 'modification_request_created',
+          companyId: req.user!.companyId,
+          data: { requestId: request.id, employeeId: req.user!.id }
+        });
+      }
+      
       res.status(201).json(request);
     } catch (error: any) {
       console.error('Error creating modification request:', error);
@@ -4361,6 +4372,16 @@ Responde directamente a este email para contactar con la persona.
         console.log(`Admin request auto-approved for user ${req.user!.id}: ${request.id}`);
       } else {
         console.log(`Request created pending approval for user ${req.user!.id}: ${request.id}`);
+        
+        // Broadcast to company admins via WebSocket (only for pending requests)
+        const wsServer = getWebSocketServer();
+        if (wsServer) {
+          wsServer.broadcastToCompany(req.user!.companyId, {
+            type: 'vacation_request_created',
+            companyId: req.user!.companyId,
+            data: { requestId: request.id, employeeId: req.user!.id }
+          });
+        }
       }
       
       res.status(201).json(request);
