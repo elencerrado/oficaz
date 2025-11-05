@@ -910,9 +910,9 @@ export default function AdminDashboard() {
 
           {/* Quick Summary of Pending Items */}
           {totalPending > 0 && (
-            <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50">
+            <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 dark:border-orange-900 dark:from-gray-800 dark:to-gray-900">
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-orange-900">
+                <CardTitle className="flex items-center gap-2 text-orange-900 dark:text-orange-400">
                   <AlertTriangle className="h-5 w-5" />
                   Resumen de Pendientes
                   <Badge variant="destructive" className="ml-auto">{totalPending}</Badge>
@@ -923,20 +923,20 @@ export default function AdminDashboard() {
                   {incompleteSessions.length > 0 && (
                     <button
                       onClick={() => setLocation('/test/fichajes')}
-                      className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors text-left"
+                      className="w-full flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg border border-orange-200 dark:border-gray-600 hover:bg-orange-50 dark:hover:bg-gray-600 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                          <Clock className="h-4 w-4 text-red-600" />
+                        <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                          <Clock className="h-4 w-4 text-red-600 dark:text-red-400" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 text-sm">Sesiones incompletas</p>
-                          <p className="text-xs text-gray-600">Sin fichaje de salida</p>
+                          <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">Sesiones incompletas</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Sin fichaje de salida</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="destructive" className="text-xs">{incompleteSessions.length}</Badge>
-                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                        <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                       </div>
                     </button>
                   )}
@@ -944,20 +944,20 @@ export default function AdminDashboard() {
                   {modificationRequests.length > 0 && (
                     <button
                       onClick={() => setLocation('/test/fichajes')}
-                      className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors text-left"
+                      className="w-full flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg border border-orange-200 dark:border-gray-600 hover:bg-orange-50 dark:hover:bg-gray-600 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                          <Edit className="h-4 w-4 text-blue-600" />
+                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                          <Edit className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 text-sm">Solicitudes de fichajes</p>
-                          <p className="text-xs text-gray-600">Modificaciones pendientes</p>
+                          <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">Solicitudes de fichajes</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Modificaciones pendientes</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">{modificationRequests.length}</Badge>
-                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 text-xs">{modificationRequests.length}</Badge>
+                        <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                       </div>
                     </button>
                   )}
@@ -965,20 +965,20 @@ export default function AdminDashboard() {
                   {pendingVacations.length > 0 && (
                     <button
                       onClick={() => setLocation('/test/vacaciones')}
-                      className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors text-left"
+                      className="w-full flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg border border-orange-200 dark:border-gray-600 hover:bg-orange-50 dark:hover:bg-gray-600 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                          <Plane className="h-4 w-4 text-purple-600" />
+                        <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                          <Plane className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 text-sm">Solicitudes de vacaciones</p>
-                          <p className="text-xs text-gray-600">Pendientes de aprobación</p>
+                          <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">Solicitudes de vacaciones</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Pendientes de aprobación</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">{pendingVacations.length}</Badge>
-                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                        <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 text-xs">{pendingVacations.length}</Badge>
+                        <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                       </div>
                     </button>
                   )}
@@ -986,20 +986,20 @@ export default function AdminDashboard() {
                   {unsignedPayrolls.length > 0 && (
                     <button
                       onClick={() => setLocation('/test/documentos')}
-                      className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors text-left"
+                      className="w-full flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg border border-orange-200 dark:border-gray-600 hover:bg-orange-50 dark:hover:bg-gray-600 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
-                          <FileText className="h-4 w-4 text-yellow-600" />
+                        <div className="w-8 h-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center flex-shrink-0">
+                          <FileText className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 text-sm">Nóminas pendientes de firma</p>
-                          <p className="text-xs text-gray-600">Por empleados</p>
+                          <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">Nóminas pendientes de firma</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Por empleados</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs">{unsignedPayrolls.length}</Badge>
-                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300 text-xs">{unsignedPayrolls.length}</Badge>
+                        <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                       </div>
                     </button>
                   )}
@@ -1007,20 +1007,20 @@ export default function AdminDashboard() {
                   {documentRequests.length > 0 && (
                     <button
                       onClick={() => setLocation('/test/documentos')}
-                      className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors text-left"
+                      className="w-full flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg border border-orange-200 dark:border-gray-600 hover:bg-orange-50 dark:hover:bg-gray-600 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                          <FileText className="h-4 w-4 text-green-600" />
+                        <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                          <FileText className="h-4 w-4 text-green-600 dark:text-green-400" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 text-sm">Solicitudes de documentos</p>
-                          <p className="text-xs text-gray-600">Pendientes de subir</p>
+                          <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">Solicitudes de documentos</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Pendientes de subir</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">{documentRequests.length}</Badge>
-                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                        <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 text-xs">{documentRequests.length}</Badge>
+                        <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                       </div>
                     </button>
                   )}
@@ -1028,20 +1028,20 @@ export default function AdminDashboard() {
                   {unreadMessagesCount > 0 && (
                     <button
                       onClick={() => setLocation('/test/mensajes')}
-                      className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors text-left"
+                      className="w-full flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg border border-orange-200 dark:border-gray-600 hover:bg-orange-50 dark:hover:bg-gray-600 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                          <MessageSquare className="h-4 w-4 text-indigo-600" />
+                        <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+                          <MessageSquare className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 text-sm">Mensajes sin leer</p>
-                          <p className="text-xs text-gray-600">Nuevas conversaciones</p>
+                          <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">Mensajes sin leer</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Nuevas conversaciones</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 text-xs">{unreadMessagesCount}</Badge>
-                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                        <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 text-xs">{unreadMessagesCount}</Badge>
+                        <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                       </div>
                     </button>
                   )}
