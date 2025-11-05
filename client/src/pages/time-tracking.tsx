@@ -2749,16 +2749,6 @@ export default function TimeTracking() {
             {/* Desktop: buttons grouped together */}
             <div className="hidden sm:flex items-center gap-2">
               <Button 
-                variant="default" 
-                size="sm" 
-                onClick={() => setShowManualEntryDialog(true)}
-                className="flex items-center gap-2"
-                data-testid="button-create-manual-entry"
-              >
-                <Plus className="w-4 h-4" />
-                Fichaje Olvidado
-              </Button>
-              <Button 
                 variant={pendingRequestsCount > 0 ? "default" : "outline"}
                 size="sm" 
                 onClick={() => setShowRequestsDialog(true)}
@@ -2791,54 +2781,40 @@ export default function TimeTracking() {
               </Button>
             </div>
 
-            {/* Mobile: buttons in 2 rows */}
-            <div className="sm:hidden flex flex-col gap-2 w-full">
-              <div className="grid grid-cols-2 gap-2">
-                <Button 
-                  variant="default" 
-                  size="sm" 
-                  onClick={() => setShowManualEntryDialog(true)}
-                  className="flex items-center justify-center gap-2"
-                  data-testid="button-create-manual-entry"
-                >
-                  <Plus className="w-4 h-4" />
-                  Fichaje
-                </Button>
-                <Button 
-                  variant={pendingRequestsCount > 0 ? "default" : "outline"}
-                  size="sm" 
-                  onClick={() => setShowRequestsDialog(true)}
-                  className="flex items-center justify-center gap-2"
-                  data-testid="button-view-requests"
-                >
-                  <Bell className={cn("w-4 h-4", pendingRequestsCount > 0 && "animate-pulse")} />
-                  Solicitudes
-                  {pendingRequestsCount > 0 && (
-                    <Badge className="ml-1 text-xs">{pendingRequestsCount}</Badge>
-                  )}
-                </Button>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center justify-center gap-2 w-full"
-                >
-                  <Filter className="w-4 h-4" />
-                  Filtros
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setShowExportDialog(true)}
-                  title="Exporta los fichajes en PDF o Excel"
-                  className="flex items-center justify-center gap-2 w-full"
-                >
-                  <Download className="w-4 h-4" />
-                  Exportar
-                </Button>
-              </div>
+            {/* Mobile: buttons in single row */}
+            <div className="sm:hidden grid grid-cols-3 gap-2 w-full">
+              <Button 
+                variant={pendingRequestsCount > 0 ? "default" : "outline"}
+                size="sm" 
+                onClick={() => setShowRequestsDialog(true)}
+                className="flex items-center justify-center gap-1"
+                data-testid="button-view-requests"
+              >
+                <Bell className={cn("w-4 h-4", pendingRequestsCount > 0 && "animate-pulse")} />
+                <span className="text-xs">Solicitudes</span>
+                {pendingRequestsCount > 0 && (
+                  <Badge className="ml-1 text-xs">{pendingRequestsCount}</Badge>
+                )}
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center justify-center gap-1"
+              >
+                <Filter className="w-4 h-4" />
+                <span className="text-xs">Filtros</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowExportDialog(true)}
+                title="Exporta los fichajes en PDF o Excel"
+                className="flex items-center justify-center gap-1"
+              >
+                <Download className="w-4 h-4" />
+                <span className="text-xs">Exportar</span>
+              </Button>
             </div>
           </CardTitle>
         </CardHeader>
