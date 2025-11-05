@@ -3080,11 +3080,25 @@ export class DrizzleStorage implements IStorage {
     return created;
   }
 
-  async getWorkSessionAuditLogs(workSessionId: number): Promise<WorkSessionAuditLog[]> {
-    return db.select()
+  async getWorkSessionAuditLogs(workSessionId: number): Promise<any[]> {
+    const logs = await db.select({
+      id: schema.workSessionAuditLog.id,
+      workSessionId: schema.workSessionAuditLog.workSessionId,
+      companyId: schema.workSessionAuditLog.companyId,
+      modificationType: schema.workSessionAuditLog.modificationType,
+      oldValue: schema.workSessionAuditLog.oldValue,
+      newValue: schema.workSessionAuditLog.newValue,
+      reason: schema.workSessionAuditLog.reason,
+      modifiedBy: schema.workSessionAuditLog.modifiedBy,
+      modifiedAt: schema.workSessionAuditLog.modifiedAt,
+      modifiedByName: schema.users.fullName,
+    })
       .from(schema.workSessionAuditLog)
+      .innerJoin(schema.users, eq(schema.workSessionAuditLog.modifiedBy, schema.users.id))
       .where(eq(schema.workSessionAuditLog.workSessionId, workSessionId))
       .orderBy(desc(schema.workSessionAuditLog.modifiedAt));
+    
+    return logs;
   }
 
   async getCompanyAuditLogs(companyId: number, limit: number = 100): Promise<WorkSessionAuditLog[]> {
