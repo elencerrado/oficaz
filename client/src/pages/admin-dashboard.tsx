@@ -925,7 +925,7 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="destructive" className="text-xs">{incompleteSessions.length}</Badge>
+                        <Badge variant="secondary" className="text-xs">{incompleteSessions.length}</Badge>
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </button>
