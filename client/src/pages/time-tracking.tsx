@@ -2827,7 +2827,7 @@ export default function TimeTracking() {
               <div className="flex flex-col space-y-2">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Empleado</label>
                 <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                  <SelectTrigger className="h-10">
+                  <SelectTrigger className="h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
                     <SelectValue placeholder="Seleccionar empleado" />
                   </SelectTrigger>
                   <SelectContent>
@@ -2872,7 +2872,10 @@ export default function TimeTracking() {
                       setStartDate('');
                       setEndDate('');
                     }}
-                    className="h-10 text-xs font-normal flex-1 text-center"
+                    className={cn(
+                      "h-10 text-xs font-normal flex-1 text-center",
+                      dateFilter !== 'today' && "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                    )}
                   >
                     Hoy
                   </Button>
@@ -2895,7 +2898,9 @@ export default function TimeTracking() {
                     }
                     className={cn(
                       "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center",
-                      dateFilter === 'day' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                      dateFilter === 'day' 
+                        ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                        : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                     )}
                   />
 
@@ -2906,7 +2911,9 @@ export default function TimeTracking() {
                         size="sm"
                         className={cn(
                           "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center",
-                          dateFilter === 'month' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                          dateFilter === 'month' 
+                            ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                            : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                         )}
                       >
                         {dateFilter === 'month' ? format(currentMonth, 'MMM yyyy', { locale: es }) : 'Mes'}
@@ -2959,7 +2966,9 @@ export default function TimeTracking() {
                     }}
                     className={cn(
                       "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center",
-                      dateFilter === 'custom' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                      dateFilter === 'custom' 
+                        ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                        : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                     )}
                   />
 
@@ -2976,7 +2985,7 @@ export default function TimeTracking() {
                       setCurrentDate(new Date());
                       setCurrentMonth(new Date());
                     }}
-                    className="h-10 text-xs font-normal whitespace-nowrap flex-1 text-center"
+                    className="h-10 text-xs font-normal whitespace-nowrap flex-1 text-center bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                   >
                     Limpiar filtros
                   </Button>
@@ -2996,7 +3005,10 @@ export default function TimeTracking() {
                         setStartDate('');
                         setEndDate('');
                       }}
-                      className="h-9 text-xs font-normal text-center"
+                      className={cn(
+                        "h-9 text-xs font-normal text-center",
+                        dateFilter !== 'today' && "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                      )}
                     >
                       Hoy
                     </Button>
@@ -3019,7 +3031,7 @@ export default function TimeTracking() {
                       }
                       className={dateFilter === 'day' 
                         ? "h-9 text-xs font-normal text-center bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
-                        : "h-9 text-xs font-normal text-center"
+                        : "h-9 text-xs font-normal text-center bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                       }
                     />
 
@@ -3040,10 +3052,10 @@ export default function TimeTracking() {
                     >
                       <SelectTrigger 
                         className={cn(
-                          "h-9 text-xs font-normal text-center [&>svg]:hidden focus:ring-0 focus:ring-offset-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                          "h-9 text-xs font-normal text-center [&>svg]:hidden focus:ring-0 focus:ring-offset-0",
                           dateFilter === 'month' 
                             ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90 focus:bg-[#007AFF] focus:border-[#007AFF]"
-                            : "text-foreground"
+                            : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-foreground hover:bg-accent hover:text-accent-foreground"
                         )}
                       >
                         <span className={cn(
@@ -3088,7 +3100,7 @@ export default function TimeTracking() {
                       }}
                       className={dateFilter === 'custom' 
                         ? "h-9 text-xs font-normal text-center bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
-                        : "h-9 text-xs font-normal text-center"
+                        : "h-9 text-xs font-normal text-center bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                       }
                     />
 
@@ -3105,7 +3117,7 @@ export default function TimeTracking() {
                         setCurrentDate(new Date());
                         setCurrentMonth(new Date());
                       }}
-                      className="h-9 text-xs font-normal text-center"
+                      className="h-9 text-xs font-normal text-center bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                     >
                       Limpiar
                     </Button>
