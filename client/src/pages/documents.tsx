@@ -622,9 +622,9 @@ export default function Documents() {
                           <div className="flex flex-wrap items-center gap-1 mt-1">
                             <Badge 
                               variant="secondary" 
-                              className={`text-xs px-2 py-0 ${
-                                category === 'nominas' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' :
-                                category === 'contratos' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' : 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300'
+                              className={`text-xs px-2 py-0 border-0 ${
+                                category === 'nominas' ? '!bg-emerald-100 !text-emerald-700 dark:!bg-emerald-900/50 dark:!text-emerald-300' :
+                                category === 'contratos' ? '!bg-blue-100 !text-blue-700 dark:!bg-blue-900/50 dark:!text-blue-300' : '!bg-orange-100 !text-orange-700 dark:!bg-orange-900/50 dark:!text-orange-300'
                               }`}
                             >
                               {category === 'nominas' ? 'Nómina' :
@@ -636,8 +636,8 @@ export default function Documents() {
                                 variant={document.isAccepted ? 'default' : 'outline'}
                                 className={`text-xs px-2 py-0 ${
                                   document.isAccepted 
-                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300' 
-                                    : 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600/30'
+                                    ? '!bg-green-100 !text-green-700 dark:!bg-green-900/50 dark:!text-green-300 border-0' 
+                                    : '!bg-yellow-100 !text-yellow-700 !border-yellow-300 dark:!bg-yellow-900/30 dark:!text-yellow-300 dark:!border-yellow-600/30'
                                 }`}
                               >
                                 {document.isAccepted ? '✓ Firmada' : 'Pendiente firma'}
