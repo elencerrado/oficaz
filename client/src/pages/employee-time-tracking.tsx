@@ -463,8 +463,16 @@ export default function EmployeeTimeTracking() {
         return total + calculateSessionHours(session);
       }, 0);
       
-      // Check if any session in this month is incomplete
-      const hasIncomplete = monthSessions.some((session: any) => !session.clockOut);
+      // Check if any session in this month is incomplete (not from today)
+      const hasIncomplete = monthSessions.some((session: any) => {
+        if (!session.clockOut) {
+          const sessionDate = new Date(session.clockIn);
+          const today = new Date();
+          // Only mark as incomplete if it's NOT from today (active sessions don't count)
+          return sessionDate.toDateString() !== today.toDateString();
+        }
+        return false;
+      });
       
       months.push({
         month: format(date, 'MMM', { locale: es }),
