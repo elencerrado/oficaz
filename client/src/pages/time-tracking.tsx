@@ -3830,6 +3830,14 @@ export default function TimeTracking() {
               </div>
             ) : (
               auditLogs.map((log: any) => {
+                // Find the session to get employee name
+                const session = filteredSessions.find((s: any) => s.id === selectedSessionForAudit);
+                const employeeName = session?.userName || 'Empleado';
+                
+                // Detect if it's an employee request or admin modification
+                const isEmployeeRequest = log.reason?.includes('Employee request approved:');
+                const isAdminModification = log.reason?.includes('Admin modification:');
+                
                 // Clean and translate the reason
                 let cleanReason = log.reason || '';
                 cleanReason = cleanReason.replace(/^Employee request approved:\s*/i, '');
@@ -3858,10 +3866,29 @@ export default function TimeTracking() {
                       </div>
                     </div>
                     
-                    {/* Show who approved */}
-                    {log.modifiedByName && (
+                    {/* Show who performed the action based on type */}
+                    {log.modificationType === 'created_manual' && log.modifiedByName && (
                       <div className="text-sm text-blue-600 dark:text-blue-400">
-                        <span className="font-medium">Aprobado por:</span> {log.modifiedByName}
+                        <span className="font-medium">Creado por:</span> {log.modifiedByName}
+                      </div>
+                    )}
+                    
+                    {log.modificationType !== 'created_manual' && isEmployeeRequest && (
+                      <>
+                        <div className="text-sm text-purple-600 dark:text-purple-400">
+                          <span className="font-medium">Solicitado por:</span> {employeeName}
+                        </div>
+                        {log.modifiedByName && (
+                          <div className="text-sm text-blue-600 dark:text-blue-400">
+                            <span className="font-medium">Aprobado por:</span> {log.modifiedByName}
+                          </div>
+                        )}
+                      </>
+                    )}
+                    
+                    {log.modificationType !== 'created_manual' && isAdminModification && log.modifiedByName && (
+                      <div className="text-sm text-blue-600 dark:text-blue-400">
+                        <span className="font-medium">Modificado por:</span> {log.modifiedByName}
                       </div>
                     )}
                     
