@@ -76,7 +76,12 @@ export interface IStorage {
   getWorkSession(id: number): Promise<WorkSession | undefined>;
   updateWorkSession(id: number, updates: Partial<InsertWorkSession>): Promise<WorkSession | undefined>;
   getWorkSessionsByUser(userId: number, limit?: number): Promise<WorkSession[]>;
-  getWorkSessionsByCompany(companyId: number, limit?: number, offset?: number): Promise<WorkSessionWithAudit[]>;
+  getWorkSessionsByCompany(companyId: number, limit?: number, offset?: number, filters?: {
+    employeeId?: number;
+    startDate?: Date;
+    endDate?: Date;
+    status?: 'active' | 'completed' | 'incomplete';
+  }): Promise<WorkSessionWithAudit[]>;
   markOldSessionsAsIncomplete(userId: number): Promise<void>;
 
   // Break periods
@@ -451,7 +456,36 @@ export class DrizzleStorage implements IStorage {
       .limit(limit);
   }
 
-  async getWorkSessionsByCompany(companyId: number, limit: number = 50, offset: number = 0): Promise<WorkSessionWithAudit[]> {
+  async getWorkSessionsByCompany(
+    companyId: number, 
+    limit: number = 50, 
+    offset: number = 0,
+    filters?: {
+      employeeId?: number;
+      startDate?: Date;
+      endDate?: Date;
+      status?: 'active' | 'completed' | 'incomplete';
+    }
+  ): Promise<WorkSessionWithAudit[]> {
+    // Build WHERE conditions dynamically
+    const conditions = [eq(schema.users.companyId, companyId)];
+    
+    if (filters?.employeeId) {
+      conditions.push(eq(schema.workSessions.userId, filters.employeeId));
+    }
+    
+    if (filters?.startDate) {
+      conditions.push(gte(schema.workSessions.clockIn, filters.startDate));
+    }
+    
+    if (filters?.endDate) {
+      conditions.push(lte(schema.workSessions.clockIn, filters.endDate));
+    }
+    
+    if (filters?.status) {
+      conditions.push(eq(schema.workSessions.status, filters.status));
+    }
+    
     // First, get all work sessions for the company with user info
     const sessions = await db.select({
       id: schema.workSessions.id,
@@ -470,7 +504,7 @@ export class DrizzleStorage implements IStorage {
       profilePicture: schema.users.profilePicture,
     }).from(schema.workSessions)
       .innerJoin(schema.users, eq(schema.workSessions.userId, schema.users.id))
-      .where(eq(schema.users.companyId, companyId))
+      .where(and(...conditions))
       .orderBy(desc(schema.workSessions.clockIn))
       .limit(limit)
       .offset(offset);

@@ -25,6 +25,7 @@ import { subscriptions, companies, features, users, workSessions, breakPeriods, 
 import { sendEmail, sendEmployeeWelcomeEmail, sendPasswordResetEmail, sendSuperAdminSecurityCode, sendNewCompanyRegistrationNotification } from './email';
 import { backgroundImageProcessor } from './backgroundWorker.js';
 import { startPushNotificationScheduler } from './pushNotificationScheduler.js';
+import { initializeWebSocketServer, getWebSocketServer } from './websocket.js';
 
 // Initialize Stripe with intelligent key detection
 // Priority: Use production keys if available, otherwise fall back to test keys
@@ -3535,6 +3536,16 @@ Responde directamente a este email para contactar con la persona.
         });
       });
 
+      // WebSocket: Notify company admins of new work session
+      const wsServer = getWebSocketServer();
+      if (wsServer && req.user!.companyId) {
+        wsServer.broadcastToCompany(req.user!.companyId, {
+          type: 'work_session_created',
+          companyId: req.user!.companyId,
+          data: { sessionId: session.id, userId: req.user!.id }
+        });
+      }
+
       res.status(201).json(session);
     } catch (error: any) {
       if (error.message === 'Already clocked in') {
@@ -3602,6 +3613,16 @@ Responde directamente a este email para contactar con la persona.
         status: 'completed',
       });
 
+      // WebSocket: Notify company admins of session update
+      const wsServer = getWebSocketServer();
+      if (wsServer && req.user!.companyId) {
+        wsServer.broadcastToCompany(req.user!.companyId, {
+          type: 'work_session_updated',
+          companyId: req.user!.companyId,
+          data: { sessionId: activeSession.id, userId: req.user!.id }
+        });
+      }
+
       res.json(updatedSession);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -3662,6 +3683,16 @@ Responde directamente a este email para contactar con la persona.
         status: 'completed',
       });
 
+      // WebSocket: Notify company admins of session update
+      const wsServer = getWebSocketServer();
+      if (wsServer && req.user!.companyId) {
+        wsServer.broadcastToCompany(req.user!.companyId, {
+          type: 'work_session_updated',
+          companyId: req.user!.companyId,
+          data: { sessionId: session.id, userId: req.user!.id }
+        });
+      }
+
       res.json(updatedSession);
     } catch (error: any) {
       console.error('Error closing incomplete session:', error);
@@ -3689,9 +3720,33 @@ Responde directamente a este email para contactar con la persona.
 
   app.get('/api/work-sessions/company', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
-      // Balanced pagination for performance and functionality
+      // Pagination parameters
       const limit = parseInt(req.query.limit as string) || 40; // Default 40 sessions
       const offset = parseInt(req.query.offset as string) || 0;
+      
+      // Server-side filters for performance optimization
+      const filters: {
+        employeeId?: number;
+        startDate?: Date;
+        endDate?: Date;
+        status?: 'active' | 'completed' | 'incomplete';
+      } = {};
+      
+      if (req.query.employeeId) {
+        filters.employeeId = parseInt(req.query.employeeId as string);
+      }
+      
+      if (req.query.startDate) {
+        filters.startDate = new Date(req.query.startDate as string);
+      }
+      
+      if (req.query.endDate) {
+        filters.endDate = new Date(req.query.endDate as string);
+      }
+      
+      if (req.query.status && ['active', 'completed', 'incomplete'].includes(req.query.status as string)) {
+        filters.status = req.query.status as 'active' | 'completed' | 'incomplete';
+      }
       
       // Mark old sessions as incomplete for all employees before retrieving
       // Get all employees from the company
@@ -3702,7 +3757,7 @@ Responde directamente a este email para contactar con la persona.
         employees.map(employee => storage.markOldSessionsAsIncomplete(employee.id))
       );
       
-      const sessions = await storage.getWorkSessionsByCompany(req.user!.companyId, limit, offset);
+      const sessions = await storage.getWorkSessionsByCompany(req.user!.companyId, limit, offset, filters);
       
       res.json(sessions);
     } catch (error: any) {
@@ -3821,6 +3876,16 @@ Responde directamente a este email para contactar con la persona.
         reason,
         modifiedBy: req.user!.id,
       });
+
+      // WebSocket: Notify company admins of new manual session
+      const wsServer = getWebSocketServer();
+      if (wsServer && req.user!.companyId) {
+        wsServer.broadcastToCompany(req.user!.companyId, {
+          type: 'work_session_created',
+          companyId: req.user!.companyId,
+          data: { sessionId: workSession.id, userId: employeeId }
+        });
+      }
 
       res.status(201).json(workSession);
     } catch (error: any) {
@@ -4093,6 +4158,16 @@ Responde directamente a este email para contactar con la persona.
             reason: `Employee request approved: ${request.reason}`,
             modifiedBy: req.user!.id,
           });
+
+          // WebSocket: Notify company admins of new session
+          const wsServer = getWebSocketServer();
+          if (wsServer && req.user!.companyId) {
+            wsServer.broadcastToCompany(req.user!.companyId, {
+              type: 'work_session_created',
+              companyId: req.user!.companyId,
+              data: { sessionId: workSession.id, userId: request.employeeId }
+            });
+          }
         } else if (request.requestType === 'modify_time' && request.workSessionId) {
           // Modify existing session
           const session = await storage.getWorkSession(request.workSessionId);
@@ -4141,6 +4216,16 @@ Responde directamente a este email para contactar con la persona.
               reason: `Employee request approved: ${request.reason}`,
               modifiedBy: req.user!.id,
             });
+
+            // WebSocket: Notify company admins of session update
+            const wsServer = getWebSocketServer();
+            if (wsServer && req.user!.companyId) {
+              wsServer.broadcastToCompany(req.user!.companyId, {
+                type: 'work_session_updated',
+                companyId: req.user!.companyId,
+                data: { sessionId: request.workSessionId, userId: request.employeeId }
+              });
+            }
           }
         }
       }
@@ -12022,5 +12107,9 @@ Responde directamente a este email para contactar con la persona.
   }
 
   const httpServer = createServer(app);
+  
+  // Initialize WebSocket server for real-time updates
+  initializeWebSocketServer(httpServer);
+  
   return httpServer;
 }
