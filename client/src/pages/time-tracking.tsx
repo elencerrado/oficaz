@@ -1024,23 +1024,17 @@ export default function TimeTracking() {
                 auditInfo.push(`Cambio solicitado por: empleado`);
               }
               
-              // Combine entrada/salida anterior on same line
+              // Add entrada/salida anterior as separate items
               const oldVal = log.oldValue || {};
-              let previousTimes: string[] = [];
               
               if ((log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') && oldVal.clockIn) {
                 const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
-                previousTimes.push(`Entrada anterior: ${oldTime}`);
+                auditInfo.push(`Entrada anterior: ${oldTime}`);
               }
               
               if ((log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') && oldVal.clockOut) {
                 const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
-                previousTimes.push(`Salida anterior: ${oldTime}`);
-              }
-              
-              // Combine both times on same line
-              if (previousTimes.length > 0) {
-                auditInfo.push(previousTimes.join(', '));
+                auditInfo.push(`Salida anterior: ${oldTime}`);
               }
               
               auditInfo.push(`Aprobado por: ${approvedBy}`);
@@ -1094,7 +1088,7 @@ export default function TimeTracking() {
                   itemWidth = doc.getTextWidth(info);
                 }
                 
-                // Check if we need to wrap (but don't add separator width to the check)
+                // Check if we need to wrap
                 if (currentLineWidth > 0 && itemWidth > remainingWidth) {
                   yOffset += lineHeight;
                   xOffset = colPositions[5];
@@ -1115,17 +1109,39 @@ export default function TimeTracking() {
                 
                 xOffset += itemWidth;
                 
-                // Add separator if not last item
+                // Add separator only if not last item AND next item fits on current line
                 if (idx < auditInfo.length - 1) {
                   doc.setFont('helvetica', 'normal');
                   const separatorWidth = doc.getTextWidth(' | ');
                   
-                  // Check if separator fits on current line
-                  if (xOffset + separatorWidth - colPositions[5] <= colWidths[5]) {
+                  // Calculate width of next item to check if it fits
+                  const nextInfo = auditInfo[idx + 1];
+                  const nextColonIndex = nextInfo.indexOf(':');
+                  let nextItemWidth = 0;
+                  
+                  if (nextColonIndex !== -1) {
+                    const nextLabel = nextInfo.substring(0, nextColonIndex).trim();
+                    const nextValue = nextInfo.substring(nextColonIndex + 1).trim();
+                    doc.setFont('helvetica', 'normal');
+                    const nextLabelWidth = doc.getTextWidth(nextLabel + ': ');
+                    doc.setFont('helvetica', 'bold');
+                    const nextValueWidth = doc.getTextWidth(nextValue);
+                    nextItemWidth = nextLabelWidth + nextValueWidth;
+                  } else {
+                    doc.setFont('helvetica', 'bold');
+                    nextItemWidth = doc.getTextWidth(nextInfo);
+                  }
+                  
+                  // Only draw separator if next item fits on current line
+                  const spaceNeeded = separatorWidth + nextItemWidth;
+                  const currentUsed = xOffset - colPositions[5];
+                  const spaceAvailable = colWidths[5] - currentUsed;
+                  
+                  if (spaceNeeded <= spaceAvailable) {
                     doc.text(' | ', xOffset, yOffset);
                     xOffset += separatorWidth;
                   } else {
-                    // Separator doesn't fit, move to next line
+                    // Next item doesn't fit, move to next line without separator
                     yOffset += lineHeight;
                     xOffset = colPositions[5];
                     linesDrawn++;
@@ -1192,7 +1208,7 @@ export default function TimeTracking() {
                   itemWidth = doc.getTextWidth(info);
                 }
                 
-                // Check if we need to wrap (but don't add separator width to the check)
+                // Check if we need to wrap
                 if (currentLineWidth > 0 && itemWidth > remainingWidth) {
                   yOffset += lineHeight;
                   xOffset = colPositions[5];
@@ -1213,17 +1229,39 @@ export default function TimeTracking() {
                 
                 xOffset += itemWidth;
                 
-                // Add separator if not last item
+                // Add separator only if not last item AND next item fits on current line
                 if (idx < auditInfo.length - 1) {
                   doc.setFont('helvetica', 'normal');
                   const separatorWidth = doc.getTextWidth(' | ');
                   
-                  // Check if separator fits on current line
-                  if (xOffset + separatorWidth - colPositions[5] <= colWidths[5]) {
+                  // Calculate width of next item to check if it fits
+                  const nextInfo = auditInfo[idx + 1];
+                  const nextColonIndex = nextInfo.indexOf(':');
+                  let nextItemWidth = 0;
+                  
+                  if (nextColonIndex !== -1) {
+                    const nextLabel = nextInfo.substring(0, nextColonIndex).trim();
+                    const nextValue = nextInfo.substring(nextColonIndex + 1).trim();
+                    doc.setFont('helvetica', 'normal');
+                    const nextLabelWidth = doc.getTextWidth(nextLabel + ': ');
+                    doc.setFont('helvetica', 'bold');
+                    const nextValueWidth = doc.getTextWidth(nextValue);
+                    nextItemWidth = nextLabelWidth + nextValueWidth;
+                  } else {
+                    doc.setFont('helvetica', 'bold');
+                    nextItemWidth = doc.getTextWidth(nextInfo);
+                  }
+                  
+                  // Only draw separator if next item fits on current line
+                  const spaceNeeded = separatorWidth + nextItemWidth;
+                  const currentUsed = xOffset - colPositions[5];
+                  const spaceAvailable = colWidths[5] - currentUsed;
+                  
+                  if (spaceNeeded <= spaceAvailable) {
                     doc.text(' | ', xOffset, yOffset);
                     xOffset += separatorWidth;
                   } else {
-                    // Separator doesn't fit, move to next line
+                    // Next item doesn't fit, move to next line without separator
                     yOffset += lineHeight;
                     xOffset = colPositions[5];
                     linesDrawn++;
@@ -1362,23 +1400,17 @@ export default function TimeTracking() {
                 auditInfo.push(`Cambio solicitado por: empleado`);
               }
               
-              // Combine entrada/salida anterior on same line
+              // Add entrada/salida anterior as separate items
               const oldVal = log.oldValue || {};
-              let previousTimes: string[] = [];
               
               if ((log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') && oldVal.clockIn) {
                 const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
-                previousTimes.push(`Entrada anterior: ${oldTime}`);
+                auditInfo.push(`Entrada anterior: ${oldTime}`);
               }
               
               if ((log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') && oldVal.clockOut) {
                 const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
-                previousTimes.push(`Salida anterior: ${oldTime}`);
-              }
-              
-              // Combine both times on same line
-              if (previousTimes.length > 0) {
-                auditInfo.push(previousTimes.join(', '));
+                auditInfo.push(`Salida anterior: ${oldTime}`);
               }
               
               auditInfo.push(`Aprobado por: ${approvedBy}`);
@@ -1432,7 +1464,7 @@ export default function TimeTracking() {
                   itemWidth = doc.getTextWidth(info);
                 }
                 
-                // Check if we need to wrap (but don't add separator width to the check)
+                // Check if we need to wrap
                 if (currentLineWidth > 0 && itemWidth > remainingWidth) {
                   yOffset += lineHeight;
                   xOffset = colPositions[5];
@@ -1453,17 +1485,39 @@ export default function TimeTracking() {
                 
                 xOffset += itemWidth;
                 
-                // Add separator if not last item
+                // Add separator only if not last item AND next item fits on current line
                 if (idx < auditInfo.length - 1) {
                   doc.setFont('helvetica', 'normal');
                   const separatorWidth = doc.getTextWidth(' | ');
                   
-                  // Check if separator fits on current line
-                  if (xOffset + separatorWidth - colPositions[5] <= colWidths[5]) {
+                  // Calculate width of next item to check if it fits
+                  const nextInfo = auditInfo[idx + 1];
+                  const nextColonIndex = nextInfo.indexOf(':');
+                  let nextItemWidth = 0;
+                  
+                  if (nextColonIndex !== -1) {
+                    const nextLabel = nextInfo.substring(0, nextColonIndex).trim();
+                    const nextValue = nextInfo.substring(nextColonIndex + 1).trim();
+                    doc.setFont('helvetica', 'normal');
+                    const nextLabelWidth = doc.getTextWidth(nextLabel + ': ');
+                    doc.setFont('helvetica', 'bold');
+                    const nextValueWidth = doc.getTextWidth(nextValue);
+                    nextItemWidth = nextLabelWidth + nextValueWidth;
+                  } else {
+                    doc.setFont('helvetica', 'bold');
+                    nextItemWidth = doc.getTextWidth(nextInfo);
+                  }
+                  
+                  // Only draw separator if next item fits on current line
+                  const spaceNeeded = separatorWidth + nextItemWidth;
+                  const currentUsed = xOffset - colPositions[5];
+                  const spaceAvailable = colWidths[5] - currentUsed;
+                  
+                  if (spaceNeeded <= spaceAvailable) {
                     doc.text(' | ', xOffset, yOffset);
                     xOffset += separatorWidth;
                   } else {
-                    // Separator doesn't fit, move to next line
+                    // Next item doesn't fit, move to next line without separator
                     yOffset += lineHeight;
                     xOffset = colPositions[5];
                     linesDrawn++;
@@ -1530,7 +1584,7 @@ export default function TimeTracking() {
                   itemWidth = doc.getTextWidth(info);
                 }
                 
-                // Check if we need to wrap (but don't add separator width to the check)
+                // Check if we need to wrap
                 if (currentLineWidth > 0 && itemWidth > remainingWidth) {
                   yOffset += lineHeight;
                   xOffset = colPositions[5];
@@ -1551,17 +1605,39 @@ export default function TimeTracking() {
                 
                 xOffset += itemWidth;
                 
-                // Add separator if not last item
+                // Add separator only if not last item AND next item fits on current line
                 if (idx < auditInfo.length - 1) {
                   doc.setFont('helvetica', 'normal');
                   const separatorWidth = doc.getTextWidth(' | ');
                   
-                  // Check if separator fits on current line
-                  if (xOffset + separatorWidth - colPositions[5] <= colWidths[5]) {
+                  // Calculate width of next item to check if it fits
+                  const nextInfo = auditInfo[idx + 1];
+                  const nextColonIndex = nextInfo.indexOf(':');
+                  let nextItemWidth = 0;
+                  
+                  if (nextColonIndex !== -1) {
+                    const nextLabel = nextInfo.substring(0, nextColonIndex).trim();
+                    const nextValue = nextInfo.substring(nextColonIndex + 1).trim();
+                    doc.setFont('helvetica', 'normal');
+                    const nextLabelWidth = doc.getTextWidth(nextLabel + ': ');
+                    doc.setFont('helvetica', 'bold');
+                    const nextValueWidth = doc.getTextWidth(nextValue);
+                    nextItemWidth = nextLabelWidth + nextValueWidth;
+                  } else {
+                    doc.setFont('helvetica', 'bold');
+                    nextItemWidth = doc.getTextWidth(nextInfo);
+                  }
+                  
+                  // Only draw separator if next item fits on current line
+                  const spaceNeeded = separatorWidth + nextItemWidth;
+                  const currentUsed = xOffset - colPositions[5];
+                  const spaceAvailable = colWidths[5] - currentUsed;
+                  
+                  if (spaceNeeded <= spaceAvailable) {
                     doc.text(' | ', xOffset, yOffset);
                     xOffset += separatorWidth;
                   } else {
-                    // Separator doesn't fit, move to next line
+                    // Next item doesn't fit, move to next line without separator
                     yOffset += lineHeight;
                     xOffset = colPositions[5];
                     linesDrawn++;
