@@ -3780,31 +3780,28 @@ export default function TimeTracking() {
                     
                     {request.requestType === 'forgotten_checkin' ? (
                       // Fichaje olvidado - solo mostrar nueva información
-                      <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
-                        <div className="text-sm space-y-1">
-                          <div>
-                            <span className="text-muted-foreground">Entrada:</span>{' '}
-                            <span className="font-medium">{format(new Date(request.requestedClockIn), 'HH:mm')}</span>
-                            {request.requestedClockOut && (
-                              <>
-                                {' • '}
-                                <span className="text-muted-foreground">Salida:</span>{' '}
-                                <span className="font-medium">{format(new Date(request.requestedClockOut), 'HH:mm')}</span>
-                              </>
-                            )}
-                          </div>
-                          {request.requestedClockOut && (() => {
-                            const totalMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
-                            const hours = Math.floor(totalMs / (1000 * 60 * 60));
-                            const minutes = Math.floor((totalMs % (1000 * 60 * 60)) / (1000 * 60));
-                            return (
-                              <div>
-                                <span className="text-muted-foreground">Total:</span>{' '}
-                                <span className="font-semibold text-blue-600 dark:text-blue-400">{hours}h {minutes}min</span>
-                              </div>
-                            );
-                          })()}
+                      <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg space-y-2 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Entrada:</span>
+                          <span className="font-medium">{format(new Date(request.requestedClockIn), 'HH:mm')}</span>
                         </div>
+                        {request.requestedClockOut && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Salida:</span>
+                            <span className="font-medium">{format(new Date(request.requestedClockOut), 'HH:mm')}</span>
+                          </div>
+                        )}
+                        {request.requestedClockOut && (() => {
+                          const totalMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
+                          const hours = Math.floor(totalMs / (1000 * 60 * 60));
+                          const minutes = Math.floor((totalMs % (1000 * 60 * 60)) / (1000 * 60));
+                          return (
+                            <div className="flex items-center justify-between pt-1 border-t border-blue-200 dark:border-blue-800">
+                              <span className="text-muted-foreground">Total:</span>
+                              <span className="font-semibold text-blue-600 dark:text-blue-400">{hours}h {minutes}min</span>
+                            </div>
+                          );
+                        })()}
                       </div>
                     ) : (
                       // Modificación de horario - mostrar antes y después compacto
