@@ -567,8 +567,8 @@ export default function EmployeeTimeTracking() {
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className={`${
                 statusColor === "red" 
-                  ? "bg-red-500/20 text-red-300 border-red-500/30" 
-                  : "bg-green-500/20 text-green-300 border-green-500/30"
+                  ? "bg-red-600 dark:bg-red-500/20 text-white dark:text-red-300 border-red-700 dark:border-red-500/30" 
+                  : "bg-green-600 dark:bg-green-500/20 text-white dark:text-green-300 border-green-700 dark:border-green-500/30"
               }`}>
                 {statusText}
               </Badge>
@@ -576,7 +576,7 @@ export default function EmployeeTimeTracking() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-6 px-2 py-0 text-xs bg-red-500/20 border-red-500/50 text-red-300 hover:bg-red-500/30 hover:border-red-400"
+                  className="h-6 px-2 py-0 text-xs bg-red-600 dark:bg-red-500/20 border-red-700 dark:border-red-500/50 text-white dark:text-red-300 hover:bg-red-700 dark:hover:bg-red-500/30 dark:hover:border-red-400"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleClockOutIncomplete(session.id);
@@ -637,7 +637,7 @@ export default function EmployeeTimeTracking() {
               {session.clockOut ? formatTotalHours(calculateSessionHours(session)) : '0h 0m'}
             </span>
             {!session.clockOut && (
-              <span className="text-red-400 text-xs bg-red-500/20 px-2 py-1 rounded-full">
+              <span className="text-white dark:text-red-400 text-xs bg-red-600 dark:bg-red-500/20 px-2 py-1 rounded-full border border-red-700 dark:border-red-500/30">
                 Incompleto
               </span>
             )}
@@ -1013,7 +1013,7 @@ export default function EmployeeTimeTracking() {
                                     {dayTotal > 0 ? formatTotalHours(dayTotal) : '0h 0m'}
                                   </span>
                                   {sortedDaySessions.some(s => !s.clockOut) && (
-                                    <span className="text-red-400 text-xs bg-red-500/20 px-2 py-1 rounded-full">
+                                    <span className="text-white dark:text-red-400 text-xs bg-red-600 dark:bg-red-500/20 px-2 py-1 rounded-full border border-red-700 dark:border-red-500/30">
                                       Incompleto
                                     </span>
                                   )}
