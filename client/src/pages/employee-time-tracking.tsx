@@ -948,13 +948,13 @@ export default function EmployeeTimeTracking() {
               
               // Contenedor de semana
               result.push(
-                <div key={`week-${weekKey}`} className="bg-white/5 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/10">
+                <div key={`week-${weekKey}`} className="bg-white dark:bg-white/5 backdrop-blur-sm rounded-xl p-4 mb-4 border border-gray-200 dark:border-white/10">
                   {/* Header de semana */}
-                  <div className="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
-                    <h3 className="text-white font-medium text-sm">
+                  <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 dark:border-white/10">
+                    <h3 className="text-gray-900 dark:text-white font-medium text-sm">
                       {format(weekStart, 'MMMM', { locale: es })} semana del {format(weekStart, 'dd', { locale: es })}-{format(addDays(weekStart, 6), 'dd', { locale: es })}
                     </h3>
-                    <span className="text-blue-300 font-mono text-sm bg-blue-400/20 px-2 py-1 rounded-lg">
+                    <span className="text-white dark:text-blue-300 font-mono text-sm bg-blue-600 dark:bg-blue-400/20 px-2 py-1 rounded-lg border border-blue-700 dark:border-blue-400/30">
                       {formatTotalHours(weekTotal)}
                     </span>
                   </div>
