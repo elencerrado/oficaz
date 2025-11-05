@@ -1786,6 +1786,9 @@ export default function TimeTracking() {
         { wch: 25 }, // Empleado
         { wch: 10 }, // Entrada
         { wch: 10 }, // Salida
+        { wch: 16 }, // Inicio Descanso
+        { wch: 14 }, // Fin Descanso
+        { wch: 15 }, // Total Descanso
         { wch: 15 }, // Horas Diarias
         { wch: 15 }, // Total Semanal
         { wch: 25 }, // Total Mensual
@@ -1816,6 +1819,9 @@ export default function TimeTracking() {
           { wch: 25 }, // Empleado
           { wch: 10 }, // Entrada
           { wch: 10 }, // Salida
+          { wch: 16 }, // Inicio Descanso
+          { wch: 14 }, // Fin Descanso
+          { wch: 15 }, // Total Descanso
           { wch: 15 }, // Horas Diarias
           { wch: 15 }, // Total Semanal
           { wch: 25 }, // Total Mensual
@@ -1837,6 +1843,9 @@ export default function TimeTracking() {
         { wch: 25 }, // Empleado
         { wch: 10 }, // Entrada
         { wch: 10 }, // Salida
+        { wch: 16 }, // Inicio Descanso
+        { wch: 14 }, // Fin Descanso
+        { wch: 15 }, // Total Descanso
         { wch: 15 }, // Horas Diarias
         { wch: 15 }, // Total Semanal
         { wch: 25 }, // Total Mensual
@@ -1927,6 +1936,9 @@ export default function TimeTracking() {
           Empleado: '',
           Entrada: '',
           Salida: '',
+          'Inicio Descanso': '',
+          'Fin Descanso': '',
+          'Total Descanso': '',
           'Horas Diarias': '',
           'Total Semanal': '',
           'Total Mensual': `${monthHours.toFixed(1)}h (${monthName})`,
@@ -1942,6 +1954,9 @@ export default function TimeTracking() {
           Empleado: '',
           Entrada: '',
           Salida: '',
+          'Inicio Descanso': '',
+          'Fin Descanso': '',
+          'Total Descanso': '',
           'Horas Diarias': '',
           'Total Semanal': `${weekHours.toFixed(1)}h`,
           'Total Mensual': '',
@@ -1956,6 +1971,25 @@ export default function TimeTracking() {
       if (isNewMonth) {
         currentMonth = monthKey;
       }
+
+      // Build break periods text
+      const breakPeriods = session.breakPeriods || [];
+      let breakStartText = '';
+      let breakEndText = '';
+      
+      breakPeriods.forEach((breakPeriod: any, idx: number) => {
+        if (breakPeriod.breakStart) {
+          if (idx > 0) breakStartText += ', ';
+          breakStartText += format(new Date(breakPeriod.breakStart), 'HH:mm');
+        }
+        if (breakPeriod.breakEnd) {
+          if (idx > 0) breakEndText += ', ';
+          breakEndText += format(new Date(breakPeriod.breakEnd), 'HH:mm');
+        } else if (breakPeriod.breakStart) {
+          if (idx > 0) breakEndText += ', ';
+          breakEndText += 'En curso';
+        }
+      });
 
       // Build modifications description
       let modificationsText = '';
@@ -2004,6 +2038,9 @@ export default function TimeTracking() {
         Empleado: session.userName || 'Desconocido',
         Entrada: session.clockIn ? format(new Date(session.clockIn), 'HH:mm') : '',
         Salida: session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : 'En curso',
+        'Inicio Descanso': breakStartText || '-',
+        'Fin Descanso': breakEndText || '-',
+        'Total Descanso': breakHours > 0 ? `${breakHours.toFixed(1)}h` : '-',
         'Horas Diarias': session.clockOut ? `${hours.toFixed(1)}h` : '',
         'Total Semanal': '',
         'Total Mensual': '',
@@ -2021,6 +2058,9 @@ export default function TimeTracking() {
         Empleado: '',
         Entrada: '',
         Salida: '',
+        'Inicio Descanso': '',
+        'Fin Descanso': '',
+        'Total Descanso': '',
         'Horas Diarias': '',
         'Total Semanal': `${weekHours.toFixed(1)}h`,
         'Total Mensual': '',
@@ -2037,6 +2077,9 @@ export default function TimeTracking() {
         Empleado: '',
         Entrada: '',
         Salida: '',
+        'Inicio Descanso': '',
+        'Fin Descanso': '',
+        'Total Descanso': '',
         'Horas Diarias': '',
         'Total Semanal': '',
         'Total Mensual': `${monthHours.toFixed(1)}h (${monthName})`,
