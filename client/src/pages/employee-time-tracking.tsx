@@ -1224,10 +1224,11 @@ export default function EmployeeTimeTracking() {
           setWizardStep('date');
           setExistingSession(null);
         }}
-        className="fixed bottom-6 right-6 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 transform hover:scale-110 z-50"
+        className="fixed bottom-6 right-6 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-full px-6 py-4 shadow-lg transition-all duration-200 transform hover:scale-110 z-50 flex items-center gap-3"
         data-testid="button-request-modification"
       >
         <Edit className="h-6 w-6" />
+        <span className="font-medium">Modificar fichaje</span>
       </button>
       
       {/* Dialog for requesting modifications - 2 Step Wizard */}
