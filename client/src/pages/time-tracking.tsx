@@ -3946,38 +3946,69 @@ export default function TimeTracking() {
                 No hay registros de auditoría para este fichaje
               </div>
             ) : (
-              auditLogs.map((log: any) => (
-                <div key={log.id} className="border-l-4 border-blue-500 pl-4 py-2 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="font-medium text-sm">
-                      {log.modificationType === 'created_manual' ? 'Creado Manualmente' :
-                       log.modificationType === 'modified_clockin' ? 'Entrada Modificada' :
-                       log.modificationType === 'modified_clockout' ? 'Salida Modificada' :
-                       'Modificación Completa'}
+              auditLogs.map((log: any) => {
+                // Clean and translate the reason
+                let cleanReason = log.reason || '';
+                cleanReason = cleanReason.replace(/^Employee request approved:\s*/i, '');
+                cleanReason = cleanReason.replace(/^Admin modification:\s*/i, '');
+                
+                // Get modification type in Spanish
+                let modificationType = '';
+                if (log.modificationType === 'created_manual') {
+                  modificationType = 'Fichaje Manual Creado';
+                } else if (log.modificationType === 'modified_clockin') {
+                  modificationType = 'Entrada Modificada';
+                } else if (log.modificationType === 'modified_clockout') {
+                  modificationType = 'Salida Modificada';
+                } else if (log.modificationType === 'modified_both') {
+                  modificationType = 'Entrada y Salida Modificadas';
+                }
+                
+                return (
+                  <div key={log.id} className="border-l-4 border-blue-500 pl-4 py-2 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="font-medium text-sm">
+                        {modificationType}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {format(new Date(log.modifiedAt), 'dd/MM/yyyy HH:mm', { locale: es })}
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {format(new Date(log.modifiedAt), 'dd/MM/yyyy HH:mm', { locale: es })}
-                    </div>
+                    
+                    {/* Show who approved */}
+                    {log.modifiedByName && (
+                      <div className="text-sm text-blue-600 dark:text-blue-400">
+                        <span className="font-medium">Aprobado por:</span> {log.modifiedByName}
+                      </div>
+                    )}
+                    
+                    {/* Show old values if exists */}
+                    {log.oldValue && (
+                      <div className="text-sm text-muted-foreground">
+                        <span className="font-medium">Anterior:</span>{' '}
+                        {log.oldValue.clockIn && format(new Date(log.oldValue.clockIn), 'HH:mm')}{' '}
+                        {log.oldValue.clockOut && `- ${format(new Date(log.oldValue.clockOut), 'HH:mm')}`}
+                      </div>
+                    )}
+                    
+                    {/* Show new values if exists */}
+                    {log.newValue && (
+                      <div className="text-sm">
+                        <span className="font-medium">Nuevo:</span>{' '}
+                        {log.newValue.clockIn && format(new Date(log.newValue.clockIn), 'HH:mm')}{' '}
+                        {log.newValue.clockOut && `- ${format(new Date(log.newValue.clockOut), 'HH:mm')}`}
+                      </div>
+                    )}
+                    
+                    {/* Show cleaned reason */}
+                    {cleanReason && (
+                      <div className="text-sm italic text-muted-foreground">
+                        <span className="font-medium">Motivo:</span> {cleanReason}
+                      </div>
+                    )}
                   </div>
-                  {log.oldValue && (
-                    <div className="text-sm text-muted-foreground">
-                      <span className="font-medium">Anterior:</span>{' '}
-                      {log.oldValue.clockIn && format(new Date(log.oldValue.clockIn), 'HH:mm')}{' '}
-                      {log.oldValue.clockOut && `- ${format(new Date(log.oldValue.clockOut), 'HH:mm')}`}
-                    </div>
-                  )}
-                  {log.newValue && (
-                    <div className="text-sm">
-                      <span className="font-medium">Nuevo:</span>{' '}
-                      {log.newValue.clockIn && format(new Date(log.newValue.clockIn), 'HH:mm')}{' '}
-                      {log.newValue.clockOut && `- ${format(new Date(log.newValue.clockOut), 'HH:mm')}`}
-                    </div>
-                  )}
-                  <div className="text-sm italic text-muted-foreground">
-                    "{log.reason}"
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </DialogContent>
