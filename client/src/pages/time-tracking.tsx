@@ -3780,104 +3780,78 @@ export default function TimeTracking() {
                     
                     {request.requestType === 'forgotten_checkin' ? (
                       // Fichaje olvidado - solo mostrar nueva información
-                      <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg space-y-2">
-                        <div className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                          Nuevo fichaje solicitado:
-                        </div>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
+                        <div className="text-sm space-y-1">
                           <div>
                             <span className="text-muted-foreground">Entrada:</span>{' '}
                             <span className="font-medium">{format(new Date(request.requestedClockIn), 'HH:mm')}</span>
-                          </div>
-                          {request.requestedClockOut && (
-                            <div>
-                              <span className="text-muted-foreground">Salida:</span>{' '}
-                              <span className="font-medium">{format(new Date(request.requestedClockOut), 'HH:mm')}</span>
-                            </div>
-                          )}
-                        </div>
-                        {request.requestedClockOut && (() => {
-                          const totalMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
-                          const totalHours = (totalMs / (1000 * 60 * 60)).toFixed(2);
-                          return (
-                            <div className="text-sm pt-1">
-                              <span className="text-muted-foreground">Total:</span>{' '}
-                              <span className="font-semibold text-blue-600 dark:text-blue-400">{totalHours} horas</span>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    ) : (
-                      // Modificación de horario - mostrar antes y después
-                      <div className="space-y-3">
-                        {/* Horario Actual */}
-                        <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg space-y-2">
-                          <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Horario actual:
-                          </div>
-                          <div className="grid grid-cols-2 gap-3 text-sm">
-                            {request.currentClockIn && (
-                              <div>
-                                <span className="text-muted-foreground">Entrada:</span>{' '}
-                                <span className="font-medium">{format(new Date(request.currentClockIn), 'HH:mm')}</span>
-                              </div>
-                            )}
-                            {request.currentClockOut && (
-                              <div>
-                                <span className="text-muted-foreground">Salida:</span>{' '}
-                                <span className="font-medium">{format(new Date(request.currentClockOut), 'HH:mm')}</span>
-                              </div>
-                            )}
-                          </div>
-                          {request.currentClockIn && request.currentClockOut && (() => {
-                            const totalMs = new Date(request.currentClockOut).getTime() - new Date(request.currentClockIn).getTime();
-                            const totalHours = (totalMs / (1000 * 60 * 60)).toFixed(2);
-                            return (
-                              <div className="text-sm pt-1">
-                                <span className="text-muted-foreground">Total:</span>{' '}
-                                <span className="font-semibold">{totalHours} horas</span>
-                              </div>
-                            );
-                          })()}
-                        </div>
-                        
-                        {/* Flecha de cambio */}
-                        <div className="flex justify-center">
-                          <ArrowDown className="w-5 h-5 text-blue-500" />
-                        </div>
-                        
-                        {/* Horario Solicitado */}
-                        <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg space-y-2">
-                          <div className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                            Horario solicitado:
-                          </div>
-                          <div className="grid grid-cols-2 gap-3 text-sm">
-                            <div>
-                              <span className="text-muted-foreground">Entrada:</span>{' '}
-                              <span className={`font-medium ${request.currentClockIn && format(new Date(request.currentClockIn), 'HH:mm') !== format(new Date(request.requestedClockIn), 'HH:mm') ? 'text-blue-600 dark:text-blue-400' : ''}`}>
-                                {format(new Date(request.requestedClockIn), 'HH:mm')}
-                              </span>
-                            </div>
                             {request.requestedClockOut && (
-                              <div>
+                              <>
+                                {' • '}
                                 <span className="text-muted-foreground">Salida:</span>{' '}
-                                <span className={`font-medium ${request.currentClockOut && format(new Date(request.currentClockOut), 'HH:mm') !== format(new Date(request.requestedClockOut), 'HH:mm') ? 'text-blue-600 dark:text-blue-400' : ''}`}>
-                                  {format(new Date(request.requestedClockOut), 'HH:mm')}
-                                </span>
-                              </div>
+                                <span className="font-medium">{format(new Date(request.requestedClockOut), 'HH:mm')}</span>
+                              </>
                             )}
                           </div>
                           {request.requestedClockOut && (() => {
                             const totalMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
-                            const totalHours = (totalMs / (1000 * 60 * 60)).toFixed(2);
+                            const hours = Math.floor(totalMs / (1000 * 60 * 60));
+                            const minutes = Math.floor((totalMs % (1000 * 60 * 60)) / (1000 * 60));
                             return (
-                              <div className="text-sm pt-1">
+                              <div>
                                 <span className="text-muted-foreground">Total:</span>{' '}
-                                <span className="font-semibold text-blue-600 dark:text-blue-400">{totalHours} horas</span>
+                                <span className="font-semibold text-blue-600 dark:text-blue-400">{hours}h {minutes}min</span>
                               </div>
                             );
                           })()}
                         </div>
+                      </div>
+                    ) : (
+                      // Modificación de horario - mostrar antes y después compacto
+                      <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg space-y-2 text-sm">
+                        {/* Entrada */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Entrada:</span>
+                          <div className="flex items-center gap-2">
+                            <span className="line-through text-gray-400">{request.currentClockIn ? format(new Date(request.currentClockIn), 'HH:mm') : '—'}</span>
+                            <ArrowDown className="w-3 h-3 text-blue-500 rotate-[-90deg]" />
+                            <span className="font-medium text-blue-600 dark:text-blue-400">{format(new Date(request.requestedClockIn), 'HH:mm')}</span>
+                          </div>
+                        </div>
+                        
+                        {/* Salida */}
+                        {request.requestedClockOut && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Salida:</span>
+                            <div className="flex items-center gap-2">
+                              <span className="line-through text-gray-400">{request.currentClockOut ? format(new Date(request.currentClockOut), 'HH:mm') : '—'}</span>
+                              <ArrowDown className="w-3 h-3 text-blue-500 rotate-[-90deg]" />
+                              <span className="font-medium text-blue-600 dark:text-blue-400">{format(new Date(request.requestedClockOut), 'HH:mm')}</span>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Total */}
+                        {request.currentClockIn && request.currentClockOut && request.requestedClockOut && (
+                          <div className="flex items-center justify-between pt-1 border-t border-gray-200 dark:border-gray-700">
+                            <span className="text-muted-foreground">Total:</span>
+                            <div className="flex items-center gap-2">
+                              {(() => {
+                                const currentMs = new Date(request.currentClockOut).getTime() - new Date(request.currentClockIn).getTime();
+                                const currentHours = Math.floor(currentMs / (1000 * 60 * 60));
+                                const currentMinutes = Math.floor((currentMs % (1000 * 60 * 60)) / (1000 * 60));
+                                return <span className="line-through text-gray-400">{currentHours}h {currentMinutes}min</span>;
+                              })()}
+                              <ArrowDown className="w-3 h-3 text-blue-500 rotate-[-90deg]" />
+                              {(() => {
+                                const requestedMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
+                                const requestedHours = Math.floor(requestedMs / (1000 * 60 * 60));
+                                const requestedMinutes = Math.floor((requestedMs % (1000 * 60 * 60)) / (1000 * 60));
+                                return <span className="font-semibold text-blue-600 dark:text-blue-400">{requestedHours}h {requestedMinutes}min</span>;
+                              })()}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                     
