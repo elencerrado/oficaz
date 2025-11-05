@@ -753,9 +753,9 @@ export default function TimeTracking() {
       if (incompleteSessions.length > 0) {
         toast({
           title: "⚠️ Aviso: Fichajes incompletos",
-          description: `Hay ${incompleteSessions.length} fichaje(s) en curso. Los datos exportados serán inexactos hasta que se completen.`,
-          variant: "default",
-          duration: 6000,
+          description: `Hay ${incompleteSessions.length} fichaje(s) incompleto(s) en el rango seleccionado. Los datos exportados serán inexactos hasta que se completen.`,
+          variant: "destructive",
+          duration: 8000,
         });
       }
     }
@@ -1787,9 +1787,9 @@ export default function TimeTracking() {
     if (incompleteSessions.length > 0) {
       toast({
         title: "⚠️ Aviso: Fichajes incompletos",
-        description: `Hay ${incompleteSessions.length} fichaje(s) en curso. Los datos exportados serán inexactos hasta que se completen.`,
-        variant: "default",
-        duration: 6000,
+        description: `Hay ${incompleteSessions.length} fichaje(s) incompleto(s) en el rango seleccionado. Los datos exportados serán inexactos hasta que se completen.`,
+        variant: "destructive",
+        duration: 8000,
       });
     }
 
@@ -2011,7 +2011,7 @@ export default function TimeTracking() {
           breakEndText += format(new Date(breakPeriod.breakEnd), 'HH:mm');
         } else if (breakPeriod.breakStart) {
           if (idx > 0) breakEndText += ', ';
-          breakEndText += 'En curso';
+          breakEndText += 'Incompleto';
         }
       });
 
@@ -2061,7 +2061,7 @@ export default function TimeTracking() {
         Fecha: format(sessionDate, 'dd/MM/yyyy'),
         Empleado: session.userName || 'Desconocido',
         Entrada: session.clockIn ? format(new Date(session.clockIn), 'HH:mm') : '',
-        Salida: session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : 'En curso',
+        Salida: session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : 'Incompleto',
         'Inicio Descanso': breakStartText || '-',
         'Fin Descanso': breakEndText || '-',
         'Total Descanso': breakHours > 0 ? `${breakHours.toFixed(1)}h` : '-',
