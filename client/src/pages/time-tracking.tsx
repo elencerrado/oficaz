@@ -109,6 +109,9 @@ export default function TimeTracking() {
   const [showAuditDialog, setShowAuditDialog] = useState(false);
   const [selectedSessionForAudit, setSelectedSessionForAudit] = useState<number | null>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showIncompleteWarningDialog, setShowIncompleteWarningDialog] = useState(false);
+  const [pendingExportType, setPendingExportType] = useState<'pdf' | 'excel' | null>(null);
+  const [incompleteSessionsCount, setIncompleteSessionsCount] = useState(0);
   const [manualEntryData, setManualEntryData] = useState({
     employeeId: '',
     date: '',
@@ -746,20 +749,7 @@ export default function TimeTracking() {
   // ⚠️ END PROTECTED SECTION
 
   // ⚠️ PROTECTED: PDF generation function - CRITICAL FOR REPORTING
-  const handleExportPDF = useCallback(() => {
-    // Check for incomplete sessions
-    if (filteredSessions && filteredSessions.length > 0) {
-      const incompleteSessions = filteredSessions.filter((session: any) => !session.clockOut);
-      if (incompleteSessions.length > 0) {
-        toast({
-          title: "⚠️ Aviso: Fichajes incompletos",
-          description: `Hay ${incompleteSessions.length} fichaje(s) incompleto(s) en el rango seleccionado. Los datos exportados serán inexactos hasta que se completen.`,
-          variant: "destructive",
-          duration: 8000,
-        });
-      }
-    }
-
+  const executeExportPDF = useCallback(() => {
     const doc = new jsPDF();
     
     // Get period text for reuse
@@ -1772,7 +1762,7 @@ export default function TimeTracking() {
   }, [filteredSessions, selectedEmployee, employeesList, dateFilter, currentDate, currentMonth, startDate, endDate, calculateHours, toast]);
 
   // Export to Excel function
-  const handleExportExcel = useCallback(() => {
+  const executeExportExcel = useCallback(() => {
     if (!filteredSessions || filteredSessions.length === 0) {
       toast({
         title: "No hay datos para exportar",
@@ -1780,17 +1770,6 @@ export default function TimeTracking() {
         variant: "destructive"
       });
       return;
-    }
-
-    // Check for incomplete sessions
-    const incompleteSessions = filteredSessions.filter((session: any) => !session.clockOut);
-    if (incompleteSessions.length > 0) {
-      toast({
-        title: "⚠️ Aviso: Fichajes incompletos",
-        description: `Hay ${incompleteSessions.length} fichaje(s) incompleto(s) en el rango seleccionado. Los datos exportados serán inexactos hasta que se completen.`,
-        variant: "destructive",
-        duration: 8000,
-      });
     }
 
     // Check if exporting all employees
@@ -1917,6 +1896,58 @@ export default function TimeTracking() {
       description: `El archivo ${fileName} se ha descargado`,
     });
   }, [filteredSessions, selectedEmployee, employeesList, dateFilter, currentDate, currentMonth, startDate, endDate, toast]);
+
+  // Handlers for export that check for incomplete sessions first
+  const handleExportPDF = useCallback(() => {
+    setShowExportDialog(false);
+    
+    if (filteredSessions && filteredSessions.length > 0) {
+      const incompleteSessions = filteredSessions.filter((session: any) => !session.clockOut);
+      if (incompleteSessions.length > 0) {
+        setIncompleteSessionsCount(incompleteSessions.length);
+        setPendingExportType('pdf');
+        setShowIncompleteWarningDialog(true);
+        return;
+      }
+    }
+    
+    executeExportPDF();
+  }, [filteredSessions, executeExportPDF]);
+
+  const handleExportExcel = useCallback(() => {
+    setShowExportDialog(false);
+    
+    if (filteredSessions && filteredSessions.length > 0) {
+      const incompleteSessions = filteredSessions.filter((session: any) => !session.clockOut);
+      if (incompleteSessions.length > 0) {
+        setIncompleteSessionsCount(incompleteSessions.length);
+        setPendingExportType('excel');
+        setShowIncompleteWarningDialog(true);
+        return;
+      }
+    }
+    
+    executeExportExcel();
+  }, [filteredSessions, executeExportExcel]);
+
+  const handleConfirmExport = useCallback(() => {
+    setShowIncompleteWarningDialog(false);
+    
+    if (pendingExportType === 'pdf') {
+      executeExportPDF();
+    } else if (pendingExportType === 'excel') {
+      executeExportExcel();
+    }
+    
+    setPendingExportType(null);
+    setIncompleteSessionsCount(0);
+  }, [pendingExportType, executeExportPDF, executeExportExcel]);
+
+  const handleCancelExport = useCallback(() => {
+    setShowIncompleteWarningDialog(false);
+    setPendingExportType(null);
+    setIncompleteSessionsCount(0);
+  }, []);
 
   // Helper function to create Excel data for a set of sessions
   const createExcelDataForSessions = (sessions: any[]) => {
@@ -2094,7 +2125,7 @@ export default function TimeTracking() {
 
     // Add final month summary
     if (monthHours > 0 && currentMonth !== null) {
-      const [year, month] = currentMonth.split('-');
+      const [year, month] = (currentMonth as string).split('-');
       const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
       data.push({
         Fecha: '',
@@ -4248,6 +4279,50 @@ export default function TimeTracking() {
                 </div>
               ))
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Incomplete Sessions Warning Dialog */}
+      <Dialog open={showIncompleteWarningDialog} onOpenChange={setShowIncompleteWarningDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertTriangle className="w-5 h-5" />
+              Fichajes Incompletos Detectados
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                  Se han encontrado {incompleteSessionsCount} fichaje(s) incompleto(s) en el rango seleccionado.
+                </p>
+                <p className="text-sm text-amber-700 dark:text-amber-200">
+                  Los datos exportados serán inexactos hasta que se completen estos fichajes.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={handleCancelExport}
+                data-testid="button-cancel-export"
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="default"
+                className="flex-1 bg-amber-600 hover:bg-amber-700"
+                onClick={handleConfirmExport}
+                data-testid="button-confirm-export"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Exportar Igualmente
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
