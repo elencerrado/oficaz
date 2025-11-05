@@ -3829,17 +3829,22 @@ export default function TimeTracking() {
                         )}
                         
                         {/* Total */}
-                        {request.currentClockIn && request.currentClockOut && request.requestedClockOut && (
+                        {request.requestedClockOut && (
                           <div className="flex items-center justify-between pt-1 border-t border-gray-200 dark:border-gray-700">
                             <span className="text-muted-foreground">Total:</span>
                             <div className="flex items-center gap-2">
-                              {(() => {
-                                const currentMs = new Date(request.currentClockOut).getTime() - new Date(request.currentClockIn).getTime();
-                                const currentHours = Math.floor(currentMs / (1000 * 60 * 60));
-                                const currentMinutes = Math.floor((currentMs % (1000 * 60 * 60)) / (1000 * 60));
-                                return <span className="line-through text-gray-400">{currentHours}h {currentMinutes}min</span>;
-                              })()}
-                              <ArrowDown className="w-3 h-3 text-blue-500 rotate-[-90deg]" />
+                              {request.currentClockIn && request.currentClockOut ? (
+                                // Mostrar comparación si hay ambos valores
+                                <>
+                                  {(() => {
+                                    const currentMs = new Date(request.currentClockOut).getTime() - new Date(request.currentClockIn).getTime();
+                                    const currentHours = Math.floor(currentMs / (1000 * 60 * 60));
+                                    const currentMinutes = Math.floor((currentMs % (1000 * 60 * 60)) / (1000 * 60));
+                                    return <span className="line-through text-gray-400">{currentHours}h {currentMinutes}min</span>;
+                                  })()}
+                                  <ArrowDown className="w-3 h-3 text-blue-500 rotate-[-90deg]" />
+                                </>
+                              ) : null}
                               {(() => {
                                 const requestedMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
                                 const requestedHours = Math.floor(requestedMs / (1000 * 60 * 60));
