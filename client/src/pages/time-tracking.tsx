@@ -163,11 +163,13 @@ export default function TimeTracking() {
     enabled: !!user && (user.role === 'admin' || user.role === 'manager') && showRequestsDialog,
   });
   
-  // Audit logs for selected session
-  const { data: auditLogs = [] } = useQuery<any[]>({
-    queryKey: ['/api/admin/work-sessions', selectedSessionForAudit, 'audit-log'],
-    enabled: !!user && (user.role === 'admin' || user.role === 'manager') && selectedSessionForAudit !== null,
-  });
+  // Get audit logs from the selected session
+  const selectedSession = useMemo(() => {
+    if (!selectedSessionForAudit) return null;
+    return (sessions as any[])?.find((s: any) => s.id === selectedSessionForAudit);
+  }, [selectedSessionForAudit, sessions]);
+  
+  const auditLogs = selectedSession?.auditLogs || [];
 
   // Helper function to check if a specific session is incomplete
   const isSessionIncomplete = useCallback((session: any) => {
