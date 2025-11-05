@@ -244,7 +244,7 @@ export default function TimeTracking() {
   // Lazy loading of audit logs (Performance Optimization)
   // Only load audit logs when the dialog is opened and a session is selected
   const { data: auditLogsData = [], isLoading: isLoadingAuditLogs } = useQuery<any[]>({
-    queryKey: ['/api/admin/work-sessions', selectedSessionForAudit, 'audit-log'],
+    queryKey: [`/api/admin/work-sessions/${selectedSessionForAudit}/audit-log`],
     enabled: !!selectedSessionForAudit && showAuditDialog,
     staleTime: 30 * 1000,
   });
