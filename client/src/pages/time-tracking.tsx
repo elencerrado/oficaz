@@ -747,6 +747,19 @@ export default function TimeTracking() {
 
   // ⚠️ PROTECTED: PDF generation function - CRITICAL FOR REPORTING
   const handleExportPDF = useCallback(() => {
+    // Check for incomplete sessions
+    if (filteredSessions && filteredSessions.length > 0) {
+      const incompleteSessions = filteredSessions.filter((session: any) => !session.clockOut);
+      if (incompleteSessions.length > 0) {
+        toast({
+          title: "⚠️ Aviso: Fichajes incompletos",
+          description: `Hay ${incompleteSessions.length} fichaje(s) en curso. Los datos exportados serán inexactos hasta que se completen.`,
+          variant: "default",
+          duration: 6000,
+        });
+      }
+    }
+
     const doc = new jsPDF();
     
     // Get period text for reuse
@@ -1767,6 +1780,17 @@ export default function TimeTracking() {
         variant: "destructive"
       });
       return;
+    }
+
+    // Check for incomplete sessions
+    const incompleteSessions = filteredSessions.filter((session: any) => !session.clockOut);
+    if (incompleteSessions.length > 0) {
+      toast({
+        title: "⚠️ Aviso: Fichajes incompletos",
+        description: `Hay ${incompleteSessions.length} fichaje(s) en curso. Los datos exportados serán inexactos hasta que se completen.`,
+        variant: "default",
+        duration: 6000,
+      });
     }
 
     // Check if exporting all employees
