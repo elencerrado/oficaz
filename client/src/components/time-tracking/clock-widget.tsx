@@ -89,8 +89,8 @@ export function ClockWidget() {
       <Card className="rounded-2xl shadow-lg">
         <CardContent className="p-6">
           <div className="animate-pulse">
-            <div className="h-4 bg-gray-200 rounded-xl mb-2"></div>
-            <div className="h-8 bg-gray-200 rounded-xl"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-xl mb-2"></div>
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
           </div>
         </CardContent>
       </Card>

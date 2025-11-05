@@ -2,12 +2,7 @@ import { LoadingSpinner } from './loading-spinner';
 
 export function PageLoading() {
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{
-        background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
-      }}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-gradient-to-br dark:from-[#323A46] dark:to-[#232B36]">
       <LoadingSpinner size="lg" />
     </div>
   );

@@ -26,16 +26,16 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
       width: `${currentConfig.outerSize}px`, 
       height: `${currentConfig.outerSize}px` 
     }}>
-      {/* Círculo contorno fijo - blanco en fondo oscuro, oscuro en fondo claro */}
+      {/* Círculo contorno fijo - azul primario en modo claro, blanco en modo oscuro */}
       <div 
-        className="absolute inset-0 rounded-full border-white dark:border-gray-800"
+        className="absolute inset-0 rounded-full border-[#007AFF] dark:border-white"
         style={{ borderWidth: `${currentConfig.borderWidth}px` }}
       ></div>
       
       {/* Círculo relleno giratorio interno - gira en órbita completa */}
       <div className="absolute inset-0 animate-spin">
         <div 
-          className="absolute bg-white dark:bg-gray-800 rounded-full"
+          className="absolute bg-[#007AFF] dark:bg-white rounded-full"
           style={{
             width: `${currentConfig.innerSize}px`,
             height: `${currentConfig.innerSize}px`,

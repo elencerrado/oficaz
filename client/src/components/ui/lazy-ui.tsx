@@ -26,7 +26,7 @@ const SelectValue = lazy(() => import('@/components/ui/select').then(m => ({ def
 
 // Loading fallbacks
 const UILoading = ({ className = "" }: { className?: string }) => (
-  <div className={`animate-pulse bg-gray-200 rounded ${className}`} style={{ minHeight: '2rem' }} />
+  <div className={`animate-pulse bg-gray-200 dark:bg-gray-800 rounded ${className}`} style={{ minHeight: '2rem' }} />
 );
 
 // Wrapper components with loading states

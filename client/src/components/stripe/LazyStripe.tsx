@@ -2,8 +2,8 @@ import { lazy, Suspense } from 'react';
 
 // Stripe loading state
 const StripeLoading = () => (
-  <div className="w-full h-32 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
-    <div className="text-gray-500 text-sm">Cargando sistema de pagos...</div>
+  <div className="w-full h-32 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-lg flex items-center justify-center">
+    <div className="text-gray-500 dark:text-gray-400 text-sm">Cargando sistema de pagos...</div>
   </div>
 );
 
