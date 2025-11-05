@@ -43,6 +43,7 @@ import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
+import * as XLSX from 'xlsx';
 
 export default function TimeTracking() {
   const { user, company } = useAuth();
@@ -107,6 +108,7 @@ export default function TimeTracking() {
   const [showRequestsDialog, setShowRequestsDialog] = useState(false);
   const [showAuditDialog, setShowAuditDialog] = useState(false);
   const [selectedSessionForAudit, setSelectedSessionForAudit] = useState<number | null>(null);
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const [manualEntryData, setManualEntryData] = useState({
     employeeId: '',
     date: '',
@@ -1752,6 +1754,227 @@ export default function TimeTracking() {
     
     toast({
       title: "PDF exportado correctamente",
+      description: `El archivo ${fileName} se ha descargado`,
+    });
+  }, [filteredSessions, selectedEmployee, employeesList, dateFilter, currentDate, currentMonth, startDate, endDate, calculateHours, toast]);
+
+  // Export to Excel function
+  const handleExportExcel = useCallback(() => {
+    if (!filteredSessions || filteredSessions.length === 0) {
+      toast({
+        title: "No hay datos para exportar",
+        description: "No se encontraron fichajes con los filtros seleccionados",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Prepare data rows
+    const data: any[] = [];
+    
+    // Sort sessions by date
+    const sortedSessions = [...filteredSessions].sort((a, b) => new Date(a.clockIn).getTime() - new Date(b.clockIn).getTime());
+    
+    // Track totals for summaries
+    let currentWeekStart: Date | null = null;
+    let currentMonth: string | null = null;
+    let weekHours = 0;
+    let monthHours = 0;
+
+    sortedSessions.forEach((session: any, index: number) => {
+      const sessionDate = new Date(session.clockIn);
+      const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 });
+      const monthKey = format(sessionDate, 'yyyy-MM');
+      
+      const isNewWeek = currentWeekStart === null || weekStart.getTime() !== currentWeekStart.getTime();
+      const isNewMonth = currentMonth === null || monthKey !== currentMonth;
+
+      // Calculate hours for this session
+      const sessionHours = calculateHours(session.clockIn, session.clockOut);
+      const breakHours = session.breakPeriods 
+        ? session.breakPeriods.reduce((breakTotal: number, breakPeriod: any) => {
+            if (breakPeriod.breakEnd) {
+              return breakTotal + calculateHours(breakPeriod.breakStart, breakPeriod.breakEnd);
+            }
+            return breakTotal;
+          }, 0)
+        : 0;
+      const hours = Math.max(0, sessionHours - breakHours);
+
+      // Add month summary row before new month
+      if (isNewMonth && index > 0 && currentMonth) {
+        const [year, month] = currentMonth.split('-');
+        const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
+        data.push({
+          Fecha: '',
+          Empleado: '',
+          Entrada: '',
+          Salida: '',
+          'Total Semanal': '',
+          'Total Mensual': `${monthHours.toFixed(1)}h (${monthName})`,
+          Modificaciones: ''
+        });
+        monthHours = 0;
+      }
+
+      // Add week summary row before new week
+      if (isNewWeek && index > 0 && currentWeekStart && !isNewMonth) {
+        data.push({
+          Fecha: '',
+          Empleado: '',
+          Entrada: '',
+          Salida: '',
+          'Total Semanal': `${weekHours.toFixed(1)}h`,
+          'Total Mensual': '',
+          Modificaciones: ''
+        });
+        weekHours = 0;
+      }
+
+      if (isNewWeek) {
+        currentWeekStart = weekStart;
+      }
+      if (isNewMonth) {
+        currentMonth = monthKey;
+      }
+
+      // Build modifications description
+      let modificationsText = '';
+      const auditLogs = session.auditLogs || [];
+      auditLogs.forEach((log: any) => {
+        let cleanReason = log.reason || '';
+        cleanReason = cleanReason.replace(/^Employee request approved:\s*/i, '');
+        cleanReason = cleanReason.replace(/^Admin modification:\s*/i, '');
+        
+        const approvedBy = log.modifiedByName || 'Admin';
+        
+        if (log.modificationType === 'created_manual') {
+          modificationsText += `Fichaje manual solicitado por empleado, aprobado por ${approvedBy}. `;
+        } else if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
+          const oldVal = log.oldValue || {};
+          
+          if (log.modificationType === 'modified_clockin' && oldVal.clockIn) {
+            const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
+            modificationsText += `Entrada modificada (anterior: ${oldTime}). `;
+          }
+          if (log.modificationType === 'modified_clockout' && oldVal.clockOut) {
+            const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
+            modificationsText += `Salida modificada (anterior: ${oldTime}). `;
+          }
+          if (log.modificationType === 'modified_both') {
+            if (oldVal.clockIn) {
+              const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
+              modificationsText += `Entrada modificada (anterior: ${oldTime}). `;
+            }
+            if (oldVal.clockOut) {
+              const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
+              modificationsText += `Salida modificada (anterior: ${oldTime}). `;
+            }
+          }
+          modificationsText += `Aprobado por ${approvedBy}. `;
+        }
+        
+        if (cleanReason) {
+          modificationsText += `Motivo: ${cleanReason}. `;
+        }
+      });
+
+      // Add session data row
+      data.push({
+        Fecha: format(sessionDate, 'dd/MM/yyyy'),
+        Empleado: session.userName || 'Desconocido',
+        Entrada: session.clockIn ? format(new Date(session.clockIn), 'HH:mm') : '',
+        Salida: session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : 'En curso',
+        'Total Semanal': '',
+        'Total Mensual': '',
+        Modificaciones: modificationsText.trim()
+      });
+
+      weekHours += hours;
+      monthHours += hours;
+    });
+
+    // Add final week summary
+    if (weekHours > 0) {
+      data.push({
+        Fecha: '',
+        Empleado: '',
+        Entrada: '',
+        Salida: '',
+        'Total Semanal': `${weekHours.toFixed(1)}h`,
+        'Total Mensual': '',
+        Modificaciones: ''
+      });
+    }
+
+    // Add final month summary
+    if (monthHours > 0 && currentMonth) {
+      const [year, month] = currentMonth.split('-');
+      const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
+      data.push({
+        Fecha: '',
+        Empleado: '',
+        Entrada: '',
+        Salida: '',
+        'Total Semanal': '',
+        'Total Mensual': `${monthHours.toFixed(1)}h (${monthName})`,
+        Modificaciones: ''
+      });
+    }
+
+    // Create worksheet
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    
+    // Set column widths
+    worksheet['!cols'] = [
+      { wch: 12 }, // Fecha
+      { wch: 25 }, // Empleado
+      { wch: 10 }, // Entrada
+      { wch: 10 }, // Salida
+      { wch: 15 }, // Total Semanal
+      { wch: 25 }, // Total Mensual
+      { wch: 60 }  // Modificaciones
+    ];
+
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Fichajes');
+
+    // Generate filename
+    let employeePart = 'todos-empleados';
+    if (selectedEmployee && selectedEmployee !== 'all') {
+      const employee = employeesList.find((e: any) => e.id.toString() === selectedEmployee);
+      if (employee) {
+        employeePart = employee.fullName.toLowerCase().replace(/\s+/g, '-');
+      }
+    }
+
+    let timePart = 'todos-registros';
+    if (dateFilter === 'day') {
+      timePart = format(currentDate, 'dd-MM-yyyy');
+    } else if (dateFilter === 'month') {
+      timePart = format(currentMonth, 'MMMM-yyyy', { locale: es });
+    } else if (dateFilter === 'custom') {
+      if (startDate && endDate) {
+        timePart = `${format(new Date(startDate), 'dd-MM-yyyy')} - ${format(new Date(endDate), 'dd-MM-yyyy')}`;
+      } else if (startDate) {
+        timePart = `desde ${format(new Date(startDate), 'dd-MM-yyyy')}`;
+      } else if (endDate) {
+        timePart = `hasta ${format(new Date(endDate), 'dd-MM-yyyy')}`;
+      }
+    }
+
+    const exportDateTime = format(new Date(), 'dd-MM-yy - HH-mm');
+    const fileName = `${employeePart} - ${timePart} - ${exportDateTime}.xlsx`
+      .replace(/[/\\?%*:|"<>]/g, '-')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // Download file
+    XLSX.writeFile(workbook, fileName);
+
+    toast({
+      title: "Excel exportado correctamente",
       description: `El archivo ${fileName} se ha descargado`,
     });
   }, [filteredSessions, selectedEmployee, employeesList, dateFilter, currentDate, currentMonth, startDate, endDate, calculateHours, toast]);
