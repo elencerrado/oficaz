@@ -327,7 +327,7 @@ export default function VacationRequests() {
           <Button
             variant="ghost"
             size="lg"
-            className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 px-6 py-3 rounded-xl bg-gray-100 dark:bg-white/10 border border-gray-300 dark:border-white/20 backdrop-blur-sm transition-all duration-200 transform hover:scale-105 shadow-md"
+            className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 px-6 py-3 rounded-xl bg-gray-100 dark:bg-white/10 border border-gray-300 dark:border-white/20 backdrop-blur-sm transition-all duration-200"
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
             <span className="font-medium">Atrás</span>
