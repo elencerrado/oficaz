@@ -323,15 +323,31 @@ export default function AdminDashboard() {
 
   // Fetch pending items for quick summary card
   const { data: incompleteSessions = [] } = useQuery({
-    queryKey: ['/api/work-sessions/company', { status: 'incomplete' }],
+    queryKey: ['/api/work-sessions/company', 'incomplete'],
+    queryFn: async () => {
+      const response = await fetch('/api/work-sessions/company?status=incomplete', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch');
+      return response.json();
+    },
     enabled: hasAccess('timeTracking'),
-    select: (data: any[]) => data?.filter((s: any) => s.status === 'incomplete') || [],
   });
 
   const { data: modificationRequests = [] } = useQuery({
-    queryKey: ['/api/admin/work-sessions/modification-requests', { status: 'pending' }],
+    queryKey: ['/api/admin/work-sessions/modification-requests', 'pending'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/work-sessions/modification-requests?status=pending', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch');
+      return response.json();
+    },
     enabled: hasAccess('timeTracking'),
-    select: (data: any[]) => data?.filter((r: any) => r.status === 'pending') || [],
   });
 
   const { data: unreadMessagesData } = useQuery({
