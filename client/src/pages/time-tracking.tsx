@@ -3346,47 +3346,27 @@ export default function TimeTracking() {
                             const incompleteSession = dayData.sessions.find((s: any) => s.status === 'incomplete');
                             const activeSession = dayData.sessions.find((s: any) => !s.clockOut);
                             const session = incompleteSession || activeSession || dayData.sessions[0];
-                            const sessionIsIncomplete = isSessionIncomplete(session);
                             const hasAuditLogs = session.auditLogs && session.auditLogs.length > 0;
                             
-                            if (sessionIsIncomplete) {
-                              // Show red exit button for force completing incomplete sessions (from previous days)
-                              return (
-                                <div className="flex gap-1 justify-center">
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => forceCompleteSessionMutation.mutate(session.id)}
-                                    className="h-8 w-8 p-0 bg-red-600 hover:bg-red-700"
-                                    disabled={forceCompleteSessionMutation.isPending}
-                                    title="Cerrar sesión incompleta"
-                                    data-testid={`button-force-complete-${session.id}`}
-                                  >
-                                    <LogOut className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              );
-                            } else {
-                              // Show history button if there are audit logs
-                              return (
-                                <Button
-                                  size="sm"
-                                  variant={hasAuditLogs ? "outline" : "ghost"}
-                                  onClick={() => {
-                                    setSelectedSessionForAudit(session.id);
-                                    setShowAuditDialog(true);
-                                  }}
-                                  className={cn(
-                                    "h-8 w-8 p-0",
-                                    hasAuditLogs ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50" : "text-gray-400"
-                                  )}
-                                  title={hasAuditLogs ? "Ver historial de modificaciones" : "Sin modificaciones"}
-                                  data-testid={`button-history-${session.id}`}
-                                >
-                                  <History className="w-4 h-4" />
-                                </Button>
-                              );
-                            }
+                            // Show history button if there are audit logs (removed force complete button)
+                            return (
+                              <Button
+                                size="sm"
+                                variant={hasAuditLogs ? "outline" : "ghost"}
+                                onClick={() => {
+                                  setSelectedSessionForAudit(session.id);
+                                  setShowAuditDialog(true);
+                                }}
+                                className={cn(
+                                  "h-8 w-8 p-0",
+                                  hasAuditLogs ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50" : "text-gray-400"
+                                )}
+                                title={hasAuditLogs ? "Ver historial de modificaciones" : "Sin modificaciones"}
+                                data-testid={`button-history-${session.id}`}
+                              >
+                                <History className="w-4 h-4" />
+                              </Button>
+                            );
                           })()}
                         </td>
                       </tr>
@@ -3622,42 +3602,25 @@ export default function TimeTracking() {
                         {(() => {
                           const hasAuditLogs = session.auditLogs && session.auditLogs.length > 0;
                           
-                          if (sessionIsIncomplete) {
-                            // Show red exit button for force completing incomplete sessions (from previous days)
-                            return (
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => forceCompleteSessionMutation.mutate(session.id)}
-                                className="h-8 w-8 p-0 bg-red-600 hover:bg-red-700"
-                                disabled={forceCompleteSessionMutation.isPending}
-                                title="Cerrar sesión incompleta"
-                                data-testid={`button-force-complete-mobile-${session.id}`}
-                              >
-                                <LogOut className="w-4 h-4" />
-                              </Button>
-                            );
-                          } else {
-                            // Show history button if there are audit logs
-                            return (
-                              <Button
-                                size="sm"
-                                variant={hasAuditLogs ? "outline" : "ghost"}
-                                onClick={() => {
-                                  setSelectedSessionForAudit(session.id);
-                                  setShowAuditDialog(true);
-                                }}
-                                className={cn(
-                                  "h-8 w-8 p-0",
-                                  hasAuditLogs ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50" : "text-gray-400"
-                                )}
-                                title={hasAuditLogs ? "Ver historial de modificaciones" : "Sin modificaciones"}
-                                data-testid={`button-history-mobile-${session.id}`}
-                              >
-                                <History className="w-4 h-4" />
-                              </Button>
-                            );
-                          }
+                          // Show history button if there are audit logs (removed force complete button)
+                          return (
+                            <Button
+                              size="sm"
+                              variant={hasAuditLogs ? "outline" : "ghost"}
+                              onClick={() => {
+                                setSelectedSessionForAudit(session.id);
+                                setShowAuditDialog(true);
+                              }}
+                              className={cn(
+                                "h-8 w-8 p-0",
+                                hasAuditLogs ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50" : "text-gray-400"
+                              )}
+                              title={hasAuditLogs ? "Ver historial de modificaciones" : "Sin modificaciones"}
+                              data-testid={`button-history-mobile-${session.id}`}
+                            >
+                              <History className="w-4 h-4" />
+                            </Button>
+                          );
                         })()}
                       </div>
                     </div>
