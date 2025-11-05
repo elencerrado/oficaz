@@ -1073,10 +1073,17 @@ export default function TimeTracking() {
                 const currentLineWidth = xOffset - colPositions[5];
                 const remainingWidth = colWidths[5] - currentLineWidth;
                 
-                // Calculate width of current item
+                // Calculate width of current item - handle label:value pairs carefully
                 let itemWidth = 0;
-                if (info.includes(':')) {
-                  const [label, value] = info.split(':').map(s => s.trim());
+                let label = '';
+                let value = '';
+                
+                // Split only on FIRST colon to handle times like "Entrada anterior: 12:00"
+                const colonIndex = info.indexOf(':');
+                if (colonIndex !== -1) {
+                  label = info.substring(0, colonIndex).trim();
+                  value = info.substring(colonIndex + 1).trim();
+                  
                   doc.setFont('helvetica', 'normal');
                   const labelWidth = doc.getTextWidth(label + ': ');
                   doc.setFont('helvetica', 'bold');
@@ -1087,19 +1094,15 @@ export default function TimeTracking() {
                   itemWidth = doc.getTextWidth(info);
                 }
                 
-                // Add separator width if not last item
-                const separatorWidth = (idx < auditInfo.length - 1) ? doc.getTextWidth(' | ') : 0;
-                
-                // Wrap to next line if needed
-                if (currentLineWidth > 0 && itemWidth + separatorWidth > remainingWidth) {
+                // Check if we need to wrap (but don't add separator width to the check)
+                if (currentLineWidth > 0 && itemWidth > remainingWidth) {
                   yOffset += lineHeight;
                   xOffset = colPositions[5];
                   linesDrawn++;
                 }
                 
                 // Draw the item
-                if (info.includes(':')) {
-                  const [label, value] = info.split(':').map(s => s.trim());
+                if (colonIndex !== -1) {
                   doc.setFont('helvetica', 'normal');
                   doc.text(label + ':', xOffset, yOffset);
                   const labelWidth = doc.getTextWidth(label + ': ');
@@ -1112,11 +1115,21 @@ export default function TimeTracking() {
                 
                 xOffset += itemWidth;
                 
-                // Add separator if not last item (NO separator at end)
+                // Add separator if not last item
                 if (idx < auditInfo.length - 1) {
                   doc.setFont('helvetica', 'normal');
-                  doc.text(' | ', xOffset, yOffset);
-                  xOffset += separatorWidth;
+                  const separatorWidth = doc.getTextWidth(' | ');
+                  
+                  // Check if separator fits on current line
+                  if (xOffset + separatorWidth - colPositions[5] <= colWidths[5]) {
+                    doc.text(' | ', xOffset, yOffset);
+                    xOffset += separatorWidth;
+                  } else {
+                    // Separator doesn't fit, move to next line
+                    yOffset += lineHeight;
+                    xOffset = colPositions[5];
+                    linesDrawn++;
+                  }
                 }
               });
               
@@ -1158,10 +1171,17 @@ export default function TimeTracking() {
                 const currentLineWidth = xOffset - colPositions[5];
                 const remainingWidth = colWidths[5] - currentLineWidth;
                 
-                // Calculate width of current item
+                // Calculate width of current item - handle label:value pairs carefully
                 let itemWidth = 0;
-                if (info.includes(':')) {
-                  const [label, value] = info.split(':').map(s => s.trim());
+                let label = '';
+                let value = '';
+                
+                // Split only on FIRST colon to handle times like "Entrada anterior: 12:00"
+                const colonIndex = info.indexOf(':');
+                if (colonIndex !== -1) {
+                  label = info.substring(0, colonIndex).trim();
+                  value = info.substring(colonIndex + 1).trim();
+                  
                   doc.setFont('helvetica', 'normal');
                   const labelWidth = doc.getTextWidth(label + ': ');
                   doc.setFont('helvetica', 'bold');
@@ -1172,19 +1192,15 @@ export default function TimeTracking() {
                   itemWidth = doc.getTextWidth(info);
                 }
                 
-                // Add separator width if not last item
-                const separatorWidth = (idx < auditInfo.length - 1) ? doc.getTextWidth(' | ') : 0;
-                
-                // Wrap to next line if needed
-                if (currentLineWidth > 0 && itemWidth + separatorWidth > remainingWidth) {
+                // Check if we need to wrap (but don't add separator width to the check)
+                if (currentLineWidth > 0 && itemWidth > remainingWidth) {
                   yOffset += lineHeight;
                   xOffset = colPositions[5];
                   linesDrawn++;
                 }
                 
                 // Draw the item
-                if (info.includes(':')) {
-                  const [label, value] = info.split(':').map(s => s.trim());
+                if (colonIndex !== -1) {
                   doc.setFont('helvetica', 'normal');
                   doc.text(label + ':', xOffset, yOffset);
                   const labelWidth = doc.getTextWidth(label + ': ');
@@ -1197,11 +1213,21 @@ export default function TimeTracking() {
                 
                 xOffset += itemWidth;
                 
-                // Add separator if not last item (NO separator at end)
+                // Add separator if not last item
                 if (idx < auditInfo.length - 1) {
                   doc.setFont('helvetica', 'normal');
-                  doc.text(' | ', xOffset, yOffset);
-                  xOffset += separatorWidth;
+                  const separatorWidth = doc.getTextWidth(' | ');
+                  
+                  // Check if separator fits on current line
+                  if (xOffset + separatorWidth - colPositions[5] <= colWidths[5]) {
+                    doc.text(' | ', xOffset, yOffset);
+                    xOffset += separatorWidth;
+                  } else {
+                    // Separator doesn't fit, move to next line
+                    yOffset += lineHeight;
+                    xOffset = colPositions[5];
+                    linesDrawn++;
+                  }
                 }
               });
               
@@ -1385,10 +1411,17 @@ export default function TimeTracking() {
                 const currentLineWidth = xOffset - colPositions[5];
                 const remainingWidth = colWidths[5] - currentLineWidth;
                 
-                // Calculate width of current item
+                // Calculate width of current item - handle label:value pairs carefully
                 let itemWidth = 0;
-                if (info.includes(':')) {
-                  const [label, value] = info.split(':').map(s => s.trim());
+                let label = '';
+                let value = '';
+                
+                // Split only on FIRST colon to handle times like "Entrada anterior: 12:00"
+                const colonIndex = info.indexOf(':');
+                if (colonIndex !== -1) {
+                  label = info.substring(0, colonIndex).trim();
+                  value = info.substring(colonIndex + 1).trim();
+                  
                   doc.setFont('helvetica', 'normal');
                   const labelWidth = doc.getTextWidth(label + ': ');
                   doc.setFont('helvetica', 'bold');
@@ -1399,19 +1432,15 @@ export default function TimeTracking() {
                   itemWidth = doc.getTextWidth(info);
                 }
                 
-                // Add separator width if not last item
-                const separatorWidth = (idx < auditInfo.length - 1) ? doc.getTextWidth(' | ') : 0;
-                
-                // Wrap to next line if needed
-                if (currentLineWidth > 0 && itemWidth + separatorWidth > remainingWidth) {
+                // Check if we need to wrap (but don't add separator width to the check)
+                if (currentLineWidth > 0 && itemWidth > remainingWidth) {
                   yOffset += lineHeight;
                   xOffset = colPositions[5];
                   linesDrawn++;
                 }
                 
                 // Draw the item
-                if (info.includes(':')) {
-                  const [label, value] = info.split(':').map(s => s.trim());
+                if (colonIndex !== -1) {
                   doc.setFont('helvetica', 'normal');
                   doc.text(label + ':', xOffset, yOffset);
                   const labelWidth = doc.getTextWidth(label + ': ');
@@ -1424,11 +1453,21 @@ export default function TimeTracking() {
                 
                 xOffset += itemWidth;
                 
-                // Add separator if not last item (NO separator at end)
+                // Add separator if not last item
                 if (idx < auditInfo.length - 1) {
                   doc.setFont('helvetica', 'normal');
-                  doc.text(' | ', xOffset, yOffset);
-                  xOffset += separatorWidth;
+                  const separatorWidth = doc.getTextWidth(' | ');
+                  
+                  // Check if separator fits on current line
+                  if (xOffset + separatorWidth - colPositions[5] <= colWidths[5]) {
+                    doc.text(' | ', xOffset, yOffset);
+                    xOffset += separatorWidth;
+                  } else {
+                    // Separator doesn't fit, move to next line
+                    yOffset += lineHeight;
+                    xOffset = colPositions[5];
+                    linesDrawn++;
+                  }
                 }
               });
               
@@ -1470,10 +1509,17 @@ export default function TimeTracking() {
                 const currentLineWidth = xOffset - colPositions[5];
                 const remainingWidth = colWidths[5] - currentLineWidth;
                 
-                // Calculate width of current item
+                // Calculate width of current item - handle label:value pairs carefully
                 let itemWidth = 0;
-                if (info.includes(':')) {
-                  const [label, value] = info.split(':').map(s => s.trim());
+                let label = '';
+                let value = '';
+                
+                // Split only on FIRST colon to handle times like "Entrada anterior: 12:00"
+                const colonIndex = info.indexOf(':');
+                if (colonIndex !== -1) {
+                  label = info.substring(0, colonIndex).trim();
+                  value = info.substring(colonIndex + 1).trim();
+                  
                   doc.setFont('helvetica', 'normal');
                   const labelWidth = doc.getTextWidth(label + ': ');
                   doc.setFont('helvetica', 'bold');
@@ -1484,19 +1530,15 @@ export default function TimeTracking() {
                   itemWidth = doc.getTextWidth(info);
                 }
                 
-                // Add separator width if not last item
-                const separatorWidth = (idx < auditInfo.length - 1) ? doc.getTextWidth(' | ') : 0;
-                
-                // Wrap to next line if needed
-                if (currentLineWidth > 0 && itemWidth + separatorWidth > remainingWidth) {
+                // Check if we need to wrap (but don't add separator width to the check)
+                if (currentLineWidth > 0 && itemWidth > remainingWidth) {
                   yOffset += lineHeight;
                   xOffset = colPositions[5];
                   linesDrawn++;
                 }
                 
                 // Draw the item
-                if (info.includes(':')) {
-                  const [label, value] = info.split(':').map(s => s.trim());
+                if (colonIndex !== -1) {
                   doc.setFont('helvetica', 'normal');
                   doc.text(label + ':', xOffset, yOffset);
                   const labelWidth = doc.getTextWidth(label + ': ');
@@ -1509,11 +1551,21 @@ export default function TimeTracking() {
                 
                 xOffset += itemWidth;
                 
-                // Add separator if not last item (NO separator at end)
+                // Add separator if not last item
                 if (idx < auditInfo.length - 1) {
                   doc.setFont('helvetica', 'normal');
-                  doc.text(' | ', xOffset, yOffset);
-                  xOffset += separatorWidth;
+                  const separatorWidth = doc.getTextWidth(' | ');
+                  
+                  // Check if separator fits on current line
+                  if (xOffset + separatorWidth - colPositions[5] <= colWidths[5]) {
+                    doc.text(' | ', xOffset, yOffset);
+                    xOffset += separatorWidth;
+                  } else {
+                    // Separator doesn't fit, move to next line
+                    yOffset += lineHeight;
+                    xOffset = colPositions[5];
+                    linesDrawn++;
+                  }
                 }
               });
               
