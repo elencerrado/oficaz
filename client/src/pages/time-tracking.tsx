@@ -3764,7 +3764,7 @@ export default function TimeTracking() {
                       <div>
                         <div className="font-medium">{request.employeeName}</div>
                         <div className="text-sm text-muted-foreground">
-                          {request.requestType === 'forgotten_checkin' ? 'Fichaje Olvidado' : 'Modificar Horario'}
+                          {request.requestType === 'forgotten_checkin' ? 'Quiere añadir un nuevo fichaje manual' : 'Quiere modificar este horario'}
                         </div>
                       </div>
                     </div>
