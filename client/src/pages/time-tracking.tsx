@@ -3260,7 +3260,7 @@ export default function TimeTracking() {
                             const incompleteSession = dayData.sessions.find((s: any) => s.status === 'incomplete');
                             const activeSession = dayData.sessions.find((s: any) => !s.clockOut);
                             const session = incompleteSession || activeSession || dayData.sessions[0];
-                            const hasAuditLogs = session.auditLogs && session.auditLogs.length > 0;
+                            const hasAuditLogs = session.hasAuditLogs === true;
                             
                             // Show history button if there are audit logs (removed force complete button)
                             return (
@@ -3517,7 +3517,7 @@ export default function TimeTracking() {
                         </div>
                         
                         {(() => {
-                          const hasAuditLogs = session.auditLogs && session.auditLogs.length > 0;
+                          const hasAuditLogs = session.hasAuditLogs === true;
                           
                           // Show history button if there are audit logs (removed force complete button)
                           return (

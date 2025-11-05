@@ -535,6 +535,19 @@ export class DrizzleStorage implements IStorage {
     // Audit logs are now loaded lazily when needed via /api/admin/work-sessions/:id/audit-log
     // This significantly reduces payload size and improves query performance
 
+    // Get audit log counts for each session (lightweight check)
+    const auditLogCounts = await db.select({
+      workSessionId: schema.workSessionAuditLog.workSessionId,
+      count: sql<number>`count(*)::int`,
+    }).from(schema.workSessionAuditLog)
+      .where(inArray(schema.workSessionAuditLog.workSessionId, sessionIds))
+      .groupBy(schema.workSessionAuditLog.workSessionId);
+
+    const auditCountMap = new Map<number, number>();
+    auditLogCounts.forEach(ac => {
+      auditCountMap.set(ac.workSessionId, ac.count);
+    });
+
     // Get modifier names for lastModifiedBy field only
     const modifierIds = new Set<number>();
     sessions.forEach(s => {
@@ -559,6 +572,7 @@ export class DrizzleStorage implements IStorage {
         ...session,
         breakPeriods: breakPeriodsMap.get(session.id) || [],
         auditLogs: [], // Empty by default - load lazily when needed
+        hasAuditLogs: (auditCountMap.get(session.id) || 0) > 0, // Lightweight indicator
         lastModifiedByName: session.lastModifiedBy ? modifiersMap.get(session.lastModifiedBy) : null,
       };
     });
