@@ -2694,8 +2694,8 @@ export default function TimeTracking() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={handleExportPDF}
-                title="Exporta en PDF la vista actual de fichajes"
+                onClick={() => setShowExportDialog(true)}
+                title="Exporta los fichajes en PDF o Excel"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Exportar
@@ -2742,8 +2742,8 @@ export default function TimeTracking() {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={handleExportPDF}
-                  title="Exporta en PDF la vista actual de fichajes"
+                  onClick={() => setShowExportDialog(true)}
+                  title="Exporta los fichajes en PDF o Excel"
                   className="flex items-center justify-center gap-2 w-full"
                 >
                   <Download className="w-4 h-4" />
@@ -3856,6 +3856,46 @@ export default function TimeTracking() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Export Dialog */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Exportar Fichajes</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Selecciona el formato de exportación para los fichajes filtrados
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                variant="outline"
+                className="h-24 flex flex-col items-center justify-center gap-2"
+                onClick={() => {
+                  setShowExportDialog(false);
+                  handleExportPDF();
+                }}
+                data-testid="button-export-pdf"
+              >
+                <FileText className="w-8 h-8 text-red-600" />
+                <span className="font-medium">Exportar PDF</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-24 flex flex-col items-center justify-center gap-2"
+                onClick={() => {
+                  setShowExportDialog(false);
+                  handleExportExcel();
+                }}
+                data-testid="button-export-excel"
+              >
+                <FileText className="w-8 h-8 text-green-600" />
+                <span className="font-medium">Exportar Excel</span>
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Manual Entry Dialog */}
       <Dialog open={showManualEntryDialog} onOpenChange={setShowManualEntryDialog}>
