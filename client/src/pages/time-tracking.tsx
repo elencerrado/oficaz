@@ -3867,10 +3867,17 @@ export default function TimeTracking() {
                     </div>
                     
                     {/* Show who performed the action based on type */}
-                    {log.modificationType === 'created_manual' && log.modifiedByName && (
-                      <div className="text-sm text-blue-600 dark:text-blue-400">
-                        <span className="font-medium">Creado por:</span> {log.modifiedByName}
-                      </div>
+                    {log.modificationType === 'created_manual' && (
+                      <>
+                        <div className="text-sm text-purple-600 dark:text-purple-400">
+                          <span className="font-medium">Creado por:</span> {employeeName}
+                        </div>
+                        {log.modifiedByName && (
+                          <div className="text-sm text-blue-600 dark:text-blue-400">
+                            <span className="font-medium">Aprobado por:</span> {log.modifiedByName}
+                          </div>
+                        )}
+                      </>
                     )}
                     
                     {log.modificationType !== 'created_manual' && isEmployeeRequest && (
