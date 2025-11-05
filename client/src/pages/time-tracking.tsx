@@ -89,13 +89,6 @@ export default function TimeTracking() {
   const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
   const [isRangeDialogOpen, setIsRangeDialogOpen] = useState(false);
   const [isMonthDialogOpen, setIsMonthDialogOpen] = useState(false);
-  const [editingSession, setEditingSession] = useState<number | null>(null);
-  const [editData, setEditData] = useState({
-    clockIn: '',
-    clockOut: '',
-    date: '',
-    breakPeriods: [] as Array<{breakStart: string, breakEnd: string | null}>,
-  });
   const [showFilters, setShowFilters] = useState(false);
   const [showBreakTooltip, setShowBreakTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -240,8 +233,6 @@ export default function TimeTracking() {
         title: 'Fichaje Actualizado',
         description: 'Los cambios se han guardado exitosamente.',
       });
-      setEditingSession(null);
-      setEditData({ clockIn: '', clockOut: '', date: '', breakPeriods: [] });
       
       // Refetch to ensure data consistency (but UI already updated)
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
@@ -406,76 +397,6 @@ export default function TimeTracking() {
       });
     },
   });
-
-  // ⚠️ PROTECTED: Session editing and time calculation functions - DO NOT MODIFY
-  // These functions are CRITICAL for time tracking accuracy and must remain stable
-  const handleEditSession = useCallback((session: any) => {
-    setEditingSession(session.id);
-    
-    // Format break periods for editing
-    const formattedBreaks = (session.breakPeriods || []).map((bp: any) => ({
-      breakStart: bp.breakStart ? format(new Date(bp.breakStart), 'HH:mm') : '',
-      breakEnd: bp.breakEnd ? format(new Date(bp.breakEnd), 'HH:mm') : '',
-    }));
-    
-    setEditData({
-      clockIn: session.clockIn ? format(new Date(session.clockIn), 'HH:mm') : '',
-      clockOut: session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '',
-      date: format(new Date(session.clockIn), 'yyyy-MM-dd'),
-      breakPeriods: formattedBreaks,
-    });
-  }, []);
-
-  const handleSaveSession = useCallback((sessionId: number) => {
-    const clockInDateTime = new Date(`${editData.date}T${editData.clockIn}:00`);
-    const clockOutDateTime = editData.clockOut ? new Date(`${editData.date}T${editData.clockOut}:00`) : null;
-    
-    // Format break periods back to ISO format
-    const formattedBreakPeriods = editData.breakPeriods
-      .filter(bp => bp.breakStart) // Only include breaks with start time
-      .map(bp => ({
-        breakStart: new Date(`${editData.date}T${bp.breakStart}:00`).toISOString(),
-        breakEnd: bp.breakEnd ? new Date(`${editData.date}T${bp.breakEnd}:00`).toISOString() : null,
-      }));
-    
-    updateSessionMutation.mutate({
-      id: sessionId,
-      data: {
-        clockIn: clockInDateTime.toISOString(),
-        clockOut: clockOutDateTime?.toISOString() || null,
-        breakPeriods: formattedBreakPeriods,
-      }
-    });
-  }, [editData, updateSessionMutation]);
-
-  const handleCancelEdit = useCallback(() => {
-    setEditingSession(null);
-    setEditData({ clockIn: '', clockOut: '', date: '', breakPeriods: [] });
-  }, []);
-
-  // Break period management functions
-  const handleAddBreakPeriod = useCallback(() => {
-    setEditData(prev => ({
-      ...prev,
-      breakPeriods: [...prev.breakPeriods, { breakStart: '', breakEnd: '' }]
-    }));
-  }, []);
-
-  const handleUpdateBreakPeriod = useCallback((index: number, field: 'breakStart' | 'breakEnd', value: string) => {
-    setEditData(prev => ({
-      ...prev,
-      breakPeriods: prev.breakPeriods.map((bp, i) => 
-        i === index ? { ...bp, [field]: value } : bp
-      )
-    }));
-  }, []);
-
-  const handleRemoveBreakPeriod = useCallback((index: number) => {
-    setEditData(prev => ({
-      ...prev,
-      breakPeriods: prev.breakPeriods.filter((_, i) => i !== index)
-    }));
-  }, []);
 
   // Quick filter functions for stats cards
   const handleResetFilters = useCallback(() => {
@@ -3227,7 +3148,7 @@ export default function TimeTracking() {
                   <th className="text-left py-3 px-4 font-medium text-foreground">Fecha</th>
                   <th className="text-left py-3 px-4 font-medium text-foreground min-w-[300px]">Jornada de Trabajo</th>
                   <th className="text-left py-3 px-4 font-medium text-foreground">Total</th>
-                  <th className="text-center py-3 px-4 font-medium text-foreground">Acciones</th>
+                  <th className="text-center py-3 px-4 font-medium text-foreground w-[80px]">Historial</th>
                 </tr>
               </thead>
               <tbody>
@@ -3382,8 +3303,6 @@ export default function TimeTracking() {
                       return total + Math.max(0, sessionHours - breakHours);
                     }, 0);
                     
-                    const isEditing = editingSession === dayData.sessions[0]?.id;
-                    
                     result.push(
                       <tr key={`day-${dayData.date}-${dayData.userId}`} className="hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-700 h-12">
                         <td className="py-2 px-4">
@@ -3407,103 +3326,12 @@ export default function TimeTracking() {
                           </div>
                         </td>
                         <td className="py-2 px-4">
-                          {isEditing ? (
-                            <div className="w-36">
-                              <DatePickerDay
-                                date={editData.date ? new Date(editData.date) : undefined}
-                                onDateChange={(date) => {
-                                  setEditData(prev => ({ 
-                                    ...prev, 
-                                    date: date ? format(date, 'yyyy-MM-dd') : '' 
-                                  }));
-                                }}
-                                className="h-8 text-sm"
-                                placeholder="Seleccionar fecha"
-                              />
-                            </div>
-                          ) : (
-                            <div className="text-gray-700 dark:text-gray-300 text-sm">
-                              {format(new Date(dayData.date), 'dd/MM/yyyy')}
-                            </div>
-                          )}
+                          <div className="text-gray-700 dark:text-gray-300 text-sm">
+                            {format(new Date(dayData.date), 'dd/MM/yyyy')}
+                          </div>
                         </td>
                         <td className="py-2 px-4 min-w-[300px]">
-                          {isEditing ? (
-                            <div className="space-y-3">
-                              {/* Entrada y Salida */}
-                              <div className="flex space-x-2">
-                                <Input
-                                  type="time"
-                                  value={editData.clockIn}
-                                  onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
-                                  className="w-24 h-8"
-                                  placeholder="Entrada"
-                                />
-                                <Input
-                                  type="time"
-                                  value={editData.clockOut}
-                                  onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
-                                  className="w-24 h-8"
-                                  placeholder="Salida"
-                                />
-                              </div>
-                              
-                              {/* Periodos de Descanso */}
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                    Descansos
-                                  </label>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={handleAddBreakPeriod}
-                                    className="h-6 px-2 text-xs"
-                                  >
-                                    + Añadir
-                                  </Button>
-                                </div>
-                                
-                                {editData.breakPeriods.map((breakPeriod, index) => (
-                                  <div key={index} className="flex items-center space-x-1">
-                                    <Input
-                                      type="time"
-                                      value={breakPeriod.breakStart}
-                                      onChange={(e) => handleUpdateBreakPeriod(index, 'breakStart', e.target.value)}
-                                      className="w-20 h-7 text-xs"
-                                      placeholder="Inicio"
-                                    />
-                                    <span className="text-xs text-gray-400 dark:text-gray-500">-</span>
-                                    <Input
-                                      type="time"
-                                      value={breakPeriod.breakEnd || ''}
-                                      onChange={(e) => handleUpdateBreakPeriod(index, 'breakEnd', e.target.value)}
-                                      className="w-20 h-7 text-xs"
-                                      placeholder="Fin"
-                                    />
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleRemoveBreakPeriod(index)}
-                                      className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30"
-                                    >
-                                      <X className="w-3 h-3" />
-                                    </Button>
-                                  </div>
-                                ))}
-                                
-                                {editData.breakPeriods.length === 0 && (
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 italic">
-                                    Sin descansos programados
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          ) : (
-                            <DailyTimelineBar dayData={dayData} />
-                          )}
+                          <DailyTimelineBar dayData={dayData} />
                         </td>
                         <td className="py-2 px-4">
                           <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
@@ -3511,65 +3339,53 @@ export default function TimeTracking() {
                           </div>
                         </td>
                         <td className="py-2 px-4 text-center">
-                          {isEditing ? (
-                            <div className="flex gap-2 justify-center">
-                              <Button
-                                size="sm"
-                                onClick={() => handleSaveSession(dayData.sessions[0]?.id)}
-                                className="h-8 w-8 p-0"
-                              >
-                                <Check className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={handleCancelEdit}
-                                className="h-8 w-8 p-0"
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          ) : (
-                            // Check session status to show appropriate button
-                            (() => {
-                              // When there are multiple sessions in a day, prioritize incomplete session, then active, then first
-                              const incompleteSession = dayData.sessions.find((s: any) => s.status === 'incomplete');
-                              const activeSession = dayData.sessions.find((s: any) => !s.clockOut);
-                              const session = incompleteSession || activeSession || dayData.sessions[0];
-                              const sessionIsIncomplete = isSessionIncomplete(session);
-                              const sessionIsActiveToday = !session.clockOut && isToday(new Date(session.clockIn)); // Active session means no clockOut AND is today
-                              
-                              if (sessionIsIncomplete) {
-                                // Show red exit button for force completing incomplete sessions (from previous days)
-                                return (
+                          {(() => {
+                            // When there are multiple sessions in a day, prioritize incomplete session, then active, then first
+                            const incompleteSession = dayData.sessions.find((s: any) => s.status === 'incomplete');
+                            const activeSession = dayData.sessions.find((s: any) => !s.clockOut);
+                            const session = incompleteSession || activeSession || dayData.sessions[0];
+                            const sessionIsIncomplete = isSessionIncomplete(session);
+                            const hasAuditLogs = session.auditLogs && session.auditLogs.length > 0;
+                            
+                            if (sessionIsIncomplete) {
+                              // Show red exit button for force completing incomplete sessions (from previous days)
+                              return (
+                                <div className="flex gap-1 justify-center">
                                   <Button
                                     size="sm"
                                     variant="destructive"
                                     onClick={() => forceCompleteSessionMutation.mutate(session.id)}
                                     className="h-8 w-8 p-0 bg-red-600 hover:bg-red-700"
                                     disabled={forceCompleteSessionMutation.isPending}
+                                    title="Cerrar sesión incompleta"
+                                    data-testid={`button-force-complete-${session.id}`}
                                   >
                                     <LogOut className="w-4 h-4" />
                                   </Button>
-                                );
-                              } else if (sessionIsActiveToday) {
-                                // Don't show edit button for today's active sessions
-                                return null;
-                              } else {
-                                // Show regular edit button for completed sessions only
-                                return (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleEditSession(session)}
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <Edit className="w-4 h-4" />
-                                  </Button>
-                                );
-                              }
-                            })()
-                          )}
+                                </div>
+                              );
+                            } else {
+                              // Show history button if there are audit logs
+                              return (
+                                <Button
+                                  size="sm"
+                                  variant={hasAuditLogs ? "outline" : "ghost"}
+                                  onClick={() => {
+                                    setSelectedSessionForAudit(session.id);
+                                    setShowAuditDialog(true);
+                                  }}
+                                  className={cn(
+                                    "h-8 w-8 p-0",
+                                    hasAuditLogs ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50" : "text-gray-400"
+                                  )}
+                                  title={hasAuditLogs ? "Ver historial de modificaciones" : "Sin modificaciones"}
+                                  data-testid={`button-history-${session.id}`}
+                                >
+                                  <History className="w-4 h-4" />
+                                </Button>
+                              );
+                            }
+                          })()}
                         </td>
                       </tr>
                     );
@@ -3761,7 +3577,6 @@ export default function TimeTracking() {
                   return total + Math.max(0, sessionHours - breakHours);
                 }, 0);
                 
-                const isEditing = editingSession === dayData.sessions[0]?.id;
                 // When there are multiple sessions in a day, prioritize incomplete session, then active, then first
                 const incompleteSession = dayData.sessions.find((s: any) => s.status === 'incomplete');
                 const activeSession = dayData.sessions.find((s: any) => !s.clockOut);
@@ -3802,173 +3617,56 @@ export default function TimeTracking() {
                           </div>
                         </div>
                         
-                        {isEditing ? (
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleSaveSession(dayData.sessions[0]?.id)}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Check className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={handleCancelEdit}
-                              className="h-8 w-8 p-0"
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          (() => {
-                            const sessionIsActiveToday = !session.clockOut && isToday(new Date(session.clockIn)); // Active session means no clockOut AND is today
-                            
-                            if (sessionIsIncomplete) {
-                              // Show red exit button for force completing incomplete sessions (from previous days)
-                              return (
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => forceCompleteSessionMutation.mutate(session.id)}
-                                  className="h-8 w-8 p-0 bg-red-600 hover:bg-red-700"
-                                  disabled={forceCompleteSessionMutation.isPending}
-                                >
-                                  <LogOut className="w-4 h-4" />
-                                </Button>
-                              );
-                            } else if (sessionIsActiveToday) {
-                              // Don't show edit button for today's active sessions
-                              return null;
-                            } else {
-                              // Show regular edit button for completed sessions only
-                              return (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleEditSession(session)}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                              );
-                            }
-                          })()
-                        )}
+                        {(() => {
+                          const hasAuditLogs = session.auditLogs && session.auditLogs.length > 0;
+                          
+                          if (sessionIsIncomplete) {
+                            // Show red exit button for force completing incomplete sessions (from previous days)
+                            return (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => forceCompleteSessionMutation.mutate(session.id)}
+                                className="h-8 w-8 p-0 bg-red-600 hover:bg-red-700"
+                                disabled={forceCompleteSessionMutation.isPending}
+                                title="Cerrar sesión incompleta"
+                                data-testid={`button-force-complete-mobile-${session.id}`}
+                              >
+                                <LogOut className="w-4 h-4" />
+                              </Button>
+                            );
+                          } else {
+                            // Show history button if there are audit logs
+                            return (
+                              <Button
+                                size="sm"
+                                variant={hasAuditLogs ? "outline" : "ghost"}
+                                onClick={() => {
+                                  setSelectedSessionForAudit(session.id);
+                                  setShowAuditDialog(true);
+                                }}
+                                className={cn(
+                                  "h-8 w-8 p-0",
+                                  hasAuditLogs ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50" : "text-gray-400"
+                                )}
+                                title={hasAuditLogs ? "Ver historial de modificaciones" : "Sin modificaciones"}
+                                data-testid={`button-history-mobile-${session.id}`}
+                              >
+                                <History className="w-4 h-4" />
+                              </Button>
+                            );
+                          }
+                        })()}
                       </div>
                     </div>
                     
-                    {/* Timeline or edit mode */}
+                    {/* Timeline */}
                     <div>
-                      {isEditing ? (
-                        <div className="space-y-3">
-                          {/* Date picker for editing */}
-                          <div>
-                            <label className="text-xs font-medium text-foreground block mb-1">Fecha</label>
-                            <DatePickerDay
-                              date={editData.date ? new Date(editData.date) : undefined}
-                              onDateChange={(date) => {
-                                setEditData(prev => ({ 
-                                  ...prev, 
-                                  date: date ? format(date, 'yyyy-MM-dd') : '' 
-                                }));
-                              }}
-                              className="h-8 text-sm w-full"
-                              placeholder="Seleccionar fecha"
-                            />
-                          </div>
-                          
-                          {/* Entry and exit times */}
-                          <div className="overflow-hidden">
-                            <label className="text-xs font-medium text-foreground block mb-1">Horarios</label>
-                            <div className="flex gap-2">
-                              <div className="flex-1 min-w-0">
-                                <Input
-                                  type="time"
-                                  value={editData.clockIn}
-                                  onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
-                                  className="h-7 w-full px-1 min-w-0"
-                                  style={{ fontSize: '10px', maxWidth: '100%' }}
-                                />
-                                <span className="text-xs text-muted-foreground mt-0.5 block">Entrada</span>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <Input
-                                  type="time"
-                                  value={editData.clockOut}
-                                  onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
-                                  className="h-7 w-full px-1 min-w-0"
-                                  style={{ fontSize: '10px', maxWidth: '100%' }}
-                                />
-                                <span className="text-xs text-muted-foreground mt-0.5 block">Salida</span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* Break periods */}
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <label className="text-xs font-medium text-foreground">Descansos</label>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={handleAddBreakPeriod}
-                                className="h-6 px-2 text-xs"
-                              >
-                                + Añadir
-                              </Button>
-                            </div>
-                            
-                            {editData.breakPeriods.map((breakPeriod, index) => (
-                              <div key={index} className="flex items-center gap-1 mb-2">
-                                <div className="flex-1 max-w-[40%]">
-                                  <Input
-                                    type="time"
-                                    value={breakPeriod.breakStart}
-                                    onChange={(e) => handleUpdateBreakPeriod(index, 'breakStart', e.target.value)}
-                                    className="h-7 text-xs w-full px-1 max-w-full"
-                                    placeholder="Inicio"
-                                    style={{ fontSize: '10px' }}
-                                  />
-                                </div>
-                                <span className="text-xs text-muted-foreground px-1">-</span>
-                                <div className="flex-1 max-w-[40%]">
-                                  <Input
-                                    type="time"
-                                    value={breakPeriod.breakEnd || ''}
-                                    onChange={(e) => handleUpdateBreakPeriod(index, 'breakEnd', e.target.value)}
-                                    className="h-7 text-xs w-full px-1 max-w-full"
-                                    placeholder="Fin"
-                                    style={{ fontSize: '10px' }}
-                                  />
-                                </div>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleRemoveBreakPeriod(index)}
-                                  className="h-7 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
-                                >
-                                  <X className="w-3 h-3" />
-                                </Button>
-                              </div>
-                            ))}
-                            
-                            {editData.breakPeriods.length === 0 && (
-                              <p className="text-xs text-muted-foreground italic">
-                                Sin descansos programados
-                              </p>
-                            )}
-                          </div>
+                      <div className="min-h-[40px] flex items-center">
+                        <div className="bg-muted rounded-lg p-2 w-full">
+                          <DailyTimelineBar dayData={dayData} />
                         </div>
-                      ) : (
-                        <div className="min-h-[40px] flex items-center">
-                          <div className="bg-muted rounded-lg p-2 w-full">
-                            <DailyTimelineBar dayData={dayData} />
-                          </div>
-                        </div>
-                      )}
+                      </div>
                     </div>
                   </div>
                 );
