@@ -29,7 +29,8 @@ import {
   X,
   FileText,
   AlertTriangle,
-  ChevronRight
+  ChevronRight,
+  Upload
 } from 'lucide-react';
 import { format, addDays, isSameDay, parseISO, startOfDay, differenceInCalendarDays } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -350,13 +351,21 @@ export default function AdminDashboard() {
     !doc.isAccepted
   ).length;
 
+  // Fetch pending document upload requests
+  const { data: documentRequests = [] } = useQuery({
+    queryKey: ['/api/document-notifications'],
+    enabled: hasAccess('documents'),
+    select: (data: any[]) => data?.filter((req: any) => !req.isCompleted) || [],
+  });
+
   // Calculate total pending items
   const totalPending = 
     incompleteSessions.length + 
     modificationRequests.length + 
     pendingVacations.length + 
     unsignedPayrollsCount + 
-    unreadMessagesCount;
+    unreadMessagesCount +
+    documentRequests.length;
 
   // Track previous vacation requests to detect new ones for toast notifications
   const previousVacationRequestsRef = useRef<any[]>([]);
@@ -989,6 +998,27 @@ export default function AdminDashboard() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary" className="text-xs">{unsignedPayrollsCount}</Badge>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </button>
+                  )}
+
+                  {documentRequests.length > 0 && (
+                    <button
+                      onClick={() => setLocation('/test/admin-documents')}
+                      className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
+                          <Upload className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">Solicitudes de documentos</p>
+                          <p className="text-xs text-muted-foreground">Pendientes de subida</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">{documentRequests.length}</Badge>
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </button>
