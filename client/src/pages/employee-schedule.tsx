@@ -116,20 +116,27 @@ export default function EmployeeSchedule() {
   // Función para verificar si está de vacaciones
   const isOnVacation = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return vacationRequests.find(request => 
-      request.status === 'approved' &&
-      request.startDate.split('T')[0] <= dateStr &&
-      request.endDate.split('T')[0] >= dateStr
-    );
+    return vacationRequests.find(request => {
+      if (request.status !== 'approved') return false;
+      
+      // Parse dates correctly to avoid timezone issues
+      const startDate = format(parseISO(request.startDate), 'yyyy-MM-dd');
+      const endDate = format(parseISO(request.endDate), 'yyyy-MM-dd');
+      
+      return startDate <= dateStr && endDate >= dateStr;
+    });
   };
 
   // Función para verificar si es festivo
   const isHoliday = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return holidays.find(holiday => 
-      holiday.startDate.split('T')[0] <= dateStr &&
-      holiday.endDate.split('T')[0] >= dateStr
-    );
+    return holidays.find(holiday => {
+      // Parse dates correctly to avoid timezone issues
+      const startDate = format(parseISO(holiday.startDate), 'yyyy-MM-dd');
+      const endDate = format(parseISO(holiday.endDate), 'yyyy-MM-dd');
+      
+      return startDate <= dateStr && endDate >= dateStr;
+    });
   };
 
   // Función para renderizar badge de turno - Optimizada para móvil
