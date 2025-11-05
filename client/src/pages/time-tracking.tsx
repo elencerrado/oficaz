@@ -110,16 +110,51 @@ export default function TimeTracking() {
     reason: ''
   });
 
-  // Optimized query with real-time updates
-  const { data: sessions = [], isLoading } = useQuery({
-    queryKey: ['/api/work-sessions/company?limit=40'], // Load 40 sessions with full data
+  // Build query params for server-side filtering (Performance Optimization)
+  const queryParams = useMemo(() => {
+    const params = new URLSearchParams();
+    params.append('limit', '40');
+    
+    // Employee filter
+    if (selectedEmployee !== 'all') {
+      params.append('employeeId', selectedEmployee);
+    }
+    
+    // Date filters
+    if (dateFilter === 'custom' && startDate && endDate) {
+      params.append('startDate', startDate);
+      params.append('endDate', endDate);
+    } else if (dateFilter === 'today') {
+      const today = new Date();
+      params.append('startDate', format(startOfDay(today), 'yyyy-MM-dd'));
+      params.append('endDate', format(endOfDay(today), 'yyyy-MM-dd'));
+    } else if (dateFilter === 'day') {
+      params.append('startDate', format(startOfDay(currentDate), 'yyyy-MM-dd'));
+      params.append('endDate', format(endOfDay(currentDate), 'yyyy-MM-dd'));
+    } else if (dateFilter === 'month') {
+      const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+      params.append('startDate', format(startOfDay(monthStart), 'yyyy-MM-dd'));
+      params.append('endDate', format(endOfDay(monthEnd), 'yyyy-MM-dd'));
+    }
+    
+    // Status filter for incomplete sessions
+    if (activeStatsFilter === 'incomplete') {
+      params.append('status', 'incomplete');
+    }
+    
+    return params.toString();
+  }, [selectedEmployee, dateFilter, startDate, endDate, currentDate, currentMonth, activeStatsFilter]);
+
+  // Optimized query with server-side filtering (NO POLLING - WebSocket handles real-time updates)
+  const { data: sessions = [], isLoading, refetch } = useQuery({
+    queryKey: ['/api/work-sessions/company', queryParams],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
-    staleTime: 0, // Force refetch after database changes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 0,
+    gcTime: 10 * 60 * 1000,
     retry: 2,
     retryDelay: 750,
-    refetchInterval: 30 * 1000, // Refresh every 30 seconds for real-time updates
-    refetchIntervalInBackground: true, // Keep updating even when window is not focused
+    // Removed aggressive polling - WebSocket will handle real-time updates
   });
 
   // Employees with ultra-aggressive caching 
@@ -154,13 +189,63 @@ export default function TimeTracking() {
     enabled: !!user && (user.role === 'admin' || user.role === 'manager') && showRequestsDialog,
   });
   
-  // Get audit logs from the selected session
-  const selectedSession = useMemo(() => {
-    if (!selectedSessionForAudit) return null;
-    return (sessions as any[])?.find((s: any) => s.id === selectedSessionForAudit);
-  }, [selectedSessionForAudit, sessions]);
+  // WebSocket connection for real-time updates (Performance Optimization)
+  useEffect(() => {
+    if (!user || (user.role !== 'admin' && user.role !== 'manager')) return;
+
+    // Get auth token for WebSocket authentication
+    const authData = localStorage.getItem('auth');
+    if (!authData) return;
+
+    const { token } = JSON.parse(authData);
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/work-sessions?token=${token}`;
+
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      console.log('✓ WebSocket connected - real-time updates enabled');
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        
+        if (message.type === 'work_session_created' || message.type === 'work_session_updated') {
+          console.log(`📡 WebSocket update received: ${message.type}`);
+          // Refetch data when changes occur
+          refetch();
+          // Also refetch pending requests count
+          queryClient.invalidateQueries({ queryKey: ['/api/admin/work-sessions/modification-requests/count'] });
+        }
+      } catch (error) {
+        console.error('WebSocket message parse error:', error);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('✗ WebSocket disconnected');
+    };
+
+    // Cleanup on unmount
+    return () => {
+      ws.close();
+    };
+  }, [user, refetch, queryClient]);
+
+  // Lazy loading of audit logs (Performance Optimization)
+  // Only load audit logs when the dialog is opened and a session is selected
+  const { data: auditLogsData = [], isLoading: isLoadingAuditLogs } = useQuery<any[]>({
+    queryKey: ['/api/admin/work-sessions', selectedSessionForAudit, 'audit-log'],
+    enabled: !!selectedSessionForAudit && showAuditDialog,
+    staleTime: 30 * 1000,
+  });
   
-  const auditLogs = selectedSession?.auditLogs || [];
+  const auditLogs = auditLogsData;
 
   // Helper function to check if a specific session is incomplete
   const isSessionIncomplete = useCallback((session: any) => {
@@ -204,7 +289,7 @@ export default function TimeTracking() {
       });
       setShowManualEntryDialog(false);
       setManualEntryData({ employeeId: '', date: '', clockIn: '', clockOut: '', reason: '' });
-      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company?limit=40'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
     },
     onError: (error: any) => {
       toast({
@@ -226,7 +311,7 @@ export default function TimeTracking() {
       });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/work-sessions/modification-requests'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/work-sessions/modification-requests/count'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company?limit=40'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
     },
     onError: (error: any) => {
       toast({

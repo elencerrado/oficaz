@@ -531,27 +531,14 @@ export class DrizzleStorage implements IStorage {
       breakPeriodsMap.get(bp.workSessionId)!.push(bp);
     });
 
-    // Get audit logs for all sessions
-    const allAuditLogs = await db.select().from(schema.workSessionAuditLog)
-      .where(inArray(schema.workSessionAuditLog.workSessionId, sessionIds))
-      .orderBy(schema.workSessionAuditLog.modifiedAt);
+    // ⚠️ PERFORMANCE OPTIMIZATION: Audit logs removed from batch loading
+    // Audit logs are now loaded lazily when needed via /api/admin/work-sessions/:id/audit-log
+    // This significantly reduces payload size and improves query performance
 
-    // Group audit logs by session ID
-    const auditLogsMap = new Map<number, any[]>();
-    allAuditLogs.forEach(log => {
-      if (!auditLogsMap.has(log.workSessionId)) {
-        auditLogsMap.set(log.workSessionId, []);
-      }
-      auditLogsMap.get(log.workSessionId)!.push(log);
-    });
-
-    // Get all unique modifier IDs
+    // Get modifier names for lastModifiedBy field only
     const modifierIds = new Set<number>();
     sessions.forEach(s => {
       if (s.lastModifiedBy) modifierIds.add(s.lastModifiedBy);
-    });
-    allAuditLogs.forEach(log => {
-      if (log.modifiedBy) modifierIds.add(log.modifiedBy);
     });
 
     // Get modifier user info
@@ -566,18 +553,12 @@ export class DrizzleStorage implements IStorage {
       modifiers.forEach(m => modifiersMap.set(m.id, m.fullName));
     }
 
-    // Combine sessions with their break periods, audit logs, and modifier names efficiently
+    // Combine sessions with their break periods and modifier names efficiently
     return sessions.map(session => {
-      const sessionAuditLogs = auditLogsMap.get(session.id) || [];
-      const enrichedAuditLogs = sessionAuditLogs.map(log => ({
-        ...log,
-        modifiedByName: log.modifiedBy ? modifiersMap.get(log.modifiedBy) : null,
-      }));
-      
       return {
         ...session,
         breakPeriods: breakPeriodsMap.get(session.id) || [],
-        auditLogs: enrichedAuditLogs,
+        auditLogs: [], // Empty by default - load lazily when needed
         lastModifiedByName: session.lastModifiedBy ? modifiersMap.get(session.lastModifiedBy) : null,
       };
     });
