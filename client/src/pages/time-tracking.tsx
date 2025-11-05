@@ -1810,6 +1810,7 @@ export default function TimeTracking() {
           Empleado: '',
           Entrada: '',
           Salida: '',
+          'Horas Diarias': '',
           'Total Semanal': '',
           'Total Mensual': `${monthHours.toFixed(1)}h (${monthName})`,
           Modificaciones: ''
@@ -1824,6 +1825,7 @@ export default function TimeTracking() {
           Empleado: '',
           Entrada: '',
           Salida: '',
+          'Horas Diarias': '',
           'Total Semanal': `${weekHours.toFixed(1)}h`,
           'Total Mensual': '',
           Modificaciones: ''
@@ -1885,6 +1887,7 @@ export default function TimeTracking() {
         Empleado: session.userName || 'Desconocido',
         Entrada: session.clockIn ? format(new Date(session.clockIn), 'HH:mm') : '',
         Salida: session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : 'En curso',
+        'Horas Diarias': session.clockOut ? `${hours.toFixed(1)}h` : '',
         'Total Semanal': '',
         'Total Mensual': '',
         Modificaciones: modificationsText.trim()
@@ -1901,6 +1904,7 @@ export default function TimeTracking() {
         Empleado: '',
         Entrada: '',
         Salida: '',
+        'Horas Diarias': '',
         'Total Semanal': `${weekHours.toFixed(1)}h`,
         'Total Mensual': '',
         Modificaciones: ''
@@ -1916,6 +1920,7 @@ export default function TimeTracking() {
         Empleado: '',
         Entrada: '',
         Salida: '',
+        'Horas Diarias': '',
         'Total Semanal': '',
         'Total Mensual': `${monthHours.toFixed(1)}h (${monthName})`,
         Modificaciones: ''
@@ -1931,6 +1936,7 @@ export default function TimeTracking() {
       { wch: 25 }, // Empleado
       { wch: 10 }, // Entrada
       { wch: 10 }, // Salida
+      { wch: 15 }, // Horas Diarias
       { wch: 15 }, // Total Semanal
       { wch: 25 }, // Total Mensual
       { wch: 60 }  // Modificaciones
