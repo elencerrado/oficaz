@@ -1769,11 +1769,128 @@ export default function TimeTracking() {
       return;
     }
 
-    // Prepare data rows
+    // Check if exporting all employees
+    const isAllEmployees = !selectedEmployee || selectedEmployee === 'all';
+    
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+
+    if (isAllEmployees) {
+      // First sheet: All employees together
+      const allData = createExcelDataForSessions(filteredSessions);
+      const allWorksheet = XLSX.utils.json_to_sheet(allData);
+      
+      // Set column widths for "Todos" sheet
+      allWorksheet['!cols'] = [
+        { wch: 12 }, // Fecha
+        { wch: 25 }, // Empleado
+        { wch: 10 }, // Entrada
+        { wch: 10 }, // Salida
+        { wch: 15 }, // Horas Diarias
+        { wch: 15 }, // Total Semanal
+        { wch: 25 }, // Total Mensual
+        { wch: 60 }  // Modificaciones
+      ];
+      
+      XLSX.utils.book_append_sheet(workbook, allWorksheet, 'Todos');
+
+      // Group sessions by employee
+      const sessionsByEmployee = new Map<string, any[]>();
+      
+      filteredSessions.forEach((session: any) => {
+        const employeeName = session.userName || 'Desconocido';
+        if (!sessionsByEmployee.has(employeeName)) {
+          sessionsByEmployee.set(employeeName, []);
+        }
+        sessionsByEmployee.get(employeeName)!.push(session);
+      });
+
+      // Create a sheet for each employee
+      sessionsByEmployee.forEach((sessions, employeeName) => {
+        const data = createExcelDataForSessions(sessions);
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        
+        // Set column widths
+        worksheet['!cols'] = [
+          { wch: 12 }, // Fecha
+          { wch: 25 }, // Empleado
+          { wch: 10 }, // Entrada
+          { wch: 10 }, // Salida
+          { wch: 15 }, // Horas Diarias
+          { wch: 15 }, // Total Semanal
+          { wch: 25 }, // Total Mensual
+          { wch: 60 }  // Modificaciones
+        ];
+
+        // Sheet name limited to 31 characters
+        const sheetName = employeeName.substring(0, 31);
+        XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+      });
+    } else {
+      // Single employee - single sheet
+      const data = createExcelDataForSessions(filteredSessions);
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      
+      // Set column widths
+      worksheet['!cols'] = [
+        { wch: 12 }, // Fecha
+        { wch: 25 }, // Empleado
+        { wch: 10 }, // Entrada
+        { wch: 10 }, // Salida
+        { wch: 15 }, // Horas Diarias
+        { wch: 15 }, // Total Semanal
+        { wch: 25 }, // Total Mensual
+        { wch: 60 }  // Modificaciones
+      ];
+
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Fichajes');
+    }
+
+    // Generate filename
+    let employeePart = 'todos-empleados';
+    if (selectedEmployee && selectedEmployee !== 'all') {
+      const employee = employeesList.find((e: any) => e.id.toString() === selectedEmployee);
+      if (employee) {
+        employeePart = employee.fullName.toLowerCase().replace(/\s+/g, '-');
+      }
+    }
+
+    let timePart = 'todos-registros';
+    if (dateFilter === 'day') {
+      timePart = format(currentDate, 'dd-MM-yyyy');
+    } else if (dateFilter === 'month') {
+      timePart = format(currentMonth, 'MMMM-yyyy', { locale: es });
+    } else if (dateFilter === 'custom') {
+      if (startDate && endDate) {
+        timePart = `${format(new Date(startDate), 'dd-MM-yyyy')} - ${format(new Date(endDate), 'dd-MM-yyyy')}`;
+      } else if (startDate) {
+        timePart = `desde ${format(new Date(startDate), 'dd-MM-yyyy')}`;
+      } else if (endDate) {
+        timePart = `hasta ${format(new Date(endDate), 'dd-MM-yyyy')}`;
+      }
+    }
+
+    const exportDateTime = format(new Date(), 'dd-MM-yy - HH-mm');
+    const fileName = `${employeePart} - ${timePart} - ${exportDateTime}.xlsx`
+      .replace(/[/\\?%*:|"<>]/g, '-')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // Download file
+    XLSX.writeFile(workbook, fileName);
+
+    toast({
+      title: "Excel exportado correctamente",
+      description: `El archivo ${fileName} se ha descargado`,
+    });
+  }, [filteredSessions, selectedEmployee, employeesList, dateFilter, currentDate, currentMonth, startDate, endDate, toast]);
+
+  // Helper function to create Excel data for a set of sessions
+  const createExcelDataForSessions = (sessions: any[]) => {
     const data: any[] = [];
     
     // Sort sessions by date
-    const sortedSessions = [...filteredSessions].sort((a, b) => new Date(a.clockIn).getTime() - new Date(b.clockIn).getTime());
+    const sortedSessions = [...sessions].sort((a, b) => new Date(a.clockIn).getTime() - new Date(b.clockIn).getTime());
     
     // Track totals for summaries
     let currentWeekStart: Date | null = null;
@@ -1802,7 +1919,7 @@ export default function TimeTracking() {
       const hours = Math.max(0, sessionHours - breakHours);
 
       // Add month summary row before new month
-      if (isNewMonth && index > 0 && currentMonth) {
+      if (isNewMonth && index > 0 && currentMonth !== null) {
         const [year, month] = currentMonth.split('-');
         const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
         data.push({
@@ -1912,7 +2029,7 @@ export default function TimeTracking() {
     }
 
     // Add final month summary
-    if (monthHours > 0 && currentMonth) {
+    if (monthHours > 0 && currentMonth !== null) {
       const [year, month] = currentMonth.split('-');
       const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
       data.push({
@@ -1927,63 +2044,8 @@ export default function TimeTracking() {
       });
     }
 
-    // Create worksheet
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    
-    // Set column widths
-    worksheet['!cols'] = [
-      { wch: 12 }, // Fecha
-      { wch: 25 }, // Empleado
-      { wch: 10 }, // Entrada
-      { wch: 10 }, // Salida
-      { wch: 15 }, // Horas Diarias
-      { wch: 15 }, // Total Semanal
-      { wch: 25 }, // Total Mensual
-      { wch: 60 }  // Modificaciones
-    ];
-
-    // Create workbook
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Fichajes');
-
-    // Generate filename
-    let employeePart = 'todos-empleados';
-    if (selectedEmployee && selectedEmployee !== 'all') {
-      const employee = employeesList.find((e: any) => e.id.toString() === selectedEmployee);
-      if (employee) {
-        employeePart = employee.fullName.toLowerCase().replace(/\s+/g, '-');
-      }
-    }
-
-    let timePart = 'todos-registros';
-    if (dateFilter === 'day') {
-      timePart = format(currentDate, 'dd-MM-yyyy');
-    } else if (dateFilter === 'month') {
-      timePart = format(currentMonth, 'MMMM-yyyy', { locale: es });
-    } else if (dateFilter === 'custom') {
-      if (startDate && endDate) {
-        timePart = `${format(new Date(startDate), 'dd-MM-yyyy')} - ${format(new Date(endDate), 'dd-MM-yyyy')}`;
-      } else if (startDate) {
-        timePart = `desde ${format(new Date(startDate), 'dd-MM-yyyy')}`;
-      } else if (endDate) {
-        timePart = `hasta ${format(new Date(endDate), 'dd-MM-yyyy')}`;
-      }
-    }
-
-    const exportDateTime = format(new Date(), 'dd-MM-yy - HH-mm');
-    const fileName = `${employeePart} - ${timePart} - ${exportDateTime}.xlsx`
-      .replace(/[/\\?%*:|"<>]/g, '-')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    // Download file
-    XLSX.writeFile(workbook, fileName);
-
-    toast({
-      title: "Excel exportado correctamente",
-      description: `El archivo ${fileName} se ha descargado`,
-    });
-  }, [filteredSessions, selectedEmployee, employeesList, dateFilter, currentDate, currentMonth, startDate, endDate, calculateHours, toast]);
+    return data;
+  };
 
   // Timeline Bar Component for displaying work sessions with break periods
   const TimelineBar = ({ session }: { session: any }) => {
