@@ -996,13 +996,13 @@ export default function Messages() {
                                 className={`max-w-xs px-4 py-2 rounded-lg ${
                                   message.senderId === user?.id
                                     ? 'bg-oficaz-primary text-white shadow-oficaz-blue'
-                                    : 'bg-white dark:bg-gray-800 text-foreground border border-gray-200 dark:border-gray-700 shadow-sm'
+                                    : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-sm'
                                 }`}
                               >
                                 <p className="text-sm">{message.content}</p>
                                 <div className="flex items-center justify-between mt-1">
                                   <p className={`text-xs ${
-                                    message.senderId === user?.id ? 'text-white/70' : 'text-muted-foreground'
+                                    message.senderId === user?.id ? 'text-white/70' : 'text-gray-600 dark:text-gray-400'
                                   }`}>
                                     {format(new Date(message.createdAt), 'HH:mm')}
                                   </p>
@@ -1030,7 +1030,7 @@ export default function Messages() {
                       </div>
                     ))
                   ) : (
-                    <div className="text-center text-muted-foreground py-8">
+                    <div className="text-center text-gray-600 dark:text-gray-400 py-8">
                       <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p>No hay mensajes aún</p>
                       <p className="text-sm">Envía el primer mensaje para comenzar</p>
@@ -1057,7 +1057,7 @@ export default function Messages() {
 
               {/* Message Input - Part of flex layout */}
               <div 
-                className="flex space-x-2 px-4 border-t border-border bg-background flex-shrink-0"
+                className="flex space-x-2 px-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex-shrink-0"
                 style={{
                   paddingTop: '16px',
                   paddingBottom: `max(16px, env(safe-area-inset-bottom))`
@@ -1265,7 +1265,7 @@ export default function Messages() {
 
   // Employee view - Responsive design for desktop and mobile
   return (
-    <div className="dark min-h-screen bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col page-scroll">
+    <div className="min-h-screen bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col page-scroll">
       {!selectedChat ? (
         /* Employee Dashboard - List of managers - RESPONSIVE VERSION */
         (<>
@@ -1387,7 +1387,7 @@ export default function Messages() {
               }
             `}</style>
             <div 
-              className="fixed bg-background flex flex-col"
+              className="fixed bg-white dark:bg-gray-900 flex flex-col"
               style={{ 
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
@@ -1399,7 +1399,7 @@ export default function Messages() {
             >
               {/* Chat Header with Back Button */}
               <div 
-                className="flex items-center space-x-3 px-4 border-b border-border bg-background flex-shrink-0"
+                className="flex items-center space-x-3 px-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex-shrink-0"
                 style={{
                   paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`,
                   paddingBottom: '16px',
@@ -1411,7 +1411,7 @@ export default function Messages() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setSelectedChat(null)}
-                  className="p-2"
+                  className="p-2 text-gray-900 dark:text-white"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </Button>
@@ -1422,10 +1422,10 @@ export default function Messages() {
                   profilePicture={selectedChatUser?.profilePicture}
                 />
                 <div>
-                  <h3 className="font-semibold text-foreground">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
                     {selectedChatUser?.fullName}
                   </h3>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
                     {getRoleDisplay(selectedChatUser)}
                   </div>
                 </div>
@@ -1467,13 +1467,13 @@ export default function Messages() {
                                 className={`max-w-xs px-4 py-2 rounded-lg ${
                                   message.senderId === user?.id
                                     ? 'bg-oficaz-primary text-white shadow-oficaz-blue'
-                                    : 'bg-white dark:bg-gray-800 text-foreground border border-gray-200 dark:border-gray-700 shadow-sm'
+                                    : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-sm'
                                 }`}
                               >
                                 <p className="text-sm">{message.content}</p>
                                 <div className="flex items-center justify-between mt-1">
                                   <p className={`text-xs ${
-                                    message.senderId === user?.id ? 'text-white/70' : 'text-muted-foreground'
+                                    message.senderId === user?.id ? 'text-white/70' : 'text-gray-600 dark:text-gray-400'
                                   }`}>
                                     {format(new Date(message.createdAt), 'HH:mm')}
                                   </p>
@@ -1501,7 +1501,7 @@ export default function Messages() {
                       </div>
                     ))
                   ) : (
-                    <div className="text-center text-muted-foreground py-8">
+                    <div className="text-center text-gray-600 dark:text-gray-400 py-8">
                       <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p>No hay mensajes aún</p>
                       <p className="text-sm">Envía el primer mensaje para comenzar</p>
@@ -1528,7 +1528,7 @@ export default function Messages() {
 
               {/* Message Input - Part of flex layout */}
               <div 
-                className="flex space-x-2 px-4 border-t border-border bg-background flex-shrink-0"
+                className="flex space-x-2 px-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex-shrink-0"
                 style={{
                   paddingTop: '16px',
                   paddingBottom: `max(16px, env(safe-area-inset-bottom))`
