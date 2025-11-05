@@ -793,7 +793,7 @@ export default function EmployeeDashboard() {
               variant="ghost"
               size="sm"
               onClick={() => setIsAlarmModalOpen(true)}
-              className="text-gray-900 dark:text-white bg-red-100 dark:bg-red-500/20 hover:bg-red-200 dark:hover:bg-red-500/30 backdrop-blur-xl border border-red-300 dark:border-red-400/30 hover:border-red-400 dark:hover:border-red-400/50 rounded-lg px-3 py-2 transition-all duration-200"
+              className="text-white dark:text-white bg-red-600 dark:bg-red-500/20 hover:bg-red-700 dark:hover:bg-red-500/30 backdrop-blur-xl border border-red-700 dark:border-red-400/30 hover:border-red-800 dark:hover:border-red-400/50 rounded-lg px-3 py-2 transition-all duration-200"
               title="Configurar alarmas de trabajo"
             >
               <AlarmClock className="h-4 w-4 mr-2" />
