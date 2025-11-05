@@ -567,7 +567,7 @@ export default function Documents() {
                 variant={selectedCategory === category.id ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedCategory(category.id)}
-                className={`${selectedCategory === category.id ? "bg-[#007AFF] hover:bg-[#0056CC] text-white dark:bg-[#007AFF] dark:hover:bg-[#0056CC] dark:text-white" : "bg-white dark:bg-white/10 backdrop-blur-sm text-gray-900 dark:text-white border-gray-200 dark:border-white/20 hover:bg-gray-100 dark:hover:bg-white/20"} flex-1 min-w-0`}
+                className={`${selectedCategory === category.id ? "bg-[#007AFF] hover:bg-[#0056CC] text-white dark:bg-[#007AFF] dark:hover:bg-[#0056CC] dark:text-white" : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"} flex-1 min-w-0`}
               >
                 <IconComponent className="h-4 w-4 mr-2 flex-shrink-0" />
                 <span className="truncate">{category.name}</span>
@@ -577,7 +577,7 @@ export default function Documents() {
         </div>
 
         {/* Search */}
-        <div className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-white/20 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center space-x-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-white/60" size={16} />
@@ -585,7 +585,7 @@ export default function Documents() {
                 placeholder="Buscar documentos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-gray-50 dark:bg-white/20 border-gray-200 dark:border-white/30 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/60 focus:border-gray-400 dark:focus:border-white focus:ring-gray-400 dark:focus:ring-white"
+                className="pl-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-400 focus:border-gray-400 dark:focus:border-gray-500 focus:ring-gray-400 dark:focus:ring-gray-500"
               />
             </div>
             <div className="text-sm text-gray-600 dark:text-white/70">
@@ -602,7 +602,7 @@ export default function Documents() {
               const category = getDocumentCategory(document.originalName);
               
               return (
-                <div key={document.id} className="bg-white dark:bg-white/8 backdrop-blur-xl rounded-2xl p-4 border border-gray-200 dark:border-white/10 shadow-2xl hover:bg-gray-50 dark:hover:bg-white/10 transition-all duration-200">
+                <div key={document.id} className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-200 dark:border-gray-700 shadow-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200">
                   <div className="flex items-center space-x-3">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                       category === 'nominas' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
@@ -688,7 +688,7 @@ export default function Documents() {
             })}
           </div>
         ) : (
-          <div className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-white/20 p-12">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12">
             <div className="text-center">
               <FileText className="mx-auto h-12 w-12 text-gray-400 dark:text-white/60 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
