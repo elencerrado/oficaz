@@ -436,14 +436,14 @@ export default function Documents() {
   }
 
   return (
-    <div className="bg-employee-gradient text-white flex flex-col">
+    <div className="bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col">
       {/* Header - Standard employee pattern */}
       <div className="flex items-center justify-between p-6 pb-8 h-20">
         <Link href={`/${companyAlias}/inicio`}>
           <Button
             variant="ghost"
             size="lg"
-            className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
+            className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 px-6 py-3 rounded-xl bg-gray-100 dark:bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
             <span className="font-medium">Atrás</span>
@@ -456,14 +456,14 @@ export default function Documents() {
             <img 
               src={company.logoUrl || ''} 
               alt={company.name || ''} 
-              className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
+              className="h-8 w-auto mb-1 object-contain filter dark:brightness-0 dark:invert"
             />
           ) : (
-            <div className="text-white text-sm font-medium mb-1">
+            <div className="text-gray-900 dark:text-white text-sm font-medium mb-1">
               {company?.name || 'Mi Empresa'}
             </div>
           )}
-          <div className="text-white/70 text-xs">
+          <div className="text-gray-600 dark:text-white/70 text-xs">
             {user?.fullName}
           </div>
         </div>
@@ -471,24 +471,24 @@ export default function Documents() {
 
       {/* Page title */}
       <div className="px-6 pb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">Documentos</h1>
-        <p className="text-white/70 text-sm">Gestiona y descarga tus documentos laborales</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Documentos</h1>
+        <p className="text-gray-600 dark:text-white/70 text-sm">Gestiona y descarga tus documentos laborales</p>
       </div>
 
       {/* Content Container */}
       <div className="flex-1 px-6 pb-6 space-y-6">
         {/* Document Request Notification - Dynamic from Admin */}
         {pendingRequest && !activeRequest && (
-          <Alert className="border-orange-200 bg-orange-50 py-3">
-            <AlertCircle className="h-4 w-4 text-orange-600" />
-            <AlertDescription className="text-orange-800">
+          <Alert className="border-orange-200 dark:border-orange-400/30 bg-orange-50 dark:bg-orange-900/20 py-3">
+            <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            <AlertDescription className="text-orange-800 dark:text-orange-200">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3">
                     <span className="font-medium text-sm">{pendingRequest.type}:</span>
                     <span className="text-sm">{pendingRequest.message || `Se solicita subir tu ${pendingRequest.type.toLowerCase()}`}</span>
                     {pendingRequest.dueDate && (
-                      <span className="text-xs text-orange-600 flex items-center">
+                      <span className="text-xs text-orange-600 dark:text-orange-400 flex items-center">
                         <Calendar className="h-3 w-3 mr-1" />
                         {format(new Date(pendingRequest.dueDate), 'd MMM yyyy', { locale: es })}
                       </span>
@@ -497,7 +497,7 @@ export default function Documents() {
                 </div>
                 <Button
                   onClick={() => setActiveRequest(pendingRequest)}
-                  className="bg-orange-600 hover:bg-orange-700 text-white ml-4 h-8"
+                  className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-600 dark:hover:bg-orange-700 text-white ml-4 h-8"
                   size="sm"
                 >
                   Subir
@@ -509,10 +509,10 @@ export default function Documents() {
 
         {/* Upload Section (Active Request) */}
         {activeRequest && (
-          <Card className="border-blue-200 bg-blue-50">
+          <Card className="border-blue-200 dark:border-blue-400/30 bg-blue-50 dark:bg-blue-900/20">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-blue-800 flex items-center">
+                <CardTitle className="text-blue-800 dark:text-blue-200 flex items-center">
                   <Upload className="h-5 w-5 mr-2" />
                   Subiendo: {activeRequest.type || 'Documento'}
                 </CardTitle>
@@ -520,26 +520,26 @@ export default function Documents() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setActiveRequest(null)}
-                  className="text-blue-600 hover:text-blue-800"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="flex items-center justify-center border-2 border-dashed border-blue-300 rounded-lg p-6 bg-white">
+              <div className="flex items-center justify-center border-2 border-dashed border-blue-300 dark:border-blue-400/40 rounded-lg p-6 bg-white dark:bg-blue-950/30">
                 <div className="text-center">
-                  <Upload className="mx-auto h-12 w-12 text-blue-400 mb-4" />
-                  <p className="text-sm text-blue-700 mb-4">{activeRequest.message || `Por favor, sube tu ${activeRequest.type?.toLowerCase() || 'documento'}`}</p>
+                  <Upload className="mx-auto h-12 w-12 text-blue-400 dark:text-blue-300 mb-4" />
+                  <p className="text-sm text-blue-700 dark:text-blue-200 mb-4">{activeRequest.message || `Por favor, sube tu ${activeRequest.type?.toLowerCase() || 'documento'}`}</p>
                   <div className="flex flex-col items-center gap-2">
                     <Button
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploading}
-                      className="bg-blue-600 hover:bg-blue-700"
+                      className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
                     >
                       {isUploading ? 'Subiendo...' : 'Seleccionar archivo'}
                     </Button>
-                    <span className="text-xs text-blue-500">
+                    <span className="text-xs text-blue-500 dark:text-blue-400">
                       Tamaño máximo: 10MB - PDF, JPG, PNG
                     </span>
                   </div>
@@ -567,7 +567,7 @@ export default function Documents() {
                 variant={selectedCategory === category.id ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedCategory(category.id)}
-                className={`${selectedCategory === category.id ? "bg-[#007AFF] hover:bg-[#0056CC] text-white" : "bg-white/10 backdrop-blur-sm text-white border-white/20 hover:bg-white/20"} flex-1 min-w-0`}
+                className={`${selectedCategory === category.id ? "bg-[#007AFF] hover:bg-[#0056CC] text-white dark:bg-[#007AFF] dark:hover:bg-[#0056CC] dark:text-white" : "bg-white dark:bg-white/10 backdrop-blur-sm text-gray-900 dark:text-white border-gray-200 dark:border-white/20 hover:bg-gray-100 dark:hover:bg-white/20"} flex-1 min-w-0`}
               >
                 <IconComponent className="h-4 w-4 mr-2 flex-shrink-0" />
                 <span className="truncate">{category.name}</span>
@@ -577,18 +577,18 @@ export default function Documents() {
         </div>
 
         {/* Search */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-4">
+        <div className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-white/20 p-4">
           <div className="flex items-center space-x-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60" size={16} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-white/60" size={16} />
               <Input
                 placeholder="Buscar documentos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white/20 border-white/30 text-white placeholder:text-white/60 focus:border-white focus:ring-white"
+                className="pl-10 bg-gray-50 dark:bg-white/20 border-gray-200 dark:border-white/30 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/60 focus:border-gray-400 dark:focus:border-white focus:ring-gray-400 dark:focus:ring-white"
               />
             </div>
-            <div className="text-sm text-white/70">
+            <div className="text-sm text-gray-600 dark:text-white/70">
               {filteredDocuments.length} documento{filteredDocuments.length !== 1 ? 's' : ''}
             </div>
           </div>
@@ -602,29 +602,29 @@ export default function Documents() {
               const category = getDocumentCategory(document.originalName);
               
               return (
-                <div key={document.id} className="bg-white/8 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-2xl hover:bg-white/10 transition-all duration-200">
+                <div key={document.id} className="bg-white dark:bg-white/8 backdrop-blur-xl rounded-2xl p-4 border border-gray-200 dark:border-white/10 shadow-2xl hover:bg-gray-50 dark:hover:bg-white/10 transition-all duration-200">
                   <div className="flex items-center space-x-3">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      category === 'nominas' ? 'bg-emerald-100' :
-                      category === 'contratos' ? 'bg-blue-100' : 'bg-orange-100'
+                      category === 'nominas' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
+                      category === 'contratos' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-orange-100 dark:bg-orange-900/30'
                     }`}>
                       <FileIcon className={`${
-                        category === 'nominas' ? 'text-emerald-600' :
-                        category === 'contratos' ? 'text-blue-600' : 'text-orange-600'
+                        category === 'nominas' ? 'text-emerald-600 dark:text-emerald-400' :
+                        category === 'contratos' ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'
                       }`} size={20} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-white text-sm leading-tight mb-1" title={document.originalName}>
+                          <h3 className="font-medium text-gray-900 dark:text-white text-sm leading-tight mb-1" title={document.originalName}>
                             {document.originalName}
                           </h3>
                           <div className="flex flex-wrap items-center gap-1 mt-1">
                             <Badge 
                               variant="secondary" 
                               className={`text-xs px-2 py-0 ${
-                                category === 'nominas' ? 'bg-emerald-100 text-emerald-700' :
-                                category === 'contratos' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
+                                category === 'nominas' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' :
+                                category === 'contratos' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' : 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300'
                               }`}
                             >
                               {category === 'nominas' ? 'Nómina' :
@@ -636,17 +636,17 @@ export default function Documents() {
                                 variant={document.isAccepted ? 'default' : 'outline'}
                                 className={`text-xs px-2 py-0 ${
                                   document.isAccepted 
-                                    ? 'bg-green-100 text-green-700' 
-                                    : 'bg-yellow-100 text-yellow-700 border-yellow-300'
+                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300' 
+                                    : 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600/30'
                                 }`}
                               >
                                 {document.isAccepted ? '✓ Firmada' : 'Pendiente firma'}
                               </Badge>
                             )}
-                            <span className="text-xs text-white/60">
+                            <span className="text-xs text-gray-500 dark:text-white/60">
                               {formatFileSize(document.fileSize)}
                             </span>
-                            <span className="text-xs text-white/50">
+                            <span className="text-xs text-gray-400 dark:text-white/50">
                               {format(new Date(document.createdAt), 'd MMM yyyy', { locale: es })}
                             </span>
                           </div>
@@ -656,7 +656,7 @@ export default function Documents() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleViewDocument(document.id, document.originalName)}
-                            className="text-blue-400 border-blue-400/50 hover:bg-blue-400 hover:text-white h-8 px-2 bg-white/10"
+                            className="text-blue-400 dark:text-blue-400 border-blue-400/50 dark:border-blue-400/50 hover:bg-blue-400 dark:hover:bg-blue-400 hover:text-white dark:hover:text-white h-8 px-2 bg-blue-50 dark:bg-white/10"
                           >
                             <Eye className="h-3 w-3" />
                           </Button>
@@ -664,7 +664,7 @@ export default function Documents() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleDownload(document.id, document.originalName)}
-                            className="text-white/70 border-white/30 hover:bg-white/20 h-8 px-2 bg-white/5"
+                            className="text-gray-600 dark:text-white/70 border-gray-300 dark:border-white/30 hover:bg-gray-200 dark:hover:bg-white/20 h-8 px-2 bg-gray-100 dark:bg-white/5"
                           >
                             <Download className="h-3 w-3" />
                           </Button>
@@ -674,7 +674,7 @@ export default function Documents() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleOpenSignatureModal(document)}
-                              className="text-green-400 border-green-400/50 hover:bg-green-400 hover:text-white h-8 px-2 bg-white/10"
+                              className="text-green-400 dark:text-green-400 border-green-400/50 dark:border-green-400/50 hover:bg-green-400 dark:hover:bg-green-400 hover:text-white dark:hover:text-white h-8 px-2 bg-green-50 dark:bg-white/10"
                             >
                               <PenTool className="h-3 w-3" />
                             </Button>
@@ -688,17 +688,17 @@ export default function Documents() {
             })}
           </div>
         ) : (
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-12">
+          <div className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-white/20 p-12">
             <div className="text-center">
-              <FileText className="mx-auto h-12 w-12 text-white/60 mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">
+              <FileText className="mx-auto h-12 w-12 text-gray-400 dark:text-white/60 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                 {searchTerm ? 'No se encontraron documentos' : 
                  selectedCategory === 'nominas' ? 'No hay nóminas disponibles' :
                  selectedCategory === 'contratos' ? 'No hay contratos disponibles' :
                  selectedCategory === 'otros' ? 'No hay otros documentos' :
                  'No hay documentos disponibles'}
               </h3>
-              <p className="text-white/70 mb-4">
+              <p className="text-gray-600 dark:text-white/70 mb-4">
                 {searchTerm 
                   ? 'Intenta ajustar los términos de búsqueda.'
                   : 'Los documentos aparecerán aquí cuando estén disponibles.'
@@ -708,7 +708,7 @@ export default function Documents() {
                 <Button
                   onClick={() => createDemoMutation.mutate()}
                   disabled={createDemoMutation.isPending}
-                  className="bg-[#007AFF] hover:bg-[#0056CC] text-white"
+                  className="bg-[#007AFF] hover:bg-[#0056CC] dark:bg-[#007AFF] dark:hover:bg-[#0056CC] text-white"
                 >
                   {createDemoMutation.isPending ? (
                     <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent"></div>

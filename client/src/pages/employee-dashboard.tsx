@@ -783,7 +783,7 @@ export default function EmployeeDashboard() {
   // Work alarms are now handled automatically by PWA push notifications
 
   return (
-    <div className="dark h-screen bg-employee-gradient text-white flex flex-col overflow-hidden">
+    <div className="h-screen bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col overflow-hidden">
       {/* Fixed Content Container - Sin scroll */}
       <div className="flex-1 flex flex-col p-4">
         {/* Header - Compacto */}
@@ -793,7 +793,7 @@ export default function EmployeeDashboard() {
               variant="ghost"
               size="sm"
               onClick={() => setIsAlarmModalOpen(true)}
-              className="text-white bg-red-500/20 hover:bg-red-500/30 backdrop-blur-xl border border-red-400/30 hover:border-red-400/50 rounded-lg px-3 py-2 transition-all duration-200"
+              className="text-gray-900 dark:text-white bg-red-100 dark:bg-red-500/20 hover:bg-red-200 dark:hover:bg-red-500/30 backdrop-blur-xl border border-red-300 dark:border-red-400/30 hover:border-red-400 dark:hover:border-red-400/50 rounded-lg px-3 py-2 transition-all duration-200"
               title="Configurar alarmas de trabajo"
             >
               <AlarmClock className="h-4 w-4 mr-2" />
@@ -815,49 +815,60 @@ export default function EmployeeDashboard() {
                   />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-white/10 backdrop-blur-xl border border-white/20 text-white dark:bg-gray-800 dark:border-gray-700" align="end" forceMount>
+              <DropdownMenuContent className="w-56 bg-white dark:bg-white/10 backdrop-blur-xl border border-gray-200 dark:border-white/20 text-gray-900 dark:text-white" align="end" forceMount>
                 <div className="flex flex-col space-y-1 p-2">
-                  <p className="text-sm font-medium text-white dark:text-white">{user?.fullName}</p>
-                  <p className="text-xs text-white/70 dark:text-gray-400">{user?.companyEmail || user?.personalEmail || 'Sin email'}</p>
-                  <p className="text-xs text-white/60 dark:text-gray-500 capitalize">{translateRole(user?.role) || 'Empleado'}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.fullName}</p>
+                  <p className="text-xs text-gray-600 dark:text-white/70">{user?.companyEmail || user?.personalEmail || 'Sin email'}</p>
+                  <p className="text-xs text-gray-500 dark:text-white/60 capitalize">{translateRole(user?.role) || 'Empleado'}</p>
                 </div>
                 
-                <div className="px-2 py-1.5">
-                  <p className="text-xs font-medium text-white/60 dark:text-gray-500 mb-2">Tema</p>
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => setTheme('light')}
-                      className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors ${
-                        theme === 'light' 
-                          ? 'bg-white/20 text-white dark:bg-blue-500 dark:text-white' 
-                          : 'text-white/70 hover:bg-white/10 dark:text-gray-400 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      <Sun className="w-3.5 h-3.5" />
-                      Claro
-                    </button>
-                    <button
-                      onClick={() => setTheme('dark')}
-                      className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors ${
-                        theme === 'dark' 
-                          ? 'bg-white/20 text-white dark:bg-blue-500 dark:text-white' 
-                          : 'text-white/70 hover:bg-white/10 dark:text-gray-400 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      <Moon className="w-3.5 h-3.5" />
-                      Oscuro
-                    </button>
-                    <button
-                      onClick={() => setTheme('system')}
-                      className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors ${
-                        theme === 'system' 
-                          ? 'bg-white/20 text-white dark:bg-blue-500 dark:text-white' 
-                          : 'text-white/70 hover:bg-white/10 dark:text-gray-400 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      <Monitor className="w-3.5 h-3.5" />
-                      Auto
-                    </button>
+                <div className="px-2 py-3">
+                  <div className="relative bg-white dark:bg-white/10 rounded-full p-1 border border-gray-200 dark:border-white/20">
+                    {/* Indicador deslizante */}
+                    <div 
+                      className="absolute top-1 bottom-1 bg-gray-200 dark:bg-white/30 rounded-full transition-all duration-200 shadow-sm"
+                      style={{
+                        width: 'calc(33.333% - 4px)',
+                        left: theme === 'light' ? '2px' : theme === 'system' ? 'calc(33.333% + 2px)' : 'calc(66.666% + 2px)',
+                      }}
+                    />
+                    
+                    {/* Botones */}
+                    <div className="relative flex items-center">
+                      <button
+                        onClick={() => setTheme('light')}
+                        className={`flex-1 flex items-center justify-center p-2 rounded-full transition-colors z-10 ${
+                          theme === 'light' 
+                            ? 'text-gray-900 dark:text-white' 
+                            : 'text-gray-400 hover:text-gray-600 dark:text-white/50 dark:hover:text-white/80'
+                        }`}
+                        aria-label="Modo claro"
+                      >
+                        <Sun className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setTheme('system')}
+                        className={`flex-1 flex items-center justify-center p-2 rounded-full transition-colors z-10 ${
+                          theme === 'system' 
+                            ? 'text-gray-900 dark:text-white' 
+                            : 'text-gray-400 hover:text-gray-600 dark:text-white/50 dark:hover:text-white/80'
+                        }`}
+                        aria-label="Modo sistema"
+                      >
+                        <Monitor className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setTheme('dark')}
+                        className={`flex-1 flex items-center justify-center p-2 rounded-full transition-colors z-10 ${
+                          theme === 'dark' 
+                            ? 'text-gray-900 dark:text-white' 
+                            : 'text-gray-400 hover:text-gray-600 dark:text-white/50 dark:hover:text-white/80'
+                        }`}
+                        aria-label="Modo oscuro"
+                      >
+                        <Moon className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -867,12 +878,12 @@ export default function EmployeeDashboard() {
                     const currentCompanyAlias = urlParts[0] || company?.alias || 'test';
                     handleNavigation(`/${currentCompanyAlias}/usuario`);
                   }} 
-                  className="text-white hover:text-blue-300 hover:bg-blue-500/20 cursor-pointer dark:text-gray-300 dark:hover:bg-gray-700"
+                  className="text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/20 cursor-pointer"
                 >
                   <User className="mr-2 h-4 w-4" />
                   Mi Perfil
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={logout} className="text-white hover:text-red-300 hover:bg-red-500/20 cursor-pointer dark:text-gray-300 dark:hover:bg-gray-700">
+                <DropdownMenuItem onClick={logout} className="text-gray-900 dark:text-white hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/20 cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   Cerrar sesión
                 </DropdownMenuItem>
@@ -891,16 +902,16 @@ export default function EmployeeDashboard() {
                   <img 
                     src={company.logoUrl} 
                     alt={company.name} 
-                    className="h-10 w-auto mx-auto object-contain filter brightness-0 invert drop-shadow-lg"
+                    className="h-10 w-auto mx-auto object-contain drop-shadow-lg dark:brightness-0 dark:invert"
                   />
                 ) : (
-                  <div className="text-white text-base font-medium drop-shadow-lg">
+                  <div className="text-gray-900 dark:text-white text-base font-medium drop-shadow-lg">
                     {company?.name || 'Mi Empresa'}
                   </div>
                 )}
               </button>
             </DialogTrigger>
-            <DialogContent className="max-w-sm mx-auto bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-3xl shadow-2xl">
+            <DialogContent className="max-w-sm mx-auto bg-white dark:bg-white/10 backdrop-blur-xl border border-gray-200 dark:border-white/20 text-gray-900 dark:text-white rounded-3xl shadow-2xl">
               {/* Tarjeta de Visita de la Empresa */}
               <div className="space-y-5 p-6">
                 {/* Header con logo o nombre */}
@@ -909,14 +920,14 @@ export default function EmployeeDashboard() {
                     <img 
                       src={company.logoUrl} 
                       alt={company.name} 
-                      className="h-12 w-auto mx-auto object-contain filter brightness-0 invert mb-4"
+                      className="h-12 w-auto mx-auto object-contain mb-4 dark:brightness-0 dark:invert"
                     />
                   ) : (
-                    <div className="w-12 h-12 mx-auto bg-white/10 rounded-2xl flex items-center justify-center mb-4">
-                      <Building2 className="h-6 w-6 text-white" />
+                    <div className="w-12 h-12 mx-auto bg-white dark:bg-white/10 rounded-2xl flex items-center justify-center mb-4 border border-gray-200 dark:border-white/20">
+                      <Building2 className="h-6 w-6 text-gray-900 dark:text-white" />
                     </div>
                   )}
-                  <h2 className="text-lg font-semibold text-white">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                     {company?.name || 'Mi Empresa'}
                   </h2>
                 </div>
@@ -926,12 +937,12 @@ export default function EmployeeDashboard() {
                   {/* CIF */}
                   {company?.cif && (
                     <div className="flex items-center space-x-4">
-                      <div className="w-8 h-8 rounded-xl bg-blue-400/20 flex items-center justify-center">
-                        <CreditCard className="h-4 w-4 text-blue-300" />
+                      <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-400/20 flex items-center justify-center">
+                        <CreditCard className="h-4 w-4 text-blue-600 dark:text-blue-300" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-white/60 mb-1">CIF</p>
-                        <p className="text-sm font-medium text-white">{company.cif}</p>
+                        <p className="text-xs text-gray-500 dark:text-white/60 mb-1">CIF</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{company.cif}</p>
                       </div>
                     </div>
                   )}
@@ -939,12 +950,12 @@ export default function EmployeeDashboard() {
                   {/* Dirección Postal */}
                   {(company?.address || company?.province) && (
                     <div className="flex items-start space-x-4">
-                      <div className="w-8 h-8 rounded-xl bg-green-400/20 flex items-center justify-center mt-0.5">
-                        <MapPin className="h-4 w-4 text-green-300" />
+                      <div className="w-8 h-8 rounded-xl bg-green-100 dark:bg-green-400/20 flex items-center justify-center mt-0.5">
+                        <MapPin className="h-4 w-4 text-green-600 dark:text-green-300" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-white/60 mb-1">Dirección</p>
-                        <div className="text-sm font-medium text-white leading-relaxed">
+                        <p className="text-xs text-gray-500 dark:text-white/60 mb-1">Dirección</p>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white leading-relaxed">
                           {company?.address && (
                             <p>{company.address}</p>
                           )}
@@ -959,12 +970,12 @@ export default function EmployeeDashboard() {
                   {/* Email de contacto */}
                   {company?.email && (
                     <div className="flex items-center space-x-4">
-                      <div className="w-8 h-8 rounded-xl bg-purple-400/20 flex items-center justify-center">
-                        <MessageSquare className="h-4 w-4 text-purple-300" />
+                      <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-400/20 flex items-center justify-center">
+                        <MessageSquare className="h-4 w-4 text-purple-600 dark:text-purple-300" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-white/60 mb-1">Contacto</p>
-                        <p className="text-sm font-medium text-white truncate">{company.email}</p>
+                        <p className="text-xs text-gray-500 dark:text-white/60 mb-1">Contacto</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{company.email}</p>
                       </div>
                     </div>
                   )}
@@ -1011,18 +1022,18 @@ export default function EmployeeDashboard() {
                     }}
                     className={`relative w-24 h-24 transition-all duration-200 rounded-2xl flex items-center justify-center mb-2 backdrop-blur-xl border ${
                       isFeatureDisabled 
-                        ? 'bg-gray-500/20 border-gray-400/30 cursor-not-allowed opacity-40' 
-                        : 'bg-[#007AFF]/20 border-[#007AFF]/30 hover:bg-[#007AFF]/30 hover:border-[#007AFF]/50'
+                        ? 'bg-gray-200 dark:bg-gray-500/20 border-gray-300 dark:border-gray-400/30 cursor-not-allowed opacity-40' 
+                        : 'bg-blue-50 dark:bg-[#007AFF]/20 border-blue-200 dark:border-[#007AFF]/30 hover:bg-blue-100 dark:hover:bg-[#007AFF]/30 hover:border-blue-300 dark:hover:border-[#007AFF]/50'
                     }`}
                     disabled={isFeatureDisabled}
                   >
                     <item.icon className={`h-12 w-12 transition-all duration-200 ${
                       isFeatureDisabled 
-                        ? 'text-gray-400/50' 
+                        ? 'text-gray-300 dark:text-gray-400/50' 
                         : 'text-[#007AFF] drop-shadow-lg'
                     }`} />
                     {item.notification && !isFeatureDisabled && (
-                      <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full border-2 border-white shadow-lg animate-bounce ${
+                      <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full border-2 border-white dark:border-gray-900 shadow-lg animate-bounce ${
                         (item as any).notificationType === 'red' ? 'bg-gradient-to-r from-red-500 to-pink-500' : 
                         (item as any).notificationType === 'green' ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-red-500 to-pink-500'
                       }`}>
@@ -1036,8 +1047,8 @@ export default function EmployeeDashboard() {
                   </button>
                   <span className={`text-sm font-medium text-center leading-tight transition-all duration-300 ${
                     isFeatureDisabled 
-                      ? 'text-white/30' 
-                      : 'text-white/90 group-hover:text-white group-hover:scale-105'
+                      ? 'text-gray-400 dark:text-white/30' 
+                      : 'text-gray-700 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white group-hover:scale-105'
                   }`}>
                     {item.title}
                   </span>
@@ -1049,7 +1060,7 @@ export default function EmployeeDashboard() {
 
         {/* Status Line and Last Clock In Info / Temporary Message - Compacto */}
         <div className="text-center mb-2 mt-6 flex justify-center">
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-2 w-[304px]">
+          <div className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-white/20 p-2 w-[304px]">
             {/* Status Line */}
             <div className={`text-xs mb-2 font-medium ${
               sessionStatus.isActive 
@@ -1090,14 +1101,14 @@ export default function EmployeeDashboard() {
             {temporaryMessage ? (
               <>
                 <div className="text-green-400 text-xs mb-1 font-medium">✓ Fichaje exitoso</div>
-                <div className="text-white text-sm font-medium">
+                <div className="text-gray-900 dark:text-white text-sm font-medium">
                   {temporaryMessage}
                 </div>
               </>
             ) : (
               <>
-                <div className="text-white/60 text-xs mb-1 font-medium">Tu último fichaje</div>
-                <div className="text-white text-sm font-medium">
+                <div className="text-gray-500 dark:text-white/60 text-xs mb-1 font-medium">Tu último fichaje</div>
+                <div className="text-gray-900 dark:text-white text-sm font-medium">
                   {formatLastClockDate() || 'Sin fichajes previos'}
                 </div>
               </>
@@ -1112,7 +1123,7 @@ export default function EmployeeDashboard() {
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 flex items-center justify-center mb-3 shadow-lg">
                 <Palmtree className="w-12 h-12 text-white" />
               </div>
-              <p className="text-sm font-bold text-white text-center">
+              <p className="text-sm font-bold text-gray-900 dark:text-white text-center">
                 ¡Disfruta de tus vacaciones!
               </p>
             </div>
@@ -1186,8 +1197,8 @@ export default function EmployeeDashboard() {
 
       {/* Small Oficaz logo at bottom */}
       <div className="text-center pb-3">
-        <div className="flex items-center justify-center space-x-1 text-gray-400 text-xs">
-          <span className="font-semibold text-blue-400">Oficaz</span>
+        <div className="flex items-center justify-center space-x-1 text-gray-500 dark:text-gray-400 text-xs">
+          <span className="font-semibold text-blue-500 dark:text-blue-400">Oficaz</span>
           <span>© {currentYear}</span>
         </div>
       </div>
@@ -1344,14 +1355,14 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-      <div className="bg-gray-900 border border-gray-700 rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="p-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-white">Alarmas de Trabajo</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Alarmas de Trabajo</h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               ✕
             </button>
@@ -1371,20 +1382,20 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
 
           {/* Alarm form */}
           {showForm && (
-            <form onSubmit={handleSubmit} className="mb-6 p-4 border border-gray-600 rounded-lg bg-gray-800">
-              <h3 className="font-medium mb-4 text-white">
+            <form onSubmit={handleSubmit} className="mb-6 p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800">
+              <h3 className="font-medium mb-4 text-gray-900 dark:text-white">
                 {editingAlarm ? 'Editar Alarma' : 'Nueva Alarma'}
               </h3>
               
               {/* Type */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Tipo
                 </label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as 'clock_in' | 'clock_out' | 'break_start' | 'break_end' }))}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-[#007AFF]"
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-[#007AFF]"
                 >
                   <option value="clock_in">Entrada (Fichar)</option>
                   <option value="clock_out">Salida (Salir)</option>
@@ -1395,14 +1406,14 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
 
               {/* Time */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Hora
                 </label>
                 <input
                   type="time"
                   value={formData.time}
                   onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
-                  className="w-full max-w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-[#007AFF] text-sm sm:text-base box-border"
+                  className="w-full max-w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-[#007AFF] text-sm sm:text-base box-border"
                   style={{ WebkitAppearance: 'none' }}
                   required
                 />
@@ -1410,7 +1421,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
 
               {/* Weekdays */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Días de la semana
                 </label>
                 <div className="flex gap-1">
@@ -1422,7 +1433,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                       className={`w-8 h-8 text-xs font-medium rounded transition-colors ${
                         formData.weekdays.includes(index + 1)
                           ? 'bg-[#007AFF] text-white'
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600 border border-gray-600'
+                          : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600'
                       }`}
                       title={weekdayFullNames[index]}
                     >
@@ -1439,9 +1450,9 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                     type="checkbox"
                     checked={formData.soundEnabled}
                     onChange={(e) => setFormData(prev => ({ ...prev, soundEnabled: e.target.checked }))}
-                    className="mr-2 bg-gray-700 border-gray-600 text-[#007AFF] focus:ring-[#007AFF]"
+                    className="mr-2 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-[#007AFF] focus:ring-[#007AFF]"
                   />
-                  <span className="text-sm text-gray-300">Activar sonido</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Activar sonido</span>
                 </label>
               </div>
 
@@ -1467,7 +1478,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                       soundEnabled: true
                     });
                   }}
-                  className="bg-gray-700 text-white border-gray-600 hover:bg-gray-600 hover:text-white"
+                  className="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   Cancelar
                 </Button>
@@ -1482,22 +1493,22 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                 <LoadingSpinner size="lg" />
               </div>
             ) : alarms.length === 0 ? (
-              <div className="text-center py-4 text-gray-400">
+              <div className="text-center py-4 text-gray-500 dark:text-gray-400">
                 No tienes alarmas configuradas
               </div>
             ) : (
               alarms.map((alarm) => (
                 <div
                   key={alarm.id}
-                  className="p-3 border border-gray-600 rounded-lg bg-gray-800 shadow-sm"
+                  className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 shadow-sm"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h4 className="font-medium text-white">{getAlarmTitle(alarm.type)}</h4>
-                      <p className="text-sm text-gray-300">
+                      <h4 className="font-medium text-gray-900 dark:text-white">{getAlarmTitle(alarm.type)}</h4>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
                         a las {alarm.time}
                       </p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {alarm.weekdays.map((day: number) => weekdayFullNames[day - 1]).join(', ')}
                         {alarm.soundEnabled && ' • Con sonido'}
                       </p>
@@ -1505,13 +1516,13 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleEdit(alarm)}
-                        className="text-blue-400 hover:text-blue-300 text-sm transition-colors"
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm transition-colors"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => handleDelete(alarm.id)}
-                        className="text-red-400 hover:text-red-300 text-sm transition-colors"
+                        className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm transition-colors"
                       >
                         Eliminar
                       </button>
@@ -1525,10 +1536,10 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
 
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={alarmToDelete !== null} onOpenChange={(open) => !open && setAlarmToDelete(null)}>
-          <AlertDialogContent className="bg-gray-900 border-gray-700">
+          <AlertDialogContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-white">¿Eliminar alarma?</AlertDialogTitle>
-              <AlertDialogDescription className="text-gray-400">
+              <AlertDialogTitle className="text-gray-900 dark:text-white">¿Eliminar alarma?</AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-600 dark:text-gray-400">
                 Esta acción no se puede deshacer. La alarma será eliminada permanentemente.
               </AlertDialogDescription>
             </AlertDialogHeader>

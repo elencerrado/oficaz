@@ -1134,7 +1134,7 @@ export default function Messages() {
                 {/* Left Column: Message composition */}
                 <div style={{ display: modalGroupMode ? 'block' : 'none' }} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Mensaje grupal
                     </label>
                     <textarea
@@ -1142,13 +1142,13 @@ export default function Messages() {
                       value={modalMessage}
                       onChange={(e) => setModalMessage(e.target.value)}
                       rows={8}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-oficaz-primary focus:border-oficaz-primary resize-none transition-colors"
+                      className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-oficaz-primary focus:border-oficaz-primary resize-none transition-colors"
                     />
                     <div className="flex items-center justify-between mt-2">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-xs text-muted-foreground">
                         {modalMessage.length}/1000 caracteres
                       </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-xs text-muted-foreground">
                         Shift + Enter para nueva línea
                       </span>
                     </div>
@@ -1166,7 +1166,7 @@ export default function Messages() {
                       Enviar a {modalSelectedEmployees.length} empleado{modalSelectedEmployees.length !== 1 ? 's' : ''}
                     </Button>
                     <div className="text-center mt-2">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                      <span className="text-sm text-muted-foreground">
                         {modalSelectedEmployees.length} empleado{modalSelectedEmployees.length !== 1 ? 's' : ''} seleccionado{modalSelectedEmployees.length !== 1 ? 's' : ''}
                       </span>
                     </div>
@@ -1206,7 +1206,7 @@ export default function Messages() {
                               <div className={`w-4 h-4 border-2 rounded ${
                                 modalSelectedEmployees.includes(employee.id)
                                   ? 'bg-card border-background'
-                                  : 'border-gray-300'
+                                  : 'border-input'
                               } flex items-center justify-center`}>
                                 {modalSelectedEmployees.includes(employee.id) && (
                                   <Check className="w-3 h-3 text-oficaz-primary" />
@@ -1228,7 +1228,7 @@ export default function Messages() {
                                 {employee.fullName}
                               </p>
                               <div className={`text-xs truncate ${
-                                modalGroupMode && modalSelectedEmployees.includes(employee.id) ? 'text-white/90' : 'text-gray-500'
+                                modalGroupMode && modalSelectedEmployees.includes(employee.id) ? 'text-white/90' : 'text-muted-foreground'
                               }`}>
                                 {getRoleDisplay(employee)}
                               </div>
@@ -1265,7 +1265,7 @@ export default function Messages() {
 
   // Employee view - Responsive design for desktop and mobile
   return (
-    <div className="dark min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
+    <div className="dark min-h-screen bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col page-scroll">
       {!selectedChat ? (
         /* Employee Dashboard - List of managers - RESPONSIVE VERSION */
         (<>
@@ -1275,7 +1275,7 @@ export default function Messages() {
               <Button
                 variant="ghost"
                 size="lg"
-                className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
+                className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 px-6 py-3 rounded-xl bg-gray-100 dark:bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
               >
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 <span className="font-medium">Atrás</span>
@@ -1288,14 +1288,14 @@ export default function Messages() {
                 <img 
                   src={company.logoUrl} 
                   alt={company.name} 
-                  className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
+                  className="h-8 w-auto mb-1 object-contain filter dark:brightness-0 dark:invert"
                 />
               ) : (
-                <div className="text-white text-sm font-medium mb-1">
+                <div className="text-gray-900 dark:text-white text-sm font-medium mb-1">
                   {company?.name || 'Mi Empresa'}
                 </div>
               )}
-              <div className="text-white/70 text-xs">
+              <div className="text-gray-600 dark:text-white/70 text-xs">
                 {user?.fullName}
               </div>
             </div>
@@ -1303,15 +1303,15 @@ export default function Messages() {
           
           {/* Page title */}
           <div className="px-6 pb-6">
-            <h1 className="text-3xl font-bold text-white mb-2">Mensajes</h1>
-            <p className="text-white/70 text-sm">Comunícate con tus responsables y mantente al día</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Mensajes</h1>
+            <p className="text-gray-600 dark:text-white/70 text-sm">Comunícate con tus responsables y mantente al día</p>
           </div>
           
           <div className="px-4 py-6 space-y-6">
 
           {/* Managers list */}
           <div className="space-y-3">
-            <h2 className="text-white/90 text-sm font-medium px-2">Conversaciones</h2>
+            <h2 className="text-gray-700 dark:text-white/90 text-sm font-medium px-2">Conversaciones</h2>
             
             {filteredEmployees.length > 0 ? (
               <div className="space-y-2">
@@ -1323,7 +1323,7 @@ export default function Messages() {
                   return (
                     <div
                       key={manager.id}
-                      className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 cursor-pointer hover:bg-white/15 transition-all duration-200 border border-white/10"
+                      className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-2xl p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/15 transition-all duration-200 border border-gray-200 dark:border-white/20"
                       onClick={() => setSelectedChat(manager.id)}
                     >
                       <div className="flex items-center space-x-4">
@@ -1336,16 +1336,16 @@ export default function Messages() {
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <p className="text-white font-medium truncate">
+                            <p className="text-gray-900 dark:text-white font-medium truncate">
                               {manager.fullName}
                             </p>
                             {unreadCount > 0 && (
-                              <div className="bg-red-500 text-white text-xs font-medium px-2 py-1 rounded-full min-w-[20px] text-center">
+                              <div className="bg-red-500 dark:bg-red-600 text-white text-xs font-medium px-2 py-1 rounded-full min-w-[20px] text-center shadow-sm">
                                 {unreadCount}
                               </div>
                             )}
                           </div>
-                          <div className="text-white/70 text-xs mt-1">
+                          <div className="text-gray-600 dark:text-white/70 text-xs mt-1">
                             {manager.position || (() => {
                               const role = manager.role || 'employee';
                               const roleDescriptions = {
@@ -1358,7 +1358,7 @@ export default function Messages() {
                           </div>
                         </div>
                         
-                        <ChevronRight className="w-5 h-5 text-white/50" />
+                        <ChevronRight className="w-5 h-5 text-gray-400 dark:text-white/50" />
                       </div>
                     </div>
                   );
@@ -1366,10 +1366,10 @@ export default function Messages() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <div className="w-16 h-16 bg-white/10 rounded-full mx-auto flex items-center justify-center mb-4">
-                  <Users className="w-8 h-8 text-white/50" />
+                <div className="w-16 h-16 bg-gray-100 dark:bg-white/10 rounded-full mx-auto flex items-center justify-center mb-4">
+                  <Users className="w-8 h-8 text-gray-400 dark:text-white/50" />
                 </div>
-                <p className="text-white/70">No hay responsables disponibles</p>
+                <p className="text-gray-600 dark:text-white/70">No hay responsables disponibles</p>
               </div>
             )}
           </div>

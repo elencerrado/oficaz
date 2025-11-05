@@ -561,9 +561,9 @@ export default function EmployeeTimeTracking() {
       const statusText = isIncomplete ? "Incompleto" : "En curso";
       
       return (
-        <div key={session.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-3 mb-2 border border-white/20">
+        <div key={session.id} className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl p-3 mb-2 border border-gray-200 dark:border-white/20">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
+            <span className="text-gray-900 dark:text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className={`${
                 statusColor === "red" 
@@ -594,10 +594,10 @@ export default function EmployeeTimeTracking() {
                 ? "bg-red-400 ring-2 ring-red-400/30" 
                 : "bg-green-400"
             } rounded-full ${statusColor === "green" ? "animate-pulse" : ""}`}></div>
-            <span className="text-white/90 text-sm">Entrada: {formatTime(session.clockIn)}</span>
+            <span className="text-gray-700 dark:text-white/90 text-sm">Entrada: {formatTime(session.clockIn)}</span>
           </div>
           
-          <div className="text-center text-white/60 text-xs py-2">
+          <div className="text-center text-gray-500 dark:text-white/60 text-xs py-2">
             {isIncomplete ? "Sesión incompleta - marcar salida" : "Sesión activa - ficha para terminar"}
           </div>
         </div>
@@ -626,14 +626,14 @@ export default function EmployeeTimeTracking() {
     return (
       <div 
         key={session.id} 
-        className="bg-white/10 backdrop-blur-sm rounded-xl p-2 mb-2 border border-white/20 cursor-pointer"
+        className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl p-2 mb-2 border border-gray-200 dark:border-white/20 cursor-pointer"
         onClick={() => toggleDayExpansion(`${formatDayDate(new Date(session.clockIn))}-${session.id}`)}
       >
         {/* Header with date and total hours - alineado con barra azul */}
         <div className="flex justify-between items-center mb-3 mx-2">
-          <span className="text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
+          <span className="text-gray-900 dark:text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
           <div className="flex items-center space-x-2">
-            <span className="text-white/90 font-mono text-sm">
+            <span className="text-gray-900 dark:text-white/90 font-mono text-sm">
               {session.clockOut ? formatTotalHours(calculateSessionHours(session)) : '0h 0m'}
             </span>
             {!session.clockOut && (
@@ -719,7 +719,7 @@ export default function EmployeeTimeTracking() {
             {/* Información de descansos - solo mostrar título cuando está expandido */}
             {sessionBreaks.length > 0 && (
               <div className="space-y-1">
-                <div className="text-xs text-white/50 font-medium">Descansos:</div>
+                <div className="text-xs text-gray-500 dark:text-white/50 font-medium">Descansos:</div>
                 {sessionBreaks.map((breakPeriod: BreakPeriod, breakIndex: number) => {
                   if (!breakPeriod.breakEnd) return null;
                   
@@ -728,7 +728,7 @@ export default function EmployeeTimeTracking() {
                   const duration = Math.floor((breakEnd.getTime() - breakStart.getTime()) / (1000 * 60));
                   
                   return (
-                    <div key={`break-detail-${breakIndex}`} className="flex justify-between text-xs text-orange-200">
+                    <div key={`break-detail-${breakIndex}`} className="flex justify-between text-xs text-orange-600 dark:text-orange-200">
                       <span>{formatTime(breakPeriod.breakStart)} - {formatTime(breakPeriod.breakEnd!)}</span>
                       <span>{duration} min</span>
                     </div>
@@ -762,7 +762,7 @@ export default function EmployeeTimeTracking() {
 
   return (
     <div 
-      className="min-h-screen bg-employee-gradient text-white overflow-x-hidden" 
+      className="min-h-screen bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white overflow-x-hidden" 
       style={{ overflowX: 'clip' }}
     >
       {/* Header - Standard employee pattern */}
@@ -771,7 +771,7 @@ export default function EmployeeTimeTracking() {
           <Button
             variant="ghost"
             size="lg"
-            className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
+            className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 px-6 py-3 rounded-xl bg-gray-100 dark:bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105 border border-gray-300 dark:border-white/20"
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
             <span className="font-medium">Atrás</span>
@@ -784,14 +784,14 @@ export default function EmployeeTimeTracking() {
             <img 
               src={company.logoUrl || ''} 
               alt={company.name} 
-              className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
+              className="h-8 w-auto mb-1 object-contain filter dark:brightness-0 dark:invert"
             />
           ) : (
-            <div className="text-white text-sm font-medium mb-1">
+            <div className="text-gray-900 dark:text-white text-sm font-medium mb-1">
               {company?.name || 'Mi Empresa'}
             </div>
           )}
-          <div className="text-white/70 text-xs">
+          <div className="text-gray-600 dark:text-white/70 text-xs">
             {user?.fullName}
           </div>
         </div>
@@ -799,20 +799,20 @@ export default function EmployeeTimeTracking() {
 
       {/* Page title */}
       <div className="px-6 pb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">Control de Tiempo</h1>
-        <p className="text-white/70 text-sm">Revisa tu historial de fichajes y horas trabajadas</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Control de Tiempo</h1>
+        <p className="text-gray-600 dark:text-white/70 text-sm">Revisa tu historial de fichajes y horas trabajadas</p>
       </div>
 
       {/* Month navigation - Fixed height */}
       <div className="flex items-center justify-between px-6 mb-6 h-12">
         <button
           onClick={() => setCurrentMonth(prev => subMonths(prev, 1))}
-          className="text-white/70 hover:text-white hover:bg-white/5 p-2 rounded-lg transition-all duration-200"
+          className="text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/5 p-2 rounded-lg transition-all duration-200"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
         
-        <h2 className="text-xl font-semibold text-white text-center min-w-0 flex-1">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white text-center min-w-0 flex-1">
           {format(currentMonth, 'MMMM yyyy', { locale: es })}
         </h2>
         
@@ -820,7 +820,7 @@ export default function EmployeeTimeTracking() {
         {format(currentMonth, 'yyyy-MM') < format(new Date(), 'yyyy-MM') ? (
           <button
             onClick={() => setCurrentMonth(prev => addMonths(prev, 1))}
-            className="text-white/70 hover:text-white hover:bg-white/5 p-2 rounded-lg transition-all duration-200"
+            className="text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/5 p-2 rounded-lg transition-all duration-200"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -836,11 +836,11 @@ export default function EmployeeTimeTracking() {
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+        <div className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-gray-200 dark:border-white/20">
           {/* Total del mes */}
           <div className="text-center mb-4">
-            <p className="text-white/70 text-sm mb-1">Total del mes</p>
-            <p className="text-2xl font-bold text-white">{formatTotalHours(totalMonthHours)}</p>
+            <p className="text-gray-600 dark:text-white/70 text-sm mb-1">Total del mes</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatTotalHours(totalMonthHours)}</p>
           </div>
           
           {/* 4 Month Statistics - Mini Charts */}
@@ -857,12 +857,12 @@ export default function EmployeeTimeTracking() {
                 <div 
                   key={monthData.month}
                   onClick={handleMonthClick}
-                  className={`relative bg-white/5 backdrop-blur-sm rounded-lg p-3 border transition-all duration-500 cursor-pointer hover:scale-105 ${
+                  className={`relative bg-gray-100 dark:bg-white/5 backdrop-blur-sm rounded-lg p-3 border transition-all duration-500 cursor-pointer hover:scale-105 ${
                     isViewingThisMonth 
                       ? 'ring-2 ring-blue-400 bg-blue-500/20 border-blue-400/50' 
                       : monthData.isCurrentMonth 
                         ? 'ring-1 ring-green-400/50 bg-green-500/10 border-green-400/30' 
-                        : 'border-white/10 hover:border-white/30'
+                        : 'border-gray-300 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/30'
                   }`}
                   style={{
                     animationDelay: `${index * 100}ms`,
@@ -880,7 +880,7 @@ export default function EmployeeTimeTracking() {
                   
                   <div className="text-center">
                     <p className={`text-xs mb-1 font-medium ${
-                      isViewingThisMonth ? 'text-blue-300' : 'text-white/60'
+                      isViewingThisMonth ? 'text-blue-300' : 'text-gray-600 dark:text-white/60'
                     }`}>
                       {monthData.month}
                     </p>
@@ -898,7 +898,7 @@ export default function EmployeeTimeTracking() {
                       />
                     </div>
                     <p className={`text-xs font-mono ${
-                      isViewingThisMonth ? 'text-blue-200' : 'text-white'
+                      isViewingThisMonth ? 'text-blue-200' : 'text-gray-900 dark:text-white'
                     }`}>
                       {monthData.hours.toFixed(0)}h
                     </p>
@@ -1000,16 +1000,16 @@ export default function EmployeeTimeTracking() {
                           return (
                             <div 
                               key={`day-${dayKey}`} 
-                              className="bg-white/10 backdrop-blur-sm rounded-xl p-2 mb-2 border border-white/20 cursor-pointer"
+                              className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl p-2 mb-2 border border-gray-200 dark:border-white/20 cursor-pointer"
                               onClick={() => toggleDayExpansion(`${formatDayDate(new Date(dayKey))}-multi`)}
                             >
                               {/* Header with date and total hours - alineado con barra azul */}
                               <div className="flex justify-between items-center mb-3 mx-2">
-                                <span className="text-white font-medium text-sm">
+                                <span className="text-gray-900 dark:text-white font-medium text-sm">
                                   {formatDayDate(new Date(dayKey))}
                                 </span>
                                 <div className="flex items-center space-x-2">
-                                  <span className="text-white/90 font-mono text-sm">
+                                  <span className="text-gray-900 dark:text-white/90 font-mono text-sm">
                                     {dayTotal > 0 ? formatTotalHours(dayTotal) : '0h 0m'}
                                   </span>
                                   {sortedDaySessions.some(s => !s.clockOut) && (
@@ -1137,18 +1137,18 @@ export default function EmployeeTimeTracking() {
                                     
                                     return (
                                       <div key={`session-detail-${session.id}`} className="space-y-2">
-                                        <div className="text-xs text-white/50 font-medium">Sesión {sessionIndex + 1}:</div>
+                                        <div className="text-xs text-gray-500 dark:text-white/50 font-medium">Sesión {sessionIndex + 1}:</div>
                                         
                                         {/* Horarios de entrada y salida de la sesión */}
                                         <div className="flex justify-between text-xs">
-                                          <span className="text-green-400">{sessionStart.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
-                                          <span className="text-red-400">{sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                                          <span className="text-green-600 dark:text-green-400">{sessionStart.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                                          <span className="text-red-600 dark:text-red-400">{sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
                                         
                                         {/* Información de descansos de esta sesión */}
                                         {sessionBreaks.length > 0 && (
                                           <div className="space-y-1 ml-4">
-                                            <div className="text-xs text-white/50 font-medium">Descansos:</div>
+                                            <div className="text-xs text-gray-500 dark:text-white/50 font-medium">Descansos:</div>
                                             {sessionBreaks.map((breakPeriod: BreakPeriod, breakIndex: number) => {
                                               if (!breakPeriod.breakEnd) return null;
                                               
@@ -1157,7 +1157,7 @@ export default function EmployeeTimeTracking() {
                                               const duration = Math.floor((breakEnd.getTime() - breakStart.getTime()) / (1000 * 60));
                                               
                                               return (
-                                                <div key={`break-detail-${breakIndex}`} className="flex justify-between text-xs text-orange-200">
+                                                <div key={`break-detail-${breakIndex}`} className="flex justify-between text-xs text-orange-600 dark:text-orange-200">
                                                   <span>{formatTime(breakPeriod.breakStart)} - {formatTime(breakPeriod.breakEnd!)}</span>
                                                   <span>{duration} min</span>
                                                 </div>
@@ -1186,14 +1186,14 @@ export default function EmployeeTimeTracking() {
           })()
         ) : isLoading ? (
           <div className="flex items-center justify-center h-48">
-            <div className="text-center text-white/60">
-              <LoadingSpinner size="lg" className="mx-auto mb-3 text-white" />
+            <div className="text-center text-gray-500 dark:text-white/60">
+              <LoadingSpinner size="lg" className="mx-auto mb-3 text-gray-900 dark:text-white" />
               <p>Cargando fichajes...</p>
             </div>
           </div>
         ) : (
           <div className="flex items-center justify-center h-48">
-            <div className="text-center text-white/60">
+            <div className="text-center text-gray-500 dark:text-white/60">
               <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>No hay fichajes este mes</p>
             </div>
@@ -1216,7 +1216,7 @@ export default function EmployeeTimeTracking() {
           setWizardStep('date');
           setExistingSession(null);
         }}
-        className="fixed bottom-6 right-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg transition-all duration-200 transform hover:scale-110 z-50"
+        className="fixed bottom-6 right-6 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 transform hover:scale-110 z-50"
         data-testid="button-request-modification"
       >
         <Edit className="h-6 w-6" />
@@ -1230,9 +1230,9 @@ export default function EmployeeTimeTracking() {
           setExistingSession(null);
         }
       }}>
-        <DialogContent className="sm:max-w-md max-w-sm bg-gray-900 border-gray-700">
+        <DialogContent className="sm:max-w-md max-w-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700">
           <DialogHeader>
-            <DialogTitle className="text-center text-white">
+            <DialogTitle className="text-center text-gray-900 dark:text-white">
               {wizardStep === 'date' ? 'Seleccionar Fecha' : 
                requestData.requestType === 'modify_time' ? 'Modificar Fichaje' : 'Añadir Fichaje Olvidado'}
             </DialogTitle>
@@ -1241,7 +1241,7 @@ export default function EmployeeTimeTracking() {
           {wizardStep === 'date' ? (
             // STEP 1: Select date
             <div className="space-y-4">
-              <div className="text-center text-sm text-gray-400">
+              <div className="text-center text-sm text-gray-600 dark:text-gray-400">
                 Selecciona la fecha del fichaje que quieres modificar o añadir
               </div>
               
@@ -1253,7 +1253,7 @@ export default function EmployeeTimeTracking() {
                   disabled={(date) => date > new Date()}
                   locale={es}
                   initialFocus
-                  className="rounded-md border border-gray-700 bg-gray-800 text-white"
+                  className="rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 />
               </div>
               
@@ -1261,7 +1261,7 @@ export default function EmployeeTimeTracking() {
                 <Button
                   variant="outline"
                   onClick={() => setShowRequestDialog(false)}
-                  className="w-full bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
+                  className="w-full bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"
                 >
                   Cancelar
                 </Button>
@@ -1271,20 +1271,20 @@ export default function EmployeeTimeTracking() {
             // STEP 2: Fill details
             <div className="space-y-4">
               {requestData.requestType === 'modify_time' ? (
-                <div className="bg-blue-900/30 border border-blue-700/50 rounded-lg p-3">
-                  <div className="text-sm text-blue-300 font-medium mb-1">
+                <div className="bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700/50 rounded-lg p-3">
+                  <div className="text-sm text-blue-700 dark:text-blue-300 font-medium mb-1">
                     📝 Modificar fichaje del {format(new Date(requestData.date), 'dd/MM/yyyy', { locale: es })}
                   </div>
-                  <div className="text-xs text-blue-400">
+                  <div className="text-xs text-blue-600 dark:text-blue-400">
                     Horas actuales: {requestData.clockIn} {requestData.clockOut && `- ${requestData.clockOut}`}
                   </div>
                 </div>
               ) : (
-                <div className="bg-amber-900/30 border border-amber-700/50 rounded-lg p-3">
-                  <div className="text-sm text-amber-300 font-medium mb-1">
+                <div className="bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700/50 rounded-lg p-3">
+                  <div className="text-sm text-amber-700 dark:text-amber-300 font-medium mb-1">
                     ➕ Añadir fichaje del {format(new Date(requestData.date), 'dd/MM/yyyy', { locale: es })}
                   </div>
-                  <div className="text-xs text-amber-400">
+                  <div className="text-xs text-amber-600 dark:text-amber-400">
                     No hay registro de fichaje en esta fecha
                   </div>
                 </div>
@@ -1292,17 +1292,17 @@ export default function EmployeeTimeTracking() {
               
               <div className="space-y-2">
                 {requestData.requestType === 'modify_time' ? (
-                  <div className="text-xs text-gray-400 text-center mb-2">
+                  <div className="text-xs text-gray-600 dark:text-gray-400 text-center mb-2">
                     Modifica solo los campos que necesites cambiar
                   </div>
                 ) : (
-                  <div className="text-xs text-gray-400 text-center mb-2">
+                  <div className="text-xs text-gray-600 dark:text-gray-400 text-center mb-2">
                     Ambos campos son opcionales si no completaste el fichaje
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-300">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Entrada {requestData.requestType === 'modify_time' && <span className="text-gray-500 text-xs">(opcional)</span>}
                     </label>
                     <Input
@@ -1324,11 +1324,11 @@ export default function EmployeeTimeTracking() {
                         }
                       }}
                       data-testid="input-request-clockin"
-                      className="bg-gray-800 border-gray-600 text-white"
+                      className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-300">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Salida <span className="text-gray-500 text-xs">(opcional)</span>
                     </label>
                     <Input
@@ -1350,7 +1350,7 @@ export default function EmployeeTimeTracking() {
                         }
                       }}
                       data-testid="input-request-clockout"
-                      className="bg-gray-800 border-gray-600 text-white"
+                      className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                     />
                   </div>
                 </div>
@@ -1363,7 +1363,7 @@ export default function EmployeeTimeTracking() {
                   const outMinutes = outHour * 60 + outMin;
                   return outMinutes <= inMinutes;
                 })() && (
-                  <div className="mt-3 p-3 bg-yellow-900/30 border border-yellow-700/50 rounded-lg">
+                  <div className="mt-3 p-3 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700/50 rounded-lg">
                     <div className="flex items-start space-x-3">
                       <Checkbox
                         id="crosses-midnight"
@@ -1375,11 +1375,11 @@ export default function EmployeeTimeTracking() {
                       <div className="flex-1">
                         <label
                           htmlFor="crosses-midnight"
-                          className="text-sm font-medium text-yellow-300 cursor-pointer"
+                          className="text-sm font-medium text-yellow-700 dark:text-yellow-300 cursor-pointer"
                         >
                           🌙 La salida es al día siguiente
                         </label>
-                        <p className="text-xs text-yellow-400/80 mt-1">
+                        <p className="text-xs text-yellow-600 dark:text-yellow-400/80 mt-1">
                           Marca esta casilla si el turno cruza medianoche (ej: entrada 20:00, salida 07:00 del día siguiente)
                         </p>
                       </div>
@@ -1389,13 +1389,13 @@ export default function EmployeeTimeTracking() {
               </div>
               
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">Motivo</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Motivo</label>
                 <Input
                   value={requestData.reason}
                   onChange={(e) => setRequestData({...requestData, reason: e.target.value})}
                   placeholder="Ej: Olvidé fichar, error en registro..."
                   data-testid="input-request-reason"
-                  className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-500"
+                  className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500"
                 />
               </div>
               
@@ -1403,14 +1403,14 @@ export default function EmployeeTimeTracking() {
                 <Button
                   variant="outline"
                   onClick={() => setWizardStep('date')}
-                  className="flex-1 bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
+                  className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"
                 >
                   Atrás
                 </Button>
                 <Button
                   onClick={() => requestModificationMutation.mutate(requestData)}
                   disabled={(!requestData.clockIn && !requestData.clockOut) || !requestData.reason || requestModificationMutation.isPending}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
                   data-testid="button-submit-request"
                 >
                   {requestModificationMutation.isPending ? (
@@ -1427,16 +1427,16 @@ export default function EmployeeTimeTracking() {
       
       {/* Dialog for incomplete session clock out */}
       <Dialog open={incompleteDialogOpen} onOpenChange={setIncompleteDialogOpen}>
-        <DialogContent className="sm:max-w-xs max-w-sm bg-gray-900 border-gray-700">
+        <DialogContent className="sm:max-w-xs max-w-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700">
           <DialogHeader>
-            <DialogTitle className="text-center text-white">Cerrar Sesión Incompleta</DialogTitle>
+            <DialogTitle className="text-center text-gray-900 dark:text-white">Cerrar Sesión Incompleta</DialogTitle>
           </DialogHeader>
           <div className="space-y-6">
-            <div className="text-center text-sm text-gray-400">
+            <div className="text-center text-sm text-gray-600 dark:text-gray-400">
               Introduce la hora de salida para cerrar esta sesión incompleta:
             </div>
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-300 text-center">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
                 Hora de salida
               </label>
               <div className="flex justify-center">
@@ -1444,7 +1444,7 @@ export default function EmployeeTimeTracking() {
                   type="time"
                   value={clockOutTime}
                   onChange={(e) => setClockOutTime(e.target.value)}
-                  className="text-center w-32 text-lg font-mono bg-gray-800 border-gray-600 text-white"
+                  className="text-center w-32 text-lg font-mono bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                   placeholder="HH:MM"
                 />
               </div>
@@ -1453,14 +1453,14 @@ export default function EmployeeTimeTracking() {
               <Button
                 variant="outline"
                 onClick={() => setIncompleteDialogOpen(false)}
-                className="flex-1 bg-gray-800 text-white border-gray-600 hover:bg-gray-700"
+                className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"
               >
                 Cancelar
               </Button>
               <Button
                 onClick={submitClockOut}
                 disabled={clockOutMutation.isPending || !clockOutTime}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
               >
                 {clockOutMutation.isPending ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />

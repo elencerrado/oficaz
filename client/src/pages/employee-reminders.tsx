@@ -315,14 +315,14 @@ export default function EmployeeReminders() {
   const companyAlias = company?.companyAlias || 'test';
 
   return (
-    <div className="min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
+    <div className="min-h-screen bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col page-scroll">
       {/* Header - Standard employee pattern */}
       <div className="flex items-center justify-between p-6 pb-8 h-20">
         <Link href={`/${companyAlias}/inicio`}>
           <Button
             variant="ghost"
             size="lg"
-            className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
+            className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 px-6 py-3 rounded-xl bg-gray-100 dark:bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
             <span className="font-medium">Atrás</span>
@@ -335,14 +335,14 @@ export default function EmployeeReminders() {
             <img 
               src={company.logoUrl} 
               alt={company.name} 
-              className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
+              className="h-8 w-auto mb-1 object-contain filter dark:brightness-0 dark:invert"
             />
           ) : (
-            <div className="text-white text-sm font-medium mb-1">
+            <div className="text-gray-900 dark:text-white text-sm font-medium mb-1">
               {company?.name || 'Mi Empresa'}
             </div>
           )}
-          <div className="text-white/70 text-xs">
+          <div className="text-gray-600 dark:text-white/70 text-xs">
             {user?.fullName}
           </div>
         </div>
@@ -350,8 +350,8 @@ export default function EmployeeReminders() {
 
       {/* Page title */}
       <div className="px-6 pb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">Recordatorios</h1>
-        <p className="text-white/70 text-sm">Gestiona tus recordatorios personales</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Recordatorios</h1>
+        <p className="text-gray-600 dark:text-white/70 text-sm">Gestiona tus recordatorios personales</p>
       </div>
 
       {/* Search and Filters */}
@@ -360,12 +360,12 @@ export default function EmployeeReminders() {
           placeholder="Buscar recordatorios..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+          className="bg-white dark:bg-white/10 border-gray-200 dark:border-white/20 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-white/50"
         />
         
         <div className="flex gap-2">
           <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
-            <SelectTrigger className="bg-white/10 border-white/20 text-white">
+            <SelectTrigger className="bg-white dark:bg-white/10 border-gray-200 dark:border-white/20 text-gray-900 dark:text-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -379,7 +379,7 @@ export default function EmployeeReminders() {
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button 
-                className="bg-white/20 hover:bg-white/30 text-white border-white/20"
+                className="bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 text-gray-900 dark:text-white border-gray-200 dark:border-white/20"
                 onClick={() => {
                   setEditingReminder(null);
                   setFormData({ title: '', content: '', reminderDate: '', priority: 'medium', color: '#ffffff', enableNotifications: false });
@@ -389,9 +389,9 @@ export default function EmployeeReminders() {
                 Nuevo
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-gray-900 border-gray-700 text-white">
+            <DialogContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
               <DialogHeader>
-                <DialogTitle className="text-white">
+                <DialogTitle className="text-gray-900 dark:text-white">
                   {editingReminder ? 'Editar Recordatorio' : 'Nuevo Recordatorio'}
                 </DialogTitle>
               </DialogHeader>
@@ -402,7 +402,7 @@ export default function EmployeeReminders() {
                     placeholder="Título del recordatorio"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="bg-gray-800 border-gray-600 text-white"
+                    className="bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white"
                     required
                   />
                 </div>
@@ -412,7 +412,7 @@ export default function EmployeeReminders() {
                     placeholder="Contenido (opcional)"
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    className="bg-gray-800 border-gray-600 text-white min-h-[80px]"
+                    className="bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white min-h-[80px]"
                   />
                 </div>
                 
@@ -421,7 +421,7 @@ export default function EmployeeReminders() {
                     type="datetime-local"
                     value={formData.reminderDate}
                     onChange={(e) => setFormData({ ...formData, reminderDate: e.target.value })}
-                    className="bg-gray-800 border-gray-600 text-white"
+                    className="bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white"
                   />
                 </div>
 
@@ -433,9 +433,9 @@ export default function EmployeeReminders() {
                       id="enableNotifications"
                       checked={formData.enableNotifications}
                       onChange={(e) => setFormData({ ...formData, enableNotifications: e.target.checked })}
-                      className="rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 text-blue-600 focus:ring-blue-500"
                     />
-                    <label htmlFor="enableNotifications" className="text-white text-sm">
+                    <label htmlFor="enableNotifications" className="text-gray-900 dark:text-white text-sm">
                       Mostrar notificación cuando llegue la fecha
                     </label>
                   </div>
@@ -444,7 +444,7 @@ export default function EmployeeReminders() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Select value={formData.priority} onValueChange={(value: any) => setFormData({ ...formData, priority: value })}>
-                      <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                      <SelectTrigger className="bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -457,7 +457,7 @@ export default function EmployeeReminders() {
                   
                   <div>
                     <Select value={formData.color} onValueChange={(value) => setFormData({ ...formData, color: value })}>
-                      <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                      <SelectTrigger className="bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
                         <SelectValue>
                           <div className="flex items-center gap-2">
                             <div 
@@ -489,7 +489,7 @@ export default function EmployeeReminders() {
                   <Button 
                     type="submit" 
                     disabled={createReminderMutation.isPending}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white dark:text-white"
                   >
                     {createReminderMutation.isPending ? 'Guardando...' : (editingReminder ? 'Actualizar' : 'Crear')}
                   </Button>
@@ -497,7 +497,7 @@ export default function EmployeeReminders() {
                     type="button" 
                     variant="outline"
                     onClick={() => setIsDialogOpen(false)}
-                    className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                    className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
                     Cancelar
                   </Button>
@@ -512,13 +512,13 @@ export default function EmployeeReminders() {
       <div className="flex-1 px-6 pb-6">
         {isLoading ? (
           <div className="text-center py-8">
-            <div className="text-white/70">Cargando recordatorios...</div>
+            <div className="text-gray-600 dark:text-white/70">Cargando recordatorios...</div>
           </div>
         ) : sortedReminders.length === 0 ? (
           <div className="text-center py-8">
-            <Clock className="h-12 w-12 text-white/30 mx-auto mb-4" />
-            <div className="text-white/70 mb-2">No hay recordatorios</div>
-            <div className="text-white/50 text-sm">
+            <Clock className="h-12 w-12 text-gray-300 dark:text-white/30 mx-auto mb-4" />
+            <div className="text-gray-600 dark:text-white/70 mb-2">No hay recordatorios</div>
+            <div className="text-gray-500 dark:text-white/50 text-sm">
               {statusFilter === 'all' ? 'Crea tu primer recordatorio' : `No hay recordatorios ${statusFilter === 'active' ? 'activos' : statusFilter === 'completed' ? 'completados' : 'archivados'}`}
             </div>
           </div>
@@ -531,8 +531,8 @@ export default function EmployeeReminders() {
               return (
                 <div
                   key={reminder.id}
-                  className="relative rounded-lg p-4 shadow-md border border-white/10 backdrop-blur-sm"
-                  style={{ backgroundColor: `${reminder.color}15` }}
+                  className="relative rounded-lg p-4 shadow-md border border-gray-200 dark:border-white/10 backdrop-blur-sm bg-white dark:bg-transparent"
+                  style={{ backgroundColor: reminder.color === '#ffffff' ? undefined : `${reminder.color}15` }}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -541,18 +541,18 @@ export default function EmployeeReminders() {
                           <Star className="h-4 w-4 text-yellow-400 fill-current" />
                         )}
                         <PriorityIcon className={`h-4 w-4 ${priorityColors[reminder.priority]}`} />
-                        <h3 className="font-medium text-white text-sm">{reminder.title}</h3>
+                        <h3 className="font-medium text-gray-900 dark:text-white text-sm">{reminder.title}</h3>
                       </div>
                       
                       {reminder.content && (
-                        <p className="text-white/70 text-xs mb-2 line-clamp-2">{reminder.content}</p>
+                        <p className="text-gray-600 dark:text-white/70 text-xs mb-2 line-clamp-2">{reminder.content}</p>
                       )}
                       
                       <div className="flex items-center gap-2 flex-wrap">
                         {reminder.reminderDate && (
                           <Badge 
                             variant="outline" 
-                            className={`text-xs ${isOverdue ? 'border-red-400 text-red-400' : 'border-white/30 text-white/70'}`}
+                            className={`text-xs ${isOverdue ? 'border-red-400 text-red-400' : 'border-gray-300 dark:border-white/30 text-gray-600 dark:text-white/70'}`}
                           >
                             <Clock className="h-3 w-3 mr-1" />
                             {formatReminderDate(reminder.reminderDate)}
@@ -566,7 +566,7 @@ export default function EmployeeReminders() {
                               ? 'border-gray-400/30 text-gray-400/70' 
                               : isCompletedByCurrentUser(reminder)
                                 ? 'border-green-400/50 text-green-400 hover:border-green-400 hover:bg-green-400/10'
-                                : 'border-white/30 text-white/70'
+                                : 'border-gray-300 dark:border-white/30 text-gray-600 dark:text-white/70'
                           }`}
                           onClick={() => {
                             if (!reminder.isArchived && isCompletedByCurrentUser(reminder)) {
@@ -600,7 +600,7 @@ export default function EmployeeReminders() {
                           size="sm"
                           variant="ghost"
                           onClick={() => togglePinMutation.mutate({ id: reminder.id, isPinned: !reminder.isPinned })}
-                          className="h-8 w-8 p-0 text-white/60 hover:text-yellow-400 hover:bg-white/10"
+                          className="h-8 w-8 p-0 text-gray-500 dark:text-white/60 hover:text-yellow-400 hover:bg-gray-100 dark:hover:bg-white/10"
                         >
                           <Star className={`h-4 w-4 ${reminder.isPinned ? 'fill-current text-yellow-400' : ''}`} />
                         </Button>
@@ -612,7 +612,7 @@ export default function EmployeeReminders() {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleEdit(reminder)}
-                          className="h-8 w-8 p-0 text-white/60 hover:text-blue-400 hover:bg-white/10"
+                          className="h-8 w-8 p-0 text-gray-500 dark:text-white/60 hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-white/10"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -624,7 +624,7 @@ export default function EmployeeReminders() {
                           size="sm"
                           variant="ghost"
                           onClick={() => completeReminderMutation.mutate(reminder.id)}
-                          className="h-8 w-8 p-0 text-white/60 hover:text-green-400 hover:bg-white/10"
+                          className="h-8 w-8 p-0 text-gray-500 dark:text-white/60 hover:text-green-400 hover:bg-gray-100 dark:hover:bg-white/10"
                         >
                           <CheckCircle className="h-4 w-4" />
                         </Button>
@@ -635,7 +635,7 @@ export default function EmployeeReminders() {
                         size="sm"
                         variant="ghost"
                         onClick={() => updateStatusMutation.mutate({ id: reminder.id, updates: { isArchived: true } })}
-                        className="h-8 w-8 p-0 text-white/60 hover:text-gray-400 hover:bg-white/10"
+                        className="h-8 w-8 p-0 text-gray-500 dark:text-white/60 hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10"
                       >
                         <Archive className="h-4 w-4" />
                       </Button>
@@ -646,7 +646,7 @@ export default function EmployeeReminders() {
                           size="sm"
                           variant="ghost"
                           onClick={() => deleteReminderMutation.mutate(reminder.id)}
-                          className="h-8 w-8 p-0 text-white/60 hover:text-red-400 hover:bg-white/10"
+                          className="h-8 w-8 p-0 text-gray-500 dark:text-white/60 hover:text-red-400 hover:bg-gray-100 dark:hover:bg-white/10"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
