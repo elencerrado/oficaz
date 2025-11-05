@@ -1023,14 +1023,14 @@ export default function EmployeeDashboard() {
                     className={`relative w-24 h-24 transition-all duration-200 rounded-2xl flex items-center justify-center mb-2 backdrop-blur-xl border ${
                       isFeatureDisabled 
                         ? 'bg-gray-200 dark:bg-gray-500/20 border-gray-300 dark:border-gray-400/30 cursor-not-allowed opacity-40' 
-                        : 'bg-blue-50 dark:bg-[#007AFF]/20 border-blue-200 dark:border-[#007AFF]/30 hover:bg-blue-100 dark:hover:bg-[#007AFF]/30 hover:border-blue-300 dark:hover:border-[#007AFF]/50'
+                        : 'bg-[#007AFF] hover:bg-[#0056CC] border-[#007AFF] hover:border-[#0056CC]'
                     }`}
                     disabled={isFeatureDisabled}
                   >
                     <item.icon className={`h-12 w-12 transition-all duration-200 ${
                       isFeatureDisabled 
                         ? 'text-gray-300 dark:text-gray-400/50' 
-                        : 'text-[#007AFF] drop-shadow-lg'
+                        : 'text-white drop-shadow-lg'
                     }`} />
                     {item.notification && !isFeatureDisabled && (
                       <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full border-2 border-white dark:border-gray-900 shadow-lg animate-bounce ${
