@@ -9,7 +9,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
 import { 
@@ -329,10 +328,6 @@ export default function EmployeeReminders() {
             <span className="font-medium">Atrás</span>
           </Button>
         </Link>
-        
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-        </div>
         
         <div className="flex-1 flex flex-col items-end text-right">
           {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}

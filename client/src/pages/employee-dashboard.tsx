@@ -8,8 +8,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard, AlarmClock, CalendarDays } from 'lucide-react';
+import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard, AlarmClock, CalendarDays, Sun, Moon, Monitor } from 'lucide-react';
+import { useTheme } from '@/lib/theme-provider';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -45,6 +45,7 @@ export default function EmployeeDashboard() {
   const { user, logout, company } = useAuth();
   const { hasAccess } = useFeatureCheck();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   useWorkAlarms(); // Initialize PWA push notifications
   
   // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
@@ -800,7 +801,6 @@ export default function EmployeeDashboard() {
             </Button>
           </div>
           <div className="flex items-center gap-2">
-            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2">
@@ -815,24 +815,64 @@ export default function EmployeeDashboard() {
                   />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-white/10 backdrop-blur-xl border border-white/20 text-white" align="end" forceMount>
+              <DropdownMenuContent className="w-56 bg-white/10 backdrop-blur-xl border border-white/20 text-white dark:bg-gray-800 dark:border-gray-700" align="end" forceMount>
                 <div className="flex flex-col space-y-1 p-2">
-                  <p className="text-sm font-medium text-white">{user?.fullName}</p>
-                  <p className="text-xs text-white/70">{user?.companyEmail || user?.personalEmail || 'Sin email'}</p>
-                  <p className="text-xs text-white/60 capitalize">{translateRole(user?.role) || 'Empleado'}</p>
+                  <p className="text-sm font-medium text-white dark:text-white">{user?.fullName}</p>
+                  <p className="text-xs text-white/70 dark:text-gray-400">{user?.companyEmail || user?.personalEmail || 'Sin email'}</p>
+                  <p className="text-xs text-white/60 dark:text-gray-500 capitalize">{translateRole(user?.role) || 'Empleado'}</p>
                 </div>
+                
+                <div className="px-2 py-1.5">
+                  <p className="text-xs font-medium text-white/60 dark:text-gray-500 mb-2">Tema</p>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => setTheme('light')}
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors ${
+                        theme === 'light' 
+                          ? 'bg-white/20 text-white dark:bg-blue-500 dark:text-white' 
+                          : 'text-white/70 hover:bg-white/10 dark:text-gray-400 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <Sun className="w-3.5 h-3.5" />
+                      Claro
+                    </button>
+                    <button
+                      onClick={() => setTheme('dark')}
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors ${
+                        theme === 'dark' 
+                          ? 'bg-white/20 text-white dark:bg-blue-500 dark:text-white' 
+                          : 'text-white/70 hover:bg-white/10 dark:text-gray-400 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <Moon className="w-3.5 h-3.5" />
+                      Oscuro
+                    </button>
+                    <button
+                      onClick={() => setTheme('system')}
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors ${
+                        theme === 'system' 
+                          ? 'bg-white/20 text-white dark:bg-blue-500 dark:text-white' 
+                          : 'text-white/70 hover:bg-white/10 dark:text-gray-400 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <Monitor className="w-3.5 h-3.5" />
+                      Auto
+                    </button>
+                  </div>
+                </div>
+
                 <DropdownMenuItem 
                   onClick={() => {
                     const urlParts = window.location.pathname.split('/').filter((part: string) => part.length > 0);
                     const currentCompanyAlias = urlParts[0] || company?.alias || 'test';
                     handleNavigation(`/${currentCompanyAlias}/usuario`);
                   }} 
-                  className="text-white hover:text-blue-300 hover:bg-blue-500/20 cursor-pointer"
+                  className="text-white hover:text-blue-300 hover:bg-blue-500/20 cursor-pointer dark:text-gray-300 dark:hover:bg-gray-700"
                 >
                   <User className="mr-2 h-4 w-4" />
                   Mi Perfil
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={logout} className="text-white hover:text-red-300 hover:bg-red-500/20 cursor-pointer">
+                <DropdownMenuItem onClick={logout} className="text-white hover:text-red-300 hover:bg-red-500/20 cursor-pointer dark:text-gray-300 dark:hover:bg-gray-700">
                   <LogOut className="mr-2 h-4 w-4" />
                   Cerrar sesión
                 </DropdownMenuItem>
