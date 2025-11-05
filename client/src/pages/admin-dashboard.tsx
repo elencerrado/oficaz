@@ -346,11 +346,24 @@ export default function AdminDashboard() {
   });
 
   // Count unsigned payrolls (documents pending employee signature)
-  const unsignedPayrollsCount = allDocuments.filter((doc: any) => 
+  const unsignedPayrolls = allDocuments.filter((doc: any) => 
     doc.originalName && 
     doc.originalName.toLowerCase().includes('nómina') && 
     !doc.isAccepted
-  ).length;
+  );
+  
+  console.log('📄 Dashboard Documents Debug:', {
+    totalDocuments: allDocuments.length,
+    unsignedPayrolls: unsignedPayrolls.length,
+    unsignedDocs: unsignedPayrolls.map((d: any) => ({
+      id: d.id,
+      name: d.originalName,
+      isAccepted: d.isAccepted,
+      userId: d.userId
+    }))
+  });
+  
+  const unsignedPayrollsCount = unsignedPayrolls.length;
 
   // Calculate total pending items
   const totalPending = 
