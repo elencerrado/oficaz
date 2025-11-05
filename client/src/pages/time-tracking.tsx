@@ -33,7 +33,8 @@ import {
   Plus,
   Bell,
   FileText,
-  History
+  History,
+  ArrowDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, startOfWeek, addDays, subDays, differenceInMinutes, startOfDay, endOfDay, endOfWeek, startOfMonth, endOfMonth, isToday } from 'date-fns';
@@ -3771,22 +3772,121 @@ export default function TimeTracking() {
                       {request.status === 'pending' ? 'Pendiente' : request.status === 'approved' ? 'Aprobada' : 'Rechazada'}
                     </Badge>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
+                  
+                  <div className="space-y-3 pt-2">
+                    <div className="text-sm">
                       <span className="text-muted-foreground">Fecha:</span> {format(new Date(request.requestedDate), 'dd/MM/yyyy', { locale: es })}
                     </div>
-                    <div>
-                      <span className="text-muted-foreground">Entrada:</span> {format(new Date(request.requestedClockIn), 'HH:mm')}
-                    </div>
-                    {request.requestedClockOut && (
-                      <div>
-                        <span className="text-muted-foreground">Salida:</span> {format(new Date(request.requestedClockOut), 'HH:mm')}
+                    
+                    {request.requestType === 'forgotten_checkin' ? (
+                      // Fichaje olvidado - solo mostrar nueva información
+                      <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg space-y-2">
+                        <div className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                          Nuevo fichaje solicitado:
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Entrada:</span>{' '}
+                            <span className="font-medium">{format(new Date(request.requestedClockIn), 'HH:mm')}</span>
+                          </div>
+                          {request.requestedClockOut && (
+                            <div>
+                              <span className="text-muted-foreground">Salida:</span>{' '}
+                              <span className="font-medium">{format(new Date(request.requestedClockOut), 'HH:mm')}</span>
+                            </div>
+                          )}
+                        </div>
+                        {request.requestedClockOut && (() => {
+                          const totalMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
+                          const totalHours = (totalMs / (1000 * 60 * 60)).toFixed(2);
+                          return (
+                            <div className="text-sm pt-1">
+                              <span className="text-muted-foreground">Total:</span>{' '}
+                              <span className="font-semibold text-blue-600 dark:text-blue-400">{totalHours} horas</span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    ) : (
+                      // Modificación de horario - mostrar antes y después
+                      <div className="space-y-3">
+                        {/* Horario Actual */}
+                        <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg space-y-2">
+                          <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Horario actual:
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            {request.currentClockIn && (
+                              <div>
+                                <span className="text-muted-foreground">Entrada:</span>{' '}
+                                <span className="font-medium">{format(new Date(request.currentClockIn), 'HH:mm')}</span>
+                              </div>
+                            )}
+                            {request.currentClockOut && (
+                              <div>
+                                <span className="text-muted-foreground">Salida:</span>{' '}
+                                <span className="font-medium">{format(new Date(request.currentClockOut), 'HH:mm')}</span>
+                              </div>
+                            )}
+                          </div>
+                          {request.currentClockIn && request.currentClockOut && (() => {
+                            const totalMs = new Date(request.currentClockOut).getTime() - new Date(request.currentClockIn).getTime();
+                            const totalHours = (totalMs / (1000 * 60 * 60)).toFixed(2);
+                            return (
+                              <div className="text-sm pt-1">
+                                <span className="text-muted-foreground">Total:</span>{' '}
+                                <span className="font-semibold">{totalHours} horas</span>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                        
+                        {/* Flecha de cambio */}
+                        <div className="flex justify-center">
+                          <ArrowDown className="w-5 h-5 text-blue-500" />
+                        </div>
+                        
+                        {/* Horario Solicitado */}
+                        <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg space-y-2">
+                          <div className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                            Horario solicitado:
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Entrada:</span>{' '}
+                              <span className={`font-medium ${request.currentClockIn && format(new Date(request.currentClockIn), 'HH:mm') !== format(new Date(request.requestedClockIn), 'HH:mm') ? 'text-blue-600 dark:text-blue-400' : ''}`}>
+                                {format(new Date(request.requestedClockIn), 'HH:mm')}
+                              </span>
+                            </div>
+                            {request.requestedClockOut && (
+                              <div>
+                                <span className="text-muted-foreground">Salida:</span>{' '}
+                                <span className={`font-medium ${request.currentClockOut && format(new Date(request.currentClockOut), 'HH:mm') !== format(new Date(request.requestedClockOut), 'HH:mm') ? 'text-blue-600 dark:text-blue-400' : ''}`}>
+                                  {format(new Date(request.requestedClockOut), 'HH:mm')}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          {request.requestedClockOut && (() => {
+                            const totalMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
+                            const totalHours = (totalMs / (1000 * 60 * 60)).toFixed(2);
+                            return (
+                              <div className="text-sm pt-1">
+                                <span className="text-muted-foreground">Total:</span>{' '}
+                                <span className="font-semibold text-blue-600 dark:text-blue-400">{totalHours} horas</span>
+                              </div>
+                            );
+                          })()}
+                        </div>
                       </div>
                     )}
+                    
+                    <div className="text-sm pt-1">
+                      <span className="text-muted-foreground">Motivo:</span>{' '}
+                      <span className="italic">{request.reason}</span>
+                    </div>
                   </div>
-                  <div className="text-sm">
-                    <span className="text-muted-foreground">Motivo:</span> {request.reason}
-                  </div>
+                  
                   {request.status === 'pending' && (
                     <div className="flex gap-2 pt-2">
                       <Button
