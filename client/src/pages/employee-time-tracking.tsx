@@ -34,6 +34,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useToast } from '@/hooks/use-toast';
 import LoadingSpinner from '@/components/ui/loading-spinner';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { apiRequest } from '@/lib/queryClient';
 import { Link, useLocation } from 'wouter';
 
@@ -777,6 +778,10 @@ export default function EmployeeTimeTracking() {
             <span className="font-medium">Atrás</span>
           </Button>
         </Link>
+        
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+        </div>
         
         <div className="flex-1 flex flex-col items-end text-right">
           {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}

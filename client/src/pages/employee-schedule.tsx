@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
 import { PageLoading } from "@/components/ui/page-loading";
 import { useFeatureCheck } from "@/hooks/use-feature-check";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface WorkShift {
   id: number;
@@ -231,6 +232,10 @@ export default function EmployeeSchedule() {
             <span className="font-medium">Atrás</span>
           </Button>
         </Link>
+        
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+        </div>
         
         <div className="flex-1 flex flex-col items-end text-right">
           {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}

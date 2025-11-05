@@ -8,6 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard, AlarmClock, CalendarDays } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -799,11 +800,12 @@ export default function EmployeeDashboard() {
             </Button>
           </div>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2">
                   <div>
-                    <h1 className="text-xs font-medium text-white drop-shadow-lg">{user?.fullName}</h1>
+                    <h1 className="text-xs font-medium text-white dark:text-white drop-shadow-lg">{user?.fullName}</h1>
                   </div>
                   <UserAvatar
                     fullName={user?.fullName || ''}
