@@ -340,32 +340,24 @@ export default function AdminDashboard() {
   });
   const unreadMessagesCount = unreadMessagesData?.count || 0;
 
-  const { data: documentRequests = [] } = useQuery({
-    queryKey: ['/api/document-notifications'],
-    select: (data: any[]) => data?.filter((d: any) => d.status !== 'completed') || [],
-  });
-
-  const { data: unsignedPayrolls = [] } = useQuery({
+  const { data: allDocuments = [] } = useQuery({
     queryKey: ['/api/documents'],
     enabled: hasAccess('documents'),
-    select: (data: any[]) => {
-      if (!data?.length) return [];
-      // Filter for unsigned payroll documents
-      return data.filter((doc: any) => 
-        doc.originalName && 
-        doc.originalName.toLowerCase().includes('nómina') && 
-        !doc.isAccepted
-      );
-    },
   });
+
+  // Count unsigned payrolls (documents pending employee signature)
+  const unsignedPayrollsCount = allDocuments.filter((doc: any) => 
+    doc.originalName && 
+    doc.originalName.toLowerCase().includes('nómina') && 
+    !doc.isAccepted
+  ).length;
 
   // Calculate total pending items
   const totalPending = 
     incompleteSessions.length + 
     modificationRequests.length + 
     pendingVacations.length + 
-    unsignedPayrolls.length + 
-    documentRequests.length + 
+    unsignedPayrollsCount + 
     unreadMessagesCount;
 
   // Track previous vacation requests to detect new ones for toast notifications
@@ -983,7 +975,7 @@ export default function AdminDashboard() {
                     </button>
                   )}
 
-                  {unsignedPayrolls.length > 0 && (
+                  {unsignedPayrollsCount > 0 && (
                     <button
                       onClick={() => setLocation('/test/documentos')}
                       className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
@@ -998,28 +990,7 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">{unsignedPayrolls.length}</Badge>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </button>
-                  )}
-
-                  {documentRequests.length > 0 && (
-                    <button
-                      onClick={() => setLocation('/test/documentos')}
-                      className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
-                          <FileText className="h-4 w-4 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">Solicitudes de documentos</p>
-                          <p className="text-xs text-muted-foreground">Pendientes de subir</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">{documentRequests.length}</Badge>
+                        <Badge variant="secondary" className="text-xs">{unsignedPayrollsCount}</Badge>
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </button>
