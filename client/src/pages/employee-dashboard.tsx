@@ -805,7 +805,7 @@ export default function EmployeeDashboard() {
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2">
                   <div>
-                    <h1 className="text-xs font-medium text-white dark:text-white drop-shadow-lg">{user?.fullName}</h1>
+                    <h1 className="text-xs font-medium text-gray-900 dark:text-white drop-shadow-lg">{user?.fullName}</h1>
                   </div>
                   <UserAvatar
                     fullName={user?.fullName || ''}
