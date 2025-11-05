@@ -1060,7 +1060,7 @@ export default function EmployeeDashboard() {
 
         {/* Status Line and Last Clock In Info / Temporary Message - Compacto */}
         <div className="text-center mb-2 mt-6 flex justify-center">
-          <div className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-white/20 p-2 w-[304px]">
+          <div className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-white/20 p-2 w-[304px] shadow-md">
             {/* Status Line */}
             <div className={`text-xs mb-2 font-medium ${
               sessionStatus.isActive 
