@@ -2874,7 +2874,7 @@ export default function TimeTracking() {
                     }}
                     className={cn(
                       "h-10 text-xs font-normal flex-1 text-center",
-                      dateFilter !== 'today' && "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                      dateFilter !== 'today' && "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
                     )}
                   >
                     Hoy
@@ -2900,7 +2900,7 @@ export default function TimeTracking() {
                       "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center",
                       dateFilter === 'day' 
                         ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
-                        : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                        : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
                     )}
                   />
 
@@ -2913,7 +2913,7 @@ export default function TimeTracking() {
                           "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center",
                           dateFilter === 'month' 
                             ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
-                            : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                            : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
                         )}
                       >
                         {dateFilter === 'month' ? format(currentMonth, 'MMM yyyy', { locale: es }) : 'Mes'}
@@ -2968,7 +2968,7 @@ export default function TimeTracking() {
                       "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center",
                       dateFilter === 'custom' 
                         ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
-                        : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                        : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
                     )}
                   />
 
@@ -2985,7 +2985,7 @@ export default function TimeTracking() {
                       setCurrentDate(new Date());
                       setCurrentMonth(new Date());
                     }}
-                    className="h-10 text-xs font-normal whitespace-nowrap flex-1 text-center bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                    className="h-10 text-xs font-normal whitespace-nowrap flex-1 text-center bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     Limpiar filtros
                   </Button>
@@ -3007,7 +3007,7 @@ export default function TimeTracking() {
                       }}
                       className={cn(
                         "h-9 text-xs font-normal text-center",
-                        dateFilter !== 'today' && "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                        dateFilter !== 'today' && "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
                       )}
                     >
                       Hoy
@@ -3031,7 +3031,7 @@ export default function TimeTracking() {
                       }
                       className={dateFilter === 'day' 
                         ? "h-9 text-xs font-normal text-center bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
-                        : "h-9 text-xs font-normal text-center bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                        : "h-9 text-xs font-normal text-center bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
                       }
                     />
 
@@ -3055,7 +3055,7 @@ export default function TimeTracking() {
                           "h-9 text-xs font-normal text-center [&>svg]:hidden focus:ring-0 focus:ring-offset-0",
                           dateFilter === 'month' 
                             ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90 focus:bg-[#007AFF] focus:border-[#007AFF]"
-                            : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-foreground hover:bg-accent hover:text-accent-foreground"
+                            : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-foreground hover:bg-gray-100 dark:hover:bg-gray-700"
                         )}
                       >
                         <span className={cn(
@@ -3100,7 +3100,7 @@ export default function TimeTracking() {
                       }}
                       className={dateFilter === 'custom' 
                         ? "h-9 text-xs font-normal text-center bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
-                        : "h-9 text-xs font-normal text-center bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                        : "h-9 text-xs font-normal text-center bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
                       }
                     />
 
@@ -3117,7 +3117,7 @@ export default function TimeTracking() {
                         setCurrentDate(new Date());
                         setCurrentMonth(new Date());
                       }}
-                      className="h-9 text-xs font-normal text-center bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                      className="h-9 text-xs font-normal text-center bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       Limpiar
                     </Button>
