@@ -3342,12 +3342,15 @@ export default function TimeTracking() {
                                 size="sm"
                                 variant={hasAuditLogs ? "outline" : "ghost"}
                                 onClick={() => {
-                                  setSelectedSessionForAudit(session.id);
-                                  setShowAuditDialog(true);
+                                  if (hasAuditLogs) {
+                                    setSelectedSessionForAudit(session.id);
+                                    setShowAuditDialog(true);
+                                  }
                                 }}
+                                disabled={!hasAuditLogs}
                                 className={cn(
                                   "h-8 w-8 p-0",
-                                  hasAuditLogs ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50" : "text-gray-400"
+                                  hasAuditLogs ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50" : "text-gray-400 cursor-default"
                                 )}
                                 title={hasAuditLogs ? "Ver historial de modificaciones" : "Sin modificaciones"}
                                 data-testid={`button-history-${session.id}`}
@@ -3596,12 +3599,15 @@ export default function TimeTracking() {
                               size="sm"
                               variant={hasAuditLogs ? "outline" : "ghost"}
                               onClick={() => {
-                                setSelectedSessionForAudit(session.id);
-                                setShowAuditDialog(true);
+                                if (hasAuditLogs) {
+                                  setSelectedSessionForAudit(session.id);
+                                  setShowAuditDialog(true);
+                                }
                               }}
+                              disabled={!hasAuditLogs}
                               className={cn(
                                 "h-8 w-8 p-0",
-                                hasAuditLogs ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50" : "text-gray-400"
+                                hasAuditLogs ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50" : "text-gray-400 cursor-default"
                               )}
                               title={hasAuditLogs ? "Ver historial de modificaciones" : "Sin modificaciones"}
                               data-testid={`button-history-mobile-${session.id}`}
