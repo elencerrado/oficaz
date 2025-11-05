@@ -26,7 +26,10 @@ import {
   AlertCircle,
   Check,
   Edit,
-  X
+  X,
+  FileText,
+  AlertTriangle,
+  ChevronRight
 } from 'lucide-react';
 import { format, addDays, isSameDay, parseISO, startOfDay, differenceInCalendarDays } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -317,6 +320,53 @@ export default function AdminDashboard() {
 
   const approvedVacations = vacationRequests?.filter((req: any) => req.status === 'approved') || [];
   const pendingVacations = vacationRequests?.filter((req: any) => req.status === 'pending') || [];
+
+  // Fetch pending items for quick summary card
+  const { data: incompleteSessions = [] } = useQuery({
+    queryKey: ['/api/work-sessions/company', { status: 'incomplete' }],
+    enabled: hasAccess('timeTracking'),
+    select: (data: any[]) => data?.filter((s: any) => s.status === 'incomplete') || [],
+  });
+
+  const { data: modificationRequests = [] } = useQuery({
+    queryKey: ['/api/admin/work-sessions/modification-requests', { status: 'pending' }],
+    enabled: hasAccess('timeTracking'),
+    select: (data: any[]) => data?.filter((r: any) => r.status === 'pending') || [],
+  });
+
+  const { data: unreadMessagesData } = useQuery({
+    queryKey: ['/api/messages/unread-count'],
+    enabled: hasAccess('messages'),
+  });
+  const unreadMessagesCount = unreadMessagesData?.count || 0;
+
+  const { data: documentRequests = [] } = useQuery({
+    queryKey: ['/api/document-notifications'],
+    select: (data: any[]) => data?.filter((d: any) => d.status !== 'completed') || [],
+  });
+
+  const { data: unsignedPayrolls = [] } = useQuery({
+    queryKey: ['/api/documents'],
+    enabled: hasAccess('documents'),
+    select: (data: any[]) => {
+      if (!data?.length) return [];
+      // Filter for unsigned payroll documents
+      return data.filter((doc: any) => 
+        doc.originalName && 
+        doc.originalName.toLowerCase().includes('nómina') && 
+        !doc.isAccepted
+      );
+    },
+  });
+
+  // Calculate total pending items
+  const totalPending = 
+    incompleteSessions.length + 
+    modificationRequests.length + 
+    pendingVacations.length + 
+    unsignedPayrolls.length + 
+    documentRequests.length + 
+    unreadMessagesCount;
 
   // Track previous vacation requests to detect new ones for toast notifications
   const previousVacationRequestsRef = useRef<any[]>([]);
@@ -857,6 +907,148 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Quick Summary of Pending Items */}
+          {totalPending > 0 && (
+            <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-orange-900">
+                  <AlertTriangle className="h-5 w-5" />
+                  Resumen de Pendientes
+                  <Badge variant="destructive" className="ml-auto">{totalPending}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {incompleteSessions.length > 0 && (
+                    <button
+                      onClick={() => setLocation('/test/fichajes')}
+                      className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                          <Clock className="h-4 w-4 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Sesiones incompletas</p>
+                          <p className="text-xs text-gray-600">Sin fichaje de salida</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="destructive" className="text-xs">{incompleteSessions.length}</Badge>
+                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                      </div>
+                    </button>
+                  )}
+
+                  {modificationRequests.length > 0 && (
+                    <button
+                      onClick={() => setLocation('/test/fichajes')}
+                      className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                          <Edit className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Solicitudes de fichajes</p>
+                          <p className="text-xs text-gray-600">Modificaciones pendientes</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">{modificationRequests.length}</Badge>
+                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                      </div>
+                    </button>
+                  )}
+
+                  {pendingVacations.length > 0 && (
+                    <button
+                      onClick={() => setLocation('/test/vacaciones')}
+                      className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                          <Plane className="h-4 w-4 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Solicitudes de vacaciones</p>
+                          <p className="text-xs text-gray-600">Pendientes de aprobación</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">{pendingVacations.length}</Badge>
+                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                      </div>
+                    </button>
+                  )}
+
+                  {unsignedPayrolls.length > 0 && (
+                    <button
+                      onClick={() => setLocation('/test/documentos')}
+                      className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                          <FileText className="h-4 w-4 text-yellow-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Nóminas pendientes de firma</p>
+                          <p className="text-xs text-gray-600">Por empleados</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs">{unsignedPayrolls.length}</Badge>
+                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                      </div>
+                    </button>
+                  )}
+
+                  {documentRequests.length > 0 && (
+                    <button
+                      onClick={() => setLocation('/test/documentos')}
+                      className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                          <FileText className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Solicitudes de documentos</p>
+                          <p className="text-xs text-gray-600">Pendientes de subir</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">{documentRequests.length}</Badge>
+                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                      </div>
+                    </button>
+                  )}
+
+                  {unreadMessagesCount > 0 && (
+                    <button
+                      onClick={() => setLocation('/test/mensajes')}
+                      className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                          <MessageSquare className="h-4 w-4 text-indigo-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Mensajes sin leer</p>
+                          <p className="text-xs text-gray-600">Nuevas conversaciones</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 text-xs">{unreadMessagesCount}</Badge>
+                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                      </div>
+                    </button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Recent Messages */}
           {hasAccess('messages') && (
