@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { usePageHeader } from '@/components/layout/page-header';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,6 +44,7 @@ import { PaymentMethodManager } from '@/components/PaymentMethodManager';
 import { WelcomeModal } from '@/components/welcome-modal';
 
 export default function AdminDashboard() {
+  usePageTitle('Panel Principal');
   const { user, company } = useAuth();
   const { hasAccess } = useFeatureCheck();
   const { setHeader, resetHeader } = usePageHeader();

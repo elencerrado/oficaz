@@ -1,6 +1,7 @@
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useWorkAlarms } from '@/hooks/use-work-alarms';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -42,6 +43,7 @@ const translateRole = (role: string | undefined) => {
 };
 
 export default function EmployeeDashboard() {
+  usePageTitle('Panel de Empleado');
   const { user, logout, company } = useAuth();
   const { hasAccess } = useFeatureCheck();
   const { toast } = useToast();

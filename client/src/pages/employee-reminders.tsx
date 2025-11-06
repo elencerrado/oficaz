@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
+import { usePageTitle } from '@/hooks/use-page-title';
 import FeatureRestrictedPage from '@/components/feature-restricted-page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,6 +71,7 @@ const colorOptions = [
 ];
 
 export default function EmployeeReminders() {
+  usePageTitle('Mis Recordatorios');
   const { user, company } = useAuth();
   const { hasAccess } = useFeatureCheck();
   
