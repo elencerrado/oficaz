@@ -12,6 +12,7 @@ import { Mail, ArrowRight, AlertTriangle, CheckCircle, XCircle } from 'lucide-re
 
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@/assets/oficaz-logo.png';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 const emailSchema = z.object({
   email: z.string().email('Email no válido'),
@@ -20,6 +21,7 @@ const emailSchema = z.object({
 type EmailData = z.infer<typeof emailSchema>;
 
 export default function RequestCode() {
+  usePageTitle('Solicitar Código de Verificación');
   const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [emailStatus, setEmailStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable' | 'cancelled'>('idle');
