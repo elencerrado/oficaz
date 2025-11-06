@@ -50,9 +50,9 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className = "" }: 
                    tab.label === 'Días Festivos' ? 'Festivos' :
                    tab.label === 'Mi Perfil' ? 'Perfil' :
                    tab.label === 'Mi Cuenta' ? 'Cuenta' :
-                   tab.label === 'Explorador' ? 'Archivos' :
                    tab.label === 'Subir Documentos' ? 'Subir' :
-                   tab.label === 'Peticiones' ? 'Peticiones' :
+                   tab.label === 'Pedir Documentos' ? 'Pedir' :
+                   tab.label === 'Archivos' ? 'Archivos' :
                    tab.label === 'Configuración' ? 'Config' :
                    tab.label}
                 </span>
