@@ -3193,7 +3193,7 @@ export default function TimeTracking() {
                     if (showSummaries && isNewWeek && index > 0 && previousWeekStart) {
                       const weekTotal = calculateWeekTotal(previousWeekStart);
                       result.push(
-                        <tr key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 dark:bg-gray-700/50 border-y border-gray-300 dark:border-gray-600 h-10">
+                        <tr key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 dark:bg-gray-700/50 border-y-2 border-gray-400 dark:border-gray-500 h-10">
                           <td colSpan={5} className="py-1 px-4 text-center">
                             <div className="font-medium text-gray-700 dark:text-gray-300 text-sm">
                               Total semana: {weekTotal.toFixed(1)}h
@@ -3299,7 +3299,7 @@ export default function TimeTracking() {
                     if (previousWeekStart) {
                       const weekTotal = calculateWeekTotal(previousWeekStart);
                       result.push(
-                        <tr key={`week-final`} className="bg-gray-100 dark:bg-gray-700/50 border-y border-gray-300 dark:border-gray-600">
+                        <tr key={`week-final`} className="bg-gray-100 dark:bg-gray-700/50 border-y-2 border-gray-400 dark:border-gray-500">
                           <td colSpan={5} className="py-2 px-4 text-center">
                             <div className="font-medium text-gray-700 dark:text-gray-300">
                               Total semana: {weekTotal.toFixed(1)}h
@@ -3458,7 +3458,7 @@ export default function TimeTracking() {
                 if (showSummaries && isNewWeek && index > 0 && previousWeekStart) {
                   const weekTotal = calculateWeekTotal(previousWeekStart);
                   result.push(
-                    <div key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg p-3 mx-4 mb-3">
+                    <div key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 dark:bg-gray-700/50 border-2 border-gray-400 dark:border-gray-500 rounded-lg p-3 mx-4 mb-3">
                       <div className="font-medium text-gray-700 dark:text-gray-300 text-sm text-center">
                         Total semana: {weekTotal.toFixed(1)}h
                       </div>
@@ -3566,8 +3566,8 @@ export default function TimeTracking() {
                 if (previousWeekStart) {
                   const weekTotal = calculateWeekTotal(previousWeekStart);
                   result.push(
-                    <div key={`week-final`} className="bg-muted border border-border rounded-lg p-3 mx-4 mb-3">
-                      <div className="font-medium text-foreground text-sm text-center">
+                    <div key={`week-final`} className="bg-gray-100 dark:bg-gray-700/50 border-2 border-gray-400 dark:border-gray-500 rounded-lg p-3 mx-4 mb-3">
+                      <div className="font-medium text-gray-700 dark:text-gray-300 text-sm text-center">
                         Total semana: {weekTotal.toFixed(1)}h
                       </div>
                     </div>
