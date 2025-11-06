@@ -618,15 +618,32 @@ export default function AdminDocuments() {
 
 
 
+  // 🔒 SECURITY: Generate signed URL for secure document access
+  const generateSignedUrl = async (docId: number): Promise<string | null> => {
+    try {
+      const data = await apiRequest('POST', `/api/documents/${docId}/generate-signed-url`);
+      return data.url;
+    } catch (error) {
+      console.error('Error generating signed URL:', error);
+      toast({
+        title: "Error de autenticación",
+        description: "No se pudo generar el enlace de descarga seguro.",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
   const handleDownload = async (docId: number, fileName: string) => {
     try {
-      const token = JSON.parse(localStorage.getItem('authData') || '{}').token;
-      const response = await fetch(`/api/documents/${docId}/download`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      // 🔒 SECURITY: Use signed URL instead of JWT token
+      const signedUrl = await generateSignedUrl(docId);
+      if (!signedUrl) return;
 
+      console.log('[SECURITY] Using signed URL for download');
+
+      // Fetch document using signed URL
+      const response = await fetch(signedUrl);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -684,26 +701,21 @@ export default function AdminDocuments() {
     }
     
     try {
-      const authData = localStorage.getItem('authData');
-      const token = authData ? JSON.parse(authData).token : '';
-      
-      if (!token) {
-        toast({
-          title: "Error de autenticación",
-          description: "No se pudo obtener el token de acceso",
-          variant: "destructive"
-        });
-        return;
-      }
+      // 🔒 SECURITY: Use signed URL instead of JWT token
+      const signedUrl = await generateSignedUrl(docId);
+      if (!signedUrl) return;
+
+      console.log('[SECURITY] Using signed URL for view');
 
       // For iOS devices, use direct link approach
       if (isIOS()) {
-        // Create a direct download link with token in query parameter
-        const downloadUrl = `/api/documents/${docId}/download?view=true&token=${encodeURIComponent(token)}`;
+        // Properly append view parameter to URL
+        const url = new URL(signedUrl, window.location.origin);
+        url.searchParams.set('view', 'true');
         
         // Create a temporary link element and click it
         const link = document.createElement('a');
-        link.href = downloadUrl;
+        link.href = url.toString();
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         document.body.appendChild(link);
@@ -719,11 +731,11 @@ export default function AdminDocuments() {
       }
 
       // For desktop browsers, use blob approach
-      const response = await fetch(`/api/documents/${docId}/download?preview=true`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      // Properly append preview parameter to URL
+      const url = new URL(signedUrl, window.location.origin);
+      url.searchParams.set('preview', 'true');
+      
+      const response = await fetch(url.toString());
 
       if (!response.ok) {
         throw new Error('Error al acceder al documento');

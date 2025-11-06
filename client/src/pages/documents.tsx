@@ -326,28 +326,32 @@ export default function Documents() {
     }
   };
 
-  const handleDownload = (id: number, filename: string) => {
-    // Create download link with token authentication  
-    const authData = getAuthData();
-    const token = authData?.token;
-    console.log('Frontend token for download:', token ? 'Token found (length: ' + token.length + ')' : 'No token found');
-    
-    if (!token) {
-      console.error('No authentication token found in authData');
+  // 🔒 SECURITY: Generate signed URL for secure document access
+  const generateSignedUrl = async (id: number): Promise<string | null> => {
+    try {
+      const data = await apiRequest('POST', `/api/documents/${id}/generate-signed-url`);
+      return data.url;
+    } catch (error) {
+      console.error('Error generating signed URL:', error);
       toast({
         title: "Error de autenticación",
-        description: "No se encontró token de autenticación. Inicia sesión de nuevo.",
+        description: "No se pudo generar el enlace de descarga seguro.",
         variant: "destructive",
       });
-      return;
+      return null;
     }
+  };
+
+  const handleDownload = async (id: number, filename: string) => {
+    // 🔒 SECURITY: Use signed URL instead of JWT token in query params
+    const signedUrl = await generateSignedUrl(id);
+    if (!signedUrl) return;
     
-    const url = `/api/documents/${id}/download?token=${encodeURIComponent(token)}`;
-    console.log('Download URL:', url.replace(token, '[TOKEN_HIDDEN]'));
+    console.log('[SECURITY] Using signed URL for download');
     
     // Create temporary link and trigger download
     const a = document.createElement('a');
-    a.href = url;
+    a.href = signedUrl;
     a.download = filename;
     a.style.display = 'none';
     document.body.appendChild(a);
@@ -355,30 +359,22 @@ export default function Documents() {
     document.body.removeChild(a);
   };
 
-  const handleViewDocument = (id: number, filename: string) => {
+  const handleViewDocument = async (id: number, filename: string) => {
     // Mark document as viewed first
     markViewedMutation.mutate(id);
     
-    // Open PDF directly in new tab with token authentication
-    const authData = getAuthData();
-    const token = authData?.token;
-    console.log('Frontend token for view:', token ? 'Token found (length: ' + token.length + ')' : 'No token found');
+    // 🔒 SECURITY: Use signed URL instead of JWT token in query params
+    const signedUrl = await generateSignedUrl(id);
+    if (!signedUrl) return;
     
-    if (!token) {
-      console.error('No authentication token found in authData for view');
-      toast({
-        title: "Error de autenticación",
-        description: "No se encontró token de autenticación. Inicia sesión de nuevo.",
-        variant: "destructive",
-      });
-      return;
-    }
+    console.log('[SECURITY] Using signed URL for view');
     
-    const url = `/api/documents/${id}/download?token=${encodeURIComponent(token)}&view=true`;
-    console.log('View URL:', url.replace(token, '[TOKEN_HIDDEN]'));
+    // Properly append view parameter to URL
+    const url = new URL(signedUrl, window.location.origin);
+    url.searchParams.set('view', 'true');
     
     // Abrir documento en nueva pestaña para visualización
-    window.open(url, '_blank', 'noopener,noreferrer');
+    window.open(url.toString(), '_blank', 'noopener,noreferrer');
   };
 
   const getFileIcon = (filename: string) => {
