@@ -2,8 +2,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import type { Server } from 'http';
 import jwt from 'jsonwebtoken';
 import type { User } from '@shared/schema';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+import { JWT_SECRET } from './utils/jwt-secret.js';
 
 interface AuthenticatedWebSocket extends WebSocket {
   userId?: number;

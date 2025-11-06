@@ -26,6 +26,7 @@ import { sendEmail, sendEmployeeWelcomeEmail, sendPasswordResetEmail, sendSuperA
 import { backgroundImageProcessor } from './backgroundWorker.js';
 import { startPushNotificationScheduler } from './pushNotificationScheduler.js';
 import { initializeWebSocketServer, getWebSocketServer } from './websocket.js';
+import { JWT_SECRET } from './utils/jwt-secret.js';
 
 // Initialize Stripe with intelligent key detection
 // Priority: Use production keys if available, otherwise fall back to test keys
@@ -4990,7 +4991,7 @@ Responde directamente a este email para contactar con la persona.
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+      const decoded = jwt.verify(token, JWT_SECRET) as any;
       req.user = decoded;
       // Token verified
       next();
@@ -6372,7 +6373,7 @@ Responde directamente a este email para contactar con la persona.
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
+      const decoded = jwt.verify(token, JWT_SECRET) as any;
       console.log('🔐 SuperAdmin token decoded:', { type: decoded.type, role: decoded.role, email: decoded.email });
       
       if (decoded.type !== 'super_admin_access' && decoded.role !== 'super_admin') {
@@ -6483,7 +6484,7 @@ Responde directamente a este email para contactar con la persona.
           email: SUPER_ADMIN_EMAIL,
           accessGrantedAt: Date.now()
         },
-        process.env.JWT_SECRET || 'secret',
+        JWT_SECRET,
         { expiresIn: '2h' }
       );
 
@@ -6648,7 +6649,7 @@ Responde directamente a este email para contactar con la persona.
           email: 'soy@oficaz.es',
           accessGrantedAt: Date.now()
         },
-        process.env.JWT_SECRET || 'secret',
+        JWT_SECRET,
         { expiresIn: '24h' }
       );
 
@@ -11340,7 +11341,7 @@ Responde directamente a este email para contactar con la persona.
           role: 'super_admin',
           type: 'super_admin_access'
         },
-        process.env.JWT_SECRET || 'secret',
+        JWT_SECRET,
         { expiresIn: '2h' } // 2 hour session
       );
       
@@ -11366,7 +11367,7 @@ Responde directamente a este email para contactar con la persona.
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
+      const decoded = jwt.verify(token, JWT_SECRET) as any;
       if (decoded.role !== 'super_admin' || decoded.type !== 'super_admin_access') {
         return res.status(403).json({ message: 'Acceso no autorizado' });
       }
