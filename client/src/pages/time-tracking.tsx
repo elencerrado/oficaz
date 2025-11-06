@@ -157,6 +157,7 @@ export default function TimeTracking() {
     gcTime: 10 * 60 * 1000,
     retry: 2,
     retryDelay: 750,
+    placeholderData: (previousData) => previousData, // Keep previous data while loading new data (prevents flashing)
     // Removed aggressive polling - WebSocket will handle real-time updates
   });
 
