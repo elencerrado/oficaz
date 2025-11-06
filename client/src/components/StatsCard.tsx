@@ -70,7 +70,11 @@ export default function StatsCard({
           ? `${config.activeBorder} ${config.activeBg} shadow-md` 
           : `${config.hover}`
       } mb-4 ${className}`}
-      onClick={onClick}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClick?.();
+      }}
     >
       <CardContent className="p-3 h-24 sm:h-20 flex flex-col items-center text-center overflow-hidden">
         {/* Layout móvil: ícono arriba, número en medio, texto abajo */}
