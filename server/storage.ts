@@ -70,6 +70,15 @@ export interface IStorage {
   updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined>;
   deleteUser(id: number): Promise<User | undefined>;
 
+  // 🔒 SECURITY: Refresh Tokens for JWT rotation
+  createRefreshToken(userId: number, hashedToken: string, expiresAt: Date): Promise<any>;
+  getRefreshToken(token: string): Promise<any | undefined>;
+  getRefreshTokensForUser(userId: number): Promise<any[]>;
+  updateRefreshTokenUsage(hashedToken: string): Promise<void>;
+  revokeRefreshToken(hashedToken: string): Promise<void>;
+  revokeAllUserRefreshTokens(userId: number): Promise<void>;
+  deleteExpiredRefreshTokens(): Promise<void>;
+
   // Work Sessions
   createWorkSession(session: InsertWorkSession): Promise<WorkSession>;
   getActiveWorkSession(userId: number): Promise<WorkSession | undefined>;
@@ -415,6 +424,65 @@ export class DrizzleStorage implements IStorage {
   async updateUserVacationDays(userId: number): Promise<User | undefined> {
     const calculatedDays = await this.calculateVacationDays(userId);
     return this.updateUser(userId, { totalVacationDays: calculatedDays.toString() });
+  }
+
+  // 🔒 SECURITY: Refresh Token Management
+  // Note: token parameter should already be hashed before calling this
+  async createRefreshToken(userId: number, hashedToken: string, expiresAt: Date): Promise<any> {
+    const [refreshToken] = await db.insert(schema.refreshTokens).values({
+      userId,
+      token: hashedToken, // Store hashed token
+      expiresAt,
+      revoked: false
+    }).returning();
+    return refreshToken;
+  }
+
+  // 🔒 SECURITY: Get all non-revoked tokens for a user (returns hashed tokens for comparison)
+  async getRefreshTokensForUser(userId: number): Promise<any[]> {
+    const tokens = await db.select().from(schema.refreshTokens)
+      .where(and(
+        eq(schema.refreshTokens.userId, userId),
+        eq(schema.refreshTokens.revoked, false),
+        gte(schema.refreshTokens.expiresAt, new Date()) // Only non-expired
+      ));
+    return tokens;
+  }
+
+  async getRefreshToken(token: string): Promise<any | undefined> {
+    // This is now used only for updating lastUsedAt with hashed token
+    const [refreshToken] = await db.select().from(schema.refreshTokens)
+      .where(and(
+        eq(schema.refreshTokens.token, token), // token here is already hashed
+        eq(schema.refreshTokens.revoked, false)
+      ));
+    return refreshToken;
+  }
+
+  async updateRefreshTokenUsage(token: string): Promise<void> {
+    await db.update(schema.refreshTokens)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(schema.refreshTokens.token, token));
+  }
+
+  async revokeRefreshToken(token: string): Promise<void> {
+    await db.update(schema.refreshTokens)
+      .set({ revoked: true })
+      .where(eq(schema.refreshTokens.token, token));
+  }
+
+  async revokeAllUserRefreshTokens(userId: number): Promise<void> {
+    await db.update(schema.refreshTokens)
+      .set({ revoked: true })
+      .where(eq(schema.refreshTokens.userId, userId));
+  }
+
+  async deleteExpiredRefreshTokens(): Promise<void> {
+    await db.delete(schema.refreshTokens)
+      .where(or(
+        lte(schema.refreshTokens.expiresAt, new Date()),
+        eq(schema.refreshTokens.revoked, true)
+      ));
   }
 
   // Work Sessions

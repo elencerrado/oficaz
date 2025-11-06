@@ -14,7 +14,7 @@ import Stripe from 'stripe';
 import webpush from 'web-push';
 import { subDays, startOfDay } from 'date-fns';
 import { storage } from "./storage";
-import { authenticateToken, requireRole, generateToken, AuthRequest } from './middleware/auth';
+import { authenticateToken, requireRole, generateToken, generateRefreshToken, AuthRequest } from './middleware/auth';
 import { withDatabaseRetry } from './utils';
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertWorkShiftSchema, insertMessageSchema, passwordResetRequestSchema, passwordResetSchema, contactFormSchema } from '@shared/schema';
 import { z } from 'zod';
@@ -2657,12 +2657,21 @@ Responde directamente a este email para contactar con la persona.
       
       const subscription = await storage.getSubscriptionByCompanyId(user.companyId);
 
+      // 🔒 SECURITY: Generate short-lived access token (15min) and long-lived refresh token (30days)
       const token = generateToken({
         id: user.id,
         username: user.companyEmail || user.personalEmail || `user_${user.id}`,
         role: user.role,
         companyId: user.companyId,
       });
+
+      const refreshToken = generateRefreshToken(user.id);
+      const refreshTokenExpiry = new Date();
+      refreshTokenExpiry.setDate(refreshTokenExpiry.getDate() + 30); // 30 days
+
+      // 🔒 SECURITY: Hash refresh token before storing (protect against DB leaks)
+      const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+      await storage.createRefreshToken(user.id, hashedRefreshToken, refreshTokenExpiry);
 
       // Log successful login for security audit
       console.log(`[SECURITY] Successful login: User ${user.id} (${user.companyEmail}) from IP ${clientIP} at ${new Date().toISOString()}`);
@@ -2671,6 +2680,7 @@ Responde directamente a este email para contactar con la persona.
         message: "Inicio de sesión exitoso",
         user: { ...user, password: undefined },
         token,
+        refreshToken, // 🔒 NEW: Return refresh token
         company: company ? {
           ...company,
           workingHoursPerDay: Number(company.workingHoursPerDay) || 8,
@@ -2683,6 +2693,111 @@ Responde directamente a este email para contactar con la persona.
     } catch (error: any) {
       console.error(`[SECURITY] Login error: ${error.message}`);
       res.status(400).json({ message: 'Error en el inicio de sesión' });
+    }
+  });
+
+  // 🔒 SECURITY: Refresh Token Endpoint
+  app.post('/api/auth/refresh', async (req, res) => {
+    try {
+      const { refreshToken } = req.body;
+
+      if (!refreshToken) {
+        return res.status(401).json({ message: 'Refresh token requerido' });
+      }
+
+      // Verify refresh token
+      let decoded: any;
+      try {
+        decoded = jwt.verify(refreshToken, JWT_SECRET);
+      } catch (error) {
+        return res.status(403).json({ message: 'Refresh token inválido o expirado' });
+      }
+
+      // Check token type
+      if (decoded.type !== 'refresh') {
+        return res.status(403).json({ message: 'Token inválido' });
+      }
+
+      // 🔒 SECURITY: Get all valid tokens for user and compare hashes
+      const userTokens = await storage.getRefreshTokensForUser(decoded.userId);
+      if (!userTokens || userTokens.length === 0) {
+        return res.status(403).json({ message: 'Refresh token no encontrado o revocado' });
+      }
+
+      // Find matching token by comparing hashes
+      let matchedToken: any = null;
+      for (const storedToken of userTokens) {
+        const isMatch = await bcrypt.compare(refreshToken, storedToken.token);
+        if (isMatch) {
+          matchedToken = storedToken;
+          break;
+        }
+      }
+
+      if (!matchedToken) {
+        return res.status(403).json({ message: 'Refresh token inválido' });
+      }
+
+      // Update last used timestamp (using hashed token)
+      await storage.updateRefreshTokenUsage(matchedToken.token);
+
+      // Get user information
+      const user = await storage.getUser(decoded.userId);
+      if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+
+      // Check if user account is active
+      if (!user.isActive) {
+        return res.status(401).json({ message: 'Cuenta desactivada' });
+      }
+
+      // Generate new access token
+      const newAccessToken = generateToken({
+        id: user.id,
+        username: user.companyEmail || user.personalEmail || `user_${user.id}`,
+        role: user.role,
+        companyId: user.companyId,
+      });
+
+      console.log(`[SECURITY] Token refreshed for user ${user.id} (${user.companyEmail})`);
+
+      res.json({
+        token: newAccessToken,
+        message: 'Token refrescado exitosamente'
+      });
+    } catch (error: any) {
+      console.error(`[SECURITY] Refresh token error: ${error.message}`);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // 🔒 SECURITY: Logout Endpoint (revoke refresh tokens)
+  app.post('/api/auth/logout', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { refreshToken } = req.body;
+
+      if (refreshToken) {
+        // 🔒 SECURITY: Find and revoke specific refresh token by comparing hashes
+        const userTokens = await storage.getRefreshTokensForUser(req.user!.id);
+        for (const storedToken of userTokens) {
+          const isMatch = await bcrypt.compare(refreshToken, storedToken.token);
+          if (isMatch) {
+            await storage.revokeRefreshToken(storedToken.token); // Revoke using hashed token
+            console.log(`[SECURITY] Refresh token revoked for user ${req.user!.id}`);
+            break;
+          }
+        }
+      } else {
+        // Revoke all refresh tokens for user (logout from all devices)
+        await storage.revokeAllUserRefreshTokens(req.user!.id);
+        console.log(`[SECURITY] All refresh tokens revoked for user ${req.user!.id}`);
+      }
+
+      res.json({ message: 'Sesión cerrada exitosamente' });
+    } catch (error: any) {
+      console.error(`[SECURITY] Logout error: ${error.message}`);
+      res.status(500).json({ message: 'Error interno del servidor' });
     }
   });
 

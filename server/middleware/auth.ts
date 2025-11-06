@@ -60,12 +60,23 @@ export function requireRole(roles: string[]) {
   };
 }
 
+// 🔒 SECURITY: Generate short-lived access token (15 minutes)
 export function generateToken(user: { id: number; username: string; role: string; companyId: number }) {
   const token = jwt.sign({
     id: user.id,
     email: user.username, // username field now contains email
     role: user.role,
-    companyId: user.companyId
-  }, JWT_SECRET, { expiresIn: '30d' }); // Increased to 30 days
+    companyId: user.companyId,
+    type: 'access' // Mark as access token
+  }, JWT_SECRET, { expiresIn: '15m' }); // 🔒 SECURITY: Reduced from 30d to 15m
+  return token;
+}
+
+// 🔒 SECURITY: Generate long-lived refresh token (30 days)
+export function generateRefreshToken(userId: number) {
+  const token = jwt.sign({
+    userId,
+    type: 'refresh' // Mark as refresh token
+  }, JWT_SECRET, { expiresIn: '30d' });
   return token;
 }

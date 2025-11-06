@@ -30,7 +30,7 @@ export const companies = pgTable("companies", {
   customAiRules: text("custom_ai_rules").default(""),
   allowManagersToGrantRoles: boolean("allow_managers_to_grant_roles").default(false).notNull(),
   // Campos migrados desde account_info (datos de facturación)
-  accountId: text("account_id").unique(), // OFZ-2024-001234 format
+  accountId: text("account_id"), // OFZ-2024-001234 format (nullable, not unique to allow multiple NULL values)
   billingPostalCode: text("billing_postal_code"),
   billingCountry: text("billing_country").default("ES"),
   
@@ -496,6 +496,21 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// 🔒 SECURITY: Refresh tokens for JWT token rotation
+// Access tokens expire in 15 minutes, refresh tokens last 30 days
+export const refreshTokens = pgTable("refresh_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  token: text("token").notNull().unique(), // Hashed refresh token
+  expiresAt: timestamp("expires_at").notNull(), // 30 days from creation
+  revoked: boolean("revoked").default(false).notNull(), // Allow manual revocation
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastUsedAt: timestamp("last_used_at"), // Track when last used for monitoring
+}, (table) => ({
+  userIdIdx: index("refresh_tokens_user_id_idx").on(table.userId),
+  tokenIdx: index("refresh_tokens_token_idx").on(table.token),
+}));
+
 // Insert schemas
 export const insertCompanySchema = createInsertSchema(companies).omit({
   id: true,
@@ -582,6 +597,12 @@ export const insertImageProcessingJobSchema = createInsertSchema(imageProcessing
 export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({
   id: true,
   createdAt: true,
+});
+
+export const insertRefreshTokenSchema = createInsertSchema(refreshTokens).omit({
+  id: true,
+  createdAt: true,
+  lastUsedAt: true,
 });
 
 export const insertSuperAdminSchema = createInsertSchema(superAdmins).omit({
