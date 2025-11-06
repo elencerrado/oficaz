@@ -835,8 +835,8 @@ export default function AdminDocuments() {
         <TabNavigation
           tabs={[
             { id: 'upload', label: 'Subir Documentos', icon: Upload },
-            { id: 'explorer', label: 'Explorador', icon: Search },
-            { id: 'requests', label: 'Solicitudes', icon: Send }
+            { id: 'requests', label: 'Peticiones', icon: Download },
+            { id: 'explorer', label: 'Explorador', icon: Search }
           ]}
           activeTab={activeTab}
           onTabChange={setActiveTab}
