@@ -12184,8 +12184,10 @@ Responde directamente a este email para contactar con la persona.
           });
 
           if (subscription) {
-            // Calculate next payment date (1 month from now)
-            const nextPaymentDate = new Date();
+            // ⚠️ CRITICAL: Calculate next payment date from PREVIOUS date, not from now
+            // This ensures the billing cycle stays consistent (e.g., always on the 4th)
+            const currentNextPaymentDate = new Date(subscription.nextPaymentDate);
+            const nextPaymentDate = new Date(currentNextPaymentDate);
             nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
 
             // Update subscription with new next payment date
@@ -12197,7 +12199,7 @@ Responde directamente a este email para contactar con la persona.
               })
               .where(eq(subscriptions.id, subscription.id));
 
-            console.log(`✅ STRIPE WEBHOOK: Updated nextPaymentDate to ${nextPaymentDate.toISOString()} for company ${subscription.companyId}`);
+            console.log(`✅ STRIPE WEBHOOK: Updated nextPaymentDate from ${currentNextPaymentDate.toISOString()} to ${nextPaymentDate.toISOString()} for company ${subscription.companyId}`);
           } else {
             console.warn(`⚠️ STRIPE WEBHOOK: No subscription found for customer ${invoice.customer}`);
           }
