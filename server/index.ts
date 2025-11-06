@@ -21,10 +21,70 @@ const app = express();
 // Trust proxy for rate limiting (required for Replit)
 app.set("trust proxy", 1);
 
-// Security middleware - Simplified for deployment stability
+// 🛡️ SECURITY: Content Security Policy configuration for React/Vite
 app.use(
   helmet({
-    contentSecurityPolicy: false, // Disable CSP temporarily to avoid mixed content issues
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        // React/Vite needs inline scripts and eval for HMR in development
+        // Stripe requires js.stripe.com for payment processing
+        // Google Maps SDK
+        scriptSrc: [
+          "'self'",
+          "https://js.stripe.com",
+          "https://maps.googleapis.com",
+          "https://maps.gstatic.com",
+          ...(process.env.NODE_ENV === "development" 
+            ? ["'unsafe-inline'", "'unsafe-eval'"] 
+            : []),
+        ],
+        // Tailwind and styled components need unsafe-inline
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        // Images from self, data URIs, blobs, HTTPS, and third-party APIs
+        // UI Avatars for user profile pictures
+        imgSrc: [
+          "'self'", 
+          "data:", 
+          "blob:", 
+          "https:", 
+          "https://ui-avatars.com",
+        ],
+        // API calls and WebSocket connections
+        // Stripe API for payment processing
+        // Google Maps API if used
+        connectSrc: [
+          "'self'",
+          "wss:",
+          "ws:",
+          "https://api.stripe.com",
+          "https://maps.googleapis.com",
+          ...(process.env.NODE_ENV === "development"
+            ? ["http://localhost:*", "ws://localhost:*"]
+            : []),
+        ],
+        // Fonts from self and data URIs
+        fontSrc: ["'self'", "data:"],
+        // Stripe iframe for payment forms
+        frameSrc: [
+          "'self'",
+          "https://js.stripe.com",
+          "https://hooks.stripe.com",
+        ],
+        // No object/embed/applet allowed
+        objectSrc: ["'none'"],
+        // Base URI restricted to self
+        baseUri: ["'self'"],
+        // Forms only submit to self or Stripe
+        formAction: ["'self'", "https://js.stripe.com"],
+        // Frame ancestors (already set in routes.ts for document endpoints)
+        frameAncestors: ["'self'"],
+        // Upgrade insecure requests in production
+        ...(process.env.NODE_ENV === "production" 
+          ? { upgradeInsecureRequests: [] } 
+          : {}),
+      },
+    },
     crossOriginEmbedderPolicy: false,
     hsts:
       process.env.NODE_ENV === "production"
