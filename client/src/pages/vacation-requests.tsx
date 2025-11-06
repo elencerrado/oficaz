@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { addDays, isSameDay, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 
 export default function VacationRequests() {
+  usePageTitle('Mis Vacaciones');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
   const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);

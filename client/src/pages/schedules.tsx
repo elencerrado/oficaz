@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePageTitle } from '@/hooks/use-page-title';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -82,6 +83,7 @@ const SHIFT_COLORS = [
 ];
 
 export default function Schedules() {
+  usePageTitle('Horarios');
   const { company, user } = useAuth();
   const { setHeader, resetHeader } = usePageHeader();
   const { toast } = useToast();

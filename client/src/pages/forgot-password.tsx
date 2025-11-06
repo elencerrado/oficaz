@@ -3,6 +3,7 @@ import { Link, useLocation, useRoute } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -14,6 +15,7 @@ import oficazLogo from '@/assets/oficaz-logo.png';
 type ForgotPasswordData = z.infer<typeof passwordResetRequestSchema>;
 
 export default function ForgotPassword() {
+  usePageTitle('Recuperar Contraseña');
   const [, setLocation] = useLocation();
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);

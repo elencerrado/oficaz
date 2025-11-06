@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { getAuthHeaders } from '@/lib/auth';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { 
   Building2, 
   Search,
@@ -144,6 +145,7 @@ const getSubscriptionBadge = (company: Company) => {
 };
 
 export default function SuperAdminCompanies() {
+  usePageTitle('SuperAdmin - Empresas');
   const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPlan, setFilterPlan] = useState<string>("all");

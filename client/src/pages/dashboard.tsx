@@ -17,8 +17,10 @@ import {
   User
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function Dashboard() {
+  usePageTitle('Panel de Control');
   const { user } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);

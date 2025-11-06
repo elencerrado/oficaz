@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useDemoBanner } from '@/hooks/use-demo-banner';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,6 +66,7 @@ interface Manager {
 }
 
 export default function Messages() {
+  usePageTitle('Mensajes');
   const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
   const { showBanner, bannerHeight } = useDemoBanner();

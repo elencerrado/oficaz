@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { usePageHeader } from '@/components/layout/page-header';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatsCard from '@/components/StatsCard';
@@ -45,6 +46,7 @@ import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 
 export default function TimeTracking() {
+  usePageTitle('Gestión de Fichajes');
   const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
   const { setHeader, resetHeader } = usePageHeader();

@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { lazy, Suspense } from 'react';
 
 // Lazy load non-critical components for better initial load performance
@@ -40,6 +41,7 @@ import { FaWhatsapp } from 'react-icons/fa';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
 export default function Landing() {
+  usePageTitle('Bienvenido a Oficaz');
   const [isScrolled, setIsScrolled] = useState(false);
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
 

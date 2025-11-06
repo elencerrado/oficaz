@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
+import { usePageTitle } from '@/hooks/use-page-title';
 import FeatureRestrictedPage from '@/components/feature-restricted-page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -152,6 +153,7 @@ const AssignedUsersAvatars = ({ assignedUserIds, employees, maxDisplay = 3, curr
 };
 
 export default function Reminders() {
+  usePageTitle('Recordatorios');
   const { user } = useAuth();
   const { hasAccess } = useFeatureCheck();
   const { setHeader, resetHeader } = usePageHeader();

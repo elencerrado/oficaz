@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -64,6 +65,7 @@ interface ActiveSession {
 }
 
 export default function EmployeeTimeTracking() {
+  usePageTitle('Mis Fichajes');
   const { user, company } = useAuth();
   const { hasAccess } = useFeatureCheck();
   const { toast } = useToast();

@@ -1,9 +1,11 @@
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Shield } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
 export default function Privacy() {
+  usePageTitle('Política de Privacidad');
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}

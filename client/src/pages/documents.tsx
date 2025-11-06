@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PageLoading } from '@/components/ui/page-loading';
@@ -47,6 +48,7 @@ interface DocumentRequest {
 }
 
 export default function Documents() {
+  usePageTitle('Mis Documentos');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isUploading, setIsUploading] = useState(false);

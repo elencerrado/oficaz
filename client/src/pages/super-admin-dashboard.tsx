@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { getAuthHeaders } from "@/lib/auth";
+import { usePageTitle } from '@/hooks/use-page-title';
 import { 
   Building2, 
   Users, 
@@ -65,6 +66,7 @@ const planLabels = {
 };
 
 export default function SuperAdminDashboard() {
+  usePageTitle('SuperAdmin - Panel');
   const [, setLocation] = useLocation();
 
   const { data: stats, isLoading: statsLoading } = useQuery<SuperAdminStats>({

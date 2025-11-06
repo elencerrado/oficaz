@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { usePageHeader } from '@/components/layout/page-header';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { PageWrapper } from '@/components/ui/page-wrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -94,6 +95,7 @@ const getTypeBadgeColor = (type: string) => {
 };
 
 export default function AdminDocuments() {
+  usePageTitle('Gestión de Documentos');
   const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
   const { setHeader, resetHeader } = usePageHeader();

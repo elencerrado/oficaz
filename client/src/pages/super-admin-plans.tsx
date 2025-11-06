@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -81,6 +82,7 @@ const featureLabels = {
 };
 
 export default function SuperAdminPlans() {
+  usePageTitle('SuperAdmin - Planes');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editingPlanName, setEditingPlanName] = useState<number | null>(null);

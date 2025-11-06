@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -41,6 +42,7 @@ import {
 import { FaWhatsapp, FaInstagram } from 'react-icons/fa';
 
 export default function SuperAdminMarketing() {
+  usePageTitle('SuperAdmin - Marketing');
   const [activeTab, setActiveTab] = useState('campaigns');
   const [editingCampaign, setEditingCampaign] = useState<any>(null);
   const [conversionsCampaign, setConversionsCampaign] = useState<any>(null);

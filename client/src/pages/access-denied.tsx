@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { useLocation, useParams } from "wouter";
+import { usePageTitle } from '@/hooks/use-page-title';
 import oficazLogo from "@assets/Imagotipo Oficaz white_1750407614936.png";
 
 export default function AccessDenied() {
+  usePageTitle('Acceso Denegado');
   const [, setLocation] = useLocation();
   const params = useParams<{ companyAlias: string }>();
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -1747,6 +1748,7 @@ const translateRole = (role: string | undefined) => {
 };
 
 export default function Settings() {
+  usePageTitle('Configuración');
   const { user, company, subscription, refreshUser } = useAuth();
   const { toast } = useToast();
   const { hasAccess } = useFeatureCheck();
