@@ -40,7 +40,7 @@ Preferred communication style: Simple, everyday language.
 - **Token System**: 
   - Access tokens: 15-minute expiration, used for API authentication
   - Refresh tokens: 30-day expiration, bcrypt-hashed, one-time use with atomic consumption
-  - Frontend auto-refresh: Transparent token renewal before expiration
+  - Frontend auto-refresh: Transparent token renewal before expiration (at 13min mark)
   - Signed URLs: One-time use, 5-minute expiration for document downloads
 - **Signed URLs**: Document downloads use time-limited, one-time signed URLs instead of JWT query parameters. Random tokens (32 bytes), atomic consumption (UPDATE...WHERE...RETURNING) prevents TOCTOU races, 5-minute expiration.
 - **Input Validation**: Zod schemas for all API endpoints to prevent malicious inputs
@@ -50,6 +50,29 @@ Preferred communication style: Simple, everyday language.
 - **Security Headers**: Helmet configuration with HTTPS enforcement, HSTS, X-Content-Type-Options, X-Frame-Options
 - **Company Isolation**: All data queries filtered by companyId to prevent cross-company data access
 - **TOCTOU Prevention**: All security-critical operations use atomic database operations (UPDATE...WHERE...RETURNING) to prevent time-of-check-time-of-use races
+- **Content Security Policy**: Full CSP enabled with whitelisted third-party services (Stripe, Google Maps, UI Avatars). Dev/prod differentiated for Vite HMR.
+
+### Security Operations & Incident Response
+**Token Management:**
+- **Access Token Refresh**: Automatic refresh at 13-minute mark (2min before expiry) via `client/src/lib/queryClient.ts`
+- **Refresh Token Rotation**: One-time use tokens consumed atomically on each refresh via `POST /api/auth/refresh`
+- **Token Revocation**: All user tokens revoked on logout or password change via `storage.revokeAllUserRefreshTokens()`
+- **Cleanup**: Expired refresh tokens/signed URLs automatically cleaned via `deleteExpiredRefreshTokens()`, `deleteExpiredSignedUrls()`
+
+**Document Access Flow:**
+1. User requests download/view → Frontend calls `POST /api/documents/:id/generate-signed-url`
+2. Backend validates access permissions (company isolation + role checks)
+3. Backend generates random 32-byte token, stores in `signed_urls` table (5min expiry)
+4. Frontend receives signed URL → Opens `GET /api/documents/download/:token`
+5. Backend atomically consumes token (UPDATE...WHERE used=false RETURNING)
+6. Only first request succeeds, subsequent requests get 403
+
+**Incident Response Procedures:**
+- **Suspected Token Compromise**: Revoke all company tokens via SuperAdmin or direct DB query
+- **TOCTOU Attack Detected**: Review audit logs for concurrent signed URL requests with same token
+- **CSP Violations**: Check browser console for blocked resources, update CSP whitelist if legitimate
+- **Rate Limit Exceeded**: Investigate source IP for potential abuse, adjust limits if needed
+- **Failed Auth Attempts**: Monitor consecutive auth errors, implement account lockout if pattern detected
 
 ## System Architecture
 
