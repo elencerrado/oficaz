@@ -3,6 +3,7 @@ import { User, Company } from '@shared/schema';
 interface AuthData {
   user: User;
   token: string;
+  refreshToken?: string; // 🔒 SECURITY: Refresh token for auto-refresh
   company: Company;
   subscription?: any;
 }
@@ -122,4 +123,87 @@ export function clearExpiredTokens() {
       window.location.href = '/super-admin';
     }
   }
+}
+
+// 🔒 SECURITY: Callback to update AuthProvider state after refresh
+let onTokenRefreshed: ((token: string) => void) | null = null;
+
+export function setTokenRefreshCallback(callback: (token: string) => void) {
+  onTokenRefreshed = callback;
+}
+
+// 🔒 SECURITY: Refresh access token using refresh token
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+
+export async function refreshAccessToken(): Promise<string | null> {
+  // Prevent multiple simultaneous refresh attempts
+  if (isRefreshing && refreshPromise) {
+    console.log('🔄 Token refresh already in progress, waiting...');
+    return refreshPromise;
+  }
+
+  isRefreshing = true;
+  
+  refreshPromise = (async () => {
+    try {
+      const authData = getAuthData();
+      
+      if (!authData?.refreshToken) {
+        console.log('❌ No refresh token available');
+        return null;
+      }
+
+      console.log('🔄 Attempting to refresh access token...');
+      
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken: authData.refreshToken }),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        console.log('❌ Refresh token failed:', response.status);
+        clearAuthData();
+        return null;
+      }
+
+      const data = await response.json();
+      
+      if (data.token) {
+        console.log('✅ Access token refreshed successfully');
+        
+        // Update stored auth data with new access token (keep same refresh token)
+        const updatedAuthData = {
+          ...authData,
+          token: data.token,
+        };
+        
+        // Determine which storage was used
+        const storage = localStorage.getItem('authData') ? localStorage : sessionStorage;
+        storage.setItem('authData', JSON.stringify(updatedAuthData));
+        
+        // 🔒 SECURITY: Notify AuthProvider of token update
+        if (onTokenRefreshed) {
+          onTokenRefreshed(data.token);
+        }
+        
+        return data.token;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('❌ Error refreshing token:', error);
+      clearAuthData();
+      return null;
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+  
+  return refreshPromise;
 }

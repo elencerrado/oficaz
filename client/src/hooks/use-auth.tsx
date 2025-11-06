@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Company } from '@shared/schema';
-import { getAuthData, setAuthData as saveAuthData, clearAuthData, clearExpiredTokens } from '@/lib/auth';
+import { getAuthData, setAuthData as saveAuthData, clearAuthData, clearExpiredTokens, setTokenRefreshCallback } from '@/lib/auth';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 
 interface AuthContextType {
@@ -11,6 +11,7 @@ interface AuthContextType {
   register: (data: any) => Promise<void>;
   logout: (manual?: boolean) => void;
   refreshUser: () => Promise<void>;
+  updateToken: (newToken: string) => void; // 🔒 SECURITY: Update token after refresh
   isLoading: boolean;
   isAuthenticated: boolean;
   subscription: any;
@@ -158,12 +159,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.clear();
     }
     
-    // Save auth data with remember preference
-    const authDataToSave = { user: data.user, token: data.token, company: data.company, subscription: data.subscription };
+    // 🔒 SECURITY: Save auth data with refresh token for auto-refresh
+    const authDataToSave = { 
+      user: data.user, 
+      token: data.token, 
+      refreshToken: data.refreshToken, // Store refresh token for auto-refresh
+      company: data.company, 
+      subscription: data.subscription 
+    };
     
     // Use the updated setAuthData function with remember parameter
     saveAuthData(authDataToSave, remember);
-    console.log(`🔐 Auth data saved to ${remember ? 'localStorage' : 'sessionStorage'}`);
+    console.log(`🔐 Auth data saved to ${remember ? 'localStorage' : 'sessionStorage'} (with refresh token)`);
     
     // Update state immediately
     setUser(data.user);
@@ -232,6 +239,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async (manual: boolean = true) => {
     console.log(`🚪 LOGOUT (${manual ? 'MANUAL' : 'AUTO'}) - CLEARING CACHE AND AUTH DATA`);
+    
+    // 🔒 SECURITY: Revoke refresh token on manual logout
+    if (manual && token) {
+      try {
+        const currentAuthData = getAuthData();
+        if (currentAuthData?.refreshToken) {
+          console.log('🔒 Revoking refresh token...');
+          await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ refreshToken: currentAuthData.refreshToken })
+          });
+          console.log('✅ Refresh token revoked');
+        }
+      } catch (error) {
+        console.error('⚠️ Error revoking refresh token:', error);
+        // Continue with logout even if revocation fails
+      }
+    }
     
     // Only unsubscribe from push notifications on MANUAL logout
     // Keep notifications active if session expires automatically
@@ -328,6 +357,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // 🔒 SECURITY: Update token in AuthProvider state after refresh
+  const updateToken = (newToken: string) => {
+    setToken(newToken);
+    const currentAuthData = getAuthData();
+    if (currentAuthData) {
+      const updatedAuthData = {
+        ...currentAuthData,
+        token: newToken
+      };
+      setAuthData(updatedAuthData);
+      console.log('✅ AuthProvider state updated with new token');
+    }
+  };
+
+  // 🔒 SECURITY: Register callback for token refresh
+  useEffect(() => {
+    setTokenRefreshCallback(updateToken);
+    return () => setTokenRefreshCallback(() => {});
+  }, []);
+
   console.log('AuthProvider rendering with:', {
     user: user?.fullName,
     company: company?.name,
@@ -345,6 +394,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       register,
       logout,
       refreshUser,
+      updateToken, // 🔒 SECURITY: Expose updateToken for refresh
       isLoading,
       isAuthenticated: !!(user && company && token),
     }}>
