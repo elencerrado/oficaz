@@ -511,6 +511,23 @@ export const refreshTokens = pgTable("refresh_tokens", {
   tokenIdx: index("refresh_tokens_token_idx").on(table.token),
 }));
 
+// 🔒 SECURITY: Signed URLs Table (One-time use tokens for secure document downloads)
+export const signedUrls = pgTable("signed_urls", {
+  id: serial("id").primaryKey(),
+  token: varchar("token", { length: 64 }).notNull().unique(), // Random token for URL
+  documentId: integer("document_id").notNull().references(() => documents.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  expiresAt: timestamp("expires_at").notNull(), // Short expiration (5 minutes)
+  used: boolean("used").notNull().default(false), // One-time use flag
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  usedAt: timestamp("used_at"),
+}, (table) => ({
+  tokenIdx: index("signed_urls_token_idx").on(table.token),
+  documentIdIdx: index("signed_urls_document_id_idx").on(table.documentId),
+  expiresAtIdx: index("signed_urls_expires_at_idx").on(table.expiresAt),
+}));
+
 // Insert schemas
 export const insertCompanySchema = createInsertSchema(companies).omit({
   id: true,

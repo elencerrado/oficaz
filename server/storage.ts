@@ -79,6 +79,13 @@ export interface IStorage {
   revokeAllUserRefreshTokens(userId: number): Promise<void>;
   deleteExpiredRefreshTokens(): Promise<void>;
 
+  // 🔒 SECURITY: Signed URLs for secure document downloads
+  createSignedUrl(documentId: number, userId: number, companyId: number, expiresAt: Date): Promise<any>;
+  consumeSignedUrl(token: string): Promise<any | undefined>; // Atomic get-and-consume
+  getSignedUrl(token: string): Promise<any | undefined>;
+  markSignedUrlAsUsed(token: string): Promise<void>;
+  deleteExpiredSignedUrls(): Promise<void>;
+
   // Work Sessions
   createWorkSession(session: InsertWorkSession): Promise<WorkSession>;
   getActiveWorkSession(userId: number): Promise<WorkSession | undefined>;
@@ -482,6 +489,69 @@ export class DrizzleStorage implements IStorage {
       .where(or(
         lte(schema.refreshTokens.expiresAt, new Date()),
         eq(schema.refreshTokens.revoked, true)
+      ));
+  }
+
+  // 🔒 SECURITY: Signed URLs for secure document downloads
+  async createSignedUrl(documentId: number, userId: number, companyId: number, expiresAt: Date): Promise<any> {
+    // Generate a random token
+    const crypto = await import('crypto');
+    const token = crypto.randomBytes(32).toString('hex');
+
+    const [signedUrl] = await db.insert(schema.signedUrls).values({
+      token,
+      documentId,
+      userId,
+      companyId,
+      expiresAt,
+      used: false
+    }).returning();
+    return signedUrl;
+  }
+
+  // 🔒 SECURITY: Atomic get-and-consume to prevent TOCTOU race conditions
+  async consumeSignedUrl(token: string): Promise<any | undefined> {
+    // Atomic operation: Update only if not used and not expired, return the updated row
+    const [signedUrl] = await db.update(schema.signedUrls)
+      .set({ 
+        used: true,
+        usedAt: new Date()
+      })
+      .where(and(
+        eq(schema.signedUrls.token, token),
+        eq(schema.signedUrls.used, false), // Only if not already used
+        gte(schema.signedUrls.expiresAt, new Date()) // Only if not expired
+      ))
+      .returning();
+    
+    // Returns undefined if token was already used, expired, or doesn't exist
+    return signedUrl;
+  }
+
+  async getSignedUrl(token: string): Promise<any | undefined> {
+    const [signedUrl] = await db.select().from(schema.signedUrls)
+      .where(and(
+        eq(schema.signedUrls.token, token),
+        eq(schema.signedUrls.used, false),
+        gte(schema.signedUrls.expiresAt, new Date()) // Not expired
+      ));
+    return signedUrl;
+  }
+
+  async markSignedUrlAsUsed(token: string): Promise<void> {
+    await db.update(schema.signedUrls)
+      .set({ 
+        used: true,
+        usedAt: new Date()
+      })
+      .where(eq(schema.signedUrls.token, token));
+  }
+
+  async deleteExpiredSignedUrls(): Promise<void> {
+    await db.delete(schema.signedUrls)
+      .where(or(
+        lt(schema.signedUrls.expiresAt, new Date()),
+        eq(schema.signedUrls.used, true)
       ));
   }
 

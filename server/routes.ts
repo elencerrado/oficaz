@@ -5215,6 +5215,113 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // 🔒 SECURITY: Generate signed URL for document download (one-time use, 5min expiration)
+  app.post('/api/documents/:id/generate-signed-url', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const document = await storage.getDocument(id);
+
+      if (!document) {
+        return res.status(404).json({ message: 'Document not found' });
+      }
+
+      // SECURITY: Same access validation as download endpoint
+      const user = req.user!;
+      
+      // Layer 1: Users can ONLY access their own documents
+      if (document.userId !== user.id) {
+        // Layer 2: Only admin/manager can access other users' documents
+        if (!['admin', 'manager'].includes(user.role)) {
+          return res.status(403).json({ message: 'Unauthorized: You can only access your own documents' });
+        }
+        
+        // Layer 3: Admin/Manager can only access documents within their company
+        const documentOwner = await storage.getUser(document.userId);
+        if (!documentOwner || documentOwner.companyId !== user.companyId) {
+          return res.status(403).json({ message: 'Unauthorized: Cross-company access denied' });
+        }
+      }
+
+      // Generate signed URL with 5-minute expiration
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+      const signedUrl = await storage.createSignedUrl(document.id, user.id, user.companyId, expiresAt);
+      
+      console.log(`[SECURITY] Generated signed URL for document ${document.id} (user: ${user.id}, expires: ${expiresAt.toISOString()})`);
+      
+      res.json({
+        token: signedUrl.token,
+        expiresAt: signedUrl.expiresAt,
+        url: `/api/documents/download/${signedUrl.token}`
+      });
+    } catch (error: any) {
+      console.error(`[SECURITY] Error generating signed URL:`, error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // 🔒 SECURITY: Download document using signed URL (one-time use, TOCTOU-safe)
+  app.get('/api/documents/download/:token', async (req, res) => {
+    try {
+      const token = req.params.token;
+      
+      // 🔒 SECURITY: Atomic consume operation - prevents TOCTOU race conditions
+      // Only succeeds if token is valid, not used, and not expired
+      const signedUrl = await storage.consumeSignedUrl(token);
+      
+      if (!signedUrl) {
+        console.log(`[SECURITY] Invalid, expired, or already-used signed URL token: ${token}`);
+        return res.status(403).json({ message: 'Invalid or expired download link' });
+      }
+
+      // Get document
+      const document = await storage.getDocument(signedUrl.documentId);
+      if (!document) {
+        return res.status(404).json({ message: 'Document not found' });
+      }
+
+      console.log(`[SECURITY] Signed URL consumed for document ${document.id} (user: ${signedUrl.userId})`);
+
+      const filePath = path.join(uploadDir, document.fileName);
+      
+      // If physical file doesn't exist, return 404
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: 'File not found on server' });
+      }
+
+      // Set content type
+      let contentType = document.mimeType || 'application/octet-stream';
+      const ext = path.extname(document.originalName || document.fileName).toLowerCase();
+      switch (ext) {
+        case '.pdf': contentType = 'application/pdf'; break;
+        case '.jpg':
+        case '.jpeg': contentType = 'image/jpeg'; break;
+        case '.png': contentType = 'image/png'; break;
+        case '.gif': contentType = 'image/gif'; break;
+        case '.txt': contentType = 'text/plain'; break;
+      }
+      
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+      res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
+      
+      // Check if it's a view request (preview) or download
+      const isPreview = req.query.view === 'true' || req.query.preview === 'true';
+      
+      if (isPreview) {
+        res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(document.originalName)}"`);
+      } else {
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(document.originalName)}"`);
+      }
+
+      // Send file
+      const absolutePath = path.resolve(filePath);
+      res.sendFile(absolutePath);
+    } catch (error: any) {
+      console.error('[SECURITY] Error in signed URL download:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.delete('/api/documents/:id', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);

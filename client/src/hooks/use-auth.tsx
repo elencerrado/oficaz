@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   company: Company | null;
   token: string | null;
-  login: (dniOrEmail: string, password: string, companyAlias?: string) => Promise<void>;
+  login: (dniOrEmail: string, password: string, companyAlias?: string, remember?: boolean) => Promise<void>;
   register: (data: any) => Promise<void>;
   logout: (manual?: boolean) => void;
   refreshUser: () => Promise<void>;
