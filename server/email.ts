@@ -12,14 +12,14 @@ export async function sendEmployeeWelcomeEmail(
   try {
     console.log(`📧 Starting sendEmployeeWelcomeEmail for: ${employeeEmail}`);
     
-    // Configure Nodemailer with Hostinger SMTP
+    // 🔒 SECURITY: Configure Nodemailer with secure environment variables
     const transporter = nodemailer.createTransport({
-      host: 'smtp.hostinger.com',
+      host: process.env.SMTP_HOST,
       port: 465,
       secure: true, // SSL
       auth: {
-        user: 'soy@oficaz.es',
-        pass: 'Sanisidro@2025',
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
       tls: {
         rejectUnauthorized: false
@@ -203,14 +203,14 @@ export async function sendSuperAdminSecurityCode(
   try {
     console.log(`🔐 Starting sendSuperAdminSecurityCode for: ${email}`);
     
-    // Configure Nodemailer with Hostinger SMTP
+    // 🔒 SECURITY: Configure Nodemailer with secure environment variables
     const transporter = nodemailer.createTransport({
-      host: 'smtp.hostinger.com',
+      host: process.env.SMTP_HOST,
       port: 465,
       secure: true, // SSL
       auth: {
-        user: 'soy@oficaz.es',
-        pass: 'Sanisidro@2025',
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
       tls: {
         rejectUnauthorized: false
@@ -344,14 +344,14 @@ export async function sendPasswordResetEmail(
   try {
     console.log(`📧 Starting sendPasswordResetEmail for: ${email}`);
     
-    // Configure Nodemailer with Hostinger SMTP
+    // 🔒 SECURITY: Configure Nodemailer with secure environment variables
     const transporter = nodemailer.createTransport({
-      host: 'smtp.hostinger.com',
+      host: process.env.SMTP_HOST,
       port: 465,
       secure: true, // SSL
       auth: {
-        user: 'soy@oficaz.es',
-        pass: 'Sanisidro@2025',
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
       tls: {
         rejectUnauthorized: false
@@ -509,14 +509,14 @@ export async function sendEmail(
   try {
     console.log(`📧 Starting sendEmail to: ${to}`);
     
-    // Configure Nodemailer with Hostinger SMTP
+    // 🔒 SECURITY: Configure Nodemailer with secure environment variables
     const transporter = nodemailer.createTransport({
-      host: 'smtp.hostinger.com',
+      host: process.env.SMTP_HOST,
       port: 465,
       secure: true, // SSL
       auth: {
-        user: 'soy@oficaz.es',
-        pass: 'Sanisidro@2025',
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
       tls: {
         rejectUnauthorized: false
@@ -558,14 +558,14 @@ export async function sendNewCompanyRegistrationNotification(
   try {
     console.log('🏢 Sending new company registration notification to soy@oficaz.es');
     
-    // Configure Nodemailer with Hostinger SMTP
+    // 🔒 SECURITY: Configure Nodemailer with secure environment variables
     const transporter = nodemailer.createTransport({
-      host: 'smtp.hostinger.com',
+      host: process.env.SMTP_HOST,
       port: 465,
       secure: true, // SSL
       auth: {
-        user: 'soy@oficaz.es',
-        pass: 'Sanisidro@2025',
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
       tls: {
         rejectUnauthorized: false

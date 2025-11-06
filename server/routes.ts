@@ -1411,14 +1411,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`📁 Contact files: ${uploadedFiles.length} files, ${(totalFileSize / 1024 / 1024).toFixed(2)}MB total`);
       }
 
-      // Configurar Nodemailer con Hostinger SMTP
+      // 🔒 SECURITY: Configure Nodemailer with secure environment variables
       const transporter = nodemailer.createTransport({
-        host: 'smtp.hostinger.com',
+        host: process.env.SMTP_HOST,
         port: 465,
         secure: true, // SSL
         auth: {
-          user: 'soy@oficaz.es',
-          pass: 'Sanisidro@2025',
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
         },
         tls: {
           rejectUnauthorized: false
@@ -1668,13 +1668,14 @@ Responde directamente a este email para contactar con la persona.
   const sendVerificationEmail = async (email: string, code: string, req: any, isRecovery = false) => {
     // ⚠️ PROTECTED NODEMAILER CONFIG - DO NOT MODIFY ⚠️
     // MUST use createTransport (NOT createTransporter) - user confirmed working
+    // 🔒 SECURITY: Now uses secure environment variables instead of hardcoded credentials
     const transporter = nodemailer.createTransport({
-      host: 'smtp.hostinger.com',
+      host: process.env.SMTP_HOST,
       port: 465,
       secure: true, // SSL
       auth: {
-        user: 'soy@oficaz.es',
-        pass: 'Sanisidro@2025',
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
       tls: {
         rejectUnauthorized: false,
@@ -1882,10 +1883,10 @@ Responde directamente a este email para contactar con la persona.
           NODE_ENV: process.env.NODE_ENV
         },
         smtp_config: {
-          host: 'smtp.hostinger.com',
+          host: process.env.SMTP_HOST || '(configured)',
           port: 465,
           secure: true,
-          auth_user: 'soy@oficaz.es'
+          auth_user: process.env.SMTP_USER || '(configured)'
         }
       };
 
@@ -6563,14 +6564,14 @@ Responde directamente a este email para contactar con la persona.
 
       // Send email with verification code using the existing email infrastructure
       try {
-        // Use the same configuration as the rest of the app
+        // 🔒 SECURITY: Configure with secure environment variables
         const transporter = nodemailer.createTransport({
-          host: 'smtp.hostinger.com',
+          host: process.env.SMTP_HOST,
           port: 465,
           secure: true, // SSL
           auth: {
-            user: 'soy@oficaz.es',
-            pass: 'Sanisidro@2025',
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
           },
           tls: {
             rejectUnauthorized: false
@@ -8643,13 +8644,14 @@ Responde directamente a este email para contactar con la persona.
       
       // Send invitation email
       try {
+        // 🔒 SECURITY: Configure with secure environment variables
         const transporter = nodemailer.createTransport({
-          host: 'smtp.hostinger.com',
+          host: process.env.SMTP_HOST,
           port: 465,
           secure: true, // SSL
           auth: {
-            user: 'soy@oficaz.es',
-            pass: 'Sanisidro@2025',
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
           },
           tls: {
             rejectUnauthorized: false
@@ -9711,14 +9713,14 @@ Responde directamente a este email para contactar con la persona.
 
       console.log(`📧 Sending to ${newEmails.length} new recipients (${alreadySentEmails.size} already received)`);
 
-      // Configure email transporter
+      // 🔒 SECURITY: Configure email transporter with secure environment variables
       const transporter = nodemailer.createTransport({
-        host: 'smtp.hostinger.com',
+        host: process.env.SMTP_HOST,
         port: 465,
         secure: true, // SSL
         auth: {
-          user: 'soy@oficaz.es',
-          pass: 'Sanisidro@2025',
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
         },
       });
 
