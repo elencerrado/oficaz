@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -133,6 +134,7 @@ export default function AdminDocuments() {
   const [message, setMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
+  const [filterPendingSignature, setFilterPendingSignature] = useState(false); // Filter for unsigned payrolls
   const [isUploading, setIsUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [uploadAnalysis, setUploadAnalysis] = useState<any[]>([]);
@@ -606,7 +608,16 @@ export default function AdminDocuments() {
     const matchesSearch = doc.originalName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          doc.user?.fullName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesEmployee = selectedEmployee === 'all' || doc.userId.toString() === selectedEmployee;
-    return matchesSearch && matchesEmployee;
+    
+    // Filter by pending signature (only unsigned payrolls)
+    let matchesPendingSignature = true;
+    if (filterPendingSignature) {
+      const fileName = doc.originalName || doc.fileName || '';
+      const analysis = analyzeFileName(fileName, employees);
+      matchesPendingSignature = analysis.documentType === 'Nómina' && !doc.isAccepted;
+    }
+    
+    return matchesSearch && matchesEmployee && matchesPendingSignature;
   });
 
   const formatFileSize = (bytes: number) => {
@@ -796,7 +807,10 @@ export default function AdminDocuments() {
             value={(allDocuments || []).length}
             color="blue"
             icon={FileText}
-            onClick={() => setActiveTab('explorer')}
+            onClick={() => {
+              setActiveTab('explorer');
+              setFilterPendingSignature(false);
+            }}
           />
 
           <StatsCard
@@ -809,7 +823,12 @@ export default function AdminDocuments() {
             }).length}
             color="orange"
             icon={FileSignature}
-            onClick={() => setActiveTab('explorer')}
+            onClick={() => {
+              setActiveTab('explorer');
+              setFilterPendingSignature(true);
+              setSearchTerm('');
+              setSelectedEmployee('all');
+            }}
           />
 
           <StatsCard
@@ -827,7 +846,10 @@ export default function AdminDocuments() {
             value={(employees || []).length}
             color="purple"
             icon={Users}
-            onClick={() => setActiveTab('explorer')}
+            onClick={() => {
+              setActiveTab('explorer');
+              setFilterPendingSignature(false);
+            }}
           />
         </div>
 
@@ -839,7 +861,12 @@ export default function AdminDocuments() {
             { id: 'explorer', label: 'Archivos', icon: Folder }
           ]}
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={(tab) => {
+            setActiveTab(tab);
+            if (tab !== 'explorer') {
+              setFilterPendingSignature(false);
+            }
+          }}
         />
 
         {/* Tab Content */}
@@ -960,6 +987,27 @@ export default function AdminDocuments() {
                   </Button>
                 </div>
               </div>
+
+              {/* Active filter indicator */}
+              {filterPendingSignature && (
+                <Alert className="bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800">
+                  <FileSignature className="h-4 w-4 text-orange-600" />
+                  <AlertDescription className="flex items-center justify-between">
+                    <span className="text-orange-700 dark:text-orange-300">
+                      Mostrando solo nóminas pendientes de firma
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setFilterPendingSignature(false)}
+                      className="text-orange-600 hover:text-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/30 h-7"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Limpiar filtro
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
 
               {/* Results count */}
               <div className="text-sm text-muted-foreground">
