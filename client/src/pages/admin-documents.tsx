@@ -159,6 +159,9 @@ export default function AdminDocuments() {
     documentName: string;
   }>({ isOpen: false, documentId: null, documentName: '' });
 
+  // Request dialog state
+  const [showRequestDialog, setShowRequestDialog] = useState(false);
+
   // Fetch employees
   const { data: employees = [] } = useQuery<Employee[]>({
     queryKey: ['/api/employees'],
@@ -210,6 +213,7 @@ export default function AdminDocuments() {
       setSelectedEmployees([]);
       setDocumentType('');
       setMessage('');
+      setShowRequestDialog(false);
     },
     onError: (error: any) => {
       toast({
@@ -1310,87 +1314,15 @@ export default function AdminDocuments() {
         {activeTab === 'requests' && (
           <Card>
             <CardContent className="p-6 space-y-6">
-              {/* Send New Request */}
-              <div className="border rounded-lg p-4 bg-muted">
-                <h3 className="font-medium text-foreground mb-4">Enviar Nueva Solicitud</h3>
-                <div className="space-y-4">
-                  {/* Document Type Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Tipo de Documento
-                    </label>
-                    <Select value={documentType} onValueChange={setDocumentType}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona el tipo de documento" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {documentTypes.map((type) => (
-                          <SelectItem key={type.id} value={type.id}>
-                            <div className="flex items-center">
-                              <type.icon className="h-4 w-4 mr-2" />
-                              {type.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Message */}
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Mensaje (opcional)
-                    </label>
-                    <Input
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Mensaje personalizado para los empleados"
-                    />
-                  </div>
-
-                  {/* Employee Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Empleados ({selectedEmployees.length} seleccionados)
-                    </label>
-                    <div className="max-h-48 overflow-y-auto border rounded-lg p-2 space-y-1 bg-card">
-                      {employees.map((employee: Employee) => (
-                        <div
-                          key={employee.id}
-                          onClick={() => toggleEmployee(employee.id)}
-                          className={`flex items-center p-2 rounded cursor-pointer transition-colors ${
-                            selectedEmployees.includes(employee.id)
-                              ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700'
-                              : 'hover:bg-muted'
-                          }`}
-                        >
-                          <div className={`w-4 h-4 border rounded mr-3 flex items-center justify-center ${
-                            selectedEmployees.includes(employee.id)
-                              ? 'bg-blue-600 border-blue-600'
-                              : 'border-gray-300 dark:border-gray-600'
-                          }`}>
-                            {selectedEmployees.includes(employee.id) && (
-                              <div className="w-2 h-2 bg-white rounded-sm" />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <div className="font-medium text-foreground">{employee.fullName}</div>
-                            <div className="text-sm text-muted-foreground">{employee.email}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={handleSendRequest}
-                    disabled={sendDocumentMutation.isPending || selectedEmployees.length === 0 || !documentType}
-                    className="w-full"
-                  >
-                    {sendDocumentMutation.isPending ? 'Enviando...' : 'Enviar Solicitud'}
-                  </Button>
-                </div>
-              </div>
+              {/* Send New Request Button */}
+              <Button 
+                onClick={() => setShowRequestDialog(true)}
+                className="w-full"
+                data-testid="button-new-request"
+              >
+                <Send className="mr-2 h-4 w-4" />
+                Enviar Nueva Solicitud
+              </Button>
 
               {/* Sent Requests History */}
               <div>
@@ -1759,6 +1691,108 @@ export default function AdminDocuments() {
                   className="text-white hover:text-white bg-red-600 hover:bg-red-700"
                 >
                   {deleteRequestMutation.isPending ? 'Eliminando...' : 'Eliminar Solicitud'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Send Request Dialog */}
+        <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center">
+                <Send className="h-5 w-5 mr-2" />
+                Enviar Nueva Solicitud de Documento
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {/* Document Type Selection */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Tipo de Documento
+                </label>
+                <Select value={documentType} onValueChange={setDocumentType}>
+                  <SelectTrigger data-testid="select-document-type">
+                    <SelectValue placeholder="Selecciona el tipo de documento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {documentTypes.map((type) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        <div className="flex items-center">
+                          <type.icon className="h-4 w-4 mr-2" />
+                          {type.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Message */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Mensaje (opcional)
+                </label>
+                <Input
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Mensaje personalizado para los empleados"
+                  data-testid="input-request-message"
+                />
+              </div>
+
+              {/* Employee Selection */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Empleados ({selectedEmployees.length} seleccionados)
+                </label>
+                <div className="max-h-64 overflow-y-auto border rounded-lg p-2 space-y-1 bg-card">
+                  {employees.map((employee: Employee) => (
+                    <div
+                      key={employee.id}
+                      onClick={() => toggleEmployee(employee.id)}
+                      className={`flex items-center p-2 rounded cursor-pointer transition-colors ${
+                        selectedEmployees.includes(employee.id)
+                          ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700'
+                          : 'hover:bg-muted'
+                      }`}
+                      data-testid={`employee-item-${employee.id}`}
+                    >
+                      <div className={`w-4 h-4 border rounded mr-3 flex items-center justify-center ${
+                        selectedEmployees.includes(employee.id)
+                          ? 'bg-blue-600 border-blue-600'
+                          : 'border-gray-300 dark:border-gray-600'
+                      }`}>
+                        {selectedEmployees.includes(employee.id) && (
+                          <div className="w-2 h-2 bg-white rounded-sm" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-medium text-foreground">{employee.fullName}</div>
+                        <div className="text-sm text-muted-foreground">{employee.email}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowRequestDialog(false)}
+                  disabled={sendDocumentMutation.isPending}
+                  data-testid="button-cancel-request"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSendRequest}
+                  disabled={sendDocumentMutation.isPending || selectedEmployees.length === 0 || !documentType}
+                  data-testid="button-send-request"
+                >
+                  {sendDocumentMutation.isPending ? 'Enviando...' : 'Enviar Solicitud'}
                 </Button>
               </div>
             </div>
