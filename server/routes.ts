@@ -386,6 +386,9 @@ async function generateComprehensiveDemoData(companyId: number, employees: any[]
   // Generate work shifts for current week + 3 next weeks
   await generateDemoWorkShifts(companyId, employees, registrationDate);
   
+  // Generate pending document requests
+  await generateDemoDocumentRequests(companyId, employees);
+  
   console.log('✅ Generated comprehensive demo data for', employees.length, 'employees');
 }
 
@@ -774,6 +777,97 @@ async function generateIncompleteSessions(employees: any[], companyId: number) {
   }
   
   console.log(`⚠️ Generated incomplete sessions for ${employeesForIncomplete.length} employees`);
+}
+
+// Generate demo document requests (pending and completed)
+async function generateDemoDocumentRequests(companyId: number, employees: any[]) {
+  // Get admin user for creating document requests
+  const adminUsers = await db.select()
+    .from(users)
+    .where(and(
+      eq(users.companyId, companyId),
+      eq(users.role, 'admin')
+    ))
+    .limit(1);
+
+  if (adminUsers.length === 0) {
+    console.log('⚠️ No admin user found to create document requests');
+    return;
+  }
+
+  const adminUser = adminUsers[0];
+  const now = new Date();
+  
+  // Select 2-3 random employees for document requests
+  const employeesForRequests = employees
+    .filter(emp => emp.role === 'employee')
+    .slice(0, Math.min(3, employees.length));
+  
+  const documentRequests = [
+    // 1. PENDING - Nómina request (first employee) - requested 2 days ago
+    {
+      employees: [employeesForRequests[0]],
+      documentType: 'Nómina',
+      message: 'Por favor, sube tu última nómina para completar tu expediente',
+      dueDate: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000), // Due in 5 days
+      priority: 'high',
+      isCompleted: false,
+    },
+    
+    // 2. PENDING - Contrato request (second employee) - requested 1 day ago
+    {
+      employees: [employeesForRequests[1] || employeesForRequests[0]],
+      documentType: 'Contrato',
+      message: 'Necesitamos una copia firmada de tu contrato de trabajo',
+      dueDate: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000), // Due in 7 days
+      priority: 'medium',
+      isCompleted: false,
+    },
+    
+    // 3. PENDING - DNI request (third employee) - requested today
+    {
+      employees: [employeesForRequests[2] || employeesForRequests[0]],
+      documentType: 'DNI',
+      message: 'Sube una copia de tu DNI (ambas caras) para actualizar nuestros archivos',
+      dueDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000), // Due in 3 days
+      priority: 'medium',
+      isCompleted: false,
+    },
+    
+    // 4. COMPLETED - Older request that was completed (first employee)
+    {
+      employees: [employeesForRequests[0]],
+      documentType: 'Justificante Médico',
+      message: 'Por favor, sube tu justificante médico de la semana pasada',
+      dueDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // Was due 2 days ago
+      priority: 'low',
+      isCompleted: true,
+    },
+  ];
+  
+  for (const request of documentRequests) {
+    // Create document notification for each employee using storage method
+    for (const employee of request.employees) {
+      const notification = await storage.createDocumentNotification(
+        employee.id,
+        request.documentType,
+        request.message,
+        adminUser.id,
+        request.priority,
+        request.dueDate
+      );
+      
+      // Mark as completed if needed
+      if (request.isCompleted && notification) {
+        await storage.markNotificationCompleted(notification.id);
+      }
+    }
+    
+    const status = request.isCompleted ? '✅ COMPLETADA' : '⏳ PENDIENTE';
+    console.log(`📄 ${status} - Document request: ${request.documentType} for ${request.employees.map(e => e.fullName).join(', ')}`);
+  }
+  
+  console.log(`📋 Generated ${documentRequests.length} demo document requests (${documentRequests.filter(r => !r.isCompleted).length} pending)`);
 }
 
 // Generate demo work shifts for current week + 3 next weeks
