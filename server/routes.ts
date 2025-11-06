@@ -12141,6 +12141,56 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // 🧪 TEST ENDPOINT: Simular evento de pago de Stripe (solo para pruebas)
+  app.post('/api/stripe/test-payment-event', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const user = req.user;
+      
+      if (!user) {
+        return res.status(401).json({ error: 'No autenticado' });
+      }
+      
+      // Find subscription by company ID
+      const subscription = await db.query.subscriptions.findFirst({
+        where: eq(subscriptions.companyId, user.companyId),
+      });
+
+      if (!subscription) {
+        return res.status(404).json({ error: 'No subscription found' });
+      }
+
+      console.log(`🧪 TEST: Simulating payment event for company ${user.companyId}`);
+      console.log(`   - Current nextPaymentDate: ${subscription.nextPaymentDate}`);
+
+      // ⚠️ CRITICAL: Calculate next payment date from PREVIOUS date, not from now
+      // This ensures the billing cycle stays consistent (e.g., always on the 4th)
+      const currentNextPaymentDate = subscription.nextPaymentDate ? new Date(subscription.nextPaymentDate) : new Date();
+      const nextPaymentDate = new Date(currentNextPaymentDate);
+      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+
+      // Update subscription with new next payment date
+      await db.update(subscriptions)
+        .set({ 
+          nextPaymentDate: nextPaymentDate,
+          status: 'active',
+          updatedAt: new Date()
+        })
+        .where(eq(subscriptions.id, subscription.id));
+
+      console.log(`✅ TEST: Updated nextPaymentDate from ${currentNextPaymentDate.toISOString()} to ${nextPaymentDate.toISOString()}`);
+      
+      res.json({ 
+        success: true,
+        message: 'Fecha de pago actualizada correctamente',
+        previousDate: currentNextPaymentDate,
+        newDate: nextPaymentDate
+      });
+    } catch (error: any) {
+      console.error('🧪 TEST: Error simulating payment event:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  });
+
   // Stripe Webhook - Handle payment events (raw body required for signature verification)
   app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'];
@@ -12186,7 +12236,7 @@ Responde directamente a este email para contactar con la persona.
           if (subscription) {
             // ⚠️ CRITICAL: Calculate next payment date from PREVIOUS date, not from now
             // This ensures the billing cycle stays consistent (e.g., always on the 4th)
-            const currentNextPaymentDate = new Date(subscription.nextPaymentDate);
+            const currentNextPaymentDate = subscription.nextPaymentDate ? new Date(subscription.nextPaymentDate) : new Date();
             const nextPaymentDate = new Date(currentNextPaymentDate);
             nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
 

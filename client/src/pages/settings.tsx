@@ -313,6 +313,40 @@ const AccountManagement = () => {
     },
   });
 
+  // 🧪 TEST: Simulate payment event
+  const testPaymentMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/stripe/test-payment-event', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al simular evento de pago');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "✅ Fecha actualizada",
+        description: `Próximo pago: ${new Date(data.newDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+      });
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error en prueba",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Preview plan change mutation
   const previewPlanMutation = useMutation({
     mutationFn: async (plan: string) => {
@@ -912,6 +946,16 @@ const AccountManagement = () => {
             >
               <Crown className="mr-2 h-4 w-4" />
               Cambiar plan de suscripción
+            </Button>
+            <Button 
+              variant="outline" 
+              className="justify-start bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+              onClick={() => testPaymentMutation.mutate()}
+              disabled={testPaymentMutation.isPending}
+              data-testid="button-test-payment"
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {testPaymentMutation.isPending ? 'Actualizando...' : '🧪 TEST: Avanzar fecha de pago'}
             </Button>
           </div>
           
