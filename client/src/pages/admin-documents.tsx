@@ -1314,19 +1314,18 @@ export default function AdminDocuments() {
         {activeTab === 'requests' && (
           <Card>
             <CardContent className="p-6 space-y-6">
-              {/* Send New Request Button */}
-              <Button 
-                onClick={() => setShowRequestDialog(true)}
-                className="w-full"
-                data-testid="button-new-request"
-              >
-                <Send className="mr-2 h-4 w-4" />
-                Enviar Nueva Solicitud
-              </Button>
-
               {/* Sent Requests History */}
               <div>
-                <h3 className="font-medium text-foreground mb-4">Historial de Solicitudes ({(sentRequests || []).length})</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-medium text-foreground">Historial de Solicitudes ({(sentRequests || []).length})</h3>
+                  <Button 
+                    onClick={() => setShowRequestDialog(true)}
+                    data-testid="button-new-request"
+                  >
+                    <Send className="mr-2 h-4 w-4" />
+                    Nueva Solicitud
+                  </Button>
+                </div>
                 {(sentRequests || []).length > 0 ? (
                   <div className="space-y-3">
                     {sentRequests.map((request: any) => (
