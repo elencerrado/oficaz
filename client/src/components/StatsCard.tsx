@@ -1,4 +1,3 @@
-import { Card, CardContent } from '@/components/ui/card';
 import { LucideIcon } from 'lucide-react';
 
 interface StatsCardProps {
@@ -63,20 +62,32 @@ export default function StatsCard({
 }: StatsCardProps) {
   const config = colorConfig[color];
   
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onClick) {
+      onClick();
+    }
+  };
+
   return (
-    <Card 
-      className={`cursor-pointer hover:shadow-lg transition-all duration-200 border-2 ${
+    <div
+      role="button"
+      tabIndex={0}
+      className={`rounded-lg text-card-foreground cursor-pointer hover:shadow-lg transition-all duration-200 border-2 ${
         isActive 
           ? `${config.activeBorder} ${config.activeBg} shadow-md` 
           : `${config.hover}`
-      } mb-4 ${className}`}
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onClick?.();
+      } mb-4 ${className} bg-card shadow-sm`}
+      onClick={handleClick}
+      onKeyPress={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (onClick) onClick();
+        }
       }}
     >
-      <CardContent className="p-3 h-24 sm:h-20 flex flex-col items-center text-center overflow-hidden">
+      <div className="p-3 h-24 sm:h-20 flex flex-col items-center text-center overflow-hidden">
         {/* Layout móvil: ícono arriba, número en medio, texto abajo */}
         <div className="sm:hidden flex flex-col justify-between h-full py-1">
           <div className="flex justify-center">
@@ -104,7 +115,7 @@ export default function StatsCard({
           <p className="text-xs font-medium text-muted-foreground leading-none">{title}</p>
           <p className="text-[10px] text-muted-foreground opacity-75 leading-none">{subtitle}</p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
