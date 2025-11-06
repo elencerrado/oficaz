@@ -35,15 +35,21 @@ Preferred communication style: Simple, everyday language.
 
 ### Security Standards (Nov 2025)
 - **Credential Management**: All sensitive credentials (SMTP, API keys) stored in Replit Secrets as environment variables
-- **JWT Security**: Centralized JWT_SECRET management via `server/utils/jwt-secret.ts` - all modules use same secret for consistency
+- **JWT Security**: Centralized JWT_SECRET management via `server/utils/jwt-secret.ts` - all modules use same secret for consistency. Short-lived access tokens (15min) with long-lived refresh tokens (30-day). Refresh tokens bcrypt-hashed before storage, atomic consumption prevents TOCTOU races.
 - **Password Hashing**: bcrypt with secure salt rounds for all password storage
-- **Token Hygiene**: JWT tokens used exclusively via Authorization headers (30-day expiration, to be reduced)
+- **Token System**: 
+  - Access tokens: 15-minute expiration, used for API authentication
+  - Refresh tokens: 30-day expiration, bcrypt-hashed, one-time use with atomic consumption
+  - Frontend auto-refresh: Transparent token renewal before expiration
+  - Signed URLs: One-time use, 5-minute expiration for document downloads
+- **Signed URLs**: Document downloads use time-limited, one-time signed URLs instead of JWT query parameters. Random tokens (32 bytes), atomic consumption (UPDATE...WHERE...RETURNING) prevents TOCTOU races, 5-minute expiration.
 - **Input Validation**: Zod schemas for all API endpoints to prevent malicious inputs
 - **SQL Injection Protection**: Drizzle ORM with parameterized queries throughout
 - **Rate Limiting**: Global and endpoint-specific rate limits to prevent abuse
 - **Error Handling**: Errors logged but never expose sensitive data or stack traces to clients
 - **Security Headers**: Helmet configuration with HTTPS enforcement, HSTS, X-Content-Type-Options, X-Frame-Options
 - **Company Isolation**: All data queries filtered by companyId to prevent cross-company data access
+- **TOCTOU Prevention**: All security-critical operations use atomic database operations (UPDATE...WHERE...RETURNING) to prevent time-of-check-time-of-use races
 
 ## System Architecture
 
