@@ -295,11 +295,11 @@ export const queryClient = new QueryClient({
       refetchOnReconnect: true, // Refetch when internet reconnects
       staleTime: 1 * 60 * 1000, // 1 minute cache
       gcTime: 2 * 60 * 1000, // 2 minutes garbage collection
-      retry: 1,
-      retryDelay: 500,
+      retry: 2, // Retry failed queries twice before failing
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
     },
     mutations: {
-      retry: false,
+      retry: false, // Don't retry mutations to avoid duplicate operations
     },
   },
 });

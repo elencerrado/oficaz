@@ -33,7 +33,7 @@ Preferred communication style: Simple, everyday language.
 - **Tracking Domain**: Production emails use https://oficaz.es for tracking URLs (pixel and click tracking) for better deliverability and reliability.
 - **Image URL Architecture**: Email marketing images use RELATIVE paths (e.g., `/public-objects/email-marketing/email-123.jpg`) stored in database/campaigns for cross-environment compatibility. Upload endpoint returns relative paths only. Frontend renders images using browser's native relative URL resolution. Email sending process converts relative paths to absolute URLs with production domain dynamically. Migration endpoint `POST /api/super-admin/email-marketing/fix-image-urls` available to normalize existing hardcoded URLs to relative paths. This architecture ensures images work correctly whether campaign is created/viewed in preview or production environment.
 
-### Security Standards (Nov 2025)
+### Security & Reliability Standards (Nov 2025)
 - **Credential Management**: All sensitive credentials (SMTP, API keys) stored in Replit Secrets as environment variables
 - **JWT Security**: Centralized JWT_SECRET management via `server/utils/jwt-secret.ts` - all modules use same secret for consistency. Short-lived access tokens (15min) with long-lived refresh tokens (30-day). Refresh tokens bcrypt-hashed before storage, atomic consumption prevents TOCTOU races.
 - **Password Hashing**: bcrypt with secure salt rounds for all password storage
@@ -46,7 +46,12 @@ Preferred communication style: Simple, everyday language.
 - **Input Validation**: Zod schemas for all API endpoints to prevent malicious inputs
 - **SQL Injection Protection**: Drizzle ORM with parameterized queries throughout
 - **Rate Limiting**: Global and endpoint-specific rate limits to prevent abuse
-- **Error Handling**: Errors logged but never expose sensitive data or stack traces to clients
+- **Error Handling**: 
+  - Global ErrorBoundary captures all React errors (prevents black screens in production)
+  - Server errors logged with full stack traces but only generic messages sent to clients
+  - React Query automatic retries with exponential backoff
+  - User-friendly error messages with reload/recovery options
+  - All errors logged to Sentry for monitoring
 - **Security Headers**: Helmet configuration with HTTPS enforcement, HSTS, X-Content-Type-Options, X-Frame-Options
 - **Company Isolation**: All data queries filtered by companyId to prevent cross-company data access
 - **TOCTOU Prevention**: All security-critical operations use atomic database operations (UPDATE...WHERE...RETURNING) to prevent time-of-check-time-of-use races
@@ -82,7 +87,10 @@ Preferred communication style: Simple, everyday language.
 - **Styling**: Tailwind CSS with shadcn/ui
 - **State Management**: TanStack Query (React Query)
 - **Form Handling**: React Hook Form with Zod validation
+- **Error Handling**: Global ErrorBoundary (`client/src/components/ErrorBoundary.tsx`) captures all React errors, preventing black screens. Shows user-friendly error page with reload/home buttons. All errors logged to Sentry for monitoring.
+- **Query Resilience**: React Query configured with automatic retries (2 attempts with exponential backoff), stale data handling, and automatic refetching on reconnection/focus.
 - **UI/UX Decisions**: Consistent header layouts (px-6 py-4, no custom containers), modern aesthetic (glassmorphism, shadows, rounded borders), responsive design, professional color scheme, animated elements, unified avatar system. Full dark mode support with `localStorage` persistence. Logo uses `dark:brightness-0 dark:invert` for dark mode compatibility.
+- **Page Titles**: All pages use `usePageTitle` hook to set descriptive browser tab titles instead of showing URLs.
 
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js

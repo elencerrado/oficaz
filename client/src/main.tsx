@@ -29,7 +29,12 @@ if (document.readyState === 'loading') {
 
 // Import App directly to avoid double loading effect
 import App from "./App";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const root = document.getElementById("root")!;
 
-createRoot(root).render(<App />);
+createRoot(root).render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);
