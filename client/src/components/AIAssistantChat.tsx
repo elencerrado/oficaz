@@ -23,22 +23,28 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
       <div 
         className="absolute inset-0 rounded-full shadow-xl"
         style={{
-          background: 'linear-gradient(45deg, #007AFF, #00C6FF, #007AFF, #5856D6)',
+          background: 'linear-gradient(45deg, #5856D6, #007AFF, #00C6FF, #007AFF, #5856D6)',
           backgroundSize: '400% 400%',
           animation: `aiGradient ${gradientDuration} ease infinite`
         }}
-      />
-      
-      {/* Círculo azul con punto - con margen desde el borde del fondo */}
-      <div className="absolute inset-[6px] rounded-full bg-white dark:bg-gray-900 flex items-center justify-center">
-        {/* Círculo azul */}
-        <div className="relative w-10 h-10">
-          <div className="absolute inset-0 rounded-full border-[5px] border-[#007AFF] dark:border-[#0A84FF] bg-white dark:bg-gray-900" />
+      >
+        {/* Círculo negro/oscuro para crear el anillo */}
+        <div className="absolute inset-[8px] rounded-full bg-[#1a1a2e] dark:bg-[#0a0a0f]">
+          {/* UN SOLO círculo azul (anillo) */}
+          <div 
+            className="absolute inset-[4px] rounded-full"
+            style={{
+              background: '#007AFF',
+            }}
+          >
+            {/* Centro oscuro para crear el anillo */}
+            <div className="absolute inset-[7px] rounded-full bg-[#1a1a2e] dark:bg-[#0a0a0f]" />
+          </div>
           
           {/* Punto rebotando aleatoriamente dentro del círculo */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div 
-              className="absolute w-2.5 h-2.5 bg-[#007AFF] dark:bg-[#0A84FF] rounded-full shadow-lg"
+              className="absolute w-2.5 h-2.5 bg-[#007AFF] rounded-full shadow-lg"
               style={{
                 animation: `aiRandomBounce ${animationDuration} ease-in-out infinite`
               }}
@@ -49,7 +55,7 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
       
       {/* Efecto de resplandor - más rápido cuando está pensando */}
       <div 
-        className="absolute inset-0 rounded-full bg-[#007AFF]/10 dark:bg-[#0A84FF]/10 animate-ping" 
+        className="absolute inset-0 rounded-full bg-[#007AFF]/10 animate-ping" 
         style={{ animationDuration: isThinking ? '1s' : '4s' }}
       />
       
