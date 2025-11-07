@@ -178,14 +178,14 @@ export function AIAssistantChat() {
           data-testid="container-ai-assistant-chat"
         >
           {/* Header */}
-          <div className="flex items-center justify-between rounded-t-2xl bg-gradient-to-r from-[#007AFF] to-[#0066CC] px-4 py-3 text-white dark:from-[#0A84FF] dark:to-[#0066CC]">
-            <h3 className="font-semibold text-base" data-testid="text-ai-assistant-title">OficazIA</h3>
+          <div className="flex items-center justify-between rounded-t-2xl bg-gradient-to-r from-[#007AFF] to-[#0066CC] px-4 py-2 text-white dark:from-[#0A84FF] dark:to-[#0066CC]">
+            <h3 className="font-semibold text-sm" data-testid="text-ai-assistant-title">OficazIA</h3>
             <button
               onClick={() => setIsOpen(false)}
-              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+              className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-white/10 transition-colors"
               data-testid="button-minimize-chat"
             >
-              <Minimize2 className="h-4 w-4" />
+              <Minimize2 className="h-3.5 w-3.5" />
             </button>
           </div>
 
