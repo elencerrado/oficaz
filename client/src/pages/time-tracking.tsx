@@ -3648,143 +3648,204 @@ export default function TimeTracking() {
 
       {/* Tab Content: Resumen */}
       {activeTab === 'summary' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-medium">Resumen de Horas</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Vista general de las horas trabajadas por empleado
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {employees?.map((employee) => {
-                // Calculate monthly hours
-                const monthStart = startOfMonth(new Date());
-                const monthEnd = endOfMonth(new Date());
-                const monthlySessions = sessions?.filter(s => 
-                  s.userId === employee.id &&
-                  new Date(s.clockIn) >= monthStart &&
-                  new Date(s.clockIn) <= monthEnd
-                ) || [];
-                
-                const monthlyHours = monthlySessions.reduce((total, session) => {
-                  if (!session.clockOut) return total;
-                  const hours = differenceInMinutes(new Date(session.clockOut), new Date(session.clockIn)) / 60;
-                  const breakMinutes = session.breaks?.reduce((sum, b) => {
-                    if (!b.endTime) return sum;
-                    return sum + differenceInMinutes(new Date(b.endTime), new Date(b.startTime));
-                  }, 0) || 0;
-                  return total + hours - (breakMinutes / 60);
+        <div className="space-y-6">
+          {/* Grid de empleados */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {employees?.map((employee) => {
+              // Calculate monthly hours
+              const monthStart = startOfMonth(new Date());
+              const monthEnd = endOfMonth(new Date());
+              const monthlySessions = (sessions || []).filter((s: any) => 
+                s.userId === employee.id &&
+                new Date(s.clockIn) >= monthStart &&
+                new Date(s.clockIn) <= monthEnd
+              );
+              
+              const monthlyHours = monthlySessions.reduce((total: number, session: any) => {
+                if (!session.clockOut) return total;
+                const hours = differenceInMinutes(new Date(session.clockOut), new Date(session.clockIn)) / 60;
+                const breakMinutes = (session.breaks || []).reduce((sum: number, b: any) => {
+                  if (!b.endTime) return sum;
+                  return sum + differenceInMinutes(new Date(b.endTime), new Date(b.startTime));
                 }, 0);
+                return total + hours - (breakMinutes / 60);
+              }, 0);
 
-                // Calculate weekly hours
-                const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-                const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
-                const weeklySessions = sessions?.filter(s => 
-                  s.userId === employee.id &&
-                  new Date(s.clockIn) >= weekStart &&
-                  new Date(s.clockIn) <= weekEnd
-                ) || [];
-                
-                const weeklyHours = weeklySessions.reduce((total, session) => {
-                  if (!session.clockOut) return total;
-                  const hours = differenceInMinutes(new Date(session.clockOut), new Date(session.clockIn)) / 60;
-                  const breakMinutes = session.breaks?.reduce((sum, b) => {
-                    if (!b.endTime) return sum;
-                    return sum + differenceInMinutes(new Date(b.endTime), new Date(b.startTime));
-                  }, 0) || 0;
-                  return total + hours - (breakMinutes / 60);
+              // Calculate weekly hours
+              const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+              const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+              const weeklySessions = (sessions || []).filter((s: any) => 
+                s.userId === employee.id &&
+                new Date(s.clockIn) >= weekStart &&
+                new Date(s.clockIn) <= weekEnd
+              );
+              
+              const weeklyHours = weeklySessions.reduce((total: number, session: any) => {
+                if (!session.clockOut) return total;
+                const hours = differenceInMinutes(new Date(session.clockOut), new Date(session.clockIn)) / 60;
+                const breakMinutes = (session.breaks || []).reduce((sum: number, b: any) => {
+                  if (!b.endTime) return sum;
+                  return sum + differenceInMinutes(new Date(b.endTime), new Date(b.startTime));
                 }, 0);
+                return total + hours - (breakMinutes / 60);
+              }, 0);
 
-                const monthlyTarget = 160; // 160 hours/month
-                const weeklyTarget = 40; // 40 hours/week
-                const monthlyProgress = (monthlyHours / monthlyTarget) * 100;
-                const weeklyProgress = (weeklyHours / weeklyTarget) * 100;
+              // Calculate today's hours
+              const todayStart = startOfDay(new Date());
+              const todayEnd = endOfDay(new Date());
+              const todaySessions = (sessions || []).filter((s: any) => 
+                s.userId === employee.id &&
+                new Date(s.clockIn) >= todayStart &&
+                new Date(s.clockIn) <= todayEnd
+              );
+              
+              const todayHours = todaySessions.reduce((total: number, session: any) => {
+                if (!session.clockOut) return total;
+                const hours = differenceInMinutes(new Date(session.clockOut), new Date(session.clockIn)) / 60;
+                const breakMinutes = (session.breaks || []).reduce((sum: number, b: any) => {
+                  if (!b.endTime) return sum;
+                  return sum + differenceInMinutes(new Date(b.endTime), new Date(b.startTime));
+                }, 0);
+                return total + hours - (breakMinutes / 60);
+              }, 0);
 
-                return (
-                  <div key={employee.id} className="border rounded-lg p-4 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
+              const monthlyTarget = 160;
+              const weeklyTarget = 40;
+              const dailyTarget = 8;
+              const monthlyProgress = (monthlyHours / monthlyTarget) * 100;
+              const weeklyProgress = (weeklyHours / weeklyTarget) * 100;
+              const dailyProgress = (todayHours / dailyTarget) * 100;
+
+              return (
+                <div 
+                  key={employee.id} 
+                  className="group relative bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                >
+                  {/* Header con Avatar */}
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="relative">
+                      <Avatar className="h-16 w-16 ring-4 ring-white dark:ring-gray-800 shadow-lg">
                         <AvatarImage src={employee.avatarUrl || undefined} />
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                          {employee.fullName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xl font-semibold">
+                          {employee.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
-                        <div className="font-medium">{employee.fullName}</div>
-                        <div className="text-sm text-muted-foreground">{employee.email || employee.position || ''}</div>
-                      </div>
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-white dark:border-gray-800"></div>
                     </div>
-
-                    {/* Monthly Progress */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Horas del mes</span>
-                        <span className="font-medium">
-                          {monthlyHours.toFixed(1)}h / {monthlyTarget}h
-                        </span>
-                      </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className={cn(
-                            "h-full rounded-full transition-all",
-                            monthlyProgress >= 100 ? "bg-green-500" : 
-                            monthlyProgress >= 75 ? "bg-blue-500" : 
-                            monthlyProgress >= 50 ? "bg-yellow-500" : "bg-orange-500"
-                          )}
-                          style={{ width: `${Math.min(monthlyProgress, 100)}%` }}
-                        />
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {monthlyProgress.toFixed(0)}% completado
-                      </div>
-                    </div>
-
-                    {/* Weekly Progress */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Horas de la semana</span>
-                        <span className="font-medium">
-                          {weeklyHours.toFixed(1)}h / {weeklyTarget}h
-                        </span>
-                      </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className={cn(
-                            "h-full rounded-full transition-all",
-                            weeklyProgress >= 100 ? "bg-green-500" : 
-                            weeklyProgress >= 75 ? "bg-blue-500" : 
-                            weeklyProgress >= 50 ? "bg-yellow-500" : "bg-orange-500"
-                          )}
-                          style={{ width: `${Math.min(weeklyProgress, 100)}%` }}
-                        />
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {weeklyProgress.toFixed(0)}% completado
-                      </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
+                        {employee.fullName}
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {employee.email || employee.position || 'Empleado'}
+                      </p>
                     </div>
                   </div>
-                );
-              })}
 
-              {(!employees || employees.length === 0) && (
-                <div className="py-12 text-center">
-                  <div className="flex flex-col items-center justify-center space-y-3">
-                    <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
-                      <Users className="w-6 h-6 text-muted-foreground" />
+                  {/* Métricas principales */}
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    {/* Hoy */}
+                    <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/20 rounded-xl">
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {todayHours.toFixed(1)}h
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">Hoy</div>
                     </div>
-                    <div className="text-foreground font-medium">
-                      No hay empleados
+                    
+                    {/* Semana */}
+                    <div className="text-center p-3 bg-purple-50 dark:bg-purple-950/20 rounded-xl">
+                      <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                        {weeklyHours.toFixed(1)}h
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">Semana</div>
                     </div>
-                    <div className="text-muted-foreground text-sm">
-                      Añade empleados para ver el resumen de horas
+                    
+                    {/* Mes */}
+                    <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-xl">
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {monthlyHours.toFixed(1)}h
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">Mes</div>
+                    </div>
+                  </div>
+
+                  {/* Progreso semanal */}
+                  <div className="space-y-3 mb-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                        <CalendarDays className="w-4 h-4" />
+                        Progreso Semanal
+                      </span>
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        {weeklyProgress.toFixed(0)}%
+                      </span>
+                    </div>
+                    <div className="relative h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div 
+                        className={cn(
+                          "h-full rounded-full transition-all duration-500 ease-out",
+                          weeklyProgress >= 100 ? "bg-gradient-to-r from-green-500 to-emerald-600" : 
+                          weeklyProgress >= 75 ? "bg-gradient-to-r from-blue-500 to-cyan-600" : 
+                          weeklyProgress >= 50 ? "bg-gradient-to-r from-yellow-500 to-orange-600" : "bg-gradient-to-r from-orange-500 to-red-600"
+                        )}
+                        style={{ width: `${Math.min(weeklyProgress, 100)}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <span>{weeklyHours.toFixed(1)}h trabajadas</span>
+                      <span>{weeklyTarget}h objetivo</span>
+                    </div>
+                  </div>
+
+                  {/* Progreso mensual */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4" />
+                        Progreso Mensual
+                      </span>
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        {monthlyProgress.toFixed(0)}%
+                      </span>
+                    </div>
+                    <div className="relative h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div 
+                        className={cn(
+                          "h-full rounded-full transition-all duration-500 ease-out",
+                          monthlyProgress >= 100 ? "bg-gradient-to-r from-green-500 to-emerald-600" : 
+                          monthlyProgress >= 75 ? "bg-gradient-to-r from-blue-500 to-cyan-600" : 
+                          monthlyProgress >= 50 ? "bg-gradient-to-r from-yellow-500 to-orange-600" : "bg-gradient-to-r from-orange-500 to-red-600"
+                        )}
+                        style={{ width: `${Math.min(monthlyProgress, 100)}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <span>{monthlyHours.toFixed(1)}h trabajadas</span>
+                      <span>{monthlyTarget}h objetivo</span>
                     </div>
                   </div>
                 </div>
-              )}
+              );
+            })}
+          </div>
+
+          {/* Empty state */}
+          {(!employees || employees.length === 0) && (
+            <div className="py-20 text-center">
+              <div className="flex flex-col items-center justify-center space-y-4">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950 rounded-full flex items-center justify-center">
+                  <Users className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="text-xl font-semibold text-gray-900 dark:text-white">
+                  No hay empleados
+                </div>
+                <div className="text-gray-500 dark:text-gray-400 max-w-md">
+                  Añade empleados para ver el resumen de horas y el progreso de su trabajo
+                </div>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </div>
       )}
 
       {/* Tab Content: Solicitudes de Modificación */}
