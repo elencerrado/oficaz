@@ -19,11 +19,11 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
   
   return (
     <div className="relative w-16 h-16">
-      {/* Fondo degradado PLANO animado */}
+      {/* Fondo degradado PLANO animado - púrpura/rosa/naranja */}
       <div 
         className="absolute inset-0 rounded-full shadow-xl"
         style={{
-          background: 'linear-gradient(45deg, #5856D6, #007AFF, #00C6FF, #007AFF, #5856D6)',
+          background: 'linear-gradient(45deg, #5856D6, #AF52DE, #FF2D55, #FF9500, #5856D6)',
           backgroundSize: '400% 400%',
           animation: `aiGradient ${gradientDuration} ease infinite`
         }}
@@ -31,9 +31,9 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
       
       {/* UN SOLO anillo azul con el punto - encima del degradado */}
       <div className="absolute inset-[10px] flex items-center justify-center">
-        {/* Anillo azul MÁS GRUESO */}
+        {/* Anillo azul SUPER GRUESO */}
         <div 
-          className="absolute inset-0 rounded-full border-[7px]"
+          className="absolute inset-0 rounded-full border-[9px]"
           style={{
             borderColor: '#007AFF',
             background: 'transparent'
