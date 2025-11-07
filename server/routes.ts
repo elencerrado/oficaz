@@ -7498,36 +7498,52 @@ Otras instrucciones:
 
       // Check if AI wants to call a function
       if (assistantMessage?.tool_calls && assistantMessage.tool_calls.length > 0) {
-        const toolCall = assistantMessage.tool_calls[0];
-        const functionName = toolCall.function.name;
-        const functionArgs = JSON.parse(toolCall.function.arguments);
-
-        // Resolve employee names to IDs before executing function
+        // Execute all tool calls
         const { resolveEmployeeName } = await import('./ai-assistant.js');
-        
-        // Handle assignSchedule and requestDocument which use employeeName
-        if ((functionName === 'assignSchedule' || functionName === 'requestDocument') && functionArgs.employeeName) {
-          const resolution = await resolveEmployeeName(storage, companyId, functionArgs.employeeName);
-          
-          if ('error' in resolution) {
-            // Name resolution failed - return error to user
-            return res.json({
-              message: resolution.error,
-              functionCalled: null,
-              result: null
+        const context = { storage, companyId, adminUserId };
+        const toolResults = [];
+
+        for (const toolCall of assistantMessage.tool_calls) {
+          const functionName = toolCall.function.name;
+          const functionArgs = JSON.parse(toolCall.function.arguments);
+
+          // Resolve employee names to IDs before executing function
+          if ((functionName === 'assignSchedule' || functionName === 'requestDocument') && functionArgs.employeeName) {
+            const resolution = await resolveEmployeeName(storage, companyId, functionArgs.employeeName);
+            
+            if ('error' in resolution) {
+              // Name resolution failed - add error to results
+              toolResults.push({
+                role: "tool" as const,
+                tool_call_id: toolCall.id,
+                content: JSON.stringify({ error: resolution.error })
+              });
+              continue;
+            }
+            
+            // Replace employeeName with employeeId
+            functionArgs.employeeId = resolution.employeeId;
+            delete functionArgs.employeeName;
+          }
+
+          // Execute the function
+          try {
+            const result = await executeAIFunction(functionName, functionArgs, context);
+            toolResults.push({
+              role: "tool" as const,
+              tool_call_id: toolCall.id,
+              content: JSON.stringify(result)
+            });
+          } catch (error: any) {
+            toolResults.push({
+              role: "tool" as const,
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({ error: error.message })
             });
           }
-          
-          // Replace employeeName with employeeId
-          functionArgs.employeeId = resolution.employeeId;
-          delete functionArgs.employeeName;
         }
 
-        // Execute the function
-        const context = { storage, companyId, adminUserId };
-        const result = await executeAIFunction(functionName, functionArgs, context);
-
-        // Get a natural language response about the result
+        // Get a natural language response about the results
         const followUpResponse = await openai.chat.completions.create({
           model: "gpt-5-nano",
           messages: [
@@ -7542,23 +7558,19 @@ Otras instrucciones:
             {
               role: "assistant",
               content: null,
-              tool_calls: [toolCall]
+              tool_calls: assistantMessage.tool_calls
             },
-            {
-              role: "tool",
-              tool_call_id: toolCall.id,
-              content: JSON.stringify(result)
-            }
+            ...toolResults
           ],
           max_completion_tokens: 8192,
         });
 
-        const finalMessage = followUpResponse.choices[0]?.message?.content || "Acción completada exitosamente.";
+        const finalMessage = followUpResponse.choices[0]?.message?.content || "Acciones completadas exitosamente.";
 
         res.json({
           message: finalMessage,
-          functionCalled: functionName,
-          result
+          functionCalled: assistantMessage.tool_calls.map(tc => tc.function.name).join(", "),
+          result: toolResults
         });
       } else {
         // No function call, just return the AI's text response
