@@ -29,14 +29,27 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
         }}
       />
       
-      {/* Logo blanco centrado - encima del degradado */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <img 
-          src={oficazLogo} 
-          alt="Oficaz AI" 
-          className="w-8 h-8 object-contain brightness-0 invert"
+      {/* Anillo con logo blanco y punto - encima del degradado */}
+      <div className="absolute inset-[10px] flex items-center justify-center">
+        {/* Anillo con logo blanco */}
+        <div 
+          className="absolute inset-0 rounded-full border-[9px] flex items-center justify-center"
           style={{
-            filter: 'brightness(0) invert(1)',
+            borderColor: 'white',
+            background: 'transparent'
+          }}
+        >
+          <img 
+            src={oficazLogo} 
+            alt="Oficaz" 
+            className="w-5 h-5 object-contain brightness-0 invert"
+          />
+        </div>
+        
+        {/* Punto rebotando */}
+        <div 
+          className="absolute w-3.5 h-3.5 bg-white rounded-full shadow-lg"
+          style={{
             animation: `aiRandomBounce ${animationDuration} ease-in-out infinite`
           }}
         />
