@@ -18,28 +18,33 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
   const gradientDuration = isThinking ? '3s' : '25s';
   
   return (
-    <div className="relative w-14 h-14">
-      {/* Círculo exterior con degradado de fondo animado tipo IA */}
+    <div className="relative w-16 h-16">
+      {/* Fondo degradado animado tipo IA */}
       <div 
-        className="absolute inset-0 rounded-full border-[6px] border-[#007AFF] dark:border-[#0A84FF] shadow-lg overflow-hidden"
+        className="absolute inset-0 rounded-full shadow-xl"
         style={{
           background: 'linear-gradient(45deg, #007AFF, #00C6FF, #007AFF, #5856D6)',
           backgroundSize: '400% 400%',
           animation: `aiGradient ${gradientDuration} ease infinite`
         }}
-      >
-        {/* Círculo interior blanco/oscuro con padding para mostrar el degradado */}
-        <div className="absolute inset-[6px] rounded-full bg-white dark:bg-gray-900" />
-      </div>
+      />
       
-      {/* Punto rebotando aleatoriamente dentro del círculo */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div 
-          className="absolute w-3 h-3 bg-[#007AFF] dark:bg-[#0A84FF] rounded-full shadow-lg"
-          style={{
-            animation: `aiRandomBounce ${animationDuration} ease-in-out infinite`
-          }}
-        />
+      {/* Círculo azul con punto - con margen desde el borde del fondo */}
+      <div className="absolute inset-[6px] rounded-full bg-white dark:bg-gray-900 flex items-center justify-center">
+        {/* Círculo azul */}
+        <div className="relative w-10 h-10">
+          <div className="absolute inset-0 rounded-full border-[5px] border-[#007AFF] dark:border-[#0A84FF] bg-white dark:bg-gray-900" />
+          
+          {/* Punto rebotando aleatoriamente dentro del círculo */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div 
+              className="absolute w-2.5 h-2.5 bg-[#007AFF] dark:bg-[#0A84FF] rounded-full shadow-lg"
+              style={{
+                animation: `aiRandomBounce ${animationDuration} ease-in-out infinite`
+              }}
+            />
+          </div>
+        </div>
       </div>
       
       {/* Efecto de resplandor - más rápido cuando está pensando */}
@@ -165,8 +170,8 @@ export function AIAssistantChat() {
         )}
       >
         {isOpen ? (
-          <div className="w-14 h-14 rounded-full bg-red-500 dark:bg-red-600 flex items-center justify-center shadow-xl hover:bg-red-600 dark:hover:bg-red-700 transition-colors">
-            <X className="h-6 w-6 text-white" />
+          <div className="w-16 h-16 rounded-full bg-red-500 dark:bg-red-600 flex items-center justify-center shadow-xl hover:bg-red-600 dark:hover:bg-red-700 transition-colors">
+            <X className="h-7 w-7 text-white" />
           </div>
         ) : (
           <AIAssistantAnimation isThinking={isLoading} />
