@@ -3662,7 +3662,7 @@ export default function TimeTracking() {
                 const monthStart = startOfMonth(new Date());
                 const monthEnd = endOfMonth(new Date());
                 const monthlySessions = sessions?.filter(s => 
-                  s.employeeId === employee.id &&
+                  s.userId === employee.id &&
                   new Date(s.clockIn) >= monthStart &&
                   new Date(s.clockIn) <= monthEnd
                 ) || [];
@@ -3681,7 +3681,7 @@ export default function TimeTracking() {
                 const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
                 const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
                 const weeklySessions = sessions?.filter(s => 
-                  s.employeeId === employee.id &&
+                  s.userId === employee.id &&
                   new Date(s.clockIn) >= weekStart &&
                   new Date(s.clockIn) <= weekEnd
                 ) || [];
@@ -3707,12 +3707,12 @@ export default function TimeTracking() {
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={employee.avatarUrl || undefined} />
                         <AvatarFallback className="bg-primary text-primary-foreground">
-                          {employee.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                          {employee.fullName.split(' ').map(n => n[0]).join('').toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium">{employee.name}</div>
-                        <div className="text-sm text-muted-foreground">{employee.email}</div>
+                        <div className="font-medium">{employee.fullName}</div>
+                        <div className="text-sm text-muted-foreground">{employee.email || employee.position || ''}</div>
                       </div>
                     </div>
 
