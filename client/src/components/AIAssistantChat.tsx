@@ -16,21 +16,15 @@ interface Message {
 function AIAssistantAnimation() {
   return (
     <div className="relative w-14 h-14">
-      {/* Círculo exterior con logo de Oficaz */}
-      <div className="absolute inset-0 rounded-full border-4 border-[#007AFF] dark:border-[#0A84FF] flex items-center justify-center bg-white dark:bg-gray-900 shadow-lg">
-        <img 
-          src={oficazLogo} 
-          alt="Oficaz" 
-          className="w-8 h-8 object-contain dark:brightness-0 dark:invert opacity-80"
-        />
-      </div>
+      {/* Círculo exterior más gordo */}
+      <div className="absolute inset-0 rounded-full border-[6px] border-[#007AFF] dark:border-[#0A84FF] bg-white dark:bg-gray-900 shadow-lg" />
       
-      {/* Punto rebotando - animación de asistente de IA */}
+      {/* Punto rebotando aleatoriamente dentro del círculo */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div 
-          className="absolute w-2 h-2 bg-[#007AFF] dark:bg-[#0A84FF] rounded-full"
+          className="absolute w-3 h-3 bg-[#007AFF] dark:bg-[#0A84FF] rounded-full"
           style={{
-            animation: 'aiPulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+            animation: 'aiRandomBounce 3s ease-in-out infinite'
           }}
         />
       </div>
@@ -41,14 +35,30 @@ function AIAssistantAnimation() {
       />
       
       <style>{`
-        @keyframes aiPulse {
-          0%, 100% {
-            transform: translateY(-8px) scale(1);
-            opacity: 1;
+        @keyframes aiRandomBounce {
+          0% {
+            transform: translate(0px, 0px);
           }
-          50% {
-            transform: translateY(8px) scale(1.2);
-            opacity: 0.8;
+          15% {
+            transform: translate(8px, -6px);
+          }
+          30% {
+            transform: translate(-6px, 8px);
+          }
+          45% {
+            transform: translate(10px, 4px);
+          }
+          60% {
+            transform: translate(-8px, -8px);
+          }
+          75% {
+            transform: translate(6px, 10px);
+          }
+          90% {
+            transform: translate(-10px, -4px);
+          }
+          100% {
+            transform: translate(0px, 0px);
           }
         }
       `}</style>
