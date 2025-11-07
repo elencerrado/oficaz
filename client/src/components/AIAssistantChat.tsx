@@ -19,31 +19,24 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
   
   return (
     <div className="relative w-16 h-16">
-      {/* Fondo degradado orgánico animado - lilas oscuros tipo Siri/OpenAI */}
+      {/* Fondo degradado azul orgánico animado */}
       <div 
         className="absolute inset-0 rounded-full shadow-xl"
         style={{
-          background: 'linear-gradient(135deg, #1a0d2e, #2d1b69, #4a148c, #6a1b9a, #2d1b69, #1a0d2e)',
+          background: 'linear-gradient(135deg, #003d7a, #005bb5, #007AFF, #0095ff, #005bb5, #003d7a)',
           backgroundSize: '400% 400%',
           animation: `aiGradient ${gradientDuration} ease infinite`
         }}
       />
       
-      {/* UN SOLO anillo azul con el punto - encima del degradado */}
-      <div className="absolute inset-[10px] flex items-center justify-center">
-        {/* Anillo azul SUPER GRUESO */}
-        <div 
-          className="absolute inset-0 rounded-full border-[9px]"
+      {/* Logo blanco centrado - encima del degradado */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <img 
+          src={oficazLogo} 
+          alt="Oficaz AI" 
+          className="w-8 h-8 object-contain brightness-0 invert"
           style={{
-            borderColor: '#007AFF',
-            background: 'transparent'
-          }}
-        />
-        
-        {/* Punto rebotando MÁS GRANDE */}
-        <div 
-          className="absolute w-3.5 h-3.5 bg-[#007AFF] rounded-full shadow-lg"
-          style={{
+            filter: 'brightness(0) invert(1)',
             animation: `aiRandomBounce ${animationDuration} ease-in-out infinite`
           }}
         />
