@@ -19,11 +19,11 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
   
   return (
     <div className="relative w-16 h-16">
-      {/* Fondo degradado PLANO animado - lilas oscuros */}
+      {/* Fondo degradado orgánico animado - lilas oscuros tipo Siri/OpenAI */}
       <div 
         className="absolute inset-0 rounded-full shadow-xl"
         style={{
-          background: 'linear-gradient(45deg, #3D2C8D, #512DA8, #6A1B9A, #4A148C, #3D2C8D)',
+          background: 'linear-gradient(135deg, #1a0d2e, #2d1b69, #4a148c, #6a1b9a, #2d1b69, #1a0d2e)',
           backgroundSize: '400% 400%',
           animation: `aiGradient ${gradientDuration} ease infinite`
         }}
