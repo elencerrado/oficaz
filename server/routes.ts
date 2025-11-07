@@ -7542,7 +7542,7 @@ Otras instrucciones:
             {
               role: "assistant",
               content: null,
-              tool_calls: assistantMessage.tool_calls
+              tool_calls: [toolCall]
             },
             {
               role: "tool",
