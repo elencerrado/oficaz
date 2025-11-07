@@ -8,6 +8,7 @@ import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatsCard from '@/components/StatsCard';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { TabNavigation } from '@/components/ui/tab-navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -2690,10 +2691,10 @@ export default function TimeTracking() {
         tabs={[
           { id: 'sessions', label: 'Lista de Horas', icon: Users },
           { id: 'summary', label: 'Resumen', icon: BarChart3 },
-          { id: 'requests', label: 'Solicitudes', icon: Bell, badge: pendingRequestsCount > 0 ? pendingRequestsCount : undefined }
+          { id: 'requests', label: 'Solicitudes', icon: Bell }
         ]}
         activeTab={activeTab}
-        onChange={setActiveTab}
+        onTabChange={setActiveTab}
       />
 
       {/* Tab Content: Lista de Horas */}
@@ -3643,6 +3644,309 @@ export default function TimeTracking() {
           </div>
         </CardContent>
       </Card>
+      )}
+
+      {/* Tab Content: Resumen */}
+      {activeTab === 'summary' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg font-medium">Resumen de Horas</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Vista general de las horas trabajadas por empleado
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {employees?.map((employee) => {
+                // Calculate monthly hours
+                const monthStart = startOfMonth(new Date());
+                const monthEnd = endOfMonth(new Date());
+                const monthlySessions = sessions?.filter(s => 
+                  s.employeeId === employee.id &&
+                  new Date(s.clockIn) >= monthStart &&
+                  new Date(s.clockIn) <= monthEnd
+                ) || [];
+                
+                const monthlyHours = monthlySessions.reduce((total, session) => {
+                  if (!session.clockOut) return total;
+                  const hours = differenceInMinutes(new Date(session.clockOut), new Date(session.clockIn)) / 60;
+                  const breakMinutes = session.breaks?.reduce((sum, b) => {
+                    if (!b.endTime) return sum;
+                    return sum + differenceInMinutes(new Date(b.endTime), new Date(b.startTime));
+                  }, 0) || 0;
+                  return total + hours - (breakMinutes / 60);
+                }, 0);
+
+                // Calculate weekly hours
+                const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+                const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+                const weeklySessions = sessions?.filter(s => 
+                  s.employeeId === employee.id &&
+                  new Date(s.clockIn) >= weekStart &&
+                  new Date(s.clockIn) <= weekEnd
+                ) || [];
+                
+                const weeklyHours = weeklySessions.reduce((total, session) => {
+                  if (!session.clockOut) return total;
+                  const hours = differenceInMinutes(new Date(session.clockOut), new Date(session.clockIn)) / 60;
+                  const breakMinutes = session.breaks?.reduce((sum, b) => {
+                    if (!b.endTime) return sum;
+                    return sum + differenceInMinutes(new Date(b.endTime), new Date(b.startTime));
+                  }, 0) || 0;
+                  return total + hours - (breakMinutes / 60);
+                }, 0);
+
+                const monthlyTarget = 160; // 160 hours/month
+                const weeklyTarget = 40; // 40 hours/week
+                const monthlyProgress = (monthlyHours / monthlyTarget) * 100;
+                const weeklyProgress = (weeklyHours / weeklyTarget) * 100;
+
+                return (
+                  <div key={employee.id} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={employee.avatarUrl || undefined} />
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          {employee.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">{employee.name}</div>
+                        <div className="text-sm text-muted-foreground">{employee.email}</div>
+                      </div>
+                    </div>
+
+                    {/* Monthly Progress */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Horas del mes</span>
+                        <span className="font-medium">
+                          {monthlyHours.toFixed(1)}h / {monthlyTarget}h
+                        </span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className={cn(
+                            "h-full rounded-full transition-all",
+                            monthlyProgress >= 100 ? "bg-green-500" : 
+                            monthlyProgress >= 75 ? "bg-blue-500" : 
+                            monthlyProgress >= 50 ? "bg-yellow-500" : "bg-orange-500"
+                          )}
+                          style={{ width: `${Math.min(monthlyProgress, 100)}%` }}
+                        />
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {monthlyProgress.toFixed(0)}% completado
+                      </div>
+                    </div>
+
+                    {/* Weekly Progress */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Horas de la semana</span>
+                        <span className="font-medium">
+                          {weeklyHours.toFixed(1)}h / {weeklyTarget}h
+                        </span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className={cn(
+                            "h-full rounded-full transition-all",
+                            weeklyProgress >= 100 ? "bg-green-500" : 
+                            weeklyProgress >= 75 ? "bg-blue-500" : 
+                            weeklyProgress >= 50 ? "bg-yellow-500" : "bg-orange-500"
+                          )}
+                          style={{ width: `${Math.min(weeklyProgress, 100)}%` }}
+                        />
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {weeklyProgress.toFixed(0)}% completado
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {(!employees || employees.length === 0) && (
+                <div className="py-12 text-center">
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                      <Users className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <div className="text-foreground font-medium">
+                      No hay empleados
+                    </div>
+                    <div className="text-muted-foreground text-sm">
+                      Añade empleados para ver el resumen de horas
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tab Content: Solicitudes de Modificación */}
+      {activeTab === 'requests' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg font-medium">Solicitudes de Modificación</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Revisa y gestiona las solicitudes de cambios en fichajes
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {modificationRequests.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                      <Bell className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <div className="text-foreground font-medium">
+                      No hay solicitudes pendientes
+                    </div>
+                    <div className="text-muted-foreground text-sm">
+                      Las solicitudes de modificación aparecerán aquí
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                modificationRequests.map((request: any) => (
+                  <div key={request.id} className="border rounded-lg p-4 space-y-3 bg-card">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <UserAvatar
+                          fullName={request.employeeName}
+                          profilePicture={request.employeeProfilePicture}
+                          size="sm"
+                        />
+                        <div>
+                          <div className="font-medium">{request.employeeName}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {request.requestType === 'forgotten_checkin' ? 'Quiere añadir un nuevo fichaje manual' : 'Quiere modificar este horario'}
+                          </div>
+                        </div>
+                      </div>
+                      <Badge variant={request.status === 'pending' ? 'default' : request.status === 'approved' ? 'default' : 'destructive'}>
+                        {request.status === 'pending' ? 'Pendiente' : request.status === 'approved' ? 'Aprobada' : 'Rechazada'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="space-y-3 pt-2">
+                      <div className="text-sm">
+                        <span className="text-muted-foreground">Fecha:</span> {format(new Date(request.requestedDate), 'dd/MM/yyyy', { locale: es })}
+                      </div>
+                      
+                      {request.requestType === 'forgotten_checkin' ? (
+                        <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg space-y-2 text-sm">
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Entrada:</span>
+                            <span className="font-medium">{format(new Date(request.requestedClockIn), 'HH:mm')}</span>
+                          </div>
+                          {request.requestedClockOut && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-muted-foreground">Salida:</span>
+                              <span className="font-medium">{format(new Date(request.requestedClockOut), 'HH:mm')}</span>
+                            </div>
+                          )}
+                          {request.requestedClockOut && (() => {
+                            const totalMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
+                            const hours = Math.floor(totalMs / (1000 * 60 * 60));
+                            const minutes = Math.floor((totalMs % (1000 * 60 * 60)) / (1000 * 60));
+                            return (
+                              <div className="flex items-center justify-between pt-1 border-t border-blue-200 dark:border-blue-800">
+                                <span className="text-muted-foreground">Total:</span>
+                                <span className="font-semibold text-blue-600 dark:text-blue-400">{hours}h {minutes}min</span>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      ) : (
+                        <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg space-y-2 text-sm">
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Entrada:</span>
+                            <div className="flex items-center gap-2">
+                              <span className="line-through text-gray-400">{request.currentClockIn ? format(new Date(request.currentClockIn), 'HH:mm') : '—'}</span>
+                              <ArrowDown className="w-3 h-3 text-blue-500 rotate-[-90deg]" />
+                              <span className="font-medium text-blue-600 dark:text-blue-400">{format(new Date(request.requestedClockIn), 'HH:mm')}</span>
+                            </div>
+                          </div>
+                          
+                          {request.requestedClockOut && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-muted-foreground">Salida:</span>
+                              <div className="flex items-center gap-2">
+                                <span className="line-through text-gray-400">{request.currentClockOut ? format(new Date(request.currentClockOut), 'HH:mm') : '—'}</span>
+                                <ArrowDown className="w-3 h-3 text-blue-500 rotate-[-90deg]" />
+                                <span className="font-medium text-blue-600 dark:text-blue-400">{format(new Date(request.requestedClockOut), 'HH:mm')}</span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {request.requestedClockOut && (
+                            <div className="flex items-center justify-between pt-1 border-t border-gray-200 dark:border-gray-700">
+                              <span className="text-muted-foreground">Total:</span>
+                              <div className="flex items-center gap-2">
+                                {request.currentClockIn && request.currentClockOut ? (
+                                  <>
+                                    {(() => {
+                                      const currentMs = new Date(request.currentClockOut).getTime() - new Date(request.currentClockIn).getTime();
+                                      const currentHours = Math.floor(currentMs / (1000 * 60 * 60));
+                                      const currentMinutes = Math.floor((currentMs % (1000 * 60 * 60)) / (1000 * 60));
+                                      return <span className="line-through text-gray-400">{currentHours}h {currentMinutes}min</span>;
+                                    })()}
+                                    <ArrowDown className="w-3 h-3 text-blue-500 rotate-[-90deg]" />
+                                  </>
+                                ) : null}
+                                {(() => {
+                                  const requestedMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
+                                  const requestedHours = Math.floor(requestedMs / (1000 * 60 * 60));
+                                  const requestedMinutes = Math.floor((requestedMs % (1000 * 60 * 60)) / (1000 * 60));
+                                  return <span className="font-semibold text-blue-600 dark:text-blue-400">{requestedHours}h {requestedMinutes}min</span>;
+                                })()}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      <div className="text-sm pt-1">
+                        <span className="text-muted-foreground">Motivo:</span>{' '}
+                        <span className="italic">{request.reason}</span>
+                      </div>
+                    </div>
+                    
+                    {request.status === 'pending' && (
+                      <div className="flex gap-2 pt-2">
+                        <Button
+                          size="sm"
+                          onClick={() => processRequestMutation.mutate({ id: request.id, status: 'approved' })}
+                          className="flex-1"
+                          data-testid={`button-approve-${request.id}`}
+                        >
+                          <Check className="w-4 h-4 mr-1" />
+                          Aprobar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => processRequestMutation.mutate({ id: request.id, status: 'rejected' })}
+                          className="flex-1"
+                          data-testid={`button-reject-${request.id}`}
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          Rechazar
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Export Dialog */}
