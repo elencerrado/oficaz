@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Send, Loader2, Minimize2 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import oficazLogo from "@/assets/oficaz-logo.png";
@@ -127,6 +127,48 @@ export function AIAssistantChat() {
           functionCalled: response.functionCalled,
         },
       ]);
+
+      // Invalidate relevant queries based on the function that was called
+      if (response.functionCalled) {
+        const functionsArray = response.functionCalled.split(", ");
+        
+        for (const func of functionsArray) {
+          switch (func.trim()) {
+            case "assignSchedule":
+              // Invalidate work shifts queries
+              queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/my-shifts'] });
+              break;
+            case "sendMessage":
+              // Invalidate messages queries
+              queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/messages/unread-count'] });
+              break;
+            case "approveVacationRequests":
+              // Invalidate vacation requests queries
+              queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
+              break;
+            case "approveTimeModificationRequests":
+              // Invalidate modification requests queries
+              queryClient.invalidateQueries({ queryKey: ['/api/admin/work-sessions/modification-requests'] });
+              break;
+            case "createReminder":
+              // Invalidate reminders queries
+              queryClient.invalidateQueries({ queryKey: ['/api/reminders/dashboard'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/reminders/check-notifications'] });
+              break;
+            case "createEmployee":
+              // Invalidate employees queries
+              queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+              break;
+            case "requestDocument":
+              // Invalidate document notifications
+              queryClient.invalidateQueries({ queryKey: ['/api/document-notifications'] });
+              break;
+          }
+        }
+      }
     } catch (error: any) {
       console.error("Error sending message to AI:", error);
       toast({
