@@ -3887,7 +3887,14 @@ export default function TimeTracking() {
                 </div>
               ) : (
                 modificationRequests.map((request: any) => (
-                  <div key={request.id} className="border rounded-lg p-4 bg-card">
+                  <div 
+                    key={request.id} 
+                    className={`border rounded-lg p-4 ${
+                      request.requestType === 'forgotten_checkin' 
+                        ? 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800' 
+                        : 'bg-orange-50/50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800'
+                    }`}
+                  >
                     <div className="grid grid-cols-1 lg:grid-cols-[auto,1fr,auto] gap-4 items-start">
                       {/* Left: Avatar y nombre */}
                       <div className="flex items-center gap-3 lg:min-w-[200px]">
@@ -3900,6 +3907,13 @@ export default function TimeTracking() {
                           <div className="font-medium text-sm">{request.employeeName}</div>
                           <div className="text-xs text-muted-foreground">
                             {format(new Date(request.requestedDate), 'dd/MM/yyyy', { locale: es })}
+                          </div>
+                          <div className={`text-xs font-medium mt-0.5 ${
+                            request.requestType === 'forgotten_checkin'
+                              ? 'text-blue-600 dark:text-blue-400'
+                              : 'text-orange-600 dark:text-orange-400'
+                          }`}>
+                            {request.requestType === 'forgotten_checkin' ? 'Fichaje olvidado' : 'Modificar horario'}
                           </div>
                         </div>
                       </div>
