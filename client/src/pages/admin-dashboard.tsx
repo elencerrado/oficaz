@@ -923,7 +923,7 @@ export default function AdminDashboard() {
                               variant="outline"
                               onClick={() => startBreakMutation.mutate()}
                               disabled={startBreakMutation.isPending}
-                              className="w-[120px] h-[48px] border-orange-300 text-orange-600 hover:bg-orange-50"
+                              className="w-[120px] h-[48px] border-orange-400 text-orange-600 hover:border-orange-500 hover:text-orange-700"
                             >
                               {startBreakMutation.isPending ? (
                                 <>
@@ -943,7 +943,7 @@ export default function AdminDashboard() {
                               variant="outline"
                               onClick={() => endBreakMutation.mutate()}
                               disabled={endBreakMutation.isPending}
-                              className="w-[120px] h-[48px] border-green-300 text-green-600 hover:bg-green-50"
+                              className="w-[120px] h-[48px] border-green-400 text-green-600 hover:border-green-500 hover:text-green-700"
                             >
                               {endBreakMutation.isPending ? (
                                 <>
