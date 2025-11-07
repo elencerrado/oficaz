@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useSearch } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { usePageHeader } from '@/components/layout/page-header';
@@ -128,6 +129,7 @@ export default function AdminDocuments() {
   console.log('Admin Documents: Access granted');
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const search = useSearch();
   
   const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
   const [documentType, setDocumentType] = useState('');
@@ -191,6 +193,19 @@ export default function AdminDocuments() {
     refetchOnReconnect: false,
     refetchIntervalInBackground: false,
   });
+
+  // Auto-activate filter from URL parameters (dashboard navigation)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(search);
+    const filter = urlParams.get('filter');
+    
+    if (filter === 'unsigned') {
+      setActiveTab('explorer');
+      setFilterPendingSignature(true);
+      // Clean URL after applying filter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [search]);
 
   // Send document notification mutation
   const sendDocumentMutation = useMutation({
