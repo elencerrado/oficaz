@@ -16,7 +16,7 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
   const config = {
     sm: { outerSize: 28, borderWidth: 5, innerSize: 5, gap: 4 },
     md: { outerSize: 36, borderWidth: 6, innerSize: 6, gap: 6 }, 
-    lg: { outerSize: 52, borderWidth: 9, innerSize: 9, gap: 8 }
+    lg: { outerSize: 60, borderWidth: 11, innerSize: 12, gap: 9 }
   };
 
   const currentConfig = config[size];
