@@ -3708,9 +3708,9 @@ export default function TimeTracking() {
               summarySearch === '' || 
               emp.fullName.toLowerCase().includes(summarySearch.toLowerCase())
             ).map((employee) => {
-              // Calculate monthly hours (current month, always fixed)
-              const monthStart = startOfMonth(new Date());
-              const monthEnd = endOfMonth(new Date());
+              // Calculate monthly hours (based on the month of the selected week)
+              const monthStart = startOfMonth(summaryWeek);
+              const monthEnd = endOfMonth(summaryWeek);
               const monthlySessions = (Array.isArray(sessions) ? sessions : []).filter((s: any) => 
                 s.userId === employee.id &&
                 new Date(s.clockIn) >= monthStart &&
@@ -3785,13 +3785,13 @@ export default function TimeTracking() {
                       <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 font-medium">Semana Seleccionada</div>
                     </div>
                     
-                    {/* Mes actual */}
+                    {/* Mes de la semana seleccionada */}
                     <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
                       <div className="text-3xl font-bold text-green-600 dark:text-green-400">
                         {monthlyHours.toFixed(1)}h
                       </div>
                       <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 font-medium">
-                        {format(new Date(), 'MMMM', { locale: es })}
+                        {format(summaryWeek, 'MMMM yyyy', { locale: es })}
                       </div>
                     </div>
                   </div>
