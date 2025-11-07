@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { usePageHeader } from '@/components/layout/page-header';
@@ -203,15 +203,17 @@ export default function AdminDashboard() {
   // Fetch payment methods to determine if user has payment method
   const { data: paymentMethods } = useQuery({
     queryKey: ['/api/account/payment-methods'],
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 120000, // Cache for 2 minutes (optimized from 30s)
+    refetchInterval: 300000, // Refetch every 5 minutes (optimized from 60s)
+    refetchIntervalInBackground: false,
   });
 
   // Fetch trial status for blocking overlay
   const { data: trialStatus = {} } = useQuery({
     queryKey: ['/api/account/trial-status'],
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 120000, // Cache for 2 minutes (optimized from 30s)
+    refetchInterval: 300000, // Refetch every 5 minutes (optimized from 60s)
+    refetchIntervalInBackground: false,
   });
 
   // Fetch company settings for work hours configuration
@@ -231,7 +233,9 @@ export default function AdminDashboard() {
   // Query for active break period
   const { data: activeBreak } = useQuery({
     queryKey: ['/api/break-periods/active'],
-    refetchInterval: 3000, // Poll every 3 seconds when session is active
+    refetchInterval: 10000, // Poll every 10 seconds (optimized from 3s)
+    refetchIntervalInBackground: false,
+    staleTime: 8000,
     enabled: !!activeSession, // Only run when there's an active session
   });
 
@@ -435,30 +439,66 @@ export default function AdminDashboard() {
   // Track previous vacation requests to detect new ones for toast notifications
   const previousVacationRequestsRef = useRef<any[]>([]);
   const previousModificationRequestsRef = useRef<any[]>([]);
-  
-  // Detect new vacation requests and show toast notification
-  useEffect(() => {
-    if (!vacationRequests || vacationRequests.length === 0) {
-      return;
-    }
+
+  // ✨ OPTIMIZATION: Reusable function to calculate work hours (prevents duplicate logic)
+  const calculateWorkHours = useCallback((session: any, settings: any) => {
+    if (!session) return null;
     
-    const previousRequests = previousVacationRequestsRef.current;
-    const currentRequests = vacationRequests;
+    const clockIn = new Date(session.clockIn);
+    const hoursWorked = (Date.now() - clockIn.getTime()) / (1000 * 60 * 60);
+    const maxDailyHours = settings?.workingHoursPerDay || 8;
+    const maxHoursWithOvertime = maxDailyHours + 4;
     
-    // On first load, just store current requests without showing notifications
-    if (previousRequests.length === 0) {
-      previousVacationRequestsRef.current = [...currentRequests];
-      return;
-    }
-    
-    // Find new pending requests
-    const newPendingRequests = currentRequests.filter((current: any) => 
-      current.status === 'pending' && 
-      !previousRequests.some((prev: any) => prev.id === current.id)
-    );
-    
-    // Show notification for each new pending request
-    newPendingRequests.forEach((request: any) => {
+    return {
+      hoursWorked,
+      maxDailyHours,
+      maxHoursWithOvertime,
+      isOvertime: hoursWorked > maxDailyHours,
+      isExceeded: hoursWorked > maxHoursWithOvertime,
+    };
+  }, []);
+
+  // ✨ OPTIMIZATION: Generic hook for request notifications (reduces duplicate useEffect code)
+  const useNewRequestNotifications = useCallback((
+    requests: any[] | undefined,
+    previousRequestsRef: React.MutableRefObject<any[]>,
+    formatter: (request: any) => { title: string; description: string }
+  ) => {
+    useEffect(() => {
+      if (!requests || requests.length === 0) {
+        return;
+      }
+      
+      const previousRequests = previousRequestsRef.current;
+      
+      // On first load, just store current requests without showing notifications
+      if (previousRequests.length === 0) {
+        previousRequestsRef.current = [...requests];
+        return;
+      }
+      
+      // Find new pending requests
+      const newPendingRequests = requests.filter((current: any) => 
+        current.status === 'pending' && 
+        !previousRequests.some((prev: any) => prev.id === current.id)
+      );
+      
+      // Show notification for each new pending request
+      newPendingRequests.forEach((request: any) => {
+        const { title, description } = formatter(request);
+        toast({ title, description, duration: 8000 });
+      });
+      
+      // Update the reference with current requests
+      previousRequestsRef.current = [...requests];
+    }, [requests, previousRequestsRef, formatter]);
+  }, [toast]);
+
+  // Use generic notification hook for vacation requests
+  useNewRequestNotifications(
+    vacationRequests,
+    previousVacationRequestsRef,
+    useCallback((request: any) => {
       const employeeName = request.userName || 'Un empleado';
       const startDateObj = startOfDay(parseISO(request.startDate));
       const endDateObj = startOfDay(parseISO(request.endDate));
@@ -467,53 +507,27 @@ export default function AdminDashboard() {
       const startDate = format(startDateObj, 'd \'de\' MMMM', { locale: es });
       const endDate = format(endDateObj, 'd \'de\' MMMM', { locale: es });
       
-      toast({
+      return {
         title: "📋 Nueva solicitud de vacaciones",
         description: `${employeeName} ha solicitado vacaciones del ${startDate} al ${endDate} (${days} ${days === 1 ? 'día' : 'días'})`,
-        duration: 8000,
-      });
-    });
-    
-    // Update the reference with current requests
-    previousVacationRequestsRef.current = [...currentRequests];
-  }, [vacationRequests, toast]);
+      };
+    }, [])
+  );
 
-  // Detect new modification requests and show toast notification
-  useEffect(() => {
-    if (!modificationRequests || modificationRequests.length === 0) {
-      return;
-    }
-    
-    const previousRequests = previousModificationRequestsRef.current;
-    const currentRequests = modificationRequests;
-    
-    // On first load, just store current requests without showing notifications
-    if (previousRequests.length === 0) {
-      previousModificationRequestsRef.current = [...currentRequests];
-      return;
-    }
-    
-    // Find new pending requests
-    const newPendingRequests = currentRequests.filter((current: any) => 
-      current.status === 'pending' && 
-      !previousRequests.some((prev: any) => prev.id === current.id)
-    );
-    
-    // Show notification for each new pending request
-    newPendingRequests.forEach((request: any) => {
+  // Use generic notification hook for modification requests
+  useNewRequestNotifications(
+    modificationRequests,
+    previousModificationRequestsRef,
+    useCallback((request: any) => {
       const employeeName = request.employeeName || 'Un empleado';
       const requestTypeText = request.requestType === 'forgotten_checkin' ? 'fichaje olvidado' : 'modificación de horario';
       
-      toast({
+      return {
         title: "🕐 Nueva solicitud de fichaje",
         description: `${employeeName} ha solicitado un ${requestTypeText}`,
-        duration: 8000,
-      });
-    });
-    
-    // Update the reference with current requests
-    previousModificationRequestsRef.current = [...currentRequests];
-  }, [modificationRequests, toast]);
+      };
+    }, [])
+  );
 
   // ⚠️ PROTECTED - DO NOT MODIFY - Fichaje mutations identical to employee system
   const clockInMutation = useMutation({
@@ -639,7 +653,10 @@ export default function AdminDashboard() {
     },
   });
 
-  const allHolidays = [...nationalHolidays, ...customHolidays];
+  // ✨ OPTIMIZED: Memoize holidays array to prevent recalculation on every render
+  const allHolidays = useMemo(() => {
+    return [...nationalHolidays, ...customHolidays];
+  }, [customHolidays]);
 
   const formatTime = (date: Date) => {
     return format(date, 'HH:mm', { locale: es });
@@ -825,15 +842,12 @@ export default function AdminDashboard() {
                   {/* Estado actual */}
                   <div className="mb-2">
                     {(() => {
-                      // Check if session has exceeded max hours + overtime (should show as "Fuera del trabajo")
-                      if (activeSession) {
-                        const clockIn = new Date(activeSession.clockIn);
-                        const hoursWorked = (Date.now() - clockIn.getTime()) / (1000 * 60 * 60);
-                        const maxDailyHours = companySettings?.workingHoursPerDay || 8;
-                        const maxHoursWithOvertime = maxDailyHours + 4;
-                        
+                      // ✨ OPTIMIZED: Using reusable calculateWorkHours function
+                      const workHours = calculateWorkHours(activeSession, companySettings);
+                      
+                      if (workHours) {
                         // If session has exceeded max hours + overtime, show as "Fuera del trabajo"
-                        if (hoursWorked > maxHoursWithOvertime) {
+                        if (workHours.isExceeded) {
                           return (
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 bg-red-500 rounded-full"></div>
@@ -850,27 +864,20 @@ export default function AdminDashboard() {
                               <span className="text-orange-600 font-medium">En descanso</span>
                             </div>
                           );
+                        } else if (workHours.isOvertime) {
+                          return (
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                              <span className="text-red-600 font-medium">Incompleto</span>
+                            </div>
+                          );
                         } else {
-                          // Calculate hours worked so far today
-                          const clockIn = new Date(activeSession.clockIn);
-                          const hoursWorked = (Date.now() - clockIn.getTime()) / (1000 * 60 * 60);
-                          const maxDailyHours = companySettings?.workingHoursPerDay || 8;
-                          
-                          if (hoursWorked > maxDailyHours) {
-                            return (
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                                <span className="text-red-600 font-medium">Incompleto</span>
-                              </div>
-                            );
-                          } else {
-                            return (
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                <span className="text-green-600 font-medium">Trabajando</span>
-                              </div>
-                            );
-                          }
+                          return (
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                              <span className="text-green-600 font-medium">Trabajando</span>
+                            </div>
+                          );
                         }
                       } else {
                         return (
@@ -888,19 +895,15 @@ export default function AdminDashboard() {
                 </div>
                 <div className="flex flex-row md:flex-col justify-center gap-2">
                   {(() => {
+                    // ✨ OPTIMIZED: Using reusable calculateWorkHours function
+                    const workHours = calculateWorkHours(activeSession, companySettings);
+                    
                     // Check if we should allow new clock-in even with active session
                     let shouldShowActiveButtons = !!activeSession;
                     
-                    if (activeSession) {
-                      const clockIn = new Date(activeSession.clockIn);
-                      const hoursWorked = (Date.now() - clockIn.getTime()) / (1000 * 60 * 60);
-                      const maxDailyHours = companySettings?.workingHoursPerDay || 8;
-                      const maxHoursWithOvertime = maxDailyHours + 4; // +4 hours for overtime allowance
-                      
-                      // If session has exceeded max hours + overtime, treat as if no active session
-                      if (hoursWorked > maxHoursWithOvertime) {
-                        shouldShowActiveButtons = false; // Allow new clock-in
-                      }
+                    // If session has exceeded max hours + overtime, treat as if no active session
+                    if (workHours?.isExceeded) {
+                      shouldShowActiveButtons = false; // Allow new clock-in
                     }
                     
                     if (shouldShowActiveButtons) {
