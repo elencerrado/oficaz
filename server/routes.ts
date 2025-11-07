@@ -7453,6 +7453,12 @@ Responde directamente a este email para contactar con la persona.
       // Import AI assistant functions
       const { AI_FUNCTIONS, executeAIFunction } = await import('./ai-assistant.js');
 
+      // Convert AI_FUNCTIONS to tools format
+      const tools = AI_FUNCTIONS.map((func: any) => ({
+        type: "function" as const,
+        function: func
+      }));
+
       // Call OpenAI with function calling
       const response = await openai.chat.completions.create({
         model: "gpt-5-nano", // GPT-5 Nano for cost-effective AI assistance (~$0.0005/command)
@@ -7483,17 +7489,18 @@ Otras instrucciones:
             content: message
           }
         ],
-        functions: AI_FUNCTIONS as any,
-        function_call: "auto",
+        tools,
+        tool_choice: "auto",
         max_completion_tokens: 8192,
       });
 
       const assistantMessage = response.choices[0]?.message;
 
       // Check if AI wants to call a function
-      if (assistantMessage?.function_call) {
-        const functionName = assistantMessage.function_call.name;
-        const functionArgs = JSON.parse(assistantMessage.function_call.arguments);
+      if (assistantMessage?.tool_calls && assistantMessage.tool_calls.length > 0) {
+        const toolCall = assistantMessage.tool_calls[0];
+        const functionName = toolCall.function.name;
+        const functionArgs = JSON.parse(toolCall.function.arguments);
 
         // Resolve employee names to IDs before executing function
         const { resolveEmployeeName } = await import('./ai-assistant.js');
@@ -7535,11 +7542,11 @@ Otras instrucciones:
             {
               role: "assistant",
               content: null,
-              function_call: assistantMessage.function_call
+              tool_calls: assistantMessage.tool_calls
             },
             {
-              role: "function",
-              name: functionName,
+              role: "tool",
+              tool_call_id: toolCall.id,
               content: JSON.stringify(result)
             }
           ],
