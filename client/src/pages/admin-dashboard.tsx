@@ -60,11 +60,11 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentLocation, setLocation] = useLocation() || ['', () => {}];
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const hasCheckedWelcomeModal = useRef(false);
+  const temporaryMessageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // ⚠️ PROTECTED - DO NOT MODIFY - Message system states identical to employee system
   const [temporaryMessage, setTemporaryMessage] = useState<string | null>(null);
@@ -136,11 +136,26 @@ export default function AdminDashboard() {
   };
 
   const showTemporaryMessage = (message: string) => {
+    // Clear any existing timeout to prevent memory leaks
+    if (temporaryMessageTimeoutRef.current) {
+      clearTimeout(temporaryMessageTimeoutRef.current);
+    }
+    
     setTemporaryMessage(message);
-    setTimeout(() => {
+    temporaryMessageTimeoutRef.current = setTimeout(() => {
       setTemporaryMessage(null);
+      temporaryMessageTimeoutRef.current = null;
     }, 3000);
   };
+  
+  // Cleanup timeout on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (temporaryMessageTimeoutRef.current) {
+        clearTimeout(temporaryMessageTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Helper function to determine if user can manage a specific request
   const canManageRequest = (request: any) => {
@@ -164,11 +179,7 @@ export default function AdminDashboard() {
     setSelectedDate(date);
   };
 
-  // Update current time every second
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+  // ⚠️ Performance: currentTime state removed - calculate directly when needed to avoid unnecessary re-renders
 
   // Check for welcome modal display (only once per session)
   useEffect(() => {
@@ -817,8 +828,7 @@ export default function AdminDashboard() {
                       // Check if session has exceeded max hours + overtime (should show as "Fuera del trabajo")
                       if (activeSession) {
                         const clockIn = new Date(activeSession.clockIn);
-                        const currentTime = new Date();
-                        const hoursWorked = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+                        const hoursWorked = (Date.now() - clockIn.getTime()) / (1000 * 60 * 60);
                         const maxDailyHours = companySettings?.workingHoursPerDay || 8;
                         const maxHoursWithOvertime = maxDailyHours + 4;
                         
@@ -843,8 +853,7 @@ export default function AdminDashboard() {
                         } else {
                           // Calculate hours worked so far today
                           const clockIn = new Date(activeSession.clockIn);
-                          const currentTime = new Date();
-                          const hoursWorked = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+                          const hoursWorked = (Date.now() - clockIn.getTime()) / (1000 * 60 * 60);
                           const maxDailyHours = companySettings?.workingHoursPerDay || 8;
                           
                           if (hoursWorked > maxDailyHours) {
@@ -884,8 +893,7 @@ export default function AdminDashboard() {
                     
                     if (activeSession) {
                       const clockIn = new Date(activeSession.clockIn);
-                      const currentTime = new Date();
-                      const hoursWorked = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+                      const hoursWorked = (Date.now() - clockIn.getTime()) / (1000 * 60 * 60);
                       const maxDailyHours = companySettings?.workingHoursPerDay || 8;
                       const maxHoursWithOvertime = maxDailyHours + 4; // +4 hours for overtime allowance
                       
