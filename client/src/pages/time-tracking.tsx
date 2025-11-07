@@ -208,10 +208,10 @@ export default function TimeTracking() {
   });
   const pendingRequestsCount = pendingRequestsData?.count || 0;
   
-  // Modification requests (when dialog is open)
+  // Modification requests (when tab is active or dialog is open)
   const { data: modificationRequests = [] } = useQuery<any[]>({
     queryKey: ['/api/admin/work-sessions/modification-requests'],
-    enabled: !!user && (user.role === 'admin' || user.role === 'manager') && showRequestsDialog,
+    enabled: !!user && (user.role === 'admin' || user.role === 'manager') && (activeTab === 'requests' || showRequestsDialog),
   });
   
   // WebSocket connection for real-time updates (Performance Optimization)
