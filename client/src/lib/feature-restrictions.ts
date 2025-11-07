@@ -89,7 +89,7 @@ export const getRequiredPlanForFeature = (feature: keyof SubscriptionFeatures): 
     reminders: 'Pro',
     employee_time_edit_permission: 'Master',
     employee_time_edit: 'Master',
-    ai_assistant: 'Master'
+    ai_assistant: 'Pro'
   };
   
   return featurePlanMap[feature] || 'Pro';
