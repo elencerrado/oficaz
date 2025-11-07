@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Minimize2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -162,34 +162,40 @@ export function AIAssistantChat() {
         data-testid="button-ai-assistant-toggle"
         className={cn(
           "fixed bottom-6 right-6 z-50 cursor-pointer transition-all duration-300",
-          isOpen ? "scale-95" : "hover:scale-110"
+          !isOpen && "hover:scale-110"
         )}
       >
-        {isOpen ? (
-          <div className="w-16 h-16 rounded-full bg-red-500 dark:bg-red-600 flex items-center justify-center shadow-xl hover:bg-red-600 dark:hover:bg-red-700 transition-colors">
-            <X className="h-7 w-7 text-white" />
-          </div>
-        ) : (
-          <AIAssistantAnimation isThinking={isLoading} />
-        )}
+        <AIAssistantAnimation isThinking={isLoading} />
       </div>
 
       {/* Chat window with animations */}
       {isOpen && (
         <div
-          className="fixed bottom-24 right-6 z-50 flex max-h-[calc(100vh-8rem)] w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 animate-in fade-in slide-in-from-bottom-4 duration-300"
+          className="fixed bottom-24 right-6 z-50 flex max-h-[calc(100vh-8rem)] w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-500"
+          style={{
+            animationTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)'
+          }}
           data-testid="container-ai-assistant-chat"
         >
           {/* Header */}
-          <div className="flex items-center gap-3 rounded-t-2xl bg-gradient-to-r from-[#007AFF] to-[#0066CC] px-4 py-3 text-white dark:from-[#0A84FF] dark:to-[#0066CC]">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-              <img 
-                src={oficazLogo} 
-                alt="Oficaz" 
-                className="w-5 h-5 object-contain brightness-0 invert"
-              />
+          <div className="flex items-center justify-between rounded-t-2xl bg-gradient-to-r from-[#007AFF] to-[#0066CC] px-4 py-3 text-white dark:from-[#0A84FF] dark:to-[#0066CC]">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+                <img 
+                  src={oficazLogo} 
+                  alt="Oficaz" 
+                  className="w-5 h-5 object-contain brightness-0 invert"
+                />
+              </div>
+              <h3 className="font-semibold text-base" data-testid="text-ai-assistant-title">OficazIA</h3>
             </div>
-            <h3 className="font-semibold text-base" data-testid="text-ai-assistant-title">OficazIA</h3>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+              data-testid="button-minimize-chat"
+            >
+              <Minimize2 className="h-4 w-4" />
+            </button>
           </div>
 
           {/* Messages */}
