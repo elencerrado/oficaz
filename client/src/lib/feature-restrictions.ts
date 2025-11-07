@@ -13,6 +13,7 @@ export interface SubscriptionFeatures {
   reminders: boolean;
   employee_time_edit_permission: boolean;
   employee_time_edit: boolean;
+  ai_assistant: boolean;
 }
 
 export interface Subscription {
@@ -60,7 +61,8 @@ export const checkFeatureAccess = (subscription: Subscription | null, feature: k
     logoUpload: 'logoUpload',
     api: 'api',
     employee_time_edit_permission: 'employee_time_edit_permission',
-    employee_time_edit: 'employee_time_edit'
+    employee_time_edit: 'employee_time_edit',
+    ai_assistant: 'ai_assistant'
   };
   
   // Get the database feature name
@@ -86,7 +88,8 @@ export const getRequiredPlanForFeature = (feature: keyof SubscriptionFeatures): 
     api: 'Master',
     reminders: 'Pro',
     employee_time_edit_permission: 'Master',
-    employee_time_edit: 'Master'
+    employee_time_edit: 'Master',
+    ai_assistant: 'Master'
   };
   
   return featurePlanMap[feature] || 'Pro';
@@ -106,7 +109,8 @@ export const getFeatureRestrictionMessage = (feature: keyof SubscriptionFeatures
     api: 'API',
     reminders: 'Recordatorios',
     employee_time_edit_permission: 'Permisos edición tiempo empleados',
-    employee_time_edit: 'Empleados pueden editar sus tiempos'
+    employee_time_edit: 'Empleados pueden editar sus tiempos',
+    ai_assistant: 'Asistente de IA'
   };
 
   return `La funcionalidad de ${featureNames[feature]} no está disponible en tu plan actual. Contacta con el administrador para actualizar tu suscripción.`;
