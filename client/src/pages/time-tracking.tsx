@@ -3758,7 +3758,6 @@ export default function TimeTracking() {
                         userId={employee.id}
                         size="lg"
                       />
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
                     </div>
                     <div className="flex-1" style={{ marginLeft: '24px' }}>
                       <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
