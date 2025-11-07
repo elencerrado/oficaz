@@ -177,7 +177,7 @@ export function AIAssistantChat() {
       {/* Chat window with animations */}
       {isOpen && (
         <div
-          className="fixed bottom-24 right-6 z-50 flex h-[600px] w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 animate-in fade-in slide-in-from-bottom-4 duration-300"
+          className="fixed bottom-24 right-6 z-50 flex max-h-[calc(100vh-8rem)] w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 animate-in fade-in slide-in-from-bottom-4 duration-300"
           data-testid="container-ai-assistant-chat"
         >
           {/* Header */}
