@@ -966,7 +966,7 @@ export default function AdminDashboard() {
                           size="lg"
                           onClick={() => clockInMutation.mutate()}
                           disabled={clockInMutation.isPending}
-                          className="w-[120px] h-[48px] font-medium rounded-lg transition-all duration-200 shadow-sm bg-green-500 hover:bg-green-600 text-white border-green-500 hover:shadow-green-200 hover:shadow-md"
+                          className="w-[120px] h-[48px] font-medium rounded-lg bg-green-500 text-white border-green-500"
                         >
                           {clockInMutation.isPending ? (
                             <>
