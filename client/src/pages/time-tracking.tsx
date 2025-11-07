@@ -3723,16 +3723,16 @@ export default function TimeTracking() {
                 >
                   {/* Header con Avatar */}
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="relative">
-                      <Avatar className="h-16 w-16 ring-4 ring-white dark:ring-gray-800 shadow-lg">
-                        <AvatarImage src={employee.avatarUrl || undefined} />
-                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xl font-semibold">
-                          {employee.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-white dark:border-gray-800"></div>
+                    <div className="relative" style={{ transform: 'scale(1.6)', transformOrigin: 'left center' }}>
+                      <UserAvatar
+                        fullName={employee.fullName}
+                        profilePicture={employee.profilePicture || employee.avatarUrl}
+                        userId={employee.id}
+                        size="lg"
+                      />
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1" style={{ marginLeft: '24px' }}>
                       <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
                         {employee.fullName}
                       </h3>
