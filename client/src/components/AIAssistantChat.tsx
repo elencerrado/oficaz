@@ -181,20 +181,15 @@ export function AIAssistantChat() {
           data-testid="container-ai-assistant-chat"
         >
           {/* Header */}
-          <div className="flex items-center justify-between rounded-t-2xl bg-gradient-to-r from-[#007AFF] to-[#0066CC] p-4 text-white dark:from-[#0A84FF] dark:to-[#0066CC]">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-                <img 
-                  src={oficazLogo} 
-                  alt="Oficaz" 
-                  className="w-6 h-6 object-contain brightness-0 invert"
-                />
-              </div>
-              <div>
-                <h3 className="font-semibold" data-testid="text-ai-assistant-title">Asistente de IA</h3>
-                <p className="text-xs opacity-90">Powered by GPT-5 Nano</p>
-              </div>
+          <div className="flex items-center gap-3 rounded-t-2xl bg-gradient-to-r from-[#007AFF] to-[#0066CC] px-4 py-3 text-white dark:from-[#0A84FF] dark:to-[#0066CC]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+              <img 
+                src={oficazLogo} 
+                alt="Oficaz" 
+                className="w-5 h-5 object-contain brightness-0 invert"
+              />
             </div>
+            <h3 className="font-semibold text-base" data-testid="text-ai-assistant-title">Asistente Oficaz</h3>
           </div>
 
           {/* Messages */}
