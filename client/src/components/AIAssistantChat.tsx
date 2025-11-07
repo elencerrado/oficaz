@@ -14,16 +14,16 @@ interface Message {
 
 // Componente de animación del asistente de IA
 function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) {
-  const animationDuration = isThinking ? '1.5s' : '20s';
-  const gradientDuration = isThinking ? '3s' : '25s';
+  const animationDuration = isThinking ? '2s' : '30s';
+  const gradientDuration = isThinking ? '4s' : '35s';
   
   return (
     <div className="relative w-16 h-16">
-      {/* Fondo degradado azul orgánico animado */}
+      {/* Fondo degradado azul orgánico animado con múltiples tonos */}
       <div 
         className="absolute inset-0 rounded-full shadow-xl"
         style={{
-          background: 'linear-gradient(135deg, #003d7a, #005bb5, #007AFF, #0095ff, #005bb5, #003d7a)',
+          background: 'linear-gradient(135deg, #002952, #003d7a, #004d99, #005bb5, #007AFF, #0095ff, #00aaff, #0095ff, #007AFF, #005bb5, #004d99, #003d7a, #002952)',
           backgroundSize: '400% 400%',
           animation: `aiGradient ${gradientDuration} ease infinite`
         }}
