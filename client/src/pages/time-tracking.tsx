@@ -205,9 +205,8 @@ export default function TimeTracking() {
     
     // Build WebSocket URL dynamically from current window location
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.hostname;
-    const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
-    const wsUrl = `${protocol}//${host}:${port}/ws/work-sessions?token=${token}`;
+    const host = window.location.host; // Already includes port if needed
+    const wsUrl = `${protocol}//${host}/ws/work-sessions?token=${token}`;
 
     const ws = new WebSocket(wsUrl);
 

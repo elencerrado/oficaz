@@ -46,6 +46,14 @@ Preferred communication style: Simple, everyday language.
 - **Input Validation**: Zod schemas for all API endpoints to prevent malicious inputs
 - **SQL Injection Protection**: Drizzle ORM with parameterized queries throughout
 - **Rate Limiting**: Global and endpoint-specific rate limits to prevent abuse
+- **🚨 ZERO ERROR TOLERANCE**: User has ABSOLUTE ZERO tolerance for error screens in production
+  - **Global Error Suppression**: Inline script in `client/index.html` (first script, executes before everything) suppresses Vite HMR WebSocket errors and network errors during navigation. Prevents unhandled rejection popups.
+  - **Auto-Reload ErrorBoundary**: `client/src/components/ErrorBoundary.tsx` automatically reloads page (up to 3 times within 1 minute) when React errors occur. Shows loading spinner during reload, never shows error screens.
+  - **WebSocket Fix**: Time tracking WebSocket uses `window.location.host` (not `hostname:port`) to prevent `localhost:undefined` errors
+  - **Vite HMR Errors**: Development-only WebSocket errors are suppressed globally in both `client/index.html` and `client/src/main.tsx`
+  - **Network Errors**: Failed fetch, NetworkError, and Load failed errors are suppressed during page navigation/reload
+  - **React Query**: Automatic retries with exponential backoff (2 retries, 500ms-2000ms delay)
+  - **Result**: NEVER show error screens - only loading states and auto-recovery
 - **Error Handling**: 
   - Global ErrorBoundary captures all React errors (prevents black screens in production)
   - Server errors logged with full stack traces but only generic messages sent to clients
