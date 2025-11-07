@@ -31,18 +31,18 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
       
       {/* UN SOLO anillo azul con el punto - encima del degradado */}
       <div className="absolute inset-[10px] flex items-center justify-center">
-        {/* Anillo azul */}
+        {/* Anillo azul MÁS GRUESO */}
         <div 
-          className="absolute inset-0 rounded-full border-[5px]"
+          className="absolute inset-0 rounded-full border-[7px]"
           style={{
             borderColor: '#007AFF',
             background: 'transparent'
           }}
         />
         
-        {/* Punto rebotando */}
+        {/* Punto rebotando MÁS GRANDE */}
         <div 
-          className="absolute w-2.5 h-2.5 bg-[#007AFF] rounded-full shadow-lg"
+          className="absolute w-3.5 h-3.5 bg-[#007AFF] rounded-full shadow-lg"
           style={{
             animation: `aiRandomBounce ${animationDuration} ease-in-out infinite`
           }}
