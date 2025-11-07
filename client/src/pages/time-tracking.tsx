@@ -8,6 +8,7 @@ import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatsCard from '@/components/StatsCard';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { TabNavigation } from '@/components/ui/tab-navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -107,6 +108,9 @@ export default function TimeTracking() {
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [tooltipContent, setTooltipContent] = useState('');
   const [activeStatsFilter, setActiveStatsFilter] = useState<'today' | 'week' | 'month' | 'incomplete' | null>(null);
+  
+  // Tab state
+  const [activeTab, setActiveTab] = useState('sessions');
   
   // Modification & Audit states
   const [showManualEntryDialog, setShowManualEntryDialog] = useState(false);
@@ -2681,31 +2685,30 @@ export default function TimeTracking() {
         />
       </div>
 
-      {/* Sessions Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-            <span className="text-sm sm:text-lg font-medium">{getFilterTitle()} ({filteredSessions.length})</span>
-            
-            {/* Desktop: buttons grouped together */}
-            <div className="hidden sm:flex items-center gap-2">
-              <Button 
-                variant={pendingRequestsCount > 0 ? "default" : "outline"}
-                size="sm" 
-                onClick={() => setShowRequestsDialog(true)}
-                className="flex items-center gap-2 relative"
-                data-testid="button-view-requests"
-              >
-                <Bell className={cn("w-4 h-4", pendingRequestsCount > 0 && "animate-pulse")} />
-                Solicitudes
-                {pendingRequestsCount > 0 && (
-                  <Badge className="ml-1 bg-orange-500 text-white">{pendingRequestsCount}</Badge>
-                )}
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowFilters(!showFilters)}
+      {/* Tab Navigation */}
+      <TabNavigation
+        tabs={[
+          { id: 'sessions', label: 'Lista de Horas', icon: Users },
+          { id: 'summary', label: 'Resumen', icon: BarChart3 },
+          { id: 'requests', label: 'Solicitudes', icon: Bell, badge: pendingRequestsCount > 0 ? pendingRequestsCount : undefined }
+        ]}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+      />
+
+      {/* Tab Content: Lista de Horas */}
+      {activeTab === 'sessions' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+              <span className="text-sm sm:text-lg font-medium">{getFilterTitle()} ({filteredSessions.length})</span>
+              
+              {/* Desktop: buttons grouped together */}
+              <div className="hidden sm:flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowFilters(!showFilters)}
                 className="flex items-center gap-2"
               >
                 <Filter className="w-4 h-4" />
@@ -3640,6 +3643,7 @@ export default function TimeTracking() {
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* Export Dialog */}
       <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
