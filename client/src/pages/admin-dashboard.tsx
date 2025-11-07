@@ -1017,7 +1017,7 @@ export default function AdminDashboard() {
                 <div className="space-y-2">
                   {incompleteSessions.length > 0 && (
                     <button
-                      onClick={() => setLocation('/test/fichajes')}
+                      onClick={() => setLocation('/test/fichajes?filter=incomplete')}
                       className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">

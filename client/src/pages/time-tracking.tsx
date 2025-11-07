@@ -59,6 +59,18 @@ export default function TimeTracking() {
     });
     return resetHeader;
   }, []);
+
+  // Read URL params to activate filters on load
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const filterParam = urlParams.get('filter');
+    
+    if (filterParam === 'incomplete') {
+      setActiveStatsFilter('incomplete');
+      // Clean URL after reading params to avoid confusion
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
   
   // Check if user has access to time tracking feature
   if (!hasAccess('timeTracking')) {
