@@ -19,53 +19,34 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
   
   return (
     <div className="relative w-16 h-16">
-      {/* Capa 1: Fondo degradado animado - completamente visible */}
+      {/* Fondo degradado PLANO animado */}
       <div 
         className="absolute inset-0 rounded-full shadow-xl"
         style={{
           background: 'linear-gradient(45deg, #5856D6, #007AFF, #00C6FF, #007AFF, #5856D6)',
           backgroundSize: '400% 400%',
-          animation: `aiGradient ${gradientDuration} ease infinite`,
-          zIndex: 0
+          animation: `aiGradient ${gradientDuration} ease infinite`
         }}
       />
       
-      {/* Capa 2: Contenedor interior semi-transparente que deja ver el borde degradado */}
-      <div 
-        className="absolute inset-[12px] rounded-full"
-        style={{
-          background: 'rgba(10, 10, 30, 0.85)',
-          zIndex: 10
-        }}
-      >
-        {/* Anillo azul exterior (más grande) */}
+      {/* UN SOLO anillo azul con el punto - encima del degradado */}
+      <div className="absolute inset-[10px] flex items-center justify-center">
+        {/* Anillo azul */}
         <div 
-          className="absolute inset-[4px] rounded-full border-[3px]"
+          className="absolute inset-0 rounded-full border-[5px]"
           style={{
-            borderColor: '#4F8DFF',
+            borderColor: '#007AFF',
             background: 'transparent'
           }}
         />
         
-        {/* Anillo azul interior (más pequeño) */}
+        {/* Punto rebotando */}
         <div 
-          className="absolute inset-[10px] rounded-full border-[4px]"
+          className="absolute w-2.5 h-2.5 bg-[#007AFF] rounded-full shadow-lg"
           style={{
-            borderColor: '#1F6BFF',
-            background: 'transparent'
+            animation: `aiRandomBounce ${animationDuration} ease-in-out infinite`
           }}
         />
-        
-        {/* Punto rebotando aleatoriamente */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div 
-            className="absolute w-2 h-2 bg-[#007AFF] rounded-full shadow-lg"
-            style={{
-              animation: `aiRandomBounce ${animationDuration} ease-in-out infinite`,
-              zIndex: 20
-            }}
-          />
-        </div>
       </div>
       
       <style>{`
