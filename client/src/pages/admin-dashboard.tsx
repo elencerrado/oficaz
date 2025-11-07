@@ -708,8 +708,8 @@ export default function AdminDashboard() {
     return 'No hay fichajes recientes';
   };
 
-  // Get vacation details for a specific date
-  const getVacationDetailsForDate = (date: Date) => {
+  // ✨ OPTIMIZATION: Memoize vacation details function to prevent recalculation on every render
+  const getVacationDetailsForDate = useCallback((date: Date) => {
     const approved = approvedVacations?.filter((req: any) => {
       const startDate = startOfDay(parseISO(req.startDate));
       const endDate = startOfDay(parseISO(req.endDate));
@@ -733,10 +733,10 @@ export default function AdminDashboard() {
     })) || [];
 
     return [...approved, ...pending];
-  };
+  }, [approvedVacations, pendingVacations]);
 
-  // Check if date has events
-  const getDateEvents = (date: Date) => {
+  // ✨ OPTIMIZATION: Memoize date events function to prevent recalculation on every render
+  const getDateEvents = useCallback((date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const events = [];
 
@@ -775,7 +775,7 @@ export default function AdminDashboard() {
     }
 
     return events;
-  };
+  }, [allHolidays, approvedVacations, pendingVacations]);
 
   return (
     <div>
