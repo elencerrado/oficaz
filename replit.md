@@ -115,7 +115,10 @@ Preferred communication style: Simple, everyday language.
 - **Email Marketing System** (SuperAdmin): Campaign management, prospect database, user segmentation, SendGrid integration, HTML content, audience targeting, tracking, Zod validation, marketing consent, unsubscribe system, contact tracking system (WhatsApp/Instagram).
 - **Time Tracking Modification & Audit System**: Complete audit trail for all time tracking modifications, including manual creation, modification of existing sessions, and audit history. Features include employee-initiated modification requests, partial modifications (clock-in OR clock-out), and PDF export with full audit trail.
 - **PWA System**: Complete PWA implementation for locked-phone notifications with interactive action buttons via Web Push API. Server-side scheduler for work alarms and daily incomplete session monitoring. Supports iOS PWA installation. Instant push notifications for various events. Notification actions use JWT authentication. Push subscriptions are removed on logout. Notification deduplication and alarm tags prevent duplicates. Asynchronous, parallel batch sending of notifications. SuperAdmin can enable/disable push notifications per subscription plan.
-- **Performance Optimizations**: Eliminated unnecessary re-renders, optimized time calculations, extracted reusable functions, reduced polling, optimized query caching, memoized arrays, and proper timeout cleanup.
+- **Performance Optimizations** (Nov 2025):
+  - **Round 1**: Eliminated unnecessary `currentTime` state (60+ re-renders/min), use `Date.now()` for calculations, extracted reusable `calculateWorkHours()` function, created generic `useNewRequestNotifications()` hook, reduced activeBreak polling 3s→10s (67% less requests), optimized query caching (2min staleTime, 5min refetchInterval), memoized holidays array, added timeout cleanup to prevent memory leaks
+  - **Round 2**: Memoized `currentWorkHours` calculation (50% reduction), memoized calendar functions (`getDateEvents`, `getVacationDetailsForDate`) with useCallback, verified callbacks and WebSocket invalidations already optimized
+  - All optimizations internal with zero UI/UX changes
 
 ### Deployment Strategy
 - **Development Environment**: Node.js 20, PostgreSQL 16 (Replit managed), Vite dev server.
