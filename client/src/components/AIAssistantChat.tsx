@@ -19,45 +19,39 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
   
   return (
     <div className="relative w-16 h-16">
-      {/* Fondo degradado animado tipo IA */}
+      {/* Capa 1: Fondo degradado animado tipo IA (z-index bajo) */}
       <div 
-        className="absolute inset-0 rounded-full shadow-xl"
+        className="absolute inset-0 rounded-full shadow-xl z-0"
         style={{
           background: 'linear-gradient(45deg, #5856D6, #007AFF, #00C6FF, #007AFF, #5856D6)',
           backgroundSize: '400% 400%',
           animation: `aiGradient ${gradientDuration} ease infinite`
         }}
-      >
-        {/* Círculo negro/oscuro para crear el anillo */}
-        <div className="absolute inset-[8px] rounded-full bg-[#1a1a2e] dark:bg-[#0a0a0f]">
-          {/* UN SOLO círculo azul (anillo) */}
+      />
+      
+      {/* Capa 2: Círculo interior con anillo azul (z-index alto) */}
+      <div className="absolute inset-[10px] rounded-full bg-white dark:bg-gray-900 z-10">
+        {/* UN SOLO anillo azul */}
+        <div 
+          className="absolute inset-[3px] rounded-full"
+          style={{
+            background: '#007AFF',
+          }}
+        >
+          {/* Centro del anillo (para crear el hueco) */}
+          <div className="absolute inset-[6px] rounded-full bg-white dark:bg-gray-900" />
+        </div>
+        
+        {/* Punto rebotando aleatoriamente dentro del círculo */}
+        <div className="absolute inset-0 flex items-center justify-center z-20">
           <div 
-            className="absolute inset-[4px] rounded-full"
+            className="absolute w-2.5 h-2.5 bg-[#007AFF] rounded-full shadow-lg"
             style={{
-              background: '#007AFF',
+              animation: `aiRandomBounce ${animationDuration} ease-in-out infinite`
             }}
-          >
-            {/* Centro oscuro para crear el anillo */}
-            <div className="absolute inset-[7px] rounded-full bg-[#1a1a2e] dark:bg-[#0a0a0f]" />
-          </div>
-          
-          {/* Punto rebotando aleatoriamente dentro del círculo */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div 
-              className="absolute w-2.5 h-2.5 bg-[#007AFF] rounded-full shadow-lg"
-              style={{
-                animation: `aiRandomBounce ${animationDuration} ease-in-out infinite`
-              }}
-            />
-          </div>
+          />
         </div>
       </div>
-      
-      {/* Efecto de resplandor - más rápido cuando está pensando */}
-      <div 
-        className="absolute inset-0 rounded-full bg-[#007AFF]/10 animate-ping" 
-        style={{ animationDuration: isThinking ? '1s' : '4s' }}
-      />
       
       <style>{`
         @keyframes aiRandomBounce {
