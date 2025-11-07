@@ -821,7 +821,17 @@ export default function VacationManagement() {
     const urlParams = new URLSearchParams(search);
     const requestId = urlParams.get('requestId');
     const action = urlParams.get('action');
+    const filter = urlParams.get('filter');
     
+    // Handle filter parameter (from dashboard quick access)
+    if (filter === 'pending') {
+      setActiveTab('requests');
+      setSelectedStatus('pending');
+      // Clean URL after applying filter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
+    // Handle requestId and action (from dashboard direct action)
     if (requestId && action && vacationRequests.length > 0) {
       const request = vacationRequests.find(r => r.id === parseInt(requestId));
       if (request && ['approve', 'deny', 'edit'].includes(action)) {
