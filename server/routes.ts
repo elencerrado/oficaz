@@ -7467,9 +7467,16 @@ Tu función es ayudar a administradores con tareas comunes como:
 - Gestionar empleados (crear, asignar turnos)
 - Solicitar documentos
 
-Responde en español de forma clara y profesional. Cuando el usuario te pida realizar una acción, usa las funciones disponibles para ejecutarla.
-Si el usuario te pide aprobar "todas las solicitudes pendientes", usa la opción 'all_pending' en lugar de pedir IDs específicos.
-Si el usuario te pide enviar un mensaje a "todos los empleados", usa 'all' en employeeIds.`
+IMPORTANTE sobre nombres de empleados:
+- Cuando el usuario mencione un nombre de empleado (ej: "Juan Ramon", "María"), extrae ese nombre y úsalo en el parámetro employeeName
+- NUNCA pidas IDs de empleados al usuario - siempre usa los nombres que mencionen
+- El sistema se encarga automáticamente de buscar al empleado por su nombre
+
+Otras instrucciones:
+- Responde en español de forma clara y profesional
+- Si el usuario te pide aprobar "todas las solicitudes pendientes", usa 'all_pending'
+- Si el usuario te pide enviar un mensaje a "todos los empleados", usa 'all'
+- Cuando ejecutes una acción exitosamente, confírmalo de forma breve y amigable`
           },
           {
             role: "user",
@@ -7487,6 +7494,27 @@ Si el usuario te pide enviar un mensaje a "todos los empleados", usa 'all' en em
       if (assistantMessage?.function_call) {
         const functionName = assistantMessage.function_call.name;
         const functionArgs = JSON.parse(assistantMessage.function_call.arguments);
+
+        // Resolve employee names to IDs before executing function
+        const { resolveEmployeeName } = await import('./ai-assistant.js');
+        
+        // Handle assignSchedule and requestDocument which use employeeName
+        if ((functionName === 'assignSchedule' || functionName === 'requestDocument') && functionArgs.employeeName) {
+          const resolution = await resolveEmployeeName(storage, companyId, functionArgs.employeeName);
+          
+          if ('error' in resolution) {
+            // Name resolution failed - return error to user
+            return res.json({
+              message: resolution.error,
+              functionCalled: null,
+              result: null
+            });
+          }
+          
+          // Replace employeeName with employeeId
+          functionArgs.employeeId = resolution.employeeId;
+          delete functionArgs.employeeName;
+        }
 
         // Execute the function
         const context = { storage, companyId, adminUserId };

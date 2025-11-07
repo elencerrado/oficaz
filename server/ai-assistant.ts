@@ -20,6 +20,45 @@ export interface AIFunctionContext {
   adminUserId: number;
 }
 
+// Helper function to normalize strings for accent-insensitive comparison
+function normalizeForComparison(str: string): string {
+  return str
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '');
+}
+
+// Helper function to resolve employee names to IDs
+export async function resolveEmployeeName(
+  storage: DrizzleStorage,
+  companyId: number,
+  employeeName: string
+): Promise<{ employeeId: number; message?: string } | { error: string }> {
+  // Get all employees from the company
+  const allEmployees = await storage.getUsersByCompany(companyId);
+  
+  // Search for employees with matching names (case-insensitive, accent-insensitive, partial match)
+  const normalizedSearch = normalizeForComparison(employeeName);
+  const matches = allEmployees.filter(emp => 
+    normalizeForComparison(emp.fullName).includes(normalizedSearch)
+  );
+  
+  if (matches.length === 0) {
+    return { error: `No encontré ningún empleado con el nombre "${employeeName}". Por favor, verifica el nombre e intenta de nuevo.` };
+  }
+  
+  if (matches.length === 1) {
+    return { employeeId: matches[0].id };
+  }
+  
+  // Multiple matches - return error with list
+  const matchNames = matches.map(emp => emp.fullName).join(", ");
+  return { 
+    error: `Encontré varios empleados con ese nombre: ${matchNames}. Por favor, especifica el nombre completo exacto.` 
+  };
+}
+
 // 1. Send message/circular to employees
 export async function sendMessage(
   context: AIFunctionContext,
@@ -514,13 +553,13 @@ export const AI_FUNCTIONS = [
   },
   {
     name: "assignSchedule",
-    description: "Asignar un turno o cuadrante de horario a un empleado",
+    description: "Asignar un turno o cuadrante de horario a un empleado. IMPORTANTE: Usa el nombre del empleado (employeeName) cuando el usuario lo mencione en el mensaje",
     parameters: {
       type: "object",
       properties: {
-        employeeId: {
-          type: "number",
-          description: "ID del empleado",
+        employeeName: {
+          type: "string",
+          description: "Nombre del empleado (usa esto cuando el usuario menciona un nombre)",
         },
         title: {
           type: "string",
@@ -547,18 +586,18 @@ export const AI_FUNCTIONS = [
           description: "Color hexadecimal para el turno (ej: '#3b82f6')",
         },
       },
-      required: ["employeeId", "title", "startDate", "endDate"],
+      required: ["employeeName", "title", "startDate", "endDate"],
     },
   },
   {
     name: "requestDocument",
-    description: "Solicitar un documento específico a un empleado",
+    description: "Solicitar un documento específico a un empleado. IMPORTANTE: Usa el nombre del empleado (employeeName) cuando el usuario lo mencione en el mensaje",
     parameters: {
       type: "object",
       properties: {
-        employeeId: {
-          type: "number",
-          description: "ID del empleado",
+        employeeName: {
+          type: "string",
+          description: "Nombre del empleado (usa esto cuando el usuario menciona un nombre)",
         },
         fileName: {
           type: "string",
@@ -569,7 +608,7 @@ export const AI_FUNCTIONS = [
           description: "Descripción o instrucciones adicionales sobre el documento",
         },
       },
-      required: ["employeeId", "fileName"],
+      required: ["employeeName", "fileName"],
     },
   },
 ];
