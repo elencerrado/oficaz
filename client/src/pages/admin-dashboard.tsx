@@ -902,7 +902,7 @@ export default function AdminDashboard() {
                             size="lg"
                             onClick={() => clockOutMutation.mutate()}
                             disabled={clockOutMutation.isPending}
-                            className="w-[120px] h-[48px] font-medium rounded-lg transition-all duration-200 shadow-sm bg-red-500 hover:bg-red-600 text-white border-red-500 hover:shadow-red-200 hover:shadow-md"
+                            className="w-[120px] h-[48px] font-medium rounded-lg bg-red-500 hover:bg-red-600 text-white border-red-500"
                           >
                             {clockOutMutation.isPending ? (
                               <>
