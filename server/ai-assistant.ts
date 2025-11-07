@@ -359,6 +359,7 @@ export async function assignSchedule(
   return {
     success: true,
     shift: shift[0],
+    employeeFullName: employee.fullName,
   };
 }
 

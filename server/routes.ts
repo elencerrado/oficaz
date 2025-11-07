@@ -7549,7 +7549,13 @@ Otras instrucciones:
           messages: [
             {
               role: "system",
-              content: "Eres un asistente de IA. Confirma al usuario que la acción se completó exitosamente. Sé breve y profesional."
+              content: `Eres un asistente de IA. Confirma al usuario que la acción se completó exitosamente. Sé breve y profesional.
+
+IMPORTANTE: Cuando menciones a un empleado en tu respuesta, SIEMPRE usa el nombre completo (employeeFullName o employeeName) que recibes en los resultados de las herramientas. NUNCA uses el nombre simplificado que mencionó el usuario.
+
+Ejemplo:
+- Si el usuario dice "Ramirez" y el resultado incluye "employeeFullName": "Juan José Ramirez"
+- Tu respuesta debe decir "Juan José Ramirez" (nombre completo correcto), NO "Ramirez" ni "Amirez"`
             },
             {
               role: "user",
