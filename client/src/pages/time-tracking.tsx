@@ -114,7 +114,7 @@ export default function TimeTracking() {
   const [activeTab, setActiveTab] = useState('sessions');
   
   // Summary tab states
-  const [summaryMonth, setSummaryMonth] = useState(() => new Date());
+  const [summaryWeek, setSummaryWeek] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [summarySearch, setSummarySearch] = useState('');
   
   // Modification & Audit states
@@ -3669,26 +3669,33 @@ export default function TimeTracking() {
               </div>
             </div>
 
-            {/* Selector de mes */}
+            {/* Selector de semana */}
             <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border rounded-lg px-3 py-2">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setSummaryMonth(new Date(summaryMonth.getFullYear(), summaryMonth.getMonth() - 1, 1))}
+                onClick={() => setSummaryWeek(addDays(summaryWeek, -7))}
                 className="h-8 w-8 p-0"
-                data-testid="button-prev-month"
+                data-testid="button-prev-week"
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <div className="text-sm font-medium min-w-[120px] text-center">
-                {format(summaryMonth, 'MMMM yyyy', { locale: es })}
+              <div className="text-sm font-medium min-w-[160px] text-center">
+                {format(summaryWeek, 'd MMM', { locale: es })} - {format(addDays(summaryWeek, 6), 'd MMM yyyy', { locale: es })}
               </div>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setSummaryMonth(new Date(summaryMonth.getFullYear(), summaryMonth.getMonth() + 1, 1))}
+                onClick={() => {
+                  const nextWeek = addDays(summaryWeek, 7);
+                  const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+                  if (nextWeek <= currentWeekStart) {
+                    setSummaryWeek(nextWeek);
+                  }
+                }}
+                disabled={addDays(summaryWeek, 7) > startOfWeek(new Date(), { weekStartsOn: 1 })}
                 className="h-8 w-8 p-0"
-                data-testid="button-next-month"
+                data-testid="button-next-week"
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>
@@ -3701,9 +3708,9 @@ export default function TimeTracking() {
               summarySearch === '' || 
               emp.fullName.toLowerCase().includes(summarySearch.toLowerCase())
             ).map((employee) => {
-              // Calculate monthly hours based on selected month
-              const monthStart = startOfMonth(summaryMonth);
-              const monthEnd = endOfMonth(summaryMonth);
+              // Calculate monthly hours (current month, always fixed)
+              const monthStart = startOfMonth(new Date());
+              const monthEnd = endOfMonth(new Date());
               const monthlySessions = (Array.isArray(sessions) ? sessions : []).filter((s: any) => 
                 s.userId === employee.id &&
                 new Date(s.clockIn) >= monthStart &&
@@ -3720,12 +3727,11 @@ export default function TimeTracking() {
                 return total + hours - (breakMinutes / 60);
               }, 0);
 
-              // Calculate weekly hours (current week only, not dependent on month selector)
-              const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-              const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+              // Calculate weekly hours (based on selected week)
+              const weekEnd = endOfWeek(summaryWeek, { weekStartsOn: 1 });
               const weeklySessions = (Array.isArray(sessions) ? sessions : []).filter((s: any) => 
                 s.userId === employee.id &&
-                new Date(s.clockIn) >= weekStart &&
+                new Date(s.clockIn) >= summaryWeek &&
                 new Date(s.clockIn) <= weekEnd
               );
               
@@ -3766,6 +3772,27 @@ export default function TimeTracking() {
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         {employee.email || employee.position || 'Empleado'}
                       </p>
+                    </div>
+                  </div>
+
+                  {/* Métricas en tarjetas */}
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    {/* Semana seleccionada */}
+                    <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
+                      <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                        {weeklyHours.toFixed(1)}h
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 font-medium">Semana Seleccionada</div>
+                    </div>
+                    
+                    {/* Mes actual */}
+                    <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+                      <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+                        {monthlyHours.toFixed(1)}h
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 font-medium">
+                        {format(new Date(), 'MMMM', { locale: es })}
+                      </div>
                     </div>
                   </div>
 
