@@ -189,7 +189,7 @@ export function AIAssistantChat() {
                 className="w-5 h-5 object-contain brightness-0 invert"
               />
             </div>
-            <h3 className="font-semibold text-base" data-testid="text-ai-assistant-title">Asistente Oficaz</h3>
+            <h3 className="font-semibold text-base" data-testid="text-ai-assistant-title">OficazIA</h3>
           </div>
 
           {/* Messages */}
