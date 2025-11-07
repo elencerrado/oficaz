@@ -14,23 +14,23 @@ interface Message {
 
 // Componente de animación del asistente de IA
 function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) {
-  const animationDuration = isThinking ? '1.5s' : '8s';
-  const gradientDuration = isThinking ? '3s' : '12s';
+  const animationDuration = isThinking ? '1.5s' : '20s';
+  const gradientDuration = isThinking ? '3s' : '25s';
   
   return (
     <div className="relative w-14 h-14">
-      {/* Degradado de fondo animado tipo IA */}
+      {/* Círculo exterior con degradado de fondo animado tipo IA */}
       <div 
-        className="absolute inset-0 rounded-full opacity-20"
+        className="absolute inset-0 rounded-full border-[6px] border-[#007AFF] dark:border-[#0A84FF] shadow-lg overflow-hidden"
         style={{
           background: 'linear-gradient(45deg, #007AFF, #00C6FF, #007AFF, #5856D6)',
           backgroundSize: '400% 400%',
           animation: `aiGradient ${gradientDuration} ease infinite`
         }}
-      />
-      
-      {/* Círculo exterior más gordo */}
-      <div className="absolute inset-0 rounded-full border-[6px] border-[#007AFF] dark:border-[#0A84FF] bg-white dark:bg-gray-900 shadow-lg" />
+      >
+        {/* Círculo interior blanco/oscuro con padding para mostrar el degradado */}
+        <div className="absolute inset-[6px] rounded-full bg-white dark:bg-gray-900" />
+      </div>
       
       {/* Punto rebotando aleatoriamente dentro del círculo */}
       <div className="absolute inset-0 flex items-center justify-center">
@@ -45,7 +45,7 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
       {/* Efecto de resplandor - más rápido cuando está pensando */}
       <div 
         className="absolute inset-0 rounded-full bg-[#007AFF]/10 dark:bg-[#0A84FF]/10 animate-ping" 
-        style={{ animationDuration: isThinking ? '1s' : '3s' }}
+        style={{ animationDuration: isThinking ? '1s' : '4s' }}
       />
       
       <style>{`
