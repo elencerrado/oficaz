@@ -7423,6 +7423,125 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // AI Assistant endpoint - chat with GPT-5 Nano for administrative task automation
+  app.post('/api/ai-assistant/chat', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const { message } = req.body;
+      const companyId = req.user!.companyId;
+      const adminUserId = req.user!.id;
+
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({ message: "Message is required" });
+      }
+
+      // Verify feature flag: AI assistant must be enabled for this company's plan
+      const subscription = await storage.getSubscriptionByCompanyId(companyId);
+      if (!subscription || !subscription.features || !(subscription.features as any).ai_assistant) {
+        return res.status(403).json({ 
+          message: "La funcionalidad de Asistente de IA no está disponible en tu plan actual. Contacta con el administrador para actualizar tu suscripción." 
+        });
+      }
+
+      // Initialize OpenAI client with Replit AI Integrations
+      // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+      const OpenAI = (await import('openai')).default;
+      const openai = new OpenAI({
+        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
+      });
+
+      // Import AI assistant functions
+      const { AI_FUNCTIONS, executeAIFunction } = await import('./ai-assistant.js');
+
+      // Call OpenAI with function calling
+      const response = await openai.chat.completions.create({
+        model: "gpt-5-nano", // GPT-5 Nano for cost-effective AI assistance (~$0.0005/command)
+        messages: [
+          {
+            role: "system",
+            content: `Eres un asistente de IA para Oficaz, un sistema de gestión de empleados. 
+Tu función es ayudar a administradores con tareas comunes como:
+- Enviar mensajes o circulares a empleados
+- Aprobar solicitudes de vacaciones o cambios de horario
+- Crear recordatorios
+- Gestionar empleados (crear, asignar turnos)
+- Solicitar documentos
+
+Responde en español de forma clara y profesional. Cuando el usuario te pida realizar una acción, usa las funciones disponibles para ejecutarla.
+Si el usuario te pide aprobar "todas las solicitudes pendientes", usa la opción 'all_pending' en lugar de pedir IDs específicos.
+Si el usuario te pide enviar un mensaje a "todos los empleados", usa 'all' en employeeIds.`
+          },
+          {
+            role: "user",
+            content: message
+          }
+        ],
+        functions: AI_FUNCTIONS as any,
+        function_call: "auto",
+        max_completion_tokens: 8192,
+      });
+
+      const assistantMessage = response.choices[0]?.message;
+
+      // Check if AI wants to call a function
+      if (assistantMessage?.function_call) {
+        const functionName = assistantMessage.function_call.name;
+        const functionArgs = JSON.parse(assistantMessage.function_call.arguments);
+
+        // Execute the function
+        const context = { storage, companyId, adminUserId };
+        const result = await executeAIFunction(functionName, functionArgs, context);
+
+        // Get a natural language response about the result
+        const followUpResponse = await openai.chat.completions.create({
+          model: "gpt-5-nano",
+          messages: [
+            {
+              role: "system",
+              content: "Eres un asistente de IA. Confirma al usuario que la acción se completó exitosamente. Sé breve y profesional."
+            },
+            {
+              role: "user",
+              content: message
+            },
+            {
+              role: "assistant",
+              content: null,
+              function_call: assistantMessage.function_call
+            },
+            {
+              role: "function",
+              name: functionName,
+              content: JSON.stringify(result)
+            }
+          ],
+          max_completion_tokens: 8192,
+        });
+
+        const finalMessage = followUpResponse.choices[0]?.message?.content || "Acción completada exitosamente.";
+
+        res.json({
+          message: finalMessage,
+          functionCalled: functionName,
+          result
+        });
+      } else {
+        // No function call, just return the AI's text response
+        res.json({
+          message: assistantMessage?.content || "No entendí tu solicitud. ¿Puedes reformularla?",
+          functionCalled: null,
+          result: null
+        });
+      }
+    } catch (error: any) {
+      console.error("Error in AI assistant:", error);
+      res.status(500).json({ 
+        message: "Error al procesar tu solicitud con el asistente de IA",
+        error: error.message 
+      });
+    }
+  });
+
   // Get employees for assignment (admin/manager only)
   app.get('/api/users/employees', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
