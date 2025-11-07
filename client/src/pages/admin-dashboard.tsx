@@ -658,6 +658,11 @@ export default function AdminDashboard() {
     return [...nationalHolidays, ...customHolidays];
   }, [customHolidays]);
 
+  // ✨ OPTIMIZATION: Calculate work hours once and reuse (prevents duplicate calculations)
+  const currentWorkHours = useMemo(() => {
+    return calculateWorkHours(activeSession, companySettings);
+  }, [activeSession, companySettings, calculateWorkHours]);
+
   const formatTime = (date: Date) => {
     return format(date, 'HH:mm', { locale: es });
   };
@@ -842,8 +847,8 @@ export default function AdminDashboard() {
                   {/* Estado actual */}
                   <div className="mb-2">
                     {(() => {
-                      // ✨ OPTIMIZED: Using reusable calculateWorkHours function
-                      const workHours = calculateWorkHours(activeSession, companySettings);
+                      // ✨ OPTIMIZED: Using memoized currentWorkHours (calculated once per render)
+                      const workHours = currentWorkHours;
                       
                       if (workHours) {
                         // If session has exceeded max hours + overtime, show as "Fuera del trabajo"
@@ -895,8 +900,8 @@ export default function AdminDashboard() {
                 </div>
                 <div className="flex flex-row md:flex-col justify-center gap-2">
                   {(() => {
-                    // ✨ OPTIMIZED: Using reusable calculateWorkHours function
-                    const workHours = calculateWorkHours(activeSession, companySettings);
+                    // ✨ OPTIMIZED: Using memoized currentWorkHours (calculated once per render)
+                    const workHours = currentWorkHours;
                     
                     // Check if we should allow new clock-in even with active session
                     let shouldShowActiveButtons = !!activeSession;
