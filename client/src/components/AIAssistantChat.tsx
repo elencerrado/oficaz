@@ -13,25 +13,39 @@ interface Message {
 }
 
 // Componente de animación del asistente de IA
-function AIAssistantAnimation() {
+function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) {
+  const animationDuration = isThinking ? '1.5s' : '8s';
+  const gradientDuration = isThinking ? '3s' : '12s';
+  
   return (
     <div className="relative w-14 h-14">
+      {/* Degradado de fondo animado tipo IA */}
+      <div 
+        className="absolute inset-0 rounded-full opacity-20"
+        style={{
+          background: 'linear-gradient(45deg, #007AFF, #00C6FF, #007AFF, #5856D6)',
+          backgroundSize: '400% 400%',
+          animation: `aiGradient ${gradientDuration} ease infinite`
+        }}
+      />
+      
       {/* Círculo exterior más gordo */}
       <div className="absolute inset-0 rounded-full border-[6px] border-[#007AFF] dark:border-[#0A84FF] bg-white dark:bg-gray-900 shadow-lg" />
       
       {/* Punto rebotando aleatoriamente dentro del círculo */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div 
-          className="absolute w-3 h-3 bg-[#007AFF] dark:bg-[#0A84FF] rounded-full"
+          className="absolute w-3 h-3 bg-[#007AFF] dark:bg-[#0A84FF] rounded-full shadow-lg"
           style={{
-            animation: 'aiRandomBounce 3s ease-in-out infinite'
+            animation: `aiRandomBounce ${animationDuration} ease-in-out infinite`
           }}
         />
       </div>
       
-      {/* Efecto de resplandor */}
-      <div className="absolute inset-0 rounded-full bg-[#007AFF]/10 dark:bg-[#0A84FF]/10 animate-ping" 
-        style={{ animationDuration: '2s' }}
+      {/* Efecto de resplandor - más rápido cuando está pensando */}
+      <div 
+        className="absolute inset-0 rounded-full bg-[#007AFF]/10 dark:bg-[#0A84FF]/10 animate-ping" 
+        style={{ animationDuration: isThinking ? '1s' : '3s' }}
       />
       
       <style>{`
@@ -59,6 +73,18 @@ function AIAssistantAnimation() {
           }
           100% {
             transform: translate(0px, 0px);
+          }
+        }
+        
+        @keyframes aiGradient {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
           }
         }
       `}</style>
@@ -143,7 +169,7 @@ export function AIAssistantChat() {
             <X className="h-6 w-6 text-white" />
           </div>
         ) : (
-          <AIAssistantAnimation />
+          <AIAssistantAnimation isThinking={isLoading} />
         )}
       </div>
 
