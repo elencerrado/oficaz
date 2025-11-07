@@ -1147,7 +1147,7 @@ export default function AdminDashboard() {
                       receivedMessages.map((message: any) => (
                         <div 
                           key={message.id} 
-                          className="flex items-start gap-3 py-2 border-b border-border last:border-0 cursor-pointer hover:bg-muted/50 transition-colors rounded-md"
+                          className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
                           onClick={() => setLocation(`/test/mensajes?chat=${message.senderId}`)}
                         >
                           <UserAvatar 
@@ -1157,12 +1157,14 @@ export default function AdminDashboard() {
                             profilePicture={message.senderProfilePicture}
                           />
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-foreground truncate">{message.senderName || 'Empleado'}</p>
-                            <p className="text-sm text-muted-foreground truncate">{message.content}</p>
-                            <p className="text-xs text-muted-foreground opacity-75">{formatTime(parseISO(message.createdAt))}</p>
+                            <p className="font-medium text-foreground truncate mb-1">{message.senderName || 'Empleado'}</p>
+                            <div className="flex items-baseline gap-2">
+                              <p className="text-sm text-muted-foreground truncate flex-1">{message.content}</p>
+                              <p className="text-xs text-muted-foreground opacity-75 whitespace-nowrap">{formatTime(parseISO(message.createdAt))}</p>
+                            </div>
                           </div>
                           {!message.isRead && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                           )}
                         </div>
                       ))
@@ -1190,17 +1192,17 @@ export default function AdminDashboard() {
                     activeReminders.map((reminder: any) => (
                       <div 
                         key={reminder.id} 
-                        className="flex items-start gap-3 py-2 border-b border-border last:border-0 cursor-pointer hover:bg-muted/50 transition-colors rounded-md"
+                        className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
                         onClick={() => setLocation('/test/recordatorios')}
                       >
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          reminder.priority === 'high' ? 'bg-red-100' : 
-                          reminder.priority === 'medium' ? 'bg-orange-100' : 'bg-blue-100'
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          reminder.priority === 'high' ? 'bg-red-100 dark:bg-red-900/30' : 
+                          reminder.priority === 'medium' ? 'bg-orange-100 dark:bg-orange-900/30' : 'bg-blue-100 dark:bg-blue-900/30'
                         }`}>
                           {reminder.priority === 'high' ? (
-                            <AlertCircle className="h-4 w-4 text-red-600" />
+                            <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
                           ) : (
-                            <Bell className="h-4 w-4 text-blue-600" />
+                            <Bell className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -1215,7 +1217,7 @@ export default function AdminDashboard() {
                             }
                           </p>
                         </div>
-                        <div className={`w-2 h-2 rounded-full ${
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                           reminder.priority === 'high' ? 'bg-red-500' : 
                           reminder.priority === 'medium' ? 'bg-orange-500' : 'bg-blue-500'
                         }`}></div>
