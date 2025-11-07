@@ -3770,29 +3770,8 @@ export default function TimeTracking() {
                     </div>
                   </div>
 
-                  {/* Métricas principales */}
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    {/* Semana */}
-                    <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
-                      <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
-                        {weeklyHours.toFixed(1)}h
-                      </div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 font-medium">Semana Actual</div>
-                    </div>
-                    
-                    {/* Mes */}
-                    <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
-                      <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                        {monthlyHours.toFixed(1)}h
-                      </div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 font-medium">
-                        {format(summaryMonth, 'MMMM', { locale: es })}
-                      </div>
-                    </div>
-                  </div>
-
                   {/* Progreso semanal */}
-                  <div className="space-y-3 mb-4">
+                  <div className="space-y-3 mb-5">
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                         <CalendarDays className="w-4 h-4" />
