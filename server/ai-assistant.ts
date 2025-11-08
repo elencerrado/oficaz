@@ -57,9 +57,7 @@ export async function listEmployees(
     employees: filteredEmployees.map(emp => ({
       id: emp.id,
       fullName: emp.fullName,
-      email: emp.email,
       role: emp.role,
-      department: emp.department || "Sin departamento",
       status: emp.status
     }))
   };
@@ -620,6 +618,80 @@ export async function deleteWorkShift(
     deletedCount: shiftsToDelete.length,
     employeeFullName: employee.fullName,
     date: targetDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+  };
+}
+
+// 7. Delete work shifts in a date range (for multiple days or all employees)
+export async function deleteWorkShiftsInRange(
+  context: AIFunctionContext,
+  params: {
+    employeeId?: number; // Optional: if not provided, deletes for ALL employees
+    startDate: string; // YYYY-MM-DD
+    endDate: string; // YYYY-MM-DD
+  }
+) {
+  const { storage, companyId } = context;
+
+  // Verify employee if specified
+  let employee = null;
+  if (params.employeeId) {
+    employee = await storage.getUser(params.employeeId);
+    if (!employee || employee.companyId !== companyId) {
+      throw new Error("Employee not found or doesn't belong to this company");
+    }
+  }
+
+  // Parse dates
+  const startBoundary = getUTCDayBoundaries(params.startDate).startOfDay;
+  const endBoundary = getUTCDayBoundaries(params.endDate).endOfDay;
+
+  // Build query
+  const whereConditions = [
+    eq(schema.workShifts.companyId, companyId)
+  ];
+  
+  if (params.employeeId) {
+    whereConditions.push(eq(schema.workShifts.employeeId, params.employeeId));
+  }
+
+  // Find all shifts in the range
+  const shifts = await db.select()
+    .from(schema.workShifts)
+    .where(and(...whereConditions));
+
+  // Filter shifts that overlap with the date range
+  const shiftsToDelete = shifts.filter((shift: any) => {
+    const shiftStart = new Date(shift.startAt);
+    const shiftEnd = new Date(shift.endAt);
+    return shiftStart <= endBoundary && shiftEnd >= startBoundary;
+  });
+
+  if (shiftsToDelete.length === 0) {
+    const targetDescription = employee 
+      ? `${employee.fullName}` 
+      : "ningún empleado";
+    return {
+      success: false,
+      error: `No hay turnos para ${targetDescription} entre ${params.startDate} y ${params.endDate}`,
+      deletedCount: 0
+    };
+  }
+
+  // Delete the shifts
+  for (const shift of shiftsToDelete) {
+    await db.delete(schema.workShifts)
+      .where(eq(schema.workShifts.id, shift.id));
+  }
+
+  const targetDescription = employee 
+    ? `de ${employee.fullName}` 
+    : "de todos los empleados";
+
+  return {
+    success: true,
+    message: `Se eliminaron ${shiftsToDelete.length} turno(s) ${targetDescription}`,
+    deletedCount: shiftsToDelete.length,
+    dateRange: `${params.startDate} a ${params.endDate}`
   };
 }
 
@@ -1420,6 +1492,28 @@ export const AI_FUNCTIONS = [
     },
   },
   {
+    name: "deleteWorkShiftsInRange",
+    description: "🗑️ Eliminar TODOS los turnos en un rango de fechas. Úsalo cuando el usuario pida borrar 'todos los turnos de la semana', 'borrar turnos del lunes al viernes', etc. Puede borrar turnos de UN empleado específico o de TODOS los empleados si no se especifica employeeName",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeName: {
+          type: "string",
+          description: "Nombre del empleado (OPCIONAL - si no se proporciona, borra turnos de TODOS los empleados)",
+        },
+        startDate: {
+          type: "string",
+          description: "Fecha de inicio en formato YYYY-MM-DD",
+        },
+        endDate: {
+          type: "string",
+          description: "Fecha de fin en formato YYYY-MM-DD",
+        },
+      },
+      required: ["startDate", "endDate"],
+    },
+  },
+  {
     name: "updateWorkShiftTimes",
     description: "Modificar las horas de un turno existente (cambiar hora de inicio o fin). Úsalo cuando el admin quiera modificar horarios a posteriori",
     parameters: {
@@ -1642,6 +1736,8 @@ export async function executeAIFunction(
       return requestDocument(context, params);
     case "deleteWorkShift":
       return deleteWorkShift(context, params);
+    case "deleteWorkShiftsInRange":
+      return deleteWorkShiftsInRange(context, params);
     case "updateWorkShiftTimes":
       return updateWorkShiftTimes(context, params);
     case "detectWorkShiftOverlaps":

@@ -7537,12 +7537,19 @@ Usuario: "Cambia los colores de los turnos de Marta"
 
 ✏️ ACTUAR DESPUÉS:
 - assignSchedule: Crear nuevos turnos
-- deleteWorkShift: Borrar turnos de una fecha
+- deleteWorkShift: Borrar turnos de UN empleado en UNA fecha específica
+- deleteWorkShiftsInRange: 🗑️ Borrar turnos en un RANGO de fechas (semana, mes, etc). Puede borrar de UN empleado o de TODOS si no se especifica
 - updateWorkShiftTimes: Cambiar horarios
 - updateEmployeeShiftsColor: Cambiar colores de TODOS los turnos en un rango de fechas (usa esto para cambios masivos)
 - updateWorkShiftColor: Cambiar color de UN turno específico (solo si sabes el título exacto)
 - updateWorkShiftDetails: Cambiar título, ubicación, notas
 - detectWorkShiftOverlaps: Identificar conflictos
+
+📌 USO CORRECTO DE FUNCIONES DE BORRADO:
+- "Borra el turno del lunes" → deleteWorkShift (empleado + fecha específica)
+- "Borra todos los turnos de la semana" → deleteWorkShiftsInRange (startDate + endDate, SIN employeeName)
+- "Borra los turnos de Juan del 10 al 15" → deleteWorkShiftsInRange (employeeName + startDate + endDate)
+- "Elimina todos los turnos de noviembre" → deleteWorkShiftsInRange (2025-11-01 a 2025-11-30)
 
 🚀 REGLAS DE EJECUCIÓN:
 1. SIEMPRE consulta PRIMERO si mencionan empleados o turnos existentes (usa listEmployees/getEmployeeShifts)
@@ -7606,7 +7613,7 @@ Responde en español, sé BREVE y DIRECTO. Confirma acciones completadas sin rod
           const functionArgs = JSON.parse(toolCall.function.arguments);
 
           // Resolve employee names to IDs before executing function
-          const functionsNeedingEmployeeResolution = ['getEmployeeShifts', 'assignSchedule', 'requestDocument', 'deleteWorkShift', 'updateWorkShiftTimes', 'updateEmployeeShiftsColor', 'updateWorkShiftColor', 'updateWorkShiftDetails', 'detectWorkShiftOverlaps'];
+          const functionsNeedingEmployeeResolution = ['getEmployeeShifts', 'assignSchedule', 'requestDocument', 'deleteWorkShift', 'deleteWorkShiftsInRange', 'updateWorkShiftTimes', 'updateEmployeeShiftsColor', 'updateWorkShiftColor', 'updateWorkShiftDetails', 'detectWorkShiftOverlaps'];
           if (functionsNeedingEmployeeResolution.includes(functionName) && functionArgs.employeeName) {
             const resolution = await resolveEmployeeName(storage, companyId, functionArgs.employeeName);
             
