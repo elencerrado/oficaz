@@ -130,6 +130,12 @@ export function AIAssistantChat() {
     const container = scrollContainerRef.current;
     
     const handleScroll = () => {
+      // IGNORE scroll events that reset to 0 (browser re-render artifact)
+      if (container.scrollTop === 0 && preservedScrollPosition.current > 100) {
+        console.log("⚠️ Ignoring scroll reset to 0, keeping:", preservedScrollPosition.current);
+        return;
+      }
+      
       preservedScrollPosition.current = container.scrollTop;
       console.log("📍 Saved scroll position:", container.scrollTop);
     };
@@ -141,10 +147,11 @@ export function AIAssistantChat() {
   // CRITICAL: Restore scroll position after every render
   useLayoutEffect(() => {
     if (!scrollContainerRef.current || !isOpen) return;
-    if (preservedScrollPosition.current > 0 && !hasInitializedScrollOnce) return; // Don't restore on first open
+    if (preservedScrollPosition.current === 0 && hasInitializedScrollOnce) return; // Don't restore 0 after initialization
     
-    scrollContainerRef.current.scrollTop = preservedScrollPosition.current;
-    console.log("🔄 Restored scroll position:", preservedScrollPosition.current);
+    const targetScroll = hasInitializedScrollOnce ? preservedScrollPosition.current : scrollContainerRef.current.scrollHeight;
+    scrollContainerRef.current.scrollTop = targetScroll;
+    console.log("🔄 Restored scroll to:", targetScroll);
   });
   
   // PROFESSIONAL PATTERN: Only scroll to bottom on FIRST open
