@@ -121,24 +121,31 @@ export function AIAssistantChat() {
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const preservedScrollPosition = useRef<number>(0);
   
-  // DEBUG: Track scroll value changes
+  // CRITICAL: Track scroll changes and save to ref
   useEffect(() => {
     if (!scrollContainerRef.current || !isOpen) return;
     
     const container = scrollContainerRef.current;
-    let lastScroll = container.scrollTop;
     
-    const checkScroll = () => {
-      if (container.scrollTop !== lastScroll) {
-        console.log("🔍 Scroll changed:", lastScroll, "→", container.scrollTop);
-        lastScroll = container.scrollTop;
-      }
+    const handleScroll = () => {
+      preservedScrollPosition.current = container.scrollTop;
+      console.log("📍 Saved scroll position:", container.scrollTop);
     };
     
-    const interval = setInterval(checkScroll, 100);
-    return () => clearInterval(interval);
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
   }, [isOpen]);
+  
+  // CRITICAL: Restore scroll position after every render
+  useLayoutEffect(() => {
+    if (!scrollContainerRef.current || !isOpen) return;
+    if (preservedScrollPosition.current > 0 && !hasInitializedScrollOnce) return; // Don't restore on first open
+    
+    scrollContainerRef.current.scrollTop = preservedScrollPosition.current;
+    console.log("🔄 Restored scroll position:", preservedScrollPosition.current);
+  });
   
   // PROFESSIONAL PATTERN: Only scroll to bottom on FIRST open
   useEffect(() => {
