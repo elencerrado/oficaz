@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, Minimize2 } from "lucide-react";
+import { Send, Loader2, Minimize2, RotateCcw } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -105,17 +105,50 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
 
 export function AIAssistantChat() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content:
-        "¡Hola! Soy tu asistente de IA. Puedo ayudarte con:\n\n• Enviar mensajes a empleados\n• Aprobar solicitudes de vacaciones\n• Aprobar cambios de horario\n• Crear recordatorios\n• Gestionar empleados\n• Asignar turnos\n• Solicitar documentos\n\n¿En qué puedo ayudarte hoy?",
-    },
-  ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Initialize messages from localStorage or with default welcome message
+  // Auto-clear history after 2 days
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const defaultMessage = {
+      role: "assistant" as const,
+      content:
+        "¡Hola! Soy tu asistente de IA. Puedo ayudarte con:\n\n• Enviar mensajes a empleados\n• Aprobar solicitudes de vacaciones\n• Aprobar cambios de horario\n• Crear recordatorios\n• Gestionar empleados\n• Asignar turnos\n• Solicitar documentos\n\n¿En qué puedo ayudarte hoy?",
+    };
+
+    const savedMessages = localStorage.getItem("ai_assistant_chat_history");
+    const savedTimestamp = localStorage.getItem("ai_assistant_chat_timestamp");
+    
+    if (savedMessages && savedTimestamp) {
+      try {
+        const timestamp = parseInt(savedTimestamp);
+        const now = Date.now();
+        const twoDaysInMs = 2 * 24 * 60 * 60 * 1000; // 2 días en milisegundos
+        
+        // Si han pasado más de 2 días, reiniciar el chat
+        if (now - timestamp > twoDaysInMs) {
+          localStorage.removeItem("ai_assistant_chat_history");
+          localStorage.removeItem("ai_assistant_chat_timestamp");
+          return [defaultMessage];
+        }
+        
+        return JSON.parse(savedMessages);
+      } catch {
+        return [defaultMessage];
+      }
+    }
+    
+    return [defaultMessage];
+  });
+
+  // Save messages to localStorage whenever they change, along with timestamp
+  useEffect(() => {
+    localStorage.setItem("ai_assistant_chat_history", JSON.stringify(messages));
+    localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
+  }, [messages]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -214,6 +247,17 @@ export function AIAssistantChat() {
     }
   };
 
+  const clearHistory = () => {
+    const defaultMessage = {
+      role: "assistant" as const,
+      content:
+        "¡Hola! Soy tu asistente de IA. Puedo ayudarte con:\n\n• Enviar mensajes a empleados\n• Aprobar solicitudes de vacaciones\n• Aprobar cambios de horario\n• Crear recordatorios\n• Gestionar empleados\n• Asignar turnos\n• Solicitar documentos\n\n¿En qué puedo ayudarte hoy?",
+    };
+    setMessages([defaultMessage]);
+    localStorage.setItem("ai_assistant_chat_history", JSON.stringify([defaultMessage]));
+    localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
+  };
+
   return (
     <>
       {/* Floating button */}
@@ -240,13 +284,23 @@ export function AIAssistantChat() {
           {/* Header */}
           <div className="flex items-center justify-between rounded-t-2xl bg-gradient-to-r from-[#007AFF] to-[#0066CC] px-4 py-2 text-white dark:from-[#0A84FF] dark:to-[#0066CC]">
             <h3 className="font-semibold text-sm" data-testid="text-ai-assistant-title">OficazIA</h3>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-white/10 transition-colors"
-              data-testid="button-minimize-chat"
-            >
-              <Minimize2 className="h-3.5 w-3.5" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={clearHistory}
+                className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+                data-testid="button-clear-chat"
+                title="Nueva conversación"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+                data-testid="button-minimize-chat"
+              >
+                <Minimize2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
 
           {/* Messages */}
