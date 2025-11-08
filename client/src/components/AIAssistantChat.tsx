@@ -109,6 +109,7 @@ export function AIAssistantChat() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Initialize messages from localStorage or with default welcome message
   // Auto-clear history after 2 days
@@ -150,10 +151,12 @@ export function AIAssistantChat() {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   }, [messages]);
 
-  // Simple scroll to bottom - works like WhatsApp Web
+  // FORCE scroll to bottom always
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-  }, [messages, isLoading, isOpen]);
+    if (isOpen && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    }
+  });
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -313,7 +316,7 @@ export function AIAssistantChat() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 space-y-4 overflow-y-auto p-4" data-testid="container-ai-messages">
+          <div ref={scrollContainerRef} className="flex-1 space-y-4 overflow-y-auto p-4" data-testid="container-ai-messages">
             {messages.map((message, index) => (
               <div
                 key={index}
