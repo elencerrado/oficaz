@@ -59,6 +59,8 @@ Preferred communication style: Simple, everyday language.
 - **AI Assistant System** (Pro/Master plans): GPT-5 Nano assistant for administrative task automation with conversational context persistence (localStorage, 2-day auto-cleanup). Includes full work schedule ("cuadrante") management capabilities (assign, delete, update, detect overlaps, change colors, update details). All schedule modifications validate input and handle overnight/cross-midnight shifts correctly.
   - **UTC Helper (Nov 2025)**: Shared `getUTCDayBoundaries()` helper function ensures consistent timezone handling across all date-based AI operations. Prevents off-by-one timezone bugs when filtering shifts by date. Used in deleteWorkShift, updateWorkShiftTimes, updateWorkShiftColor, updateWorkShiftDetails.
   - **Chat UI (Nov 2025)**: Auto-scroll to bottom when chat opens or receives new messages for better UX.
+  - **Auto-color System (Nov 2025)**: Each employee gets unique color based on ID % 8 to visually distinguish schedules. 8 colors rotate: blue, green, amber, purple, red, cyan, orange, pink.
+  - **Real-time UI Sync (Nov 2025)**: All AI shift modification functions (updateWorkShiftTimes, updateWorkShiftColor, updateWorkShiftDetails, assignSchedule, deleteWorkShift) trigger immediate React Query cache invalidation for instant frontend updates without page reload.
 - **Object Storage**: Replit Object Storage integration for persistent file storage.
 - **Account Management**: 30-day grace period for account deletion, immediate blocking of cancelled accounts.
 - **Data Integrity**: Break periods belong to current work session. Orphaned documents are removed.
