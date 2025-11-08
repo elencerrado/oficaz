@@ -144,14 +144,19 @@ export function AIAssistantChat() {
     return () => container.removeEventListener('scroll', handleScroll);
   }, [isOpen]);
   
-  // CRITICAL: Restore scroll position after every render
+  // CRITICAL: Restore scroll position after every render (AFTER browser paint)
   useLayoutEffect(() => {
     if (!scrollContainerRef.current || !isOpen) return;
     if (preservedScrollPosition.current === 0 && hasInitializedScrollOnce) return; // Don't restore 0 after initialization
     
-    const targetScroll = hasInitializedScrollOnce ? preservedScrollPosition.current : scrollContainerRef.current.scrollHeight;
-    scrollContainerRef.current.scrollTop = targetScroll;
-    console.log("🔄 Restored scroll to:", targetScroll);
+    // Use RAF to ensure this runs AFTER browser has painted
+    requestAnimationFrame(() => {
+      if (!scrollContainerRef.current) return;
+      
+      const targetScroll = hasInitializedScrollOnce ? preservedScrollPosition.current : scrollContainerRef.current.scrollHeight;
+      scrollContainerRef.current.scrollTop = targetScroll;
+      console.log("🔄 Restored scroll to:", targetScroll);
+    });
   });
   
   // PROFESSIONAL PATTERN: Only scroll to bottom on FIRST open
