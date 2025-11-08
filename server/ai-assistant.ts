@@ -333,6 +333,21 @@ export async function createEmployee(
   };
 }
 
+// Helper: Generate consistent color for employee based on their ID
+function getEmployeeColor(employeeId: number): string {
+  const colors = [
+    "#3b82f6", // Blue
+    "#10b981", // Green
+    "#f59e0b", // Amber
+    "#8b5cf6", // Purple
+    "#ef4444", // Red
+    "#06b6d4", // Cyan
+    "#f97316", // Orange
+    "#ec4899", // Pink
+  ];
+  return colors[employeeId % colors.length];
+}
+
 // 6. Assign schedule/shift
 export async function assignSchedule(
   context: AIFunctionContext,
@@ -359,6 +374,9 @@ export async function assignSchedule(
   const startAt = new Date(params.startDate + '+01:00'); // CET offset
   const endAt = new Date(params.endDate + '+01:00');
 
+  // Auto-assign color based on employee ID if not provided
+  const shiftColor = params.color || getEmployeeColor(params.employeeId);
+
   // Create work shift
   const shift = await db.insert(schema.workShifts)
     .values({
@@ -369,7 +387,7 @@ export async function assignSchedule(
       title: params.title,
       location: params.location || null,
       notes: params.notes || null,
-      color: params.color || "#3b82f6",
+      color: shiftColor,
       createdByUserId: adminUserId,
     })
     .returning();
@@ -699,6 +717,15 @@ export async function updateWorkShiftColor(
   // Parse the date using UTC to avoid timezone issues
   const { startOfDay, endOfDay, targetDate } = getUTCDayBoundaries(params.date);
 
+  console.log("🎨 UPDATE COLOR DEBUG:", {
+    employeeName: employee.fullName,
+    date: params.date,
+    newColor: params.newColor,
+    shiftTitle: params.shiftTitle,
+    startOfDay: startOfDay.toISOString(),
+    endOfDay: endOfDay.toISOString()
+  });
+
   const shifts = await db.select()
     .from(schema.workShifts)
     .where(
@@ -708,16 +735,27 @@ export async function updateWorkShiftColor(
       )
     );
 
+  console.log("🎨 All employee shifts:", shifts.map(s => ({
+    id: s.id,
+    title: s.title,
+    startAt: new Date(s.startAt).toISOString(),
+    endAt: new Date(s.endAt).toISOString(),
+    color: s.color
+  })));
+
   let shiftsOnDate = shifts.filter((shift: any) => {
     const shiftStart = new Date(shift.startAt);
     const shiftEnd = new Date(shift.endAt);
     return shiftStart <= endOfDay && shiftEnd >= startOfDay;
   });
 
+  console.log("🎨 Shifts on target date:", shiftsOnDate.length);
+
   if (params.shiftTitle) {
     shiftsOnDate = shiftsOnDate.filter((shift: any) => 
       shift.title?.toLowerCase().includes(params.shiftTitle!.toLowerCase())
     );
+    console.log("🎨 Shifts after title filter:", shiftsOnDate.length);
   }
 
   if (shiftsOnDate.length === 0) {
@@ -729,9 +767,11 @@ export async function updateWorkShiftColor(
   }
 
   // Update color for all matching shifts
+  console.log("🎨 Updating color for shifts:", shiftsOnDate.map(s => s.id));
   for (const shift of shiftsOnDate) {
     await storage.updateWorkShift(shift.id, { color: params.newColor });
   }
+  console.log("🎨 Color updated successfully");
 
   return {
     success: true,
