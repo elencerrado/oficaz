@@ -7723,8 +7723,10 @@ Responde en español, sé BREVE y DIRECTO. Confirma acciones completadas sin rod
           }
 
           // Execute the function
+          console.log(`🤖 AI executing function: ${functionName} with args:`, JSON.stringify(functionArgs, null, 2));
           try {
             const result = await executeAIFunction(functionName, functionArgs, context);
+            console.log(`✅ Function ${functionName} result:`, JSON.stringify(result, null, 2));
             toolResults.push({
               role: "tool" as const,
               tool_call_id: toolCall.id,
