@@ -151,12 +151,23 @@ export function AIAssistantChat() {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   }, [messages]);
 
-  // Scroll to bottom ONLY when messages actually change (not on navigation)
+  // Track previous states to detect actual changes
   const previousMessageCount = useRef(messages.length);
+  const previousIsOpen = useRef(isOpen);
+  
   useEffect(() => {
-    if (isOpen && scrollContainerRef.current && previousMessageCount.current !== messages.length) {
-      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    if (scrollContainerRef.current) {
+      // Scroll if: chat just opened OR messages changed
+      const chatJustOpened = isOpen && !previousIsOpen.current;
+      const messagesChanged = previousMessageCount.current !== messages.length;
+      
+      if (chatJustOpened || (isOpen && messagesChanged)) {
+        scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+      }
+      
+      // Update refs
       previousMessageCount.current = messages.length;
+      previousIsOpen.current = isOpen;
     }
   }, [messages.length, isLoading, isOpen]);
 
