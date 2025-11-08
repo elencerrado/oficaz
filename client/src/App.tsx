@@ -598,7 +598,7 @@ function AIAssistantWrapper() {
   const { user } = useAuth();
   
   // Always mount the component (never unmount), just hide if no access
-  const hasAccess = user && hasAIAssistant('ai_assistant');
+  const hasAccess = Boolean(user && hasAIAssistant('ai_assistant'));
   
   return <AIAssistantChat hasAccess={hasAccess} />;
 }
