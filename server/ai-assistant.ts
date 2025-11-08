@@ -443,6 +443,15 @@ export async function deleteWorkShift(
   // Parse the date using UTC to avoid timezone issues
   const { startOfDay, endOfDay, targetDate } = getUTCDayBoundaries(params.date);
 
+  console.log("🔍 DELETE SHIFT DEBUG:", {
+    employeeId: params.employeeId,
+    employeeName: employee.fullName,
+    inputDate: params.date,
+    startOfDay: startOfDay.toISOString(),
+    endOfDay: endOfDay.toISOString(),
+    targetDate: targetDate.toISOString()
+  });
+
   // Find all shifts for this employee
   const shifts = await db.select()
     .from(schema.workShifts)
@@ -453,13 +462,32 @@ export async function deleteWorkShift(
       )
     );
 
+  console.log("🔍 All shifts for employee:", shifts.map(s => ({
+    id: s.id,
+    title: s.title,
+    startAt: new Date(s.startAt).toISOString(),
+    endAt: new Date(s.endAt).toISOString()
+  })));
+
   // Filter shifts that OVERLAP with the target date (including overnight shifts)
   // A shift overlaps if: startAt <= endOfDay AND endAt >= startOfDay
   const shiftsToDelete = shifts.filter((shift: any) => {
     const shiftStart = new Date(shift.startAt);
     const shiftEnd = new Date(shift.endAt);
-    return shiftStart <= endOfDay && shiftEnd >= startOfDay;
+    const overlaps = shiftStart <= endOfDay && shiftEnd >= startOfDay;
+    
+    console.log(`  Shift ${shift.id} check:`, {
+      shiftStart: shiftStart.toISOString(),
+      shiftEnd: shiftEnd.toISOString(),
+      'shiftStart <= endOfDay': shiftStart <= endOfDay,
+      'shiftEnd >= startOfDay': shiftEnd >= startOfDay,
+      overlaps
+    });
+    
+    return overlaps;
   });
+
+  console.log("🔍 Shifts to delete:", shiftsToDelete.length);
 
   if (shiftsToDelete.length === 0) {
     return {
