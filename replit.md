@@ -57,6 +57,8 @@ Preferred communication style: Simple, everyday language.
 - **Security**: Helmet for CSP, CORS, rate limiting, HSTS, X-XSS-Protection, Referrer-Policy; SQL injection protection. SuperAdmin access via email verification with enhanced security.
 - **Core Modules**: Authentication, Time Tracking, Vacation Management, Document Management, Messaging, Administrative Features, Subscription Management, Reminders, Email Marketing (SuperAdmin), Time Tracking Modification & Audit System, PWA System, AI Assistant.
 - **AI Assistant System** (Pro/Master plans): GPT-5 Nano assistant for administrative task automation with conversational context persistence (localStorage, 2-day auto-cleanup). Includes full work schedule ("cuadrante") management capabilities (assign, delete, update, detect overlaps, change colors, update details). All schedule modifications validate input and handle overnight/cross-midnight shifts correctly.
+  - **UTC Helper (Nov 2025)**: Shared `getUTCDayBoundaries()` helper function ensures consistent timezone handling across all date-based AI operations. Prevents off-by-one timezone bugs when filtering shifts by date. Used in deleteWorkShift, updateWorkShiftTimes, updateWorkShiftColor, updateWorkShiftDetails.
+  - **Chat UI (Nov 2025)**: Auto-scroll to bottom when chat opens or receives new messages for better UX.
 - **Object Storage**: Replit Object Storage integration for persistent file storage.
 - **Account Management**: 30-day grace period for account deletion, immediate blocking of cancelled accounts.
 - **Data Integrity**: Break periods belong to current work session. Orphaned documents are removed.
