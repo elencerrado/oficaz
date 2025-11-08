@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Send, Loader2, Minimize2, RotateCcw } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -152,8 +152,8 @@ export function AIAssistantChat() {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   }, [messages]);
 
-  // Restore scroll position ONLY when opening chat
-  useEffect(() => {
+  // Restore scroll position BEFORE browser paint (prevents flash)
+  useLayoutEffect(() => {
     if (!isOpen || !scrollContainerRef.current) return;
     
     const savedPos = localStorage.getItem('ai_chat_scroll_position');
