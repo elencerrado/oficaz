@@ -120,6 +120,25 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
+  // Track scroll position changes
+  useEffect(() => {
+    if (!scrollContainerRef.current || !isOpen) return;
+    
+    const observer = new MutationObserver(() => {
+      if (scrollContainerRef.current) {
+        console.log("🔍 Container mutated, scrollTop:", scrollContainerRef.current.scrollTop);
+      }
+    });
+    
+    observer.observe(scrollContainerRef.current, {
+      childList: true,
+      subtree: true,
+      attributes: true
+    });
+    
+    return () => observer.disconnect();
+  }, [isOpen]);
+  
   // PROFESSIONAL PATTERN: Only scroll to bottom on FIRST open
   useEffect(() => {
     if (isOpen && scrollContainerRef.current && !hasInitializedScrollOnce) {
@@ -127,9 +146,11 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
         if (scrollContainerRef.current) {
           scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
           hasInitializedScrollOnce = true;
-          console.log("✅ First open - scrolled to bottom");
+          console.log("✅ First open - scrolled to bottom, scrollTop:", scrollContainerRef.current.scrollTop);
         }
       });
+    } else if (isOpen && scrollContainerRef.current) {
+      console.log("🔍 Chat opened, current scrollTop:", scrollContainerRef.current.scrollTop);
     }
   }, [isOpen]); // Only runs when isOpen changes
 
