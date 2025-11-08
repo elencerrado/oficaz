@@ -7572,7 +7572,7 @@ Responde en español, sé BREVE y DIRECTO. Confirma acciones completadas sin rod
           const functionArgs = JSON.parse(toolCall.function.arguments);
 
           // Resolve employee names to IDs before executing function
-          const functionsNeedingEmployeeResolution = ['assignSchedule', 'requestDocument', 'deleteWorkShift', 'updateWorkShiftTimes', 'updateWorkShiftColor', 'updateWorkShiftDetails', 'detectWorkShiftOverlaps'];
+          const functionsNeedingEmployeeResolution = ['assignSchedule', 'requestDocument', 'deleteWorkShift', 'updateWorkShiftTimes', 'updateEmployeeShiftsColor', 'updateWorkShiftColor', 'updateWorkShiftDetails', 'detectWorkShiftOverlaps'];
           if (functionsNeedingEmployeeResolution.includes(functionName) && functionArgs.employeeName) {
             const resolution = await resolveEmployeeName(storage, companyId, functionArgs.employeeName);
             

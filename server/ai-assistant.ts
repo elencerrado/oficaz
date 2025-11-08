@@ -858,7 +858,61 @@ export async function updateWorkShiftDetails(
   };
 }
 
-// 13. Swap work shifts between two employees
+// 13. Update all work shift colors for an employee in a date range
+export async function updateEmployeeShiftsColor(
+  context: AIFunctionContext,
+  params: {
+    employeeId: number;
+    startDate: string; // YYYY-MM-DD
+    endDate: string;   // YYYY-MM-DD  
+    newColor: string;  // Hex color (e.g., "#3b82f6")
+  }
+) {
+  const { storage, companyId } = context;
+
+  // Validate hex color
+  if (!/^#[0-9A-F]{6}$/i.test(params.newColor)) {
+    return {
+      success: false,
+      error: `"${params.newColor}" no es un color hexadecimal válido. Usa formato #RRGGBB (ej: #3b82f6)`
+    };
+  }
+
+  const employee = await storage.getUser(params.employeeId);
+  if (!employee || employee.companyId !== companyId) {
+    throw new Error("Employee not found or doesn't belong to this company");
+  }
+
+  // Get all shifts in the date range
+  const shifts = await storage.getWorkShiftsByEmployee(
+    params.employeeId,
+    params.startDate,
+    params.endDate
+  );
+
+  if (shifts.length === 0) {
+    return {
+      success: false,
+      error: `${employee.fullName} no tiene turnos entre ${params.startDate} y ${params.endDate}`,
+      employeeFullName: employee.fullName
+    };
+  }
+
+  // Update color for all shifts
+  for (const shift of shifts) {
+    await storage.updateWorkShift(shift.id, { color: params.newColor });
+  }
+
+  return {
+    success: true,
+    employeeFullName: employee.fullName,
+    shiftsUpdated: shifts.length,
+    newColor: params.newColor,
+    dateRange: `${params.startDate} a ${params.endDate}`
+  };
+}
+
+// 14. Swap work shifts between two employees
 export async function swapEmployeeShifts(
   context: AIFunctionContext,
   params: {
@@ -910,7 +964,7 @@ export async function swapEmployeeShifts(
   };
 }
 
-// 14. Copy work shifts from one employee to another
+// 15. Copy work shifts from one employee to another
 export async function copyEmployeeShifts(
   context: AIFunctionContext,
   params: {
@@ -1250,6 +1304,32 @@ export const AI_FUNCTIONS = [
     },
   },
   {
+    name: "updateEmployeeShiftsColor",
+    description: "Cambiar el color de TODOS los turnos de un empleado en un rango de fechas. Usa esta función cuando quieras cambiar colores sin especificar turnos individuales",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeName: {
+          type: "string",
+          description: "Nombre del empleado",
+        },
+        startDate: {
+          type: "string",
+          description: "Fecha de inicio en formato YYYY-MM-DD",
+        },
+        endDate: {
+          type: "string",
+          description: "Fecha de fin en formato YYYY-MM-DD",
+        },
+        newColor: {
+          type: "string",
+          description: "Nuevo color en formato hexadecimal (ej: '#3b82f6' para azul, '#ef4444' para rojo, '#10b981' para verde, '#f59e0b' para naranja, '#8b5cf6' para morado)",
+        },
+      },
+      required: ["employeeName", "startDate", "endDate", "newColor"],
+    },
+  },
+  {
     name: "updateWorkShiftColor",
     description: "Cambiar el color de un turno existente. Útil para organizaci��n visual del cuadrante",
     parameters: {
@@ -1390,6 +1470,8 @@ export async function executeAIFunction(
       return updateWorkShiftTimes(context, params);
     case "detectWorkShiftOverlaps":
       return detectWorkShiftOverlaps(context, params);
+    case "updateEmployeeShiftsColor":
+      return updateEmployeeShiftsColor(context, params);
     case "updateWorkShiftColor":
       return updateWorkShiftColor(context, params);
     case "updateWorkShiftDetails":

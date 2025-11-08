@@ -189,6 +189,7 @@ export function AIAssistantChat() {
             case "assignSchedule":
             case "deleteWorkShift":
             case "updateWorkShiftTimes":
+            case "updateEmployeeShiftsColor":
             case "updateWorkShiftColor":
             case "updateWorkShiftDetails":
             case "swapEmployeeShifts":
