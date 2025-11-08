@@ -29,6 +29,19 @@ function normalizeForComparison(str: string): string {
     .replace(/\p{Diacritic}/gu, '');
 }
 
+// ⚠️ HELPER: Calculate UTC day boundaries from YYYY-MM-DD string
+// This ensures consistent timezone handling across all date-based operations
+function getUTCDayBoundaries(dateString: string) {
+  // Parse as UTC midnight to avoid timezone issues
+  const targetDate = new Date(`${dateString}T00:00:00Z`);
+  const startOfDay = new Date(targetDate);
+  startOfDay.setUTCHours(0, 0, 0, 0);
+  const endOfDay = new Date(targetDate);
+  endOfDay.setUTCHours(23, 59, 59, 999);
+  
+  return { startOfDay, endOfDay, targetDate };
+}
+
 // Helper function to resolve employee names to IDs
 export async function resolveEmployeeName(
   storage: DrizzleStorage,
@@ -427,12 +440,8 @@ export async function deleteWorkShift(
     throw new Error("Employee not found or doesn't belong to this company");
   }
 
-  // Parse the date
-  const targetDate = new Date(params.date);
-  const startOfDay = new Date(targetDate);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(targetDate);
-  endOfDay.setHours(23, 59, 59, 999);
+  // Parse the date using UTC to avoid timezone issues
+  const { startOfDay, endOfDay, targetDate } = getUTCDayBoundaries(params.date);
 
   // Find all shifts for this employee
   const shifts = await db.select()
@@ -494,12 +503,8 @@ export async function updateWorkShiftTimes(
     throw new Error("Employee not found or doesn't belong to this company");
   }
 
-  // Parse the date
-  const targetDate = new Date(params.date);
-  const startOfDay = new Date(targetDate);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(targetDate);
-  endOfDay.setHours(23, 59, 59, 999);
+  // Parse the date using UTC to avoid timezone issues
+  const { startOfDay, endOfDay } = getUTCDayBoundaries(params.date);
 
   // Find all shifts for this employee on this date
   const shifts = await db.select()
@@ -686,11 +691,8 @@ export async function updateWorkShiftColor(
     throw new Error("Employee not found or doesn't belong to this company");
   }
 
-  const targetDate = new Date(params.date);
-  const startOfDay = new Date(targetDate);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(targetDate);
-  endOfDay.setHours(23, 59, 59, 999);
+  // Parse the date using UTC to avoid timezone issues
+  const { startOfDay, endOfDay, targetDate } = getUTCDayBoundaries(params.date);
 
   const shifts = await db.select()
     .from(schema.workShifts)
@@ -753,11 +755,8 @@ export async function updateWorkShiftDetails(
     throw new Error("Employee not found or doesn't belong to this company");
   }
 
-  const targetDate = new Date(params.date);
-  const startOfDay = new Date(targetDate);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(targetDate);
-  endOfDay.setHours(23, 59, 59, 999);
+  // Parse the date using UTC to avoid timezone issues
+  const { startOfDay, endOfDay, targetDate } = getUTCDayBoundaries(params.date);
 
   const shifts = await db.select()
     .from(schema.workShifts)
