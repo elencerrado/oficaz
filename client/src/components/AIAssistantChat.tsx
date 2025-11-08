@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Send, Loader2, Minimize2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -105,6 +105,12 @@ export function AIAssistantChat() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -268,6 +274,9 @@ export function AIAssistantChat() {
                 </div>
               </div>
             )}
+            
+            {/* Auto-scroll anchor */}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Input */}
