@@ -9,6 +9,7 @@ import oficazLogo from "@/assets/oficaz-logo.png";
 
 // PROFESSIONAL PATTERN: Scroll cache persists across route changes (survives re-renders)
 const scrollCache = new Map<string, number>();
+let hasInitializedScrollOnce = false; // Global flag - only scroll to bottom ONCE ever
 
 interface Message {
   role: "user" | "assistant";
@@ -130,13 +131,14 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
       if (!scrollContainerRef.current) return;
       
       if (savedScroll !== undefined) {
-        // Restore previous position
+        // Always restore saved position (even if it's 0)
         scrollContainerRef.current.scrollTop = savedScroll;
         console.log("✅ Restored scroll position:", savedScroll);
-      } else {
-        // First time: scroll to bottom
+      } else if (!hasInitializedScrollOnce) {
+        // ONLY first time EVER: scroll to bottom
         scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-        console.log("✅ First open - scrolled to bottom");
+        hasInitializedScrollOnce = true;
+        console.log("✅ First open ever - scrolled to bottom");
       }
     });
   }, [isOpen]); // Runs when chat opens/closes
