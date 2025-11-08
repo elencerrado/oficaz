@@ -1141,6 +1141,87 @@ export async function updateWorkShiftDetails(
   };
 }
 
+// 12b. Update work shift times in BULK for date range
+export async function updateWorkShiftsInRange(
+  context: AIFunctionContext,
+  params: {
+    employeeId: number;
+    startDate: string; // YYYY-MM-DD
+    endDate: string; // YYYY-MM-DD
+    newStartTime?: string; // HH:mm (e.g., "09:00")
+    newEndTime?: string; // HH:mm (e.g., "17:00")
+    shiftTitle?: string; // Optional: filter by title
+  }
+) {
+  const { storage, companyId } = context;
+
+  const employee = await storage.getUser(params.employeeId);
+  if (!employee || employee.companyId !== companyId) {
+    throw new Error("Employee not found or doesn't belong to this company");
+  }
+
+  // Get all shifts in the date range
+  const shifts = await storage.getWorkShiftsByEmployee(
+    params.employeeId,
+    params.startDate,
+    params.endDate
+  );
+
+  if (shifts.length === 0) {
+    return {
+      success: false,
+      error: `${employee.fullName} no tiene turnos entre ${params.startDate} y ${params.endDate}`,
+      employeeFullName: employee.fullName
+    };
+  }
+
+  // Filter by title if specified
+  let targetShifts = shifts;
+  if (params.shiftTitle) {
+    targetShifts = shifts.filter(shift =>
+      shift.title?.toLowerCase().includes(params.shiftTitle!.toLowerCase())
+    );
+
+    if (targetShifts.length === 0) {
+      return {
+        success: false,
+        error: `No encontré turnos con título "${params.shiftTitle}" para ${employee.fullName} en ese rango`,
+        employeeFullName: employee.fullName
+      };
+    }
+  }
+
+  // Update times for all matching shifts
+  let updatedCount = 0;
+  for (const shift of targetShifts) {
+    const updates: any = {};
+
+    if (params.newStartTime) {
+      const dateStr = new Date(shift.startAt).toISOString().split('T')[0];
+      updates.startAt = new Date(`${dateStr}T${params.newStartTime}:00+01:00`);
+    }
+
+    if (params.newEndTime) {
+      const dateStr = new Date(shift.endAt).toISOString().split('T')[0];
+      updates.endAt = new Date(`${dateStr}T${params.newEndTime}:00+01:00`);
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await storage.updateWorkShift(shift.id, updates);
+      updatedCount++;
+    }
+  }
+
+  return {
+    success: true,
+    employeeFullName: employee.fullName,
+    shiftsUpdated: updatedCount,
+    newStartTime: params.newStartTime,
+    newEndTime: params.newEndTime,
+    dateRange: `${params.startDate} a ${params.endDate}`
+  };
+}
+
 // 13. Update all work shift colors for an employee in a date range
 export async function updateEmployeeShiftsColor(
   context: AIFunctionContext,
@@ -1660,7 +1741,7 @@ export const AI_FUNCTIONS = [
   },
   {
     name: "updateWorkShiftTimes",
-    description: "Modificar las horas de un turno existente (cambiar hora de inicio o fin). Úsalo cuando el admin quiera modificar horarios a posteriori",
+    description: "Modificar las horas de UN turno específico (una fecha). Úsalo cuando el admin quiera modificar el horario de un día concreto",
     parameters: {
       type: "object",
       properties: {
@@ -1686,6 +1767,40 @@ export const AI_FUNCTIONS = [
         },
       },
       required: ["employeeName", "date"],
+    },
+  },
+  {
+    name: "updateWorkShiftsInRange",
+    description: "🗓️ MODIFICAR HORARIOS MASIVOS en RANGO de fechas. Usa esto cuando el admin quiera cambiar las horas de TODA la semana/mes/periodo. Ejemplo: 'cambia todos los turnos de la semana de 8-14 a 9-15'",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeName: {
+          type: "string",
+          description: "Nombre del empleado",
+        },
+        startDate: {
+          type: "string",
+          description: "Fecha de inicio del rango en formato YYYY-MM-DD",
+        },
+        endDate: {
+          type: "string",
+          description: "Fecha de fin del rango en formato YYYY-MM-DD",
+        },
+        newStartTime: {
+          type: "string",
+          description: "Nueva hora de inicio en formato HH:mm (ej: '09:00')",
+        },
+        newEndTime: {
+          type: "string",
+          description: "Nueva hora de fin en formato HH:mm (ej: '17:00')",
+        },
+        shiftTitle: {
+          type: "string",
+          description: "Opcional: filtrar por título de turno",
+        },
+      },
+      required: ["employeeName", "startDate", "endDate"],
     },
   },
   {
@@ -1887,6 +2002,8 @@ export async function executeAIFunction(
       return deleteWorkShiftsInRange(context, params);
     case "updateWorkShiftTimes":
       return updateWorkShiftTimes(context, params);
+    case "updateWorkShiftsInRange":
+      return updateWorkShiftsInRange(context, params);
     case "detectWorkShiftOverlaps":
       return detectWorkShiftOverlaps(context, params);
     case "updateEmployeeShiftsColor":

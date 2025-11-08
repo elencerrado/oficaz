@@ -7546,7 +7546,8 @@ Usuario: "Cambia los colores de los turnos de Marta"
 - deleteWorkShiftsInRange: Borrar turnos en RANGO de fechas (semana, mes). Puede ser de UN empleado o TODOS
 
 ✏️ MODIFICAR TURNOS:
-- updateWorkShiftTimes: Cambiar horarios de UN turno específico
+- updateWorkShiftTimes: Cambiar horarios de UN turno específico (una fecha)
+- updateWorkShiftsInRange: 🗓️ Cambiar horarios MASIVOS en RANGO de fechas (semana/mes)
 - updateEmployeeShiftsColor: Cambiar colores de TODOS los turnos en un rango de fechas
 - updateWorkShiftColor: Cambiar color de UN turno específico
 - updateWorkShiftDetails: Cambiar título, ubicación, notas de UN turno
@@ -7569,6 +7570,11 @@ BORRAR:
 - "Borra el turno del lunes" → deleteWorkShift(employeeName, date)
 - "Elimina todos los turnos de la semana" → deleteWorkShiftsInRange(startDate, endDate) SIN employeeName
 - "Borra los turnos de Juan del 10 al 15" → deleteWorkShiftsInRange(employeeName: "Juan", startDate, endDate)
+
+MODIFICAR:
+- "Cambia el turno del lunes de Juan a 10-18" → updateWorkShiftTimes(employeeName, date, newStartTime, newEndTime)
+- "Cambia todos los turnos de la semana de 8-14 a 9-15" → updateWorkShiftsInRange(employeeName, startDate, endDate, newStartTime, newEndTime)
+- "Modifica los horarios de toda la semana que viene de María" → updateWorkShiftsInRange con rango de fechas
 
 COPIAR:
 - "Copia los turnos de Juan a María" → copyEmployeeShifts(fromEmployeeName: "Juan", toEmployeeName: "María")
@@ -7636,7 +7642,7 @@ Responde en español, sé BREVE y DIRECTO. Confirma acciones completadas sin rod
           const functionArgs = JSON.parse(toolCall.function.arguments);
 
           // Resolve employee names to IDs before executing function
-          const functionsNeedingEmployeeResolution = ['getEmployeeShifts', 'assignSchedule', 'assignScheduleInRange', 'requestDocument', 'deleteWorkShift', 'deleteWorkShiftsInRange', 'updateWorkShiftTimes', 'updateEmployeeShiftsColor', 'updateWorkShiftColor', 'updateWorkShiftDetails', 'detectWorkShiftOverlaps'];
+          const functionsNeedingEmployeeResolution = ['getEmployeeShifts', 'assignSchedule', 'assignScheduleInRange', 'requestDocument', 'deleteWorkShift', 'deleteWorkShiftsInRange', 'updateWorkShiftTimes', 'updateWorkShiftsInRange', 'updateEmployeeShiftsColor', 'updateWorkShiftColor', 'updateWorkShiftDetails', 'detectWorkShiftOverlaps'];
           if (functionsNeedingEmployeeResolution.includes(functionName) && functionArgs.employeeName) {
             const resolution = await resolveEmployeeName(storage, companyId, functionArgs.employeeName);
             
