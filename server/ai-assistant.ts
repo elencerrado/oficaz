@@ -31,7 +31,7 @@ export async function listEmployees(
   context: AIFunctionContext,
   params?: {
     role?: string; // Optional: filter by role (admin/employee)
-    includeInactive?: boolean; // Optional: include inactive employees
+    includeInactive?: boolean; // Optional: include inactive employees (default: false, only active)
   }
 ) {
   const { storage, companyId } = context;
@@ -39,6 +39,11 @@ export async function listEmployees(
   const allEmployees = await storage.getUsersByCompany(companyId);
   
   let filteredEmployees = allEmployees;
+  
+  // Filter by active status (default: only active employees)
+  if (!params?.includeInactive) {
+    filteredEmployees = filteredEmployees.filter(emp => emp.status === 'active');
+  }
   
   // Filter by role if specified
   if (params?.role) {
@@ -54,7 +59,8 @@ export async function listEmployees(
       fullName: emp.fullName,
       email: emp.email,
       role: emp.role,
-      department: emp.department || "Sin departamento"
+      department: emp.department || "Sin departamento",
+      status: emp.status
     }))
   };
 }
