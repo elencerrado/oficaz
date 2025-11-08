@@ -161,16 +161,20 @@ export function AIAssistantChat() {
     const container = scrollContainerRef.current;
     const savedPos = localStorage.getItem('ai_chat_scroll_position');
     
-    // Wait for next frame to ensure content is rendered
+    // Use MULTIPLE frames to ensure DOM is fully rendered
     requestAnimationFrame(() => {
-      if (savedPos && parseInt(savedPos) > 0) {
-        container.scrollTop = parseInt(savedPos);
-      } else {
-        // First time or no saved position - scroll to bottom
-        container.scrollTop = container.scrollHeight;
-      }
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (savedPos && parseInt(savedPos) > 0) {
+            container.scrollTop = parseInt(savedPos);
+          } else {
+            // First time or no saved position - scroll to bottom
+            container.scrollTop = container.scrollHeight;
+          }
+        });
+      });
     });
-  }, [isOpen, location]); // 👈 ALSO runs when location changes
+  }, [isOpen, location]); // Runs when opening OR navigating
   
   // Save scroll position on scroll
   useEffect(() => {
