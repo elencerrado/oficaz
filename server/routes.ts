@@ -7579,6 +7579,9 @@ MODIFICAR:
 COPIAR:
 - "Copia los turnos de Juan a María" → copyEmployeeShifts(fromEmployeeName: "Juan", toEmployeeName: "María")
 - "Duplica los turnos de Pedro a Ana solo del 1 al 10" → copyEmployeeShifts con startDate/endDate
+- "Andrés tiene el mismo turno que Marta" → copyEmployeeShifts(fromEmployeeName: "Marta", toEmployeeName: "Andrés")
+- "Pedro trabaja igual que Ana" → copyEmployeeShifts(fromEmployeeName: "Ana", toEmployeeName: "Pedro")
+- "Asigna a Carlos los mismos turnos que Luis" → copyEmployeeShifts(fromEmployeeName: "Luis", toEmployeeName: "Carlos")
 
 🚀 REGLAS DE EJECUCIÓN:
 1. SIEMPRE consulta PRIMERO si mencionan empleados o turnos existentes (usa listEmployees/getEmployeeShifts)
