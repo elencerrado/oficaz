@@ -104,7 +104,11 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
   );
 }
 
-export function AIAssistantChat() {
+interface AIAssistantChatProps {
+  hasAccess: boolean;
+}
+
+export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -314,6 +318,11 @@ export function AIAssistantChat() {
     localStorage.setItem("ai_assistant_chat_history", JSON.stringify([defaultMessage]));
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   };
+
+  // Don't render if no access
+  if (!hasAccess) {
+    return null;
+  }
 
   // Render directly to body using Portal (prevents destruction on route changes)
   return createPortal(

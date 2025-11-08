@@ -597,12 +597,10 @@ function AIAssistantWrapper() {
   const { hasAccess: hasAIAssistant } = useFeatureCheck();
   const { user } = useAuth();
   
-  // Only show AI Assistant for authenticated users with AI feature
-  if (user && hasAIAssistant('ai_assistant')) {
-    return <AIAssistantChat />;
-  }
+  // Always mount the component (never unmount), just hide if no access
+  const hasAccess = user && hasAIAssistant('ai_assistant');
   
-  return null;
+  return <AIAssistantChat hasAccess={hasAccess} />;
 }
 
 function App() {
