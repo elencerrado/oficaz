@@ -1939,7 +1939,7 @@ export const AI_FUNCTIONS = [
   },
   {
     name: "copyEmployeeShifts",
-    description: "Copiar turnos de un empleado a otro en un rango de fechas. El empleado destino recibirá copias de los turnos del empleado origen. Útil para 'copiar turnos', 'asignar los mismos turnos que', etc.",
+    description: "🔄 COPIAR/DUPLICAR turnos existentes de un empleado a otro. USA ESTA FUNCIÓN cuando el usuario diga: 'X tiene el mismo turno/horario que Y', 'X trabaja igual que Y', 'copia los turnos de Y a X', 'asigna a X los mismos turnos que Y', 'duplica los turnos'. IMPORTANTE: Esta función crea COPIAS de turnos YA EXISTENTES, NO crea turnos nuevos desde cero.",
     parameters: {
       type: "object",
       properties: {
