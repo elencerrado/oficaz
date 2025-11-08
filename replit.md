@@ -1,7 +1,7 @@
 # Oficaz - Employee Management System
 
 ## Overview
-Oficaz is a comprehensive employee management system designed to streamline employee management for companies. It offers features like time tracking, vacation management, document handling, messaging, and administrative tools. The project aims to automate tasks, boost productivity, and allow businesses to focus on core operations through a modern, full-stack application.
+Oficaz is a comprehensive employee management system designed to streamline employee management for companies. It offers features like time tracking, vacation management, document handling, messaging, and administrative tools. The project aims to automate tasks, boost productivity, and allow businesses to focus on core operations through a modern, full-stack application with a vision to deliver a robust and efficient solution for employee management.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -24,28 +24,7 @@ Preferred communication style: Simple, everyday language.
 - **User Requirement**: "Blindfold" (protect/secure) critical functionality to prevent breaking changes
 - **Protection Pattern**: Wrap critical functions with warning comments and clear boundaries
 
-### Email System Configuration
-- **Logo URL**: MUST use static URL `'https://oficaz.es/email-logo-white.png'` - this is the ONLY solution that works
-- **Never use dynamic domain detection for email logos** - it breaks the email display
-- **SMTP Configuration**: nodemailer.createTransport() (NOT createTransporter)
-- **🔒 SECURITY**: SMTP credentials stored in environment variables (SMTP_HOST, SMTP_USER, SMTP_PASS) - NEVER hardcode credentials in code
-- **Outlook Compatibility**: Email marketing templates use HTML height attribute (height="40") with width:auto in CSS to maintain logo proportions in Outlook. Tracking pixel uses border="0" and display:block for maximum compatibility.
-- **Tracking Domain**: Production emails use https://oficaz.es for tracking URLs (pixel and click tracking) for better deliverability and reliability.
-- **Image URL Architecture**: Email marketing images use RELATIVE paths (e.g., `/public-objects/email-marketing/email-123.jpg`) stored in database/campaigns for cross-environment compatibility. Upload endpoint returns relative paths only. Frontend renders images using browser's native relative URL resolution. Email sending process converts relative paths to absolute URLs with production domain dynamically. Migration endpoint `POST /api/super-admin/email-marketing/fix-image-urls` available to normalize existing hardcoded URLs to relative paths. This architecture ensures images work correctly whether campaign is created/viewed in preview or production environment.
-
 ### Security & Reliability Standards
-- **Credential Management**: All sensitive credentials (SMTP, API keys) stored in Replit Secrets as environment variables
-- **JWT Security**: Centralized JWT_SECRET management via `server/utils/jwt-secret.ts` - all modules use same secret for consistency. Short-lived access tokens (15min) with long-lived refresh tokens (30-day). Refresh tokens bcrypt-hashed before storage, atomic consumption prevents TOCTOU races.
-- **Password Hashing**: bcrypt with secure salt rounds for all password storage
-- **Token System**: 
-  - Access tokens: 15-minute expiration, used for API authentication
-  - Refresh tokens: 30-day expiration, bcrypt-hashed, one-time use with atomic consumption
-  - Frontend auto-refresh: Transparent token renewal before expiration (at 13min mark)
-  - Signed URLs: One-time use, 5-minute expiration for document downloads
-- **Signed URLs**: Document downloads use time-limited, one-time signed URLs instead of JWT query parameters. Random tokens (32 bytes), atomic consumption (UPDATE...WHERE...RETURNING) prevents TOCTOU races, 5-minute expiration.
-- **Input Validation**: Zod schemas for all API endpoints to prevent malicious inputs
-- **SQL Injection Protection**: Drizzle ORM with parameterized queries throughout
-- **Rate Limiting**: Global and endpoint-specific rate limits to prevent abuse
 - **🚨 ZERO ERROR TOLERANCE**: User has ABSOLUTE ZERO tolerance for error screens in production
   - **Global Error Suppression**: Inline script in `client/index.html` (first script, executes before everything) suppresses Vite HMR WebSocket errors and network errors during navigation. Prevents unhandled rejection popups.
   - **Auto-Reload ErrorBoundary**: `client/src/components/ErrorBoundary.tsx` automatically reloads page (up to 3 times within 1 minute) when React errors occur. Shows loading spinner during reload, never shows error screens.
@@ -54,38 +33,6 @@ Preferred communication style: Simple, everyday language.
   - **Network Errors**: Failed fetch, NetworkError, and Load failed errors are suppressed during page navigation/reload
   - **React Query**: Automatic retries with exponential backoff (2 retries, 500ms-2000ms delay)
   - **Result**: NEVER show error screens - only loading states and auto-recovery
-- **Error Handling**: 
-  - Global ErrorBoundary captures all React errors (prevents black screens in production)
-  - Server errors logged with full stack traces but only generic messages sent to clients
-  - React Query automatic retries with exponential backoff
-  - User-friendly error messages with reload/recovery options
-  - All errors logged to Sentry for monitoring
-- **Security Headers**: Helmet configuration with HTTPS enforcement, HSTS, X-Content-Type-Options, X-Frame-Options
-- **Company Isolation**: All data queries filtered by companyId to prevent cross-company data access
-- **TOCTOU Prevention**: All security-critical operations use atomic database operations (UPDATE...WHERE...RETURNING) to prevent time-of-check-time-of-use races
-- **Content Security Policy**: Full CSP enabled with whitelisted third-party services (Stripe, Google Maps, UI Avatars). Dev/prod differentiated for Vite HMR.
-
-### Security Operations & Incident Response
-**Token Management:**
-- **Access Token Refresh**: Automatic refresh at 13-minute mark (2min before expiry) via `client/src/lib/queryClient.ts`
-- **Refresh Token Rotation**: One-time use tokens consumed atomically on each refresh via `POST /api/auth/refresh`
-- **Token Revocation**: All user tokens revoked on logout or password change via `storage.revokeAllUserRefreshTokens()`
-- **Cleanup**: Expired refresh tokens/signed URLs automatically cleaned via `deleteExpiredRefreshTokens()`, `deleteExpiredSignedUrls()`
-
-**Document Access Flow:**
-1. User requests download/view → Frontend calls `POST /api/documents/:id/generate-signed-url`
-2. Backend validates access permissions (company isolation + role checks)
-3. Backend generates random 32-byte token, stores in `signed_urls` table (5min expiry)
-4. Frontend receives signed URL → Opens `GET /api/documents/download/:token`
-5. Backend atomically consumes token (UPDATE...WHERE used=false RETURNING)
-6. Only first request succeeds, subsequent requests get 403
-
-**Incident Response Procedures:**
-- **Suspected Token Compromise**: Revoke all company tokens via SuperAdmin or direct DB query
-- **TOCTOU Attack Detected**: Review audit logs for concurrent signed URL requests with same token
-- **CSP Violations**: Check browser console for blocked resources, update CSP whitelist if legitimate
-- **Rate Limit Exceeded**: Investigate source IP for potential abuse, adjust limits if needed
-- **Failed Auth Attempts**: Monitor consecutive auth errors, implement account lockout if pattern detected
 
 ## System Architecture
 
@@ -95,30 +42,30 @@ Preferred communication style: Simple, everyday language.
 - **Styling**: Tailwind CSS with shadcn/ui
 - **State Management**: TanStack Query (React Query)
 - **Form Handling**: React Hook Form with Zod validation
-- **Error Handling**: Global ErrorBoundary (`client/src/components/ErrorBoundary.tsx`) captures all React errors, preventing black screens. Shows user-friendly error page with reload/home buttons. All errors logged to Sentry for monitoring.
-- **Query Resilience**: React Query configured with automatic retries (2 attempts with exponential backoff), stale data handling, and automatic refetching on reconnection/focus.
-- **UI/UX Decisions**: Consistent header layouts (px-6 py-4, no custom containers), modern aesthetic (glassmorphism, shadows, rounded borders), responsive design, professional color scheme, animated elements, unified avatar system. Full dark mode support with `localStorage` persistence. Logo uses `dark:brightness-0 dark:invert` for dark mode compatibility.
-- **Page Titles**: All pages use `usePageTitle` hook to set descriptive browser tab titles instead of showing URLs.
+- **Error Handling**: Global ErrorBoundary (`client/src/components/ErrorBoundary.tsx`) captures all React errors.
+- **Query Resilience**: React Query with automatic retries, stale data handling, and automatic refetching.
+- **UI/UX Decisions**: Consistent header layouts (px-6 py-4), modern aesthetic (glassmorphism, shadows, rounded borders), responsive design, professional color scheme, animated elements, unified avatar system. Full dark mode support with `localStorage` persistence. Logo uses `dark:brightness-0 dark:invert` for dark mode compatibility.
+- **Page Titles**: All pages use `usePageTitle` hook for descriptive browser tab titles.
 
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
 - **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: JWT-based with role-based access control, bcrypt hashing. Silent auth error handling.
+- **Authentication**: JWT-based with role-based access control, bcrypt hashing, silent auth error handling.
 - **File Uploads**: Multer with Sharp (image compression), with specific handling for iOS devices.
 - **Session Management**: Express sessions with PostgreSQL store.
 - **Security**: Helmet for CSP, CORS, rate limiting, HSTS, X-XSS-Protection, Referrer-Policy; SQL injection protection. SuperAdmin access via email verification with enhanced security.
-- **Core Modules**: Authentication, Time Tracking, Vacation Management, Document Management, Messaging, Administrative Features, Subscription Management, Reminders, Email Marketing (SuperAdmin), Time Tracking Modification & Audit System, PWA System.
+- **Core Modules**: Authentication, Time Tracking, Vacation Management, Document Management, Messaging, Administrative Features, Subscription Management, Reminders, Email Marketing (SuperAdmin), Time Tracking Modification & Audit System, PWA System, AI Assistant.
+- **AI Assistant System** (Pro/Master plans): GPT-5 Nano assistant for administrative task automation with conversational context persistence (localStorage, 2-day auto-cleanup). Includes full work schedule ("cuadrante") management capabilities (assign, delete, update, detect overlaps, change colors, update details). All schedule modifications validate input and handle overnight/cross-midnight shifts correctly.
 - **Object Storage**: Replit Object Storage integration for persistent file storage.
 - **Account Management**: 30-day grace period for account deletion, immediate blocking of cancelled accounts.
 - **Data Integrity**: Break periods belong to current work session. Orphaned documents are removed.
-- **Email Marketing System** (SuperAdmin): Campaign management, prospect database, user segmentation, SendGrid integration, HTML content, audience targeting, tracking, Zod validation, marketing consent, unsubscribe system, contact tracking system (WhatsApp/Instagram).
-- **Time Tracking Modification & Audit System**: Complete audit trail for all time tracking modifications, including manual creation, modification of existing sessions, and audit history. Features include employee-initiated modification requests, partial modifications (clock-in OR clock-out), and PDF export with full audit trail.
+- **Email Marketing System** (SuperAdmin): Campaign management, prospect database, user segmentation, SendGrid integration, HTML content, audience targeting, tracking, Zod validation, marketing consent, unsubscribe system, contact tracking system.
+  - **Logo URL**: MUST use static URL `'https://oficaz.es/email-logo-white.png'`. Never use dynamic domain detection.
+  - **Image URL Architecture**: Email marketing images use RELATIVE paths (e.g., `/public-objects/email-marketing/email-123.jpg`) stored in database/campaigns for cross-environment compatibility. Upload endpoint returns relative paths only. Frontend renders images using browser's native relative URL resolution. Email sending process converts relative paths to absolute URLs with production domain dynamically. Migration endpoint `POST /api/super-admin/email-marketing/fix-image-urls` available to normalize existing hardcoded URLs to relative paths.
+- **Time Tracking Modification & Audit System**: Complete audit trail for all time tracking modifications, including employee-initiated modification requests, partial modifications, and PDF export with full audit trail.
 - **PWA System**: Complete PWA implementation for locked-phone notifications with interactive action buttons via Web Push API. Server-side scheduler for work alarms and daily incomplete session monitoring. Supports iOS PWA installation. Instant push notifications for various events. Notification actions use JWT authentication. Push subscriptions are removed on logout. Notification deduplication and alarm tags prevent duplicates. Asynchronous, parallel batch sending of notifications. SuperAdmin can enable/disable push notifications per subscription plan.
-- **Performance Optimizations** (Nov 2025):
-  - **Round 1**: Eliminated unnecessary `currentTime` state (60+ re-renders/min), use `Date.now()` for calculations, extracted reusable `calculateWorkHours()` function, created generic `useNewRequestNotifications()` hook, reduced activeBreak polling 3s→10s (67% less requests), optimized query caching (2min staleTime, 5min refetchInterval), memoized holidays array, added timeout cleanup to prevent memory leaks
-  - **Round 2**: Memoized `currentWorkHours` calculation (50% reduction), memoized calendar functions (`getDateEvents`, `getVacationDetailsForDate`) with useCallback, verified callbacks and WebSocket invalidations already optimized
-  - All optimizations internal with zero UI/UX changes
+- **Performance Optimizations**: Implemented optimizations including reduced re-renders, efficient calculations, generic hooks, reduced polling, optimized query caching, memoization of functions and arrays, and timeout cleanup.
 
 ### Deployment Strategy
 - **Development Environment**: Node.js 20, PostgreSQL 16 (Replit managed), Vite dev server.
@@ -141,7 +88,7 @@ Preferred communication style: Simple, everyday language.
 - **File Handling**: Multer, Sharp
 - **Object Storage**: @google-cloud/storage (Replit Object Storage)
 - **Session Store**: connect-pg-simple
-- **Email Services**: Nodemailer
+- **Email Services**: Nodemailer (SMTP Configuration: nodemailer.createTransport(), credentials in environment variables)
 - **Payment Processing**: Stripe API
 - **Avatar Generation**: UI Avatars API
 - **Push Notifications**: web-push
