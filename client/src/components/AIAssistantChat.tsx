@@ -116,6 +116,9 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const savedScrollPosition = useRef<number | null>(null);
+  
+  // DEBUG: Log render
+  console.log("🔍 AIAssistantChat RENDER - isOpen:", isOpen, "hasAccess:", hasAccess);
 
   // Initialize messages from localStorage or with default welcome message
   // Auto-clear history after 2 days
@@ -160,10 +163,14 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
   // Scroll to bottom ONLY when opening chat for the first time
   useEffect(() => {
     if (isOpen && scrollContainerRef.current) {
+      const currentScroll = scrollContainerRef.current.scrollTop;
+      console.log("📜 isOpen effect - currentScroll:", currentScroll);
+      
       // Only scroll to bottom if there's no existing scroll (first open)
-      if (scrollContainerRef.current.scrollTop === 0) {
+      if (currentScroll === 0) {
         setTimeout(() => {
           if (scrollContainerRef.current) {
+            console.log("📜 Scrolling to bottom on first open");
             scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
           }
         }, 0);
@@ -354,7 +361,16 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
           </div>
 
           {/* Messages */}
-          <div ref={scrollContainerRef} className="flex-1 space-y-4 overflow-y-auto p-4" data-testid="container-ai-messages">
+          <div 
+            ref={(el) => {
+              scrollContainerRef.current = el;
+              if (el) {
+                console.log("📜 scrollContainerRef updated - scrollTop:", el.scrollTop);
+              }
+            }}
+            className="flex-1 space-y-4 overflow-y-auto p-4" 
+            data-testid="container-ai-messages"
+          >
             {messages.map((message, index) => (
               <div
                 key={index}
