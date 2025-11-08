@@ -157,38 +157,21 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   }, [messages]);
 
-  // Restore scroll position when opening chat
-  useLayoutEffect(() => {
-    if (!isOpen || !scrollContainerRef.current) return;
-    
-    const container = scrollContainerRef.current;
-    const savedPos = localStorage.getItem('ai_chat_scroll_position');
-    
-    // setTimeout(0) waits for DOM update
-    const timeoutId = setTimeout(() => {
-      if (savedPos && parseInt(savedPos) > 0) {
-        container.scrollTop = parseInt(savedPos);
-      } else {
-        // First time or no saved position - scroll to bottom
-        container.scrollTop = container.scrollHeight;
+  // Scroll to bottom ONLY when opening chat for the first time
+  useEffect(() => {
+    if (isOpen && scrollContainerRef.current) {
+      // Only scroll to bottom if there's no existing scroll (first open)
+      if (scrollContainerRef.current.scrollTop === 0) {
+        setTimeout(() => {
+          if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+          }
+        }, 0);
       }
-    }, 0);
-    
-    return () => clearTimeout(timeoutId);
+    }
   }, [isOpen]); // Only when opening/closing
   
-  // Save scroll position on scroll
-  useEffect(() => {
-    if (!isOpen || !scrollContainerRef.current) return;
-    
-    const container = scrollContainerRef.current;
-    const handleScroll = () => {
-      localStorage.setItem('ai_chat_scroll_position', container.scrollTop.toString());
-    };
-    
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [isOpen]);
+  // NO MORE SCROLL RESTORATION - Portal keeps DOM alive so scroll persists naturally!
   
   // Helper to scroll to bottom
   const scrollToBottom = () => {
