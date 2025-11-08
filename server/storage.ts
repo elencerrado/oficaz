@@ -2715,7 +2715,10 @@ export class DrizzleStorage implements IStorage {
       }
       
       if (endDate) {
-        conditions.push(lte(schema.workShifts.endAt, new Date(endDate)));
+        // Add one day to endDate to include all shifts that start on endDate
+        const endDatePlusOne = new Date(endDate);
+        endDatePlusOne.setDate(endDatePlusOne.getDate() + 1);
+        conditions.push(lte(schema.workShifts.startAt, endDatePlusOne));
       }
 
       return await db.select()
