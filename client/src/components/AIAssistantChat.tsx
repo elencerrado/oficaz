@@ -151,6 +151,7 @@ export function AIAssistantChat() {
         for (const func of functionsArray) {
           switch (func.trim()) {
             case "assignSchedule":
+            case "deleteWorkShift":
               // Invalidate work shifts queries
               queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
               queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/my-shifts'] });

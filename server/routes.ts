@@ -7550,7 +7550,7 @@ Responde en español, sé BREVE y DIRECTO. Confirma acciones completadas sin rod
           const functionArgs = JSON.parse(toolCall.function.arguments);
 
           // Resolve employee names to IDs before executing function
-          if ((functionName === 'assignSchedule' || functionName === 'requestDocument') && functionArgs.employeeName) {
+          if ((functionName === 'assignSchedule' || functionName === 'requestDocument' || functionName === 'deleteWorkShift') && functionArgs.employeeName) {
             const resolution = await resolveEmployeeName(storage, companyId, functionArgs.employeeName);
             
             if ('error' in resolution) {

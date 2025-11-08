@@ -411,6 +411,68 @@ export async function requestDocument(
   };
 }
 
+// 8. Delete work shift(s)
+export async function deleteWorkShift(
+  context: AIFunctionContext,
+  params: {
+    employeeId: number;
+    date: string; // YYYY-MM-DD
+  }
+) {
+  const { storage, companyId, adminUserId } = context;
+
+  // Verify employee belongs to company
+  const employee = await storage.getUser(params.employeeId);
+  if (!employee || employee.companyId !== companyId) {
+    throw new Error("Employee not found or doesn't belong to this company");
+  }
+
+  // Parse the date
+  const targetDate = new Date(params.date);
+  const startOfDay = new Date(targetDate);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(targetDate);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  // Find all shifts for this employee on this date
+  const shifts = await db.select()
+    .from(schema.workShifts)
+    .where(
+      and(
+        eq(schema.workShifts.companyId, companyId),
+        eq(schema.workShifts.employeeId, params.employeeId)
+      )
+    );
+
+  // Filter shifts that fall on the target date
+  const shiftsToDelete = shifts.filter((shift: any) => {
+    const shiftStart = new Date(shift.startAt);
+    return shiftStart >= startOfDay && shiftStart <= endOfDay;
+  });
+
+  if (shiftsToDelete.length === 0) {
+    return {
+      success: false,
+      error: `No hay turnos para ${employee.fullName} el ${targetDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}`,
+      employeeFullName: employee.fullName,
+      deletedCount: 0
+    };
+  }
+
+  // Delete the shifts
+  for (const shift of shiftsToDelete) {
+    await db.delete(schema.workShifts)
+      .where(eq(schema.workShifts.id, shift.id));
+  }
+
+  return {
+    success: true,
+    deletedCount: shiftsToDelete.length,
+    employeeFullName: employee.fullName,
+    date: targetDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+  };
+}
+
 // Function definitions for OpenAI function calling
 export const AI_FUNCTIONS = [
   {
@@ -612,6 +674,24 @@ export const AI_FUNCTIONS = [
       required: ["employeeName", "fileName"],
     },
   },
+  {
+    name: "deleteWorkShift",
+    description: "Eliminar turno(s) de trabajo de un empleado en una fecha específica. IMPORTANTE: Usa el nombre del empleado (employeeName) cuando el usuario lo mencione",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeName: {
+          type: "string",
+          description: "Nombre del empleado (usa esto cuando el usuario menciona un nombre)",
+        },
+        date: {
+          type: "string",
+          description: "Fecha del turno a eliminar en formato YYYY-MM-DD. Para fechas relativas: 'hoy' = fecha actual, 'mañana' = día siguiente",
+        },
+      },
+      required: ["employeeName", "date"],
+    },
+  },
 ];
 
 // Execute AI function by name
@@ -635,6 +715,8 @@ export async function executeAIFunction(
       return assignSchedule(context, params);
     case "requestDocument":
       return requestDocument(context, params);
+    case "deleteWorkShift":
+      return deleteWorkShift(context, params);
     default:
       throw new Error(`Unknown function: ${functionName}`);
   }
