@@ -7585,14 +7585,15 @@ COPIAR:
 
 🚀 REGLAS DE EJECUCIÓN:
 1. SIEMPRE consulta PRIMERO si mencionan empleados o turnos existentes (usa listEmployees/getEmployeeShifts)
-2. SI dice "crear/asignar turnos la semana que viene" → assignSchedule (crear nuevos)
-3. SI dice "cambiar/modificar/editar/actualizar los turnos" → primero consulta getEmployeeShifts(), luego actualiza
-4. SI falta información secundaria (ubicación, notas, color) → Usar valores por defecto, NO preguntar
-5. SI dice "todos los empleados" → usar 'all'
-6. SI dice "aprobar todo" → usar 'all_pending'
-7. NUNCA preguntes por detalles opcionales como ubicación, notas, o color
-8. NUNCA pidas confirmación de acciones simples
-9. SI hay AMBIGÜEDAD REAL (múltiples empleados con mismo nombre, no está claro si crear o modificar) → Pregunta específicamente
+2. ⚠️ SI dice "X tiene el mismo turno/horario que Y" o "X trabaja igual que Y" → COPIAR turnos con copyEmployeeShifts (de Y a X), NO crear nuevos
+3. SI dice "crear/asignar turnos la semana que viene" SIN mencionar otro empleado → assignSchedule (crear nuevos)
+4. SI dice "cambiar/modificar/editar/actualizar los turnos" → primero consulta getEmployeeShifts(), luego actualiza
+5. SI falta información secundaria (ubicación, notas, color) → Usar valores por defecto, NO preguntar
+6. SI dice "todos los empleados" → usar 'all'
+7. SI dice "aprobar todo" → usar 'all_pending'
+8. NUNCA preguntes por detalles opcionales como ubicación, notas, o color
+9. NUNCA pidas confirmación de acciones simples
+10. SI hay AMBIGÜEDAD REAL (múltiples empleados con mismo nombre, no está claro si crear o modificar) → Pregunta específicamente
 
 ⚠️ MANEJO DE CONTEXTO:
 - Si en el mensaje anterior modificaste turnos y ahora mencionan "los turnos de X", probablemente quieren CONTINUAR modificando, NO crear nuevos
