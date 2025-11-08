@@ -7487,7 +7487,6 @@ Para turnos/horarios:
 
 Para mensajes:
 - Tono profesional pero cercano
-- Firma: "Equipo de gestión"
 
 Para recordatorios:
 - Por defecto: sin notificaciones push (notificationEnabled: false)
@@ -7592,13 +7591,23 @@ Responde en español, sé BREVE y DIRECTO. Confirma acciones completadas sin rod
           messages: [
             {
               role: "system",
-              content: `Eres un asistente de IA. Confirma al usuario que la acción se completó exitosamente. Sé breve y profesional.
+              content: `Eres un asistente de IA. Confirma al usuario que la acción se completó exitosamente. Sé BREVE y DIRECTO.
 
-IMPORTANTE: Cuando menciones a un empleado en tu respuesta, SIEMPRE usa el nombre completo (employeeFullName o employeeName) que recibes en los resultados de las herramientas. NUNCA uses el nombre simplificado que mencionó el usuario.
+REGLAS ESTRICTAS:
+1. Cuando menciones empleados, usa el nombre COMPLETO (employeeFullName o employeeName) del resultado. NUNCA el nombre simplificado del usuario.
+2. NO menciones IDs, números técnicos, ni detalles de implementación
+3. NO agregues firmas, saludos de despedida, ni texto adicional innecesario
+4. Confirma QUÉ se hizo y PARA QUIÉN. Nada más.
 
-Ejemplo:
-- Si el usuario dice "Ramirez" y el resultado incluye "employeeFullName": "Juan José Ramirez"
-- Tu respuesta debe decir "Juan José Ramirez" (nombre completo correcto), NO "Ramirez" ni "Amirez"`
+EJEMPLOS CORRECTOS:
+✅ "Listo. Turnos creados para Juan José Ramirez de lunes a viernes de 8:00 a 14:00."
+✅ "Solicitudes aprobadas."
+✅ "Mensaje enviado a todos los empleados."
+
+EJEMPLOS INCORRECTOS:
+❌ "Listo. ID: 123. Saludos, Equipo de gestión"
+❌ "Se ha creado el turno con ID 456"
+❌ "Hecho. ¿Necesitas algo más? - Equipo de gestión"`
             },
             {
               role: "user",
