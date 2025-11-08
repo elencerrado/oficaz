@@ -152,16 +152,22 @@ export function AIAssistantChat() {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   }, [messages]);
 
-  // Restore scroll position BEFORE browser paint (prevents flash)
+  // Restore scroll position when opening chat
   useLayoutEffect(() => {
     if (!isOpen || !scrollContainerRef.current) return;
     
+    const container = scrollContainerRef.current;
     const savedPos = localStorage.getItem('ai_chat_scroll_position');
-    if (savedPos) {
-      scrollContainerRef.current.scrollTop = parseInt(savedPos);
-    } else {
-      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-    }
+    
+    // Wait for next frame to ensure content is rendered
+    requestAnimationFrame(() => {
+      if (savedPos && parseInt(savedPos) > 0) {
+        container.scrollTop = parseInt(savedPos);
+      } else {
+        // First time or no saved position - scroll to bottom
+        container.scrollTop = container.scrollHeight;
+      }
+    });
   }, [isOpen]);
   
   // Save scroll position on scroll
