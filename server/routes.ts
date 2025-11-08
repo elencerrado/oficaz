@@ -7426,12 +7426,12 @@ Responde directamente a este email para contactar con la persona.
   // AI Assistant endpoint - chat with GPT-5 Nano for administrative task automation
   app.post('/api/ai-assistant/chat', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
-      const { message } = req.body;
+      const { messages } = req.body; // Array of message history
       const companyId = req.user!.companyId;
       const adminUserId = req.user!.id;
 
-      if (!message || typeof message !== 'string') {
-        return res.status(400).json({ message: "Message is required" });
+      if (!messages || !Array.isArray(messages) || messages.length === 0) {
+        return res.status(400).json({ message: "Messages history is required" });
       }
 
       // Verify feature flag: AI assistant must be enabled for this company's plan
@@ -7463,6 +7463,14 @@ Responde directamente a este email para contactar con la persona.
       const now = new Date();
       const currentDateStr = now.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
       
+      // Convert frontend messages to OpenAI format
+      const conversationHistory = messages
+        .filter((msg: any) => msg.role === 'user' || msg.role === 'assistant')
+        .map((msg: any) => ({
+          role: msg.role,
+          content: msg.content
+        }));
+
       // Call OpenAI with function calling
       const response = await openai.chat.completions.create({
         model: "gpt-5-nano", // GPT-5 Nano for cost-effective AI assistance (~$0.0005/command)
@@ -7526,10 +7534,7 @@ Tú: Aprobar todo con 'all_pending', sin pedir confirmación
 
 Responde en español, sé BREVE y DIRECTO. Confirma acciones completadas sin rodeos.`
           },
-          {
-            role: "user",
-            content: message
-          }
+          ...conversationHistory
         ],
         tools,
         tool_choice: "auto",
@@ -7609,10 +7614,7 @@ EJEMPLOS INCORRECTOS:
 ❌ "Se ha creado el turno con ID 456"
 ❌ "Hecho. ¿Necesitas algo más? - Equipo de gestión"`
             },
-            {
-              role: "user",
-              content: message
-            },
+            ...conversationHistory,
             {
               role: "assistant",
               content: null,

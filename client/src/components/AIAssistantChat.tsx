@@ -131,8 +131,9 @@ export function AIAssistantChat() {
     setIsLoading(true);
 
     try {
+      // Send entire message history for context
       const response = await apiRequest("POST", "/api/ai-assistant/chat", {
-        message: userMessage,
+        messages: [...messages, { role: "user", content: userMessage }],
       });
 
       setMessages((prev) => [
