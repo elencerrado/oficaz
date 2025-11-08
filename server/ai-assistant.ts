@@ -434,7 +434,7 @@ export async function deleteWorkShift(
   const endOfDay = new Date(targetDate);
   endOfDay.setHours(23, 59, 59, 999);
 
-  // Find all shifts for this employee on this date
+  // Find all shifts for this employee
   const shifts = await db.select()
     .from(schema.workShifts)
     .where(
@@ -444,10 +444,12 @@ export async function deleteWorkShift(
       )
     );
 
-  // Filter shifts that fall on the target date
+  // Filter shifts that OVERLAP with the target date (including overnight shifts)
+  // A shift overlaps if: startAt <= endOfDay AND endAt >= startOfDay
   const shiftsToDelete = shifts.filter((shift: any) => {
     const shiftStart = new Date(shift.startAt);
-    return shiftStart >= startOfDay && shiftStart <= endOfDay;
+    const shiftEnd = new Date(shift.endAt);
+    return shiftStart <= endOfDay && shiftEnd >= startOfDay;
   });
 
   if (shiftsToDelete.length === 0) {
@@ -470,6 +472,345 @@ export async function deleteWorkShift(
     deletedCount: shiftsToDelete.length,
     employeeFullName: employee.fullName,
     date: targetDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+  };
+}
+
+// 9. Update work shift times (modify hours a posteriori)
+export async function updateWorkShiftTimes(
+  context: AIFunctionContext,
+  params: {
+    employeeId: number;
+    date: string; // YYYY-MM-DD
+    newStartTime?: string; // HH:mm (24h format)
+    newEndTime?: string; // HH:mm (24h format)
+    shiftTitle?: string; // Optional: to identify specific shift if multiple on same day
+  }
+) {
+  const { storage, companyId } = context;
+
+  // Verify employee belongs to company
+  const employee = await storage.getUser(params.employeeId);
+  if (!employee || employee.companyId !== companyId) {
+    throw new Error("Employee not found or doesn't belong to this company");
+  }
+
+  // Parse the date
+  const targetDate = new Date(params.date);
+  const startOfDay = new Date(targetDate);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(targetDate);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  // Find all shifts for this employee on this date
+  const shifts = await db.select()
+    .from(schema.workShifts)
+    .where(
+      and(
+        eq(schema.workShifts.companyId, companyId),
+        eq(schema.workShifts.employeeId, params.employeeId)
+      )
+    );
+
+  // Filter shifts that overlap with target date
+  let shiftsOnDate = shifts.filter((shift: any) => {
+    const shiftStart = new Date(shift.startAt);
+    const shiftEnd = new Date(shift.endAt);
+    return shiftStart <= endOfDay && shiftEnd >= startOfDay;
+  });
+
+  // If shiftTitle provided, filter further
+  if (params.shiftTitle) {
+    shiftsOnDate = shiftsOnDate.filter((shift: any) => 
+      shift.title?.toLowerCase().includes(params.shiftTitle!.toLowerCase())
+    );
+  }
+
+  if (shiftsOnDate.length === 0) {
+    return {
+      success: false,
+      error: `No encontré turnos para ${employee.fullName} el ${targetDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}`,
+      employeeFullName: employee.fullName
+    };
+  }
+
+  if (shiftsOnDate.length > 1 && !params.shiftTitle) {
+    const titles = shiftsOnDate.map((s: any) => s.title).join(", ");
+    return {
+      success: false,
+      error: `${employee.fullName} tiene múltiples turnos ese día (${titles}). Por favor, especifica cuál quieres modificar.`,
+      employeeFullName: employee.fullName
+    };
+  }
+
+  // Validate that at least one time is being updated
+  if (!params.newStartTime && !params.newEndTime) {
+    return {
+      success: false,
+      error: "Debes especificar al menos una hora nueva (inicio o fin)",
+      employeeFullName: employee.fullName
+    };
+  }
+
+  // Update the shift
+  const shift = shiftsOnDate[0];
+  const updates: any = {};
+
+  if (params.newStartTime) {
+    const [hours, minutes] = params.newStartTime.split(':').map(Number);
+    const newStart = new Date(shift.startAt);
+    newStart.setHours(hours, minutes, 0, 0);
+    updates.startAt = newStart;
+  }
+
+  if (params.newEndTime) {
+    const [hours, minutes] = params.newEndTime.split(':').map(Number);
+    const newEnd = new Date(shift.endAt);
+    newEnd.setHours(hours, minutes, 0, 0);
+    updates.endAt = newEnd;
+  }
+
+  // Critical validation: ensure end time is after start time
+  const finalStartAt = updates.startAt || shift.startAt;
+  const finalEndAt = updates.endAt || shift.endAt;
+  
+  if (finalEndAt <= finalStartAt) {
+    return {
+      success: false,
+      error: `La hora de fin (${new Date(finalEndAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}) debe ser posterior a la hora de inicio (${new Date(finalStartAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })})`,
+      employeeFullName: employee.fullName
+    };
+  }
+
+  await storage.updateWorkShift(shift.id, updates);
+
+  return {
+    success: true,
+    employeeFullName: employee.fullName,
+    shiftTitle: shift.title,
+    newTimes: {
+      start: updates.startAt?.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+      end: updates.endAt?.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+    }
+  };
+}
+
+// 10. Detect work shift overlaps for an employee
+export async function detectWorkShiftOverlaps(
+  context: AIFunctionContext,
+  params: {
+    employeeId?: number; // Optional: check specific employee, or all if not provided
+    startDate?: string; // Optional: date range
+    endDate?: string;
+  }
+) {
+  const { storage, companyId } = context;
+
+  let employeesToCheck: any[] = [];
+
+  if (params.employeeId) {
+    const employee = await storage.getUser(params.employeeId);
+    if (!employee || employee.companyId !== companyId) {
+      throw new Error("Employee not found or doesn't belong to this company");
+    }
+    employeesToCheck = [employee];
+  } else {
+    employeesToCheck = await storage.getUsersByCompany(companyId);
+  }
+
+  const overlaps: any[] = [];
+
+  for (const employee of employeesToCheck) {
+    const shifts = await storage.getWorkShiftsByEmployee(
+      employee.id,
+      params.startDate,
+      params.endDate
+    );
+
+    // Sort by start time
+    const sortedShifts = shifts.sort((a, b) => 
+      new Date(a.startAt).getTime() - new Date(b.startAt).getTime()
+    );
+
+    // Check for overlaps
+    for (let i = 0; i < sortedShifts.length - 1; i++) {
+      const current = sortedShifts[i];
+      const next = sortedShifts[i + 1];
+
+      if (new Date(current.endAt) > new Date(next.startAt)) {
+        overlaps.push({
+          employeeName: employee.fullName,
+          shift1: {
+            title: current.title,
+            start: new Date(current.startAt).toLocaleString('es-ES'),
+            end: new Date(current.endAt).toLocaleString('es-ES')
+          },
+          shift2: {
+            title: next.title,
+            start: new Date(next.startAt).toLocaleString('es-ES'),
+            end: new Date(next.endAt).toLocaleString('es-ES')
+          }
+        });
+      }
+    }
+  }
+
+  return {
+    success: true,
+    overlapsFound: overlaps.length,
+    overlaps
+  };
+}
+
+// 11. Update work shift color
+export async function updateWorkShiftColor(
+  context: AIFunctionContext,
+  params: {
+    employeeId: number;
+    date: string; // YYYY-MM-DD
+    newColor: string; // Hex color (e.g., "#3b82f6")
+    shiftTitle?: string; // Optional: to identify specific shift
+  }
+) {
+  const { storage, companyId } = context;
+
+  // Validate hex color
+  if (!/^#[0-9A-F]{6}$/i.test(params.newColor)) {
+    return {
+      success: false,
+      error: `"${params.newColor}" no es un color hexadecimal válido. Usa formato #RRGGBB (ej: #3b82f6)`
+    };
+  }
+
+  const employee = await storage.getUser(params.employeeId);
+  if (!employee || employee.companyId !== companyId) {
+    throw new Error("Employee not found or doesn't belong to this company");
+  }
+
+  const targetDate = new Date(params.date);
+  const startOfDay = new Date(targetDate);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(targetDate);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const shifts = await db.select()
+    .from(schema.workShifts)
+    .where(
+      and(
+        eq(schema.workShifts.companyId, companyId),
+        eq(schema.workShifts.employeeId, params.employeeId)
+      )
+    );
+
+  let shiftsOnDate = shifts.filter((shift: any) => {
+    const shiftStart = new Date(shift.startAt);
+    const shiftEnd = new Date(shift.endAt);
+    return shiftStart <= endOfDay && shiftEnd >= startOfDay;
+  });
+
+  if (params.shiftTitle) {
+    shiftsOnDate = shiftsOnDate.filter((shift: any) => 
+      shift.title?.toLowerCase().includes(params.shiftTitle!.toLowerCase())
+    );
+  }
+
+  if (shiftsOnDate.length === 0) {
+    return {
+      success: false,
+      error: `No encontré turnos para ${employee.fullName} el ${targetDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}`,
+      employeeFullName: employee.fullName
+    };
+  }
+
+  // Update color for all matching shifts
+  for (const shift of shiftsOnDate) {
+    await storage.updateWorkShift(shift.id, { color: params.newColor });
+  }
+
+  return {
+    success: true,
+    employeeFullName: employee.fullName,
+    shiftsUpdated: shiftsOnDate.length,
+    newColor: params.newColor
+  };
+}
+
+// 12. Update work shift details (title, location, notes)
+export async function updateWorkShiftDetails(
+  context: AIFunctionContext,
+  params: {
+    employeeId: number;
+    date: string; // YYYY-MM-DD
+    newTitle?: string;
+    newLocation?: string;
+    newNotes?: string;
+    shiftTitle?: string; // Current title to identify which shift
+  }
+) {
+  const { storage, companyId } = context;
+
+  const employee = await storage.getUser(params.employeeId);
+  if (!employee || employee.companyId !== companyId) {
+    throw new Error("Employee not found or doesn't belong to this company");
+  }
+
+  const targetDate = new Date(params.date);
+  const startOfDay = new Date(targetDate);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(targetDate);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const shifts = await db.select()
+    .from(schema.workShifts)
+    .where(
+      and(
+        eq(schema.workShifts.companyId, companyId),
+        eq(schema.workShifts.employeeId, params.employeeId)
+      )
+    );
+
+  let shiftsOnDate = shifts.filter((shift: any) => {
+    const shiftStart = new Date(shift.startAt);
+    const shiftEnd = new Date(shift.endAt);
+    return shiftStart <= endOfDay && shiftEnd >= startOfDay;
+  });
+
+  if (params.shiftTitle) {
+    shiftsOnDate = shiftsOnDate.filter((shift: any) => 
+      shift.title?.toLowerCase().includes(params.shiftTitle!.toLowerCase())
+    );
+  }
+
+  if (shiftsOnDate.length === 0) {
+    return {
+      success: false,
+      error: `No encontré turnos para ${employee.fullName} el ${targetDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}`,
+      employeeFullName: employee.fullName
+    };
+  }
+
+  if (shiftsOnDate.length > 1 && !params.shiftTitle) {
+    const titles = shiftsOnDate.map((s: any) => s.title).join(", ");
+    return {
+      success: false,
+      error: `${employee.fullName} tiene múltiples turnos ese día (${titles}). Por favor, especifica cuál quieres modificar.`,
+      employeeFullName: employee.fullName
+    };
+  }
+
+  const shift = shiftsOnDate[0];
+  const updates: any = {};
+
+  if (params.newTitle) updates.title = params.newTitle;
+  if (params.newLocation) updates.location = params.newLocation;
+  if (params.newNotes) updates.notes = params.newNotes;
+
+  await storage.updateWorkShift(shift.id, updates);
+
+  return {
+    success: true,
+    employeeFullName: employee.fullName,
+    updatedFields: Object.keys(updates),
+    shiftTitle: updates.title || shift.title
   };
 }
 
@@ -692,6 +1033,118 @@ export const AI_FUNCTIONS = [
       required: ["employeeName", "date"],
     },
   },
+  {
+    name: "updateWorkShiftTimes",
+    description: "Modificar las horas de un turno existente (cambiar hora de inicio o fin). Úsalo cuando el admin quiera modificar horarios a posteriori",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeName: {
+          type: "string",
+          description: "Nombre del empleado",
+        },
+        date: {
+          type: "string",
+          description: "Fecha del turno en formato YYYY-MM-DD",
+        },
+        newStartTime: {
+          type: "string",
+          description: "Nueva hora de inicio en formato HH:mm (24h), ej: '09:00'",
+        },
+        newEndTime: {
+          type: "string",
+          description: "Nueva hora de fin en formato HH:mm (24h), ej: '17:00'",
+        },
+        shiftTitle: {
+          type: "string",
+          description: "Título del turno (opcional, para identificar cuál si hay varios ese día)",
+        },
+      },
+      required: ["employeeName", "date"],
+    },
+  },
+  {
+    name: "detectWorkShiftOverlaps",
+    description: "Detectar solapamientos de turnos (cuando un empleado tiene turnos que se superponen en tiempo). Útil para identificar conflictos",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeName: {
+          type: "string",
+          description: "Nombre del empleado (opcional, si no se proporciona revisa todos)",
+        },
+        startDate: {
+          type: "string",
+          description: "Fecha de inicio del rango a revisar (opcional)",
+        },
+        endDate: {
+          type: "string",
+          description: "Fecha de fin del rango a revisar (opcional)",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "updateWorkShiftColor",
+    description: "Cambiar el color de un turno existente. Útil para organizaci��n visual del cuadrante",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeName: {
+          type: "string",
+          description: "Nombre del empleado",
+        },
+        date: {
+          type: "string",
+          description: "Fecha del turno en formato YYYY-MM-DD",
+        },
+        newColor: {
+          type: "string",
+          description: "Nuevo color en formato hexadecimal (ej: '#3b82f6' para azul, '#ef4444' para rojo, '#10b981' para verde)",
+        },
+        shiftTitle: {
+          type: "string",
+          description: "Título del turno (opcional, para identificar cuál si hay varios ese día)",
+        },
+      },
+      required: ["employeeName", "date", "newColor"],
+    },
+  },
+  {
+    name: "updateWorkShiftDetails",
+    description: "Modificar detalles de un turno (título, ubicación, notas). Útil cuando el admin quiere cambiar el nombre del turno o añadir información",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeName: {
+          type: "string",
+          description: "Nombre del empleado",
+        },
+        date: {
+          type: "string",
+          description: "Fecha del turno en formato YYYY-MM-DD",
+        },
+        newTitle: {
+          type: "string",
+          description: "Nuevo título del turno (ej: 'Turno en Cliente XYZ', 'Guardia nocturna')",
+        },
+        newLocation: {
+          type: "string",
+          description: "Nueva ubicación del turno",
+        },
+        newNotes: {
+          type: "string",
+          description: "Nuevas notas del turno",
+        },
+        shiftTitle: {
+          type: "string",
+          description: "Título actual del turno para identificarlo",
+        },
+      },
+      required: ["employeeName", "date"],
+    },
+  },
 ];
 
 // Execute AI function by name
@@ -717,6 +1170,14 @@ export async function executeAIFunction(
       return requestDocument(context, params);
     case "deleteWorkShift":
       return deleteWorkShift(context, params);
+    case "updateWorkShiftTimes":
+      return updateWorkShiftTimes(context, params);
+    case "detectWorkShiftOverlaps":
+      return detectWorkShiftOverlaps(context, params);
+    case "updateWorkShiftColor":
+      return updateWorkShiftColor(context, params);
+    case "updateWorkShiftDetails":
+      return updateWorkShiftDetails(context, params);
     default:
       throw new Error(`Unknown function: ${functionName}`);
   }

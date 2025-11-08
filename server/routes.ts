@@ -7500,14 +7500,31 @@ Para recordatorios:
 - Por defecto: sin notificaciones push (notificationEnabled: false)
 - Fecha: interpretar fechas relativas ("mañana", "próxima semana", etc.)
 
+🎨 GESTIÓN AVANZADA DE CUADRANTE:
+Tienes control TOTAL sobre los turnos de trabajo:
+- ✅ CREAR: assignSchedule (nuevos turnos con horarios, ubicación, color)
+- ❌ ELIMINAR: deleteWorkShift (borrar turnos de una fecha específica)
+- ⏰ MODIFICAR HORAS: updateWorkShiftTimes (cambiar startTime o endTime a posteriori)
+- 🎨 CAMBIAR COLOR: updateWorkShiftColor (azul #3b82f6, rojo #ef4444, verde #10b981, etc)
+- 📝 EDITAR DETALLES: updateWorkShiftDetails (cambiar título, ubicación, notas)
+- 🔍 DETECTAR SOLAPAMIENTOS: detectWorkShiftOverlaps (identificar conflictos de horarios)
+
+IMPORTANTE para modificaciones:
+- Si hay múltiples turnos en un día, usa shiftTitle para identificar cuál modificar
+- Detecta automáticamente solapamientos cuando sea necesario
+- Confirma cambios de forma clara y precisa
+
 🚀 REGLAS DE EJECUCIÓN:
 1. SI el usuario dice "la semana que viene de X a Y" → Crear turnos para TODOS los días laborables (lunes-viernes)
 2. SI falta información secundaria (ubicación, notas, color) → Usar valores por defecto
 3. SI el usuario menciona un nombre → Usar directamente, NO pedir confirmación
 4. SI dice "todos los empleados" → usar 'all'
 5. SI dice "aprobar todo" → usar 'all_pending'
-6. NUNCA preguntes por detalles opcionales como ubicación, notas, o color de turnos
-7. NUNCA pidas confirmación de acciones simples
+6. SI pide modificar horarios → usar updateWorkShiftTimes con las nuevas horas
+7. SI pide cambiar color → usar updateWorkShiftColor con código hexadecimal
+8. SI pide cambiar nombre/ubicación → usar updateWorkShiftDetails
+9. NUNCA preguntes por detalles opcionales como ubicación, notas, o color de turnos
+10. NUNCA pidas confirmación de acciones simples
 
 ❌ PROHIBIDO PREGUNTAR:
 - "¿En qué ubicación?" → Usa "Oficina"
@@ -7555,7 +7572,8 @@ Responde en español, sé BREVE y DIRECTO. Confirma acciones completadas sin rod
           const functionArgs = JSON.parse(toolCall.function.arguments);
 
           // Resolve employee names to IDs before executing function
-          if ((functionName === 'assignSchedule' || functionName === 'requestDocument' || functionName === 'deleteWorkShift') && functionArgs.employeeName) {
+          const functionsNeedingEmployeeResolution = ['assignSchedule', 'requestDocument', 'deleteWorkShift', 'updateWorkShiftTimes', 'updateWorkShiftColor', 'updateWorkShiftDetails', 'detectWorkShiftOverlaps'];
+          if (functionsNeedingEmployeeResolution.includes(functionName) && functionArgs.employeeName) {
             const resolution = await resolveEmployeeName(storage, companyId, functionArgs.employeeName);
             
             if ('error' in resolution) {
