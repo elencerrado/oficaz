@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, memo } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Send, Loader2, Minimize2, RotateCcw } from "lucide-react";
@@ -122,23 +122,22 @@ export function AIAssistantChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
-  // Track scroll position changes
+  // DEBUG: Track scroll value changes
   useEffect(() => {
     if (!scrollContainerRef.current || !isOpen) return;
     
-    const observer = new MutationObserver(() => {
-      if (scrollContainerRef.current) {
-        console.log("🔍 Container mutated, scrollTop:", scrollContainerRef.current.scrollTop);
+    const container = scrollContainerRef.current;
+    let lastScroll = container.scrollTop;
+    
+    const checkScroll = () => {
+      if (container.scrollTop !== lastScroll) {
+        console.log("🔍 Scroll changed:", lastScroll, "→", container.scrollTop);
+        lastScroll = container.scrollTop;
       }
-    });
+    };
     
-    observer.observe(scrollContainerRef.current, {
-      childList: true,
-      subtree: true,
-      attributes: true
-    });
-    
-    return () => observer.disconnect();
+    const interval = setInterval(checkScroll, 100);
+    return () => clearInterval(interval);
   }, [isOpen]);
   
   // PROFESSIONAL PATTERN: Only scroll to bottom on FIRST open
@@ -346,11 +345,12 @@ export function AIAssistantChat() {
         <AIAssistantAnimation isThinking={isLoading} />
       </div>
 
-      {/* PROFESSIONAL PATTERN: Always rendered and in layout, hidden with visibility */}
+      {/* PROFESSIONAL PATTERN: Always rendered, moved off-screen when closed */}
       <div
-        className="fixed bottom-24 right-6 z-50 flex max-h-[calc(100vh-8rem)] w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 transition-opacity duration-300"
+        className="fixed z-50 flex max-h-[calc(100vh-8rem)] w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 transition-all duration-300"
         style={{
-          visibility: isOpen ? 'visible' : 'hidden',
+          bottom: '6rem',
+          right: isOpen ? '1.5rem' : '-450px',
           opacity: isOpen ? 1 : 0,
           pointerEvents: isOpen ? 'auto' : 'none'
         }}
@@ -378,11 +378,12 @@ export function AIAssistantChat() {
             </div>
           </div>
 
-          {/* Messages */}
+          {/* Messages - Memoized to prevent re-renders */}
           <div 
             ref={scrollContainerRef}
             className="flex-1 space-y-4 overflow-y-auto p-4" 
             data-testid="container-ai-messages"
+            key="messages-container"
           >
             {messages.map((message, index) => (
               <div
