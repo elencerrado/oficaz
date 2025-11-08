@@ -152,32 +152,23 @@ export function AIAssistantChat() {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   }, [messages]);
 
-  // Restore scroll position from localStorage on mount
+  // Restore scroll position ONLY when opening chat
   useEffect(() => {
-    if (isOpen && scrollContainerRef.current) {
-      const savedPos = localStorage.getItem('ai_chat_scroll_position');
-      if (savedPos) {
-        scrollContainerRef.current.scrollTop = parseInt(savedPos);
-      } else {
-        // First time opening, scroll to bottom
-        scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-      }
+    if (!isOpen || !scrollContainerRef.current) return;
+    
+    const savedPos = localStorage.getItem('ai_chat_scroll_position');
+    if (savedPos) {
+      scrollContainerRef.current.scrollTop = parseInt(savedPos);
+    } else {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
     }
   }, [isOpen]);
   
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    if (isOpen && scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-      localStorage.setItem('ai_chat_scroll_position', scrollContainerRef.current.scrollHeight.toString());
-    }
-  }, [messages.length, isLoading]);
-  
   // Save scroll position on scroll
   useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container || !isOpen) return;
+    if (!isOpen || !scrollContainerRef.current) return;
     
+    const container = scrollContainerRef.current;
     const handleScroll = () => {
       localStorage.setItem('ai_chat_scroll_position', container.scrollTop.toString());
     };
@@ -185,6 +176,14 @@ export function AIAssistantChat() {
     container.addEventListener('scroll', handleScroll, { passive: true });
     return () => container.removeEventListener('scroll', handleScroll);
   }, [isOpen]);
+  
+  // Helper to scroll to bottom
+  const scrollToBottom = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+      localStorage.setItem('ai_chat_scroll_position', scrollContainerRef.current.scrollHeight.toString());
+    }
+  };
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -193,6 +192,9 @@ export function AIAssistantChat() {
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
+    
+    // Scroll to bottom after adding user message
+    setTimeout(scrollToBottom, 0);
 
     try {
       // Send entire message history for context
@@ -208,6 +210,9 @@ export function AIAssistantChat() {
           functionCalled: response.functionCalled,
         },
       ]);
+      
+      // Scroll to bottom after AI response
+      setTimeout(scrollToBottom, 0);
 
       // Invalidate relevant queries based on the function that was called
       if (response.functionCalled) {
@@ -275,6 +280,9 @@ export function AIAssistantChat() {
             "Lo siento, hubo un error al procesar tu solicitud. Por favor, intenta de nuevo.",
         },
       ]);
+      
+      // Scroll to bottom after error message
+      setTimeout(scrollToBottom, 0);
     } finally {
       setIsLoading(false);
     }
