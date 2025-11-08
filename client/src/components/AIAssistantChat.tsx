@@ -110,6 +110,7 @@ export function AIAssistantChat() {
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const savedScrollPosition = useRef<number | null>(null);
 
   // Initialize messages from localStorage or with default welcome message
   // Auto-clear history after 2 days
@@ -155,21 +156,38 @@ export function AIAssistantChat() {
   const previousMessageCount = useRef(messages.length);
   const previousIsOpen = useRef(isOpen);
   
+  // Scroll to bottom when chat opens or messages change
   useEffect(() => {
-    if (scrollContainerRef.current) {
-      // Scroll if: chat just opened OR messages changed
-      const chatJustOpened = isOpen && !previousIsOpen.current;
-      const messagesChanged = previousMessageCount.current !== messages.length;
-      
-      if (chatJustOpened || (isOpen && messagesChanged)) {
-        scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-      }
-      
-      // Update refs
-      previousMessageCount.current = messages.length;
-      previousIsOpen.current = isOpen;
+    if (!scrollContainerRef.current) return;
+    
+    const chatJustOpened = isOpen && !previousIsOpen.current;
+    const messagesChanged = previousMessageCount.current !== messages.length;
+    
+    if (chatJustOpened || (isOpen && messagesChanged)) {
+      // Scroll to bottom for new messages
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+      savedScrollPosition.current = scrollContainerRef.current.scrollHeight;
+    } else if (isOpen && savedScrollPosition.current !== null) {
+      // Restore saved position when navigating
+      scrollContainerRef.current.scrollTop = savedScrollPosition.current;
     }
-  }, [messages.length, isLoading, isOpen]);
+    
+    previousMessageCount.current = messages.length;
+    previousIsOpen.current = isOpen;
+  });
+  
+  // Save scroll position on scroll
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    
+    const handleScroll = () => {
+      savedScrollPosition.current = container.scrollTop;
+    };
+    
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [isOpen]);
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
