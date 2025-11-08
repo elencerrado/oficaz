@@ -120,35 +120,31 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
-  // PROFESSIONAL PATTERN: Restore/set scroll position when chat opens
+  // PROFESSIONAL PATTERN: Restore scroll when opening, save when closing
   useEffect(() => {
-    if (!isOpen || !scrollContainerRef.current) return;
-    
-    const savedScroll = scrollCache.get('ai-chat-scroll');
-    
-    // Use requestAnimationFrame for smooth restore after DOM is ready
-    requestAnimationFrame(() => {
-      if (!scrollContainerRef.current) return;
+    if (isOpen && scrollContainerRef.current) {
+      // Opening: restore scroll
+      const savedScroll = scrollCache.get('ai-chat-scroll');
       
-      if (savedScroll !== undefined) {
-        // Always restore saved position (even if it's 0)
-        scrollContainerRef.current.scrollTop = savedScroll;
-        console.log("✅ Restored scroll position:", savedScroll);
-      } else if (!hasInitializedScrollOnce) {
-        // ONLY first time EVER: scroll to bottom
-        scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-        hasInitializedScrollOnce = true;
-        console.log("✅ First open ever - scrolled to bottom");
-      }
-    });
-  }, [isOpen]); // Runs when chat opens/closes
-  
-  // Save scroll position when user scrolls
-  const handleScroll = () => {
-    if (scrollContainerRef.current) {
-      scrollCache.set('ai-chat-scroll', scrollContainerRef.current.scrollTop);
+      requestAnimationFrame(() => {
+        if (!scrollContainerRef.current) return;
+        
+        if (savedScroll !== undefined) {
+          scrollContainerRef.current.scrollTop = savedScroll;
+          console.log("✅ Restored scroll position:", savedScroll);
+        } else if (!hasInitializedScrollOnce) {
+          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+          hasInitializedScrollOnce = true;
+          console.log("✅ First open ever - scrolled to bottom");
+        }
+      });
+    } else if (!isOpen && scrollContainerRef.current) {
+      // Closing: save current scroll position
+      const currentScroll = scrollContainerRef.current.scrollTop;
+      scrollCache.set('ai-chat-scroll', currentScroll);
+      console.log("💾 Saved scroll position on close:", currentScroll);
     }
-  };
+  }, [isOpen]); // Runs when chat opens/closes
 
   // Initialize messages from localStorage or with default welcome message
   // Auto-clear history after 2 days
@@ -374,7 +370,6 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
           {/* Messages */}
           <div 
             ref={scrollContainerRef}
-            onScroll={handleScroll}
             className="flex-1 space-y-4 overflow-y-auto p-4" 
             data-testid="container-ai-messages"
           >
