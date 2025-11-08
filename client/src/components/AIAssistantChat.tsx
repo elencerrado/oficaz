@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Send, Loader2, Minimize2, RotateCcw } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useLocation } from "wouter";
 import oficazLogo from "@/assets/oficaz-logo.png";
 
 interface Message {
@@ -105,7 +105,6 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
 }
 
 export function AIAssistantChat() {
-  const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -154,14 +153,14 @@ export function AIAssistantChat() {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   }, [messages]);
 
-  // Restore scroll position when opening chat OR changing pages
+  // Restore scroll position when opening chat
   useLayoutEffect(() => {
     if (!isOpen || !scrollContainerRef.current) return;
     
     const container = scrollContainerRef.current;
     const savedPos = localStorage.getItem('ai_chat_scroll_position');
     
-    // setTimeout(0) waits for DOM update but faster than requestAnimationFrame
+    // setTimeout(0) waits for DOM update
     const timeoutId = setTimeout(() => {
       if (savedPos && parseInt(savedPos) > 0) {
         container.scrollTop = parseInt(savedPos);
@@ -172,7 +171,7 @@ export function AIAssistantChat() {
     }, 0);
     
     return () => clearTimeout(timeoutId);
-  }, [isOpen, location]); // Runs when opening OR navigating
+  }, [isOpen]); // Only when opening/closing
   
   // Save scroll position on scroll
   useEffect(() => {
@@ -316,7 +315,8 @@ export function AIAssistantChat() {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   };
 
-  return (
+  // Render directly to body using Portal (prevents destruction on route changes)
+  return createPortal(
     <>
       {/* Floating button */}
       <div
@@ -430,6 +430,7 @@ export function AIAssistantChat() {
           </div>
         </div>
       )}
-    </>
+    </>,
+    document.body
   );
 }
