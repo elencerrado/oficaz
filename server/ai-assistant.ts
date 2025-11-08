@@ -504,7 +504,7 @@ export async function updateWorkShiftTimes(
   }
 
   // Parse the date using UTC to avoid timezone issues
-  const { startOfDay, endOfDay } = getUTCDayBoundaries(params.date);
+  const { startOfDay, endOfDay, targetDate } = getUTCDayBoundaries(params.date);
 
   // Find all shifts for this employee on this date
   const shifts = await db.select()
