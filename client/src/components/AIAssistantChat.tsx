@@ -150,12 +150,19 @@ export function AIAssistantChat() {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   }, [messages]);
 
-  // Auto-scroll to bottom when new messages arrive or chat opens
+  // Scroll to bottom instantly when chat opens (no animation)
   useEffect(() => {
     if (isOpen) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+    }
+  }, [isOpen]);
+
+  // Scroll to bottom smoothly when new messages arrive
+  useEffect(() => {
+    if (isOpen && messages.length > 0) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, isLoading, isOpen]);
+  }, [messages, isLoading]);
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
