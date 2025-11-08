@@ -4,6 +4,7 @@ import { Send, Loader2, Minimize2, RotateCcw } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useLocation } from "wouter";
 import oficazLogo from "@/assets/oficaz-logo.png";
 
 interface Message {
@@ -104,6 +105,7 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
 }
 
 export function AIAssistantChat() {
+  const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -152,7 +154,7 @@ export function AIAssistantChat() {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   }, [messages]);
 
-  // Restore scroll position when opening chat
+  // Restore scroll position when opening chat OR changing pages
   useLayoutEffect(() => {
     if (!isOpen || !scrollContainerRef.current) return;
     
@@ -168,7 +170,7 @@ export function AIAssistantChat() {
         container.scrollTop = container.scrollHeight;
       }
     });
-  }, [isOpen]);
+  }, [isOpen, location]); // 👈 ALSO runs when location changes
   
   // Save scroll position on scroll
   useEffect(() => {
