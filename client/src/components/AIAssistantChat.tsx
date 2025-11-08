@@ -115,7 +115,7 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const savedScrollPosition = useRef<number | null>(null);
+  const hasScrolledOnceRef = useRef(false);
   
   // DEBUG: Log render
   console.log("🔍 AIAssistantChat RENDER - isOpen:", isOpen, "hasAccess:", hasAccess);
@@ -160,8 +160,18 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   }, [messages]);
 
-  // SCROLL IS BROKEN - DISABLED COMPLETELY
-  // The Portal + ref should keep scroll naturally - NO CODE NEEDED
+  // Scroll to bottom ONLY on first open ever
+  useEffect(() => {
+    if (isOpen && scrollContainerRef.current && !hasScrolledOnceRef.current) {
+      console.log("📜 First time opening chat - scrolling to bottom");
+      setTimeout(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+          hasScrolledOnceRef.current = true;
+        }
+      }, 0);
+    }
+  }, [isOpen]);
   
   // Helper to scroll to bottom
   const scrollToBottom = () => {
