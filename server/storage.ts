@@ -245,6 +245,7 @@ export interface IStorage {
   updateWorkShift(id: number, updates: Partial<InsertWorkShift>): Promise<WorkShift | undefined>;
   deleteWorkShift(id: number): Promise<boolean>;
   replicateWeekShifts(companyId: number, weekStart: string, offsetWeeks?: number, employeeIds?: number[]): Promise<WorkShift[]>;
+  swapEmployeeShifts(employeeAId: number, employeeBId: number, startDate?: string, endDate?: string): Promise<{ success: boolean; swappedCount: number; conflicts?: string[] }>;
 
   // Promotional Codes
   createPromotionalCode(code: InsertPromotionalCode): Promise<PromotionalCode>;
@@ -2808,6 +2809,75 @@ export class DrizzleStorage implements IStorage {
     } catch (error) {
       console.error('Error replicating week shifts:', error);
       return [];
+    }
+  }
+
+  async swapEmployeeShifts(
+    employeeAId: number,
+    employeeBId: number,
+    startDate?: string,
+    endDate?: string
+  ): Promise<{ success: boolean; swappedCount: number; conflicts?: string[] }> {
+    try {
+      // Build date filter conditions
+      const dateConditions: any[] = [];
+      if (startDate) {
+        dateConditions.push(gte(schema.workShifts.startAt, new Date(startDate)));
+      }
+      if (endDate) {
+        dateConditions.push(lte(schema.workShifts.endAt, new Date(endDate)));
+      }
+
+      // Get all shifts for employee A
+      const shiftsA = await db.select()
+        .from(schema.workShifts)
+        .where(and(
+          eq(schema.workShifts.employeeId, employeeAId),
+          ...(dateConditions.length > 0 ? dateConditions : [])
+        ));
+
+      // Get all shifts for employee B
+      const shiftsB = await db.select()
+        .from(schema.workShifts)
+        .where(and(
+          eq(schema.workShifts.employeeId, employeeBId),
+          ...(dateConditions.length > 0 ? dateConditions : [])
+        ));
+
+      console.log(`🔄 SWAP DEBUG: Employee ${employeeAId} has ${shiftsA.length} shifts, Employee ${employeeBId} has ${shiftsB.length} shifts`);
+
+      // Swap employee IDs for all shifts
+      let swappedCount = 0;
+
+      // Update all shifts from A to B
+      for (const shift of shiftsA) {
+        await db.update(schema.workShifts)
+          .set({ employeeId: employeeBId, updatedAt: new Date() })
+          .where(eq(schema.workShifts.id, shift.id));
+        swappedCount++;
+      }
+
+      // Update all shifts from B to A
+      for (const shift of shiftsB) {
+        await db.update(schema.workShifts)
+          .set({ employeeId: employeeAId, updatedAt: new Date() })
+          .where(eq(schema.workShifts.id, shift.id));
+        swappedCount++;
+      }
+
+      console.log(`✅ SWAP SUCCESS: Swapped ${swappedCount} shifts total`);
+
+      return {
+        success: true,
+        swappedCount,
+      };
+    } catch (error) {
+      console.error('❌ Error swapping employee shifts:', error);
+      return {
+        success: false,
+        swappedCount: 0,
+        conflicts: [(error as Error).message],
+      };
     }
   }
 

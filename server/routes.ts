@@ -7591,6 +7591,67 @@ Responde en español, sé BREVE y DIRECTO. Confirma acciones completadas sin rod
             delete functionArgs.employeeName;
           }
 
+          // Handle functions that need TWO employee name resolutions
+          if (functionName === 'swapEmployeeShifts') {
+            if (functionArgs.employeeAName) {
+              const resolutionA = await resolveEmployeeName(storage, companyId, functionArgs.employeeAName);
+              if ('error' in resolutionA) {
+                toolResults.push({
+                  role: "tool" as const,
+                  tool_call_id: toolCall.id,
+                  content: JSON.stringify({ error: `Empleado A: ${resolutionA.error}` })
+                });
+                continue;
+              }
+              functionArgs.employeeAId = resolutionA.employeeId;
+              delete functionArgs.employeeAName;
+            }
+
+            if (functionArgs.employeeBName) {
+              const resolutionB = await resolveEmployeeName(storage, companyId, functionArgs.employeeBName);
+              if ('error' in resolutionB) {
+                toolResults.push({
+                  role: "tool" as const,
+                  tool_call_id: toolCall.id,
+                  content: JSON.stringify({ error: `Empleado B: ${resolutionB.error}` })
+                });
+                continue;
+              }
+              functionArgs.employeeBId = resolutionB.employeeId;
+              delete functionArgs.employeeBName;
+            }
+          }
+
+          if (functionName === 'copyEmployeeShifts') {
+            if (functionArgs.fromEmployeeName) {
+              const resolutionFrom = await resolveEmployeeName(storage, companyId, functionArgs.fromEmployeeName);
+              if ('error' in resolutionFrom) {
+                toolResults.push({
+                  role: "tool" as const,
+                  tool_call_id: toolCall.id,
+                  content: JSON.stringify({ error: `Empleado origen: ${resolutionFrom.error}` })
+                });
+                continue;
+              }
+              functionArgs.fromEmployeeId = resolutionFrom.employeeId;
+              delete functionArgs.fromEmployeeName;
+            }
+
+            if (functionArgs.toEmployeeName) {
+              const resolutionTo = await resolveEmployeeName(storage, companyId, functionArgs.toEmployeeName);
+              if ('error' in resolutionTo) {
+                toolResults.push({
+                  role: "tool" as const,
+                  tool_call_id: toolCall.id,
+                  content: JSON.stringify({ error: `Empleado destino: ${resolutionTo.error}` })
+                });
+                continue;
+              }
+              functionArgs.toEmployeeId = resolutionTo.employeeId;
+              delete functionArgs.toEmployeeName;
+            }
+          }
+
           // Execute the function
           try {
             const result = await executeAIFunction(functionName, functionArgs, context);

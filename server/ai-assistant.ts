@@ -858,6 +858,126 @@ export async function updateWorkShiftDetails(
   };
 }
 
+// 13. Swap work shifts between two employees
+export async function swapEmployeeShifts(
+  context: AIFunctionContext,
+  params: {
+    employeeAId: number;
+    employeeBId: number;
+    startDate?: string; // YYYY-MM-DD - Optional start date
+    endDate?: string;   // YYYY-MM-DD - Optional end date
+  }
+) {
+  const { storage, companyId } = context;
+
+  // Verify both employees belong to the company
+  const employeeA = await storage.getUser(params.employeeAId);
+  const employeeB = await storage.getUser(params.employeeBId);
+
+  if (!employeeA || employeeA.companyId !== companyId) {
+    throw new Error("Employee A not found or doesn't belong to this company");
+  }
+
+  if (!employeeB || employeeB.companyId !== companyId) {
+    throw new Error("Employee B not found or doesn't belong to this company");
+  }
+
+  // Perform the swap
+  const result = await storage.swapEmployeeShifts(
+    params.employeeAId,
+    params.employeeBId,
+    params.startDate,
+    params.endDate
+  );
+
+  if (!result.success) {
+    return {
+      success: false,
+      error: result.conflicts?.[0] || "Error al intercambiar turnos",
+      employeeAName: employeeA.fullName,
+      employeeBName: employeeB.fullName
+    };
+  }
+
+  return {
+    success: true,
+    employeeAName: employeeA.fullName,
+    employeeBName: employeeB.fullName,
+    swappedCount: result.swappedCount,
+    dateRange: params.startDate && params.endDate 
+      ? `${params.startDate} a ${params.endDate}`
+      : "todos los turnos"
+  };
+}
+
+// 14. Copy work shifts from one employee to another
+export async function copyEmployeeShifts(
+  context: AIFunctionContext,
+  params: {
+    fromEmployeeId: number;
+    toEmployeeId: number;
+    startDate?: string; // YYYY-MM-DD - Optional start date
+    endDate?: string;   // YYYY-MM-DD - Optional end date
+  }
+) {
+  const { storage, companyId, adminUserId } = context;
+
+  // Verify both employees belong to the company
+  const fromEmployee = await storage.getUser(params.fromEmployeeId);
+  const toEmployee = await storage.getUser(params.toEmployeeId);
+
+  if (!fromEmployee || fromEmployee.companyId !== companyId) {
+    throw new Error("Source employee not found or doesn't belong to this company");
+  }
+
+  if (!toEmployee || toEmployee.companyId !== companyId) {
+    throw new Error("Target employee not found or doesn't belong to this company");
+  }
+
+  // Get shifts from source employee
+  const sourceShifts = await storage.getWorkShiftsByEmployee(
+    params.fromEmployeeId,
+    params.startDate,
+    params.endDate
+  );
+
+  if (sourceShifts.length === 0) {
+    return {
+      success: false,
+      error: `${fromEmployee.fullName} no tiene turnos en el rango especificado`,
+      fromEmployeeName: fromEmployee.fullName,
+      toEmployeeName: toEmployee.fullName
+    };
+  }
+
+  // Create copies for target employee
+  let copiedCount = 0;
+  for (const shift of sourceShifts) {
+    await db.insert(schema.workShifts).values({
+      companyId,
+      employeeId: params.toEmployeeId,
+      startAt: shift.startAt,
+      endAt: shift.endAt,
+      title: shift.title,
+      location: shift.location,
+      notes: shift.notes,
+      color: getEmployeeColor(params.toEmployeeId), // Use target employee's color
+      createdByUserId: adminUserId,
+    });
+    copiedCount++;
+  }
+
+  return {
+    success: true,
+    fromEmployeeName: fromEmployee.fullName,
+    toEmployeeName: toEmployee.fullName,
+    copiedCount,
+    dateRange: params.startDate && params.endDate 
+      ? `${params.startDate} a ${params.endDate}`
+      : "todos los turnos"
+  };
+}
+
 // Function definitions for OpenAI function calling
 export const AI_FUNCTIONS = [
   {
@@ -1189,6 +1309,58 @@ export const AI_FUNCTIONS = [
       required: ["employeeName", "date"],
     },
   },
+  {
+    name: "swapEmployeeShifts",
+    description: "Intercambiar todos los turnos entre dos empleados en un rango de fechas (o todos si no se especifica). Los turnos de A pasan a B, y los de B pasan a A. Útil para 'intercambiar turnos', 'cambiar cuadrantes', etc.",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeAName: {
+          type: "string",
+          description: "Nombre del primer empleado",
+        },
+        employeeBName: {
+          type: "string",
+          description: "Nombre del segundo empleado",
+        },
+        startDate: {
+          type: "string",
+          description: "Fecha de inicio del rango (opcional, formato YYYY-MM-DD). Si no se especifica, intercambia TODOS los turnos",
+        },
+        endDate: {
+          type: "string",
+          description: "Fecha de fin del rango (opcional, formato YYYY-MM-DD)",
+        },
+      },
+      required: ["employeeAName", "employeeBName"],
+    },
+  },
+  {
+    name: "copyEmployeeShifts",
+    description: "Copiar turnos de un empleado a otro en un rango de fechas. El empleado destino recibirá copias de los turnos del empleado origen. Útil para 'copiar turnos', 'asignar los mismos turnos que', etc.",
+    parameters: {
+      type: "object",
+      properties: {
+        fromEmployeeName: {
+          type: "string",
+          description: "Nombre del empleado origen (de quien se copian los turnos)",
+        },
+        toEmployeeName: {
+          type: "string",
+          description: "Nombre del empleado destino (quien recibe las copias)",
+        },
+        startDate: {
+          type: "string",
+          description: "Fecha de inicio del rango (opcional, formato YYYY-MM-DD). Si no se especifica, copia TODOS los turnos",
+        },
+        endDate: {
+          type: "string",
+          description: "Fecha de fin del rango (opcional, formato YYYY-MM-DD)",
+        },
+      },
+      required: ["fromEmployeeName", "toEmployeeName"],
+    },
+  },
 ];
 
 // Execute AI function by name
@@ -1222,6 +1394,10 @@ export async function executeAIFunction(
       return updateWorkShiftColor(context, params);
     case "updateWorkShiftDetails":
       return updateWorkShiftDetails(context, params);
+    case "swapEmployeeShifts":
+      return swapEmployeeShifts(context, params);
+    case "copyEmployeeShifts":
+      return copyEmployeeShifts(context, params);
     default:
       throw new Error(`Unknown function: ${functionName}`);
   }
