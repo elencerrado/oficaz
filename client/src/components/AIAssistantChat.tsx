@@ -161,13 +161,17 @@ export function AIAssistantChat() {
     const container = scrollContainerRef.current;
     const savedPos = localStorage.getItem('ai_chat_scroll_position');
     
-    // Apply scroll SYNCHRONOUSLY before browser paint (no flicker)
-    if (savedPos && parseInt(savedPos) > 0) {
-      container.scrollTop = parseInt(savedPos);
-    } else {
-      // First time or no saved position - scroll to bottom
-      container.scrollTop = container.scrollHeight;
-    }
+    // setTimeout(0) waits for DOM update but faster than requestAnimationFrame
+    const timeoutId = setTimeout(() => {
+      if (savedPos && parseInt(savedPos) > 0) {
+        container.scrollTop = parseInt(savedPos);
+      } else {
+        // First time or no saved position - scroll to bottom
+        container.scrollTop = container.scrollHeight;
+      }
+    }, 0);
+    
+    return () => clearTimeout(timeoutId);
   }, [isOpen, location]); // Runs when opening OR navigating
   
   // Save scroll position on scroll
