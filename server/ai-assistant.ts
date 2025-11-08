@@ -13,12 +13,122 @@ const db = drizzle(connection, { schema });
 
 // ⚠️ AI Assistant Functions - Executed by GPT-5 Nano via function calling
 // These functions provide the AI assistant with capabilities to perform administrative tasks
+// ARCHITECTURE: Read-only functions first (for context), then mutation functions
 
 export interface AIFunctionContext {
   storage: DrizzleStorage;
   companyId: number;
   adminUserId: number;
 }
+
+// ========================================
+// 📖 READ-ONLY FUNCTIONS (Query/Consult)
+// ========================================
+// These functions allow the AI to gather context before acting
+
+// QUERY 1: List all employees in the company
+export async function listEmployees(
+  context: AIFunctionContext,
+  params?: {
+    role?: string; // Optional: filter by role (admin/employee)
+    includeInactive?: boolean; // Optional: include inactive employees
+  }
+) {
+  const { storage, companyId } = context;
+  
+  const allEmployees = await storage.getUsersByCompany(companyId);
+  
+  let filteredEmployees = allEmployees;
+  
+  // Filter by role if specified
+  if (params?.role) {
+    filteredEmployees = filteredEmployees.filter(emp => emp.role === params.role);
+  }
+  
+  // Return simplified employee info for AI context
+  return {
+    success: true,
+    totalCount: filteredEmployees.length,
+    employees: filteredEmployees.map(emp => ({
+      id: emp.id,
+      fullName: emp.fullName,
+      email: emp.email,
+      role: emp.role,
+      department: emp.department || "Sin departamento"
+    }))
+  };
+}
+
+// QUERY 2: Get work shifts for an employee in a date range
+export async function getEmployeeShifts(
+  context: AIFunctionContext,
+  params: {
+    employeeId: number;
+    startDate?: string; // Optional: YYYY-MM-DD
+    endDate?: string;   // Optional: YYYY-MM-DD
+  }
+) {
+  const { storage, companyId } = context;
+  
+  const employee = await storage.getUser(params.employeeId);
+  if (!employee || employee.companyId !== companyId) {
+    return {
+      success: false,
+      error: "Empleado no encontrado o no pertenece a esta empresa"
+    };
+  }
+  
+  const shifts = await storage.getWorkShiftsByEmployee(
+    params.employeeId,
+    params.startDate,
+    params.endDate
+  );
+  
+  return {
+    success: true,
+    employeeName: employee.fullName,
+    totalShifts: shifts.length,
+    shifts: shifts.map(shift => ({
+      id: shift.id,
+      title: shift.title,
+      startAt: new Date(shift.startAt).toLocaleString('es-ES'),
+      endAt: new Date(shift.endAt).toLocaleString('es-ES'),
+      location: shift.location || "Sin ubicación",
+      color: shift.color,
+      notes: shift.notes || ""
+    }))
+  };
+}
+
+// QUERY 3: Get company context summary (useful for understanding current state)
+export async function getCompanyContext(
+  context: AIFunctionContext
+) {
+  const { storage, companyId } = context;
+  
+  const employees = await storage.getUsersByCompany(companyId);
+  const adminCount = employees.filter(e => e.role === 'admin').length;
+  const employeeCount = employees.filter(e => e.role === 'employee').length;
+  
+  // Get pending requests count
+  const pendingTimeRequests = await storage.getCompanyModificationRequests(companyId);
+  const pendingTimeCount = pendingTimeRequests.filter(r => r.status === 'pending').length;
+  
+  return {
+    success: true,
+    context: {
+      totalEmployees: employees.length,
+      admins: adminCount,
+      regularEmployees: employeeCount,
+      pendingTimeModificationRequests: pendingTimeCount,
+      employeeNames: employees.map(e => e.fullName).slice(0, 10) // First 10 for context
+    }
+  };
+}
+
+// ========================================
+// ✏️ MUTATION FUNCTIONS (Actions)
+// ========================================
 
 // Helper function to normalize strings for accent-insensitive comparison
 function normalizeForComparison(str: string): string {
@@ -1034,6 +1144,58 @@ export async function copyEmployeeShifts(
 
 // Function definitions for OpenAI function calling
 export const AI_FUNCTIONS = [
+  // ========================================
+  // 📖 READ-ONLY FUNCTIONS (Always available - use these to gather context!)
+  // ========================================
+  {
+    name: "listEmployees",
+    description: "📋 CONSULTA la lista de empleados de la empresa. USA ESTA FUNCIÓN PRIMERO cuando el usuario mencione empleados para verificar quiénes existen y sus nombres exactos. SIEMPRE consulta antes de actuar sobre empleados",
+    parameters: {
+      type: "object",
+      properties: {
+        role: {
+          type: "string",
+          enum: ["admin", "employee"],
+          description: "Filtrar por rol (opcional)",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "getEmployeeShifts",
+    description: "🔍 CONSULTA los turnos existentes de un empleado. USA ESTA FUNCIÓN ANTES de modificar, eliminar o cambiar colores de turnos para ver qué turnos realmente existen y sus títulos exactos. SIEMPRE consulta los turnos antes de actuar sobre ellos",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeName: {
+          type: "string",
+          description: "Nombre del empleado",
+        },
+        startDate: {
+          type: "string",
+          description: "Fecha de inicio en formato YYYY-MM-DD (opcional)",
+        },
+        endDate: {
+          type: "string",
+          description: "Fecha de fin en formato YYYY-MM-DD (opcional)",
+        },
+      },
+      required: ["employeeName"],
+    },
+  },
+  {
+    name: "getCompanyContext",
+    description: "📊 CONSULTA un resumen del estado actual de la empresa (empleados, solicitudes pendientes, etc). Útil para entender el contexto general",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: [],
+    },
+  },
+  // ========================================
+  // ✏️ MUTATION FUNCTIONS (Actions - use after consulting)
+  // ========================================
   {
     name: "sendMessage",
     description: "Enviar un mensaje o circular a uno o varios empleados de la empresa",
@@ -1450,6 +1612,14 @@ export async function executeAIFunction(
   context: AIFunctionContext
 ): Promise<any> {
   switch (functionName) {
+    // Query functions
+    case "listEmployees":
+      return listEmployees(context, params);
+    case "getEmployeeShifts":
+      return getEmployeeShifts(context, params);
+    case "getCompanyContext":
+      return getCompanyContext(context);
+    // Action functions
     case "sendMessage":
       return sendMessage(context, params);
     case "approveTimeModificationRequests":
