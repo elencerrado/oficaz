@@ -354,21 +354,18 @@ export async function assignSchedule(
     throw new Error("Employee not found or doesn't belong to this company");
   }
 
-  console.log("🕐 ASSIGN SCHEDULE DEBUG:", {
-    employeeName: employee.fullName,
-    rawStartDate: params.startDate,
-    rawEndDate: params.endDate,
-    parsedStartAt: new Date(params.startDate).toISOString(),
-    parsedEndAt: new Date(params.endDate).toISOString()
-  });
+  // Parse dates as Europe/Madrid timezone (CET/CEST)
+  // When AI sends "2025-11-10T08:00:00", it means 8am in Spain, not UTC
+  const startAt = new Date(params.startDate + '+01:00'); // CET offset
+  const endAt = new Date(params.endDate + '+01:00');
 
   // Create work shift
   const shift = await db.insert(schema.workShifts)
     .values({
       companyId,
       employeeId: params.employeeId,
-      startAt: new Date(params.startDate),
-      endAt: new Date(params.endDate),
+      startAt,
+      endAt,
       title: params.title,
       location: params.location || null,
       notes: params.notes || null,
