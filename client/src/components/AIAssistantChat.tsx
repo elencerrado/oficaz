@@ -253,18 +253,6 @@ export function AIAssistantChat() {
                   <p className="whitespace-pre-wrap break-words">
                     {message.content}
                   </p>
-                  {message.functionCalled && (
-                    <div className="mt-2 flex items-center gap-1 text-xs opacity-75">
-                      <div className="w-3 h-3 relative">
-                        <img 
-                          src={oficazLogo} 
-                          alt="" 
-                          className="w-3 h-3 object-contain brightness-0 invert opacity-75"
-                        />
-                      </div>
-                      <span>Acción ejecutada: {message.functionCalled}</span>
-                    </div>
-                  )}
                 </div>
               </div>
             ))}
