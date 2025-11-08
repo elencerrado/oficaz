@@ -14,6 +14,7 @@ interface Message {
 
 // Componente de animación del asistente de IA
 function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) {
+  const animationName = isThinking ? 'aiCircularOrbit' : 'aiRandomBounce';
   const animationDuration = isThinking ? '2s' : '30s';
   const gradientDuration = isThinking ? '4s' : '35s';
   
@@ -29,7 +30,7 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
         }}
       />
       
-      {/* Anillo blanco con punto rebotando - encima del degradado */}
+      {/* Anillo blanco con punto - encima del degradado */}
       <div className="absolute inset-[10px] flex items-center justify-center">
         {/* Anillo blanco */}
         <div 
@@ -40,16 +41,25 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
           }}
         />
         
-        {/* Punto blanco rebotando */}
+        {/* Punto blanco (rebotando o girando según el estado) */}
         <div 
           className="absolute w-3.5 h-3.5 bg-white rounded-full shadow-lg"
           style={{
-            animation: `aiRandomBounce ${animationDuration} ease-in-out infinite`
+            animation: `${animationName} ${animationDuration} ${isThinking ? 'linear' : 'ease-in-out'} infinite`
           }}
         />
       </div>
       
       <style>{`
+        @keyframes aiCircularOrbit {
+          0% {
+            transform: rotate(0deg) translateX(11px) rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg) translateX(11px) rotate(-360deg);
+          }
+        }
+        
         @keyframes aiRandomBounce {
           0% {
             transform: translate(0px, 0px);
