@@ -22,6 +22,8 @@ import { useScrollReset } from "@/hooks/use-scroll-reset";
 import { useReminderNotifications } from "@/hooks/useReminderNotifications";
 import { SidebarProvider, useSidebarState } from "@/hooks/use-sidebar-state";
 import { AdminLayout } from "@/components/layout/admin-layout";
+import { AIAssistantChat } from "@/components/AIAssistantChat";
+import { useFeatureCheck } from "@/hooks/use-feature-check";
 
 import { lazy, Suspense } from "react";
 
@@ -591,6 +593,18 @@ function Router() {
   );
 }
 
+function AIAssistantWrapper() {
+  const { hasAccess: hasAIAssistant } = useFeatureCheck();
+  const { user } = useAuth();
+  
+  // Only show AI Assistant for authenticated users with AI feature
+  if (user && hasAIAssistant('ai_assistant')) {
+    return <AIAssistantChat />;
+  }
+  
+  return null;
+}
+
 function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="oficaz-theme">
@@ -601,6 +615,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router />
+            <AIAssistantWrapper />
             <CookieBanner />
           </TooltipProvider>
         </AuthProvider>
