@@ -120,31 +120,18 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
-  // PROFESSIONAL PATTERN: Restore scroll when opening, save when closing
+  // PROFESSIONAL PATTERN: Only scroll to bottom on FIRST open
   useEffect(() => {
-    if (isOpen && scrollContainerRef.current) {
-      // Opening: restore scroll
-      const savedScroll = scrollCache.get('ai-chat-scroll');
-      
+    if (isOpen && scrollContainerRef.current && !hasInitializedScrollOnce) {
       requestAnimationFrame(() => {
-        if (!scrollContainerRef.current) return;
-        
-        if (savedScroll !== undefined) {
-          scrollContainerRef.current.scrollTop = savedScroll;
-          console.log("✅ Restored scroll position:", savedScroll);
-        } else if (!hasInitializedScrollOnce) {
+        if (scrollContainerRef.current) {
           scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
           hasInitializedScrollOnce = true;
-          console.log("✅ First open ever - scrolled to bottom");
+          console.log("✅ First open - scrolled to bottom");
         }
       });
-    } else if (!isOpen && scrollContainerRef.current) {
-      // Closing: save current scroll position
-      const currentScroll = scrollContainerRef.current.scrollTop;
-      scrollCache.set('ai-chat-scroll', currentScroll);
-      console.log("💾 Saved scroll position on close:", currentScroll);
     }
-  }, [isOpen]); // Runs when chat opens/closes
+  }, [isOpen]); // Only runs when isOpen changes
 
   // Initialize messages from localStorage or with default welcome message
   // Auto-clear history after 2 days
@@ -336,12 +323,13 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
         <AIAssistantAnimation isThinking={isLoading} />
       </div>
 
-      {/* PROFESSIONAL PATTERN: Always rendered, visibility controlled by display style */}
+      {/* PROFESSIONAL PATTERN: Always rendered and in layout, hidden with visibility */}
       <div
         className="fixed bottom-24 right-6 z-50 flex max-h-[calc(100vh-8rem)] w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 transition-opacity duration-300"
         style={{
-          display: isOpen ? 'flex' : 'none',
-          opacity: isOpen ? 1 : 0
+          visibility: isOpen ? 'visible' : 'hidden',
+          opacity: isOpen ? 1 : 0,
+          pointerEvents: isOpen ? 'auto' : 'none'
         }}
         data-testid="container-ai-assistant-chat"
       >
