@@ -152,40 +152,37 @@ export function AIAssistantChat() {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   }, [messages]);
 
-  // Track previous states to detect actual changes
-  const previousMessageCount = useRef(messages.length);
-  const previousIsOpen = useRef(isOpen);
-  
-  // Scroll to bottom when chat opens or messages change
+  // Restore scroll position from localStorage on mount
   useEffect(() => {
-    if (!scrollContainerRef.current) return;
-    
-    const chatJustOpened = isOpen && !previousIsOpen.current;
-    const messagesChanged = previousMessageCount.current !== messages.length;
-    
-    if (chatJustOpened || (isOpen && messagesChanged)) {
-      // Scroll to bottom for new messages
-      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-      savedScrollPosition.current = scrollContainerRef.current.scrollHeight;
-    } else if (isOpen && savedScrollPosition.current !== null) {
-      // Restore saved position when navigating
-      scrollContainerRef.current.scrollTop = savedScrollPosition.current;
+    if (isOpen && scrollContainerRef.current) {
+      const savedPos = localStorage.getItem('ai_chat_scroll_position');
+      if (savedPos) {
+        scrollContainerRef.current.scrollTop = parseInt(savedPos);
+      } else {
+        // First time opening, scroll to bottom
+        scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+      }
     }
-    
-    previousMessageCount.current = messages.length;
-    previousIsOpen.current = isOpen;
-  });
+  }, [isOpen]);
+  
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (isOpen && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+      localStorage.setItem('ai_chat_scroll_position', scrollContainerRef.current.scrollHeight.toString());
+    }
+  }, [messages.length, isLoading]);
   
   // Save scroll position on scroll
   useEffect(() => {
     const container = scrollContainerRef.current;
-    if (!container) return;
+    if (!container || !isOpen) return;
     
     const handleScroll = () => {
-      savedScrollPosition.current = container.scrollTop;
+      localStorage.setItem('ai_chat_scroll_position', container.scrollTop.toString());
     };
     
-    container.addEventListener('scroll', handleScroll);
+    container.addEventListener('scroll', handleScroll, { passive: true });
     return () => container.removeEventListener('scroll', handleScroll);
   }, [isOpen]);
 
