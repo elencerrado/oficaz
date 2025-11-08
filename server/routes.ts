@@ -7535,21 +7535,44 @@ Usuario: "Cambia los colores de los turnos de Marta"
 - getEmployeeShifts: Ver turnos existentes de un empleado (CRUCIAL antes de modificar)
 - getCompanyContext: Ver resumen de la empresa
 
-✏️ ACTUAR DESPUÉS:
-- assignSchedule: Crear nuevos turnos
-- deleteWorkShift: Borrar turnos de UN empleado en UNA fecha específica
-- deleteWorkShiftsInRange: 🗑️ Borrar turnos en un RANGO de fechas (semana, mes, etc). Puede borrar de UN empleado o de TODOS si no se especifica
-- updateWorkShiftTimes: Cambiar horarios
-- updateEmployeeShiftsColor: Cambiar colores de TODOS los turnos en un rango de fechas (usa esto para cambios masivos)
-- updateWorkShiftColor: Cambiar color de UN turno específico (solo si sabes el título exacto)
-- updateWorkShiftDetails: Cambiar título, ubicación, notas
-- detectWorkShiftOverlaps: Identificar conflictos
+✏️ ACTUAR DESPUÉS (FUNCIONALIDAD COMPLETA):
 
-📌 USO CORRECTO DE FUNCIONES DE BORRADO:
-- "Borra el turno del lunes" → deleteWorkShift (empleado + fecha específica)
-- "Borra todos los turnos de la semana" → deleteWorkShiftsInRange (startDate + endDate, SIN employeeName)
-- "Borra los turnos de Juan del 10 al 15" → deleteWorkShiftsInRange (employeeName + startDate + endDate)
-- "Elimina todos los turnos de noviembre" → deleteWorkShiftsInRange (2025-11-01 a 2025-11-30)
+🆕 CREAR TURNOS:
+- assignSchedule: Crear UN solo turno (una fecha específica con hora inicio/fin)
+- assignScheduleInRange: 🗓️ Crear turnos MASIVOS para semanas/meses enteros (skipWeekends: true por defecto)
+
+🗑️ BORRAR TURNOS:
+- deleteWorkShift: Borrar turnos de UN empleado en UNA fecha específica
+- deleteWorkShiftsInRange: Borrar turnos en RANGO de fechas (semana, mes). Puede ser de UN empleado o TODOS
+
+✏️ MODIFICAR TURNOS:
+- updateWorkShiftTimes: Cambiar horarios de UN turno específico
+- updateEmployeeShiftsColor: Cambiar colores de TODOS los turnos en un rango de fechas
+- updateWorkShiftColor: Cambiar color de UN turno específico
+- updateWorkShiftDetails: Cambiar título, ubicación, notas de UN turno
+
+📋 COPIAR/DUPLICAR TURNOS:
+- copyEmployeeShifts: Copiar turnos de un empleado a otro (opcional: rango de fechas)
+- swapEmployeeShifts: Intercambiar turnos entre dos empleados
+
+🔍 DETECTAR PROBLEMAS:
+- detectWorkShiftOverlaps: Identificar solapamientos de horarios
+
+📌 EJEMPLOS DE USO CORRECTO:
+
+CREAR:
+- "Crea turnos para Juan toda la semana de 8 a 14" → assignScheduleInRange(employeeName: "Juan", startDate: "2025-11-11", endDate: "2025-11-15", startTime: "08:00", endTime: "14:00")
+- "Asigna a María turnos todo noviembre de 9 a 17" → assignScheduleInRange(startDate: "2025-11-01", endDate: "2025-11-30", startTime: "09:00", endTime: "17:00")
+- "Crea UN turno para Pedro el lunes de 10 a 18" → assignSchedule(startDate: "2025-11-11T10:00", endDate: "2025-11-11T18:00")
+
+BORRAR:
+- "Borra el turno del lunes" → deleteWorkShift(employeeName, date)
+- "Elimina todos los turnos de la semana" → deleteWorkShiftsInRange(startDate, endDate) SIN employeeName
+- "Borra los turnos de Juan del 10 al 15" → deleteWorkShiftsInRange(employeeName: "Juan", startDate, endDate)
+
+COPIAR:
+- "Copia los turnos de Juan a María" → copyEmployeeShifts(fromEmployeeName: "Juan", toEmployeeName: "María")
+- "Duplica los turnos de Pedro a Ana solo del 1 al 10" → copyEmployeeShifts con startDate/endDate
 
 🚀 REGLAS DE EJECUCIÓN:
 1. SIEMPRE consulta PRIMERO si mencionan empleados o turnos existentes (usa listEmployees/getEmployeeShifts)
@@ -7613,7 +7636,7 @@ Responde en español, sé BREVE y DIRECTO. Confirma acciones completadas sin rod
           const functionArgs = JSON.parse(toolCall.function.arguments);
 
           // Resolve employee names to IDs before executing function
-          const functionsNeedingEmployeeResolution = ['getEmployeeShifts', 'assignSchedule', 'requestDocument', 'deleteWorkShift', 'deleteWorkShiftsInRange', 'updateWorkShiftTimes', 'updateEmployeeShiftsColor', 'updateWorkShiftColor', 'updateWorkShiftDetails', 'detectWorkShiftOverlaps'];
+          const functionsNeedingEmployeeResolution = ['getEmployeeShifts', 'assignSchedule', 'assignScheduleInRange', 'requestDocument', 'deleteWorkShift', 'deleteWorkShiftsInRange', 'updateWorkShiftTimes', 'updateEmployeeShiftsColor', 'updateWorkShiftColor', 'updateWorkShiftDetails', 'detectWorkShiftOverlaps'];
           if (functionsNeedingEmployeeResolution.includes(functionName) && functionArgs.employeeName) {
             const resolution = await resolveEmployeeName(storage, companyId, functionArgs.employeeName);
             

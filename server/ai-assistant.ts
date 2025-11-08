@@ -513,6 +513,101 @@ export async function assignSchedule(
   };
 }
 
+// 6b. Assign schedule in BULK for date range (for weeks/months)
+export async function assignScheduleInRange(
+  context: AIFunctionContext,
+  params: {
+    employeeId: number;
+    title: string;
+    startDate: string; // YYYY-MM-DD
+    endDate: string; // YYYY-MM-DD
+    startTime: string; // HH:mm (e.g., "08:00")
+    endTime: string; // HH:mm (e.g., "14:00")
+    location?: string;
+    notes?: string;
+    color?: string;
+    skipWeekends?: boolean; // Default: true (skip Saturdays and Sundays)
+  }
+) {
+  const { storage, companyId, adminUserId } = context;
+
+  // Verify employee belongs to company
+  const employee = await storage.getUser(params.employeeId);
+  if (!employee || employee.companyId !== companyId) {
+    throw new Error("Employee not found or doesn't belong to this company");
+  }
+
+  // Auto-assign color based on employee ID if not provided
+  const shiftColor = params.color || getEmployeeColor(params.employeeId);
+
+  // Parse date range
+  const start = new Date(params.startDate);
+  const end = new Date(params.endDate);
+  
+  // Skip weekends by default
+  const skipWeekends = params.skipWeekends !== false;
+
+  // Generate all dates in range
+  const dates: Date[] = [];
+  let currentDate = new Date(start);
+  
+  while (currentDate <= end) {
+    const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
+    
+    // Skip weekends if enabled
+    if (skipWeekends && (dayOfWeek === 0 || dayOfWeek === 6)) {
+      currentDate.setDate(currentDate.getDate() + 1);
+      continue;
+    }
+    
+    dates.push(new Date(currentDate));
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  if (dates.length === 0) {
+    return {
+      success: false,
+      error: `No hay fechas válidas en el rango ${params.startDate} a ${params.endDate}`,
+      createdCount: 0
+    };
+  }
+
+  // Create shifts for all dates
+  const createdShifts = [];
+  for (const date of dates) {
+    const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+    const startAt = new Date(`${dateStr}T${params.startTime}:00+01:00`); // CET
+    const endAt = new Date(`${dateStr}T${params.endTime}:00+01:00`);
+
+    const shift = await db.insert(schema.workShifts)
+      .values({
+        companyId,
+        employeeId: params.employeeId,
+        startAt,
+        endAt,
+        title: params.title,
+        location: params.location || null,
+        notes: params.notes || null,
+        color: shiftColor,
+        createdByUserId: adminUserId,
+      })
+      .returning();
+
+    createdShifts.push(shift[0]);
+  }
+
+  return {
+    success: true,
+    createdCount: createdShifts.length,
+    employeeFullName: employee.fullName,
+    dateRange: `${params.startDate} a ${params.endDate}`,
+    shifts: createdShifts.map(s => ({
+      date: new Date(s.startAt).toLocaleDateString('es-ES'),
+      title: s.title
+    }))
+  };
+}
+
 // 7. Request document from employee
 export async function requestDocument(
   context: AIFunctionContext,
@@ -1415,7 +1510,7 @@ export const AI_FUNCTIONS = [
   },
   {
     name: "assignSchedule",
-    description: "Asignar un turno o cuadrante de horario a un empleado. IMPORTANTE: Usa el nombre del empleado (employeeName) cuando el usuario lo mencione en el mensaje",
+    description: "Asignar UN SOLO turno a un empleado (una fecha específica). IMPORTANTE: Usa el nombre del empleado (employeeName) cuando el usuario lo mencione en el mensaje",
     parameters: {
       type: "object",
       properties: {
@@ -1449,6 +1544,56 @@ export const AI_FUNCTIONS = [
         },
       },
       required: ["employeeName", "title", "startDate", "endDate"],
+    },
+  },
+  {
+    name: "assignScheduleInRange",
+    description: "🗓️ CREAR TURNOS MASIVOS para SEMANAS/MESES completos. Usa esto cuando el usuario pida 'crear turnos toda la semana', 'asignar horario del 1 al 30', 'turnos de todo noviembre', etc. Salta fines de semana por defecto",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeName: {
+          type: "string",
+          description: "Nombre del empleado",
+        },
+        title: {
+          type: "string",
+          description: "Nombre del turno (ej: 'Turno 08:00-14:00', 'Mañana')",
+        },
+        startDate: {
+          type: "string",
+          description: "Fecha de inicio en formato YYYY-MM-DD",
+        },
+        endDate: {
+          type: "string",
+          description: "Fecha de fin en formato YYYY-MM-DD",
+        },
+        startTime: {
+          type: "string",
+          description: "Hora de inicio en formato HH:mm (ej: '08:00', '09:30')",
+        },
+        endTime: {
+          type: "string",
+          description: "Hora de fin en formato HH:mm (ej: '14:00', '17:00')",
+        },
+        location: {
+          type: "string",
+          description: "Ubicación del turno (opcional)",
+        },
+        notes: {
+          type: "string",
+          description: "Notas adicionales (opcional)",
+        },
+        color: {
+          type: "string",
+          description: "Color hexadecimal (opcional, se asigna automáticamente)",
+        },
+        skipWeekends: {
+          type: "boolean",
+          description: "Saltar sábados y domingos (default: true). Usar false si el usuario quiere incluir fines de semana",
+        },
+      },
+      required: ["employeeName", "title", "startDate", "endDate", "startTime", "endTime"],
     },
   },
   {
@@ -1732,6 +1877,8 @@ export async function executeAIFunction(
       return createEmployee(context, params);
     case "assignSchedule":
       return assignSchedule(context, params);
+    case "assignScheduleInRange":
+      return assignScheduleInRange(context, params);
     case "requestDocument":
       return requestDocument(context, params);
     case "deleteWorkShift":

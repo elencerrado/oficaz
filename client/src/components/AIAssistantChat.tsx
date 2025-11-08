@@ -187,6 +187,7 @@ export function AIAssistantChat() {
         for (const func of functionsArray) {
           switch (func.trim()) {
             case "assignSchedule":
+            case "assignScheduleInRange":
             case "deleteWorkShift":
             case "deleteWorkShiftsInRange":
             case "updateWorkShiftTimes":
