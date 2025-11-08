@@ -7471,6 +7471,68 @@ Responde directamente a este email para contactar con la persona.
           content: msg.content
         }));
 
+      // 🔍 PRE-DETECTION: Detect "copy shifts" patterns and execute directly
+      const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop()?.content || '';
+      const copyPattern = /(.*?)\s+(tiene el mismo turno|tiene los mismos turnos|trabaja igual|tiene el mismo horario)\s+que\s+(.*?)(?:\s+(?:la semana que viene|esta semana|del \d|en|la próxima semana))?/i;
+      const copyMatch = lastUserMessage.match(copyPattern);
+      
+      if (copyMatch) {
+        console.log('🎯 DETECTED COPY PATTERN:', copyMatch[0]);
+        const toEmployeeName = copyMatch[1].trim();
+        const fromEmployeeName = copyMatch[3].trim();
+        
+        // Detect date range from the message
+        let startDate: string | undefined;
+        let endDate: string | undefined;
+        
+        if (lastUserMessage.includes('la semana que viene') || lastUserMessage.includes('próxima semana')) {
+          // Next week: Monday to Friday
+          const nextMonday = new Date(now);
+          nextMonday.setDate(now.getDate() + ((1 + 7 - now.getDay()) % 7 || 7));
+          startDate = nextMonday.toISOString().split('T')[0];
+          
+          const nextFriday = new Date(nextMonday);
+          nextFriday.setDate(nextMonday.getDate() + 4);
+          endDate = nextFriday.toISOString().split('T')[0];
+        }
+        
+        try {
+          const { resolveEmployeeName, copyEmployeeShifts } = await import('./ai-assistant.js');
+          const context = { storage, companyId, adminUserId };
+          
+          // Resolve employee names
+          const fromResolution = await resolveEmployeeName(storage, companyId, fromEmployeeName);
+          const toResolution = await resolveEmployeeName(storage, companyId, toEmployeeName);
+          
+          if ('error' in fromResolution) {
+            return res.json({ message: `❌ ${fromResolution.error}` });
+          }
+          if ('error' in toResolution) {
+            return res.json({ message: `❌ ${toResolution.error}` });
+          }
+          
+          // Execute copy
+          const result = await copyEmployeeShifts(context, {
+            fromEmployeeId: fromResolution.employeeId,
+            toEmployeeId: toResolution.employeeId,
+            startDate,
+            endDate
+          });
+          
+          if (result.success) {
+            const dateRangeText = result.dateRange ? ` para ${result.dateRange}` : '';
+            return res.json({ 
+              message: `✅ Listo. ${result.toEmployeeName} ahora tiene los mismos turnos que ${result.fromEmployeeName}${dateRangeText}. Se copiaron ${result.copiedCount} turno(s).`
+            });
+          } else {
+            return res.json({ message: `❌ ${result.error}` });
+          }
+        } catch (error: any) {
+          console.error('Error in copy pattern detection:', error);
+          return res.json({ message: `❌ Error al copiar turnos: ${error.message}` });
+        }
+      }
+
       // Call OpenAI with function calling
       const response = await openai.chat.completions.create({
         model: "gpt-5-nano", // GPT-5 Nano for cost-effective AI assistance (~$0.0005/command)
