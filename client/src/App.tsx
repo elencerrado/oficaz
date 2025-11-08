@@ -593,16 +593,6 @@ function Router() {
   );
 }
 
-function AIAssistantWrapper() {
-  const { hasAccess: hasAIAssistant } = useFeatureCheck();
-  const { user } = useAuth();
-  
-  // Always mount the component (never unmount), just hide if no access
-  const hasAccess = Boolean(user && hasAIAssistant('ai_assistant'));
-  
-  return <AIAssistantChat hasAccess={hasAccess} />;
-}
-
 function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="oficaz-theme">
@@ -613,7 +603,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router />
-            <AIAssistantWrapper />
+            <AIAssistantChat />
             <CookieBanner />
           </TooltipProvider>
         </AuthProvider>

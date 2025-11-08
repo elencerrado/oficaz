@@ -5,6 +5,8 @@ import { Send, Loader2, Minimize2, RotateCcw } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
+import { useFeatureCheck } from "@/hooks/use-feature-check";
 import oficazLogo from "@/assets/oficaz-logo.png";
 
 // PROFESSIONAL PATTERN: Scroll cache persists across route changes (survives re-renders)
@@ -108,11 +110,11 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
   );
 }
 
-interface AIAssistantChatProps {
-  hasAccess: boolean;
-}
-
-export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
+export function AIAssistantChat() {
+  // Check access inside the component to avoid re-mounting
+  const { hasAccess: hasAIAssistant } = useFeatureCheck();
+  const { user } = useAuth();
+  const hasAccess = Boolean(user && hasAIAssistant('ai_assistant'));
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
