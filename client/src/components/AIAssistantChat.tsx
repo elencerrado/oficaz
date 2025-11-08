@@ -151,12 +151,12 @@ export function AIAssistantChat() {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   }, [messages]);
 
-  // FORCE scroll to bottom always
+  // Scroll to bottom ONLY when chat opens or messages change
   useEffect(() => {
     if (isOpen && scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
     }
-  });
+  }, [isOpen, messages.length, isLoading]);
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
