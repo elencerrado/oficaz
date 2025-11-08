@@ -153,48 +153,6 @@ export function AIAssistantChat() {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   }, [messages]);
 
-  // Force scroll to stay at bottom - set scrollTop directly
-  const scrollToBottom = (smooth = false) => {
-    if (!messagesContainerRef.current) return;
-    
-    if (smooth) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    } else {
-      // Instantly scroll to max height
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-    }
-  };
-
-  // Scroll to bottom when chat opens (instant)
-  useEffect(() => {
-    if (isOpen) {
-      scrollToBottom(false);
-    }
-  }, [isOpen]);
-  
-  // Scroll to bottom when new messages arrive (smooth)
-  const previousMessagesLengthRef = useRef(messages.length);
-  useEffect(() => {
-    if (isOpen && messages.length !== previousMessagesLengthRef.current) {
-      previousMessagesLengthRef.current = messages.length;
-      scrollToBottom(true);
-    }
-  }, [messages, isOpen]);
-  
-  // Scroll when loading state changes (smooth)
-  useEffect(() => {
-    if (isOpen && isLoading) {
-      scrollToBottom(true);
-    }
-  }, [isLoading, isOpen]);
-  
-  // CRITICAL: Force scroll to bottom BEFORE paint (prevents flash)
-  useLayoutEffect(() => {
-    if (isOpen && messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-    }
-  });
-
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -353,42 +311,45 @@ export function AIAssistantChat() {
           </div>
 
           {/* Messages */}
-          <div ref={messagesContainerRef} className="flex-1 space-y-4 overflow-y-auto p-4" data-testid="container-ai-messages">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "flex",
-                  message.role === "user" ? "justify-end" : "justify-start"
-                )}
-                data-testid={`message-${message.role}-${index}`}
-              >
+          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 flex flex-col" data-testid="container-ai-messages">
+            <div className="flex-1" />
+            <div className="space-y-4">
+              {messages.map((message, index) => (
                 <div
+                  key={index}
                   className={cn(
-                    "max-w-[85%] rounded-2xl px-4 py-3 text-sm",
-                    message.role === "user"
-                      ? "bg-gradient-to-br from-[#007AFF] to-[#0066CC] text-white dark:from-[#0A84FF] dark:to-[#0066CC]"
-                      : "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                    "flex",
+                    message.role === "user" ? "justify-end" : "justify-start"
                   )}
+                  data-testid={`message-${message.role}-${index}`}
                 >
-                  <p className="whitespace-pre-wrap break-words">
-                    {message.content}
-                  </p>
-                </div>
-              </div>
-            ))}
-
-            {/* Loading indicator */}
-            {isLoading && (
-              <div className="flex justify-start" data-testid="indicator-ai-loading">
-                <div className="max-w-[85%] rounded-2xl bg-gray-100 px-4 py-3 dark:bg-gray-800">
-                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Procesando...</span>
+                  <div
+                    className={cn(
+                      "max-w-[85%] rounded-2xl px-4 py-3 text-sm",
+                      message.role === "user"
+                        ? "bg-gradient-to-br from-[#007AFF] to-[#0066CC] text-white dark:from-[#0A84FF] dark:to-[#0066CC]"
+                        : "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                    )}
+                  >
+                    <p className="whitespace-pre-wrap break-words">
+                      {message.content}
+                    </p>
                   </div>
                 </div>
-              </div>
-            )}
+              ))}
+
+              {/* Loading indicator */}
+              {isLoading && (
+                <div className="flex justify-start" data-testid="indicator-ai-loading">
+                  <div className="max-w-[85%] rounded-2xl bg-gray-100 px-4 py-3 dark:bg-gray-800">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Procesando...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             
             {/* Auto-scroll anchor */}
             <div ref={messagesEndRef} />
