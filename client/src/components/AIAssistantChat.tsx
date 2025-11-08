@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Send, Loader2, Minimize2, RotateCcw } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -188,10 +188,10 @@ export function AIAssistantChat() {
     }
   }, [isLoading, isOpen]);
   
-  // CRITICAL: Force scroll to bottom on every render when chat is open
-  useEffect(() => {
-    if (isOpen) {
-      scrollToBottom(false);
+  // CRITICAL: Force scroll to bottom BEFORE paint (prevents flash)
+  useLayoutEffect(() => {
+    if (isOpen && messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   });
 
