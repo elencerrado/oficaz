@@ -4,6 +4,7 @@ import { Send, Loader2, Minimize2, RotateCcw } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useLocation } from "wouter";
 import oficazLogo from "@/assets/oficaz-logo.png";
 
 interface Message {
@@ -109,6 +110,7 @@ export function AIAssistantChat() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [location] = useLocation();
 
   // Initialize messages from localStorage or with default welcome message
   // Auto-clear history after 2 days
@@ -151,11 +153,22 @@ export function AIAssistantChat() {
   }, [messages]);
 
   // Scroll to bottom instantly when chat opens (no animation)
+  const hasOpenedRef = useRef(false);
+  useEffect(() => {
+    if (isOpen && !hasOpenedRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+      hasOpenedRef.current = true;
+    } else if (!isOpen) {
+      hasOpenedRef.current = false;
+    }
+  }, [isOpen]);
+
+  // Maintain scroll at bottom when navigating pages with chat open
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
     }
-  }, [isOpen]);
+  }, [isOpen, location]);
 
   // Scroll to bottom smoothly when new messages arrive
   useEffect(() => {
