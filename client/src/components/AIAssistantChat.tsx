@@ -116,6 +116,26 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hasScrolledOnceRef = useRef(false);
+  const portalContainerRef = useRef<HTMLDivElement | null>(null);
+  
+  // Create portal container once and never destroy it
+  useEffect(() => {
+    if (!portalContainerRef.current) {
+      const container = document.createElement('div');
+      container.id = 'ai-chat-portal-container';
+      document.body.appendChild(container);
+      portalContainerRef.current = container;
+      console.log("🎯 Created permanent portal container");
+    }
+    
+    // Cleanup only on unmount (which should never happen)
+    return () => {
+      if (portalContainerRef.current) {
+        document.body.removeChild(portalContainerRef.current);
+        portalContainerRef.current = null;
+      }
+    };
+  }, []);
   
   // DEBUG: Log render
   console.log("🔍 AIAssistantChat RENDER - isOpen:", isOpen, "hasAccess:", hasAccess);
@@ -302,12 +322,12 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   };
 
-  // Don't render if no access
-  if (!hasAccess) {
+  // Don't render if no access or portal container not ready
+  if (!hasAccess || !portalContainerRef.current) {
     return null;
   }
 
-  // Render directly to body using Portal (prevents destruction on route changes)
+  // Render into permanent container using Portal (prevents destruction on route changes)
   return createPortal(
     <>
       {/* Floating button */}
@@ -428,6 +448,6 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
           </div>
         </div>
     </>,
-    document.body
+    portalContainerRef.current
   );
 }
