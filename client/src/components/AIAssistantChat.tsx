@@ -110,6 +110,7 @@ export function AIAssistantChat() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [location] = useLocation();
 
   // Initialize messages from localStorage or with default welcome message
@@ -152,10 +153,22 @@ export function AIAssistantChat() {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   }, [messages]);
 
+  // Force scroll to stay at bottom - set scrollTop directly
+  const scrollToBottom = (smooth = false) => {
+    if (!messagesContainerRef.current) return;
+    
+    if (smooth) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      // Instantly scroll to max height
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  };
+
   // Scroll to bottom when chat opens (instant)
   useEffect(() => {
     if (isOpen) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+      scrollToBottom(false);
     }
   }, [isOpen]);
   
@@ -164,16 +177,23 @@ export function AIAssistantChat() {
   useEffect(() => {
     if (isOpen && messages.length !== previousMessagesLengthRef.current) {
       previousMessagesLengthRef.current = messages.length;
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      scrollToBottom(true);
     }
   }, [messages, isOpen]);
   
   // Scroll when loading state changes (smooth)
   useEffect(() => {
     if (isOpen && isLoading) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      scrollToBottom(true);
     }
   }, [isLoading, isOpen]);
+  
+  // CRITICAL: Force scroll to bottom on every render when chat is open
+  useEffect(() => {
+    if (isOpen) {
+      scrollToBottom(false);
+    }
+  });
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -333,7 +353,7 @@ export function AIAssistantChat() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 space-y-4 overflow-y-auto p-4" data-testid="container-ai-messages">
+          <div ref={messagesContainerRef} className="flex-1 space-y-4 overflow-y-auto p-4" data-testid="container-ai-messages">
             {messages.map((message, index) => (
               <div
                 key={index}
