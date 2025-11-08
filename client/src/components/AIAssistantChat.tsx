@@ -7,6 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import oficazLogo from "@/assets/oficaz-logo.png";
 
+// PROFESSIONAL PATTERN: Scroll cache persists across route changes (survives re-renders)
+const scrollCache = new Map<string, number>();
+
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -115,30 +118,37 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const hasScrolledOnceRef = useRef(false);
-  const portalContainerRef = useRef<HTMLDivElement | null>(null);
   
-  // Create portal container once and never destroy it
+  // PROFESSIONAL PATTERN: Restore scroll on mount, save on unmount
   useEffect(() => {
-    if (!portalContainerRef.current) {
-      const container = document.createElement('div');
-      container.id = 'ai-chat-portal-container';
-      document.body.appendChild(container);
-      portalContainerRef.current = container;
-      console.log("🎯 Created permanent portal container");
+    const savedScroll = scrollCache.get('ai-chat-scroll');
+    if (savedScroll !== undefined && scrollContainerRef.current) {
+      // Use requestAnimationFrame for smooth restore
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = savedScroll;
+          console.log("✅ Restored scroll position:", savedScroll);
+        }
+      });
+    } else if (scrollContainerRef.current) {
+      // First time: scroll to bottom
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+          console.log("✅ First open - scrolled to bottom");
+        }
+      });
     }
     
-    // Cleanup only on unmount (which should never happen)
+    // Save scroll position on unmount (or re-render)
     return () => {
-      if (portalContainerRef.current) {
-        document.body.removeChild(portalContainerRef.current);
-        portalContainerRef.current = null;
+      if (scrollContainerRef.current) {
+        const currentScroll = scrollContainerRef.current.scrollTop;
+        scrollCache.set('ai-chat-scroll', currentScroll);
+        console.log("💾 Saved scroll position:", currentScroll);
       }
     };
-  }, []);
-  
-  // DEBUG: Log render
-  console.log("🔍 AIAssistantChat RENDER - isOpen:", isOpen, "hasAccess:", hasAccess);
+  }, []); // Empty deps - runs once on mount
 
   // Initialize messages from localStorage or with default welcome message
   // Auto-clear history after 2 days
@@ -180,24 +190,12 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   }, [messages]);
 
-  // Scroll to bottom ONLY on first open ever
-  useEffect(() => {
-    if (isOpen && scrollContainerRef.current && !hasScrolledOnceRef.current) {
-      console.log("📜 First time opening chat - scrolling to bottom");
-      setTimeout(() => {
-        if (scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-          hasScrolledOnceRef.current = true;
-        }
-      }, 0);
-    }
-  }, [isOpen]);
   
-  // Helper to scroll to bottom
+  // Helper to scroll to bottom (for new messages)
   const scrollToBottom = () => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-      localStorage.setItem('ai_chat_scroll_position', scrollContainerRef.current.scrollHeight.toString());
+      scrollCache.set('ai-chat-scroll', scrollContainerRef.current.scrollHeight);
     }
   };
 
@@ -322,12 +320,12 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   };
 
-  // Don't render if no access or portal container not ready
-  if (!hasAccess || !portalContainerRef.current) {
+  // Don't render if no access
+  if (!hasAccess) {
     return null;
   }
 
-  // Render into permanent container using Portal (prevents destruction on route changes)
+  // PROFESSIONAL PATTERN: Render to body, use display:none instead of conditional rendering
   return createPortal(
     <>
       {/* Floating button */}
@@ -342,14 +340,12 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
         <AIAssistantAnimation isThinking={isLoading} />
       </div>
 
-      {/* Chat window - ALWAYS rendered but hidden with CSS to preserve scroll */}
+      {/* PROFESSIONAL PATTERN: Always rendered, visibility controlled by display style */}
       <div
-        className={cn(
-          "fixed bottom-24 right-6 z-50 flex max-h-[calc(100vh-8rem)] w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900",
-          isOpen ? "animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-500" : "hidden"
-        )}
+        className="fixed bottom-24 right-6 z-50 flex max-h-[calc(100vh-8rem)] w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 transition-opacity duration-300"
         style={{
-          animationTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)'
+          display: isOpen ? 'flex' : 'none',
+          opacity: isOpen ? 1 : 0
         }}
         data-testid="container-ai-assistant-chat"
       >
@@ -448,6 +444,6 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
           </div>
         </div>
     </>,
-    portalContainerRef.current
+    document.body
   );
 }
