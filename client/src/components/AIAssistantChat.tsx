@@ -195,6 +195,30 @@ export function AIAssistantChat() {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   }, [messages]);
 
+  // Memoize rendered messages to prevent re-renders
+  const renderedMessages = useMemo(() => messages.map((message, index) => (
+    <div
+      key={index}
+      className={cn(
+        "flex",
+        message.role === "user" ? "justify-end" : "justify-start"
+      )}
+      data-testid={`message-${message.role}-${index}`}
+    >
+      <div
+        className={cn(
+          "max-w-[85%] rounded-2xl px-4 py-3 text-sm",
+          message.role === "user"
+            ? "bg-gradient-to-br from-[#007AFF] to-[#0066CC] text-white dark:from-[#0A84FF] dark:to-[#0066CC]"
+            : "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100"
+        )}
+      >
+        <p className="whitespace-pre-wrap break-words">
+          {message.content}
+        </p>
+      </div>
+    </div>
+  )), [messages]);
   
   // Helper to scroll to bottom (for new messages)
   const scrollToBottom = () => {
@@ -385,29 +409,7 @@ export function AIAssistantChat() {
             data-testid="container-ai-messages"
             key="messages-container"
           >
-            {useMemo(() => messages.map((message, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "flex",
-                  message.role === "user" ? "justify-end" : "justify-start"
-                )}
-                data-testid={`message-${message.role}-${index}`}
-              >
-                <div
-                  className={cn(
-                    "max-w-[85%] rounded-2xl px-4 py-3 text-sm",
-                    message.role === "user"
-                      ? "bg-gradient-to-br from-[#007AFF] to-[#0066CC] text-white dark:from-[#0A84FF] dark:to-[#0066CC]"
-                      : "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100"
-                  )}
-                >
-                  <p className="whitespace-pre-wrap break-words">
-                    {message.content}
-                  </p>
-                </div>
-              </div>
-            )), [messages])}
+            {renderedMessages}
 
             {/* Loading indicator */}
             {isLoading && (
