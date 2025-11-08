@@ -362,12 +362,7 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
 
           {/* Messages */}
           <div 
-            ref={(el) => {
-              scrollContainerRef.current = el;
-              if (el) {
-                console.log("📜 scrollContainerRef updated - scrollTop:", el.scrollTop);
-              }
-            }}
+            ref={scrollContainerRef}
             className="flex-1 space-y-4 overflow-y-auto p-4" 
             data-testid="container-ai-messages"
           >
