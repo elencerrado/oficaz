@@ -152,30 +152,25 @@ export function AIAssistantChat() {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   }, [messages]);
 
-  // Scroll to bottom instantly when chat opens (no animation)
-  const hasOpenedRef = useRef(false);
+  // Track if this is the first open or a message update
+  const previousMessagesLengthRef = useRef(messages.length);
+  
+  // Unified scroll logic
   useEffect(() => {
-    if (isOpen && !hasOpenedRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-      hasOpenedRef.current = true;
-    } else if (!isOpen) {
-      hasOpenedRef.current = false;
-    }
-  }, [isOpen]);
-
-  // Maintain scroll at bottom when navigating pages with chat open
-  useEffect(() => {
-    if (isOpen) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-    }
-  }, [isOpen, location]);
-
-  // Scroll to bottom smoothly when new messages arrive
-  useEffect(() => {
-    if (isOpen && messages.length > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, isLoading]);
+    if (!isOpen) return;
+    
+    // Check if messages changed (new message arrived)
+    const messagesChanged = messages.length !== previousMessagesLengthRef.current;
+    previousMessagesLengthRef.current = messages.length;
+    
+    // Scroll behavior: smooth for new messages, instant for everything else
+    const behavior = messagesChanged || isLoading ? "smooth" : "auto";
+    
+    // Use setTimeout to ensure DOM is ready after navigation
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior });
+    }, 0);
+  }, [isOpen, messages, isLoading, location]);
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
