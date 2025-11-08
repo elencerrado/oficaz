@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect, memo } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, memo, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Send, Loader2, Minimize2, RotateCcw } from "lucide-react";
@@ -385,7 +385,7 @@ export function AIAssistantChat() {
             data-testid="container-ai-messages"
             key="messages-container"
           >
-            {messages.map((message, index) => (
+            {useMemo(() => messages.map((message, index) => (
               <div
                 key={index}
                 className={cn(
@@ -407,7 +407,7 @@ export function AIAssistantChat() {
                   </p>
                 </div>
               </div>
-            ))}
+            )), [messages])}
 
             {/* Loading indicator */}
             {isLoading && (
