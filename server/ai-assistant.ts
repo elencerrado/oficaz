@@ -354,6 +354,14 @@ export async function assignSchedule(
     throw new Error("Employee not found or doesn't belong to this company");
   }
 
+  console.log("🕐 ASSIGN SCHEDULE DEBUG:", {
+    employeeName: employee.fullName,
+    rawStartDate: params.startDate,
+    rawEndDate: params.endDate,
+    parsedStartAt: new Date(params.startDate).toISOString(),
+    parsedEndAt: new Date(params.endDate).toISOString()
+  });
+
   // Create work shift
   const shift = await db.insert(schema.workShifts)
     .values({
