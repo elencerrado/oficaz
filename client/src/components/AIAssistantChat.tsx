@@ -322,15 +322,17 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
         <AIAssistantAnimation isThinking={isLoading} />
       </div>
 
-      {/* Chat window with animations */}
-      {isOpen && (
-        <div
-          className="fixed bottom-24 right-6 z-50 flex max-h-[calc(100vh-8rem)] w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-500"
-          style={{
-            animationTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)'
-          }}
-          data-testid="container-ai-assistant-chat"
-        >
+      {/* Chat window - ALWAYS rendered but hidden with CSS to preserve scroll */}
+      <div
+        className={cn(
+          "fixed bottom-24 right-6 z-50 flex max-h-[calc(100vh-8rem)] w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900",
+          isOpen ? "animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-500" : "hidden"
+        )}
+        style={{
+          animationTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)'
+        }}
+        data-testid="container-ai-assistant-chat"
+      >
           {/* Header */}
           <div className="flex items-center justify-between rounded-t-2xl bg-gradient-to-r from-[#007AFF] to-[#0066CC] px-4 py-2 text-white dark:from-[#0A84FF] dark:to-[#0066CC]">
             <h3 className="font-semibold text-sm" data-testid="text-ai-assistant-title">OficazIA</h3>
@@ -425,7 +427,6 @@ export function AIAssistantChat({ hasAccess }: AIAssistantChatProps) {
             </div>
           </div>
         </div>
-      )}
     </>,
     document.body
   );
