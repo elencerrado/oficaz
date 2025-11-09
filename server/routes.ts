@@ -7482,13 +7482,31 @@ Responde directamente a este email para contactar con la persona.
 
       // 🔍 PRE-DETECTION: Detect "copy shifts" patterns and execute directly
       const lastUserMsg = conversationHistory.filter((m: any) => m.role === 'user').pop()?.content || '';
-      const copyPattern = /(.*?)\s+(tiene el mismo turno|tiene los mismos turnos|trabaja igual|tiene el mismo horario)\s+que\s+(.*?)(?:\s+(?:la semana que viene|esta semana|del \d|en|la próxima semana))?/i;
-      const copyMatch = lastUserMsg.match(copyPattern);
+      
+      // Pattern 1: "X tiene el mismo turno que Y"
+      const copyPattern1 = /(.*?)\s+(tiene el mismo turno|tiene los mismos turnos|trabaja igual|tiene el mismo horario)\s+que\s+(.*?)(?:\s+(?:la semana que viene|esta semana|del \d|en|la próxima semana))?/i;
+      
+      // Pattern 2: "el turno de X es igual que el de Y"
+      const copyPattern2 = /(?:el turno|los turnos)\s+(?:de\s+)?(?:la semana que viene\s+)?(?:de\s+)?(.*?)\s+(?:es|son)\s+(?:igual|iguales?)\s+(?:que|al?)\s+(?:el de|los de|el turno de|los turnos de)\s+(.*?)(?:\s+(?:la semana que viene|esta semana|del \d|en|la próxima semana))?/i;
+      
+      let copyMatch = lastUserMsg.match(copyPattern1);
+      let toEmployeeName = '';
+      let fromEmployeeName = '';
+      
+      if (copyMatch) {
+        toEmployeeName = copyMatch[1].trim();
+        fromEmployeeName = copyMatch[3].trim();
+      } else {
+        copyMatch = lastUserMsg.match(copyPattern2);
+        if (copyMatch) {
+          toEmployeeName = copyMatch[1].trim();
+          fromEmployeeName = copyMatch[2].trim();
+        }
+      }
       
       if (copyMatch) {
         console.log('🎯 DETECTED COPY PATTERN:', copyMatch[0]);
-        const toEmployeeName = copyMatch[1].trim();
-        const fromEmployeeName = copyMatch[3].trim();
+        console.log(`📝 From: ${fromEmployeeName}, To: ${toEmployeeName}`);
         
         // Detect date range from the message
         let startDate: string | undefined;
@@ -7582,7 +7600,12 @@ MODIFICAR: updateWorkShiftTimes (1 turno), updateWorkShiftsInRange (rango), upda
 COPIAR: copyEmployeeShifts (copiar), swapEmployeeShifts (intercambiar)
 
 🚨 REGLAS CRÍTICAS:
-1. "X tiene mismo turno que Y" → SIEMPRE copyEmployeeShifts, NUNCA assignSchedule
+1. Copiar turnos (TODAS estas variaciones usan copyEmployeeShifts):
+   - "X tiene mismo turno que Y"
+   - "el turno de X es igual que el de Y"
+   - "los turnos de X son iguales que los de Y"
+   - "X trabaja igual que Y"
+   → SIEMPRE copyEmployeeShifts, NUNCA assignSchedule
 2. "Dile/avisa/informa a X" → OBLIGATORIO: 1) listEmployees() 2) sendMessage()
 3. Mensajes: UN empleado = "Hola [nombre], ...". VARIOS = "Hola, ..."
 4. Si contexto continúa acción anterior, NO crees turnos nuevos
