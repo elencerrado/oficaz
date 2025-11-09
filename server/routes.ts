@@ -7442,8 +7442,8 @@ Responde directamente a este email para contactar con la persona.
         });
       }
 
-      // Initialize OpenRouter client with DeepSeek V3.2 (via Replit AI Integrations)
-      // DeepSeek V3.2 is 25× cheaper than GPT-4 with excellent reasoning capabilities
+      // Initialize OpenRouter client with Llama 3.3 70B (via Replit AI Integrations)
+      // Llama 3.3 70B is FREE with excellent function calling and multilingual support
       const OpenAI = (await import('openai')).default;
       const openai = new OpenAI({
         baseURL: process.env.AI_INTEGRATIONS_OPENROUTER_BASE_URL,
@@ -7683,9 +7683,9 @@ Responde directamente a este email para contactar con la persona.
         iteration++;
         console.log(`🔄 AI Assistant iteration ${iteration}/${MAX_ITERATIONS}`);
 
-        // Call DeepSeek V3.2 with function calling
+        // Call Llama 3.3 70B with function calling
         const response = await openai.chat.completions.create({
-          model: "deepseek/deepseek-v3.2-exp",
+          model: "meta-llama/llama-3.3-70b-instruct:free",
           messages: [
             {
               role: "system",
