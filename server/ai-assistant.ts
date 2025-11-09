@@ -1355,7 +1355,7 @@ export async function createShiftAfterEmployee(
   }
 
   // Get all shifts from source employee
-  const allShifts = await storage.getCompanyWorkShifts(companyId);
+  const allShifts = await storage.getWorkShiftsByCompany(companyId);
   let sourceShifts = allShifts.filter(shift => shift.employeeId === params.sourceEmployeeId);
 
   // Filter by date range if provided
