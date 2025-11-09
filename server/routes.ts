@@ -7737,6 +7737,13 @@ Tú: assignScheduleInRange(
 ⚡ COPIAR TURNOS:
 Frases como "X tiene mismo turno que Y" → copyEmployeeShifts(fromEmployeeName: "Y", toEmployeeName: "X")
 
+EJEMPLO 3 - Copiar con excepciones:
+Usuario: "marta trabaja los mismos turnos que ramirez, pero tiene libre el miércoles"
+Tú ejecutas EN ORDEN:
+1) copyEmployeeShifts(fromEmployeeName: "ramirez", toEmployeeName: "marta")
+2) getEmployeeShifts(employeeName: "marta") para ver qué día es miércoles
+3) deleteWorkShift(employeeName: "marta", date: "2025-11-13") ← fecha del miércoles
+
 ⚡ MENSAJES:
 1) listEmployees() primero
 2) sendMessage(employeeIds, subject, content)
