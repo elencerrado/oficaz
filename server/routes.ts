@@ -7745,6 +7745,19 @@ Tú ejecutas EN ORDEN:
 2) getEmployeeShifts(employeeName: "marta") para ver qué día es miércoles
 3) deleteWorkShift(employeeName: "marta", date: "2025-11-13") ← fecha del miércoles
 
+EJEMPLO 4 - "X trabaja después de Y":
+Usuario: "andres trabajara despues de ramirez y hasta las 22"
+Tú ejecutas EN ORDEN:
+1) getEmployeeShifts(employeeName: "ramirez") → ves que tiene turnos del 10 al 15 (lunes a SÁBADO)
+2) assignScheduleInRange(
+     employeeName: "andres",
+     startDate: "2025-11-10",
+     endDate: "2025-11-15",  ← MISMO rango que Ramirez (incluye sábado)
+     startTime: "14:00",  ← después de la hora de fin de Ramirez
+     endTime: "22:00",
+     skipWeekends: false  ← IMPORTANTE: Si Ramirez trabaja sábado, Andrés también
+   )
+
 ⚡ MENSAJES:
 1) listEmployees() primero
 2) sendMessage(employeeIds, subject, content)
