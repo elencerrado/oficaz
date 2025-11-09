@@ -322,7 +322,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 0);
     
     // Direct redirect without history manipulation
-    window.location.href = '/login';
+    console.log('🔄 Redirecting to login...');
+    setTimeout(() => {
+      console.log('🔄 Executing redirect NOW');
+      window.location.href = '/login';
+    }, 100);
   };
 
   const refreshUser = async () => {
