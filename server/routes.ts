@@ -7606,7 +7606,7 @@ Responde directamente a este email para contactar con la persona.
       // ==============================================
       // ⚡ DETERMINISTIC PRE-PARSER: "X trabaja después de Y"
       // ==============================================
-      const afterPattern = /(.*?)\s+trabaja(?:r[áa]?)?\s+despu[ée]s\s+de\s+(.*?)(?:\s+(?:y\s+)?hasta\s+(?:las?\s+)?(\d{1,2}):?(\d{2})?)?/i;
+      const afterPattern = /(.*?)\s+trabaja(?:r[áa]?)?\s+despu[ée]s\s+de\s+([a-záéíóúñ]+)(?:\s+(?:y\s+)?hasta\s+(?:las?\s+)?(\d{1,2}):?(\d{2})?)?/i;
       const afterMatch = lastUserMsg.match(afterPattern);
       
       if (afterMatch) {
