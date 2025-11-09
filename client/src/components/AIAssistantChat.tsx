@@ -115,6 +115,7 @@ export function AIAssistantChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hasScrolledToBottomOnce = useRef(false);
+  const messagesLengthRef = useRef(messages.length);
 
   // Initialize messages from localStorage or with default welcome message
   // Auto-clear history after 2 days
@@ -188,13 +189,15 @@ export function AIAssistantChat() {
     }
   };
   
-  // CRITICAL FIX: Only auto-scroll on FIRST open ever, never again
+  // Auto-scroll only when NEW messages arrive (not on navigation)
   useEffect(() => {
-    if (isOpen && scrollContainerRef.current && !hasScrolledToBottomOnce.current) {
+    // First open ever OR new message added
+    if (!hasScrolledToBottomOnce.current || messages.length > messagesLengthRef.current) {
       setTimeout(scrollToBottom, 0);
       hasScrolledToBottomOnce.current = true;
+      messagesLengthRef.current = messages.length;
     }
-  }, [isOpen]);
+  }, [messages.length]);
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -337,12 +340,13 @@ export function AIAssistantChat() {
         <AIAssistantAnimation isThinking={isLoading} />
       </div>
 
-      {/* PROFESSIONAL PATTERN: Always rendered, moved off-screen when closed */}
+      {/* CRITICAL FIX: Keep position fixed, hide with visibility/opacity instead of moving off-screen */}
       <div
         className="fixed z-50 flex max-h-[calc(100vh-8rem)] w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 transition-all duration-300"
         style={{
           bottom: '6rem',
-          right: isOpen ? '1.5rem' : '-450px',
+          right: '1.5rem',
+          visibility: isOpen ? 'visible' : 'hidden',
           opacity: isOpen ? 1 : 0,
           pointerEvents: isOpen ? 'auto' : 'none'
         }}
