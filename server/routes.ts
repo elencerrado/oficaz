@@ -7463,6 +7463,18 @@ Responde directamente a este email para contactar con la persona.
       const now = new Date();
       const currentDateStr = now.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
       
+      // Calculate next Monday for "la semana que viene" context
+      const currentDay = now.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+      const daysUntilMonday = currentDay === 0 ? 1 : (8 - currentDay);
+      const nextMonday = new Date(now);
+      nextMonday.setDate(now.getDate() + daysUntilMonday);
+      const nextMondayStr = nextMonday.toISOString().split('T')[0]; // YYYY-MM-DD
+      
+      // Calculate next Saturday (for "lunes a sábado" context)
+      const nextSaturday = new Date(nextMonday);
+      nextSaturday.setDate(nextMonday.getDate() + 5);
+      const nextSaturdayStr = nextSaturday.toISOString().split('T')[0];
+      
       // 🚀 PERFORMANCE OPTIMIZATION: Limit conversation history to last 6 messages
       // This provides enough context for multi-turn conversations while keeping OpenAI fast
       // Before: 5+ minutes with full history → After: <10 seconds with limited history
@@ -7692,10 +7704,11 @@ Responde directamente a este email para contactar con la persona.
 - Si dice "lunes a sábado" o "incluye sábado" → skipWeekends: false
 - Si dice "toda la semana" y NO menciona sábado → skipWeekends: true
 
-📅 INTERPRETACIÓN DE FECHAS:
-- "la semana que viene" = próximo lunes a viernes (2025-11-11 a 2025-11-15)
-- Si dice "lunes a sábado" → endDate debe ser el sábado (2025-11-16)
-- "mañana" = día siguiente
+📅 FECHAS EXACTAS (USA ESTAS):
+- "la semana que viene" o "próxima semana":
+  * Lunes a viernes: startDate="${nextMondayStr}", endDate="${nextSaturdayStr.split('-').slice(0,2).join('-')}-${parseInt(nextSaturdayStr.split('-')[2])-1}", skipWeekends=true
+  * Lunes a sábado: startDate="${nextMondayStr}", endDate="${nextSaturdayStr}", skipWeekends=false
+- "mañana" = día siguiente del actual
 - "hoy" = día actual
 
 ⚡ CREAR TURNOS - USA assignScheduleInRange:
