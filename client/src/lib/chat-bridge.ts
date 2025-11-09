@@ -20,13 +20,29 @@ let chatBridgeState: ChatBridgeState = {
   hasChatAccess: false,
 };
 
+// Cache last valid state to prevent unmounting during auth refetch
+let lastValidState: ChatBridgeState | null = null;
+
 const listeners = new Set<() => void>();
 
 export const chatBridge = {
   getState: (): ChatBridgeState => chatBridgeState,
   
   setState: (newState: Partial<ChatBridgeState>) => {
-    chatBridgeState = { ...chatBridgeState, ...newState };
+    // CRITICAL: Don't clear state during auth loading - use cached state
+    if (newState.userSummary && newState.hasChatAccess) {
+      // Valid state - cache it
+      lastValidState = { ...chatBridgeState, ...newState };
+      chatBridgeState = lastValidState;
+    } else if (lastValidState && !newState.userSummary && chatBridgeState.userSummary) {
+      // Auth is temporarily null (refetching) - keep last valid state
+      console.log("🔒 ChatBridge: Preserving cached state during auth reload");
+      return; // DON'T update state or notify listeners
+    } else {
+      // First load or logout - update normally
+      chatBridgeState = { ...chatBridgeState, ...newState };
+    }
+    
     listeners.forEach(listener => listener());
   },
   
