@@ -7496,6 +7496,16 @@ Responde directamente a este email para contactar con la persona.
       const lastUserMsg = conversationHistory.filter((m: any) => m.role === 'user').pop()?.content || '';
       console.log('🔍 [DEBUG] Last user message:', lastUserMsg);
       
+      // ⚠️ CRITICAL: Detect weekend intent (Saturday mentions)
+      // This OVERRIDES default skipWeekends=true to prevent AI errors
+      const saturdayMentioned = /s[áa]bado|lunes\s+a\s+s[áa]bado|de\s+lunes\s+a\s+s[áa]bado/i.test(lastUserMsg);
+      const correctiveFeedback = /no\s+has?\s+inclui[dt]o|falta|te\s+falta|olvidaste|no\s+est[áa]|tambi[ée]n\s+el?\s+s[áa]bado/i.test(lastUserMsg);
+      const forceSaturday = saturdayMentioned || correctiveFeedback;
+      
+      if (forceSaturday) {
+        console.log('🎯 [WEEKEND OVERRIDE] Saturday detected - forcing skipWeekends=false');
+      }
+      
       // ==============================================
       // PATTERN 1: CREATE SCHEDULE
       // "ramirez trabaja de 8 a 14 la semana que viene de lunes a sabado"
@@ -7745,11 +7755,9 @@ Responde directamente a este email para contactar con la persona.
 
 REGLAS:
 1. Ejecuta tareas inmediatamente, usa valores por defecto (horario 8-14, ubicación "Oficina")
-2. skipWeekends: true por defecto (L-V). Para incluir sábado usa skipWeekends: false
-3. "La semana que viene": ${nextMondayStr} al ${nextSaturdayStr.split('-').slice(0,2).join('-')}-${parseInt(nextSaturdayStr.split('-')[2])-1} (L-V)
-4. "X después de Y": getEmployeeShifts(Y) → mira los 6 últimos turnos (más recientes) → extrae FECHAS de primer y último turno de esa semana → cuenta días (6 turnos = trabaja sábado) → assignScheduleInRange(startDate="FECHA_PRIMER_TURNO", endDate="FECHA_ULTIMO_TURNO", skipWeekends=false si tiene 6 turnos, true si tiene 5)
-5. "X igual que Y pero [excepción]": copyEmployeeShifts → deleteWorkShift
-6. Mensajes: listEmployees() → sendMessage()
+2. skipWeekends: ${forceSaturday ? 'MUST BE FALSE - usuario mencionó sábado' : 'true por defecto (L-V)'}
+3. "La semana que viene": ${nextMondayStr} al ${forceSaturday ? nextSaturdayStr : nextSaturdayStr.split('-').slice(0,2).join('-') + '-' + (parseInt(nextSaturdayStr.split('-')[2])-1)}
+4. Mensajes: listEmployees() → sendMessage()
 
 Responde BREVE en español.`
           },
