@@ -7486,8 +7486,8 @@ Responde directamente a este email para contactar con la persona.
       // Pattern 1: "X tiene el mismo turno que Y"
       const copyPattern1 = /(.*?)\s+(tiene el mismo turno|tiene los mismos turnos|trabaja igual|tiene el mismo horario)\s+que\s+(.*?)(?:\s+(?:la semana que viene|esta semana|del \d|en|la próxima semana))?/i;
       
-      // Pattern 2: "el turno de X es igual que el de Y"
-      const copyPattern2 = /(?:el turno|los turnos)\s+(?:de\s+)?(?:la semana que viene\s+)?(?:de\s+)?(.*?)\s+(?:es|son)\s+(?:igual|iguales?)\s+(?:que|al?)\s+(?:el de|los de|el turno de|los turnos de)\s+(.*?)(?:\s+(?:la semana que viene|esta semana|del \d|en|la próxima semana))?/i;
+      // Pattern 2: "el turno de X es igual que el de Y" (con soporte para "la semana que viene" antes o después)
+      const copyPattern2 = /(?:el turno|los turnos)\s+(?:de\s+)?(?:la semana que viene\s+de\s+|de\s+)?(.*?)\s+(?:es|son)\s+(?:igual|iguales?)\s+(?:que|al?)\s+(?:el de|los de|el turno de|los turnos de)\s+([^\s,]+)/i;
       
       let copyMatch = lastUserMsg.match(copyPattern1);
       let toEmployeeName = '';
@@ -7512,7 +7512,7 @@ Responde directamente a este email para contactar con la persona.
         let startDate: string | undefined;
         let endDate: string | undefined;
         
-        if (lastUserMessage.includes('la semana que viene') || lastUserMessage.includes('próxima semana')) {
+        if (lastUserMsg.includes('la semana que viene') || lastUserMsg.includes('próxima semana')) {
           // Next week: Monday to Friday
           const nextMonday = new Date(now);
           nextMonday.setDate(now.getDate() + ((1 + 7 - now.getDay()) % 7 || 7));
