@@ -7480,9 +7480,106 @@ Responde directamente a este email para contactar con la persona.
         content: messages.filter((m: any) => m.role === 'user').pop()?.content || ''
       }];
 
-      // 🔍 PRE-DETECTION: Detect "copy shifts" patterns and execute directly
+      // 🔍 PRE-DETECTION: Detect patterns and execute directly (bypasses AI for common requests)
       const lastUserMsg = conversationHistory.filter((m: any) => m.role === 'user').pop()?.content || '';
       
+      // ==============================================
+      // PATTERN 1: CREATE SCHEDULE
+      // "ramirez trabaja de 8 a 14 la semana que viene de lunes a sabado"
+      // ==============================================
+      const createPattern = /(\w+)\s+(?:trabaja|trabajará|va a trabajar)\s+de\s+(\d{1,2})\s+a\s+(\d{1,2})\s*(?:de\s+)?(?:(lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)\s+a\s+(lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo))?\s*(?:la semana que viene|próxima semana|esta semana|mañana)?/i;
+      
+      const createMatch = lastUserMsg.match(createPattern);
+      
+      if (createMatch) {
+        const employeeName = createMatch[1];
+        const startHour = createMatch[2].padStart(2, '0');
+        const endHour = createMatch[3].padStart(2, '0');
+        const dayFrom = createMatch[4];
+        const dayTo = createMatch[5];
+        
+        console.log('🎯 DETECTED CREATE SCHEDULE PATTERN:', createMatch[0]);
+        console.log(`📝 Employee: ${employeeName}, Hours: ${startHour}:00-${endHour}:00, Days: ${dayFrom || 'default'} to ${dayTo || 'default'}`);
+        
+        // Determine skipWeekends based on day range
+        const skipWeekends = !(dayTo === 'sábado' || dayTo === 'sabado');
+        
+        // Detect date range
+        let startDate: string;
+        let endDate: string;
+        
+        if (lastUserMsg.includes('la semana que viene') || lastUserMsg.includes('próxima semana')) {
+          // Next week: Monday to Friday (or Saturday if specified)
+          const nextMonday = new Date(now);
+          nextMonday.setDate(now.getDate() + ((1 + 7 - now.getDay()) % 7 || 7));
+          startDate = nextMonday.toISOString().split('T')[0];
+          
+          const endDay = skipWeekends ? 5 : 6; // Friday=5, Saturday=6
+          const nextEndDay = new Date(nextMonday);
+          nextEndDay.setDate(nextMonday.getDate() + (endDay - 1));
+          endDate = nextEndDay.toISOString().split('T')[0];
+        } else {
+          // Default: this week
+          const monday = new Date(now);
+          monday.setDate(now.getDate() - now.getDay() + 1);
+          startDate = monday.toISOString().split('T')[0];
+          
+          const endDay = skipWeekends ? 5 : 6;
+          const endOfWeek = new Date(monday);
+          endOfWeek.setDate(monday.getDate() + (endDay - 1));
+          endDate = endOfWeek.toISOString().split('T')[0];
+        }
+        
+        try {
+          // Find employee
+          const employees = await storage.getEmployees(req.user.companyId);
+          const employee = employees.find(e => 
+            e.fullName.toLowerCase().includes(employeeName) ||
+            e.fullName.toLowerCase().split(' ').some(part => part.startsWith(employeeName))
+          );
+          
+          if (!employee) {
+            return res.status(200).json({
+              message: `No encontré al empleado "${employeeName}". ¿Podrías verificar el nombre?`
+            });
+          }
+          
+          // Import and execute assignScheduleInRange directly
+          const { assignScheduleInRange } = await import('./ai-assistant.js');
+          const context = { storage, companyId, adminUserId };
+          
+          const result = await assignScheduleInRange(context, {
+            employeeId: employee.id,
+            startDate,
+            endDate,
+            startTime: `${startHour}:00`,
+            endTime: `${endHour}:00`,
+            title: 'Turno de trabajo',
+            location: 'Oficina',
+            color: '#3b82f6',
+            skipWeekends
+          });
+          
+          if (result.success) {
+            return res.status(200).json({
+              message: `✅ Perfecto. ${employee.fullName.split(' ')[0]} trabajará de ${startHour}:00 a ${endHour}:00 del ${startDate} al ${endDate}${skipWeekends ? ' (lun-vie)' : ' (lun-sáb)'}.`
+            });
+          } else {
+            return res.status(200).json({
+              message: `❌ ${result.message}`
+            });
+          }
+        } catch (error: any) {
+          console.error('Error in pre-parser create schedule:', error);
+          return res.status(200).json({
+            message: `Error al crear el turno: ${error.message}`
+          });
+        }
+      }
+      
+      // ==============================================
+      // PATTERN 2: COPY SCHEDULE
+      // ==============================================
       // Pattern 1: "X tiene el mismo turno que Y"
       const copyPattern1 = /(.*?)\s+(tiene el mismo turno|tiene los mismos turnos|trabaja igual|tiene el mismo horario)\s+que\s+(.*?)(?:\s+(?:la semana que viene|esta semana|del \d|en|la próxima semana))?/i;
       
