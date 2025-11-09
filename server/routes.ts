@@ -7693,9 +7693,9 @@ Responde directamente a este email para contactar con la persona.
 
 REGLAS:
 1. Ejecuta tareas inmediatamente, usa valores por defecto (horario 8-14, ubicación "Oficina")
-2. skipWeekends: true por defecto. Si menciona "sábado" → skipWeekends: false
-3. "La semana que viene": ${nextMondayStr} al ${nextSaturdayStr.split('-').slice(0,2).join('-')}-${parseInt(nextSaturdayStr.split('-')[2])-1} (L-V) o ${nextSaturdayStr} (L-S)
-4. "X después de Y": getEmployeeShifts(Y) → cuenta cuántos días (ej: 6 días = incluye sábado) → assignScheduleInRange(startDate=primer día Y, endDate=último día Y, skipWeekends=false si Y trabaja sábado)
+2. skipWeekends: true por defecto (L-V). Para incluir sábado usa skipWeekends: false
+3. "La semana que viene": ${nextMondayStr} al ${nextSaturdayStr.split('-').slice(0,2).join('-')}-${parseInt(nextSaturdayStr.split('-')[2])-1} (L-V)
+4. "X después de Y": getEmployeeShifts(Y) → mira los 6 últimos turnos (más recientes) → extrae FECHAS de primer y último turno de esa semana → cuenta días (6 turnos = trabaja sábado) → assignScheduleInRange(startDate="FECHA_PRIMER_TURNO", endDate="FECHA_ULTIMO_TURNO", skipWeekends=false si tiene 6 turnos, true si tiene 5)
 5. "X igual que Y pero [excepción]": copyEmployeeShifts → deleteWorkShift
 6. Mensajes: listEmployees() → sendMessage()
 
