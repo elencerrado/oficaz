@@ -7487,7 +7487,7 @@ Responde directamente a este email para contactar con la persona.
       // PATTERN 1: CREATE SCHEDULE
       // "ramirez trabaja de 8 a 14 la semana que viene de lunes a sabado"
       // ==============================================
-      const createPattern = /(\w+)\s+(?:trabaja|trabajará|va a trabajar)\s+de\s+(\d{1,2})\s+a\s+(\d{1,2})\s*(?:de\s+)?(?:(lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)\s+a\s+(lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo))?\s*(?:la semana que viene|próxima semana|esta semana|mañana)?/i;
+      const createPattern = /^(\w+)\s+(?:trabaja|trabajará|va a trabajar)\s+de\s+(\d{1,2})\s+a\s+(\d{1,2})\s*(?:la semana que viene|próxima semana|esta semana)?\s*(?:de\s+)?(?:(lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)\s+a\s+(lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo))?/i;
       
       const createMatch = lastUserMsg.match(createPattern);
       
@@ -7531,25 +7531,24 @@ Responde directamente a este email para contactar con la persona.
         }
         
         try {
-          // Find employee
-          const employees = await storage.getEmployees(req.user.companyId);
-          const employee = employees.find(e => 
-            e.fullName.toLowerCase().includes(employeeName) ||
-            e.fullName.toLowerCase().split(' ').some(part => part.startsWith(employeeName))
-          );
+          // Import resolveEmployeeName
+          const { resolveEmployeeName, assignScheduleInRange } = await import('./ai-assistant.js');
+          const context = { storage, companyId, adminUserId };
           
-          if (!employee) {
+          // Find employee
+          const resolution = await resolveEmployeeName(storage, companyId, employeeName);
+          
+          if ('error' in resolution) {
             return res.status(200).json({
               message: `No encontré al empleado "${employeeName}". ¿Podrías verificar el nombre?`
             });
           }
           
-          // Import and execute assignScheduleInRange directly
-          const { assignScheduleInRange } = await import('./ai-assistant.js');
-          const context = { storage, companyId, adminUserId };
+          const employee = resolution;
           
+          // Execute assignScheduleInRange directly
           const result = await assignScheduleInRange(context, {
-            employeeId: employee.id,
+            employeeId: employee.employeeId,
             startDate,
             endDate,
             startTime: `${startHour}:00`,
@@ -7562,7 +7561,7 @@ Responde directamente a este email para contactar con la persona.
           
           if (result.success) {
             return res.status(200).json({
-              message: `✅ Perfecto. ${employee.fullName.split(' ')[0]} trabajará de ${startHour}:00 a ${endHour}:00 del ${startDate} al ${endDate}${skipWeekends ? ' (lun-vie)' : ' (lun-sáb)'}.`
+              message: `✅ Perfecto. ${employee.employeeName.split(' ')[0]} trabajará de ${startHour}:00 a ${endHour}:00 del ${startDate} al ${endDate}${skipWeekends ? ' (lun-vie)' : ' (lun-sáb)'}.`
             });
           } else {
             return res.status(200).json({
