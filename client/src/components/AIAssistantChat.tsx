@@ -201,7 +201,6 @@ export function AIAssistantChat() {
     
     const handleScroll = () => {
       savedScrollPosition.current = container.scrollTop;
-      console.log("💾 Saved scroll position:", savedScrollPosition.current);
     };
     
     container.addEventListener('scroll', handleScroll);
@@ -215,17 +214,24 @@ export function AIAssistantChat() {
     
     // If we have a saved position, restore it
     if (savedScrollPosition.current > 0) {
-      console.log("🔄 Restoring scroll position:", savedScrollPosition.current);
       container.scrollTop = savedScrollPosition.current;
     }
   });
   
-  // Auto-scroll only when NEW messages arrive (not on navigation)
+  // CRITICAL: Scroll to bottom when chat opens OR new message arrives
   useEffect(() => {
-    // First open ever OR new message added
-    if (!hasScrolledToBottomOnce.current || messages.length > messagesLengthRef.current) {
+    if (isOpen && scrollContainerRef.current) {
+      // If no saved position, scroll to bottom (first time opening)
+      if (savedScrollPosition.current === 0) {
+        setTimeout(scrollToBottom, 0);
+      }
+    }
+  }, [isOpen]);
+  
+  // Auto-scroll when NEW messages arrive
+  useEffect(() => {
+    if (messages.length > messagesLengthRef.current) {
       setTimeout(scrollToBottom, 0);
-      hasScrolledToBottomOnce.current = true;
       messagesLengthRef.current = messages.length;
     }
   }, [messages.length]);
