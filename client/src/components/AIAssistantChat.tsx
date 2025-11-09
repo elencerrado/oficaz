@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect, memo, useMemo } from "react";
+import { useState, useRef, useEffect, memo, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Send, Loader2, Minimize2, RotateCcw } from "lucide-react";
@@ -8,10 +8,6 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useFeatureCheck } from "@/hooks/use-feature-check";
 import oficazLogo from "@/assets/oficaz-logo.png";
-
-// PROFESSIONAL PATTERN: Scroll cache persists across route changes (survives re-renders)
-const scrollCache = new Map<string, number>();
-let hasInitializedScrollOnce = false; // Global flag - only scroll to bottom ONCE ever
 
 interface Message {
   role: "user" | "assistant";
@@ -121,58 +117,6 @@ export function AIAssistantChat() {
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const preservedScrollPosition = useRef<number>(0);
-  
-  // CRITICAL: Track scroll changes and save to ref
-  useEffect(() => {
-    if (!scrollContainerRef.current || !isOpen) return;
-    
-    const container = scrollContainerRef.current;
-    
-    const handleScroll = () => {
-      // IGNORE scroll events that reset to 0 (browser re-render artifact)
-      if (container.scrollTop === 0 && preservedScrollPosition.current > 100) {
-        console.log("⚠️ Ignoring scroll reset to 0, keeping:", preservedScrollPosition.current);
-        return;
-      }
-      
-      preservedScrollPosition.current = container.scrollTop;
-      console.log("📍 Saved scroll position:", container.scrollTop);
-    };
-    
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [isOpen]);
-  
-  // CRITICAL: Restore scroll position after every render (AFTER browser paint)
-  useLayoutEffect(() => {
-    if (!scrollContainerRef.current || !isOpen) return;
-    if (preservedScrollPosition.current === 0 && hasInitializedScrollOnce) return; // Don't restore 0 after initialization
-    
-    // Use RAF to ensure this runs AFTER browser has painted
-    requestAnimationFrame(() => {
-      if (!scrollContainerRef.current) return;
-      
-      const targetScroll = hasInitializedScrollOnce ? preservedScrollPosition.current : scrollContainerRef.current.scrollHeight;
-      scrollContainerRef.current.scrollTop = targetScroll;
-      console.log("🔄 Restored scroll to:", targetScroll);
-    });
-  });
-  
-  // PROFESSIONAL PATTERN: Only scroll to bottom on FIRST open
-  useEffect(() => {
-    if (isOpen && scrollContainerRef.current && !hasInitializedScrollOnce) {
-      requestAnimationFrame(() => {
-        if (scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-          hasInitializedScrollOnce = true;
-          console.log("✅ First open - scrolled to bottom, scrollTop:", scrollContainerRef.current.scrollTop);
-        }
-      });
-    } else if (isOpen && scrollContainerRef.current) {
-      console.log("🔍 Chat opened, current scrollTop:", scrollContainerRef.current.scrollTop);
-    }
-  }, [isOpen]); // Only runs when isOpen changes
 
   // Initialize messages from localStorage or with default welcome message
   // Auto-clear history after 2 days
@@ -239,13 +183,19 @@ export function AIAssistantChat() {
     </div>
   )), [messages]);
   
-  // Helper to scroll to bottom (for new messages)
+  // Scroll to bottom when new messages are added
   const scrollToBottom = () => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-      scrollCache.set('ai-chat-scroll', scrollContainerRef.current.scrollHeight);
     }
   };
+  
+  // Auto-scroll to bottom when chat opens
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(scrollToBottom, 0);
+    }
+  }, [isOpen]);
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
