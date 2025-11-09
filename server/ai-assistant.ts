@@ -1328,6 +1328,101 @@ export async function swapEmployeeShifts(
   };
 }
 
+// 14b. Create shifts for target employee "after" source employee
+export async function createShiftAfterEmployee(
+  context: AIFunctionContext,
+  params: {
+    sourceEmployeeId: number;
+    targetEmployeeId: number;
+    endTime: string; // HH:mm - when target shift ends (e.g., "22:00")
+    startDate?: string; // YYYY-MM-DD - optional date range filter
+    endDate?: string; // YYYY-MM-DD
+  }
+) {
+  const { storage, companyId, adminUserId } = context;
+
+  // Verify both employees belong to company
+  const [sourceEmployee, targetEmployee] = await Promise.all([
+    storage.getUser(params.sourceEmployeeId),
+    storage.getUser(params.targetEmployeeId)
+  ]);
+
+  if (!sourceEmployee || sourceEmployee.companyId !== companyId) {
+    return { success: false, error: "Empleado de referencia no encontrado" };
+  }
+  if (!targetEmployee || targetEmployee.companyId !== companyId) {
+    return { success: false, error: "Empleado destino no encontrado" };
+  }
+
+  // Get all shifts from source employee
+  const allShifts = await storage.getCompanyWorkShifts(companyId);
+  let sourceShifts = allShifts.filter(shift => shift.employeeId === params.sourceEmployeeId);
+
+  // Filter by date range if provided
+  if (params.startDate || params.endDate) {
+    const startFilter = params.startDate ? new Date(params.startDate) : new Date(0);
+    const endFilter = params.endDate ? new Date(params.endDate) : new Date('2100-01-01');
+    
+    sourceShifts = sourceShifts.filter(shift => {
+      const shiftDate = new Date(shift.startAt);
+      return shiftDate >= startFilter && shiftDate <= endFilter;
+    });
+  }
+
+  if (sourceShifts.length === 0) {
+    return { success: false, error: `${sourceEmployee.fullName} no tiene turnos en el rango especificado` };
+  }
+
+  // Parse target end time
+  const [endHour, endMinute] = params.endTime.split(':').map(Number);
+
+  // Auto-assign color based on employee ID
+  const targetColor = getEmployeeColor(params.targetEmployeeId);
+
+  // Create new shifts for target: start when source ends, end at specified time
+  const createdShifts = [];
+  
+  for (const sourceShift of sourceShifts) {
+    const sourceEnd = new Date(sourceShift.endAt);
+
+    // Extract source shift end time
+    const sourceEndHour = sourceEnd.getUTCHours();
+    const sourceEndMinute = sourceEnd.getUTCMinutes();
+
+    // Create target shift: same date, starts when source ends
+    const targetStart = new Date(sourceEnd);
+    targetStart.setUTCHours(sourceEndHour, sourceEndMinute, 0, 0);
+
+    const targetEnd = new Date(sourceEnd);
+    targetEnd.setUTCHours(endHour, endMinute, 0, 0);
+
+    // Create the shift
+    const newShift = await storage.createWorkShift({
+      companyId,
+      employeeId: params.targetEmployeeId,
+      startAt: targetStart,
+      endAt: targetEnd,
+      title: `Turno hasta las ${params.endTime}`,
+      location: sourceShift.location || 'Oficina',
+      color: targetColor,
+      notes: null,
+      createdByUserId: adminUserId
+    });
+
+    createdShifts.push(newShift);
+  }
+
+  return {
+    success: true,
+    sourceEmployeeName: sourceEmployee.fullName,
+    targetEmployeeName: targetEmployee.fullName,
+    createdCount: createdShifts.length,
+    dateRange: params.startDate && params.endDate 
+      ? `del ${params.startDate} al ${params.endDate}`
+      : 'todos los turnos'
+  };
+}
+
 // 15. Copy work shifts from one employee to another
 export async function copyEmployeeShifts(
   context: AIFunctionContext,

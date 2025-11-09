@@ -7593,6 +7593,57 @@ Responde directamente a este email para contactar con la persona.
       // ==============================================
       // PATTERN 2: COPY SCHEDULE
       // ==============================================
+      // ⚡ DETERMINISTIC PRE-PARSER: "X trabaja después de Y"
+      // ==============================================
+      const afterPattern = /(.*?)\s+trabaja(?:r[áa]?)?\s+despu[ée]s\s+de\s+(.*?)(?:\s+(?:y\s+)?hasta\s+(?:las?\s+)?(\d{1,2}):?(\d{2})?)?/i;
+      const afterMatch = lastUserMsg.match(afterPattern);
+      
+      if (afterMatch) {
+        const targetEmployeeName = afterMatch[1].trim();
+        const sourceEmployeeName = afterMatch[2].trim();
+        const endHour = afterMatch[3] ? parseInt(afterMatch[3]) : 22; // Default 22:00
+        const endMinute = afterMatch[4] ? parseInt(afterMatch[4]) : 0;
+        const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+        
+        console.log('🎯 DETECTED "AFTER" PATTERN:', afterMatch[0]);
+        console.log(`📝 Target: ${targetEmployeeName}, Source: ${sourceEmployeeName}, End time: ${endTime}`);
+        
+        try {
+          const { resolveEmployeeName, createShiftAfterEmployee } = await import('./ai-assistant.js');
+          const context = { storage, companyId, adminUserId };
+          
+          // Resolve employee names
+          const sourceResolution = await resolveEmployeeName(storage, companyId, sourceEmployeeName);
+          const targetResolution = await resolveEmployeeName(storage, companyId, targetEmployeeName);
+          
+          if ('error' in sourceResolution) {
+            return res.json({ message: `❌ ${sourceResolution.error}` });
+          }
+          if ('error' in targetResolution) {
+            return res.json({ message: `❌ ${targetResolution.error}` });
+          }
+          
+          // Execute createShiftAfterEmployee
+          const result = await createShiftAfterEmployee(context, {
+            sourceEmployeeId: sourceResolution.employeeId,
+            targetEmployeeId: targetResolution.employeeId,
+            endTime
+          });
+          
+          if (result.success) {
+            return res.json({ 
+              message: `✅ Listo. ${result.targetEmployeeName} trabajará después de ${result.sourceEmployeeName} hasta las ${endTime} (${result.createdCount} turno(s) creados).`
+            });
+          } else {
+            return res.json({ message: `❌ ${result.error}` });
+          }
+        } catch (error: any) {
+          console.error('Error in "after" pattern detection:', error);
+          return res.json({ message: `❌ Error al crear turnos: ${error.message}` });
+        }
+      }
+      
+      // ==============================================
       // Pattern 1: "X tiene el mismo turno que Y"
       const copyPattern1 = /(.*?)\s+(tiene el mismo turno|tiene los mismos turnos|trabaja igual|tiene el mismo horario)\s+que\s+(.*?)(?:\s+(?:la semana que viene|esta semana|del \d|en|la próxima semana))?/i;
       
