@@ -7442,12 +7442,11 @@ Responde directamente a este email para contactar con la persona.
         });
       }
 
-      // Initialize OpenRouter client with Llama 3.3 70B (via Replit AI Integrations)
-      // Llama 3.3 70B is FREE with excellent function calling and multilingual support
+      // Initialize OpenAI client with GPT-5 Nano (via Replit AI Integrations)
       const OpenAI = (await import('openai')).default;
       const openai = new OpenAI({
-        baseURL: process.env.AI_INTEGRATIONS_OPENROUTER_BASE_URL,
-        apiKey: process.env.AI_INTEGRATIONS_OPENROUTER_API_KEY
+        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
       });
 
       // Import AI assistant functions
@@ -7683,9 +7682,9 @@ Responde directamente a este email para contactar con la persona.
         iteration++;
         console.log(`🔄 AI Assistant iteration ${iteration}/${MAX_ITERATIONS}`);
 
-        // Call Llama 3.3 70B with function calling
+        // Call GPT-5 Nano with function calling
         const response = await openai.chat.completions.create({
-          model: "meta-llama/llama-3.3-70b-instruct:free",
+          model: "gpt-5-nano",
           messages: [
             {
               role: "system",
