@@ -7511,7 +7511,9 @@ Responde directamente a este email para contactar con la persona.
         if (lastUserMsg.includes('la semana que viene') || lastUserMsg.includes('próxima semana')) {
           // Next week: Monday to Friday (or Saturday if specified)
           const nextMonday = new Date(now);
-          nextMonday.setDate(now.getDate() + ((1 + 7 - now.getDay()) % 7 || 7));
+          const currentDay = now.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+          const daysUntilMonday = currentDay === 0 ? 1 : (8 - currentDay); // If Sunday, +1 day; else days until next Monday
+          nextMonday.setDate(now.getDate() + daysUntilMonday);
           startDate = nextMonday.toISOString().split('T')[0];
           
           const endDay = skipWeekends ? 5 : 6; // Friday=5, Saturday=6
