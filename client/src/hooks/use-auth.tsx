@@ -240,93 +240,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async (manual: boolean = true) => {
     console.log(`🚪 LOGOUT (${manual ? 'MANUAL' : 'AUTO'}) - CLEARING CACHE AND AUTH DATA`);
     
-    // 🔒 SECURITY: Revoke refresh token on manual logout
-    if (manual && token) {
-      try {
-        const currentAuthData = getAuthData();
-        if (currentAuthData?.refreshToken) {
-          console.log('🔒 Revoking refresh token...');
-          await fetch('/api/auth/logout', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ refreshToken: currentAuthData.refreshToken })
-          });
-          console.log('✅ Refresh token revoked');
-        }
-      } catch (error) {
-        console.error('⚠️ Error revoking refresh token:', error);
-        // Continue with logout even if revocation fails
-      }
-    }
-    
-    // Only unsubscribe from push notifications on MANUAL logout
-    // Keep notifications active if session expires automatically
-    if (manual) {
-      try {
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-          const registration = await navigator.serviceWorker.ready;
-          const subscription = await registration.pushManager.getSubscription();
-          
-          if (subscription && token) {
-            console.log('📱 Unsubscribing from push notifications (manual logout)...');
-            // Unsubscribe from server
-            await fetch('/api/push/unsubscribe', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({ endpoint: subscription.endpoint })
-            });
-            
-            // Unsubscribe from browser
-            await subscription.unsubscribe();
-            console.log('✅ Push notifications unsubscribed');
-          }
-        }
-      } catch (error) {
-        console.error('⚠️ Error unsubscribing from push notifications:', error);
-        // Continue with logout even if unsubscribe fails
-      }
-    } else {
-      console.log('📱 Keeping push notifications active (auto logout - session expired)');
-    }
-    
-    // Clear state immediately
-    setUser(null);
-    setCompany(null);
-    setToken(null);
-    setAuthData(null);
-    
-    // Preserve only theme (DO NOT preserve superAdminToken anymore - it's session-based)
+    // CRITICAL: Clear localStorage FIRST to prevent re-initialization
     const theme = localStorage.getItem('theme');
-    
-    // Clear only auth-related items instead of localStorage.clear()
     localStorage.removeItem('authData');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('company');
-    
-    // 🔒 SECURITY: Clear sessionStorage (includes superAdminToken)
     sessionStorage.clear();
-    
-    // Restore only theme
     if (theme) localStorage.setItem('theme', theme);
+    console.log('✅ localStorage cleared');
     
-    // Clear queries asynchronously to avoid blocking UI
-    setTimeout(() => {
-      queryClient.clear();
-    }, 0);
+    // Clear state immediately AFTER localStorage
+    setUser(null);
+    setCompany(null);
+    setToken(null);
+    setAuthData(null);
+    console.log('✅ State cleared');
     
-    // Direct redirect without history manipulation
-    console.log('🔄 Redirecting to login...');
-    setTimeout(() => {
-      console.log('🔄 Executing redirect NOW');
-      window.location.href = '/login';
-    }, 100);
+    // 🔒 SECURITY: Revoke refresh token on manual logout
+    if (manual && token) {
+      try {
+        console.log('🔒 Revoking refresh token...');
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ refreshToken: getAuthData()?.refreshToken })
+        });
+        console.log('✅ Refresh token revoked');
+      } catch (error) {
+        console.error('⚠️ Error revoking refresh token:', error);
+      }
+    }
+    
+    // Clear queries
+    queryClient.clear();
+    
+    // Direct redirect without delay
+    console.log('🔄 Redirecting to login NOW...');
+    window.location.href = '/login';
   };
 
   const refreshUser = async () => {
