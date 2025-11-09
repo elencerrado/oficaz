@@ -120,6 +120,7 @@ export function AIAssistantChat() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hasScrolledToBottomOnce = useRef(false);
   const messagesLengthRef = useRef(0);
+  const savedScrollPosition = useRef<number>(0);
 
   // Initialize messages from localStorage or with default welcome message
   // Auto-clear history after 2 days
@@ -192,6 +193,32 @@ export function AIAssistantChat() {
       scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
     }
   };
+  
+  // CRITICAL: Save scroll position on every scroll event
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    
+    const handleScroll = () => {
+      savedScrollPosition.current = container.scrollTop;
+      console.log("💾 Saved scroll position:", savedScrollPosition.current);
+    };
+    
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+  
+  // CRITICAL: Restore scroll position after every render
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    
+    // If we have a saved position, restore it
+    if (savedScrollPosition.current > 0) {
+      console.log("🔄 Restoring scroll position:", savedScrollPosition.current);
+      container.scrollTop = savedScrollPosition.current;
+    }
+  });
   
   // Auto-scroll only when NEW messages arrive (not on navigation)
   useEffect(() => {
