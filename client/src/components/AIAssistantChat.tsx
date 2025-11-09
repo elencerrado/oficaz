@@ -114,19 +114,7 @@ export function AIAssistantChat() {
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  
-  // DEBUG: Track render count
-  const renderCount = useRef(0);
-  renderCount.current += 1;
-  console.log(`🔍 AIAssistantChat render #${renderCount.current}`, { isOpen, hasUser: !!userSummary, hasChatAccess });
-  
-  // DEBUG: Track component mount/unmount
-  useEffect(() => {
-    console.log("✅ AIAssistantChat MOUNTED");
-    return () => {
-      console.log("❌ AIAssistantChat UNMOUNTED - THIS SHOULD NEVER HAPPEN!");
-    };
-  }, []);
+  const hasScrolledToBottomOnce = useRef(false);
 
   // Initialize messages from localStorage or with default welcome message
   // Auto-clear history after 2 days
@@ -200,21 +188,11 @@ export function AIAssistantChat() {
     }
   };
   
-  // Auto-scroll to bottom when chat opens
+  // CRITICAL FIX: Only auto-scroll on FIRST open ever, never again
   useEffect(() => {
-    if (isOpen && scrollContainerRef.current) {
-      const currentScroll = scrollContainerRef.current.scrollTop;
-      console.log(`🎯 isOpen effect triggered, current scroll: ${currentScroll}`);
-      
-      // ONLY scroll to bottom if scroll is already at bottom (not if user scrolled up)
-      const isAtBottom = currentScroll + scrollContainerRef.current.clientHeight >= scrollContainerRef.current.scrollHeight - 10;
-      
-      if (isAtBottom || currentScroll === 0) {
-        console.log("📍 Scrolling to bottom (was at bottom or never scrolled)");
-        setTimeout(scrollToBottom, 0);
-      } else {
-        console.log(`⚠️ NOT scrolling - user is at position ${currentScroll} (not at bottom)`);
-      }
+    if (isOpen && scrollContainerRef.current && !hasScrolledToBottomOnce.current) {
+      setTimeout(scrollToBottom, 0);
+      hasScrolledToBottomOnce.current = true;
     }
   }, [isOpen]);
 
