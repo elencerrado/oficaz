@@ -7533,13 +7533,26 @@ Responde directamente a este email para contactar con la persona.
         }
       }
 
-      // Call OpenAI with function calling
-      const response = await openai.chat.completions.create({
-        model: "gpt-5-nano", // GPT-5 Nano for cost-effective AI assistance (~$0.0005/command)
-        messages: [
-          {
-            role: "system",
-            content: `Eres un asistente de IA ejecutivo para Oficaz, un sistema de gestión de empleados. Tu objetivo es ACTUAR, no preguntar.
+      // 🔄 ITERATIVE LOOP: Allow multiple rounds of tool calls
+      // The AI can call listEmployees(), then sendMessage(), then respond
+      const { resolveEmployeeName } = await import('./ai-assistant.js');
+      const context = { storage, companyId, adminUserId };
+      const MAX_ITERATIONS = 5; // Safety limit to prevent infinite loops
+      let iteration = 0;
+      let currentMessages = conversationHistory;
+      let allToolCalls: string[] = []; // Track all function calls made
+
+      while (iteration < MAX_ITERATIONS) {
+        iteration++;
+        console.log(`🔄 AI Assistant iteration ${iteration}/${MAX_ITERATIONS}`);
+
+        // Call OpenAI with function calling
+        const response = await openai.chat.completions.create({
+          model: "gpt-5-nano", // GPT-5 Nano for cost-effective AI assistance (~$0.0005/command)
+          messages: [
+            {
+              role: "system",
+              content: `Eres un asistente de IA ejecutivo para Oficaz, un sistema de gestión de empleados. Tu objetivo es ACTUAR, no preguntar.
 
 FECHA ACTUAL: ${currentDateStr}
 
@@ -7686,12 +7699,12 @@ COPIAR:
 - "manda un mensaje a X..." → sendMessage
 - "envía a X..." → sendMessage
 
-✅ PROCESO OBLIGATORIO:
-1. Llamar listEmployees() para obtener IDs
-2. SI es UN solo empleado → Extraer nombre corto (primer nombre)
-3. SI son VARIOS o 'all' → Usar saludo neutral
-4. Construir mensaje CORDIAL y PROFESIONAL
-5. Asunto: Breve y descriptivo
+🚨 PROCESO OBLIGATORIO (DOS FUNCIONES REQUERIDAS):
+1. PRIMERO: Llamar listEmployees() para obtener IDs de empleados
+2. SEGUNDO: Llamar sendMessage(employeeIds: [IDs], subject: "...", content: "...")
+   - SI es UN solo empleado → content: "Hola [nombre corto], [mensaje], un saludo."
+   - SI son VARIOS o 'all' → content: "Hola, [mensaje], un saludo."
+3. ⚠️ IMPORTANTE: DEBES llamar AMBAS funciones. NO respondas sin llamar sendMessage()
 
 ⚠️ FORMATO DE MENSAJES SEGÚN DESTINATARIOS:
 - UN empleado: "Hola [nombre corto], [mensaje], un saludo."
@@ -7753,7 +7766,7 @@ Tú PASO A PASO:
 
 Responde en español, sé BREVE y DIRECTO. Confirma acciones completadas sin rodeos.`
           },
-          ...conversationHistory
+          ...currentMessages
         ],
         tools,
         tool_choice: "auto",
@@ -7762,12 +7775,21 @@ Responde en español, sé BREVE y DIRECTO. Confirma acciones completadas sin rod
 
       const assistantMessage = response.choices[0]?.message;
 
-      // Check if AI wants to call a function
-      if (assistantMessage?.tool_calls && assistantMessage.tool_calls.length > 0) {
-        // Execute all tool calls
-        const { resolveEmployeeName } = await import('./ai-assistant.js');
-        const context = { storage, companyId, adminUserId };
-        const toolResults = [];
+      // If NO tool calls, AI has finished → return response
+      if (!assistantMessage?.tool_calls || assistantMessage.tool_calls.length === 0) {
+        console.log(`✅ AI Assistant finished after ${iteration} iteration(s)`);
+        console.log(`🔧 Tool calls made: ${allToolCalls.join(', ') || 'none'}`);
+        res.json({
+          message: assistantMessage?.content || "No entendí tu solicitud. ¿Puedes reformularla?",
+          functionCalled: allToolCalls.join(", ") || null,
+          result: null
+        });
+        return; // Exit endpoint
+      }
+
+      // Execute all tool calls for this iteration
+      console.log(`🔧 Executing ${assistantMessage.tool_calls.length} tool call(s) in iteration ${iteration}`);
+      const toolResults = [];
 
         for (const toolCall of assistantMessage.tool_calls) {
           const functionName = toolCall.function.name;
@@ -7873,56 +7895,29 @@ Responde en español, sé BREVE y DIRECTO. Confirma acciones completadas sin rod
           }
         }
 
-        // Get a natural language response about the results
-        const followUpResponse = await openai.chat.completions.create({
-          model: "gpt-5-nano",
-          messages: [
-            {
-              role: "system",
-              content: `Eres un asistente de IA. Confirma al usuario que la acción se completó exitosamente. Sé BREVE y DIRECTO.
+        // Track all tool calls made
+        for (const toolCall of assistantMessage.tool_calls) {
+          allToolCalls.push(toolCall.function.name);
+        }
 
-REGLAS ESTRICTAS:
-1. Cuando menciones empleados, usa el nombre COMPLETO (employeeFullName o employeeName) del resultado. NUNCA el nombre simplificado del usuario.
-2. NO menciones IDs, números técnicos, ni detalles de implementación
-3. NO agregues firmas, saludos de despedida, ni texto adicional innecesario
-4. Confirma QUÉ se hizo y PARA QUIÉN. Nada más.
-
-EJEMPLOS CORRECTOS:
-✅ "Listo. Turnos creados para Juan José Ramirez de lunes a viernes de 8:00 a 14:00."
-✅ "Solicitudes aprobadas."
-✅ "Mensaje enviado a todos los empleados."
-
-EJEMPLOS INCORRECTOS:
-❌ "Listo. ID: 123. Saludos, Equipo de gestión"
-❌ "Se ha creado el turno con ID 456"
-❌ "Hecho. ¿Necesitas algo más? - Equipo de gestión"`
-            },
-            ...conversationHistory,
-            {
-              role: "assistant",
-              content: null,
-              tool_calls: assistantMessage.tool_calls
-            },
-            ...toolResults
-          ],
-          max_completion_tokens: 8192,
+        // Add assistant message and tool results to conversation history
+        currentMessages.push({
+          role: "assistant",
+          content: null,
+          tool_calls: assistantMessage.tool_calls
         });
+        currentMessages.push(...toolResults);
 
-        const finalMessage = followUpResponse.choices[0]?.message?.content || "Acciones completadas exitosamente.";
-
-        res.json({
-          message: finalMessage,
-          functionCalled: assistantMessage.tool_calls.map(tc => tc.function.name).join(", "),
-          result: toolResults
-        });
-      } else {
-        // No function call, just return the AI's text response
-        res.json({
-          message: assistantMessage?.content || "No entendí tu solicitud. ¿Puedes reformularla?",
-          functionCalled: null,
-          result: null
-        });
+        console.log(`✅ Completed iteration ${iteration}, tool results added to history`);
+        // Continue loop → AI can make more tool calls in next iteration
       }
+
+      // Safety: If we reach MAX_ITERATIONS, return error
+      console.log(`⚠️ AI Assistant reached MAX_ITERATIONS (${MAX_ITERATIONS})`);
+      res.status(500).json({
+        message: "El asistente alcanzó el límite de iteraciones. Por favor, intenta reformular tu solicitud de forma más simple.",
+        error: "MAX_ITERATIONS_REACHED"
+      });
     } catch (error: any) {
       console.error("Error in AI assistant:", error);
       res.status(500).json({ 
