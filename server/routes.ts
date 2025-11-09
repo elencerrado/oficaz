@@ -7442,12 +7442,12 @@ Responde directamente a este email para contactar con la persona.
         });
       }
 
-      // Initialize OpenAI client with Replit AI Integrations
-      // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+      // Initialize OpenRouter client with DeepSeek V3.2 (via Replit AI Integrations)
+      // DeepSeek V3.2 is 25× cheaper than GPT-4 with excellent reasoning capabilities
       const OpenAI = (await import('openai')).default;
       const openai = new OpenAI({
-        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
+        baseURL: process.env.AI_INTEGRATIONS_OPENROUTER_BASE_URL,
+        apiKey: process.env.AI_INTEGRATIONS_OPENROUTER_API_KEY
       });
 
       // Import AI assistant functions
@@ -7669,9 +7669,9 @@ Responde directamente a este email para contactar con la persona.
         iteration++;
         console.log(`🔄 AI Assistant iteration ${iteration}/${MAX_ITERATIONS}`);
 
-        // Call OpenAI with function calling
+        // Call DeepSeek V3.2 with function calling
         const response = await openai.chat.completions.create({
-          model: "gpt-5-nano",
+          model: "deepseek/deepseek-v3.2-exp",
           messages: [
             {
               role: "system",
