@@ -376,7 +376,7 @@ export function AIAssistantChat() {
 
           {/* CRITICAL FIX: Keep position fixed, hide with visibility/opacity instead of moving off-screen */}
           <div
-        className="fixed z-50 flex max-h-[calc(100vh-8rem)] w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 transition-all duration-300"
+        className="fixed z-50 flex max-h-[500px] w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 transition-all duration-300"
         style={{
           bottom: '6rem',
           right: '1.5rem',
