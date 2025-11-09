@@ -1452,7 +1452,7 @@ export const AI_FUNCTIONS = [
   // ========================================
   {
     name: "sendMessage",
-    description: "Enviar un mensaje o circular a uno o varios empleados de la empresa",
+    description: "💬 ENVIAR un mensaje a uno o varios empleados. USA ESTA FUNCIÓN cuando el usuario diga 'dile a X que...', 'avisa a X...', 'manda un mensaje a X...', 'informa a X...'. IMPORTANTE: 1) Primero usa listEmployees() para obtener los IDs de los empleados, 2) Construye mensajes CORDIALES: si es UN solo empleado usa 'Hola [nombre corto]...', si son VARIOS o 'all' usa saludo neutral 'Hola,...' o 'Hola equipo,...', 3) Usa tono profesional pero cercano.",
     parameters: {
       type: "object",
       properties: {
@@ -1461,15 +1461,15 @@ export const AI_FUNCTIONS = [
             { type: "array", items: { type: "number" } },
             { type: "string", enum: ["all"] }
           ],
-          description: "Array de IDs de empleados o 'all' para enviar a todos los empleados",
+          description: "Array de IDs de empleados (obtener de listEmployees) o 'all' para enviar a todos",
         },
         subject: {
           type: "string",
-          description: "Asunto del mensaje",
+          description: "Asunto breve del mensaje (ej: 'Actualización de horario', 'Información importante')",
         },
         content: {
           type: "string",
-          description: "Contenido del mensaje",
+          description: "Contenido del mensaje cordial. SI es UN empleado: 'Hola [nombre], [mensaje], un saludo.' SI son VARIOS o 'all': 'Hola, [mensaje], un saludo.' o 'Hola equipo, [mensaje], un saludo.'",
         },
       },
       required: ["employeeIds", "subject", "content"],
