@@ -106,11 +106,8 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
 }
 
 export function AIAssistantChat() {
-  console.log("🤖 AIAssistantChat component rendering");
-  
   // Use chat bridge to access auth data without causing re-renders
   const { userSummary, hasChatAccess } = useChatBridge();
-  console.log("🤖 Chat bridge state:", { userSummary, hasChatAccess });
   
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -416,6 +413,7 @@ export function AIAssistantChat() {
             ref={scrollContainerRef}
             className="flex-1 space-y-4 overflow-y-auto p-4" 
             data-testid="container-ai-messages"
+            data-preserve-scroll="true"
             key="messages-container"
           >
             {renderedMessages}

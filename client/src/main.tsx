@@ -93,10 +93,8 @@ import { queryClient } from "./lib/queryClient";
 import { ThemeProvider } from "./lib/theme-provider";
 
 const chatRoot = document.getElementById("chat-root");
-console.log("🔍 Chat root element:", chatRoot);
 
 if (chatRoot) {
-  console.log("✅ Mounting AIAssistantChat to #chat-root");
   createRoot(chatRoot).render(
     <ThemeProvider defaultTheme="system" storageKey="oficaz-theme">
       <QueryClientProvider client={queryClient}>
@@ -104,6 +102,4 @@ if (chatRoot) {
       </QueryClientProvider>
     </ThemeProvider>
   );
-} else {
-  console.error("❌ #chat-root element not found!");
 }

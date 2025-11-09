@@ -14,11 +14,15 @@ export function useScrollReset() {
       // Scroll main window
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       
-      // Also scroll any potential scrollable containers
+      // Also scroll any potential scrollable containers (EXCEPT those marked to preserve)
       const scrollableElements = document.querySelectorAll('[data-scroll-container], .overflow-auto, .overflow-y-auto, main');
       
       scrollableElements.forEach(element => {
         if (element instanceof HTMLElement) {
+          // CRITICAL: Skip AI chat and other elements that need to preserve scroll
+          if (element.hasAttribute('data-preserve-scroll')) {
+            return;
+          }
           element.scrollTo({ top: 0, left: 0, behavior: 'instant' });
         }
       });

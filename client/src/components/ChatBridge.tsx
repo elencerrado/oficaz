@@ -13,7 +13,6 @@ export function ChatBridge() {
   const hasChatAccess = Boolean(user && hasAccess('ai_assistant'));
   
   useEffect(() => {
-    console.log("🔗 ChatBridge updating state:", { hasUser: !!user, hasChatAccess });
     chatBridge.setState({
       userSummary: user ? {
         id: user.id,
