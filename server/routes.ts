@@ -7695,8 +7695,8 @@ REGLAS:
 1. Ejecuta tareas inmediatamente, usa valores por defecto (horario 8-14, ubicación "Oficina")
 2. skipWeekends: true por defecto. Si menciona "sábado" → skipWeekends: false
 3. "La semana que viene": ${nextMondayStr} al ${nextSaturdayStr.split('-').slice(0,2).join('-')}-${parseInt(nextSaturdayStr.split('-')[2])-1} (L-V) o ${nextSaturdayStr} (L-S)
-4. "X trabaja después de Y": llama getEmployeeShifts(Y) primero, copia rango exacto y skipWeekends
-5. "X igual que Y pero [excepción]": copyEmployeeShifts → getEmployeeShifts → deleteWorkShift
+4. "X después de Y": getEmployeeShifts(Y) → cuenta cuántos días (ej: 6 días = incluye sábado) → assignScheduleInRange(startDate=primer día Y, endDate=último día Y, skipWeekends=false si Y trabaja sábado)
+5. "X igual que Y pero [excepción]": copyEmployeeShifts → deleteWorkShift
 6. Mensajes: listEmployees() → sendMessage()
 
 Responde BREVE en español.`
