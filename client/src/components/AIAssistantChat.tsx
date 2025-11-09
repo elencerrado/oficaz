@@ -320,28 +320,28 @@ export function AIAssistantChat() {
     localStorage.setItem("ai_assistant_chat_timestamp", Date.now().toString());
   };
 
-  // Don't render if no access
-  if (!userSummary || !hasChatAccess) {
-    return null;
-  }
+  // CRITICAL: Always render to preserve scroll position, conditional render inside portal
+  const hasAccess = Boolean(userSummary && hasChatAccess);
 
   // PROFESSIONAL PATTERN: Render to body, use display:none instead of conditional rendering
   return createPortal(
     <>
-      {/* Floating button */}
-      <div
-        onClick={() => setIsOpen(!isOpen)}
-        data-testid="button-ai-assistant-toggle"
-        className={cn(
-          "fixed bottom-6 right-6 z-50 cursor-pointer transition-all duration-300",
-          !isOpen && "hover:scale-110"
-        )}
-      >
-        <AIAssistantAnimation isThinking={isLoading} />
-      </div>
+      {hasAccess && (
+        <>
+          {/* Floating button */}
+          <div
+            onClick={() => setIsOpen(!isOpen)}
+            data-testid="button-ai-assistant-toggle"
+            className={cn(
+              "fixed bottom-6 right-6 z-50 cursor-pointer transition-all duration-300",
+              !isOpen && "hover:scale-110"
+            )}
+          >
+            <AIAssistantAnimation isThinking={isLoading} />
+          </div>
 
-      {/* CRITICAL FIX: Keep position fixed, hide with visibility/opacity instead of moving off-screen */}
-      <div
+          {/* CRITICAL FIX: Keep position fixed, hide with visibility/opacity instead of moving off-screen */}
+          <div
         className="fixed z-50 flex max-h-[calc(100vh-8rem)] w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 transition-all duration-300"
         style={{
           bottom: '6rem',
@@ -425,6 +425,8 @@ export function AIAssistantChat() {
             </div>
           </div>
         </div>
+        </>
+      )}
     </>,
     document.body
   );
