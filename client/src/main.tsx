@@ -78,10 +78,25 @@ if (document.readyState === 'loading') {
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
+// Main app root
 const root = document.getElementById("root")!;
-
 createRoot(root).render(
   <ErrorBoundary>
     <App />
   </ErrorBoundary>
+);
+
+// Isolated chat root (separate React tree to prevent re-renders from navigation)
+import { AIAssistantChat } from "./components/AIAssistantChat";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/queryClient";
+import { ThemeProvider } from "./lib/theme-provider";
+
+const chatRoot = document.getElementById("chat-root")!;
+createRoot(chatRoot).render(
+  <ThemeProvider defaultTheme="system" storageKey="oficaz-theme">
+    <QueryClientProvider client={queryClient}>
+      <AIAssistantChat />
+    </QueryClientProvider>
+  </ThemeProvider>
 );

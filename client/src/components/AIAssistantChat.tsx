@@ -5,8 +5,7 @@ import { Send, Loader2, Minimize2, RotateCcw } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/use-auth";
-import { useFeatureCheck } from "@/hooks/use-feature-check";
+import { useChatBridge } from "@/lib/chat-bridge";
 import oficazLogo from "@/assets/oficaz-logo.png";
 
 interface Message {
@@ -107,10 +106,8 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
 }
 
 export function AIAssistantChat() {
-  // Check access inside the component to avoid re-mounting
-  const { hasAccess: hasAIAssistant } = useFeatureCheck();
-  const { user } = useAuth();
-  const hasAccess = Boolean(user && hasAIAssistant('ai_assistant'));
+  // Use chat bridge to access auth data without causing re-renders
+  const { userSummary, hasChatAccess } = useChatBridge();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -319,7 +316,7 @@ export function AIAssistantChat() {
   };
 
   // Don't render if no access
-  if (!hasAccess) {
+  if (!userSummary || !hasChatAccess) {
     return null;
   }
 

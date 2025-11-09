@@ -133,6 +133,8 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Separate mount point for AI chat (isolated React root) -->
+    <div id="chat-root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <!-- Load Replit banner asynchronously to prevent render blocking -->
     <script async type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
