@@ -106,8 +106,12 @@ function AIAssistantAnimation({ isThinking = false }: { isThinking?: boolean }) 
 }
 
 export function AIAssistantChat() {
+  console.log("🤖 AIAssistantChat component rendering");
+  
   // Use chat bridge to access auth data without causing re-renders
   const { userSummary, hasChatAccess } = useChatBridge();
+  console.log("🤖 Chat bridge state:", { userSummary, hasChatAccess });
+  
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -115,7 +119,7 @@ export function AIAssistantChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hasScrolledToBottomOnce = useRef(false);
-  const messagesLengthRef = useRef(messages.length);
+  const messagesLengthRef = useRef(0);
 
   // Initialize messages from localStorage or with default welcome message
   // Auto-clear history after 2 days
