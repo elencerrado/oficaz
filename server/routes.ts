@@ -7494,6 +7494,7 @@ Responde directamente a este email para contactar con la persona.
 
       // 🔍 PRE-DETECTION: Detect patterns and execute directly (bypasses AI for common requests)
       const lastUserMsg = conversationHistory.filter((m: any) => m.role === 'user').pop()?.content || '';
+      console.log('🔍 [DEBUG] Last user message:', lastUserMsg);
       
       // ==============================================
       // PATTERN 1: CREATE SCHEDULE
