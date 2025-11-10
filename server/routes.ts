@@ -7442,13 +7442,22 @@ Responde directamente a este email para contactar con la persona.
         });
       }
 
-      // Initialize OpenAI client with GPT-4o-mini (via Replit AI Integrations)
-      // GPT-4o-mini: 10× more intelligent than GPT-5 Nano, native function calling, excellent Spanish support
+      // Initialize AI client - Groq (Llama 3.3 70B) or fallback to OpenAI
+      // Groq: 10x faster, 92% cheaper, same quality, native function calling
       const OpenAI = (await import('openai')).default;
+      
+      const useGroq = !!process.env.GROQ_API_KEY;
       const openai = new OpenAI({
-        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
+        baseURL: useGroq 
+          ? 'https://api.groq.com/openai/v1'
+          : process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+        apiKey: useGroq 
+          ? process.env.GROQ_API_KEY
+          : process.env.AI_INTEGRATIONS_OPENAI_API_KEY
       });
+      
+      console.log(`🤖 AI Assistant using: ${useGroq ? 'Groq (Llama 3.3 70B)' : 'OpenAI (GPT-4o-mini)'}`);
+      
 
       // Import AI assistant functions
       const { AI_FUNCTIONS, executeAIFunction } = await import('./ai-assistant.js');
@@ -7745,9 +7754,9 @@ Responde directamente a este email para contactar con la persona.
         iteration++;
         console.log(`🔄 AI Assistant iteration ${iteration}/${MAX_ITERATIONS}`);
 
-        // Call GPT-4o-mini with function calling
+        // Call AI with function calling (Groq or OpenAI)
         const response = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
+          model: useGroq ? "llama-3.3-70b-versatile" : "gpt-4o-mini",
           messages: [
             {
               role: "system",
