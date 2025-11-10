@@ -7740,7 +7740,7 @@ Responde directamente a este email para contactar con la persona.
       // The AI can call listEmployees(), then sendMessage(), then respond
       const { resolveEmployeeName } = await import('./ai-assistant.js');
       const context = { storage, companyId, adminUserId };
-      const MAX_ITERATIONS = 2; // Execute function (iter 1) + response (iter 2)
+      const MAX_ITERATIONS = 3; // Query (iter 1) + Execute (iter 2) + Response (iter 3)
       let iteration = 0;
       let currentMessages = conversationHistory;
       let allToolCalls: string[] = []; // Track all function calls made
