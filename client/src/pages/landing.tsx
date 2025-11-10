@@ -231,6 +231,7 @@ export default function Landing() {
         timeEditingPermissions: "Edición de horarios",
         employee_time_edit: "Edición de fichajes",
         employee_time_edit_permission: "Permisos de edición",
+        ai_assistant: "Asistente de IA",
         api: "API personalizada"
       };
       return featureNames[featureKey] || featureKey;
@@ -257,7 +258,12 @@ export default function Landing() {
       master: false
     };
     
-    return subscriptionPlans.map((dbPlan: any) => {
+    // Get all plans sorted by price to determine hierarchy
+    const sortedPlans = [...subscriptionPlans].sort((a: any, b: any) => 
+      Number(a.monthlyPrice) - Number(b.monthlyPrice)
+    );
+    
+    return sortedPlans.map((dbPlan: any, index: number) => {
       const planKey = dbPlan.name.toLowerCase();
       const userLimit = dbPlan.maxUsers 
         ? `Hasta ${dbPlan.maxUsers} empleados`
@@ -280,23 +286,37 @@ export default function Landing() {
         'reminders',
         'logoUpload',
         'reports',
+        'ai_assistant',
         'employee_time_edit',
         'employee_time_edit_permission'
       ];
       
-      // Add features based on what's enabled in the database, respecting the order
+      // For Pro and Master, add "Includes previous plan +" first
+      if (planKey === 'pro') {
+        dynamicFeatures.push('✓ Lo incluido en Basic +');
+      } else if (planKey === 'master') {
+        dynamicFeatures.push('✓ Lo incluido en Pro +');
+      }
+      
+      // Get features from previous plan to compare
+      const previousPlan = index > 0 ? sortedPlans[index - 1] : null;
+      const previousFeatures = previousPlan?.features || {};
+      
+      // Add features based on what's enabled in the database
       if (dbPlan.features) {
-        // First add features in the defined order
+        // First add NEW features in the defined order (not in previous plan)
         featureOrder.forEach(featureKey => {
-          if (dbPlan.features[featureKey]) {
+          const isNewFeature = planKey === 'basic' || !previousFeatures[featureKey];
+          if (dbPlan.features[featureKey] && isNewFeature) {
             const displayName = getFeatureDisplayName(featureKey);
             dynamicFeatures.push(displayName);
           }
         });
         
-        // Then add any remaining features not in the order (for future features)
+        // Then add any remaining NEW features not in the order
         Object.entries(dbPlan.features).forEach(([featureKey, isEnabled]) => {
-          if (isEnabled && !featureOrder.includes(featureKey)) {
+          const isNewFeature = planKey === 'basic' || !previousFeatures[featureKey];
+          if (isEnabled && !featureOrder.includes(featureKey) && isNewFeature) {
             const displayName = getFeatureDisplayName(featureKey);
             dynamicFeatures.push(displayName);
           }
