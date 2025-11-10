@@ -630,7 +630,7 @@ export async function generateTimeReport(
   // Determine format (default to PDF)
   const reportFormat = params.format || 'pdf';
 
-  // Generate report file URL (mocking for now - actual generation would use jsPDF/XLSX)
+  // Get employee name
   const employeeName = employeeId 
     ? (await storage.getUser(employeeId))?.fullName || 'Empleado'
     : 'Todos los empleados';
@@ -639,15 +639,86 @@ export async function generateTimeReport(
     ? `${params.startDate} - ${params.endDate}`
     : params.period.replace('_', ' ');
 
+  // Calculate total hours
+  const totalHours = sessions.reduce((sum: number, s: any) => sum + parseFloat(s.totalHours || '0'), 0);
+
+  // Only generate PDF for now (Excel can be added later)
+  if (reportFormat === 'pdf') {
+    try {
+      const PDFDocument = (await import('pdfkit')).default;
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      // Create PDF document
+      const doc = new PDFDocument({ size: 'A4', margin: 50 });
+      
+      // Generate filename
+      const filename = `Informe_${employeeName.replace(/\s+/g, '_')}_${params.period}_${Date.now()}.pdf`;
+      const filepath = path.join(process.cwd(), 'uploads', filename);
+      
+      // Pipe PDF to file
+      const stream = fs.createWriteStream(filepath);
+      doc.pipe(stream);
+      
+      // Add content to PDF
+      doc.fontSize(20).text('Informe de Horas de Trabajo', { align: 'center' });
+      doc.moveDown();
+      
+      doc.fontSize(12);
+      doc.text(`Empleado: ${employeeName}`);
+      doc.text(`Período: ${periodText}`);
+      doc.text(`Total de fichajes: ${sessions.length}`);
+      doc.text(`Total de horas: ${totalHours.toFixed(1)}h`);
+      doc.moveDown();
+      
+      // Add table header
+      doc.fontSize(10).text('Fecha          Entrada    Salida     Horas', { underline: true });
+      doc.moveDown(0.5);
+      
+      // Add sessions
+      sessions.forEach((session: any) => {
+        const date = new Date(session.clockIn).toLocaleDateString('es-ES');
+        const clockIn = new Date(session.clockIn).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        const clockOut = session.clockOut ? new Date(session.clockOut).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '-';
+        const hours = parseFloat(session.totalHours || '0').toFixed(1);
+        
+        doc.text(`${date}    ${clockIn}    ${clockOut}    ${hours}h`);
+      });
+      
+      // Finalize PDF
+      doc.end();
+      
+      // Wait for PDF to be written
+      await new Promise((resolve) => stream.on('finish', resolve));
+      
+      // Return download URL
+      const downloadUrl = `/uploads/${filename}`;
+      
+      return {
+        success: true,
+        reportGenerated: true,
+        format: reportFormat,
+        employee: employeeName,
+        period: periodText,
+        sessionsCount: sessions.length,
+        totalHours: totalHours.toFixed(1),
+        downloadUrl,
+        filename,
+        message: `Perfecto. Informe PDF generado: ${sessions.length} fichajes, ${totalHours.toFixed(1)}h totales. El archivo se descargará automáticamente.`
+      };
+    } catch (error: any) {
+      console.error('Error generating PDF:', error);
+      return {
+        success: false,
+        error: `Error al generar el PDF: ${error.message}`
+      };
+    }
+  }
+
+  // For Excel format (not implemented yet)
   return {
-    success: true,
-    reportGenerated: true,
-    format: reportFormat,
-    employee: employeeName,
-    period: periodText,
-    sessionsCount: sessions.length,
-    totalHours: sessions.reduce((sum: number, s: any) => sum + parseFloat(s.totalHours || '0'), 0).toFixed(1),
-    message: `Informe generado: ${employeeName} - ${periodText} - ${sessions.length} fichajes (${sessions.reduce((sum: number, s: any) => sum + parseFloat(s.totalHours || '0'), 0).toFixed(1)}h totales). Para descargar el informe ${reportFormat.toUpperCase()}, ve a la página de Fichajes > Exportar > Selecciona los mismos filtros.`
+    success: false,
+    error: "Formato Excel no implementado aún. Usa format: 'pdf' por ahora."
   };
 }
 

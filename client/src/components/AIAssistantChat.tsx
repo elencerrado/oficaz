@@ -262,6 +262,16 @@ export function AIAssistantChat() {
       // Scroll to bottom after AI response
       setTimeout(scrollToBottom, 0);
 
+      // AUTO-DOWNLOAD PDF if downloadUrl is present (time tracking reports)
+      if (response.downloadUrl) {
+        const link = document.createElement('a');
+        link.href = response.downloadUrl;
+        link.download = response.filename || 'informe.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
       // Invalidate relevant queries based on the function that was called
       if (response.functionCalled) {
         const functionsArray = response.functionCalled.split(", ");
@@ -315,6 +325,9 @@ export function AIAssistantChat() {
             case "requestDocument":
               // Invalidate document notifications
               queryClient.invalidateQueries({ queryKey: ['/api/document-notifications'] });
+              break;
+            case "generateTimeReport":
+              // No query invalidation needed for reports
               break;
           }
         }
