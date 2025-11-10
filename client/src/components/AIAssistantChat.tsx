@@ -109,6 +109,12 @@ export function AIAssistantChat() {
   // Use chat bridge to access auth data without causing re-renders
   const { userSummary, hasChatAccess } = useChatBridge();
   
+  // 🔒 SECURITY: Only show AI assistant to admin and manager roles
+  // Employees should NEVER see the AI assistant, even on master plan
+  if (!userSummary || (userSummary.role !== 'admin' && userSummary.role !== 'manager')) {
+    return null;
+  }
+  
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
