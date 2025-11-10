@@ -7766,6 +7766,8 @@ RECORDATORIOS:
 - Título: extrae de "recuérdame X"
 - Asignación: listEmployees() → usa IDs ("para juan"→[id], "para todos"→"all")
 - enableNotifications: true, priority: "medium" (o "high" si urgente)
+- ZONA HORARIA: España (UTC+1/+2). Si usuario dice "a las 10", usa hora ESPAÑOLA, no UTC.
+  Ejemplo: "mañana a las 10" → "2025-11-11T10:00:00+01:00" (NO "2025-11-11T10:00:00Z")
 
 Respuestas: BREVES, DIRECTAS, AMIGABLES.`
           },
