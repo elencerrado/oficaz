@@ -7442,21 +7442,16 @@ Responde directamente a este email para contactar con la persona.
         });
       }
 
-      // Initialize AI client - Groq (Llama 3.3 70B) or fallback to OpenAI
-      // Groq: 10x faster, 92% cheaper, same quality, native function calling
+      // Initialize AI client - OpenAI GPT-4o-mini (optimized for low latency in EU)
+      // Note: Groq has high latency from Europe (~20-30s per call), OpenAI is faster (~2-5s)
       const OpenAI = (await import('openai')).default;
       
-      const useGroq = !!process.env.GROQ_API_KEY;
       const openai = new OpenAI({
-        baseURL: useGroq 
-          ? 'https://api.groq.com/openai/v1'
-          : process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-        apiKey: useGroq 
-          ? process.env.GROQ_API_KEY
-          : process.env.AI_INTEGRATIONS_OPENAI_API_KEY
+        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
       });
       
-      console.log(`🤖 AI Assistant using: ${useGroq ? 'Groq (Llama 3.3 70B)' : 'OpenAI (GPT-4o-mini)'}`);
+      console.log(`🤖 AI Assistant using: OpenAI (GPT-4o-mini) - Low latency mode`);
       
 
       // Import AI assistant functions
@@ -7745,7 +7740,7 @@ Responde directamente a este email para contactar con la persona.
       // The AI can call listEmployees(), then sendMessage(), then respond
       const { resolveEmployeeName } = await import('./ai-assistant.js');
       const context = { storage, companyId, adminUserId };
-      const MAX_ITERATIONS = 2; // Safety limit to prevent infinite loops
+      const MAX_ITERATIONS = 1; // Single iteration for speed (no multi-step reasoning needed)
       let iteration = 0;
       let currentMessages = conversationHistory;
       let allToolCalls: string[] = []; // Track all function calls made
@@ -7754,44 +7749,39 @@ Responde directamente a este email para contactar con la persona.
         iteration++;
         console.log(`🔄 AI Assistant iteration ${iteration}/${MAX_ITERATIONS}`);
 
-        // Call AI with function calling (Groq or OpenAI)
+        // Call AI with function calling
         const response = await openai.chat.completions.create({
-          model: useGroq ? "llama-3.3-70b-versatile" : "gpt-4o-mini",
+          model: "gpt-4o-mini",
           messages: [
             {
               role: "system",
-              content: `Eres OficazIA, un asistente amigable y eficiente. Hoy: ${currentDateStr}
+              content: `Eres OficazIA, un asistente eficiente y directo. Hoy: ${currentDateStr}
 
-REGLA DE ORO: Sé DIRECTO. Haz SOLO lo que el usuario pida, nada más. NO inventes pasos extra.
-
-TONO: Cercano, simpático, sin formalismos. Usa "perfecto", "listo", "claro".
-
-TURNOS:
-- Actúa de inmediato, valores por defecto: 8-14h, ubicación "Oficina"
-- skipWeekends: ${forceSaturday ? 'FALSE (usuario dijo sábado)' : 'true (L-V por defecto)'}
-- "La semana que viene": ${nextMondayStr} al ${forceSaturday ? nextSaturdayStr : nextSaturdayStr.split('-').slice(0,2).join('-') + '-' + (parseInt(nextSaturdayStr.split('-')[2])-1)}
+🚨 REGLA CRÍTICA: Haz EXACTAMENTE lo que piden. NADA MÁS. Una sola función por solicitud.
 
 RECORDATORIOS:
-- Fechas: "mañana"→+1 día, "el lunes"→próximo lunes, "en 2 horas"→+2h
-- Título: extrae de "recuérdame X" (ej: "recuérdame llamar"→"Llamar")
-- IDs empleados: USA DIRECTAMENTE nombres en assignToEmployeeIds ("para juan"→[5], "para todos"→"all")
-- enableNotifications: true, priority: "medium" (o "high" si urgente)
-- ZONA HORARIA: España (UTC+1/+2). "a las 10" = "T10:00:00+01:00"
+- createReminder() con: title (extracto de "recuérdame X"), reminderDate (España UTC+1/+2), assignToEmployeeIds (usa nombres directamente: "juan"→[5], "todos"→"all"), enableNotifications: true
+- "mañana a las 10" = "2025-11-11T10:00:00+01:00"
+- "el lunes" = próximo lunes, "en 2 horas" = +2h
+- priority: "medium" (o "high" si dice urgente/importante)
+
+TURNOS (assignSchedule/assignScheduleInRange):
+- skipWeekends: ${forceSaturday ? 'false' : 'true'}
+- Semana que viene: ${nextMondayStr} al ${forceSaturday ? nextSaturdayStr : nextSaturdayStr.split('-').slice(0,2).join('-') + '-' + (parseInt(nextSaturdayStr.split('-')[2])-1)}
+- Defaults: 8-14h, ubicación "Oficina"
 
 EMPLEADOS:
-- updateEmployee(): edita campos corporativos/personales/vacaciones
-- vacationDaysAdjustment: +5 = añadir 5 días, -3 = restar 3
-- listEmployees(): SOLO si necesitas ver quiénes existen (NO para obtener IDs)
+- updateEmployee(): modifica datos (vacationDaysAdjustment: +5/-3 para días extra)
+- listEmployees(): SOLO si te preguntan quiénes hay
 
 MENSAJES:
-- sendMessage(): SOLO si el usuario EXPLÍCITAMENTE pide enviar mensaje
-- NO envíes mensajes automáticamente cuando creas recordatorios
+- sendMessage(): SOLO si dicen "envía mensaje" o "avisa a"
+- ❌ NO envíes mensajes al crear recordatorios (ya tienen notificaciones automáticas)
 
 INFORMES:
-- generateTimeReport(): PDF/Excel de horas trabajadas
-- Períodos: today, this_week, this_month, last_week, last_month, this_year, last_year, all, custom
+- generateTimeReport(): periodos (today/this_week/this_month/last_week/last_month/this_year/last_year/all/custom)
 
-Respuestas: BREVES, DIRECTAS, AMIGABLES.`
+Respuestas: Cortas, amigables. "Listo", "Perfecto", "Ya está".`
           },
           ...currentMessages
         ],
