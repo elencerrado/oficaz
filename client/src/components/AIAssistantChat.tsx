@@ -334,11 +334,7 @@ export function AIAssistantChat() {
       }
     } catch (error: any) {
       console.error("Error sending message to AI:", error);
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo procesar tu solicitud",
-        variant: "destructive",
-      });
+      // Toast disabled per user request - errors only shown in chat
       setMessages((prev) => [
         ...prev,
         {
