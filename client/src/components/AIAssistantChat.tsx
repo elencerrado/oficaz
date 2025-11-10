@@ -125,7 +125,7 @@ export function AIAssistantChat() {
     const defaultMessage = {
       role: "assistant" as const,
       content:
-        "¡Hola! Soy tu asistente de IA. Puedo ayudarte con:\n\n📋 GESTIÓN:\n• Enviar mensajes a empleados\n• Aprobar solicitudes (vacaciones, cambios horario)\n• Crear recordatorios\n• Gestionar empleados\n• Solicitar documentos\n\n🗓️ CUADRANTE (Control Total):\n• ✅ Crear turnos\n• ❌ Eliminar turnos\n• 🔄 Intercambiar turnos entre empleados\n• 📋 Copiar turnos de un empleado a otro\n• ⏰ Modificar horas de turnos existentes\n• 🎨 Cambiar colores de turnos\n• 📝 Editar títulos/ubicaciones\n• 🔍 Detectar solapamientos\n\n¿En qué puedo ayudarte hoy?",
+        "¡Hola! Puedo ayudarte a gestionar cuadrantes, enviar mensajes y crear recordatorios. ¿En qué te ayudo?",
     };
 
     const savedMessages = localStorage.getItem("ai_assistant_chat_history");
@@ -347,7 +347,7 @@ export function AIAssistantChat() {
     const defaultMessage = {
       role: "assistant" as const,
       content:
-        "¡Hola! Soy tu asistente de IA. Puedo ayudarte con:\n\n📋 GESTIÓN:\n• Enviar mensajes a empleados\n• Aprobar solicitudes (vacaciones, cambios horario)\n• Crear recordatorios\n• Gestionar empleados\n• Solicitar documentos\n\n🗓️ CUADRANTE (Control Total):\n• ✅ Crear turnos\n• ❌ Eliminar turnos\n• 🔄 Intercambiar turnos entre empleados\n• 📋 Copiar turnos de un empleado a otro\n• ⏰ Modificar horas de turnos existentes\n• 🎨 Cambiar colores de turnos\n• 📝 Editar títulos/ubicaciones\n• 🔍 Detectar solapamientos\n\n¿En qué puedo ayudarte hoy?",
+        "¡Hola! Puedo ayudarte a gestionar cuadrantes, enviar mensajes y crear recordatorios. ¿En qué te ayudo?",
     };
     setMessages([defaultMessage]);
     localStorage.setItem("ai_assistant_chat_history", JSON.stringify([defaultMessage]));
