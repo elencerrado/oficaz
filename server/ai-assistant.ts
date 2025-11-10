@@ -1614,37 +1614,42 @@ export const AI_FUNCTIONS = [
   },
   {
     name: "createReminder",
-    description: "Crear un recordatorio, opcionalmente asignarlo a empleados específicos",
+    description: "Crear un recordatorio, opcionalmente asignarlo a empleados específicos. Soporta nombres de empleados.",
     parameters: {
       type: "object",
       properties: {
         title: {
           type: "string",
-          description: "Título del recordatorio",
+          description: "Título del recordatorio (infiere del mensaje del usuario si dice 'recuérdame...')",
         },
         content: {
           type: "string",
-          description: "Descripción o contenido del recordatorio",
+          description: "Descripción o contenido del recordatorio (opcional)",
         },
         reminderDate: {
           type: "string",
-          description: "Fecha del recordatorio en formato ISO (YYYY-MM-DD o YYYY-MM-DDTHH:mm:ss)",
+          description: "Fecha del recordatorio en formato ISO (YYYY-MM-DD o YYYY-MM-DDTHH:mm:ss). Interpreta fechas naturales: 'mañana', 'el lunes', 'en 2 horas', etc.",
         },
         priority: {
           type: "string",
           enum: ["low", "medium", "high"],
-          description: "Prioridad del recordatorio",
+          description: "Prioridad del recordatorio. Usa 'high' si el usuario dice 'urgente' o 'importante'",
+        },
+        assignToEmployeeNames: {
+          type: "array",
+          items: { type: "string" },
+          description: "Array de NOMBRES de empleados a quienes asignar (ej: ['juan', 'maria']). La IA resolverá los nombres a IDs automáticamente",
         },
         assignToEmployeeIds: {
           oneOf: [
             { type: "array", items: { type: "number" } },
             { type: "string", enum: ["all"] }
           ],
-          description: "Array de IDs de empleados o 'all' para asignar a todos",
+          description: "Array de IDs de empleados o 'all' para asignar a todos. Usa assignToEmployeeNames si el usuario menciona nombres",
         },
         enableNotifications: {
           type: "boolean",
-          description: "Si se deben enviar notificaciones push para este recordatorio",
+          description: "Si se deben enviar notificaciones push. true por defecto",
         },
       },
       required: ["title"],

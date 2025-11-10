@@ -70,6 +70,13 @@ Preferred communication style: Simple, everyday language.
     - **Details**: `updateWorkShiftDetails` (title, location, notes for single shift)
   - **Advanced Shift Management (Nov 2025)**: AI can swap all shifts between two employees atomically (useful for schedule exchanges) or copy shifts from one employee to another (useful for replication). Both operations support optional date range filtering and handle employee name resolution automatically.
   - **Intelligence Architecture (Nov 2025)**: AI follows "Consultar→Decidir→Actuar" (Query→Decide→Act) methodology to prevent errors. CRITICAL upgrade with 3 read-only query functions (listEmployees, getEmployeeShifts, getCompanyContext) that AI MUST use before executing mutations. System prompt enforces context awareness: AI must verify data exists before acting (no guessing shift titles/employee names), detect ambiguity vs continuation in conversation flow, and ask specific questions only when truly ambiguous. Prevents context bugs like creating new shifts when user meant to modify existing ones.
+  - **Smart Reminders (Nov 2025)**: AI can create reminders with natural language interpretation:
+    - **Date/Time Intelligence**: Interprets "mañana", "el lunes", "en 2 horas", "el 15 de diciembre a las 3pm", etc.
+    - **Title Inference**: Extracts title from context (e.g., "recuérdame llamar al proveedor" → title: "Llamar al proveedor")
+    - **Employee Assignment**: Resolves employee names to IDs automatically ("para juan y maria" → assigns to both)
+    - **Bulk Assignment**: Supports "para todos" to assign to all employees
+    - **Priority Detection**: Auto-sets "high" priority if user says "urgente" or "importante"
+    - **Default Notifications**: Enables push notifications by default for all reminders
 - **Object Storage**: Replit Object Storage integration for persistent file storage.
 - **Account Management**: 30-day grace period for account deletion, immediate blocking of cancelled accounts.
 - **Data Integrity**: Break periods belong to current work session. Orphaned documents are removed.

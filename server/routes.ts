@@ -7759,6 +7759,17 @@ REGLAS:
 3. "La semana que viene": ${nextMondayStr} al ${forceSaturday ? nextSaturdayStr : nextSaturdayStr.split('-').slice(0,2).join('-') + '-' + (parseInt(nextSaturdayStr.split('-')[2])-1)}
 4. Mensajes: listEmployees() → sendMessage()
 
+RECORDATORIOS (createReminder):
+- Interpreta fechas naturales: "mañana"→+1 día, "el lunes"→próximo lunes, "en 2 horas"→+2h
+- Si dice "recuérdame X", usa "X" como título
+- Para asignar: listEmployees() primero, luego usa IDs en assignToEmployeeIds
+- Ejemplos de asignación:
+  * "para juan" → busca empleado, usa [id]
+  * "para todos" → usa "all"
+  * "para juan y maria" → busca ambos, usa [id1, id2]
+- enableNotifications: true por defecto
+- priority: "medium" por defecto, "high" si urgente
+
 Responde BREVE en español.`
           },
           ...currentMessages
@@ -7791,7 +7802,7 @@ Responde BREVE en español.`
           const functionArgs = JSON.parse(toolCall.function.arguments);
 
           // Resolve employee names to IDs before executing function
-          const functionsNeedingEmployeeResolution = ['getEmployeeShifts', 'assignSchedule', 'assignScheduleInRange', 'requestDocument', 'deleteWorkShift', 'deleteWorkShiftsInRange', 'updateWorkShiftTimes', 'updateWorkShiftsInRange', 'updateEmployeeShiftsColor', 'updateWorkShiftColor', 'updateWorkShiftDetails', 'detectWorkShiftOverlaps'];
+          const functionsNeedingEmployeeResolution = ['getEmployeeShifts', 'assignSchedule', 'assignScheduleInRange', 'requestDocument', 'deleteWorkShift', 'deleteWorkShiftsInRange', 'updateWorkShiftTimes', 'updateWorkShiftsInRange', 'updateEmployeeShiftsColor', 'updateWorkShiftColor', 'updateWorkShiftDetails', 'detectWorkShiftOverlaps', 'createReminder'];
           if (functionsNeedingEmployeeResolution.includes(functionName) && functionArgs.employeeName) {
             const resolution = await resolveEmployeeName(storage, companyId, functionArgs.employeeName);
             
@@ -7869,6 +7880,36 @@ Responde BREVE en español.`
               functionArgs.toEmployeeId = resolutionTo.employeeId;
               delete functionArgs.toEmployeeName;
             }
+          }
+
+          // Handle createReminder with employee names
+          if (functionName === 'createReminder' && functionArgs.assignToEmployeeNames) {
+            const employeeNames = functionArgs.assignToEmployeeNames;
+            const resolvedIds: number[] = [];
+            let hasError = false;
+            let errorMessage = '';
+
+            for (const name of employeeNames) {
+              const resolution = await resolveEmployeeName(storage, companyId, name);
+              if ('error' in resolution) {
+                toolResults.push({
+                  role: "tool" as const,
+                  tool_call_id: toolCall.id,
+                  content: JSON.stringify({ error: `Empleado "${name}": ${resolution.error}` })
+                });
+                hasError = true;
+                break;
+              }
+              resolvedIds.push(resolution.employeeId);
+            }
+
+            if (hasError) {
+              continue;
+            }
+
+            // Replace assignToEmployeeNames with assignToEmployeeIds
+            functionArgs.assignToEmployeeIds = resolvedIds;
+            delete functionArgs.assignToEmployeeNames;
           }
 
           // Execute the function
