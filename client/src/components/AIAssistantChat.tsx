@@ -307,6 +307,11 @@ export function AIAssistantChat() {
               // Invalidate employees queries
               queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
               break;
+            case "updateEmployee":
+              // Invalidate employees queries
+              queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/users/employees'] });
+              break;
             case "requestDocument":
               // Invalidate document notifications
               queryClient.invalidateQueries({ queryKey: ['/api/document-notifications'] });

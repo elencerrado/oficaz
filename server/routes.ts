@@ -7769,6 +7769,12 @@ RECORDATORIOS:
 - ZONA HORARIA: España (UTC+1/+2). Si usuario dice "a las 10", usa hora ESPAÑOLA, no UTC.
   Ejemplo: "mañana a las 10" → "2025-11-11T10:00:00+01:00" (NO "2025-11-11T10:00:00Z")
 
+EMPLEADOS:
+- Modificar datos: updateEmployee() permite editar TODOS los campos (corporativos, personales, vacaciones)
+- Vacaciones extra: vacationDaysAdjustment (+5 = añadir 5 días, -3 = restar 3 días)
+- Campos editables: email corporativo/personal, teléfonos, cargo, fecha incorporación, estado, rol, dirección, contacto emergencia
+- SIEMPRE usa listEmployees() primero para obtener el ID del empleado
+
 Respuestas: BREVES, DIRECTAS, AMIGABLES.`
           },
           ...currentMessages

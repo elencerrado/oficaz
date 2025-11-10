@@ -447,6 +447,80 @@ export async function createEmployee(
   };
 }
 
+// 5b. Update employee data
+export async function updateEmployee(
+  context: AIFunctionContext,
+  params: {
+    employeeId: number;
+    // Corporate information
+    companyEmail?: string;
+    companyPhone?: string;
+    position?: string;
+    startDate?: string;
+    status?: 'active' | 'inactive' | 'leave' | 'vacation';
+    role?: 'admin' | 'manager' | 'employee';
+    // Personal information
+    personalEmail?: string;
+    personalPhone?: string;
+    address?: string;
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
+    // Vacation management
+    vacationDaysAdjustment?: number; // Extra vacation days (+ or -)
+  }
+) {
+  const { storage, companyId } = context;
+
+  // Verify employee exists and belongs to company
+  const employee = await storage.getUser(params.employeeId);
+  if (!employee || employee.companyId !== companyId) {
+    return {
+      success: false,
+      error: "Empleado no encontrado o no pertenece a esta empresa"
+    };
+  }
+
+  // Build update object with only provided fields
+  const updates: any = {};
+  
+  if (params.companyEmail !== undefined) updates.companyEmail = params.companyEmail;
+  if (params.companyPhone !== undefined) updates.companyPhone = params.companyPhone;
+  if (params.position !== undefined) updates.position = params.position;
+  if (params.startDate !== undefined) updates.startDate = new Date(params.startDate);
+  if (params.status !== undefined) updates.status = params.status;
+  if (params.role !== undefined) updates.role = params.role;
+  if (params.personalEmail !== undefined) updates.personalEmail = params.personalEmail;
+  if (params.personalPhone !== undefined) updates.personalPhone = params.personalPhone;
+  if (params.address !== undefined) updates.postalAddress = params.address;
+  if (params.emergencyContactName !== undefined) updates.emergencyContactName = params.emergencyContactName;
+  if (params.emergencyContactPhone !== undefined) updates.emergencyContactPhone = params.emergencyContactPhone;
+  if (params.vacationDaysAdjustment !== undefined) updates.vacationDaysAdjustment = params.vacationDaysAdjustment.toString();
+
+  // Update employee
+  const updatedEmployee = await storage.updateUser(params.employeeId, updates);
+
+  if (!updatedEmployee) {
+    return {
+      success: false,
+      error: "No se pudo actualizar el empleado"
+    };
+  }
+
+  return {
+    success: true,
+    employee: {
+      id: updatedEmployee.id,
+      fullName: updatedEmployee.fullName,
+      companyEmail: updatedEmployee.companyEmail,
+      position: updatedEmployee.position,
+      status: updatedEmployee.status,
+      role: updatedEmployee.role,
+      vacationDaysAdjustment: updatedEmployee.vacationDaysAdjustment,
+    },
+    message: `Empleado ${updatedEmployee.fullName} actualizado correctamente`
+  };
+}
+
 // Helper: Generate consistent color for employee based on their ID
 function getEmployeeColor(employeeId: number): string {
   const colors = [
@@ -1690,6 +1764,70 @@ export const AI_FUNCTIONS = [
     },
   },
   {
+    name: "updateEmployee",
+    description: "Modificar datos de un empleado existente. Usa listEmployees() primero para obtener el ID del empleado. Permite modificar información corporativa, personal y días de vacaciones extra",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeId: {
+          type: "number",
+          description: "ID del empleado a modificar (obtener de listEmployees)",
+        },
+        companyEmail: {
+          type: "string",
+          description: "Email corporativo del empleado",
+        },
+        companyPhone: {
+          type: "string",
+          description: "Teléfono corporativo",
+        },
+        position: {
+          type: "string",
+          description: "Cargo o puesto de trabajo",
+        },
+        startDate: {
+          type: "string",
+          description: "Fecha de incorporación en formato YYYY-MM-DD",
+        },
+        status: {
+          type: "string",
+          enum: ["active", "inactive", "leave", "vacation"],
+          description: "Estado del empleado: active (activo), inactive (inactivo), leave (de baja), vacation (de vacaciones)",
+        },
+        role: {
+          type: "string",
+          enum: ["admin", "manager", "employee"],
+          description: "Rol del empleado en el sistema",
+        },
+        personalEmail: {
+          type: "string",
+          description: "Email personal del empleado",
+        },
+        personalPhone: {
+          type: "string",
+          description: "Teléfono personal",
+        },
+        address: {
+          type: "string",
+          description: "Dirección postal completa",
+        },
+        emergencyContactName: {
+          type: "string",
+          description: "Nombre de la persona de contacto de emergencia",
+        },
+        emergencyContactPhone: {
+          type: "string",
+          description: "Teléfono de contacto de emergencia",
+        },
+        vacationDaysAdjustment: {
+          type: "number",
+          description: "Días de vacaciones extra para añadir (+) o restar (-). Ej: 5 = añadir 5 días, -3 = restar 3 días. Estos días se suman al total automático de vacaciones",
+        },
+      },
+      required: ["employeeId"],
+    },
+  },
+  {
     name: "assignSchedule",
     description: "Asignar UN SOLO turno a un empleado (una fecha específica). IMPORTANTE: Usa el nombre del empleado (employeeName) cuando el usuario lo mencione en el mensaje",
     parameters: {
@@ -2090,6 +2228,8 @@ export async function executeAIFunction(
       return createReminder(context, params);
     case "createEmployee":
       return createEmployee(context, params);
+    case "updateEmployee":
+      return updateEmployee(context, params);
     case "assignSchedule":
       return assignSchedule(context, params);
     case "assignScheduleInRange":
