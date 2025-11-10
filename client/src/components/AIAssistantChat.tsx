@@ -299,6 +299,7 @@ export function AIAssistantChat() {
               break;
             case "createReminder":
               // Invalidate reminders queries
+              queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
               queryClient.invalidateQueries({ queryKey: ['/api/reminders/dashboard'] });
               queryClient.invalidateQueries({ queryKey: ['/api/reminders/check-notifications'] });
               break;
