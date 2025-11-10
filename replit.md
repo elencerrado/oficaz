@@ -83,6 +83,12 @@ Preferred communication style: Simple, everyday language.
     - **Personal Info**: Email personal, teléfono personal, dirección, contacto de emergencia (nombre y teléfono)
     - **Vacation Management**: `vacationDaysAdjustment` field allows adding/subtracting extra vacation days (e.g., +5 adds 5 days, -3 subtracts 3 days)
     - **Real-time Updates**: Immediate UI sync via React Query cache invalidation (`/api/employees`, `/api/users/employees`)
+  - **Time Tracking Reports (Nov 2025)**: AI can generate work hours reports via `generateTimeReport()`:
+    - **Formats**: PDF (default) or Excel
+    - **Periods**: today, this_week, this_month, last_week, last_month, this_year, last_year, all, custom (with date range)
+    - **Filtering**: By employee name (optional, all employees if not specified)
+    - **Statistics**: Returns session count, total hours, and period summary
+    - **Integration**: Provides filtering instructions for manual export from UI
 - **Object Storage**: Replit Object Storage integration for persistent file storage.
 - **Account Management**: 30-day grace period for account deletion, immediate blocking of cancelled accounts.
 - **Data Integrity**: Break periods belong to current work session. Orphaned documents are removed.

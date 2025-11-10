@@ -7775,6 +7775,12 @@ EMPLEADOS:
 - Campos editables: email corporativo/personal, teléfonos, cargo, fecha incorporación, estado, rol, dirección, contacto emergencia
 - SIEMPRE usa listEmployees() primero para obtener el ID del empleado
 
+INFORMES:
+- generateTimeReport(): genera informe de horas/fichajes en PDF o Excel
+- Períodos: today, this_week, this_month, last_week, last_month, this_year, last_year, all, custom
+- Filtrar por empleado: usa employeeName (opcional, si no se especifica genera para todos)
+- Formato: pdf (default) o excel
+
 Respuestas: BREVES, DIRECTAS, AMIGABLES.`
           },
           ...currentMessages

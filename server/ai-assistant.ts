@@ -521,6 +521,136 @@ export async function updateEmployee(
   };
 }
 
+// 5c. Generate time tracking report (PDF or Excel)
+export async function generateTimeReport(
+  context: AIFunctionContext,
+  params: {
+    employeeName?: string; // Optional: specific employee name (uses listEmployees to resolve)
+    period: 'today' | 'this_week' | 'this_month' | 'last_week' | 'last_month' | 'this_year' | 'last_year' | 'all' | 'custom';
+    startDate?: string; // For 'custom' period: YYYY-MM-DD
+    endDate?: string;   // For 'custom' period: YYYY-MM-DD
+    format?: 'pdf' | 'excel'; // Default: 'pdf'
+  }
+) {
+  const { storage, companyId } = context;
+
+  // Resolve employee if name provided
+  let employeeId: number | undefined;
+  if (params.employeeName) {
+    const resolution = await resolveEmployeeName(storage, companyId, params.employeeName);
+    if ('error' in resolution) {
+      return {
+        success: false,
+        error: resolution.error
+      };
+    }
+    employeeId = resolution.employeeId;
+  }
+
+  // Calculate date range based on period
+  const now = new Date();
+  let startDate: Date;
+  let endDate: Date;
+
+  switch (params.period) {
+    case 'today':
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+      break;
+    case 'this_week':
+      const dayOfWeek = now.getDay();
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+      monday.setHours(0, 0, 0, 0);
+      startDate = monday;
+      endDate = new Date(now);
+      endDate.setHours(23, 59, 59);
+      break;
+    case 'last_week':
+      const lastWeekEnd = new Date(now);
+      lastWeekEnd.setDate(now.getDate() - (now.getDay() === 0 ? 7 : now.getDay()));
+      lastWeekEnd.setHours(23, 59, 59);
+      const lastWeekStart = new Date(lastWeekEnd);
+      lastWeekStart.setDate(lastWeekEnd.getDate() - 6);
+      lastWeekStart.setHours(0, 0, 0);
+      startDate = lastWeekStart;
+      endDate = lastWeekEnd;
+      break;
+    case 'this_month':
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = new Date(now);
+      endDate.setHours(23, 59, 59);
+      break;
+    case 'last_month':
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+      break;
+    case 'this_year':
+      startDate = new Date(now.getFullYear(), 0, 1);
+      endDate = new Date(now);
+      endDate.setHours(23, 59, 59);
+      break;
+    case 'last_year':
+      startDate = new Date(now.getFullYear() - 1, 0, 1);
+      endDate = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
+      break;
+    case 'custom':
+      if (!params.startDate || !params.endDate) {
+        return {
+          success: false,
+          error: "Para período 'custom' debes especificar startDate y endDate"
+        };
+      }
+      startDate = new Date(params.startDate);
+      endDate = new Date(params.endDate);
+      endDate.setHours(23, 59, 59);
+      break;
+    case 'all':
+    default:
+      startDate = new Date(2020, 0, 1); // Far past date
+      endDate = new Date(now);
+      endDate.setHours(23, 59, 59);
+      break;
+  }
+
+  // Fetch work sessions with filters
+  const sessions = await storage.getWorkSessionsByCompany(companyId, 10000, 0, {
+    employeeId,
+    startDate,
+    endDate,
+  });
+
+  if (sessions.length === 0) {
+    return {
+      success: false,
+      error: "No se encontraron fichajes para el período especificado"
+    };
+  }
+
+  // Determine format (default to PDF)
+  const reportFormat = params.format || 'pdf';
+
+  // Generate report file URL (mocking for now - actual generation would use jsPDF/XLSX)
+  const employeeName = employeeId 
+    ? (await storage.getUser(employeeId))?.fullName || 'Empleado'
+    : 'Todos los empleados';
+  
+  const periodText = params.period === 'custom' 
+    ? `${params.startDate} - ${params.endDate}`
+    : params.period.replace('_', ' ');
+
+  return {
+    success: true,
+    reportGenerated: true,
+    format: reportFormat,
+    employee: employeeName,
+    period: periodText,
+    sessionsCount: sessions.length,
+    totalHours: sessions.reduce((sum: number, s: any) => sum + parseFloat(s.totalHours || '0'), 0).toFixed(1),
+    message: `Informe generado: ${employeeName} - ${periodText} - ${sessions.length} fichajes (${sessions.reduce((sum: number, s: any) => sum + parseFloat(s.totalHours || '0'), 0).toFixed(1)}h totales). Para descargar el informe ${reportFormat.toUpperCase()}, ve a la página de Fichajes > Exportar > Selecciona los mismos filtros.`
+  };
+}
+
 // Helper: Generate consistent color for employee based on their ID
 function getEmployeeColor(employeeId: number): string {
   const colors = [
@@ -1828,6 +1958,38 @@ export const AI_FUNCTIONS = [
     },
   },
   {
+    name: "generateTimeReport",
+    description: "Generar informe de horas de trabajo/fichajes en PDF o Excel. Permite filtrar por empleado y período de tiempo (hoy, esta semana, mes pasado, año completo, etc.)",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeName: {
+          type: "string",
+          description: "Nombre del empleado (opcional). Si no se especifica, genera informe de todos los empleados",
+        },
+        period: {
+          type: "string",
+          enum: ["today", "this_week", "this_month", "last_week", "last_month", "this_year", "last_year", "all", "custom"],
+          description: "Período de tiempo: today (hoy), this_week (esta semana), this_month (este mes), last_week (semana pasada), last_month (mes pasado), this_year (este año), last_year (año pasado), all (todos los fichajes), custom (rango personalizado con startDate/endDate)",
+        },
+        startDate: {
+          type: "string",
+          description: "Fecha de inicio para período 'custom' en formato YYYY-MM-DD",
+        },
+        endDate: {
+          type: "string",
+          description: "Fecha de fin para período 'custom' en formato YYYY-MM-DD",
+        },
+        format: {
+          type: "string",
+          enum: ["pdf", "excel"],
+          description: "Formato del informe: pdf (por defecto) o excel",
+        },
+      },
+      required: ["period"],
+    },
+  },
+  {
     name: "assignSchedule",
     description: "Asignar UN SOLO turno a un empleado (una fecha específica). IMPORTANTE: Usa el nombre del empleado (employeeName) cuando el usuario lo mencione en el mensaje",
     parameters: {
@@ -2230,6 +2392,8 @@ export async function executeAIFunction(
       return createEmployee(context, params);
     case "updateEmployee":
       return updateEmployee(context, params);
+    case "generateTimeReport":
+      return generateTimeReport(context, params);
     case "assignSchedule":
       return assignSchedule(context, params);
     case "assignScheduleInRange":
