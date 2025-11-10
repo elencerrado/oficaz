@@ -7772,8 +7772,8 @@ Responde directamente a este email para contactar con la persona.
 
 COPIAR TURNOS:
 - "turno de X como el de Y" → copyEmployeeShifts(fromEmployeeName: "Y", toEmployeeName: "X")
-- "esta semana" → usa startDate/endDate de la semana ACTUAL: ${thisMondayStr} al ${forceSaturday ? thisSaturdayStr : thisSaturdayStr.split('-').slice(0,2).join('-') + '-' + (parseInt(thisSaturdayStr.split('-')[2])-1)}
-- "próxima semana" → usa startDate/endDate de la semana PRÓXIMA: ${nextMondayStr} al ${forceSaturday ? nextSaturdayStr : nextSaturdayStr.split('-').slice(0,2).join('-') + '-' + (parseInt(nextSaturdayStr.split('-')[2])-1)}
+- "esta semana" → usa startDate/endDate de la semana ACTUAL: ${thisMondayStr} al ${thisSaturdayStr} (INCLUYE SÁBADO)
+- "próxima semana" → usa startDate/endDate de la semana PRÓXIMA: ${nextMondayStr} al ${nextSaturdayStr} (INCLUYE SÁBADO)
 - ⚠️ NO consultes turnos con getEmployeeShifts, USA copyEmployeeShifts DIRECTAMENTE
 
 RECORDATORIOS (createReminder):
@@ -7785,9 +7785,9 @@ RECORDATORIOS (createReminder):
 - ⚠️ NUNCA llames sendMessage()
 
 TURNOS (CREAR):
-- skipWeekends: ${forceSaturday ? 'false' : 'true'}
-- "esta semana": ${thisMondayStr} al ${forceSaturday ? thisSaturdayStr : thisSaturdayStr.split('-').slice(0,2).join('-') + '-' + (parseInt(thisSaturdayStr.split('-')[2])-1)}
-- "próxima semana": ${nextMondayStr} al ${forceSaturday ? nextSaturdayStr : nextSaturdayStr.split('-').slice(0,2).join('-') + '-' + (parseInt(nextSaturdayStr.split('-')[2])-1)}
+- skipWeekends: false (SIEMPRE incluye sábado)
+- "esta semana": ${thisMondayStr} al ${thisSaturdayStr} (lunes-sábado)
+- "próxima semana": ${nextMondayStr} al ${nextSaturdayStr} (lunes-sábado)
 - Defaults: 8-14h, "Oficina"
 
 EMPLEADOS:
