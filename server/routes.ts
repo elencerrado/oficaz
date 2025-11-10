@@ -7467,14 +7467,25 @@ Responde directamente a este email para contactar con la persona.
       const now = new Date();
       const currentDateStr = now.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
       
-      // Calculate next Monday for "la semana que viene" context
+      // Calculate THIS WEEK (Monday of current week)
       const currentDay = now.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+      const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1; // Sunday=6 days back, Monday=0, Tuesday=1, etc.
+      const thisMonday = new Date(now);
+      thisMonday.setDate(now.getDate() - daysFromMonday);
+      const thisMondayStr = thisMonday.toISOString().split('T')[0]; // YYYY-MM-DD
+      
+      // Calculate this Saturday (for "esta semana de lunes a sábado")
+      const thisSaturday = new Date(thisMonday);
+      thisSaturday.setDate(thisMonday.getDate() + 5);
+      const thisSaturdayStr = thisSaturday.toISOString().split('T')[0];
+      
+      // Calculate NEXT WEEK (Monday of next week)
       const daysUntilMonday = currentDay === 0 ? 1 : (8 - currentDay);
       const nextMonday = new Date(now);
       nextMonday.setDate(now.getDate() + daysUntilMonday);
       const nextMondayStr = nextMonday.toISOString().split('T')[0]; // YYYY-MM-DD
       
-      // Calculate next Saturday (for "lunes a sábado" context)
+      // Calculate next Saturday (for "próxima semana de lunes a sábado")
       const nextSaturday = new Date(nextMonday);
       nextSaturday.setDate(nextMonday.getDate() + 5);
       const nextSaturdayStr = nextSaturday.toISOString().split('T')[0];
@@ -7761,7 +7772,8 @@ Responde directamente a este email para contactar con la persona.
 
 COPIAR TURNOS:
 - "turno de X como el de Y" → copyEmployeeShifts(fromEmployeeName: "Y", toEmployeeName: "X")
-- "esta semana" → usa startDate/endDate de la semana actual (${nextMondayStr} al ${forceSaturday ? nextSaturdayStr : nextSaturdayStr.split('-').slice(0,2).join('-') + '-' + (parseInt(nextSaturdayStr.split('-')[2])-1)})
+- "esta semana" → usa startDate/endDate de la semana ACTUAL: ${thisMondayStr} al ${forceSaturday ? thisSaturdayStr : thisSaturdayStr.split('-').slice(0,2).join('-') + '-' + (parseInt(thisSaturdayStr.split('-')[2])-1)}
+- "próxima semana" → usa startDate/endDate de la semana PRÓXIMA: ${nextMondayStr} al ${forceSaturday ? nextSaturdayStr : nextSaturdayStr.split('-').slice(0,2).join('-') + '-' + (parseInt(nextSaturdayStr.split('-')[2])-1)}
 - ⚠️ NO consultes turnos con getEmployeeShifts, USA copyEmployeeShifts DIRECTAMENTE
 
 RECORDATORIOS (createReminder):
@@ -7772,9 +7784,10 @@ RECORDATORIOS (createReminder):
 - enableNotifications: true
 - ⚠️ NUNCA llames sendMessage()
 
-TURNOS:
+TURNOS (CREAR):
 - skipWeekends: ${forceSaturday ? 'false' : 'true'}
-- Semana: ${nextMondayStr} al ${forceSaturday ? nextSaturdayStr : nextSaturdayStr.split('-').slice(0,2).join('-') + '-' + (parseInt(nextSaturdayStr.split('-')[2])-1)}
+- "esta semana": ${thisMondayStr} al ${forceSaturday ? thisSaturdayStr : thisSaturdayStr.split('-').slice(0,2).join('-') + '-' + (parseInt(thisSaturdayStr.split('-')[2])-1)}
+- "próxima semana": ${nextMondayStr} al ${forceSaturday ? nextSaturdayStr : nextSaturdayStr.split('-').slice(0,2).join('-') + '-' + (parseInt(nextSaturdayStr.split('-')[2])-1)}
 - Defaults: 8-14h, "Oficina"
 
 EMPLEADOS:
