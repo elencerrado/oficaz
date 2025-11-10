@@ -96,10 +96,10 @@ export class SimpleObjectStorageService {
 
   // Search for a public object (R2 or Replit)
   async searchPublicObject(filePath: string): Promise<File | null> {
-    // R2 path
+    // R2 path - use filePath directly (it already includes the folder)
     if (useR2 && r2Client) {
       try {
-        const key = `email-marketing/${filePath}`;
+        const key = filePath; // Use filePath as-is (e.g., "documents/file.jpg" or "email-marketing/img.png")
         const command = new HeadObjectCommand({
           Bucket: r2BucketName,
           Key: key,

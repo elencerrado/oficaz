@@ -199,30 +199,39 @@ function validateObjectStorageConfig() {
 
 validateObjectStorageConfig();
 
-// Serve uploaded files with fallback to Object Storage
-// This allows old email links to work even if files were lost from local filesystem
+// Serve uploaded files with R2/Object Storage priority, local fallback
+// Priority: R2 → Replit Object Storage → Local filesystem
 app.get("/uploads/:filename", async (req, res, next) => {
   const filename = req.params.filename;
   const localPath = path.join(process.cwd(), "uploads", filename);
   
-  // First, try to serve from local filesystem
-  if (fs.existsSync(localPath)) {
-    return res.sendFile(localPath);
-  }
-  
-  // If not found locally, try Object Storage (for recovered images)
+  // Try R2/Object Storage first (primary storage)
   try {
     const { SimpleObjectStorageService } = await import('./objectStorageSimple.js');
     const objectStorage = new SimpleObjectStorageService();
-    const objectPath = `email-marketing/${filename}`;
-    const file = await objectStorage.searchPublicObject(objectPath);
+    
+    // Try documents folder (migrated files)
+    let objectPath = `documents/${filename}`;
+    let file = await objectStorage.searchPublicObject(objectPath);
+    
+    // If not in documents/, try email-marketing/ (for email images)
+    if (!file) {
+      objectPath = `email-marketing/${filename}`;
+      file = await objectStorage.searchPublicObject(objectPath);
+    }
     
     if (file) {
-      console.log(`📦 Serving ${filename} from Object Storage (fallback)`);
+      console.log(`📦 Serving ${filename} from Cloud Storage`);
       return await objectStorage.downloadObject(file, res);
     }
   } catch (error) {
-    console.error(`Error searching Object Storage for ${filename}:`, error);
+    console.error(`Error searching Cloud Storage for ${filename}:`, error);
+  }
+  
+  // Fallback to local filesystem (legacy files)
+  if (fs.existsSync(localPath)) {
+    console.log(`📁 Serving ${filename} from local filesystem (fallback)`);
+    return res.sendFile(localPath);
   }
   
   // If not found anywhere, return 404
