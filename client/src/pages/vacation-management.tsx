@@ -312,7 +312,9 @@ export default function VacationManagement() {
           }}
         >
           {/* Número de días visible siempre */}
-          <div className="text-white text-xs md:text-sm font-bold select-none">
+          <div className={`text-xs md:text-sm font-bold select-none ${
+            period.status === 'approved' ? 'text-white' : 'text-yellow-900 dark:text-yellow-950'
+          }`}>
             {fullRequest?.startDate && fullRequest?.endDate 
               ? calculateDays(fullRequest.startDate, fullRequest.endDate)
               : fullRequest?.days || duration
