@@ -13073,10 +13073,10 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
         return res.status(400).json({ error: 'Query must be at least 3 characters' });
       }
 
-      const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=es`;
+      const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5`;
       console.log('🌐 Geocoding request:', url);
 
-      // Call Photon API (free OpenStreetMap geocoding)
+      // Call Photon API (free OpenStreetMap geocoding) - uses default language
       const response = await fetch(url);
 
       console.log('📡 Photon API response status:', response.status);
