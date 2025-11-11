@@ -6491,7 +6491,7 @@ Responde directamente a este email para contactar con la persona.
       const { category } = req.query;
       let notifications;
       
-      // Check for incomplete sessions and create notifications if needed
+      // Check for incomplete sessions (throttled to once per 5 minutes per company)
       await storage.checkAndCreateIncompleteSessionNotifications(req.user!.companyId);
       
       if (category && typeof category === 'string') {
@@ -6558,7 +6558,7 @@ Responde directamente a este email para contactar con la persona.
       const { category } = req.query;
       let count;
       
-      // Check for incomplete sessions and create notifications if needed
+      // Check for incomplete sessions (throttled to once per 5 minutes per company)
       await storage.checkAndCreateIncompleteSessionNotifications(req.user!.companyId);
       
       if (category && typeof category === 'string') {

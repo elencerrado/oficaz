@@ -2276,9 +2276,32 @@ export class DrizzleStorage implements IStorage {
     return await this.createNotification(notification);
   }
 
+  // 🔒 THROTTLE: Only check once every 5 minutes per company (prevents spam on every API call)
+  private lastIncompleteSessionCheck = new Map<number, Date>();
+  private readonly INCOMPLETE_SESSION_CHECK_THROTTLE_MS = 5 * 60 * 1000; // 5 minutes
+
   // ⚠️ PROTECTED - DO NOT MODIFY - Check and create notifications for incomplete sessions
   async checkAndCreateIncompleteSessionNotifications(companyId: number): Promise<void> {
     try {
+      // 🔒 THROTTLE: Skip if checked recently (within last 5 minutes)
+      const lastCheck = this.lastIncompleteSessionCheck.get(companyId);
+      const now = new Date();
+      
+      if (lastCheck && (now.getTime() - lastCheck.getTime()) < this.INCOMPLETE_SESSION_CHECK_THROTTLE_MS) {
+        return; // Skip - checked too recently
+      }
+      
+      // Update last check time
+      this.lastIncompleteSessionCheck.set(companyId, now);
+      
+      // Clean up old entries (older than 1 hour)
+      const oneHourAgo = now.getTime() - (60 * 60 * 1000);
+      for (const [key, date] of Array.from(this.lastIncompleteSessionCheck.entries())) {
+        if (date.getTime() < oneHourAgo) {
+          this.lastIncompleteSessionCheck.delete(key);
+        }
+      }
+      
       // Get company settings for working hours
       const [company] = await db.select({
         workingHoursPerDay: schema.companies.workingHoursPerDay
@@ -2290,7 +2313,6 @@ export class DrizzleStorage implements IStorage {
 
       const maxHours = company.workingHoursPerDay || 8;
       const maxMilliseconds = maxHours * 60 * 60 * 1000;
-      const now = new Date();
 
       // Find all incomplete sessions that exceed max working hours
       const incompleteSessions = await db.select({

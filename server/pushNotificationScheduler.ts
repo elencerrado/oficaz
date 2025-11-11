@@ -2,7 +2,7 @@ import webpush from 'web-push';
 import jwt from 'jsonwebtoken';
 import { db } from './db';
 import { eq, and, isNull, sql, lte } from 'drizzle-orm';
-import { workAlarms, pushSubscriptions, workSessions, breakPeriods, users, reminders } from '@shared/schema';
+import { workAlarms, pushSubscriptions, workSessions, breakPeriods, users, reminders, systemNotifications } from '@shared/schema';
 import { JWT_SECRET } from './utils/jwt-secret.js';
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 
@@ -339,6 +339,39 @@ async function checkIncompleteSessions() {
       const sessionCount = sessions.length;
       
       console.log(`📱 Sending incomplete session notification to user ${userId} (${sessionCount} session(s))`);
+      
+      // 🔒 Create database notifications for each incomplete session (UI notifications)
+      for (const session of sessions) {
+        // Check if notification already exists for this session
+        const existingNotification = await db.select()
+          .from(systemNotifications)
+          .where(and(
+            eq(systemNotifications.userId, userId),
+            eq(systemNotifications.type, 'incomplete_session'),
+            eq(systemNotifications.category, 'time-tracking'),
+            eq(systemNotifications.isCompleted, false),
+            sql`${systemNotifications.metadata}::json->>'workSessionId' = ${session.id.toString()}`
+          ))
+          .limit(1);
+
+        if (existingNotification.length === 0) {
+          // Create notification for this incomplete session
+          await db.insert(systemNotifications).values({
+            userId,
+            type: 'incomplete_session',
+            category: 'time-tracking',
+            title: 'Fichaje Incompleto',
+            message: 'Tienes una sesión de trabajo abierta que necesita ser cerrada.',
+            actionUrl: '/employee/time-tracking',
+            priority: 'high',
+            isRead: false,
+            isCompleted: false,
+            metadata: JSON.stringify({ workSessionId: session.id }),
+            createdBy: 1 // System-generated
+          });
+          console.log(`📊 System notification created for session ${session.id}`);
+        }
+      }
       
       // Get push subscriptions
       const subscriptions = await db.select()
