@@ -349,6 +349,40 @@ export default function TimeTracking() {
       });
     },
   });
+  
+  // Close incomplete sessions mutation
+  const closeIncompleteSessionsMutation = useMutation({
+    mutationFn: async (incompleteSessions: any[]) => {
+      // Close all incomplete sessions in the day
+      const promises = incompleteSessions.map(session => {
+        // Set clock out time to end of the day of clock in
+        const clockInDate = new Date(session.clockIn);
+        const clockOutTime = new Date(clockInDate);
+        clockOutTime.setHours(23, 59, 59, 999);
+        
+        return apiRequest('POST', '/api/work-sessions/clock-out-incomplete', {
+          sessionId: session.id,
+          clockOutTime: clockOutTime.toISOString()
+        });
+      });
+      
+      return Promise.all(promises);
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Día Cerrado',
+        description: 'Las sesiones incompletas se han cerrado exitosamente.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudieron cerrar las sesiones.',
+        variant: 'destructive',
+      });
+    },
+  });
 
   // Quick filter functions for stats cards
   const handleResetFilters = useCallback(() => {
@@ -3284,8 +3318,26 @@ export default function TimeTracking() {
                           <DailyTimelineBar dayData={dayData} />
                         </td>
                         <td className="py-2 px-4">
-                          <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
-                            {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
+                          <div className="flex items-center gap-2">
+                            <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+                              {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
+                            </div>
+                            {hasIncompleteSession && (user?.role === 'admin' || user?.role === 'manager') && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  const incompleteSessions = dayData.sessions.filter((s: any) => s.status === 'incomplete');
+                                  closeIncompleteSessionsMutation.mutate(incompleteSessions);
+                                }}
+                                disabled={closeIncompleteSessionsMutation.isPending}
+                                className="h-6 px-2 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200"
+                                title="Cerrar día incompleto"
+                                data-testid={`button-close-incomplete-${dayData.date}`}
+                              >
+                                {closeIncompleteSessionsMutation.isPending ? 'Cerrando...' : 'Cerrar'}
+                              </Button>
+                            )}
                           </div>
                         </td>
                         <td className="py-2 px-4 text-center">
@@ -3558,6 +3610,23 @@ export default function TimeTracking() {
                             {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
                           </div>
                         </div>
+                        
+                        {hasIncompleteSession && (user?.role === 'admin' || user?.role === 'manager') && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const incompleteSessions = dayData.sessions.filter((s: any) => s.status === 'incomplete');
+                              closeIncompleteSessionsMutation.mutate(incompleteSessions);
+                            }}
+                            disabled={closeIncompleteSessionsMutation.isPending}
+                            className="h-6 px-2 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200"
+                            title="Cerrar día incompleto"
+                            data-testid={`button-close-incomplete-mobile-${dayData.date}`}
+                          >
+                            {closeIncompleteSessionsMutation.isPending ? 'Cerrando...' : 'Cerrar'}
+                          </Button>
+                        )}
                         
                         {(() => {
                           const hasAuditLogs = session.hasAuditLogs === true;
