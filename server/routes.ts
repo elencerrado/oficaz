@@ -13073,20 +13073,26 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
         return res.status(400).json({ error: 'Query must be at least 3 characters' });
       }
 
-      // Call Photon API (free OpenStreetMap geocoding)
-      const response = await fetch(
-        `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=es`
-      );
+      const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=es`;
+      console.log('🌐 Geocoding request:', url);
 
+      // Call Photon API (free OpenStreetMap geocoding)
+      const response = await fetch(url);
+
+      console.log('📡 Photon API response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Photon API request failed');
+        const errorText = await response.text();
+        console.error('❌ Photon API error:', response.status, errorText);
+        throw new Error(`Photon API request failed: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('✅ Photon API success, features:', data.features?.length || 0);
       res.json(data);
     } catch (error: any) {
-      console.error('Geocoding error:', error);
-      res.status(500).json({ error: 'Failed to fetch location data' });
+      console.error('❌ Geocoding error:', error.message);
+      res.status(500).json({ error: 'Failed to fetch location data', details: error.message });
     }
   });
 
