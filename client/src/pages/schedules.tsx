@@ -573,6 +573,10 @@ export default function Schedules() {
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [loadingLocationSuggestions, setLoadingLocationSuggestions] = useState(false);
   const [locationSearchTimeout, setLocationSearchTimeout] = useState<number | null>(null);
+  
+  // Coordenadas para links exactos de Google Maps
+  const [newShiftCoords, setNewShiftCoords] = useState<{lat: number, lng: number} | null>(null);
+  const [editShiftCoords, setEditShiftCoords] = useState<{lat: number, lng: number} | null>(null);
 
   // Estados y configuración para drag & drop
   const [activeShift, setActiveShift] = useState<WorkShift | null>(null);
@@ -821,17 +825,28 @@ export default function Schedules() {
     
     const address = parts.join(', ') || props.name || 'Ubicación seleccionada';
     
+    // Extract coordinates from Photon API response (format: [lng, lat])
+    const coords = feature.geometry?.coordinates;
+    const locationCoords = coords ? { lat: coords[1], lng: coords[0] } : null;
+    
     if (isEditMode) {
       setEditShift(prev => ({ ...prev, location: address }));
+      setEditShiftCoords(locationCoords);
     } else {
       setNewShift(prev => ({ ...prev, location: address }));
+      setNewShiftCoords(locationCoords);
     }
     
     setLocationSuggestions([]);
     setShowLocationSuggestions(false);
   };
 
-  const getGoogleMapsLink = (address: string) => {
+  const getGoogleMapsLink = (address: string, coords?: {lat: number, lng: number} | null) => {
+    // If we have exact coordinates, use them for a precise location
+    if (coords) {
+      return `https://www.google.com/maps/search/?api=1&query=${coords.lat},${coords.lng}`;
+    }
+    // Otherwise, fall back to text search
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
   };
 
@@ -2107,6 +2122,7 @@ export default function Schedules() {
                   value={newShift.location}
                   onChange={(e) => {
                     setNewShift(prev => ({ ...prev, location: e.target.value }));
+                    setNewShiftCoords(null); // Clear coords when typing manually
                     searchLocation(e.target.value);
                   }}
                   onFocus={() => newShift.location && searchLocation(newShift.location)}
@@ -2140,12 +2156,12 @@ export default function Schedules() {
                 {/* Link a Google Maps si hay dirección */}
                 {newShift.location && !showLocationSuggestions && (
                   <a
-                    href={getGoogleMapsLink(newShift.location)}
+                    href={getGoogleMapsLink(newShift.location, newShiftCoords)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-blue-600 dark:text-blue-400 mt-1 pl-8 flex items-center gap-1 hover:underline"
                   >
-                    🗺️ Abrir en Google Maps
+                    🗺️ Abrir en Google Maps {newShiftCoords && '(ubicación exacta)'}
                   </a>
                 )}
               </div>
@@ -2324,6 +2340,7 @@ export default function Schedules() {
                   value={editShift.location}
                   onChange={(e) => {
                     setEditShift(prev => ({ ...prev, location: e.target.value }));
+                    setEditShiftCoords(null); // Clear coords when typing manually
                     searchLocation(e.target.value);
                   }}
                   onFocus={() => editShift.location && searchLocation(editShift.location)}
@@ -2356,12 +2373,12 @@ export default function Schedules() {
                 {/* Link a Google Maps si hay dirección */}
                 {editShift.location && !showLocationSuggestions && (
                   <a
-                    href={getGoogleMapsLink(editShift.location)}
+                    href={getGoogleMapsLink(editShift.location, editShiftCoords)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-blue-600 dark:text-blue-400 mt-1 pl-8 flex items-center gap-1 hover:underline"
                   >
-                    🗺️ Abrir en Google Maps
+                    🗺️ Abrir en Google Maps {editShiftCoords && '(ubicación exacta)'}
                   </a>
                 )}
               </div>
