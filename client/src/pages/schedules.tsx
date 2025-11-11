@@ -15,7 +15,6 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useAuth } from "@/hooks/use-auth";
 import { usePageHeader } from '@/components/layout/page-header';
 import { UserAvatar } from "@/components/ui/user-avatar";
-import Autocomplete from "react-google-autocomplete";
 import { 
   DndContext, 
   closestCenter, 
@@ -569,6 +568,12 @@ export default function Schedules() {
     color: SHIFT_COLORS[0]
   });
 
+  // Estados para autocompletado de direcciones (Photon API)
+  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [loadingLocationSuggestions, setLoadingLocationSuggestions] = useState(false);
+  const [locationSearchTimeout, setLocationSearchTimeout] = useState<number | null>(null);
+
   // Estados y configuración para drag & drop
   const [activeShift, setActiveShift] = useState<WorkShift | null>(null);
   const [dragOverCellId, setDragOverCellId] = useState<string | null>(null);
@@ -763,6 +768,70 @@ export default function Schedules() {
     queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
     
     return response;
+  };
+
+  // Funciones para autocompletado de direcciones con Photon API
+  const searchLocation = async (query: string) => {
+    if (!query || query.length < 3) {
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
+      return;
+    }
+
+    // Clear previous timeout
+    if (locationSearchTimeout) {
+      clearTimeout(locationSearchTimeout);
+    }
+
+    // Debounce search (500ms)
+    const timeout = window.setTimeout(async () => {
+      try {
+        setLoadingLocationSuggestions(true);
+        // Photon API - free geocoding based on OpenStreetMap
+        const response = await fetch(
+          `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=es`
+        );
+        
+        if (!response.ok) throw new Error('Failed to fetch locations');
+        
+        const data = await response.json();
+        setLocationSuggestions(data.features || []);
+        setShowLocationSuggestions(true);
+      } catch (error) {
+        console.error('Location search error:', error);
+        setLocationSuggestions([]);
+      } finally {
+        setLoadingLocationSuggestions(false);
+      }
+    }, 500);
+
+    setLocationSearchTimeout(timeout);
+  };
+
+  const selectLocation = (feature: any, isEditMode: boolean = false) => {
+    const props = feature.properties;
+    // Build formatted address
+    const parts = [];
+    if (props.name) parts.push(props.name);
+    if (props.street) parts.push(props.street);
+    if (props.housenumber) parts[parts.length - 1] += ` ${props.housenumber}`;
+    if (props.city) parts.push(props.city);
+    if (props.country) parts.push(props.country);
+    
+    const address = parts.join(', ') || props.name || 'Ubicación seleccionada';
+    
+    if (isEditMode) {
+      setEditShift(prev => ({ ...prev, location: address }));
+    } else {
+      setNewShift(prev => ({ ...prev, location: address }));
+    }
+    
+    setLocationSuggestions([]);
+    setShowLocationSuggestions(false);
+  };
+
+  const getGoogleMapsLink = (address: string) => {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
   };
 
   // Funciones para manejar el modal de conflictos
@@ -2029,19 +2098,55 @@ export default function Schedules() {
                 })}
               </div>
               
-              {/* Ubicación */}
+              {/* Ubicación con autocompletado */}
               <div className="relative">
-                <MapPin className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <MapPin className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                 <input
                   type="text"
                   value={newShift.location}
-                  onChange={(e) => setNewShift(prev => ({ ...prev, location: e.target.value }))}
+                  onChange={(e) => {
+                    setNewShift(prev => ({ ...prev, location: e.target.value }));
+                    searchLocation(e.target.value);
+                  }}
+                  onFocus={() => newShift.location && searchLocation(newShift.location)}
+                  onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
                   placeholder="Dirección o ubicación (ej: Calle Gran Vía 1, Madrid)"
                   className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
-                <div className="text-xs text-blue-600 dark:text-blue-400 mt-1 pl-8">
-                  🗺️ Para habilitar autocompletado: quita restricciones de tu API key de Google Maps
-                </div>
+                
+                {/* Sugerencias de autocompletado */}
+                {showLocationSuggestions && locationSuggestions.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    {locationSuggestions.map((feature, idx) => {
+                      const props = feature.properties;
+                      const displayName = [props.name, props.city, props.country].filter(Boolean).join(', ');
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => selectLocation(feature, false)}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors border-b border-border last:border-0"
+                        >
+                          <div className="font-medium text-foreground">{props.name || props.city}</div>
+                          {props.street && <div className="text-xs text-muted-foreground">{props.street} {props.housenumber || ''}</div>}
+                          <div className="text-xs text-muted-foreground">{props.city}, {props.country}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                {/* Link a Google Maps si hay dirección */}
+                {newShift.location && !showLocationSuggestions && (
+                  <a
+                    href={getGoogleMapsLink(newShift.location)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-600 dark:text-blue-400 mt-1 pl-8 flex items-center gap-1 hover:underline"
+                  >
+                    🗺️ Abrir en Google Maps
+                  </a>
+                )}
               </div>
               
               {/* Notas */}
@@ -2210,19 +2315,54 @@ export default function Schedules() {
                 })}
               </div>
               
-              {/* Ubicación */}
+              {/* Ubicación con autocompletado */}
               <div className="relative">
-                <MapPin className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <MapPin className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                 <input
                   type="text"
                   value={editShift.location}
-                  onChange={(e) => setEditShift(prev => ({ ...prev, location: e.target.value }))}
+                  onChange={(e) => {
+                    setEditShift(prev => ({ ...prev, location: e.target.value }));
+                    searchLocation(e.target.value);
+                  }}
+                  onFocus={() => editShift.location && searchLocation(editShift.location)}
+                  onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
                   placeholder="Dirección o ubicación (ej: Calle Gran Vía 1, Madrid)"
                   className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
-                <div className="text-xs text-blue-600 dark:text-blue-400 mt-1 pl-8">
-                  🗺️ Para habilitar autocompletado: quita restricciones de tu API key de Google Maps
-                </div>
+                
+                {/* Sugerencias de autocompletado */}
+                {showLocationSuggestions && locationSuggestions.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    {locationSuggestions.map((feature, idx) => {
+                      const props = feature.properties;
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => selectLocation(feature, true)}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors border-b border-border last:border-0"
+                        >
+                          <div className="font-medium text-foreground">{props.name || props.city}</div>
+                          {props.street && <div className="text-xs text-muted-foreground">{props.street} {props.housenumber || ''}</div>}
+                          <div className="text-xs text-muted-foreground">{props.city}, {props.country}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                {/* Link a Google Maps si hay dirección */}
+                {editShift.location && !showLocationSuggestions && (
+                  <a
+                    href={getGoogleMapsLink(editShift.location)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-600 dark:text-blue-400 mt-1 pl-8 flex items-center gap-1 hover:underline"
+                  >
+                    🗺️ Abrir en Google Maps
+                  </a>
+                )}
               </div>
               
               {/* Notas */}
