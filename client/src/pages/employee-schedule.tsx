@@ -113,6 +113,11 @@ export default function EmployeeSchedule() {
     });
   };
 
+  // Función para generar link de Google Maps
+  const getGoogleMapsLink = (address: string) => {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+  };
+
   // Función para verificar si está de vacaciones
   const isOnVacation = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -159,10 +164,16 @@ export default function EmployeeSchedule() {
         </div>
         
         {shift.location && (
-          <div className="flex items-center text-xs opacity-90 mb-1">
+          <a
+            href={getGoogleMapsLink(shift.location)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center text-xs opacity-90 mb-1 hover:opacity-100 hover:underline transition-opacity"
+            onClick={(e) => e.stopPropagation()}
+          >
             <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
             <span className="truncate">{shift.location}</span>
-          </div>
+          </a>
         )}
         
         {shift.notes && (
@@ -442,10 +453,16 @@ export default function EmployeeSchedule() {
                                 </div>
                               </div>
                               {shift.location && (
-                                <div className="flex items-center mt-1 opacity-90">
+                                <a
+                                  href={getGoogleMapsLink(shift.location)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center mt-1 opacity-90 hover:opacity-100 hover:underline transition-opacity"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
                                   <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
                                   <span className="truncate text-xs">{shift.location}</span>
-                                </div>
+                                </a>
                               )}
                             </div>
                           );
