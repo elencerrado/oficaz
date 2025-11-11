@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { format, isToday, isTomorrow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAuth } from '@/hooks/use-auth';
+import { getMadridDate, getMadridTimeString, formatInMadridTime } from '@/utils/dateUtils';
 
 // Hook para detectar si estamos en móvil
 const useIsMobile = () => {
@@ -131,26 +132,30 @@ export function ReminderBanner() {
   };
 
   const formatReminderDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = getMadridDate(dateString);
     if (isToday(date)) return 'Hoy';
     if (isTomorrow(date)) return 'Mañana';
-    return format(date, 'dd/MM/yyyy HH:mm', { locale: es });
+    return formatInMadridTime(dateString, 'dd/MM/yyyy HH:mm');
   };
 
   // Format just the time for display in column layout
   const formatReminderTime = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = getMadridDate(dateString);
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
     
     if (isToday) {
-      return `Hoy ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+      return `Hoy ${getMadridTimeString(dateString)}`;
     }
     
-    return date.toLocaleDateString('es-ES', { 
-      day: 'numeric', 
+    // Format date in Madrid timezone
+    const dateFormatter = new Intl.DateTimeFormat('es-ES', {
+      timeZone: 'Europe/Madrid',
+      day: 'numeric',
       month: 'short'
-    }) + ` ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+    });
+    
+    return `${dateFormatter.format(date)} ${getMadridTimeString(dateString)}`; 
   };
 
 

@@ -23,10 +23,10 @@ import {
   Star,
   CheckCircle
 } from 'lucide-react';
-import { format, isToday, isTomorrow, isPast } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
+import { format, isToday, isTomorrow, isPast, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
+import { convertMadridToUTC, convertUTCToMadrid, getMadridDate } from '@/utils/dateUtils';
 
 interface Reminder {
   id: number;
@@ -225,15 +225,42 @@ export default function EmployeeReminders() {
       return;
     }
 
-    createReminderMutation.mutate(formData);
+    // Convert Madrid time to UTC for storage
+    let processedDate = null;
+    if (formData.reminderDate && formData.reminderDate !== '') {
+      try {
+        processedDate = convertMadridToUTC(formData.reminderDate);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Fecha inválida. Por favor, selecciona una fecha válida.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    const submitData = {
+      ...formData,
+      reminderDate: processedDate
+    };
+
+    createReminderMutation.mutate(submitData);
   };
 
   const handleEdit = (reminder: Reminder) => {
     setEditingReminder(reminder);
+    
+    // Convert UTC date back to Madrid time for datetime-local input
+    let localDateTimeString = '';
+    if (reminder.reminderDate) {
+      localDateTimeString = convertUTCToMadrid(reminder.reminderDate);
+    }
+    
     setFormData({
       title: reminder.title,
       content: reminder.content || '',
-      reminderDate: reminder.reminderDate ? reminder.reminderDate.slice(0, 16) : '',
+      reminderDate: localDateTimeString,
       priority: reminder.priority,
       color: reminder.color,
       enableNotifications: reminder.enableNotifications || false
@@ -248,36 +275,14 @@ export default function EmployeeReminders() {
     }
     
     try {
-      // ⚠️ CRITICAL TIMEZONE HANDLING:
-      // Backend stores dates in DB as Spain time: "2025-10-24 12:32:00"
-      // When serialized to JSON, it becomes: "2025-10-24T12:32:00.000Z"
-      // The "Z" is misleading - the time is actually Spain time, NOT UTC
-      // So we must parse and display directly WITHOUT timezone conversion
+      // Convert UTC to Madrid time for display
+      const date = getMadridDate(dateString);
+      const timeStr = format(date, 'HH:mm', { locale: es });
       
-      // Parse the ISO string but ignore the Z (treat as local Spain time)
-      const date = new Date(dateString);
-      
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
-        console.error('Invalid date:', dateString);
-        return 'Fecha inválida';
-      }
-      
-      // Format directly - the hours in the date object are already Spain time
-      // We use UTC methods to avoid browser's local timezone conversion
-      const year = date.getUTCFullYear();
-      const month = date.getUTCMonth();
-      const day = date.getUTCDate();
-      const hours = date.getUTCHours();
-      const minutes = date.getUTCMinutes();
-      
-      // Create a date for comparison (today/tomorrow in Spain time)
-      const spainDate = new Date(year, month, day, hours, minutes);
-      const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-      
-      if (isToday(spainDate)) return `Hoy ${timeStr}`;
-      if (isTomorrow(spainDate)) return `Mañana ${timeStr}`;
-      return `${day.toString().padStart(2, '0')}/${(month + 1).toString().padStart(2, '0')}/${year} ${timeStr}`;
+      if (isToday(date)) return `Hoy ${timeStr}`;
+      if (isTomorrow(date)) return `Mañana ${timeStr}`;
+      if (isPast(date)) return `Hace ${formatDistanceToNow(date, { locale: es })}`;
+      return format(date, 'dd/MM/yyyy HH:mm', { locale: es });
     } catch (error) {
       console.error('Error formatting reminder date:', error, 'Input:', dateString);
       return 'Fecha inválida';
@@ -306,7 +311,7 @@ export default function EmployeeReminders() {
     if (!a.isPinned && b.isPinned) return 1;
     
     if (a.reminderDate && b.reminderDate) {
-      return new Date(a.reminderDate).getTime() - new Date(b.reminderDate).getTime();
+      return getMadridDate(a.reminderDate).getTime() - getMadridDate(b.reminderDate).getTime();
     }
     if (a.reminderDate && !b.reminderDate) return -1;
     if (!a.reminderDate && b.reminderDate) return 1;
@@ -528,7 +533,7 @@ export default function EmployeeReminders() {
           <div className="space-y-3">
             {sortedReminders.map((reminder) => {
               const PriorityIcon = priorityIcons[reminder.priority];
-              const isOverdue = reminder.reminderDate && isPast(new Date(reminder.reminderDate)) && !reminder.isCompleted && !reminder.isArchived;
+              const isOverdue = reminder.reminderDate && isPast(getMadridDate(reminder.reminderDate)) && !reminder.isCompleted && !reminder.isArchived;
               
               return (
                 <div

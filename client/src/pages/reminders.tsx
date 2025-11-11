@@ -35,6 +35,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { format, isToday, isTomorrow, isPast, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { usePageHeader } from '@/components/layout/page-header';
+import { convertMadridToUTC, convertUTCToMadrid, getMadridDate } from '@/utils/dateUtils';
 
 interface Reminder {
   id: number;
@@ -401,11 +402,15 @@ export default function Reminders() {
         return;
       }
       
-      // Create date from datetime-local input string
-      const testDate = new Date(reminderData.reminderDate);
-      
-      // Validate the date is actually valid
-      if (isNaN(testDate.getTime())) {
+      // Convert Madrid time to UTC for storage
+      try {
+        processedDate = convertMadridToUTC(reminderData.reminderDate);
+        
+        console.log('Date processing (Madrid → UTC):', {
+          input: reminderData.reminderDate,
+          outputUTC: processedDate
+        });
+      } catch (error) {
         toast({
           title: "Error",
           description: "Fecha inválida. Por favor, selecciona una fecha válida.",
@@ -413,15 +418,6 @@ export default function Reminders() {
         });
         return;
       }
-      
-      // User input is in local timezone (Madrid), convert to UTC for storage
-      processedDate = testDate.toISOString();
-      
-      console.log('Date processing (validated):', {
-        input: reminderData.reminderDate,
-        testDate: testDate.toString(),
-        finalISO: processedDate
-      });
     }
 
     const submitData = {
@@ -440,34 +436,14 @@ export default function Reminders() {
   const handleEdit = (reminder: Reminder) => {
     setEditingReminder(reminder);
     
-    // Convert UTC date back to local datetime-local format
+    // Convert UTC date back to Madrid time for datetime-local input
     let localDateTimeString = '';
     if (reminder.reminderDate) {
-      const reminderDate = new Date(reminder.reminderDate);
+      localDateTimeString = convertUTCToMadrid(reminder.reminderDate);
       
-      // Get Madrid time components directly using date methods with timezone offset
-      const madridOffset = 1; // Madrid is UTC+1 (UTC+2 in summer, but let's use built-in browser handling)
-      
-      // Use Intl.DateTimeFormat to get parts in Madrid timezone
-      const madridFormatter = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Europe/Madrid',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      });
-      
-      const parts = madridFormatter.formatToParts(reminderDate);
-      const partsMap = Object.fromEntries(parts.map(part => [part.type, part.value]));
-      
-      localDateTimeString = `${partsMap.year}-${partsMap.month}-${partsMap.day}T${partsMap.hour}:${partsMap.minute}`;
-      
-      console.log('Edit date conversion (fixed):', {
+      console.log('Edit date conversion (UTC → Madrid):', {
         originalUTC: reminder.reminderDate,
-        madridParts: partsMap,
-        inputValue: localDateTimeString
+        madridTime: localDateTimeString
       });
     }
     
@@ -530,7 +506,8 @@ export default function Reminders() {
   };
 
   const formatReminderDate = (dateString: string) => {
-    const date = new Date(dateString);
+    // Convert UTC to Madrid time for display
+    const date = getMadridDate(dateString);
     const timeStr = format(date, 'HH:mm', { locale: es });
     
     if (isToday(date)) return `Hoy ${timeStr}`;

@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, X } from 'lucide-react';
 import { apiRequest, queryClient } from '@/lib/queryClient';
+import { getMadridTimeString } from '@/utils/dateUtils';
 
 interface ReminderNotification {
   id: number;
@@ -47,11 +48,7 @@ export function useReminderNotifications() {
         const priorityText = reminder.priority === 'high' ? 'Alta' :
                             reminder.priority === 'medium' ? 'Media' : 'Baja';
         
-        const reminderDate = new Date(reminder.reminderDate);
-        const timeString = reminderDate.toLocaleTimeString('es-ES', { 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        });
+        const timeString = getMadridTimeString(reminder.reminderDate);
         
         const description = `${reminder.content ? reminder.content + ' | ' : ''}Prioridad: ${priorityText} | Hora: ${timeString}`;
         
