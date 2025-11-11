@@ -770,12 +770,9 @@ export default function Schedules() {
     return response;
   };
 
-  // Funciones para autocompletado de direcciones con Photon API
+  // Funciones para autocompletado de direcciones con Photon API (via backend proxy)
   const searchLocation = async (query: string) => {
-    console.log('🔍 searchLocation called with:', query);
-    
     if (!query || query.length < 3) {
-      console.log('❌ Query too short or empty');
       setLocationSuggestions([]);
       setShowLocationSuggestions(false);
       return;
@@ -789,22 +786,19 @@ export default function Schedules() {
     // Debounce search (500ms)
     const timeout = window.setTimeout(async () => {
       try {
-        console.log('🌐 Fetching from Photon API...');
         setLoadingLocationSuggestions(true);
-        // Photon API - free geocoding based on OpenStreetMap
+        // Use backend proxy to avoid CORS issues
         const response = await fetch(
-          `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=es`
+          `/api/geocoding/search?q=${encodeURIComponent(query)}`
         );
         
         if (!response.ok) throw new Error('Failed to fetch locations');
         
         const data = await response.json();
-        console.log('✅ Photon API response:', data);
-        console.log('📍 Features found:', data.features?.length || 0);
         setLocationSuggestions(data.features || []);
         setShowLocationSuggestions(data.features && data.features.length > 0);
       } catch (error) {
-        console.error('❌ Location search error:', error);
+        console.error('Location search error:', error);
         setLocationSuggestions([]);
         setShowLocationSuggestions(false);
       } finally {

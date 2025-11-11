@@ -13064,6 +13064,32 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
     }
   });
 
+  // Geocoding proxy endpoint (Photon API)
+  app.get('/api/geocoding/search', async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      
+      if (!query || query.length < 3) {
+        return res.status(400).json({ error: 'Query must be at least 3 characters' });
+      }
+
+      // Call Photon API (free OpenStreetMap geocoding)
+      const response = await fetch(
+        `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=es`
+      );
+
+      if (!response.ok) {
+        throw new Error('Photon API request failed');
+      }
+
+      const data = await response.json();
+      res.json(data);
+    } catch (error: any) {
+      console.error('Geocoding error:', error);
+      res.status(500).json({ error: 'Failed to fetch location data' });
+    }
+  });
+
   // Start push notification scheduler for work alarms
   if (vapidPublicKey && vapidPrivateKey) {
     startPushNotificationScheduler();
