@@ -3237,7 +3237,23 @@ export class DrizzleStorage implements IStorage {
     // Uses LEFT JOIN with a subquery to get the latest send per email efficiently
     const prospects = await db.execute(sql`
       SELECT 
-        p.*,
+        p.id,
+        p.email,
+        p.name,
+        p.phone,
+        p.website,
+        p.location,
+        p.tags,
+        p.industry_tag as "industryTag",
+        p.status,
+        p.notes,
+        p.whatsapp_contacted as "whatsappContacted",
+        p.whatsapp_conversation_status as "whatsappConversationStatus",
+        p.whatsapp_conversation_status_updated_at as "whatsappConversationStatusUpdatedAt",
+        p.instagram_contacted as "instagramContacted",
+        p.instagram_conversation_status as "instagramConversationStatus",
+        p.instagram_conversation_status_updated_at as "instagramConversationStatusUpdatedAt",
+        p.created_at as "createdAt",
         CASE 
           WHEN latest_send.clicked_at IS NOT NULL THEN 'clicked'
           WHEN latest_send.opened_at IS NOT NULL THEN 'opened'
