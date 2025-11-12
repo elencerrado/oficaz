@@ -10905,10 +10905,9 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
       })[0];
 
       // Update prospect's lastEmailStatus to bounced
+      const prospectUpdate: any = { lastEmailStatus: 'bounced' };
       await db.update(schema.emailProspects)
-        .set({ 
-          lastEmailStatus: 'bounced'
-        })
+        .set(prospectUpdate)
         .where(eq(schema.emailProspects.id, prospectId));
 
       // If there's a last send, mark it as bounced too
