@@ -489,17 +489,29 @@ export default function SuperAdminMarketing() {
       // Optimistically update to the new value
       queryClient.setQueryData(['/api/super-admin/email-prospects'], (old: any) => {
         if (!old) return old;
-        return old.map((prospect: any) => 
-          prospect.id === prospectId 
-            ? { ...prospect, [field]: value }
-            : prospect
-        );
+        return old.map((prospect: any) => {
+          if (prospect.id === prospectId) {
+            const updates: any = { ...prospect, [field]: value };
+            
+            // Update timestamp when conversation status changes
+            if (field === 'whatsappConversationStatus') {
+              updates.whatsappConversationStatusUpdatedAt = new Date().toISOString();
+            } else if (field === 'instagramConversationStatus') {
+              updates.instagramConversationStatusUpdatedAt = new Date().toISOString();
+            }
+            
+            return updates;
+          }
+          return prospect;
+        });
       });
       
       return { previousProspects };
     },
     onSuccess: () => {
       setEditingCell(null);
+      // Invalidate and refetch to get server-updated data (including timestamps)
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-prospects'] });
     },
     onError: (error: Error, variables, context: any) => {
       // Rollback to previous value on error
