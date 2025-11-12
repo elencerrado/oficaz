@@ -1519,7 +1519,7 @@ export default function SuperAdminMarketing() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-4xl font-bold text-white">{openRate}%</div>
-                  <p className="text-xs text-white/70 mt-2">{totalOpened} de {totalSent} emails abiertos</p>
+                  <p className="text-xs text-white/70 mt-2">{totalOpened} de {totalSuccessful} emails abiertos</p>
                 </CardContent>
               </Card>
 
@@ -1532,7 +1532,7 @@ export default function SuperAdminMarketing() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-4xl font-bold text-white">{clickRate}%</div>
-                  <p className="text-xs text-white/70 mt-2">{totalClicked} de {totalSent} emails con clics</p>
+                  <p className="text-xs text-white/70 mt-2">{totalClicked} de {totalSuccessful} emails con clics</p>
                 </CardContent>
               </Card>
 
@@ -1544,8 +1544,8 @@ export default function SuperAdminMarketing() {
                   <Send className="h-5 w-5 text-purple-300" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-4xl font-bold text-white">{totalSent}</div>
-                  <p className="text-xs text-white/70 mt-2">Total de envíos realizados</p>
+                  <div className="text-4xl font-bold text-white">{totalSuccessful}</div>
+                  <p className="text-xs text-white/70 mt-2">Total de envíos exitosos</p>
                 </CardContent>
               </Card>
             </div>
