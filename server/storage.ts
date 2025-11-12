@@ -3233,9 +3233,46 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getAllEmailProspects(): Promise<any[]> {
-    return await db.select()
+    // Get all prospects with their latest email campaign status
+    const prospects = await db.select()
       .from(schema.emailProspects)
       .orderBy(desc(schema.emailProspects.createdAt));
+    
+    // For each prospect, get the latest email campaign send status
+    const prospectsWithEmailStatus = await Promise.all(
+      prospects.map(async (prospect) => {
+        if (!prospect.email) {
+          return { ...prospect, lastEmailStatus: null };
+        }
+        
+        // Get the most recent campaign send for this prospect's email
+        const [latestSend] = await db.select()
+          .from(schema.emailCampaignSends)
+          .where(eq(schema.emailCampaignSends.recipientEmail, prospect.email))
+          .orderBy(desc(schema.emailCampaignSends.sentAt))
+          .limit(1);
+        
+        // Map status to user-friendly labels
+        let lastEmailStatus = null;
+        if (latestSend) {
+          if (latestSend.clickedAt) {
+            lastEmailStatus = 'clicked';
+          } else if (latestSend.openedAt) {
+            lastEmailStatus = 'opened';
+          } else if (latestSend.status === 'sent' || latestSend.status === 'delivered') {
+            lastEmailStatus = 'sent';
+          } else if (latestSend.status === 'bounced' || latestSend.status === 'failed') {
+            lastEmailStatus = 'bounced';
+          } else {
+            lastEmailStatus = 'pending';
+          }
+        }
+        
+        return { ...prospect, lastEmailStatus };
+      })
+    );
+    
+    return prospectsWithEmailStatus;
   }
 
   async getRegisteredUsersStats(): Promise<{ total: number; active: number; trial: number; blocked: number; cancelled: number }> {
