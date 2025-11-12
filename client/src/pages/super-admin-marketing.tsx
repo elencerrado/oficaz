@@ -578,6 +578,74 @@ export default function SuperAdminMarketing() {
     },
   });
 
+  // Mark email as bounced mutation
+  const markBouncedMutation = useMutation({
+    mutationFn: async (prospectId: number) => {
+      const token = sessionStorage.getItem('superAdminToken');
+      const response = await fetch(`/api/super-admin/email-prospects/${prospectId}/mark-bounced`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to mark email as bounced');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: '✅ Email marcado como rebotado',
+        description: 'El estado del email se ha actualizado correctamente',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-prospects'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-campaigns'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo marcar el email como rebotado',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Reactivate bounced email mutation (reset lastEmailStatus)
+  const reactivateEmailMutation = useMutation({
+    mutationFn: async (prospectId: number) => {
+      const token = sessionStorage.getItem('superAdminToken');
+      const response = await fetch(`/api/super-admin/email-prospects/${prospectId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ lastEmailStatus: null }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to reactivate email');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: '✅ Email reactivado',
+        description: 'El email puede recibir campañas nuevamente',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-prospects'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo reactivar el email',
+        variant: 'destructive',
+      });
+    },
+  });
+
   // Handler functions
   const handleEditProspect = (prospect: any) => {
     setEditingProspect(prospect);
