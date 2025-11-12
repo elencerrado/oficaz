@@ -17,6 +17,7 @@ import { EditCampaignDialog } from '@/components/email-marketing/edit-campaign-d
 import { CampaignConversionsDialog } from '@/components/email-marketing/campaign-conversions-dialog';
 import { ProspectStatsDialog } from '@/components/email-marketing/prospect-stats-dialog';
 import { SendingProgressDialog } from '@/components/email-marketing/sending-progress-dialog';
+import { AiProspectDiscoveryDialog } from '@/components/email-marketing/ai-prospect-discovery-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Send, 
@@ -38,7 +39,8 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  MessageCircle
+  MessageCircle,
+  Sparkles
 } from 'lucide-react';
 import { FaWhatsapp, FaInstagram } from 'react-icons/fa';
 
@@ -59,6 +61,7 @@ export default function SuperAdminMarketing() {
   const [prospectToDelete, setProspectToDelete] = useState<number | null>(null);
   const [whatsappFilter, setWhatsappFilter] = useState<string>('all');
   const [instagramFilter, setInstagramFilter] = useState<string>('all');
+  const [isAiDiscoveryOpen, setIsAiDiscoveryOpen] = useState(false);
   
   // Sending progress dialog states
   const [sendingProgress, setSendingProgress] = useState<{
@@ -735,6 +738,15 @@ export default function SuperAdminMarketing() {
                             <LayoutList className="w-4 h-4" />
                           </button>
                         </div>
+                        <Button
+                          onClick={() => setIsAiDiscoveryOpen(true)}
+                          variant="outline"
+                          className="bg-purple-600/20 hover:bg-purple-600/30 border-purple-500/50 text-white"
+                          data-testid="button-ai-discovery"
+                        >
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Buscar con IA
+                        </Button>
                         <AddProspectDialog />
                       </div>
                     </div>
@@ -1742,6 +1754,16 @@ export default function SuperAdminMarketing() {
         failCount={sendingProgress.failCount}
         errorMessage={sendingProgress.errorMessage}
         onClose={() => setSendingProgress(prev => ({ ...prev, isOpen: false }))}
+      />
+
+      {/* AI Prospect Discovery Dialog */}
+      <AiProspectDiscoveryDialog
+        isOpen={isAiDiscoveryOpen}
+        onOpenChange={setIsAiDiscoveryOpen}
+        onComplete={() => {
+          queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-prospects'] });
+        }}
+        existingProspects={prospects || []}
       />
     </SuperAdminLayout>
   );
