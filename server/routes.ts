@@ -10893,12 +10893,16 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
         });
       }
 
-      // Find the most recent email send for this prospect
-      const [lastSend] = await db.select()
+      // Find all email sends for this prospect and get the most recent
+      const sends = await db.select()
         .from(schema.emailCampaignSends)
-        .where(eq(schema.emailCampaignSends.recipientEmail, prospect.email))
-        .orderBy(desc(schema.emailCampaignSends.sentAt))
-        .limit(1);
+        .where(eq(schema.emailCampaignSends.recipientEmail, prospect.email));
+      
+      // Get the most recent send by sorting in memory
+      const lastSend = sends.sort((a, b) => {
+        if (!a.sentAt || !b.sentAt) return 0;
+        return new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime();
+      })[0];
 
       // Update prospect's lastEmailStatus to bounced
       await db.update(schema.emailProspects)
