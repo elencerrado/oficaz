@@ -61,6 +61,7 @@ export default function SuperAdminMarketing() {
   const [prospectToDelete, setProspectToDelete] = useState<number | null>(null);
   const [whatsappFilter, setWhatsappFilter] = useState<string>('all');
   const [instagramFilter, setInstagramFilter] = useState<string>('all');
+  const [emailStatusFilter, setEmailStatusFilter] = useState<string>('all');
   const [isAiDiscoveryOpen, setIsAiDiscoveryOpen] = useState(false);
   
   // Sending progress dialog states
@@ -173,6 +174,17 @@ export default function SuperAdminMarketing() {
     if (instagramFilter !== 'all') {
       result = result.filter((prospect: any) => {
         return prospect.instagramConversationStatus === instagramFilter;
+      });
+    }
+    
+    // Apply Email Status filter
+    if (emailStatusFilter === 'bounced') {
+      result = result.filter((prospect: any) => {
+        return prospect.lastEmailStatus === 'bounced';
+      });
+    } else if (emailStatusFilter === 'healthy') {
+      result = result.filter((prospect: any) => {
+        return prospect.lastEmailStatus !== 'bounced' && prospect.lastEmailStatus !== 'failed';
       });
     }
     
@@ -893,12 +905,28 @@ export default function SuperAdminMarketing() {
                           </select>
                         </div>
                         
+                        {/* Email Filter */}
+                        <div className="flex items-center gap-1.5">
+                          <Mail className="w-4 h-4 text-blue-400" />
+                          <select
+                            value={emailStatusFilter}
+                            onChange={(e) => setEmailStatusFilter(e.target.value)}
+                            className="text-xs px-2 py-1.5 rounded bg-white/10 border border-white/20 text-white cursor-pointer"
+                            data-testid="select-filter-email-status"
+                          >
+                            <option value="all" className="bg-gray-800">Todos</option>
+                            <option value="bounced" className="bg-gray-800">Solo rebotados</option>
+                            <option value="healthy" className="bg-gray-800">Sin rebotes</option>
+                          </select>
+                        </div>
+                        
                         {/* Clear filters button */}
-                        {(whatsappFilter !== 'all' || instagramFilter !== 'all') && (
+                        {(whatsappFilter !== 'all' || instagramFilter !== 'all' || emailStatusFilter !== 'all') && (
                           <button
                             onClick={() => {
                               setWhatsappFilter('all');
                               setInstagramFilter('all');
+                              setEmailStatusFilter('all');
                             }}
                             className="text-xs px-2 py-1.5 rounded bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-colors"
                             data-testid="button-clear-filters"
