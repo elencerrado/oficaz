@@ -3245,7 +3245,10 @@ export class DrizzleStorage implements IStorage {
           WHEN latest_send.status IN ('bounced', 'failed') THEN 'bounced'
           WHEN latest_send.status = 'pending' THEN 'pending'
           ELSE NULL
-        END as "lastEmailStatus"
+        END as "lastEmailStatus",
+        latest_send.clicked_at as "lastEmailClickedAt",
+        latest_send.opened_at as "lastEmailOpenedAt",
+        latest_send.sent_at as "lastEmailSentAt"
       FROM email_prospects p
       LEFT JOIN LATERAL (
         SELECT status, clicked_at, opened_at, sent_at

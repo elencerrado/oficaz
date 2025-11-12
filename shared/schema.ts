@@ -953,8 +953,10 @@ export const emailProspects = pgTable("email_prospects", {
   // Contact tracking fields - separate status for each channel
   whatsappContacted: boolean("whatsapp_contacted").default(false).notNull(),
   whatsappConversationStatus: varchar("whatsapp_conversation_status", { length: 50 }).default("not_contacted").notNull(), // not_contacted, no_response, in_conversation, not_interested, closed
+  whatsappConversationStatusUpdatedAt: timestamp("whatsapp_conversation_status_updated_at"),
   instagramContacted: boolean("instagram_contacted").default(false).notNull(),
   instagramConversationStatus: varchar("instagram_conversation_status", { length: 50 }).default("not_contacted").notNull(), // not_contacted, no_response, in_conversation, not_interested, closed
+  instagramConversationStatusUpdatedAt: timestamp("instagram_conversation_status_updated_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

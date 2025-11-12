@@ -10840,9 +10840,15 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
       if (updates.status !== undefined) updatedData.status = updates.status;
       // Contact tracking fields - separate status for each channel
       if (updates.whatsappContacted !== undefined) updatedData.whatsappContacted = updates.whatsappContacted;
-      if (updates.whatsappConversationStatus !== undefined) updatedData.whatsappConversationStatus = updates.whatsappConversationStatus;
+      if (updates.whatsappConversationStatus !== undefined) {
+        updatedData.whatsappConversationStatus = updates.whatsappConversationStatus;
+        updatedData.whatsappConversationStatusUpdatedAt = new Date();
+      }
       if (updates.instagramContacted !== undefined) updatedData.instagramContacted = updates.instagramContacted;
-      if (updates.instagramConversationStatus !== undefined) updatedData.instagramConversationStatus = updates.instagramConversationStatus;
+      if (updates.instagramConversationStatus !== undefined) {
+        updatedData.instagramConversationStatus = updates.instagramConversationStatus;
+        updatedData.instagramConversationStatusUpdatedAt = new Date();
+      }
 
       await db.update(schema.emailProspects)
         .set(updatedData)
