@@ -429,6 +429,38 @@ export default function SuperAdminMarketing() {
     },
   });
 
+  // Clean duplicate tags mutation
+  const cleanDuplicateTagsMutation = useMutation({
+    mutationFn: async () => {
+      const token = sessionStorage.getItem('superAdminToken');
+      const response = await fetch('/api/super-admin/email-prospects/clean-duplicate-tags', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to clean duplicate tags');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: '✅ Limpieza completada',
+        description: `${data.prospectsUpdated} prospects actualizados (de ${data.prospectsFound} con tags duplicados)`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-prospects'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudieron limpiar los tags duplicados',
+        variant: 'destructive',
+      });
+    },
+  });
+
   // Update prospect inline mutation with optimistic updates
   const updateProspectInlineMutation = useMutation({
     mutationFn: async ({ prospectId, field, value }: { prospectId: number; field: string; value: any }) => {
@@ -779,6 +811,17 @@ export default function SuperAdminMarketing() {
                         >
                           <Sparkles className="w-4 h-4 mr-2" />
                           Buscar con IA
+                        </Button>
+                        <Button
+                          onClick={() => cleanDuplicateTagsMutation.mutate()}
+                          variant="outline"
+                          size="sm"
+                          disabled={cleanDuplicateTagsMutation.isPending}
+                          className="bg-orange-600/20 hover:bg-orange-600/30 border-orange-500/50 text-white text-xs"
+                          title="Limpiar tags duplicados (deja solo 1 tag por empresa)"
+                          data-testid="button-clean-duplicate-tags"
+                        >
+                          🧹 Limpiar tags
                         </Button>
                         <AddProspectDialog />
                       </div>

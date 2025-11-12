@@ -10836,7 +10836,15 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
       if (updates.phone !== undefined) updatedData.phone = updates.phone;
       if (updates.location !== undefined) updatedData.location = updates.location;
       if (updates.notes !== undefined) updatedData.notes = updates.notes;
-      if (updates.tags !== undefined) updatedData.tags = updates.tags;
+      // Validate tags: only 1 tag maximum (sector/industry)
+      if (updates.tags !== undefined) {
+        if (Array.isArray(updates.tags)) {
+          // Keep only the first tag if multiple provided
+          updatedData.tags = updates.tags.length > 0 ? [updates.tags[0]] : [];
+        } else {
+          updatedData.tags = updates.tags;
+        }
+      }
       if (updates.status !== undefined) updatedData.status = updates.status;
       // Contact tracking fields - separate status for each channel
       if (updates.whatsappContacted !== undefined) updatedData.whatsappContacted = updates.whatsappContacted;
@@ -10858,6 +10866,52 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
     } catch (error: any) {
       console.error('Error updating email prospect:', error);
       res.status(500).json({ success: false, message: 'Error al actualizar prospect' });
+    }
+  });
+
+  // Clean duplicate tags from email prospects (keep only first tag)
+  app.post('/api/super-admin/email-prospects/clean-duplicate-tags', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      console.log('🧹 Starting tag deduplication process...');
+      
+      // Get all prospects with tags
+      const prospectsWithTags = await db.select()
+        .from(schema.emailProspects)
+        .where(sql`tags IS NOT NULL AND array_length(tags, 1) > 1`);
+      
+      console.log(`📊 Found ${prospectsWithTags.length} prospects with multiple tags`);
+      
+      let updatedCount = 0;
+      
+      // Update each prospect to keep only first tag
+      for (const prospect of prospectsWithTags) {
+        if (prospect.tags && Array.isArray(prospect.tags) && prospect.tags.length > 1) {
+          const singleTag = [prospect.tags[0]];
+          
+          await db.update(schema.emailProspects)
+            .set({ tags: singleTag })
+            .where(eq(schema.emailProspects.id, prospect.id));
+          
+          updatedCount++;
+          console.log(`✂️ Cleaned prospect ${prospect.id}: ${prospect.tags.join(', ')} → ${singleTag[0]}`);
+        }
+      }
+      
+      console.log(`✅ Tag deduplication complete: ${updatedCount} prospects updated`);
+      
+      res.json({ 
+        success: true, 
+        message: `Limpieza completada: ${updatedCount} prospects actualizados`,
+        prospectsFound: prospectsWithTags.length,
+        prospectsUpdated: updatedCount
+      });
+      
+    } catch (error: any) {
+      console.error('Error cleaning duplicate tags:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Error al limpiar tags duplicados' 
+      });
     }
   });
 
