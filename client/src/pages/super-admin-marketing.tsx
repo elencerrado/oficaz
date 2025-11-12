@@ -40,7 +40,9 @@ import {
   ArrowUp,
   ArrowDown,
   MessageCircle,
-  Sparkles
+  Sparkles,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import { FaWhatsapp, FaInstagram } from 'react-icons/fa';
 
@@ -274,7 +276,7 @@ export default function SuperAdminMarketing() {
     }
     
     return result;
-  }, [prospects, searchTerm, whatsappFilter, instagramFilter, sortField, sortDirection]);
+  }, [prospects, searchTerm, whatsappFilter, instagramFilter, emailStatusFilter, sortField, sortDirection]);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -1518,6 +1520,31 @@ export default function SuperAdminMarketing() {
                                     >
                                       <BarChart3 className="w-3.5 h-3.5" />
                                     </Button>
+                                    {prospect.lastEmailStatus === 'bounced' ? (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => reactivateEmailMutation.mutate(prospect.id)}
+                                        disabled={reactivateEmailMutation.isPending}
+                                        className="h-7 w-7 p-0 text-green-400 hover:text-green-300 hover:bg-green-500/20"
+                                        title="Reactivar email (permitir recibir campañas)"
+                                        data-testid={`button-reactivate-email-${prospect.id}`}
+                                      >
+                                        <RefreshCw className="w-3.5 h-3.5" />
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => markBouncedMutation.mutate(prospect.id)}
+                                        disabled={markBouncedMutation.isPending}
+                                        className="h-7 w-7 p-0 text-orange-400 hover:text-orange-300 hover:bg-orange-500/20"
+                                        title="Marcar como rebotado"
+                                        data-testid={`button-mark-bounced-${prospect.id}`}
+                                      >
+                                        <AlertTriangle className="w-3.5 h-3.5" />
+                                      </Button>
+                                    )}
                                     <Button
                                       size="sm"
                                       variant="ghost"
@@ -1582,6 +1609,31 @@ export default function SuperAdminMarketing() {
                             >
                               <Edit2 className="w-4 h-4" />
                             </Button>
+                            {prospect.lastEmailStatus === 'bounced' ? (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => reactivateEmailMutation.mutate(prospect.id)}
+                                disabled={reactivateEmailMutation.isPending}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-green-400 hover:text-green-300 hover:bg-green-500/20"
+                                title="Reactivar email"
+                                data-testid={`button-reactivate-email-compact-${prospect.id}`}
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => markBouncedMutation.mutate(prospect.id)}
+                                disabled={markBouncedMutation.isPending}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-orange-400 hover:text-orange-300 hover:bg-orange-500/20"
+                                title="Marcar como rebotado"
+                                data-testid={`button-mark-bounced-compact-${prospect.id}`}
+                              >
+                                <AlertTriangle className="w-4 h-4" />
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"
