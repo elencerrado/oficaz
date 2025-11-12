@@ -27,6 +27,7 @@ import { backgroundImageProcessor } from './backgroundWorker.js';
 import { startPushNotificationScheduler } from './pushNotificationScheduler.js';
 import { initializeWebSocketServer, getWebSocketServer } from './websocket.js';
 import { JWT_SECRET } from './utils/jwt-secret.js';
+import Groq from 'groq-sdk';
 
 // Initialize Stripe with intelligent key detection
 // Priority: Use production keys if available, otherwise fall back to test keys
@@ -10851,6 +10852,144 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
     } catch (error: any) {
       console.error('Error updating email prospect:', error);
       res.status(500).json({ success: false, message: 'Error al actualizar prospect' });
+    }
+  });
+
+  // 🤖 AI PROSPECT DISCOVERY - Use Groq Compound with web search to find prospects
+  app.post('/api/super-admin/ai-prospect-discovery', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const { query, limit = 10 } = req.body;
+      
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ success: false, message: 'Query de búsqueda requerida' });
+      }
+
+      console.log(`🤖 AI Prospect Discovery - Query: "${query}", Limit: ${limit}`);
+
+      // Initialize Groq client
+      const groq = new Groq({
+        apiKey: process.env.GROQ_API_KEY
+      });
+
+      // Create a very specific prompt for prospect discovery
+      const systemPrompt = `Eres un asistente experto en descubrimiento de prospects B2B para email marketing.
+
+Tu trabajo es buscar en internet empresas o negocios que coincidan con la búsqueda del usuario y extraer la siguiente información de cada uno:
+
+INFORMACIÓN A EXTRAER:
+1. email: Email de contacto (preferiblemente comercial o info@)
+2. name: Nombre del contacto principal o persona responsable
+3. company: Nombre completo de la empresa
+4. phone: Número de teléfono (formato español preferido: +34XXXXXXXXX o 6XXXXXXXX)
+5. location: Ciudad o región donde opera
+6. website: URL del sitio web (si está disponible)
+7. description: Breve descripción de qué hace la empresa (1-2 líneas)
+
+INSTRUCCIONES:
+- Busca empresas REALES que existan en internet
+- Prioriza fuentes confiables: páginas web oficiales, directorios empresariales, Google Maps/Google Business
+- Si no encuentras un dato específico (ej: email), déjalo como null
+- Para teléfonos, verifica que sean móviles (empiezan con 6 o 7) o fijos (empiezan con 9)
+- Devuelve EXACTAMENTE el formato JSON solicitado
+
+FORMATO DE RESPUESTA (JSON):
+{
+  "prospects": [
+    {
+      "email": "contacto@empresa.com" | null,
+      "name": "Juan Pérez" | null,
+      "company": "Fontanería Pérez S.L.",
+      "phone": "+34600123456" | null,
+      "location": "Sevilla",
+      "website": "https://www.empresa.com" | null,
+      "description": "Empresa de fontanería y climatización con 20 años de experiencia"
+    }
+  ],
+  "sources": ["URL1", "URL2", ...]
+}`;
+
+      const userPrompt = `Busca ${limit} empresas/negocios que coincidan con: "${query}"
+
+Busca información real y actualizada en internet. Incluye emails, teléfonos y todos los datos disponibles.`;
+
+      // Call Groq Compound with web search enabled
+      const completion = await groq.chat.completions.create({
+        model: "groq/compound",  // Compound system with built-in web search
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.3,  // Lower temperature for more consistent output
+        max_tokens: 4000,
+      });
+
+      const responseText = completion.choices[0]?.message?.content;
+      
+      if (!responseText) {
+        return res.status(500).json({ 
+          success: false, 
+          message: 'No se recibió respuesta del modelo de IA' 
+        });
+      }
+
+      console.log('🤖 Groq response:', responseText.substring(0, 500) + '...');
+
+      // Parse JSON response
+      let parsedResponse;
+      try {
+        // Extract JSON from markdown code blocks if present
+        const jsonMatch = responseText.match(/```json\n([\s\S]*?)\n```/) || responseText.match(/```\n([\s\S]*?)\n```/);
+        const jsonText = jsonMatch ? jsonMatch[1] : responseText;
+        
+        parsedResponse = JSON.parse(jsonText);
+      } catch (parseError) {
+        console.error('Error parsing Groq response:', parseError);
+        console.error('Raw response:', responseText);
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Error al procesar la respuesta de IA. Por favor, intenta con una búsqueda más específica.',
+          rawResponse: responseText.substring(0, 1000)
+        });
+      }
+
+      // Validate response structure
+      if (!parsedResponse.prospects || !Array.isArray(parsedResponse.prospects)) {
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Formato de respuesta inválido de la IA',
+          rawResponse: responseText.substring(0, 1000)
+        });
+      }
+
+      // Clean and validate prospects
+      const prospects = parsedResponse.prospects.map((p: any) => ({
+        email: p.email || null,
+        name: p.name || null,
+        company: p.company || 'Empresa sin nombre',
+        phone: p.phone || null,
+        location: p.location || null,
+        website: p.website || null,
+        description: p.description || null,
+        tags: [], // User can add tags later
+        notes: p.description || '',  // Use description as initial notes
+      }));
+
+      console.log(`✅ Found ${prospects.length} prospects`);
+
+      res.json({ 
+        success: true, 
+        prospects,
+        sources: parsedResponse.sources || [],
+        query,
+        count: prospects.length
+      });
+
+    } catch (error: any) {
+      console.error('Error in AI prospect discovery:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || 'Error al buscar prospects con IA' 
+      });
     }
   });
 
