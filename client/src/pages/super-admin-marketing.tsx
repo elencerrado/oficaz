@@ -882,12 +882,12 @@ export default function SuperAdminMarketing() {
                       <p className="text-white/60">No se encontraron resultados</p>
                     </div>
                   ) : isTableView ? (
-                    <div className="overflow-x-auto">
-                      <Table>
+                    <div className="w-full">
+                      <Table className="table-fixed w-full">
                         <TableHeader>
                           <TableRow className="border-white/20 hover:bg-white/5">
                             <TableHead 
-                              className="text-white/90 cursor-pointer hover:text-white select-none min-w-[180px]"
+                              className="text-white/90 cursor-pointer hover:text-white select-none w-[20%]"
                               onClick={() => handleSort('company')}
                             >
                               <div className="flex items-center gap-1">
@@ -900,7 +900,7 @@ export default function SuperAdminMarketing() {
                               </div>
                             </TableHead>
                             <TableHead 
-                              className="text-white/90 cursor-pointer hover:text-white select-none w-24"
+                              className="text-white/90 cursor-pointer hover:text-white select-none w-[12%]"
                               onClick={() => handleSort('whatsappStatus')}
                             >
                               <div className="flex items-center gap-1">
@@ -914,7 +914,7 @@ export default function SuperAdminMarketing() {
                               </div>
                             </TableHead>
                             <TableHead 
-                              className="text-white/90 cursor-pointer hover:text-white select-none w-24"
+                              className="text-white/90 cursor-pointer hover:text-white select-none w-[12%]"
                               onClick={() => handleSort('instagramStatus')}
                             >
                               <div className="flex items-center gap-1">
@@ -928,7 +928,7 @@ export default function SuperAdminMarketing() {
                               </div>
                             </TableHead>
                             <TableHead 
-                              className="text-white/90 cursor-pointer hover:text-white select-none w-28"
+                              className="text-white/90 cursor-pointer hover:text-white select-none w-[13%]"
                               onClick={() => handleSort('emailStatus')}
                             >
                               <div className="flex items-center gap-1">
@@ -942,7 +942,7 @@ export default function SuperAdminMarketing() {
                               </div>
                             </TableHead>
                             <TableHead 
-                              className="text-white/90 cursor-pointer hover:text-white select-none min-w-[100px]"
+                              className="text-white/90 cursor-pointer hover:text-white select-none w-[15%]"
                               onClick={() => handleSort('location')}
                             >
                               <div className="flex items-center gap-1">
@@ -955,7 +955,7 @@ export default function SuperAdminMarketing() {
                               </div>
                             </TableHead>
                             <TableHead 
-                              className="text-white/90 cursor-pointer hover:text-white select-none min-w-[150px]"
+                              className="text-white/90 cursor-pointer hover:text-white select-none w-[18%]"
                               onClick={() => handleSort('tags')}
                             >
                               <div className="flex items-center gap-1">
@@ -967,7 +967,7 @@ export default function SuperAdminMarketing() {
                                 )}
                               </div>
                             </TableHead>
-                            <TableHead className="text-white/90 w-24">Acciones</TableHead>
+                            <TableHead className="text-white/90 w-[10%]">Acciones</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -975,7 +975,7 @@ export default function SuperAdminMarketing() {
                             <TableRow key={prospect.id} className={`border-white/20 hover:bg-white/5 ${prospect.id === 'new' ? 'bg-purple-500/10' : ''}`}>
                               {/* EMPRESA */}
                               <TableCell
-                                className="text-white font-medium cursor-pointer hover:bg-white/10 py-2"
+                                className="text-white font-medium cursor-pointer hover:bg-white/10 py-2 overflow-hidden"
                                 onClick={() => {
                                   if (prospect.id === 'new') {
                                     setEditingCell({ id: 'new', field: 'company' });
@@ -1019,15 +1019,17 @@ export default function SuperAdminMarketing() {
                                     }}
                                   />
                                 ) : (
-                                  prospect.company || (prospect.id === 'new' ? <span className="text-white/40 italic">Empresa...</span> : '-')
+                                  <div className="truncate" title={prospect.company}>
+                                    {prospect.company || (prospect.id === 'new' ? <span className="text-white/40 italic">Empresa...</span> : '-')}
+                                  </div>
                                 )}
                               </TableCell>
                               
                               {/* WHATSAPP */}
-                              <TableCell className="text-white py-2">
+                              <TableCell className="text-white py-2 overflow-hidden">
                                 {prospect.id !== 'new' ? (
                                   <div className="flex flex-col gap-1">
-                                    <div className="flex items-center gap-1">
+                                    <div className="flex items-center gap-1 w-full">
                                       {prospect.phone && !prospect.phone.trim().startsWith('9') && (
                                         <button
                                           onClick={() => {
@@ -1052,7 +1054,7 @@ export default function SuperAdminMarketing() {
                                         }}
                                         onClick={(e) => e.stopPropagation()}
                                         disabled={prospect.phone && prospect.phone.trim().startsWith('9')}
-                                        className={`text-[10px] px-1.5 py-0.5 rounded cursor-pointer border-0 flex-1 ${
+                                        className={`text-[10px] px-1.5 py-0.5 rounded cursor-pointer border-0 flex-1 min-w-0 ${
                                           prospect.whatsappConversationStatus === 'in_conversation' ? 'bg-green-500/20 text-green-300' :
                                           prospect.whatsappConversationStatus === 'no_response' ? 'bg-yellow-500/20 text-yellow-300' :
                                           prospect.whatsappConversationStatus === 'not_interested' ? 'bg-red-500/20 text-red-300' :
@@ -1080,7 +1082,7 @@ export default function SuperAdminMarketing() {
                               </TableCell>
                               
                               {/* INSTAGRAM */}
-                              <TableCell className="text-white py-2">
+                              <TableCell className="text-white py-2 overflow-hidden">
                                 {prospect.id !== 'new' ? (
                                   <div className="flex flex-col gap-1">
                                     <select
@@ -1093,7 +1095,7 @@ export default function SuperAdminMarketing() {
                                         });
                                       }}
                                       onClick={(e) => e.stopPropagation()}
-                                      className={`text-[10px] px-1.5 py-0.5 rounded cursor-pointer border-0 w-full ${
+                                      className={`text-[10px] px-1.5 py-0.5 rounded cursor-pointer border-0 w-full min-w-0 ${
                                         prospect.instagramConversationStatus === 'in_conversation' ? 'bg-green-500/20 text-green-300' :
                                         prospect.instagramConversationStatus === 'no_response' ? 'bg-yellow-500/20 text-yellow-300' :
                                         prospect.instagramConversationStatus === 'not_interested' ? 'bg-red-500/20 text-red-300' :
@@ -1120,7 +1122,7 @@ export default function SuperAdminMarketing() {
                               </TableCell>
                               
                               {/* EMAIL STATUS */}
-                              <TableCell className="text-white py-2">
+                              <TableCell className="text-white py-2 overflow-hidden">
                                 {prospect.id !== 'new' ? (
                                   <div className="flex flex-col gap-1">
                                     <span className={`text-[10px] px-2 py-0.5 rounded inline-block ${
@@ -1153,7 +1155,7 @@ export default function SuperAdminMarketing() {
                               </TableCell>
                               
                               <TableCell
-                                className="text-white cursor-pointer hover:bg-white/10"
+                                className="text-white cursor-pointer hover:bg-white/10 overflow-hidden"
                                 onClick={() => {
                                   if (prospect.id === 'new') {
                                     setEditingCell({ id: 'new', field: 'location' });
@@ -1197,11 +1199,13 @@ export default function SuperAdminMarketing() {
                                     }}
                                   />
                                 ) : (
-                                  prospect.location || (prospect.id === 'new' ? <span className="text-white/40 italic">Localización...</span> : '-')
+                                  <div className="truncate" title={prospect.location}>
+                                    {prospect.location || (prospect.id === 'new' ? <span className="text-white/40 italic">Localización...</span> : '-')}
+                                  </div>
                                 )}
                               </TableCell>
                               <TableCell
-                                className={`text-white ${prospect.id !== 'new' ? 'cursor-pointer hover:bg-white/10' : 'opacity-40'}`}
+                                className={`text-white overflow-hidden ${prospect.id !== 'new' ? 'cursor-pointer hover:bg-white/10' : 'opacity-40'}`}
                                 onDoubleClick={() => {
                                   if (prospect.id !== 'new') {
                                     setEditingCell({ id: prospect.id, field: 'tags' });
