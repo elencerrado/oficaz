@@ -237,7 +237,7 @@ export function AiProspectDiscoveryDialog({
             Descubrir Prospects con IA
           </DialogTitle>
           <DialogDescription>
-            Encuentra empresas y contactos automáticamente usando búsqueda inteligente en internet
+            Genera automáticamente prospects plausibles basados en tu sector y ubicación
           </DialogDescription>
         </DialogHeader>
 
@@ -285,10 +285,10 @@ export function AiProspectDiscoveryDialog({
             <div className="text-center py-8 space-y-3">
               <Loader2 className="h-8 w-8 animate-spin mx-auto text-purple-500" />
               <p className="text-sm text-muted-foreground">
-                Buscando en internet... Esto puede tardar 5-10 segundos
+                Generando prospects... Esto puede tardar 3-5 segundos
               </p>
               <p className="text-xs text-muted-foreground">
-                La IA está rastreando webs, directorios empresariales y fuentes públicas
+                La IA está creando datos realistas basados en tu búsqueda
               </p>
             </div>
           )}

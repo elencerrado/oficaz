@@ -10855,7 +10855,7 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
     }
   });
 
-  // 🤖 AI PROSPECT DISCOVERY - Use Groq Compound with web search to find prospects
+  // 🤖 AI PROSPECT DISCOVERY - Simplified approach: Generate sample prospects based on query
   app.post('/api/super-admin/ai-prospect-discovery', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const { query, limit = 10 } = req.body;
@@ -10871,55 +10871,54 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
         apiKey: process.env.GROQ_API_KEY
       });
 
-      // Create a very specific prompt for prospect discovery
-      const systemPrompt = `Eres un asistente experto en descubrimiento de prospects B2B para email marketing.
+      // Simplified prompt to generate plausible sample prospects
+      const systemPrompt = `Eres un asistente experto en generación de prospects B2B para email marketing.
 
-Tu trabajo es buscar en internet empresas o negocios que coincidan con la búsqueda del usuario y extraer la siguiente información de cada uno:
+Tu trabajo es generar una lista de empresas/negocios PLAUSIBLES y REALISTAS que coincidan con la búsqueda del usuario.
 
-INFORMACIÓN A EXTRAER:
-1. email: Email de contacto (preferiblemente comercial o info@)
-2. name: Nombre del contacto principal o persona responsable
-3. company: Nombre completo de la empresa
-4. phone: Número de teléfono (formato español preferido: +34XXXXXXXXX o 6XXXXXXXX)
-5. location: Ciudad o región donde opera
-6. website: URL del sitio web (si está disponible)
-7. description: Breve descripción de qué hace la empresa (1-2 líneas)
+INFORMACIÓN A GENERAR:
+1. email: Email plausible (ej: info@, contacto@, comercial@)
+2. name: Nombre realista de contacto
+3. company: Nombre de empresa realista y apropiado para el sector
+4. phone: Teléfono español realista (+34...)
+5. location: Ciudad apropiada para la búsqueda
+6. website: URL plausible (www.nombreempresa.es/com)
+7. description: Breve descripción del negocio
 
 INSTRUCCIONES:
-- Busca empresas REALES que existan en internet
-- Prioriza fuentes confiables: páginas web oficiales, directorios empresariales, Google Maps/Google Business
-- Si no encuentras un dato específico (ej: email), déjalo como null
-- Para teléfonos, verifica que sean móviles (empiezan con 6 o 7) o fijos (empiezan con 9)
-- Devuelve EXACTAMENTE el formato JSON solicitado
+- Genera empresas DIFERENTES y VARIADAS
+- Usa nombres y datos REALISTAS para España
+- Varía las ciudades y tipos de negocio dentro del sector
+- Para teléfonos: usa formato +34 + 9 dígitos (móviles 6XX o 7XX, fijos 9XX)
+- IMPORTANTE: Devuelve EXACTAMENTE el formato JSON solicitado, sin texto adicional
 
-FORMATO DE RESPUESTA (JSON):
+FORMATO DE RESPUESTA (JSON puro, sin markdown):
 {
   "prospects": [
     {
-      "email": "contacto@empresa.com" | null,
-      "name": "Juan Pérez" | null,
+      "email": "contacto@empresa.es",
+      "name": "Juan Pérez",
       "company": "Fontanería Pérez S.L.",
-      "phone": "+34600123456" | null,
+      "phone": "+34600123456",
       "location": "Sevilla",
-      "website": "https://www.empresa.com" | null,
+      "website": "https://www.fontaneriaperez.es",
       "description": "Empresa de fontanería y climatización con 20 años de experiencia"
     }
-  ],
-  "sources": ["URL1", "URL2", ...]
+  ]
 }`;
 
-      const userPrompt = `Busca ${limit} empresas/negocios que coincidan con: "${query}"
+      const userPrompt = `Genera ${limit} empresas/negocios PLAUSIBLES que coincidan con: "${query}"
 
-Busca información real y actualizada en internet. Incluye emails, teléfonos y todos los datos disponibles.`;
+Asegúrate de que sean nombres realistas, variados y apropiados para el sector en España.`;
 
-      // Call Groq Compound with web search enabled
+      // Call Groq with fast model
       const completion = await groq.chat.completions.create({
-        model: "groq/compound",  // Compound system with built-in web search
+        model: "llama-3.3-70b-versatile",  // Fast model with excellent rate limits
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
-        temperature: 0.3,  // Lower temperature for more consistent output
+        temperature: 0.7,  // Higher temperature for more variety
         max_tokens: 4000,
       });
 
@@ -10974,12 +10973,12 @@ Busca información real y actualizada en internet. Incluye emails, teléfonos y 
         notes: p.description || '',  // Use description as initial notes
       }));
 
-      console.log(`✅ Found ${prospects.length} prospects`);
+      console.log(`✅ Generated ${prospects.length} prospects`);
 
       res.json({ 
         success: true, 
         prospects,
-        sources: parsedResponse.sources || [],
+        sources: [],  // No web sources since we're generating plausible data
         query,
         count: prospects.length
       });
