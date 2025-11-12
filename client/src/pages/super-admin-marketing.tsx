@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -62,6 +63,7 @@ export default function SuperAdminMarketing() {
   const [whatsappFilter, setWhatsappFilter] = useState<string>('all');
   const [instagramFilter, setInstagramFilter] = useState<string>('all');
   const [isAiDiscoveryOpen, setIsAiDiscoveryOpen] = useState(false);
+  const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
   
   // Sending progress dialog states
   const [sendingProgress, setSendingProgress] = useState<{
@@ -1279,100 +1281,106 @@ export default function SuperAdminMarketing() {
                                         </span>
                                       );
                                     })}
-                                    <div className="relative">
-                                      <Input
-                                        value={tagInput}
-                                        onChange={(e) => setTagInput(e.target.value)}
-                                        placeholder="Escribe o selecciona..."
-                                        autoFocus
-                                        className="bg-transparent border-0 text-white p-0 h-auto text-xs w-40 focus-visible:ring-0 focus-visible:ring-offset-0"
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter' && tagInput.trim()) {
-                                            e.preventDefault();
-                                            const newTag = tagInput.trim();
-                                            const currentTags = prospect.tags || [];
-                                            if (!currentTags.includes(newTag)) {
-                                              updateProspectInlineMutation.mutate({
-                                                prospectId: prospect.id,
-                                                field: 'tags',
-                                                value: [...currentTags, newTag],
-                                              });
-                                            }
-                                            setTagInput('');
-                                          } else if (e.key === 'Escape') {
-                                            setEditingCell(null);
-                                            setTagInput('');
-                                          }
-                                        }}
-                                        onBlur={(e) => {
-                                          // Check if we're clicking on a dropdown item
-                                          const relatedTarget = e.relatedTarget as HTMLElement;
-                                          if (!relatedTarget || !relatedTarget.closest('.tags-dropdown')) {
-                                            setTimeout(() => {
-                                              setEditingCell(null);
-                                              setTagInput('');
-                                            }, 200);
-                                          }
-                                        }}
-                                      />
-                                      {/* Show dropdown always when editing, with all available tags */}
-                                      <div className="tags-dropdown absolute top-full left-0 mt-1 bg-gray-800 border border-white/20 rounded shadow-lg z-50 max-h-48 overflow-y-auto min-w-[150px]">
-                                        {/* Show filtered suggestions based on input */}
-                                        {allTags
-                                          .filter(tag => {
-                                            const matchesSearch = tagInput === '' || tag.toLowerCase().includes(tagInput.toLowerCase());
-                                            const notAlreadyAdded = !(prospect.tags || []).includes(tag);
-                                            return matchesSearch && notAlreadyAdded;
-                                          })
-                                          .map(tag => (
+                                    <Popover open={isTagPopoverOpen} onOpenChange={setIsTagPopoverOpen}>
+                                      <PopoverTrigger asChild>
+                                        <div className="relative">
+                                          <Input
+                                            value={tagInput}
+                                            onChange={(e) => setTagInput(e.target.value)}
+                                            placeholder="Escribe o selecciona..."
+                                            autoFocus
+                                            className="bg-transparent border-0 text-white p-0 h-auto text-xs w-40 focus-visible:ring-0 focus-visible:ring-offset-0"
+                                            onFocus={() => setIsTagPopoverOpen(true)}
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter' && tagInput.trim()) {
+                                                e.preventDefault();
+                                                const newTag = tagInput.trim();
+                                                const currentTags = prospect.tags || [];
+                                                if (!currentTags.includes(newTag)) {
+                                                  updateProspectInlineMutation.mutate({
+                                                    prospectId: prospect.id,
+                                                    field: 'tags',
+                                                    value: [...currentTags, newTag],
+                                                  });
+                                                }
+                                                setTagInput('');
+                                              } else if (e.key === 'Escape') {
+                                                setEditingCell(null);
+                                                setTagInput('');
+                                                setIsTagPopoverOpen(false);
+                                              }
+                                            }}
+                                            onBlur={() => {
+                                              setTimeout(() => {
+                                                setEditingCell(null);
+                                                setTagInput('');
+                                                setIsTagPopoverOpen(false);
+                                              }, 200);
+                                            }}
+                                          />
+                                        </div>
+                                      </PopoverTrigger>
+                                      <PopoverContent 
+                                        className="bg-gray-800 border-white/20 p-0 w-auto min-w-[150px]"
+                                        align="start"
+                                        side="bottom"
+                                        sideOffset={4}
+                                      >
+                                        <div className="max-h-48 overflow-y-auto">
+                                          {allTags
+                                            .filter(tag => {
+                                              const matchesSearch = tagInput === '' || tag.toLowerCase().includes(tagInput.toLowerCase());
+                                              const notAlreadyAdded = !(prospect.tags || []).includes(tag);
+                                              return matchesSearch && notAlreadyAdded;
+                                            })
+                                            .map(tag => (
+                                              <button
+                                                key={tag}
+                                                type="button"
+                                                className="block w-full text-left px-3 py-1.5 text-xs text-white hover:bg-white/10 transition-colors"
+                                                onMouseDown={(e) => {
+                                                  e.preventDefault();
+                                                  const currentTags = prospect.tags || [];
+                                                  updateProspectInlineMutation.mutate({
+                                                    prospectId: prospect.id,
+                                                    field: 'tags',
+                                                    value: [...currentTags, tag],
+                                                  });
+                                                  setTagInput('');
+                                                }}
+                                              >
+                                                {tag}
+                                              </button>
+                                            ))}
+                                          {tagInput.trim() && !allTags.some(tag => tag.toLowerCase() === tagInput.toLowerCase()) && (
                                             <button
-                                              key={tag}
                                               type="button"
-                                              className="block w-full text-left px-3 py-1.5 text-xs text-white hover:bg-white/10 transition-colors"
+                                              className="block w-full text-left px-3 py-1.5 text-xs text-green-400 hover:bg-white/10 transition-colors border-t border-white/10"
                                               onMouseDown={(e) => {
                                                 e.preventDefault();
+                                                const newTag = tagInput.trim();
                                                 const currentTags = prospect.tags || [];
-                                                updateProspectInlineMutation.mutate({
-                                                  prospectId: prospect.id,
-                                                  field: 'tags',
-                                                  value: [...currentTags, tag],
-                                                });
+                                                if (!currentTags.includes(newTag)) {
+                                                  updateProspectInlineMutation.mutate({
+                                                    prospectId: prospect.id,
+                                                    field: 'tags',
+                                                    value: [...currentTags, newTag],
+                                                  });
+                                                }
                                                 setTagInput('');
                                               }}
                                             >
-                                              {tag}
+                                              + Crear "{tagInput.trim()}"
                                             </button>
-                                          ))}
-                                        {/* Show "Create new" option when typing */}
-                                        {tagInput.trim() && !allTags.some(tag => tag.toLowerCase() === tagInput.toLowerCase()) && (
-                                          <button
-                                            type="button"
-                                            className="block w-full text-left px-3 py-1.5 text-xs text-green-400 hover:bg-white/10 transition-colors border-t border-white/10"
-                                            onMouseDown={(e) => {
-                                              e.preventDefault();
-                                              const newTag = tagInput.trim();
-                                              const currentTags = prospect.tags || [];
-                                              if (!currentTags.includes(newTag)) {
-                                                updateProspectInlineMutation.mutate({
-                                                  prospectId: prospect.id,
-                                                  field: 'tags',
-                                                  value: [...currentTags, newTag],
-                                                });
-                                              }
-                                              setTagInput('');
-                                            }}
-                                          >
-                                            + Crear "{tagInput.trim()}"
-                                          </button>
-                                        )}
-                                        {/* Show empty state */}
-                                        {allTags.length === 0 && !tagInput && (
-                                          <div className="px-3 py-2 text-xs text-white/40 italic">
-                                            Escribe para crear el primer tag
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
+                                          )}
+                                          {allTags.length === 0 && !tagInput && (
+                                            <div className="px-3 py-2 text-xs text-white/40 italic">
+                                              Escribe para crear el primer tag
+                                            </div>
+                                          )}
+                                        </div>
+                                      </PopoverContent>
+                                    </Popover>
                                   </div>
                                 ) : (
                                   <div className="flex flex-wrap gap-1">
