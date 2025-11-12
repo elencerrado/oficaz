@@ -10890,6 +10890,14 @@ INFORMACIÓN A GENERAR:
 5. location: Ciudad apropiada para la búsqueda
 6. website: URL plausible (www.nombreempresa.es/com)
 7. description: Breve descripción del negocio
+8. industryTag: UN SOLO tag del sector/industria (ej: "Fontanería", "Restauración", "Salud", "Construcción")
+
+REGLAS PARA EL TAG:
+- OBLIGATORIO: Genera EXACTAMENTE 1 tag por empresa, nunca más de 1
+- El tag debe ser UNA SOLA PALABRA o máximo 2 palabras
+- Usa nombres de sectores estándar en español (ej: "Odontología", "Hostelería", "Carpintería")
+- NO uses frases largas ni descripciones
+- Ejemplos válidos: "Fontanería", "Restauración", "Clínica Dental", "Construcción", "Tecnología"
 
 INSTRUCCIONES:
 - Genera empresas DIFERENTES y VARIADAS
@@ -10908,7 +10916,8 @@ FORMATO DE RESPUESTA (JSON puro, sin markdown):
       "phone": "+34600123456",
       "location": "Sevilla",
       "website": "https://www.fontaneriaperez.es",
-      "description": "Empresa de fontanería y climatización con 20 años de experiencia"
+      "description": "Empresa de fontanería y climatización con 20 años de experiencia",
+      "industryTag": "Fontanería"
     }
   ]
 }`;
@@ -10966,18 +10975,36 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         });
       }
 
+      // Helper function to normalize industry tag
+      const normalizeTag = (tag: string | null | undefined): string | null => {
+        if (!tag || typeof tag !== 'string') return null;
+        
+        // Trim and capitalize first letter of each word
+        const normalized = tag.trim()
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
+        
+        return normalized || null;
+      };
+
       // Clean and validate prospects
-      const prospects = parsedResponse.prospects.map((p: any) => ({
-        email: p.email || null,
-        name: p.name || null,
-        company: p.company || 'Empresa sin nombre',
-        phone: p.phone || null,
-        location: p.location || null,
-        website: p.website || null,
-        description: p.description || null,
-        tags: [], // User can add tags later
-        notes: p.description || '',  // Use description as initial notes
-      }));
+      const prospects = parsedResponse.prospects.map((p: any) => {
+        // Extract and normalize the single industry tag
+        const normalizedTag = normalizeTag(p.industryTag);
+        
+        return {
+          email: p.email || null,
+          name: p.name || null,
+          company: p.company || 'Empresa sin nombre',
+          phone: p.phone || null,
+          location: p.location || null,
+          website: p.website || null,
+          description: p.description || null,
+          tags: normalizedTag ? [normalizedTag] : [], // Single tag from AI
+          notes: p.description || '',  // Use description as initial notes
+        };
+      });
 
       console.log(`✅ Generated ${prospects.length} prospects`);
 
