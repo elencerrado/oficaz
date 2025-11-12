@@ -58,9 +58,9 @@ export function FullScreenProspectDialog({ prospect, open, onOpenChange }: FullS
 
   const allTags = Array.from(
     new Set(
-      (allProspects || [])
-        .flatMap((p: any) => p.tags || [])
-        .filter(Boolean)
+      Array.isArray(allProspects)
+        ? allProspects.flatMap((p: any) => p.tags || []).filter(Boolean)
+        : []
     )
   ) as string[];
 

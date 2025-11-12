@@ -842,7 +842,7 @@ export default function SuperAdminMarketing() {
                         <TableHeader>
                           <TableRow className="border-white/20 hover:bg-white/5">
                             <TableHead 
-                              className="text-white/90 cursor-pointer hover:text-white select-none"
+                              className="text-white/90 cursor-pointer hover:text-white select-none min-w-[220px]"
                               onClick={() => handleSort('email')}
                             >
                               <div className="flex items-center gap-1">
@@ -855,7 +855,7 @@ export default function SuperAdminMarketing() {
                               </div>
                             </TableHead>
                             <TableHead 
-                              className="text-white/90 cursor-pointer hover:text-white select-none"
+                              className="text-white/90 cursor-pointer hover:text-white select-none min-w-[160px]"
                               onClick={() => handleSort('name')}
                             >
                               <div className="flex items-center gap-1">
@@ -868,7 +868,7 @@ export default function SuperAdminMarketing() {
                               </div>
                             </TableHead>
                             <TableHead 
-                              className="text-white/90 cursor-pointer hover:text-white select-none"
+                              className="text-white/90 cursor-pointer hover:text-white select-none min-w-[180px]"
                               onClick={() => handleSort('company')}
                             >
                               <div className="flex items-center gap-1">
@@ -881,7 +881,7 @@ export default function SuperAdminMarketing() {
                               </div>
                             </TableHead>
                             <TableHead 
-                              className="text-white/90 cursor-pointer hover:text-white select-none"
+                              className="text-white/90 cursor-pointer hover:text-white select-none min-w-[140px]"
                               onClick={() => handleSort('phone')}
                             >
                               <div className="flex items-center gap-1">
@@ -894,7 +894,7 @@ export default function SuperAdminMarketing() {
                               </div>
                             </TableHead>
                             <TableHead 
-                              className="text-white/90 cursor-pointer hover:text-white select-none"
+                              className="text-white/90 cursor-pointer hover:text-white select-none min-w-[240px]"
                               onClick={() => handleSort('whatsappAvailable')}
                             >
                               <div className="flex items-center gap-1">
@@ -908,7 +908,7 @@ export default function SuperAdminMarketing() {
                               </div>
                             </TableHead>
                             <TableHead 
-                              className="text-white/90 cursor-pointer hover:text-white select-none"
+                              className="text-white/90 cursor-pointer hover:text-white select-none min-w-[150px]"
                               onClick={() => handleSort('location')}
                             >
                               <div className="flex items-center gap-1">
@@ -921,7 +921,7 @@ export default function SuperAdminMarketing() {
                               </div>
                             </TableHead>
                             <TableHead 
-                              className="text-white/90 cursor-pointer hover:text-white select-none"
+                              className="text-white/90 cursor-pointer hover:text-white select-none min-w-[200px]"
                               onClick={() => handleSort('tags')}
                             >
                               <div className="flex items-center gap-1">
@@ -933,15 +933,15 @@ export default function SuperAdminMarketing() {
                                 )}
                               </div>
                             </TableHead>
-                            <TableHead className="text-white/90">Notas</TableHead>
-                            <TableHead className="text-white/90 w-24">Acciones</TableHead>
+                            <TableHead className="text-white/90 min-w-[180px]">Notas</TableHead>
+                            <TableHead className="text-white/90 w-32">Acciones</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {[{ id: 'new', email: '', name: '', company: '', phone: '', location: '', tags: [], notes: '' }, ...filteredProspects].map((prospect: any) => (
-                            <TableRow key={prospect.id} className="border-white/20 hover:bg-white/5">
+                            <TableRow key={prospect.id} className={`border-white/20 hover:bg-white/5 ${prospect.id === 'new' ? 'bg-purple-500/10' : ''}`}>
                               <TableCell
-                                className="text-white font-medium cursor-pointer hover:bg-white/10"
+                                className="text-white font-medium cursor-pointer hover:bg-white/10 py-3"
                                 onClick={() => {
                                   if (prospect.id === 'new') {
                                     setEditingCell({ id: 'new', field: 'email' });
