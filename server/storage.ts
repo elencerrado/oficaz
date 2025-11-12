@@ -3233,46 +3233,31 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getAllEmailProspects(): Promise<any[]> {
-    // Get all prospects with their latest email campaign status
-    const prospects = await db.select()
-      .from(schema.emailProspects)
-      .orderBy(desc(schema.emailProspects.createdAt));
+    // Get all prospects with their latest email campaign status in a single query
+    // Uses LEFT JOIN with a subquery to get the latest send per email efficiently
+    const prospects = await db.execute(sql`
+      SELECT 
+        p.*,
+        CASE 
+          WHEN latest_send.clicked_at IS NOT NULL THEN 'clicked'
+          WHEN latest_send.opened_at IS NOT NULL THEN 'opened'
+          WHEN latest_send.status IN ('sent', 'delivered') THEN 'sent'
+          WHEN latest_send.status IN ('bounced', 'failed') THEN 'bounced'
+          WHEN latest_send.status = 'pending' THEN 'pending'
+          ELSE NULL
+        END as "lastEmailStatus"
+      FROM email_prospects p
+      LEFT JOIN LATERAL (
+        SELECT status, clicked_at, opened_at, sent_at
+        FROM email_campaign_sends
+        WHERE recipient_email = p.email
+        ORDER BY sent_at DESC NULLS LAST
+        LIMIT 1
+      ) latest_send ON true
+      ORDER BY p.created_at DESC
+    `);
     
-    // For each prospect, get the latest email campaign send status
-    const prospectsWithEmailStatus = await Promise.all(
-      prospects.map(async (prospect) => {
-        if (!prospect.email) {
-          return { ...prospect, lastEmailStatus: null };
-        }
-        
-        // Get the most recent campaign send for this prospect's email
-        const [latestSend] = await db.select()
-          .from(schema.emailCampaignSends)
-          .where(eq(schema.emailCampaignSends.recipientEmail, prospect.email))
-          .orderBy(desc(schema.emailCampaignSends.sentAt))
-          .limit(1);
-        
-        // Map status to user-friendly labels
-        let lastEmailStatus = null;
-        if (latestSend) {
-          if (latestSend.clickedAt) {
-            lastEmailStatus = 'clicked';
-          } else if (latestSend.openedAt) {
-            lastEmailStatus = 'opened';
-          } else if (latestSend.status === 'sent' || latestSend.status === 'delivered') {
-            lastEmailStatus = 'sent';
-          } else if (latestSend.status === 'bounced' || latestSend.status === 'failed') {
-            lastEmailStatus = 'bounced';
-          } else {
-            lastEmailStatus = 'pending';
-          }
-        }
-        
-        return { ...prospect, lastEmailStatus };
-      })
-    );
-    
-    return prospectsWithEmailStatus;
+    return prospects.rows;
   }
 
   async getRegisteredUsersStats(): Promise<{ total: number; active: number; trial: number; blocked: number; cancelled: number }> {
