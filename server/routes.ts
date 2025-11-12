@@ -131,6 +131,10 @@ const contactUpload = multer({
   }
 });
 
+// 🔒 MONITOR EMAIL: Test/control email that receives all campaigns but doesn't count in stats
+const MONITOR_EMAIL = 'soy@oficaz.es';
+const isMonitorEmail = (email: string) => email.toLowerCase() === MONITOR_EMAIL.toLowerCase();
+
 // Contact form rate limiter - strict limits to prevent abuse
 const contactLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -9848,14 +9852,16 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
           .set({ openedAt: new Date() })
           .where(eq(schema.emailCampaignSends.id, sendId));
 
-        // Increment campaign opened count
-        await db.update(schema.emailCampaigns)
-          .set({ 
-            openedCount: sql`${schema.emailCampaigns.openedCount} + 1`
-          })
-          .where(eq(schema.emailCampaigns.id, sendRecord.campaignId));
+        // 🔒 MONITOR EMAIL: Increment campaign opened count only if not test/control email
+        if (!isMonitorEmail(sendRecord.recipientEmail)) {
+          await db.update(schema.emailCampaigns)
+            .set({ 
+              openedCount: sql`${schema.emailCampaigns.openedCount} + 1`
+            })
+            .where(eq(schema.emailCampaigns.id, sendRecord.campaignId));
+        }
 
-        console.log(`📧 Email opened: sendId=${sendId}, campaign=${sendRecord.campaignId}`);
+        console.log(`📧 Email opened: sendId=${sendId}, campaign=${sendRecord.campaignId}, recipient=${sendRecord.recipientEmail}${isMonitorEmail(sendRecord.recipientEmail) ? ' (monitor - not counted)' : ''}`);
       }
 
       // Return 1x1 transparent pixel
@@ -9897,14 +9903,16 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
           .set({ clickedAt: new Date() })
           .where(eq(schema.emailCampaignSends.id, sendId));
 
-        // Increment campaign clicked count
-        await db.update(schema.emailCampaigns)
-          .set({ 
-            clickedCount: sql`${schema.emailCampaigns.clickedCount} + 1`
-          })
-          .where(eq(schema.emailCampaigns.id, sendRecord.campaignId));
+        // 🔒 MONITOR EMAIL: Increment campaign clicked count only if not test/control email
+        if (!isMonitorEmail(sendRecord.recipientEmail)) {
+          await db.update(schema.emailCampaigns)
+            .set({ 
+              clickedCount: sql`${schema.emailCampaigns.clickedCount} + 1`
+            })
+            .where(eq(schema.emailCampaigns.id, sendRecord.campaignId));
+        }
 
-        console.log(`🖱️ Email clicked: sendId=${sendId}, campaign=${sendRecord.campaignId}, url=${targetUrl}`);
+        console.log(`🖱️ Email clicked: sendId=${sendId}, campaign=${sendRecord.campaignId}, url=${targetUrl}, recipient=${sendRecord.recipientEmail}${isMonitorEmail(sendRecord.recipientEmail) ? ' (monitor - not counted)' : ''}`);
       }
 
       // Add campaign tracking parameter to registration URLs
@@ -10569,9 +10577,9 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
       // Use selected_emails array from campaign and remove duplicates
       let selectedEmails = Array.from(new Set(campaign.selectedEmails || []));
       
-      // Always add soy@oficaz.es as a recipient to monitor campaigns
-      if (!selectedEmails.includes('soy@oficaz.es')) {
-        selectedEmails.push('soy@oficaz.es');
+      // Always add monitor email as a recipient to monitor campaigns
+      if (!selectedEmails.some(email => isMonitorEmail(email))) {
+        selectedEmails.push(MONITOR_EMAIL);
       }
       
       if (selectedEmails.length === 0) {
@@ -10586,9 +10594,9 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
       const alreadySentEmails = new Set(alreadySent.map(s => s.email));
       
       // Filter only new emails (not already sent)
-      // EXCEPTION: soy@oficaz.es always receives the email to monitor campaigns
+      // EXCEPTION: Monitor email always receives the email to monitor campaigns
       const newEmails = selectedEmails.filter(email => 
-        email === 'soy@oficaz.es' || !alreadySentEmails.has(email)
+        isMonitorEmail(email) || !alreadySentEmails.has(email)
       );
       
       if (newEmails.length === 0) {
@@ -10664,7 +10672,10 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
             html: htmlWithTracking,
           });
           
-          successCount++;
+          // 🔒 MONITOR EMAIL: Don't count test/control email in statistics
+          if (!isMonitorEmail(email)) {
+            successCount++;
+          }
         } catch (emailError) {
           console.error(`Failed to send email to ${email}:`, emailError);
           
