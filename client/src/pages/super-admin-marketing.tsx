@@ -1068,11 +1068,11 @@ export default function SuperAdminMarketing() {
                                         <option value="closed" className="bg-gray-800">Cerrado</option>
                                       </select>
                                     </div>
-                                    {prospect.whatsappConversationStatusUpdatedAt && (
-                                      <span className="text-[9px] text-white/40">
-                                        {new Date(prospect.whatsappConversationStatusUpdatedAt).toLocaleDateString('es-ES')}
-                                      </span>
-                                    )}
+                                    <span className="text-[9px] text-white/40">
+                                      {prospect.whatsappConversationStatusUpdatedAt 
+                                        ? new Date(prospect.whatsappConversationStatusUpdatedAt).toLocaleDateString('es-ES')
+                                        : 'Sin fecha'}
+                                    </span>
                                   </div>
                                 ) : (
                                   <span className="text-white/40 text-xs">-</span>
@@ -1108,11 +1108,11 @@ export default function SuperAdminMarketing() {
                                       <option value="not_interested" className="bg-gray-800">No interesa</option>
                                       <option value="closed" className="bg-gray-800">Cerrado</option>
                                     </select>
-                                    {prospect.instagramConversationStatusUpdatedAt && (
-                                      <span className="text-[9px] text-white/40">
-                                        {new Date(prospect.instagramConversationStatusUpdatedAt).toLocaleDateString('es-ES')}
-                                      </span>
-                                    )}
+                                    <span className="text-[9px] text-white/40">
+                                      {prospect.instagramConversationStatusUpdatedAt 
+                                        ? new Date(prospect.instagramConversationStatusUpdatedAt).toLocaleDateString('es-ES')
+                                        : 'Sin fecha'}
+                                    </span>
                                   </div>
                                 ) : (
                                   <span className="text-white/40 text-xs">-</span>
@@ -1138,14 +1138,14 @@ export default function SuperAdminMarketing() {
                                        prospect.lastEmailStatus === 'pending' ? 'Pendiente' :
                                        'Sin enviar'}
                                     </span>
-                                    {(() => {
-                                      const emailDate = prospect.lastEmailClickedAt || prospect.lastEmailOpenedAt || prospect.lastEmailSentAt;
-                                      return emailDate ? (
-                                        <span className="text-[9px] text-white/40">
-                                          {new Date(emailDate).toLocaleDateString('es-ES')}
-                                        </span>
-                                      ) : null;
-                                    })()}
+                                    <span className="text-[9px] text-white/40">
+                                      {(() => {
+                                        const emailDate = prospect.lastEmailClickedAt || prospect.lastEmailOpenedAt || prospect.lastEmailSentAt;
+                                        return emailDate 
+                                          ? new Date(emailDate).toLocaleDateString('es-ES')
+                                          : 'Sin fecha';
+                                      })()}
+                                    </span>
                                   </div>
                                 ) : (
                                   <span className="text-white/40 text-xs">-</span>
