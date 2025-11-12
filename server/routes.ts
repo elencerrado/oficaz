@@ -10869,6 +10869,81 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
     }
   });
 
+  // Mark email send as bounced (for manual bounce reporting)
+  // Accepts either sendId param OR email+campaignId in body
+  app.patch('/api/super-admin/email-campaign-sends/mark-bounced', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const { sendId, email, campaignId, bounceReason } = req.body;
+
+      // Validate that we have either sendId or (email + campaignId)
+      if (!sendId && (!email || !campaignId)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Se requiere sendId o (email + campaignId)' 
+        });
+      }
+
+      let targetSend;
+
+      if (sendId) {
+        // Find by sendId
+        console.log(`📧 Marking email send ${sendId} as bounced`);
+        
+        const [send] = await db.select()
+          .from(schema.emailCampaignSends)
+          .where(eq(schema.emailCampaignSends.id, sendId));
+        
+        if (!send) {
+          return res.status(404).json({ 
+            success: false, 
+            message: 'Envío no encontrado' 
+          });
+        }
+        
+        targetSend = send;
+      } else {
+        // Find by email + campaignId
+        console.log(`📧 Marking email send for ${email} in campaign ${campaignId} as bounced`);
+        
+        const [send] = await db.select()
+          .from(schema.emailCampaignSends)
+          .where(
+            and(
+              eq(schema.emailCampaignSends.recipientEmail, email),
+              eq(schema.emailCampaignSends.campaignId, campaignId)
+            )
+          );
+        
+        if (!send) {
+          return res.status(404).json({ 
+            success: false, 
+            message: 'No se encontró el envío para este email y campaña' 
+          });
+        }
+        
+        targetSend = send;
+      }
+
+      // Update the send status to bounced
+      await db.update(schema.emailCampaignSends)
+        .set({ 
+          status: 'bounced',
+          updatedAt: new Date()
+        })
+        .where(eq(schema.emailCampaignSends.id, targetSend.id));
+
+      console.log(`✅ Email send ${targetSend.id} marked as bounced${bounceReason ? `: ${bounceReason}` : ''}`);
+
+      res.json({ 
+        success: true, 
+        message: 'Email marcado como rebotado. Las estadísticas se actualizarán automáticamente.'
+      });
+    } catch (error: any) {
+      console.error('Error marking email as bounced:', error);
+      res.status(500).json({ success: false, message: 'Error al marcar email como rebotado' });
+    }
+  });
+
   // Clean duplicate tags from email prospects (keep only first tag)
   app.post('/api/super-admin/email-prospects/clean-duplicate-tags', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {

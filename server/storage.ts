@@ -3205,19 +3205,27 @@ export class DrizzleStorage implements IStorage {
           return { ...campaign, hasNewRecipients: false };
         }
         
-        // Get emails already sent for this campaign
-        const sentRecords = await db.select({ email: schema.emailCampaignSends.recipientEmail })
+        // Get emails already sent for this campaign with their status
+        const sentRecords = await db.select({ 
+          email: schema.emailCampaignSends.recipientEmail,
+          status: schema.emailCampaignSends.status
+        })
           .from(schema.emailCampaignSends)
           .where(eq(schema.emailCampaignSends.campaignId, campaign.id));
         
         const sentEmails = new Set(sentRecords.map(s => s.email));
         const newEmails = selectedEmails.filter((email: string) => !sentEmails.has(email));
         
+        // Calculate successful sends (exclude bounced and failed from statistics)
+        const successfulStatuses = ['sent', 'delivered', 'opened', 'clicked'];
+        const successfulSends = sentRecords.filter(s => successfulStatuses.includes(s.status || ''));
+        
         return {
           ...campaign,
           hasNewRecipients: newEmails.length > 0,
           newRecipientsCount: newEmails.length,
-          sentRecipientsCount: sentEmails.size
+          sentRecipientsCount: sentEmails.size, // Total attempted (including bounces/failed)
+          successfulSendCount: successfulSends.length // Only successful sends for rate calculations
         };
       })
     );

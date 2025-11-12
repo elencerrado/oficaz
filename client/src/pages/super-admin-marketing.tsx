@@ -589,13 +589,13 @@ export default function SuperAdminMarketing() {
   const totalProspects = prospects?.length || 0;
   const activeProspects = prospects?.filter((p: any) => p.status === 'active').length || 0;
 
-  // Calculate email statistics
-  const totalSent = campaigns?.reduce((sum: number, c: any) => sum + (c.sentRecipientsCount || 0), 0) || 0;
+  // Calculate email statistics (using successfulSendCount to exclude bounces/failed)
+  const totalSuccessful = campaigns?.reduce((sum: number, c: any) => sum + (c.successfulSendCount || 0), 0) || 0;
   const totalOpened = campaigns?.reduce((sum: number, c: any) => sum + (c.openedCount || 0), 0) || 0;
   const totalClicked = campaigns?.reduce((sum: number, c: any) => sum + (c.clickedCount || 0), 0) || 0;
   
-  const openRate = totalSent > 0 ? Math.round((totalOpened / totalSent) * 100) : 0;
-  const clickRate = totalSent > 0 ? Math.round((totalClicked / totalSent) * 100) : 0;
+  const openRate = totalSuccessful > 0 ? Math.round((totalOpened / totalSuccessful) * 100) : 0;
+  const clickRate = totalSuccessful > 0 ? Math.round((totalClicked / totalSuccessful) * 100) : 0;
 
   return (
     <SuperAdminLayout>
@@ -717,7 +717,7 @@ export default function SuperAdminMarketing() {
                             </p>
                             {campaign.status === 'sent' && (
                               <p className="text-xs text-white/60 hidden md:block">
-                                {campaign.sentRecipientsCount || 0} enviados · {campaign.openedCount || 0} aperturas · {campaign.clickedCount || 0} clics
+                                {campaign.successfulSendCount || 0} enviados · {campaign.openedCount || 0} aperturas · {campaign.clickedCount || 0} clics
                               </p>
                             )}
                           </div>
