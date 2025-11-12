@@ -1281,7 +1281,16 @@ export default function SuperAdminMarketing() {
                                         </span>
                                       );
                                     })}
-                                    <Popover open={isTagPopoverOpen} onOpenChange={setIsTagPopoverOpen}>
+                                    <Popover 
+                                      open={isTagPopoverOpen} 
+                                      onOpenChange={(open) => {
+                                        setIsTagPopoverOpen(open);
+                                        if (!open) {
+                                          setEditingCell(null);
+                                          setTagInput('');
+                                        }
+                                      }}
+                                    >
                                       <PopoverTrigger asChild>
                                         <div className="relative">
                                           <Input
@@ -1305,17 +1314,8 @@ export default function SuperAdminMarketing() {
                                                 }
                                                 setTagInput('');
                                               } else if (e.key === 'Escape') {
-                                                setEditingCell(null);
-                                                setTagInput('');
                                                 setIsTagPopoverOpen(false);
                                               }
-                                            }}
-                                            onBlur={() => {
-                                              setTimeout(() => {
-                                                setEditingCell(null);
-                                                setTagInput('');
-                                                setIsTagPopoverOpen(false);
-                                              }, 200);
                                             }}
                                           />
                                         </div>
