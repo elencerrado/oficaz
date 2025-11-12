@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { CreateCampaignDialog } from '@/components/email-marketing/create-campaign-dialog';
 import { AddProspectDialog } from '@/components/email-marketing/add-prospect-dialog';
 import { EditProspectDialog } from '@/components/email-marketing/edit-prospect-dialog';
+import { FullScreenProspectDialog } from '@/components/email-marketing/fullscreen-prospect-dialog';
 import { EditCampaignDialog } from '@/components/email-marketing/edit-campaign-dialog';
 import { CampaignConversionsDialog } from '@/components/email-marketing/campaign-conversions-dialog';
 import { ProspectStatsDialog } from '@/components/email-marketing/prospect-stats-dialog';
@@ -47,6 +48,7 @@ export default function SuperAdminMarketing() {
   const [editingCampaign, setEditingCampaign] = useState<any>(null);
   const [conversionsCampaign, setConversionsCampaign] = useState<any>(null);
   const [editingProspect, setEditingProspect] = useState<any>(null);
+  const [fullScreenEditingProspect, setFullScreenEditingProspect] = useState<any>(null);
   const [statsProspect, setStatsProspect] = useState<any>(null);
   const [isTableView, setIsTableView] = useState(true);
   const [editingCell, setEditingCell] = useState<{ id: number | string; field: string } | null>(null);
@@ -1501,8 +1503,18 @@ export default function SuperAdminMarketing() {
                                     <Button
                                       size="sm"
                                       variant="ghost"
+                                      onClick={() => setFullScreenEditingProspect(prospect)}
+                                      className="h-7 w-7 p-0 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                                      title="Editar a pantalla completa"
+                                    >
+                                      <Edit2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
                                       onClick={() => setStatsProspect(prospect)}
                                       className="h-7 w-7 p-0 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20"
+                                      title="Ver estadísticas"
                                     >
                                       <BarChart3 className="w-3.5 h-3.5" />
                                     </Button>
@@ -1511,6 +1523,7 @@ export default function SuperAdminMarketing() {
                                       variant="ghost"
                                       onClick={() => handleDeleteProspect(prospect.id)}
                                       className="h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                                      title="Eliminar"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
                                     </Button>
@@ -1681,6 +1694,15 @@ export default function SuperAdminMarketing() {
           prospect={statsProspect}
           open={!!statsProspect}
           onOpenChange={(open) => !open && setStatsProspect(null)}
+        />
+      )}
+
+      {/* Full Screen Prospect Edit Dialog */}
+      {fullScreenEditingProspect && (
+        <FullScreenProspectDialog
+          prospect={fullScreenEditingProspect}
+          open={!!fullScreenEditingProspect}
+          onOpenChange={(open) => !open && setFullScreenEditingProspect(null)}
         />
       )}
 
