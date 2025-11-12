@@ -10869,6 +10869,68 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
     }
   });
 
+  // Mark prospect's last email as bounced
+  app.patch('/api/super-admin/email-prospects/:prospectId/mark-bounced', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const prospectId = parseInt(req.params.prospectId);
+      
+      if (!prospectId || isNaN(prospectId)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'ID de prospect inválido' 
+        });
+      }
+
+      // Get prospect to find their email
+      const [prospect] = await db.select()
+        .from(schema.emailProspects)
+        .where(eq(schema.emailProspects.id, prospectId));
+      
+      if (!prospect) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Prospect no encontrado' 
+        });
+      }
+
+      // Find the most recent email send for this prospect
+      const [lastSend] = await db.select()
+        .from(schema.emailCampaignSends)
+        .where(eq(schema.emailCampaignSends.recipientEmail, prospect.email))
+        .orderBy(desc(schema.emailCampaignSends.sentAt))
+        .limit(1);
+
+      // Update prospect's lastEmailStatus to bounced
+      await db.update(schema.emailProspects)
+        .set({ 
+          lastEmailStatus: 'bounced'
+        })
+        .where(eq(schema.emailProspects.id, prospectId));
+
+      // If there's a last send, mark it as bounced too
+      if (lastSend) {
+        await db.update(schema.emailCampaignSends)
+          .set({ 
+            status: 'bounced',
+            updatedAt: new Date()
+          })
+          .where(eq(schema.emailCampaignSends.id, lastSend.id));
+        
+        console.log(`✅ Prospect ${prospectId} (${prospect.email}) and email send ${lastSend.id} marked as bounced`);
+      } else {
+        console.log(`✅ Prospect ${prospectId} (${prospect.email}) marked as bounced (no sends found)`);
+      }
+
+      res.json({ 
+        success: true, 
+        message: 'Email marcado como rebotado'
+      });
+    } catch (error: any) {
+      console.error('Error marking prospect email as bounced:', error);
+      res.status(500).json({ success: false, message: 'Error al marcar email como rebotado' });
+    }
+  });
+
   // Mark email send as bounced (for manual bounce reporting)
   // Accepts either sendId param OR email+campaignId in body
   app.patch('/api/super-admin/email-campaign-sends/mark-bounced', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
