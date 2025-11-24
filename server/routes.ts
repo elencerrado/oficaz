@@ -10869,65 +10869,55 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
     }
   });
 
-  // Mark prospect's last email as bounced
+  // Mark prospect's email as bounced
   app.patch('/api/super-admin/email-prospects/:prospectId/mark-bounced', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const prospectId = parseInt(req.params.prospectId);
       
       if (!prospectId || isNaN(prospectId)) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'ID de prospect inválido' 
-        });
+        return res.status(400).json({ success: false, message: 'ID de prospect inválido' });
       }
 
-      // Get prospect to find their email
+      // Get prospect
       const [prospect] = await db.select()
         .from(schema.emailProspects)
         .where(eq(schema.emailProspects.id, prospectId));
       
       if (!prospect) {
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Prospect no encontrado' 
-        });
+        return res.status(404).json({ success: false, message: 'Prospect no encontrado' });
       }
 
-      // Find all email sends for this prospect and get the most recent
+      // Update prospect's lastEmailStatus to bounced
+      await db.update(schema.emailProspects)
+        .set({ lastEmailStatus: 'bounced' })
+        .where(eq(schema.emailProspects.id, prospectId));
+
+      // Find and update the most recent email send for this prospect
       const sends = await db.select()
         .from(schema.emailCampaignSends)
         .where(eq(schema.emailCampaignSends.recipientEmail, prospect.email));
       
-      // Get the most recent send by sorting in memory
-      const lastSend = sends.sort((a, b) => {
-        if (!a.sentAt || !b.sentAt) return 0;
-        return new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime();
-      })[0];
-
-      // Update prospect's lastEmailStatus to bounced
-      const prospectUpdate: any = { lastEmailStatus: 'bounced' };
-      await db.update(schema.emailProspects)
-        .set(prospectUpdate)
-        .where(eq(schema.emailProspects.id, prospectId));
-
-      // If there's a last send, mark it as bounced too
-      if (lastSend) {
+      if (sends.length > 0) {
+        // Sort to find most recent
+        const sortedSends = [...sends].sort((a, b) => {
+          const dateA = a.sentAt ? new Date(a.sentAt).getTime() : 0;
+          const dateB = b.sentAt ? new Date(b.sentAt).getTime() : 0;
+          return dateB - dateA;
+        });
+        
+        const lastSend = sortedSends[0];
+        
+        // Mark the most recent send as bounced
         await db.update(schema.emailCampaignSends)
-          .set({ 
-            status: 'bounced',
-            updatedAt: new Date()
-          })
+          .set({ status: 'bounced', updatedAt: new Date() })
           .where(eq(schema.emailCampaignSends.id, lastSend.id));
         
-        console.log(`✅ Prospect ${prospectId} (${prospect.email}) and email send ${lastSend.id} marked as bounced`);
+        console.log(`✅ Marked prospect ${prospectId} and send ${lastSend.id} as bounced`);
       } else {
-        console.log(`✅ Prospect ${prospectId} (${prospect.email}) marked as bounced (no sends found)`);
+        console.log(`✅ Marked prospect ${prospectId} as bounced (no sends found)`);
       }
 
-      res.json({ 
-        success: true, 
-        message: 'Email marcado como rebotado'
-      });
+      res.json({ success: true, message: 'Email marcado como rebotado' });
     } catch (error: any) {
       console.error('Error marking prospect email as bounced:', error);
       res.status(500).json({ success: false, message: 'Error al marcar email como rebotado' });
