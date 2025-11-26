@@ -933,7 +933,7 @@ export default function WorkReportsPage() {
                             <img 
                               src={report.signatureImage} 
                               alt="Firma"
-                              className="h-8 max-w-[100px] object-contain"
+                              className="h-8 max-w-[100px] object-contain dark:invert dark:brightness-90"
                             />
                           )}
                         </div>

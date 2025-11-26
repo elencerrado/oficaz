@@ -745,7 +745,7 @@ export default function AdminWorkReportsPage() {
                         <img 
                           src={selectedReport.employeeSignature} 
                           alt="Firma del empleado" 
-                          className="max-h-20 w-auto mx-auto"
+                          className="max-h-20 w-auto mx-auto dark:invert dark:brightness-90"
                         />
                       </div>
                     ) : (
@@ -764,7 +764,7 @@ export default function AdminWorkReportsPage() {
                         <img 
                           src={selectedReport.signatureImage} 
                           alt="Firma del cliente" 
-                          className="max-h-20 w-auto mx-auto"
+                          className="max-h-20 w-auto mx-auto dark:invert dark:brightness-90"
                         />
                       </div>
                     ) : (
