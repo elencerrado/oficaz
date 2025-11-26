@@ -52,15 +52,14 @@ interface WorkReport {
   notes?: string | null;
   signedBy?: string | null;
   signatureImage?: string | null;
-  status: 'completed' | 'pending' | 'cancelled';
+  status: 'draft' | 'submitted';
   createdAt: string;
   updatedAt: string;
 }
 
 const STATUS_STYLES = {
-  completed: { bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-green-200 dark:border-green-800', text: 'text-green-700 dark:text-green-300', label: 'Completado' },
-  pending: { bg: 'bg-yellow-50 dark:bg-yellow-900/20', border: 'border-yellow-200 dark:border-yellow-800', text: 'text-yellow-700 dark:text-yellow-300', label: 'Pendiente' },
-  cancelled: { bg: 'bg-red-50 dark:bg-red-900/20', border: 'border-red-200 dark:border-red-800', text: 'text-red-700 dark:text-red-300', label: 'Cancelado' }
+  draft: { bg: 'bg-yellow-50 dark:bg-yellow-900/20', border: 'border-yellow-200 dark:border-yellow-800', text: 'text-yellow-700 dark:text-yellow-300', label: 'Borrador' },
+  submitted: { bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-green-200 dark:border-green-800', text: 'text-green-700 dark:text-green-300', label: 'Enviado' }
 };
 
 export default function WorkReportsPage() {
@@ -94,7 +93,7 @@ export default function WorkReportsPage() {
     clientName: '',
     notes: '',
     signedBy: '',
-    status: 'completed' as 'completed' | 'pending' | 'cancelled'
+    status: 'draft' as 'draft' | 'submitted'
   });
 
   const getDateRange = () => {
@@ -302,7 +301,7 @@ export default function WorkReportsPage() {
       clientName: '',
       notes: '',
       signedBy: '',
-      status: 'completed'
+      status: 'draft'
     });
     setClientSignatureData('');
     setClientSignedBy('');
@@ -667,34 +666,6 @@ export default function WorkReportsPage() {
                       data-testid="textarea-notes"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm">Estado</Label>
-                    <Select value={formData.status} onValueChange={(v: 'completed' | 'pending' | 'cancelled') => setFormData({ ...formData, status: v })}>
-                      <SelectTrigger className="bg-white dark:bg-gray-800" data-testid="select-status">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="completed">
-                          <span className="flex items-center gap-2">
-                            <CheckCircle className="w-4 h-4 text-green-600" />
-                            Completado
-                          </span>
-                        </SelectItem>
-                        <SelectItem value="pending">
-                          <span className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-yellow-600" />
-                            Pendiente
-                          </span>
-                        </SelectItem>
-                        <SelectItem value="cancelled">
-                          <span className="flex items-center gap-2">
-                            <Trash2 className="w-4 h-4 text-red-600" />
-                            Cancelado
-                          </span>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
               </div>
 
@@ -727,17 +698,26 @@ export default function WorkReportsPage() {
                 </Button>
               )}
             </div>
-            <DialogFooter className="grid grid-cols-2 gap-3">
+            <DialogFooter className="grid grid-cols-3 gap-3">
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} data-testid="button-cancel-create" className="w-full">
                 Cancelar
               </Button>
               <Button 
-                onClick={() => createMutation.mutate({ ...formData, signatureImage: clientSignatureData || undefined })}
+                variant="outline"
+                onClick={() => createMutation.mutate({ ...formData, status: 'draft', signatureImage: clientSignatureData || undefined })}
+                disabled={createMutation.isPending || !formData.location || !formData.description}
+                data-testid="button-save-draft"
+                className="w-full border-yellow-300 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-600 dark:text-yellow-300 dark:hover:bg-yellow-900/30"
+              >
+                {createMutation.isPending ? 'Guardando...' : 'Guardar borrador'}
+              </Button>
+              <Button 
+                onClick={() => createMutation.mutate({ ...formData, status: 'submitted', signatureImage: clientSignatureData || undefined })}
                 disabled={createMutation.isPending || !formData.location || !formData.description}
                 data-testid="button-submit-create"
-                className="w-full"
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
               >
-                {createMutation.isPending ? 'Guardando...' : 'Guardar Parte'}
+                {createMutation.isPending ? 'Enviando...' : 'Enviar'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -973,19 +953,6 @@ export default function WorkReportsPage() {
                     data-testid="textarea-edit-notes"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm">Estado</Label>
-                  <Select value={formData.status} onValueChange={(v: 'completed' | 'pending' | 'cancelled') => setFormData({ ...formData, status: v })}>
-                    <SelectTrigger className="bg-white dark:bg-gray-800" data-testid="select-edit-status">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="completed">Completado</SelectItem>
-                      <SelectItem value="pending">Pendiente</SelectItem>
-                      <SelectItem value="cancelled">Cancelado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
             </div>
 
@@ -1018,21 +985,49 @@ export default function WorkReportsPage() {
               </Button>
             )}
           </div>
-          <DialogFooter className="grid grid-cols-2 gap-3">
+          <DialogFooter className={`grid gap-3 ${selectedReport?.status === 'draft' ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} data-testid="button-cancel-edit" className="w-full">
               Cancelar
             </Button>
-            <Button
-              onClick={() => selectedReport && updateMutation.mutate({ 
-                id: selectedReport.id, 
-                data: { ...formData, signatureImage: clientSignatureData || undefined } 
-              })}
-              disabled={updateMutation.isPending || !formData.location || !formData.description}
-              data-testid="button-submit-edit"
-              className="w-full"
-            >
-              {updateMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
-            </Button>
+            {selectedReport?.status === 'draft' ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => selectedReport && updateMutation.mutate({ 
+                    id: selectedReport.id, 
+                    data: { ...formData, status: 'draft', signatureImage: clientSignatureData || undefined } 
+                  })}
+                  disabled={updateMutation.isPending || !formData.location || !formData.description}
+                  data-testid="button-save-draft-edit"
+                  className="w-full border-yellow-300 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-600 dark:text-yellow-300 dark:hover:bg-yellow-900/30"
+                >
+                  {updateMutation.isPending ? 'Guardando...' : 'Guardar borrador'}
+                </Button>
+                <Button
+                  onClick={() => selectedReport && updateMutation.mutate({ 
+                    id: selectedReport.id, 
+                    data: { ...formData, status: 'submitted', signatureImage: clientSignatureData || undefined } 
+                  })}
+                  disabled={updateMutation.isPending || !formData.location || !formData.description}
+                  data-testid="button-submit-edit"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {updateMutation.isPending ? 'Enviando...' : 'Enviar'}
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={() => selectedReport && updateMutation.mutate({ 
+                  id: selectedReport.id, 
+                  data: { ...formData, signatureImage: clientSignatureData || undefined } 
+                })}
+                disabled={updateMutation.isPending || !formData.location || !formData.description}
+                data-testid="button-submit-edit"
+                className="w-full"
+              >
+                {updateMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

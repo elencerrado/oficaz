@@ -1133,7 +1133,7 @@ export const workReports = pgTable("work_reports", {
   notes: text("notes"), // Additional notes
   signedBy: text("signed_by"), // Optional name of person who signed the report
   signatureImage: text("signature_image"), // Optional signature image URL for the report
-  status: varchar("status", { length: 20 }).default('completed').notNull(), // completed, pending, cancelled
+  status: varchar("status", { length: 20 }).default('draft').notNull(), // draft, submitted
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => ({
