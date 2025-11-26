@@ -5300,32 +5300,38 @@ Responde directamente a este email para contactar con la persona.
         return `${hours} horas ${mins} minutos`;
       };
       
-      // Header with company name and client prominently displayed
-      doc.setFillColor(59, 130, 246);
-      doc.rect(0, 0, 210, 45, 'F');
-      doc.setTextColor(255, 255, 255);
+      // Header with company name and client prominently displayed (white background)
+      doc.setTextColor(0, 0, 0);
       doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
-      doc.text(company?.name || 'Empresa', 14, 16);
-      doc.setFontSize(12);
+      doc.text(company?.name || 'Empresa', 14, 18);
+      doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
-      doc.text('PARTE DE TRABAJO', 14, 26);
-      
-      // Client name prominently in header
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Cliente: ${report.clientName || 'No especificado'}`, 14, 38);
+      doc.setTextColor(100, 100, 100);
+      doc.text('PARTE DE TRABAJO', 14, 27);
       
       // Reference number on the right
       doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`REF: PT-${report.id}`, 196, 16, { align: 'right' });
-      doc.text(report.status === 'submitted' ? 'ENVIADO' : 'BORRADOR', 196, 24, { align: 'right' });
-      
-      // Reset text color
       doc.setTextColor(0, 0, 0);
+      doc.text(`REF: PT-${report.id}`, 196, 18, { align: 'right' });
+      doc.setTextColor(100, 100, 100);
+      doc.text(report.status === 'submitted' ? 'ENVIADO' : 'BORRADOR', 196, 27, { align: 'right' });
       
-      let yPos = 58;
+      // Separator line
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.line(14, 33, 196, 33);
+      
+      // Client name prominently below separator
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Cliente: ${report.clientName || 'No especificado'}`, 14, 44);
+      
+      // Another separator line after client
+      doc.line(14, 50, 196, 50);
+      
+      let yPos = 60;
       
       // Details section - all fields in a clean list format
       doc.setDrawColor(229, 231, 235);
