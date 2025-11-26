@@ -18,7 +18,7 @@ import {
   ClipboardList, 
   Clock, 
   MapPin,
-  Calendar,
+  Calendar as CalendarIcon,
   Search,
   Filter,
   User,
@@ -33,6 +33,8 @@ import {
   Edit
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
@@ -807,14 +809,34 @@ export default function AdminWorkReportsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-date">Fecha</Label>
-                  <Input
-                    id="edit-date"
-                    type="date"
-                    value={editFormData.reportDate}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, reportDate: e.target.value }))}
-                    className="bg-white dark:bg-gray-800"
-                  />
+                  <Label>Fecha</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal bg-white dark:bg-gray-800"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {editFormData.reportDate 
+                          ? format(parseISO(editFormData.reportDate), "d 'de' MMMM, yyyy", { locale: es })
+                          : "Seleccionar fecha"
+                        }
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={editFormData.reportDate ? parseISO(editFormData.reportDate) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            setEditFormData(prev => ({ ...prev, reportDate: format(date, 'yyyy-MM-dd') }));
+                          }
+                        }}
+                        locale={es}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-location">Ubicación</Label>
