@@ -349,10 +349,10 @@ export default function AdminWorkReportsPage() {
       </div>
 
       {/* Filters & List Card */}
-      <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
-        <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+      <Card>
+        <CardHeader>
           <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-            <span className="text-sm sm:text-lg font-medium text-gray-900 dark:text-white">{getFilterTitle()} ({filteredReports.length})</span>
+            <span className="text-sm sm:text-lg font-medium">{getFilterTitle()} ({filteredReports.length})</span>
             
             {/* Desktop: buttons grouped together */}
             <div className="hidden sm:flex items-center gap-2">
@@ -360,7 +360,7 @@ export default function AdminWorkReportsPage() {
                 variant="outline" 
                 size="sm" 
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="flex items-center gap-2"
               >
                 <Filter className="w-4 h-4" />
                 Filtros
@@ -370,7 +370,6 @@ export default function AdminWorkReportsPage() {
                 size="sm" 
                 onClick={() => exportToFormat('pdf')}
                 disabled={isExporting || filteredReports.length === 0}
-                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
                 data-testid="button-export-pdf"
               >
                 <Download className="w-4 h-4 mr-2" />
@@ -381,7 +380,6 @@ export default function AdminWorkReportsPage() {
                 size="sm" 
                 onClick={() => exportToFormat('excel')}
                 disabled={isExporting || filteredReports.length === 0}
-                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
                 data-testid="button-export-excel"
               >
                 <FileSpreadsheet className="w-4 h-4 mr-2" />
@@ -395,7 +393,7 @@ export default function AdminWorkReportsPage() {
                 variant="outline" 
                 size="sm" 
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center justify-center gap-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+                className="flex items-center justify-center gap-1"
               >
                 <Filter className="w-4 h-4" />
                 <span className="text-xs">Filtros</span>
@@ -405,7 +403,7 @@ export default function AdminWorkReportsPage() {
                 size="sm" 
                 onClick={() => exportToFormat('pdf')}
                 disabled={isExporting || filteredReports.length === 0}
-                className="flex items-center justify-center gap-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+                className="flex items-center justify-center gap-1"
               >
                 <Download className="w-4 h-4" />
                 <span className="text-xs">PDF</span>
@@ -415,7 +413,7 @@ export default function AdminWorkReportsPage() {
                 size="sm" 
                 onClick={() => exportToFormat('excel')}
                 disabled={isExporting || filteredReports.length === 0}
-                className="flex items-center justify-center gap-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+                className="flex items-center justify-center gap-1"
               >
                 <FileSpreadsheet className="w-4 h-4" />
                 <span className="text-xs">Excel</span>
@@ -426,7 +424,7 @@ export default function AdminWorkReportsPage() {
 
         {/* Collapsible Filters */}
         {showFilters && (
-          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+          <div className="px-6 py-4 border-b bg-muted">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
               <div className="flex flex-col space-y-2">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Buscar</label>
@@ -436,7 +434,7 @@ export default function AdminWorkReportsPage() {
                     placeholder="Buscar por empleado, ubicación..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                    className="pl-10 h-10"
                     data-testid="input-admin-search-reports"
                   />
                 </div>
@@ -444,14 +442,14 @@ export default function AdminWorkReportsPage() {
               <div className="flex flex-col space-y-2">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Empleado</label>
                 <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
-                  <SelectTrigger className="h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white" data-testid="select-employee-filter">
+                  <SelectTrigger className="h-10" data-testid="select-employee-filter">
                     <Users className="w-4 h-4 mr-2 text-gray-500" />
                     <SelectValue placeholder="Filtrar por empleado" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                    <SelectItem value="all" className="text-gray-900 dark:text-white">Todos los empleados</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los empleados</SelectItem>
                     {employees.map((emp) => (
-                      <SelectItem key={emp.id} value={emp.id.toString()} className="text-gray-900 dark:text-white">{emp.fullName}</SelectItem>
+                      <SelectItem key={emp.id} value={emp.id.toString()}>{emp.fullName}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -466,10 +464,7 @@ export default function AdminWorkReportsPage() {
                       setDateFilter('today');
                       setActiveStatsFilter('today');
                     }}
-                    className={cn(
-                      "h-10 text-xs font-normal flex-1",
-                      dateFilter !== 'today' && "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    )}
+                    className="h-10 text-xs font-normal flex-1"
                   >
                     Hoy
                   </Button>
@@ -480,10 +475,7 @@ export default function AdminWorkReportsPage() {
                       setDateFilter('this-week');
                       setActiveStatsFilter('week');
                     }}
-                    className={cn(
-                      "h-10 text-xs font-normal flex-1",
-                      dateFilter !== 'this-week' && "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    )}
+                    className="h-10 text-xs font-normal flex-1"
                   >
                     Semana
                   </Button>
@@ -494,10 +486,7 @@ export default function AdminWorkReportsPage() {
                       setDateFilter('this-month');
                       setActiveStatsFilter('month');
                     }}
-                    className={cn(
-                      "h-10 text-xs font-normal flex-1",
-                      dateFilter !== 'this-month' && "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    )}
+                    className="h-10 text-xs font-normal flex-1"
                   >
                     Mes
                   </Button>
@@ -508,10 +497,7 @@ export default function AdminWorkReportsPage() {
                       setDateFilter('all');
                       setActiveStatsFilter(null);
                     }}
-                    className={cn(
-                      "h-10 text-xs font-normal flex-1",
-                      dateFilter !== 'all' && "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    )}
+                    className="h-10 text-xs font-normal flex-1"
                   >
                     Todo
                   </Button>
