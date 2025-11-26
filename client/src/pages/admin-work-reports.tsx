@@ -502,77 +502,64 @@ export default function AdminWorkReportsPage() {
                     className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
                     data-testid={`card-admin-report-${report.id}`}
                   >
-                    <div className="flex flex-col md:flex-row">
-                      <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 px-4 py-3 md:py-0 md:w-48 md:flex-shrink-0 flex md:flex-col items-center md:items-start justify-between md:justify-center gap-2">
-                        <div className="flex items-center gap-2 text-white">
-                          <User className="w-4 h-4" />
-                          <span className="font-semibold text-sm">{report.employeeName}</span>
+                    <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800">
+                      <div className="flex items-center gap-2 text-white">
+                        <User className="w-4 h-4" />
+                        <span className="font-semibold">{report.employeeName}</span>
+                      </div>
+                      <Badge className={`${statusStyle.bg} ${statusStyle.text} border-0`}>
+                        {statusStyle.label}
+                      </Badge>
+                    </div>
+                    
+                    <div className="p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
+                            <Calendar className="w-3.5 h-3.5" />
+                            <Clock className="w-3.5 h-3.5" />
+                            Fecha y horario
+                          </div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
+                            {format(parseISO(report.reportDate), 'EEE, d MMM yyyy', { locale: es })}
+                          </p>
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            {report.startTime} - {report.endTime}
+                            <span className="ml-1 text-xs text-blue-600 dark:text-blue-400 font-medium">
+                              ({formatDuration(report.durationMinutes)})
+                            </span>
+                          </p>
                         </div>
-                        <Badge className={`${statusStyle.bg} ${statusStyle.text} border-0 text-xs`}>
-                          {statusStyle.label}
-                        </Badge>
+                        
+                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
+                            <MapPin className="w-3.5 h-3.5" />
+                            Ubicación
+                          </div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{report.location}</p>
+                          {report.clientName && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              <span className="text-xs text-gray-500">Cliente:</span> {report.clientName}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="md:col-span-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
+                            <FileText className="w-3.5 h-3.5" />
+                            Trabajo realizado
+                          </div>
+                          <p className="text-sm text-gray-700 dark:text-gray-300">{report.description}</p>
+                        </div>
                       </div>
                       
-                      <div className="flex-1 p-4">
-                        <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-                          <div className="flex flex-wrap gap-4 lg:gap-6 lg:flex-shrink-0">
-                            <div className="min-w-[140px]">
-                              <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
-                                <Calendar className="w-3.5 h-3.5" />
-                                Fecha
-                              </div>
-                              <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                                {format(parseISO(report.reportDate), 'EEE, d MMM yyyy', { locale: es })}
-                              </p>
-                            </div>
-                            <div className="min-w-[120px]">
-                              <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
-                                <Clock className="w-3.5 h-3.5" />
-                                Horario
-                              </div>
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                {report.startTime} - {report.endTime}
-                                <span className="ml-2 text-xs text-blue-600 dark:text-blue-400 font-medium">
-                                  ({formatDuration(report.durationMinutes)})
-                                </span>
-                              </p>
-                            </div>
-                            <div className="min-w-[140px]">
-                              <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
-                                <MapPin className="w-3.5 h-3.5" />
-                                Ubicación
-                              </div>
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">{report.location}</p>
-                            </div>
-                            {report.clientName && (
-                              <div className="min-w-[120px]">
-                                <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
-                                  <User className="w-3.5 h-3.5" />
-                                  Cliente
-                                </div>
-                                <p className="text-sm font-medium text-gray-900 dark:text-white">{report.clientName}</p>
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="flex-1 lg:border-l lg:border-gray-200 lg:dark:border-gray-700 lg:pl-6 space-y-2">
-                            <div>
-                              <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
-                                <FileText className="w-3.5 h-3.5" />
-                                Trabajo realizado
-                              </div>
-                              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{report.description}</p>
-                            </div>
-                            {report.notes && (
-                              <div className="bg-amber-50 dark:bg-amber-900/20 rounded p-2 border-l-2 border-amber-400">
-                                <p className="text-xs text-amber-800 dark:text-amber-200 italic">
-                                  <span className="font-medium">Notas:</span> {report.notes}
-                                </p>
-                              </div>
-                            )}
-                          </div>
+                      {report.notes && (
+                        <div className="mt-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 border-l-4 border-amber-400">
+                          <p className="text-sm text-amber-800 dark:text-amber-200">
+                            <span className="font-medium">Notas:</span> {report.notes}
+                          </p>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 );
