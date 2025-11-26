@@ -277,30 +277,8 @@ export default function WorkReportsPage() {
         <p className="text-gray-600 dark:text-white/70 text-sm">Registra y gestiona tus partes de trabajo diarios</p>
       </div>
 
-      {/* Search and Filters */}
-      <div className="px-6 pb-4 flex flex-col sm:flex-row gap-3">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-white/50 w-4 h-4" />
-          <Input
-            placeholder="Buscar por ubicación, cliente o descripción..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-white dark:bg-white/10 border-gray-200 dark:border-white/20 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-white/50"
-            data-testid="input-search-reports"
-          />
-        </div>
-        <Select value={dateFilter} onValueChange={setDateFilter}>
-          <SelectTrigger className="w-[180px] bg-white dark:bg-white/10 border-gray-200 dark:border-white/20 text-gray-900 dark:text-white" data-testid="select-date-filter">
-            <Filter className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Filtrar por fecha" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="today">Hoy</SelectItem>
-            <SelectItem value="this-week">Esta semana</SelectItem>
-            <SelectItem value="this-month">Este mes</SelectItem>
-            <SelectItem value="all">Todo</SelectItem>
-          </SelectContent>
-        </Select>
+      {/* New Report Button */}
+      <div className="px-6 pb-4">
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button 
@@ -309,7 +287,7 @@ export default function WorkReportsPage() {
               data-testid="button-new-report"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Nuevo
+              Nuevo Parte
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
@@ -431,29 +409,29 @@ export default function WorkReportsPage() {
           <LoadingSpinner size="lg" />
           <p className="text-gray-500 dark:text-gray-400">Cargando partes de trabajo...</p>
         </div>
-      ) : filteredReports.length === 0 ? (
-        <Card className="bg-white dark:bg-gray-800">
+      ) : reports.length === 0 ? (
+        <Card className="bg-white dark:bg-white/10 border-gray-200 dark:border-white/20">
           <CardContent className="py-12 text-center">
-            <ClipboardList className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+            <ClipboardList className="w-12 h-12 mx-auto text-gray-300 dark:text-white/30 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              {searchTerm ? 'No se encontraron partes' : 'Sin partes de trabajo'}
+              Sin partes de trabajo
             </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              {searchTerm 
-                ? 'Intenta con otros términos de búsqueda' 
-                : 'Crea tu primer parte de trabajo para empezar a registrar tus visitas'}
+            <p className="text-gray-500 dark:text-white/60 mb-4">
+              Crea tu primer parte de trabajo para empezar a registrar tus visitas
             </p>
-            {!searchTerm && (
-              <Button onClick={() => { resetForm(); setIsCreateDialogOpen(true); }} data-testid="button-empty-new-report">
-                <Plus className="w-4 h-4 mr-2" />
-                Crear Parte
-              </Button>
-            )}
+            <Button 
+              onClick={() => { resetForm(); setIsCreateDialogOpen(true); }} 
+              className="bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 text-gray-900 dark:text-white"
+              data-testid="button-empty-new-report"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Crear Parte
+            </Button>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
-          {filteredReports.map((report) => {
+          {reports.map((report) => {
             const statusStyle = STATUS_STYLES[report.status];
             return (
               <Card 
