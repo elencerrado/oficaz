@@ -5002,10 +5002,11 @@ Responde directamente a este email para contactar con la persona.
         return res.status(403).json({ message: 'No tienes permiso para editar este parte' });
       }
 
-      const { reportDate, location, locationCoords, startTime, endTime, description, clientName, notes, status } = req.body;
+      const { reportDate, refCode, location, locationCoords, startTime, endTime, description, clientName, notes, status } = req.body;
       
       const updates: any = {};
       if (reportDate) updates.reportDate = reportDate;
+      if (refCode !== undefined) updates.refCode = refCode;
       if (location) updates.location = location;
       if (locationCoords !== undefined) updates.locationCoords = locationCoords;
       if (startTime) updates.startTime = startTime;
@@ -5141,10 +5142,11 @@ Responde directamente a este email para contactar con la persona.
         return res.status(403).json({ message: 'No tienes permiso para editar este parte' });
       }
 
-      const { reportDate, location, startTime, endTime, description, clientName, notes } = req.body;
+      const { reportDate, refCode, location, startTime, endTime, description, clientName, notes } = req.body;
       
       const updates: any = {};
       if (reportDate !== undefined) updates.reportDate = reportDate;
+      if (refCode !== undefined) updates.refCode = refCode;
       if (location !== undefined) updates.location = location;
       if (startTime !== undefined) updates.startTime = startTime;
       if (endTime !== undefined) updates.endTime = endTime;
