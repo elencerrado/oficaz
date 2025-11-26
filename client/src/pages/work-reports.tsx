@@ -546,12 +546,13 @@ export default function WorkReportsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-white">
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white">
               <canvas
                 ref={canvasRef}
                 width={700}
                 height={300}
-                className="w-full touch-none cursor-crosshair"
+                className="w-full block touch-none cursor-crosshair"
+                style={{ aspectRatio: '700/300' }}
                 onMouseDown={startDrawing}
                 onMouseMove={draw}
                 onMouseUp={stopDrawing}
