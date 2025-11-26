@@ -44,7 +44,7 @@ interface WorkReportWithEmployee {
   description: string;
   clientName?: string | null;
   notes?: string | null;
-  status: 'completed' | 'pending' | 'cancelled';
+  status: 'draft' | 'submitted';
   createdAt: string;
   updatedAt: string;
   employeeName: string;
@@ -57,9 +57,8 @@ interface Employee {
 }
 
 const STATUS_STYLES = {
-  completed: { bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-green-200 dark:border-green-800', text: 'text-green-700 dark:text-green-300', label: 'Completado' },
-  pending: { bg: 'bg-yellow-50 dark:bg-yellow-900/20', border: 'border-yellow-200 dark:border-yellow-800', text: 'text-yellow-700 dark:text-yellow-300', label: 'Pendiente' },
-  cancelled: { bg: 'bg-red-50 dark:bg-red-900/20', border: 'border-red-200 dark:border-red-800', text: 'text-red-700 dark:text-red-300', label: 'Cancelado' }
+  draft: { bg: 'bg-orange-50 dark:bg-orange-900/20', border: 'border-orange-200 dark:border-orange-800', text: 'text-orange-700 dark:text-orange-300', label: 'Borrador' },
+  submitted: { bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-green-200 dark:border-green-800', text: 'text-green-700 dark:text-green-300', label: 'Enviado' }
 };
 
 export default function AdminWorkReportsPage() {
