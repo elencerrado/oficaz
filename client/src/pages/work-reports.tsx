@@ -24,8 +24,10 @@ import {
   Filter,
   User,
   FileText,
-  CheckCircle
+  CheckCircle,
+  ArrowLeft
 } from 'lucide-react';
+import { Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
@@ -234,26 +236,61 @@ export default function WorkReportsPage() {
     );
   }
 
+  const companyAlias = company?.companyAlias || 'test';
+
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50 dark:bg-gray-900" style={{ overflowX: 'clip' }}>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Partes de Trabajo</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">Registra y gestiona tus partes de trabajo diarios</p>
+    <div className="min-h-screen bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col page-scroll">
+      {/* Header - Standard employee pattern */}
+      <div className="flex items-center justify-between p-6 pb-8 h-20">
+        <Link href={`/${companyAlias}/inicio`}>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 px-6 py-3 rounded-xl bg-gray-100 dark:bg-white/10 backdrop-blur-sm transition-all duration-200 border border-gray-300 dark:border-white/20"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            <span className="font-medium">Atrás</span>
+          </Button>
+        </Link>
+        
+        <div className="flex-1 flex flex-col items-end text-right">
+          {company?.logoUrl && hasAccess('logoUpload') ? (
+            <img 
+              src={company.logoUrl} 
+              alt={company.name} 
+              className="h-8 w-auto mb-1 object-contain filter dark:brightness-0 dark:invert"
+            />
+          ) : (
+            <div className="text-gray-900 dark:text-white text-sm font-medium mb-1">
+              {company?.name || 'Mi Empresa'}
+            </div>
+          )}
+          <div className="text-gray-600 dark:text-white/70 text-xs">
+            {user?.fullName}
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+      {/* Page title */}
+      <div className="px-6 pb-6">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Partes de Trabajo</h1>
+        <p className="text-gray-600 dark:text-white/70 text-sm">Registra y gestiona tus partes de trabajo diarios</p>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="px-6 pb-4 flex flex-col sm:flex-row gap-3">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-white/50 w-4 h-4" />
           <Input
             placeholder="Buscar por ubicación, cliente o descripción..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 bg-white dark:bg-white/10 border-gray-200 dark:border-white/20 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-white/50"
             data-testid="input-search-reports"
           />
         </div>
         <Select value={dateFilter} onValueChange={setDateFilter}>
-          <SelectTrigger className="w-[180px]" data-testid="select-date-filter">
+          <SelectTrigger className="w-[180px] bg-white dark:bg-white/10 border-gray-200 dark:border-white/20 text-gray-900 dark:text-white" data-testid="select-date-filter">
             <Filter className="w-4 h-4 mr-2" />
             <SelectValue placeholder="Filtrar por fecha" />
           </SelectTrigger>
@@ -266,9 +303,13 @@ export default function WorkReportsPage() {
         </Select>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => { resetForm(); setIsCreateDialogOpen(true); }} data-testid="button-new-report">
+            <Button 
+              onClick={() => { resetForm(); setIsCreateDialogOpen(true); }} 
+              className="bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 text-gray-900 dark:text-white border-gray-200 dark:border-white/20"
+              data-testid="button-new-report"
+            >
               <Plus className="w-4 h-4 mr-2" />
-              Nuevo Parte
+              Nuevo
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
