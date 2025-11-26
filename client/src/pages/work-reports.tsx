@@ -130,6 +130,41 @@ export default function WorkReportsPage() {
     enabled: isAuthenticated && !authLoading
   });
 
+  const { data: allReports = [] } = useQuery<WorkReport[]>({
+    queryKey: ['/api/work-reports'],
+    enabled: isAuthenticated && !authLoading
+  });
+
+  const { uniqueLocations, uniqueClients } = useMemo(() => {
+    const locations = new Set<string>();
+    const clients = new Set<string>();
+    allReports.forEach(report => {
+      if (report.location) locations.add(report.location);
+      if (report.clientName) clients.add(report.clientName);
+    });
+    return {
+      uniqueLocations: Array.from(locations).sort(),
+      uniqueClients: Array.from(clients).sort()
+    };
+  }, [allReports]);
+
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [showClientSuggestions, setShowClientSuggestions] = useState(false);
+
+  const filteredLocationSuggestions = useMemo(() => {
+    if (!formData.location) return uniqueLocations.slice(0, 5);
+    return uniqueLocations
+      .filter(loc => loc.toLowerCase().includes(formData.location.toLowerCase()))
+      .slice(0, 5);
+  }, [formData.location, uniqueLocations]);
+
+  const filteredClientSuggestions = useMemo(() => {
+    if (!formData.clientName) return uniqueClients.slice(0, 5);
+    return uniqueClients
+      .filter(client => client.toLowerCase().includes(formData.clientName.toLowerCase()))
+      .slice(0, 5);
+  }, [formData.clientName, uniqueClients]);
+
   const filteredReports = useMemo(() => {
     return reports.filter(report => {
       const matchesSearch = searchTerm === '' || 
@@ -610,7 +645,7 @@ export default function WorkReportsPage() {
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative">
                     <Label className="text-sm flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
                       Ubicación
@@ -619,9 +654,29 @@ export default function WorkReportsPage() {
                       placeholder="Ej: Calle Mayor 15, Madrid"
                       value={formData.location}
                       onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      onFocus={() => setShowLocationSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
                       className="bg-white dark:bg-gray-800"
                       data-testid="input-location"
                     />
+                    {showLocationSuggestions && filteredLocationSuggestions.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                        {filteredLocationSuggestions.map((loc, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                            onMouseDown={() => {
+                              setFormData({ ...formData, location: loc });
+                              setShowLocationSuggestions(false);
+                            }}
+                          >
+                            <MapPin className="w-3 h-3 text-gray-400" />
+                            {loc}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -632,7 +687,7 @@ export default function WorkReportsPage() {
                   Detalles del trabajo
                 </h4>
                 <div className="space-y-3">
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative">
                     <Label className="text-sm flex items-center gap-1">
                       <User className="w-3 h-3" />
                       Cliente <span className="text-gray-400 text-xs">(opcional)</span>
@@ -641,9 +696,29 @@ export default function WorkReportsPage() {
                       placeholder="Nombre del cliente"
                       value={formData.clientName}
                       onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                      onFocus={() => setShowClientSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowClientSuggestions(false), 200)}
                       className="bg-white dark:bg-gray-800"
                       data-testid="input-client-name"
                     />
+                    {showClientSuggestions && filteredClientSuggestions.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                        {filteredClientSuggestions.map((client, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                            onMouseDown={() => {
+                              setFormData({ ...formData, clientName: client });
+                              setShowClientSuggestions(false);
+                            }}
+                          >
+                            <User className="w-3 h-3 text-gray-400" />
+                            {client}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label className="text-sm">¿Qué trabajo realizaste?</Label>
@@ -909,7 +984,7 @@ export default function WorkReportsPage() {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 relative">
                   <Label className="text-sm flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
                     Ubicación
@@ -917,9 +992,29 @@ export default function WorkReportsPage() {
                   <Input
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    onFocus={() => setShowLocationSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
                     className="bg-white dark:bg-gray-800"
                     data-testid="input-edit-location"
                   />
+                  {showLocationSuggestions && filteredLocationSuggestions.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                      {filteredLocationSuggestions.map((loc, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                          onMouseDown={() => {
+                            setFormData({ ...formData, location: loc });
+                            setShowLocationSuggestions(false);
+                          }}
+                        >
+                          <MapPin className="w-3 h-3 text-gray-400" />
+                          {loc}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -930,14 +1025,34 @@ export default function WorkReportsPage() {
                 Detalles del trabajo
               </h4>
               <div className="space-y-3">
-                <div className="space-y-2">
+                <div className="space-y-2 relative">
                   <Label className="text-sm">Cliente <span className="text-gray-400 text-xs">(opcional)</span></Label>
                   <Input
                     value={formData.clientName}
                     onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                    onFocus={() => setShowClientSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowClientSuggestions(false), 200)}
                     className="bg-white dark:bg-gray-800"
                     data-testid="input-edit-client-name"
                   />
+                  {showClientSuggestions && filteredClientSuggestions.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                      {filteredClientSuggestions.map((client, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                          onMouseDown={() => {
+                            setFormData({ ...formData, clientName: client });
+                            setShowClientSuggestions(false);
+                          }}
+                        >
+                          <User className="w-3 h-3 text-gray-400" />
+                          {client}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm">Descripción del trabajo</Label>
