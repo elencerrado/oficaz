@@ -44,7 +44,7 @@ const translateRole = (role: string | undefined) => {
 
 export default function EmployeeDashboard() {
   usePageTitle('Panel de Empleado');
-  const { user, logout, company } = useAuth();
+  const { user, logout, company, subscription } = useAuth();
   const { hasAccess } = useFeatureCheck();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
