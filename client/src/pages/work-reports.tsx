@@ -33,6 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { DatePickerDay } from '@/components/ui/date-picker';
 
 interface WorkReport {
   id: number;
@@ -298,13 +299,12 @@ export default function WorkReportsPage() {
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="reportDate">Fecha</Label>
-                  <Input
-                    id="reportDate"
-                    type="date"
-                    value={formData.reportDate}
-                    onChange={(e) => setFormData({ ...formData, reportDate: e.target.value })}
-                    data-testid="input-report-date"
+                  <Label>Fecha</Label>
+                  <DatePickerDay
+                    date={formData.reportDate ? parseISO(formData.reportDate) : new Date()}
+                    onDateChange={(date) => setFormData({ ...formData, reportDate: date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd') })}
+                    className="w-full justify-start"
+                    placeholder="Seleccionar fecha"
                   />
                 </div>
                 <div className="space-y-2">
@@ -509,13 +509,12 @@ export default function WorkReportsPage() {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-reportDate">Fecha</Label>
-                <Input
-                  id="edit-reportDate"
-                  type="date"
-                  value={formData.reportDate}
-                  onChange={(e) => setFormData({ ...formData, reportDate: e.target.value })}
-                  data-testid="input-edit-report-date"
+                <Label>Fecha</Label>
+                <DatePickerDay
+                  date={formData.reportDate ? parseISO(formData.reportDate) : new Date()}
+                  onDateChange={(date) => setFormData({ ...formData, reportDate: date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd') })}
+                  className="w-full justify-start"
+                  placeholder="Seleccionar fecha"
                 />
               </div>
               <div className="space-y-2">
