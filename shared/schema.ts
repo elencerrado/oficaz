@@ -1131,6 +1131,8 @@ export const workReports = pgTable("work_reports", {
   description: text("description").notNull(), // What work was done
   clientName: text("client_name"), // Optional client/customer name
   notes: text("notes"), // Additional notes
+  signedBy: text("signed_by"), // Optional name of person who signed the report
+  signatureImage: text("signature_image"), // Optional signature image URL for the report
   status: varchar("status", { length: 20 }).default('completed').notNull(), // completed, pending, cancelled
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

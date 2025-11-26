@@ -50,6 +50,8 @@ interface WorkReport {
   description: string;
   clientName?: string | null;
   notes?: string | null;
+  signedBy?: string | null;
+  signatureImage?: string | null;
   status: 'completed' | 'pending' | 'cancelled';
   createdAt: string;
   updatedAt: string;
@@ -76,7 +78,11 @@ export default function WorkReportsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('this-month');
   const [isDrawing, setIsDrawing] = useState(false);
+  const [isReportDrawing, setIsReportDrawing] = useState(false);
+  const [showReportSignature, setShowReportSignature] = useState(false);
+  const [reportSignatureData, setReportSignatureData] = useState<string>('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const reportCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const [formData, setFormData] = useState({
     reportDate: format(new Date(), 'yyyy-MM-dd'),
@@ -86,6 +92,7 @@ export default function WorkReportsPage() {
     description: '',
     clientName: '',
     notes: '',
+    signedBy: '',
     status: 'completed' as 'completed' | 'pending' | 'cancelled'
   });
 
@@ -133,7 +140,7 @@ export default function WorkReportsPage() {
   }, [reports, searchTerm]);
 
   const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
+    mutationFn: async (data: typeof formData & { signatureImage?: string }) => {
       return apiRequest('POST', '/api/work-reports', data);
     },
     onSuccess: () => {
@@ -148,7 +155,7 @@ export default function WorkReportsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: typeof formData }) => {
+    mutationFn: async ({ id, data }: { id: number; data: typeof formData & { signatureImage?: string } }) => {
       return apiRequest('PATCH', `/api/work-reports/${id}`, data);
     },
     onSuccess: () => {
@@ -293,9 +300,91 @@ export default function WorkReportsPage() {
       description: '',
       clientName: '',
       notes: '',
+      signedBy: '',
       status: 'completed'
     });
+    setReportSignatureData('');
+    setShowReportSignature(false);
   };
+
+  const initReportCanvas = () => {
+    const canvas = reportCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#1f2937';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+  };
+
+  const clearReportCanvas = () => {
+    const canvas = reportCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    setReportSignatureData('');
+  };
+
+  const startReportDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    const canvas = reportCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    setIsReportDrawing(true);
+    const rect = canvas.getBoundingClientRect();
+    let x, y;
+    if ('touches' in e) {
+      x = e.touches[0].clientX - rect.left;
+      y = e.touches[0].clientY - rect.top;
+    } else {
+      x = e.clientX - rect.left;
+      y = e.clientY - rect.top;
+    }
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const drawReport = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isReportDrawing) return;
+    e.preventDefault();
+    const canvas = reportCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const rect = canvas.getBoundingClientRect();
+    let x, y;
+    if ('touches' in e) {
+      x = e.touches[0].clientX - rect.left;
+      y = e.touches[0].clientY - rect.top;
+    } else {
+      x = e.clientX - rect.left;
+      y = e.clientY - rect.top;
+    }
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const stopReportDrawing = () => {
+    if (isReportDrawing) {
+      setIsReportDrawing(false);
+      const canvas = reportCanvasRef.current;
+      if (canvas) {
+        setReportSignatureData(canvas.toDataURL('image/png'));
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (showReportSignature) {
+      setTimeout(initReportCanvas, 100);
+    }
+  }, [showReportSignature]);
 
   const openEditDialog = (report: WorkReport) => {
     setSelectedReport(report);
@@ -307,8 +396,11 @@ export default function WorkReportsPage() {
       description: report.description,
       clientName: report.clientName || '',
       notes: report.notes || '',
+      signedBy: report.signedBy || '',
       status: report.status
     });
+    setReportSignatureData(report.signatureImage || '');
+    setShowReportSignature(!!report.signatureImage || !!report.signedBy);
     setIsEditDialogOpen(true);
   };
 
@@ -457,110 +549,217 @@ export default function WorkReportsPage() {
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Nuevo Parte de Trabajo</DialogTitle>
-              <DialogDescription>Registra un nuevo parte de trabajo con los detalles de la visita.</DialogDescription>
+              <DialogTitle className="flex items-center gap-2">
+                <ClipboardList className="w-5 h-5 text-blue-600" />
+                Nuevo Parte de Trabajo
+              </DialogTitle>
+              <DialogDescription>Completa los datos del trabajo realizado</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Fecha</Label>
-                  <DatePickerDay
-                    date={formData.reportDate ? parseISO(formData.reportDate) : new Date()}
-                    onDateChange={(date) => setFormData({ ...formData, reportDate: date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd') })}
-                    className="w-full justify-start"
-                    placeholder="Seleccionar fecha"
-                  />
+            <div className="space-y-6 py-4">
+              <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                <h4 className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Cuándo y dónde
+                </h4>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-sm">Fecha del trabajo</Label>
+                    <DatePickerDay
+                      date={formData.reportDate ? parseISO(formData.reportDate) : new Date()}
+                      onDateChange={(date) => setFormData({ ...formData, reportDate: date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd') })}
+                      className="w-full justify-start bg-white dark:bg-gray-800"
+                      placeholder="Seleccionar fecha"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label className="text-sm flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Hora inicio
+                      </Label>
+                      <Input
+                        type="time"
+                        value={formData.startTime}
+                        onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                        className="bg-white dark:bg-gray-800"
+                        data-testid="input-start-time"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Hora fin
+                      </Label>
+                      <Input
+                        type="time"
+                        value={formData.endTime}
+                        onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                        className="bg-white dark:bg-gray-800"
+                        data-testid="input-end-time"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      Ubicación
+                    </Label>
+                    <Input
+                      placeholder="Ej: Calle Mayor 15, Madrid"
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      className="bg-white dark:bg-gray-800"
+                      data-testid="input-location"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="status">Estado</Label>
-                  <Select value={formData.status} onValueChange={(v: 'completed' | 'pending' | 'cancelled') => setFormData({ ...formData, status: v })}>
-                    <SelectTrigger data-testid="select-status">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="completed">Completado</SelectItem>
-                      <SelectItem value="pending">Pendiente</SelectItem>
-                      <SelectItem value="cancelled">Cancelado</SelectItem>
-                    </SelectContent>
-                  </Select>
+              </div>
+
+              <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Detalles del trabajo
+                </h4>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-sm flex items-center gap-1">
+                      <User className="w-3 h-3" />
+                      Cliente <span className="text-gray-400 text-xs">(opcional)</span>
+                    </Label>
+                    <Input
+                      placeholder="Nombre del cliente"
+                      value={formData.clientName}
+                      onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                      className="bg-white dark:bg-gray-800"
+                      data-testid="input-client-name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm">¿Qué trabajo realizaste?</Label>
+                    <Textarea
+                      placeholder="Describe las tareas completadas..."
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      rows={3}
+                      className="bg-white dark:bg-gray-800"
+                      data-testid="textarea-description"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm">Notas adicionales <span className="text-gray-400 text-xs">(opcional)</span></Label>
+                    <Textarea
+                      placeholder="Observaciones, incidencias..."
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      rows={2}
+                      className="bg-white dark:bg-gray-800"
+                      data-testid="textarea-notes"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm">Estado</Label>
+                    <Select value={formData.status} onValueChange={(v: 'completed' | 'pending' | 'cancelled') => setFormData({ ...formData, status: v })}>
+                      <SelectTrigger className="bg-white dark:bg-gray-800" data-testid="select-status">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="completed">
+                          <span className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            Completado
+                          </span>
+                        </SelectItem>
+                        <SelectItem value="pending">
+                          <span className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-yellow-600" />
+                            Pendiente
+                          </span>
+                        </SelectItem>
+                        <SelectItem value="cancelled">
+                          <span className="flex items-center gap-2">
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                            Cancelado
+                          </span>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="location">Ubicación *</Label>
-                <Input
-                  id="location"
-                  placeholder="Dirección o nombre del lugar"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  data-testid="input-location"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="startTime">Hora inicio *</Label>
-                  <Input
-                    id="startTime"
-                    type="time"
-                    value={formData.startTime}
-                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                    data-testid="input-start-time"
-                  />
+
+              <div className="space-y-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-amber-900 dark:text-amber-100 flex items-center gap-2">
+                    <PenTool className="w-4 h-4" />
+                    Firma del parte <span className="text-amber-600 dark:text-amber-400 text-xs font-normal">(opcional)</span>
+                  </h4>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowReportSignature(!showReportSignature)}
+                    className="text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-800/30"
+                  >
+                    {showReportSignature ? 'Ocultar' : 'Añadir firma'}
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="endTime">Hora fin *</Label>
-                  <Input
-                    id="endTime"
-                    type="time"
-                    value={formData.endTime}
-                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                    data-testid="input-end-time"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="clientName">Cliente</Label>
-                <Input
-                  id="clientName"
-                  placeholder="Nombre del cliente (opcional)"
-                  value={formData.clientName}
-                  onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-                  data-testid="input-client-name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Descripción del trabajo *</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Describe las tareas realizadas..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                  data-testid="textarea-description"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notas adicionales</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Observaciones o notas (opcional)"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  rows={2}
-                  data-testid="textarea-notes"
-                />
+                {showReportSignature && (
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label className="text-sm">Firmado por</Label>
+                      <Input
+                        placeholder="Nombre de quien firma"
+                        value={formData.signedBy}
+                        onChange={(e) => setFormData({ ...formData, signedBy: e.target.value })}
+                        className="bg-white dark:bg-gray-800"
+                        data-testid="input-signed-by"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm">Firma</Label>
+                      <div className="border-2 border-dashed border-amber-300 dark:border-amber-600 rounded-lg p-2 bg-white">
+                        <canvas
+                          ref={reportCanvasRef}
+                          width={300}
+                          height={100}
+                          className="w-full touch-none cursor-crosshair"
+                          onMouseDown={startReportDrawing}
+                          onMouseMove={drawReport}
+                          onMouseUp={stopReportDrawing}
+                          onMouseLeave={stopReportDrawing}
+                          onTouchStart={startReportDrawing}
+                          onTouchMove={drawReport}
+                          onTouchEnd={stopReportDrawing}
+                        />
+                      </div>
+                      <div className="flex justify-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearReportCanvas}
+                          className="text-gray-500"
+                        >
+                          <RotateCcw className="w-3 h-3 mr-1" />
+                          Limpiar
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-            <DialogFooter className="grid grid-cols-2 gap-3 sm:flex sm:flex-row sm:justify-end">
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} data-testid="button-cancel-create" className="w-full sm:w-auto">
+            <DialogFooter className="grid grid-cols-2 gap-3">
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} data-testid="button-cancel-create" className="w-full">
                 Cancelar
               </Button>
               <Button 
-                onClick={() => createMutation.mutate(formData)}
+                onClick={() => createMutation.mutate({ ...formData, signatureImage: reportSignatureData || undefined })}
                 disabled={createMutation.isPending || !formData.location || !formData.description}
                 data-testid="button-submit-create"
-                className="w-full sm:w-auto"
+                className="w-full"
               >
-                {createMutation.isPending ? 'Creando...' : 'Crear Parte'}
+                {createMutation.isPending ? 'Guardando...' : 'Guardar Parte'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -588,7 +787,7 @@ export default function WorkReportsPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {reports.map((report) => {
+          {filteredReports.map((report) => {
             const statusStyle = STATUS_STYLES[report.status];
             return (
               <Card 
@@ -636,14 +835,31 @@ export default function WorkReportsPage() {
                         </p>
                       )}
 
+                      {(report.signedBy || report.signatureImage) && (
+                        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                          <PenTool className="w-4 h-4 text-amber-500" />
+                          {report.signedBy && (
+                            <span className="text-sm text-gray-600 dark:text-gray-300">
+                              Firmado por: <strong>{report.signedBy}</strong>
+                            </span>
+                          )}
+                          {report.signatureImage && (
+                            <img 
+                              src={report.signatureImage} 
+                              alt="Firma"
+                              className="h-8 max-w-[100px] object-contain"
+                            />
+                          )}
+                        </div>
+                      )}
+
                       {signatureData?.signatureUrl && (
-                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                          <PenTool className="w-4 h-4 text-gray-400" />
-                          <span className="text-xs text-gray-500 dark:text-gray-400">Firma:</span>
+                        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                          <span className="text-xs text-gray-400">Mi firma:</span>
                           <img 
                             src={signatureData.signatureUrl} 
-                            alt="Firma del empleado"
-                            className="h-8 max-w-[120px] object-contain"
+                            alt="Mi firma"
+                            className="h-6 max-w-[80px] object-contain opacity-60"
                           />
                         </div>
                       )}
@@ -680,104 +896,192 @@ export default function WorkReportsPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Editar Parte de Trabajo</DialogTitle>
-            <DialogDescription>Modifica los detalles del parte de trabajo.</DialogDescription>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="w-5 h-5 text-blue-600" />
+              Editar Parte de Trabajo
+            </DialogTitle>
+            <DialogDescription>Modifica los detalles del parte</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Fecha</Label>
-                <DatePickerDay
-                  date={formData.reportDate ? parseISO(formData.reportDate) : new Date()}
-                  onDateChange={(date) => setFormData({ ...formData, reportDate: date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd') })}
-                  className="w-full justify-start"
-                  placeholder="Seleccionar fecha"
-                />
+          <div className="space-y-6 py-4">
+            <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+              <h4 className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Cuándo y dónde
+              </h4>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label className="text-sm">Fecha del trabajo</Label>
+                  <DatePickerDay
+                    date={formData.reportDate ? parseISO(formData.reportDate) : new Date()}
+                    onDateChange={(date) => setFormData({ ...formData, reportDate: date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd') })}
+                    className="w-full justify-start bg-white dark:bg-gray-800"
+                    placeholder="Seleccionar fecha"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label className="text-sm flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      Hora inicio
+                    </Label>
+                    <Input
+                      type="time"
+                      value={formData.startTime}
+                      onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                      className="bg-white dark:bg-gray-800"
+                      data-testid="input-edit-start-time"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      Hora fin
+                    </Label>
+                    <Input
+                      type="time"
+                      value={formData.endTime}
+                      onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                      className="bg-white dark:bg-gray-800"
+                      data-testid="input-edit-end-time"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    Ubicación
+                  </Label>
+                  <Input
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    className="bg-white dark:bg-gray-800"
+                    data-testid="input-edit-location"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-status">Estado</Label>
-                <Select value={formData.status} onValueChange={(v: 'completed' | 'pending' | 'cancelled') => setFormData({ ...formData, status: v })}>
-                  <SelectTrigger data-testid="select-edit-status">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="completed">Completado</SelectItem>
-                    <SelectItem value="pending">Pendiente</SelectItem>
-                    <SelectItem value="cancelled">Cancelado</SelectItem>
-                  </SelectContent>
-                </Select>
+            </div>
+
+            <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+              <h4 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Detalles del trabajo
+              </h4>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label className="text-sm">Cliente <span className="text-gray-400 text-xs">(opcional)</span></Label>
+                  <Input
+                    value={formData.clientName}
+                    onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                    className="bg-white dark:bg-gray-800"
+                    data-testid="input-edit-client-name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm">Descripción del trabajo</Label>
+                  <Textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={3}
+                    className="bg-white dark:bg-gray-800"
+                    data-testid="textarea-edit-description"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm">Notas adicionales</Label>
+                  <Textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    rows={2}
+                    className="bg-white dark:bg-gray-800"
+                    data-testid="textarea-edit-notes"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm">Estado</Label>
+                  <Select value={formData.status} onValueChange={(v: 'completed' | 'pending' | 'cancelled') => setFormData({ ...formData, status: v })}>
+                    <SelectTrigger className="bg-white dark:bg-gray-800" data-testid="select-edit-status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="completed">Completado</SelectItem>
+                      <SelectItem value="pending">Pendiente</SelectItem>
+                      <SelectItem value="cancelled">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-location">Ubicación *</Label>
-              <Input
-                id="edit-location"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                data-testid="input-edit-location"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-startTime">Hora inicio *</Label>
-                <Input
-                  id="edit-startTime"
-                  type="time"
-                  value={formData.startTime}
-                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                  data-testid="input-edit-start-time"
-                />
+
+            <div className="space-y-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium text-amber-900 dark:text-amber-100 flex items-center gap-2">
+                  <PenTool className="w-4 h-4" />
+                  Firma del parte
+                </h4>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowReportSignature(!showReportSignature)}
+                  className="text-amber-700 dark:text-amber-300"
+                >
+                  {showReportSignature ? 'Ocultar' : 'Editar firma'}
+                </Button>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-endTime">Hora fin *</Label>
-                <Input
-                  id="edit-endTime"
-                  type="time"
-                  value={formData.endTime}
-                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                  data-testid="input-edit-end-time"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-clientName">Cliente</Label>
-              <Input
-                id="edit-clientName"
-                value={formData.clientName}
-                onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-                data-testid="input-edit-client-name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-description">Descripción del trabajo *</Label>
-              <Textarea
-                id="edit-description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
-                data-testid="textarea-edit-description"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-notes">Notas adicionales</Label>
-              <Textarea
-                id="edit-notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                rows={2}
-                data-testid="textarea-edit-notes"
-              />
+              {showReportSignature && (
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-sm">Firmado por</Label>
+                    <Input
+                      value={formData.signedBy}
+                      onChange={(e) => setFormData({ ...formData, signedBy: e.target.value })}
+                      className="bg-white dark:bg-gray-800"
+                      data-testid="input-edit-signed-by"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm">Firma</Label>
+                    {reportSignatureData && !isReportDrawing ? (
+                      <div className="flex items-center gap-3">
+                        <img src={reportSignatureData} alt="Firma actual" className="h-12 border rounded" />
+                        <Button variant="ghost" size="sm" onClick={clearReportCanvas}>
+                          Cambiar
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="border-2 border-dashed border-amber-300 rounded-lg p-2 bg-white">
+                        <canvas
+                          ref={reportCanvasRef}
+                          width={300}
+                          height={100}
+                          className="w-full touch-none cursor-crosshair"
+                          onMouseDown={startReportDrawing}
+                          onMouseMove={drawReport}
+                          onMouseUp={stopReportDrawing}
+                          onMouseLeave={stopReportDrawing}
+                          onTouchStart={startReportDrawing}
+                          onTouchMove={drawReport}
+                          onTouchEnd={stopReportDrawing}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-          <DialogFooter className="grid grid-cols-2 gap-3 sm:flex sm:flex-row sm:justify-end">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} data-testid="button-cancel-edit" className="w-full sm:w-auto">
+          <DialogFooter className="grid grid-cols-2 gap-3">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} data-testid="button-cancel-edit" className="w-full">
               Cancelar
             </Button>
-            <Button 
-              onClick={() => selectedReport && updateMutation.mutate({ id: selectedReport.id, data: formData })}
+            <Button
+              onClick={() => selectedReport && updateMutation.mutate({ 
+                id: selectedReport.id, 
+                data: { ...formData, signatureImage: reportSignatureData || undefined } 
+              })}
               disabled={updateMutation.isPending || !formData.location || !formData.description}
               data-testid="button-submit-edit"
-              className="w-full sm:w-auto"
+              className="w-full"
             >
               {updateMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
             </Button>
@@ -788,23 +1092,13 @@ export default function WorkReportsPage() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Eliminar Parte de Trabajo</DialogTitle>
+            <DialogTitle>Eliminar Parte</DialogTitle>
             <DialogDescription>
               ¿Estás seguro de que quieres eliminar este parte de trabajo? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
-          {selectedReport && (
-            <div className="py-4">
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-2">
-                <p className="font-medium text-gray-900 dark:text-white">{selectedReport.location}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {format(parseISO(selectedReport.reportDate), 'd MMMM yyyy', { locale: es })} - {selectedReport.startTime} a {selectedReport.endTime}
-                </p>
-              </div>
-            </div>
-          )}
-          <DialogFooter className="grid grid-cols-2 gap-3 sm:flex sm:flex-row sm:justify-end">
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} data-testid="button-cancel-delete" className="w-full sm:w-auto">
+          <DialogFooter className="grid grid-cols-2 gap-3">
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} data-testid="button-cancel-delete" className="w-full">
               Cancelar
             </Button>
             <Button 
@@ -812,7 +1106,7 @@ export default function WorkReportsPage() {
               onClick={() => selectedReport && deleteMutation.mutate(selectedReport.id)}
               disabled={deleteMutation.isPending}
               data-testid="button-confirm-delete"
-              className="w-full sm:w-auto"
+              className="w-full"
             >
               {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar'}
             </Button>
