@@ -1123,6 +1123,7 @@ export const workReports = pgTable("work_reports", {
   companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
   employeeId: integer("employee_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   reportDate: date("report_date").notNull(), // Date of the work
+  refCode: text("ref_code"), // Reference code for the project/work order (código de obra)
   location: text("location").notNull(), // Address or location name
   locationCoords: text("location_coords"), // Optional GPS coordinates "lat,lng"
   startTime: time("start_time").notNull(), // Time work started at location
