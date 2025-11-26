@@ -383,7 +383,7 @@ export default function AdminWorkReportsPage() {
 
         {/* Collapsible Filters */}
         {showFilters && (
-          <div className="px-6 pb-4 border-b">
+          <div className="px-6 pb-4 border-b border-border">
             <div className="flex flex-col lg:flex-row gap-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -443,7 +443,7 @@ export default function AdminWorkReportsPage() {
               </p>
             </div>
           ) : (
-            <div className="divide-y">
+            <div className="divide-y divide-border">
               {filteredReports.map((report) => {
                 const statusStyle = STATUS_STYLES[report.status];
                 return (
