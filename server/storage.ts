@@ -283,6 +283,14 @@ export interface IStorage {
   getCompanyModificationRequests(companyId: number, status?: string): Promise<WorkSessionModificationRequest[]>;
   updateModificationRequest(id: number, updates: Partial<InsertWorkSessionModificationRequest>): Promise<WorkSessionModificationRequest | undefined>;
   getPendingModificationRequestsCount(companyId: number): Promise<number>;
+
+  // Work Reports (Partes de Trabajo) - Pro feature
+  createWorkReport(report: schema.InsertWorkReport & { durationMinutes: number }): Promise<schema.WorkReport>;
+  getWorkReport(id: number): Promise<schema.WorkReport | undefined>;
+  getWorkReportsByUser(userId: number, filters?: { startDate?: string; endDate?: string }): Promise<schema.WorkReport[]>;
+  getWorkReportsByCompany(companyId: number, filters?: { employeeId?: number; startDate?: string; endDate?: string }): Promise<(schema.WorkReport & { employeeName: string })[]>;
+  updateWorkReport(id: number, updates: Partial<schema.InsertWorkReport> & { durationMinutes?: number }): Promise<schema.WorkReport | undefined>;
+  deleteWorkReport(id: number): Promise<boolean>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -3441,6 +3449,93 @@ export class DrizzleStorage implements IStorage {
         )
       );
     return result[0]?.count || 0;
+  }
+
+  // Work Reports (Partes de Trabajo)
+  async createWorkReport(report: schema.InsertWorkReport & { durationMinutes: number }): Promise<schema.WorkReport> {
+    const [result] = await db.insert(schema.workReports).values(report).returning();
+    return result;
+  }
+
+  async getWorkReport(id: number): Promise<schema.WorkReport | undefined> {
+    const [report] = await db.select()
+      .from(schema.workReports)
+      .where(eq(schema.workReports.id, id))
+      .limit(1);
+    return report;
+  }
+
+  async getWorkReportsByUser(userId: number, filters?: { startDate?: string; endDate?: string }): Promise<schema.WorkReport[]> {
+    const conditions = [eq(schema.workReports.employeeId, userId)];
+    
+    if (filters?.startDate) {
+      conditions.push(gte(schema.workReports.reportDate, filters.startDate));
+    }
+    if (filters?.endDate) {
+      conditions.push(lte(schema.workReports.reportDate, filters.endDate));
+    }
+    
+    return db.select()
+      .from(schema.workReports)
+      .where(and(...conditions))
+      .orderBy(desc(schema.workReports.reportDate), desc(schema.workReports.startTime));
+  }
+
+  async getWorkReportsByCompany(
+    companyId: number, 
+    filters?: { employeeId?: number; startDate?: string; endDate?: string }
+  ): Promise<(schema.WorkReport & { employeeName: string })[]> {
+    const conditions = [eq(schema.workReports.companyId, companyId)];
+    
+    if (filters?.employeeId) {
+      conditions.push(eq(schema.workReports.employeeId, filters.employeeId));
+    }
+    if (filters?.startDate) {
+      conditions.push(gte(schema.workReports.reportDate, filters.startDate));
+    }
+    if (filters?.endDate) {
+      conditions.push(lte(schema.workReports.reportDate, filters.endDate));
+    }
+    
+    const reports = await db.select({
+      id: schema.workReports.id,
+      companyId: schema.workReports.companyId,
+      employeeId: schema.workReports.employeeId,
+      reportDate: schema.workReports.reportDate,
+      location: schema.workReports.location,
+      locationCoords: schema.workReports.locationCoords,
+      startTime: schema.workReports.startTime,
+      endTime: schema.workReports.endTime,
+      durationMinutes: schema.workReports.durationMinutes,
+      description: schema.workReports.description,
+      clientName: schema.workReports.clientName,
+      notes: schema.workReports.notes,
+      status: schema.workReports.status,
+      createdAt: schema.workReports.createdAt,
+      updatedAt: schema.workReports.updatedAt,
+      employeeName: schema.users.fullName,
+    })
+      .from(schema.workReports)
+      .innerJoin(schema.users, eq(schema.workReports.employeeId, schema.users.id))
+      .where(and(...conditions))
+      .orderBy(desc(schema.workReports.reportDate), desc(schema.workReports.startTime));
+    
+    return reports;
+  }
+
+  async updateWorkReport(id: number, updates: Partial<schema.InsertWorkReport> & { durationMinutes?: number }): Promise<schema.WorkReport | undefined> {
+    const [updated] = await db.update(schema.workReports)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.workReports.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteWorkReport(id: number): Promise<boolean> {
+    const result = await db.delete(schema.workReports)
+      .where(eq(schema.workReports.id, id))
+      .returning();
+    return result.length > 0;
   }
 }
 
