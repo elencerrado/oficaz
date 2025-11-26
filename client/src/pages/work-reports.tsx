@@ -84,6 +84,8 @@ export default function WorkReportsPage() {
   const [isClientDrawing, setIsClientDrawing] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const clientCanvasRef = useRef<HTMLCanvasElement>(null);
+  const lastPointRef = useRef<{ x: number; y: number } | null>(null);
+  const lastClientPointRef = useRef<{ x: number; y: number } | null>(null);
 
   const [formData, setFormData] = useState({
     reportDate: format(new Date(), 'yyyy-MM-dd'),
@@ -247,12 +249,13 @@ export default function WorkReportsPage() {
     if (!ctx) return;
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#1f2937';
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineWidth = 4;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
+    lastPointRef.current = null;
   };
 
   const clearCanvas = () => {
@@ -262,6 +265,7 @@ export default function WorkReportsPage() {
     if (!ctx) return;
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    lastPointRef.current = null;
   };
 
   const getCoordinates = (e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
@@ -289,6 +293,7 @@ export default function WorkReportsPage() {
     if (!ctx) return;
     setIsDrawing(true);
     const { x, y } = getCoordinates(e, canvas);
+    lastPointRef.current = { x, y };
     ctx.beginPath();
     ctx.moveTo(x, y);
   };
@@ -301,12 +306,32 @@ export default function WorkReportsPage() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const { x, y } = getCoordinates(e, canvas);
-    ctx.lineTo(x, y);
-    ctx.stroke();
+    
+    if (lastPointRef.current) {
+      const midX = (lastPointRef.current.x + x) / 2;
+      const midY = (lastPointRef.current.y + y) / 2;
+      ctx.quadraticCurveTo(lastPointRef.current.x, lastPointRef.current.y, midX, midY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(midX, midY);
+    }
+    
+    lastPointRef.current = { x, y };
   };
 
   const stopDrawing = () => {
+    if (isDrawing && lastPointRef.current) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.lineTo(lastPointRef.current.x, lastPointRef.current.y);
+          ctx.stroke();
+        }
+      }
+    }
     setIsDrawing(false);
+    lastPointRef.current = null;
   };
 
   const saveSignature = () => {
@@ -353,12 +378,13 @@ export default function WorkReportsPage() {
     if (!ctx) return;
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#1f2937';
-    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineWidth = 5;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
+    lastClientPointRef.current = null;
   };
 
   const clearClientCanvas = () => {
@@ -368,6 +394,24 @@ export default function WorkReportsPage() {
     if (!ctx) return;
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    lastClientPointRef.current = null;
+  };
+
+  const getClientCoordinates = (e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    if ('touches' in e) {
+      return {
+        x: (e.touches[0].clientX - rect.left) * scaleX,
+        y: (e.touches[0].clientY - rect.top) * scaleY
+      };
+    }
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
+    };
   };
 
   const startClientDrawing = (e: React.MouseEvent | React.TouchEvent) => {
@@ -377,17 +421,8 @@ export default function WorkReportsPage() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     setIsClientDrawing(true);
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    let x, y;
-    if ('touches' in e) {
-      x = (e.touches[0].clientX - rect.left) * scaleX;
-      y = (e.touches[0].clientY - rect.top) * scaleY;
-    } else {
-      x = (e.clientX - rect.left) * scaleX;
-      y = (e.clientY - rect.top) * scaleY;
-    }
+    const { x, y } = getClientCoordinates(e, canvas);
+    lastClientPointRef.current = { x, y };
     ctx.beginPath();
     ctx.moveTo(x, y);
   };
@@ -399,23 +434,33 @@ export default function WorkReportsPage() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    let x, y;
-    if ('touches' in e) {
-      x = (e.touches[0].clientX - rect.left) * scaleX;
-      y = (e.touches[0].clientY - rect.top) * scaleY;
-    } else {
-      x = (e.clientX - rect.left) * scaleX;
-      y = (e.clientY - rect.top) * scaleY;
+    const { x, y } = getClientCoordinates(e, canvas);
+    
+    if (lastClientPointRef.current) {
+      const midX = (lastClientPointRef.current.x + x) / 2;
+      const midY = (lastClientPointRef.current.y + y) / 2;
+      ctx.quadraticCurveTo(lastClientPointRef.current.x, lastClientPointRef.current.y, midX, midY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(midX, midY);
     }
-    ctx.lineTo(x, y);
-    ctx.stroke();
+    
+    lastClientPointRef.current = { x, y };
   };
 
   const stopClientDrawing = () => {
+    if (isClientDrawing && lastClientPointRef.current) {
+      const canvas = clientCanvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.lineTo(lastClientPointRef.current.x, lastClientPointRef.current.y);
+          ctx.stroke();
+        }
+      }
+    }
     setIsClientDrawing(false);
+    lastClientPointRef.current = null;
   };
 
   const saveClientSignature = () => {
@@ -549,10 +594,10 @@ export default function WorkReportsPage() {
             <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white">
               <canvas
                 ref={canvasRef}
-                width={700}
-                height={300}
+                width={1400}
+                height={600}
                 className="w-full block touch-none cursor-crosshair"
-                style={{ aspectRatio: '700/300' }}
+                style={{ aspectRatio: '7/3' }}
                 onMouseDown={startDrawing}
                 onMouseMove={draw}
                 onMouseUp={stopDrawing}
@@ -1230,10 +1275,10 @@ export default function WorkReportsPage() {
               <div className="flex-1 border-2 border-dashed border-amber-400 dark:border-amber-600 rounded-xl bg-white overflow-hidden min-h-[200px]">
                 <canvas
                   ref={clientCanvasRef}
-                  width={800}
-                  height={400}
+                  width={1600}
+                  height={800}
                   className="w-full h-full touch-none cursor-crosshair"
-                  style={{ touchAction: 'none' }}
+                  style={{ touchAction: 'none', aspectRatio: '2/1' }}
                   onMouseDown={startClientDrawing}
                   onMouseMove={drawClient}
                   onMouseUp={stopClientDrawing}
