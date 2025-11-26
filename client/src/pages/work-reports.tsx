@@ -742,37 +742,35 @@ export default function WorkReportsPage() {
                       data-testid="textarea-notes"
                     />
                   </div>
+                  {clientSignatureData ? (
+                    <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700">
+                      <img src={clientSignatureData} alt="Firma del cliente" className="h-12 max-w-[120px] object-contain" />
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-600 dark:text-gray-300">Firmado por: <strong>{formData.signedBy}</strong></p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setClientSignedBy(formData.signedBy); openClientSignatureModal(); }}
+                        className="text-amber-700 border-amber-300"
+                      >
+                        Cambiar
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      onClick={() => { setClientSignedBy(''); openClientSignatureModal(); }}
+                      className="w-full bg-yellow-500 hover:bg-yellow-600 text-white"
+                      data-testid="button-add-client-signature"
+                    >
+                      <PenTool className="w-4 h-4 mr-2" />
+                      Añadir firma del cliente (opcional)
+                    </Button>
+                  )}
                 </div>
               </div>
-
-              {clientSignatureData ? (
-                <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700">
-                  <img src={clientSignatureData} alt="Firma del cliente" className="h-12 max-w-[120px] object-contain" />
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-600 dark:text-gray-300">Firmado por: <strong>{formData.signedBy}</strong></p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => { setClientSignedBy(formData.signedBy); openClientSignatureModal(); }}
-                    className="text-amber-700 border-amber-300"
-                  >
-                    Cambiar
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => { setClientSignedBy(''); openClientSignatureModal(); }}
-                  className="w-full border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-300 dark:hover:bg-amber-900/30"
-                  data-testid="button-add-client-signature"
-                >
-                  <PenTool className="w-4 h-4 mr-2" />
-                  Añadir firma del cliente (opcional)
-                </Button>
-              )}
             </div>
             <DialogFooter className="grid grid-cols-3 gap-3">
               <Button 
@@ -1074,37 +1072,35 @@ export default function WorkReportsPage() {
                     data-testid="textarea-edit-notes"
                   />
                 </div>
+                {clientSignatureData ? (
+                  <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700">
+                    <img src={clientSignatureData} alt="Firma del cliente" className="h-12 max-w-[120px] object-contain" />
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-300">Firmado por: <strong>{formData.signedBy}</strong></p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => { setClientSignedBy(formData.signedBy); openClientSignatureModal(); }}
+                      className="text-amber-700 border-amber-300"
+                    >
+                      Cambiar
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={() => { setClientSignedBy(''); openClientSignatureModal(); }}
+                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-white"
+                    data-testid="button-edit-add-client-signature"
+                  >
+                    <PenTool className="w-4 h-4 mr-2" />
+                    Añadir firma del cliente (opcional)
+                  </Button>
+                )}
               </div>
             </div>
-
-            {clientSignatureData ? (
-              <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700">
-                <img src={clientSignatureData} alt="Firma del cliente" className="h-12 max-w-[120px] object-contain" />
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600 dark:text-gray-300">Firmado por: <strong>{formData.signedBy}</strong></p>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => { setClientSignedBy(formData.signedBy); openClientSignatureModal(); }}
-                  className="text-amber-700 border-amber-300"
-                >
-                  Cambiar
-                </Button>
-              </div>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => { setClientSignedBy(''); openClientSignatureModal(); }}
-                className="w-full border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-300 dark:hover:bg-amber-900/30"
-                data-testid="button-edit-add-client-signature"
-              >
-                <PenTool className="w-4 h-4 mr-2" />
-                Añadir firma del cliente (opcional)
-              </Button>
-            )}
           </div>
           <DialogFooter className={`grid gap-3 ${selectedReport?.status === 'draft' ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <Button 
