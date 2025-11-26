@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, jsonb, index, date, time } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -1112,3 +1112,36 @@ export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions
 
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
+
+// Work Reports table - Partes de Trabajo (Pro feature)
+// Independent from time tracking - employees document each job/visit
+export const workReports = pgTable("work_reports", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  employeeId: integer("employee_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  reportDate: date("report_date").notNull(), // Date of the work
+  location: text("location").notNull(), // Address or location name
+  locationCoords: text("location_coords"), // Optional GPS coordinates "lat,lng"
+  startTime: time("start_time").notNull(), // Time work started at location
+  endTime: time("end_time").notNull(), // Time work ended at location
+  durationMinutes: integer("duration_minutes").notNull(), // Computed server-side
+  description: text("description").notNull(), // What work was done
+  clientName: text("client_name"), // Optional client/customer name
+  notes: text("notes"), // Additional notes
+  status: varchar("status", { length: 20 }).default('completed').notNull(), // completed, pending, cancelled
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyDateIdx: index("work_reports_company_date_idx").on(table.companyId, table.reportDate),
+  employeeDateIdx: index("work_reports_employee_date_idx").on(table.employeeId, table.reportDate),
+}));
+
+export const insertWorkReportSchema = createInsertSchema(workReports).omit({
+  id: true,
+  durationMinutes: true, // Computed server-side
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type WorkReport = typeof workReports.$inferSelect;
+export type InsertWorkReport = z.infer<typeof insertWorkReportSchema>;
