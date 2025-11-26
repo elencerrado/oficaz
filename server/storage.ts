@@ -1,5 +1,3 @@
-import { drizzle } from 'drizzle-orm/neon-http';
-import { neon } from '@neondatabase/serverless';
 import { eq, and, or, desc, sql, lte, gte, lt, isNotNull, isNull, inArray, asc, ne } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 import type {
@@ -20,6 +18,7 @@ import type {
   EmailCampaignSend, InsertEmailCampaignSend
 } from '@shared/schema';
 import Stripe from 'stripe';
+import { db } from './db';
 
 // Extended type for work sessions with audit trail information
 export type WorkSessionWithAudit = WorkSession & {
@@ -29,13 +28,6 @@ export type WorkSessionWithAudit = WorkSession & {
   auditLogs?: Array<WorkSessionAuditLog & { modifiedByName?: string | null }>;
   lastModifiedByName?: string | null;
 };
-
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL must be set");
-}
-
-const connection = neon(process.env.DATABASE_URL);
-const db = drizzle(connection, { schema });
 
 // Initialize Stripe
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_TEST;

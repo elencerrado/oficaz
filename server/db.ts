@@ -11,14 +11,20 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Optimized connection pool for high concurrency (1000+ simultaneous clock-ins)
+// Optimized connection pool with aggressive idle timeout to prevent stale connections
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
   max: 20,                      // Maximum number of connections in pool
-  min: 2,                       // Minimum number of connections to keep open
-  idleTimeoutMillis: 30000,     // Close idle connections after 30s
-  connectionTimeoutMillis: 3000, // Timeout if connection takes >3s
-  maxUses: 7500,                // Recycle connections after 7500 uses
+  min: 0,                       // Don't keep minimum connections (prevents stale connection issues)
+  idleTimeoutMillis: 10000,     // Close idle connections after 10s (prevent overnight stale connections)
+  connectionTimeoutMillis: 5000, // Timeout if connection takes >5s
+  maxUses: 1000,                // Recycle connections more frequently
+});
+
+// Handle pool errors gracefully to prevent crashes
+pool.on('error', (err) => {
+  console.error('🔄 Database pool error (will auto-reconnect):', err.message);
+  // Don't crash - pool will create new connection on next query
 });
 
 export const db = drizzle({ client: pool, schema });

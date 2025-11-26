@@ -305,6 +305,27 @@ app.get('/sitemap.xml', (req, res) => {
   fs.createReadStream(sitemapPath).pipe(res);
 });
 
+// Handle only specific Neon database WebSocket errors that cause morning crashes
+// Other errors should crash and trigger supervisor restart
+process.on('unhandledRejection', (reason: any, promise) => {
+  const message = reason?.message || String(reason);
+  
+  // Only suppress the specific Neon stale WebSocket connection error
+  const isNeonWebSocketError = 
+    (message.includes('Cannot set property message') && message.includes('ErrorEvent')) ||
+    (message.includes('WebSocket') && message.includes('connect'));
+  
+  if (isNeonWebSocketError) {
+    console.error('🔄 Neon WebSocket error (auto-recovering):', message);
+    // Don't exit - pool will create new connection on next query
+    return;
+  }
+  
+  // For all other errors, crash for supervised restart
+  console.error('🚨 UNHANDLED REJECTION - CRASHING FOR RESTART:', reason);
+  process.exit(1);
+});
+
 (async () => {
   const server = await registerRoutes(app);
 
