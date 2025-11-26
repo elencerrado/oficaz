@@ -5118,6 +5118,55 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Admin/Manager: Update any work report
+  app.patch('/api/admin/work-reports/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Check if company has Pro plan
+      const subscription = await storage.getSubscriptionByCompanyId(req.user!.companyId);
+      if (!subscription || (subscription.plan !== 'pro' && subscription.plan !== 'master')) {
+        return res.status(403).json({ message: 'Esta función requiere el plan Pro' });
+      }
+
+      // Get existing report
+      const existingReport = await storage.getWorkReport(id);
+      if (!existingReport) {
+        return res.status(404).json({ message: 'Parte de trabajo no encontrado' });
+      }
+
+      // Verify the report belongs to an employee of the same company
+      const employee = await storage.getUser(existingReport.employeeId);
+      if (!employee || employee.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'No tienes permiso para editar este parte' });
+      }
+
+      const { reportDate, location, startTime, endTime, description, clientName, notes } = req.body;
+      
+      const updates: any = {};
+      if (reportDate !== undefined) updates.reportDate = reportDate;
+      if (location !== undefined) updates.location = location;
+      if (startTime !== undefined) updates.startTime = startTime;
+      if (endTime !== undefined) updates.endTime = endTime;
+      if (description !== undefined) updates.description = description;
+      if (clientName !== undefined) updates.clientName = clientName;
+      if (notes !== undefined) updates.notes = notes;
+      
+      // Recalculate duration if times changed
+      if (startTime !== undefined || endTime !== undefined) {
+        const finalStart = startTime !== undefined ? startTime : existingReport.startTime;
+        const finalEnd = endTime !== undefined ? endTime : existingReport.endTime;
+        updates.durationMinutes = calculateDurationMinutes(finalStart, finalEnd);
+      }
+
+      const updatedReport = await storage.updateWorkReport(id, updates);
+      res.json(updatedReport);
+    } catch (error: any) {
+      console.error('Admin work report update error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Admin/Manager: Export work reports to PDF
   app.get('/api/admin/work-reports/export/pdf', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {

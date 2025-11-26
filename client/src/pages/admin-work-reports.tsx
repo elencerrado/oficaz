@@ -7,6 +7,8 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { getAuthHeaders } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -27,11 +29,13 @@ import {
   Users,
   Eye,
   X,
-  Pen
+  Pen,
+  Edit
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -68,11 +72,22 @@ const STATUS_STYLES = {
   submitted: { bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-green-200 dark:border-green-800', text: 'text-green-700 dark:text-green-300', label: 'Enviado' }
 };
 
+interface EditFormData {
+  reportDate: string;
+  location: string;
+  startTime: string;
+  endTime: string;
+  description: string;
+  clientName: string;
+  notes: string;
+}
+
 export default function AdminWorkReportsPage() {
   usePageTitle('Partes de Trabajo - Admin');
   const { user, isAuthenticated, isLoading: authLoading, subscription } = useAuth();
   const { setHeader, resetHeader } = usePageHeader();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setHeader({
@@ -91,6 +106,17 @@ export default function AdminWorkReportsPage() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<WorkReportWithEmployee | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<number | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingReport, setEditingReport] = useState<WorkReportWithEmployee | null>(null);
+  const [editFormData, setEditFormData] = useState<EditFormData>({
+    reportDate: '',
+    location: '',
+    startTime: '',
+    endTime: '',
+    description: '',
+    clientName: '',
+    notes: ''
+  });
 
   const getDateRange = useCallback(() => {
     const today = new Date();
@@ -245,6 +271,43 @@ export default function AdminWorkReportsPage() {
     } finally {
       setIsDownloadingPdf(null);
     }
+  };
+
+  const handleEditReport = (report: WorkReportWithEmployee) => {
+    setEditingReport(report);
+    setEditFormData({
+      reportDate: report.reportDate,
+      location: report.location,
+      startTime: report.startTime,
+      endTime: report.endTime,
+      description: report.description,
+      clientName: report.clientName || '',
+      notes: report.notes || ''
+    });
+    setEditModalOpen(true);
+  };
+
+  const updateReportMutation = useMutation({
+    mutationFn: async (data: { id: number; updates: Partial<EditFormData> }) => {
+      return apiRequest('PATCH', `/api/admin/work-reports/${data.id}`, data.updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/work-reports'] });
+      setEditModalOpen(false);
+      setEditingReport(null);
+      toast({ title: 'Parte actualizado', description: 'Los cambios se han guardado correctamente.' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'No se pudo actualizar el parte.', variant: 'destructive' });
+    }
+  });
+
+  const handleSaveEdit = () => {
+    if (!editingReport) return;
+    updateReportMutation.mutate({
+      id: editingReport.id,
+      updates: editFormData
+    });
   };
 
   const totalMinutes = filteredReports.reduce((sum, r) => sum + r.durationMinutes, 0);
@@ -482,6 +545,14 @@ export default function AdminWorkReportsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <button
+                          onClick={() => handleEditReport(report)}
+                          className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
+                          title="Editar parte"
+                          data-testid={`button-edit-report-${report.id}`}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => handleViewReport(report)}
                           className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
                           title="Ver parte completo"
@@ -710,6 +781,124 @@ export default function AdminWorkReportsPage() {
                 >
                   <Download className="w-4 h-4 mr-2" />
                   {isDownloadingPdf === selectedReport.id ? 'Generando...' : 'Descargar PDF'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de edición */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
+          <DialogHeader className="border-b border-gray-200 dark:border-gray-700 pb-4">
+            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Edit className="w-5 h-5 text-blue-600" />
+              Editar Parte de Trabajo
+            </DialogTitle>
+          </DialogHeader>
+          
+          {editingReport && (
+            <div className="py-4 space-y-4">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Empleado</p>
+                <p className="font-medium text-gray-900 dark:text-white">{editingReport.employeeName}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-date">Fecha</Label>
+                  <Input
+                    id="edit-date"
+                    type="date"
+                    value={editFormData.reportDate}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, reportDate: e.target.value }))}
+                    className="bg-white dark:bg-gray-800"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-location">Ubicación</Label>
+                  <Input
+                    id="edit-location"
+                    value={editFormData.location}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, location: e.target.value }))}
+                    placeholder="Ubicación"
+                    className="bg-white dark:bg-gray-800"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-start">Hora inicio</Label>
+                  <Input
+                    id="edit-start"
+                    type="time"
+                    value={editFormData.startTime}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, startTime: e.target.value }))}
+                    className="bg-white dark:bg-gray-800"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-end">Hora fin</Label>
+                  <Input
+                    id="edit-end"
+                    type="time"
+                    value={editFormData.endTime}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, endTime: e.target.value }))}
+                    className="bg-white dark:bg-gray-800"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-client">Cliente</Label>
+                <Input
+                  id="edit-client"
+                  value={editFormData.clientName}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, clientName: e.target.value }))}
+                  placeholder="Nombre del cliente"
+                  className="bg-white dark:bg-gray-800"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-description">Trabajo realizado</Label>
+                <Textarea
+                  id="edit-description"
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Descripción del trabajo realizado"
+                  rows={4}
+                  className="bg-white dark:bg-gray-800"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-notes">Notas adicionales</Label>
+                <Textarea
+                  id="edit-notes"
+                  value={editFormData.notes}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Notas adicionales (opcional)"
+                  rows={2}
+                  className="bg-white dark:bg-gray-800"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditModalOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  disabled={updateReportMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {updateReportMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
                 </Button>
               </div>
             </div>
