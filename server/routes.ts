@@ -5410,11 +5410,7 @@ Responde directamente a este email para contactar con la persona.
       // Horizontal line before signatures
       doc.line(14, yPos - 5, 196, yPos - 5);
       
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.text('FIRMAS', 14, yPos + 3);
-      
-      yPos += 15;
+      yPos += 10;
       
       // Employee signature box (larger for better quality)
       doc.setDrawColor(200, 200, 200);
