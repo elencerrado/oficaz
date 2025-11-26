@@ -553,7 +553,6 @@ export default function WorkReportsPage() {
                 <ClipboardList className="w-5 h-5 text-blue-600" />
                 Nuevo Parte de Trabajo
               </DialogTitle>
-              <DialogDescription>Completa los datos del trabajo realizado</DialogDescription>
             </DialogHeader>
             <div className="space-y-6 py-4">
               <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
@@ -900,7 +899,6 @@ export default function WorkReportsPage() {
               <Edit className="w-5 h-5 text-blue-600" />
               Editar Parte de Trabajo
             </DialogTitle>
-            <DialogDescription>Modifica los detalles del parte</DialogDescription>
           </DialogHeader>
           <div className="space-y-6 py-4">
             <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
