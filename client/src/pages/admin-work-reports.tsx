@@ -74,6 +74,14 @@ const STATUS_STYLES = {
   submitted: { bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-green-200 dark:border-green-800', text: 'text-green-700 dark:text-green-300', label: 'Enviado' }
 };
 
+const formatDuration = (minutes: number) => {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours === 0) return `${mins}min`;
+  if (mins === 0) return `${hours}h`;
+  return `${hours}h ${mins}min`;
+};
+
 interface EditFormData {
   reportDate: string;
   location: string;
@@ -149,17 +157,31 @@ export default function AdminWorkReportsPage() {
     enabled: isAuthenticated && !authLoading
   });
 
-  const buildQueryParams = useCallback(() => {
+  const queryParams = useMemo(() => {
     const params = new URLSearchParams();
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
     if (employeeFilter !== 'all') params.append('employeeId', employeeFilter);
     return params.toString() ? `?${params.toString()}` : '';
   }, [startDate, endDate, employeeFilter]);
+
+  const stableQueryKey = useMemo(() => 
+    ['/api/admin/work-reports', dateFilter, employeeFilter] as const,
+    [dateFilter, employeeFilter]
+  );
   
   const { data: reports = [], isLoading: reportsLoading } = useQuery<WorkReportWithEmployee[]>({
-    queryKey: [`/api/admin/work-reports${buildQueryParams()}`],
-    enabled: isAuthenticated && !authLoading
+    queryKey: stableQueryKey,
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/work-reports${queryParams}`, {
+        headers: getAuthHeaders() as Record<string, string>,
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch reports');
+      return response.json();
+    },
+    enabled: isAuthenticated && !authLoading,
+    staleTime: 30000
   });
 
   const filteredReports = useMemo(() => {
@@ -174,34 +196,37 @@ export default function AdminWorkReportsPage() {
   }, [reports, searchTerm]);
 
   const handleTodayFilter = useCallback(() => {
-    if (activeStatsFilter === 'today') {
-      setActiveStatsFilter(null);
-      setDateFilter('all');
-    } else {
-      setActiveStatsFilter('today');
+    setActiveStatsFilter(prev => {
+      if (prev === 'today') {
+        setDateFilter('all');
+        return null;
+      }
       setDateFilter('today');
-    }
-  }, [activeStatsFilter]);
+      return 'today';
+    });
+  }, []);
 
   const handleThisWeekFilter = useCallback(() => {
-    if (activeStatsFilter === 'week') {
-      setActiveStatsFilter(null);
-      setDateFilter('all');
-    } else {
-      setActiveStatsFilter('week');
+    setActiveStatsFilter(prev => {
+      if (prev === 'week') {
+        setDateFilter('all');
+        return null;
+      }
       setDateFilter('this-week');
-    }
-  }, [activeStatsFilter]);
+      return 'week';
+    });
+  }, []);
 
   const handleThisMonthFilter = useCallback(() => {
-    if (activeStatsFilter === 'month') {
-      setActiveStatsFilter(null);
-      setDateFilter('all');
-    } else {
-      setActiveStatsFilter('month');
+    setActiveStatsFilter(prev => {
+      if (prev === 'month') {
+        setDateFilter('all');
+        return null;
+      }
       setDateFilter('this-month');
-    }
-  }, [activeStatsFilter]);
+      return 'month';
+    });
+  }, []);
 
   const exportToFormat = async (format: 'pdf' | 'excel') => {
     setIsExporting(true);
@@ -235,20 +260,12 @@ export default function AdminWorkReportsPage() {
     }
   };
 
-  const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours === 0) return `${mins}min`;
-    if (mins === 0) return `${hours}h`;
-    return `${hours}h ${mins}min`;
-  };
-
-  const handleViewReport = (report: WorkReportWithEmployee) => {
+  const handleViewReport = useCallback((report: WorkReportWithEmployee) => {
     setSelectedReport(report);
     setViewModalOpen(true);
-  };
+  }, []);
 
-  const handleDownloadPdf = async (report: WorkReportWithEmployee) => {
+  const handleDownloadPdf = useCallback(async (report: WorkReportWithEmployee) => {
     setIsDownloadingPdf(report.id);
     try {
       const response = await fetch(`/api/work-reports/${report.id}/pdf`, {
@@ -273,9 +290,9 @@ export default function AdminWorkReportsPage() {
     } finally {
       setIsDownloadingPdf(null);
     }
-  };
+  }, [toast]);
 
-  const handleEditReport = (report: WorkReportWithEmployee) => {
+  const handleEditReport = useCallback((report: WorkReportWithEmployee) => {
     setEditingReport(report);
     setEditFormData({
       reportDate: report.reportDate,
@@ -287,14 +304,14 @@ export default function AdminWorkReportsPage() {
       notes: report.notes || ''
     });
     setEditModalOpen(true);
-  };
+  }, []);
 
   const updateReportMutation = useMutation({
     mutationFn: async (data: { id: number; updates: Partial<EditFormData> }) => {
       return apiRequest('PATCH', `/api/admin/work-reports/${data.id}`, data.updates);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/work-reports'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/work-reports'], exact: false });
       setEditModalOpen(false);
       setEditingReport(null);
       toast({ title: 'Parte actualizado', description: 'Los cambios se han guardado correctamente.' });
@@ -304,28 +321,24 @@ export default function AdminWorkReportsPage() {
     }
   });
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = useCallback(() => {
     if (!editingReport) return;
     updateReportMutation.mutate({
       id: editingReport.id,
       updates: editFormData
     });
-  };
+  }, [editingReport, editFormData, updateReportMutation]);
 
-  const totalMinutes = filteredReports.reduce((sum, r) => sum + r.durationMinutes, 0);
-  const totalHours = Math.floor(totalMinutes / 60);
-  const remainingMinutes = totalMinutes % 60;
+  const stats = useMemo(() => {
+    const totalMinutes = filteredReports.reduce((sum, r) => sum + r.durationMinutes, 0);
+    const totalHours = Math.floor(totalMinutes / 60);
+    const remainingMinutes = totalMinutes % 60;
+    const uniqueEmployees = new Set(reports.map(r => r.employeeName)).size;
+    const completedCount = filteredReports.filter(r => r.status === 'submitted').length;
+    return { totalMinutes, totalHours, remainingMinutes, uniqueEmployees, completedCount };
+  }, [filteredReports, reports]);
 
-  const uniqueEmployees = useMemo(() => {
-    const names = new Set(reports.map(r => r.employeeName));
-    return names.size;
-  }, [reports]);
-
-  const completedCount = useMemo(() => {
-    return filteredReports.filter(r => r.status === 'submitted').length;
-  }, [filteredReports]);
-
-  const getFilterTitle = () => {
+  const filterTitle = useMemo(() => {
     switch (dateFilter) {
       case 'today':
         return 'Partes de hoy';
@@ -337,7 +350,7 @@ export default function AdminWorkReportsPage() {
       default:
         return 'Todos los partes';
     }
-  };
+  }, [dateFilter]);
 
   if (authLoading) {
     return (
@@ -387,7 +400,7 @@ export default function AdminWorkReportsPage() {
         <StatsCard
           title="Horas Totales"
           subtitle="Trabajadas"
-          value={`${totalHours}h${remainingMinutes > 0 ? ` ${remainingMinutes}m` : ''}`}
+          value={`${stats.totalHours}h${stats.remainingMinutes > 0 ? ` ${stats.remainingMinutes}m` : ''}`}
           color="green"
           icon={Clock}
           onClick={handleTodayFilter}
@@ -397,7 +410,7 @@ export default function AdminWorkReportsPage() {
         <StatsCard
           title="Empleados"
           subtitle="Activos"
-          value={uniqueEmployees}
+          value={stats.uniqueEmployees}
           color="purple"
           icon={Users}
           onClick={handleThisWeekFilter}
@@ -407,7 +420,7 @@ export default function AdminWorkReportsPage() {
         <StatsCard
           title="Completados"
           subtitle="Partes"
-          value={completedCount}
+          value={stats.completedCount}
           color="green"
           icon={CheckCircle}
         />
@@ -417,7 +430,7 @@ export default function AdminWorkReportsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-            <span className="text-sm sm:text-lg font-medium">{getFilterTitle()} ({filteredReports.length})</span>
+            <span className="text-sm sm:text-lg font-medium">{filterTitle} ({filteredReports.length})</span>
             
             {/* Filters button */}
             <Button 
