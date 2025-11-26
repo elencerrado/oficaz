@@ -475,9 +475,9 @@ export default function AdminWorkReportsPage() {
                     className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
                     data-testid={`card-admin-report-${report.id}`}
                   >
-                    <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800">
-                      <div className="flex items-center gap-2 text-white">
-                        <User className="w-4 h-4" />
+                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center gap-2 text-gray-900 dark:text-white">
+                        <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                         <span className="font-semibold">{report.employeeName}</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -486,7 +486,7 @@ export default function AdminWorkReportsPage() {
                         </Badge>
                         <button
                           onClick={() => handleViewReport(report)}
-                          className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors text-white"
+                          className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
                           title="Ver parte completo"
                           data-testid={`button-view-report-${report.id}`}
                         >
@@ -495,7 +495,7 @@ export default function AdminWorkReportsPage() {
                         <button
                           onClick={() => handleDownloadPdf(report)}
                           disabled={isDownloadingPdf === report.id}
-                          className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors text-white disabled:opacity-50"
+                          className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400 disabled:opacity-50"
                           title="Descargar PDF"
                           data-testid={`button-download-pdf-${report.id}`}
                         >
