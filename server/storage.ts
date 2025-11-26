@@ -60,6 +60,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   getUsersByCompany(companyId: number): Promise<User[]>;
   updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined>;
+  updateUserSignature(userId: number, signatureUrl: string): Promise<User | undefined>;
   deleteUser(id: number): Promise<User | undefined>;
 
   // 🔒 SECURITY: Refresh Tokens for JWT rotation
@@ -378,6 +379,15 @@ export class DrizzleStorage implements IStorage {
 
   async updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined> {
     const [user] = await db.update(schema.users).set(updates).where(eq(schema.users.id, id)).returning();
+    return user;
+  }
+
+  async updateUserSignature(userId: number, signatureUrl: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(schema.users)
+      .set({ signatureImage: signatureUrl })
+      .where(eq(schema.users.id, userId))
+      .returning();
     return user;
   }
 

@@ -178,6 +178,54 @@ export class SimpleObjectStorageService {
     return `/public-objects/email-marketing/${filename}`;
   }
 
+  // Upload a signature image to object storage (R2 or Replit)
+  async uploadSignature(
+    buffer: Buffer,
+    contentType: string,
+    filename: string
+  ): Promise<string> {
+    // R2 upload
+    if (useR2 && r2Client) {
+      const key = `signatures/${filename}`;
+      const command = new PutObjectCommand({
+        Bucket: r2BucketName,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+        CacheControl: "public, max-age=31536000",
+      });
+
+      await r2Client.send(command);
+      console.log(`📦 Uploaded signature to R2: ${filename}`);
+
+      // Return relative URL for database storage
+      return `/public-objects/signatures/${filename}`;
+    }
+
+    // Replit fallback
+    const searchPaths = this.getPublicObjectSearchPaths();
+    if (searchPaths.length === 0) {
+      throw new Error("No public search paths configured");
+    }
+
+    const publicPath = searchPaths[0];
+    const fullPath = `${publicPath}/signatures/${filename}`;
+    const { bucketName, objectName } = this.parseObjectPath(fullPath);
+
+    const bucket = objectStorageClient.bucket(bucketName);
+    const file = bucket.file(objectName);
+
+    await file.save(buffer, {
+      contentType,
+      metadata: {
+        cacheControl: "public, max-age=31536000",
+      },
+    });
+
+    console.log(`📦 Uploaded signature to Replit Object Storage: ${filename}`);
+    return `/public-objects/signatures/${filename}`;
+  }
+
   // Download an object to the response (R2 or Replit)
   async downloadObject(file: File | { key: string }, res: Response) {
     try {

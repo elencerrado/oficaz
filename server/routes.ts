@@ -5050,6 +5050,47 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Employee: Save signature for work reports
+  app.post('/api/work-reports/signature', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { signatureData } = req.body;
+      
+      if (!signatureData) {
+        return res.status(400).json({ message: 'Firma requerida' });
+      }
+
+      // signatureData is a base64 data URL
+      // Convert to buffer for upload to object storage
+      const base64Data = signatureData.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+      
+      // Upload to object storage using SimpleObjectStorageService
+      const { SimpleObjectStorageService } = await import('./objectStorageSimple');
+      const storageService = new SimpleObjectStorageService();
+      const filename = `signature-${req.user!.id}-${Date.now()}.png`;
+      const signatureUrl = await storageService.uploadSignature(buffer, 'image/png', filename);
+      
+      // Update user's signature in database
+      await storage.updateUserSignature(req.user!.id, signatureUrl);
+      
+      res.json({ signatureUrl });
+    } catch (error: any) {
+      console.error('Signature save error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Employee: Get own signature
+  app.get('/api/work-reports/signature', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const user = await storage.getUser(req.user!.id);
+      res.json({ signatureUrl: user?.signatureImage || null });
+    } catch (error: any) {
+      console.error('Signature fetch error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Admin/Manager: Get all company work reports with filters
   app.get('/api/admin/work-reports', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
