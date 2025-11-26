@@ -43,6 +43,7 @@ interface WorkReport {
   companyId: number;
   employeeId: number;
   reportDate: string;
+  refCode?: string | null;
   location: string;
   locationCoords?: string | null;
   startTime: string;
@@ -89,6 +90,7 @@ export default function WorkReportsPage() {
 
   const [formData, setFormData] = useState({
     reportDate: format(new Date(), 'yyyy-MM-dd'),
+    refCode: '',
     location: '',
     startTime: '09:00',
     endTime: '17:00',
@@ -193,7 +195,7 @@ export default function WorkReportsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: typeof formData & { signatureImage?: string } }) => {
+    mutationFn: async ({ id, data }: { id: number; data: Partial<typeof formData> & { signatureImage?: string } }) => {
       return apiRequest('PATCH', `/api/work-reports/${id}`, data);
     },
     onSuccess: () => {
@@ -358,6 +360,7 @@ export default function WorkReportsPage() {
   const resetForm = () => {
     setFormData({
       reportDate: format(new Date(), 'yyyy-MM-dd'),
+      refCode: '',
       location: '',
       startTime: '09:00',
       endTime: '17:00',
@@ -487,6 +490,7 @@ export default function WorkReportsPage() {
     setSelectedReport(report);
     setFormData({
       reportDate: report.reportDate,
+      refCode: report.refCode || '',
       location: report.location,
       startTime: report.startTime,
       endTime: report.endTime,
@@ -659,14 +663,26 @@ export default function WorkReportsPage() {
                   Cuándo y dónde
                 </h4>
                 <div className="space-y-3">
-                  <div className="space-y-2">
-                    <Label className="text-sm">Fecha del trabajo</Label>
-                    <DatePickerDay
-                      date={formData.reportDate ? parseISO(formData.reportDate) : new Date()}
-                      onDateChange={(date) => setFormData({ ...formData, reportDate: date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd') })}
-                      className="w-full justify-start bg-white dark:bg-gray-800"
-                      placeholder="Seleccionar fecha"
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label className="text-sm">Fecha del trabajo</Label>
+                      <DatePickerDay
+                        date={formData.reportDate ? parseISO(formData.reportDate) : new Date()}
+                        onDateChange={(date) => setFormData({ ...formData, reportDate: date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd') })}
+                        className="w-full justify-start bg-white dark:bg-gray-800"
+                        placeholder="Seleccionar fecha"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm">Código ref. <span className="text-gray-400 text-xs">(opcional)</span></Label>
+                      <Input
+                        placeholder="Ej: OBR-2024-001"
+                        value={formData.refCode}
+                        onChange={(e) => setFormData({ ...formData, refCode: e.target.value })}
+                        className="bg-white dark:bg-gray-800"
+                        data-testid="input-ref-code"
+                      />
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
@@ -888,6 +904,11 @@ export default function WorkReportsPage() {
                         <Badge className={`${statusStyle.bg} ${statusStyle.text} border-0`}>
                           {statusStyle.label}
                         </Badge>
+                        {report.refCode && (
+                          <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700">
+                            {report.refCode}
+                          </Badge>
+                        )}
                         <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                           <Calendar className="w-4 h-4 mr-1" />
                           {format(parseISO(report.reportDate), 'EEEE, d MMMM yyyy', { locale: es })}
@@ -996,14 +1017,26 @@ export default function WorkReportsPage() {
                 Cuándo y dónde
               </h4>
               <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label className="text-sm">Fecha del trabajo</Label>
-                  <DatePickerDay
-                    date={formData.reportDate ? parseISO(formData.reportDate) : new Date()}
-                    onDateChange={(date) => setFormData({ ...formData, reportDate: date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd') })}
-                    className="w-full justify-start bg-white dark:bg-gray-800"
-                    placeholder="Seleccionar fecha"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label className="text-sm">Fecha del trabajo</Label>
+                    <DatePickerDay
+                      date={formData.reportDate ? parseISO(formData.reportDate) : new Date()}
+                      onDateChange={(date) => setFormData({ ...formData, reportDate: date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd') })}
+                      className="w-full justify-start bg-white dark:bg-gray-800"
+                      placeholder="Seleccionar fecha"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm">Código ref. <span className="text-gray-400 text-xs">(opcional)</span></Label>
+                    <Input
+                      placeholder="Ej: OBR-2024-001"
+                      value={formData.refCode}
+                      onChange={(e) => setFormData({ ...formData, refCode: e.target.value })}
+                      className="bg-white dark:bg-gray-800"
+                      data-testid="input-edit-ref-code"
+                    />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">

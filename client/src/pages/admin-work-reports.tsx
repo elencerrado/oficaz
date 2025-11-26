@@ -46,6 +46,7 @@ interface WorkReportWithEmployee {
   companyId: number;
   employeeId: number;
   reportDate: string;
+  refCode?: string | null;
   location: string;
   locationCoords?: string | null;
   startTime: string;
@@ -84,6 +85,7 @@ const formatDuration = (minutes: number) => {
 
 interface EditFormData {
   reportDate: string;
+  refCode: string;
   location: string;
   startTime: string;
   endTime: string;
@@ -120,6 +122,7 @@ export default function AdminWorkReportsPage() {
   const [editingReport, setEditingReport] = useState<WorkReportWithEmployee | null>(null);
   const [editFormData, setEditFormData] = useState<EditFormData>({
     reportDate: '',
+    refCode: '',
     location: '',
     startTime: '',
     endTime: '',
@@ -296,6 +299,7 @@ export default function AdminWorkReportsPage() {
     setEditingReport(report);
     setEditFormData({
       reportDate: report.reportDate,
+      refCode: report.refCode || '',
       location: report.location,
       startTime: report.startTime,
       endTime: report.endTime,
@@ -557,6 +561,11 @@ export default function AdminWorkReportsPage() {
                       <div className="flex items-center gap-2 text-gray-900 dark:text-white">
                         <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                         <span className="font-semibold">{report.employeeName}</span>
+                        {report.refCode && (
+                          <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs">
+                            {report.refCode}
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <button
@@ -852,15 +861,26 @@ export default function AdminWorkReportsPage() {
                   </Popover>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-location">Ubicación</Label>
+                  <Label htmlFor="edit-ref-code">Código ref.</Label>
                   <Input
-                    id="edit-location"
-                    value={editFormData.location}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, location: e.target.value }))}
-                    placeholder="Ubicación"
+                    id="edit-ref-code"
+                    value={editFormData.refCode}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, refCode: e.target.value }))}
+                    placeholder="Ej: OBR-2024-001"
                     className="bg-white dark:bg-gray-800"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-location">Ubicación</Label>
+                <Input
+                  id="edit-location"
+                  value={editFormData.location}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, location: e.target.value }))}
+                  placeholder="Ubicación"
+                  className="bg-white dark:bg-gray-800"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
