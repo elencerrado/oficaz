@@ -904,11 +904,6 @@ export default function WorkReportsPage() {
                         <Badge className={`${statusStyle.bg} ${statusStyle.text} border-0`}>
                           {statusStyle.label}
                         </Badge>
-                        {report.refCode && (
-                          <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700">
-                            {report.refCode}
-                          </Badge>
-                        )}
                         <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                           <Calendar className="w-4 h-4 mr-1" />
                           {format(parseISO(report.reportDate), 'EEEE, d MMMM yyyy', { locale: es })}
@@ -919,9 +914,14 @@ export default function WorkReportsPage() {
                         </div>
                       </div>
                       
-                      <div className="flex items-start gap-2">
-                        <MapPin className="w-4 h-4 mt-1 text-gray-400 flex-shrink-0" />
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
                         <span className="font-medium text-gray-900 dark:text-white">{report.location}</span>
+                        {report.refCode && (
+                          <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs">
+                            {report.refCode}
+                          </Badge>
+                        )}
                       </div>
 
                       {report.clientName && (
