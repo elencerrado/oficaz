@@ -424,46 +424,8 @@ export default function WorkReportsPage() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card className="bg-white dark:bg-gray-800">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Total Partes</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{filteredReports.length}</p>
-              </div>
-              <ClipboardList className="w-8 h-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-white dark:bg-gray-800">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Horas Trabajadas</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                  {totalHours}h {remainingMinutes > 0 ? `${remainingMinutes}m` : ''}
-                </p>
-              </div>
-              <Clock className="w-8 h-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-white dark:bg-gray-800">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Completados</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                  {filteredReports.filter(r => r.status === 'completed').length}
-                </p>
-              </div>
-              <CheckCircle className="w-8 h-8 text-emerald-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
+      {/* Reports List */}
+      <div className="px-6 flex-1 pb-6">
       {reportsLoading ? (
         <div className="flex flex-col items-center justify-center py-12 gap-4">
           <LoadingSpinner size="lg" />
@@ -566,6 +528,7 @@ export default function WorkReportsPage() {
           })}
         </div>
       )}
+      </div>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-lg">
