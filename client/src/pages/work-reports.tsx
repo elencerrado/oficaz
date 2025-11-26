@@ -698,42 +698,34 @@ export default function WorkReportsPage() {
                 </div>
               </div>
 
-              <div className="space-y-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium text-amber-900 dark:text-amber-100 flex items-center gap-2">
-                    <PenTool className="w-4 h-4" />
-                    Firma del cliente <span className="text-amber-600 dark:text-amber-400 text-xs font-normal">(opcional)</span>
-                  </h4>
-                </div>
-                {clientSignatureData ? (
-                  <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-amber-200 dark:border-amber-700">
-                    <img src={clientSignatureData} alt="Firma del cliente" className="h-12 max-w-[120px] object-contain" />
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-600 dark:text-gray-300">Firmado por: <strong>{formData.signedBy}</strong></p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => { setClientSignedBy(formData.signedBy); openClientSignatureModal(); }}
-                      className="text-amber-700 border-amber-300"
-                    >
-                      Cambiar
-                    </Button>
+              {clientSignatureData ? (
+                <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700">
+                  <img src={clientSignatureData} alt="Firma del cliente" className="h-12 max-w-[120px] object-contain" />
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Firmado por: <strong>{formData.signedBy}</strong></p>
                   </div>
-                ) : (
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => { setClientSignedBy(''); openClientSignatureModal(); }}
-                    className="w-full border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-300 dark:hover:bg-amber-900/30"
-                    data-testid="button-add-client-signature"
+                    size="sm"
+                    onClick={() => { setClientSignedBy(formData.signedBy); openClientSignatureModal(); }}
+                    className="text-amber-700 border-amber-300"
                   >
-                    <PenTool className="w-4 h-4 mr-2" />
-                    Añadir firma del cliente
+                    Cambiar
                   </Button>
-                )}
-              </div>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => { setClientSignedBy(''); openClientSignatureModal(); }}
+                  className="w-full border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-300 dark:hover:bg-amber-900/30"
+                  data-testid="button-add-client-signature"
+                >
+                  <PenTool className="w-4 h-4 mr-2" />
+                  Añadir firma del cliente (opcional)
+                </Button>
+              )}
             </div>
             <DialogFooter className="grid grid-cols-2 gap-3">
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} data-testid="button-cancel-create" className="w-full">
@@ -997,42 +989,34 @@ export default function WorkReportsPage() {
               </div>
             </div>
 
-            <div className="space-y-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium text-amber-900 dark:text-amber-100 flex items-center gap-2">
-                  <PenTool className="w-4 h-4" />
-                  Firma del cliente <span className="text-amber-600 dark:text-amber-400 text-xs font-normal">(opcional)</span>
-                </h4>
-              </div>
-              {clientSignatureData ? (
-                <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-amber-200 dark:border-amber-700">
-                  <img src={clientSignatureData} alt="Firma del cliente" className="h-12 max-w-[120px] object-contain" />
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-600 dark:text-gray-300">Firmado por: <strong>{formData.signedBy}</strong></p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => { setClientSignedBy(formData.signedBy); openClientSignatureModal(); }}
-                    className="text-amber-700 border-amber-300"
-                  >
-                    Cambiar
-                  </Button>
+            {clientSignatureData ? (
+              <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700">
+                <img src={clientSignatureData} alt="Firma del cliente" className="h-12 max-w-[120px] object-contain" />
+                <div className="flex-1">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Firmado por: <strong>{formData.signedBy}</strong></p>
                 </div>
-              ) : (
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => { setClientSignedBy(''); openClientSignatureModal(); }}
-                  className="w-full border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-300 dark:hover:bg-amber-900/30"
-                  data-testid="button-edit-add-client-signature"
+                  size="sm"
+                  onClick={() => { setClientSignedBy(formData.signedBy); openClientSignatureModal(); }}
+                  className="text-amber-700 border-amber-300"
                 >
-                  <PenTool className="w-4 h-4 mr-2" />
-                  Añadir firma del cliente
+                  Cambiar
                 </Button>
-              )}
-            </div>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => { setClientSignedBy(''); openClientSignatureModal(); }}
+                className="w-full border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-300 dark:hover:bg-amber-900/30"
+                data-testid="button-edit-add-client-signature"
+              >
+                <PenTool className="w-4 h-4 mr-2" />
+                Añadir firma del cliente (opcional)
+              </Button>
+            )}
           </div>
           <DialogFooter className="grid grid-cols-2 gap-3">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} data-testid="button-cancel-edit" className="w-full">
