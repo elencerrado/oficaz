@@ -741,7 +741,7 @@ export default function AdminWorkReportsPage() {
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Firma del empleado</p>
                     {selectedReport.employeeSignature ? (
-                      <div className="bg-white dark:bg-gray-800 rounded border border-gray-100 dark:border-gray-600 p-2">
+                      <div className="bg-white dark:bg-gray-900 rounded border border-gray-100 dark:border-gray-700 p-2">
                         <img 
                           src={selectedReport.employeeSignature} 
                           alt="Firma del empleado" 
@@ -749,7 +749,7 @@ export default function AdminWorkReportsPage() {
                         />
                       </div>
                     ) : (
-                      <div className="h-20 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center">
+                      <div className="h-20 bg-gray-100 dark:bg-gray-900 rounded flex items-center justify-center">
                         <span className="text-gray-400 text-sm">Sin firma registrada</span>
                       </div>
                     )}
@@ -760,7 +760,7 @@ export default function AdminWorkReportsPage() {
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Firma del cliente</p>
                     {selectedReport.signatureImage ? (
-                      <div className="bg-white dark:bg-gray-800 rounded border border-gray-100 dark:border-gray-600 p-2">
+                      <div className="bg-white dark:bg-gray-900 rounded border border-gray-100 dark:border-gray-700 p-2">
                         <img 
                           src={selectedReport.signatureImage} 
                           alt="Firma del cliente" 
@@ -768,7 +768,7 @@ export default function AdminWorkReportsPage() {
                         />
                       </div>
                     ) : (
-                      <div className="h-20 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center">
+                      <div className="h-20 bg-gray-100 dark:bg-gray-900 rounded flex items-center justify-center">
                         <span className="text-gray-400 text-sm">Sin firma del cliente</span>
                       </div>
                     )}
