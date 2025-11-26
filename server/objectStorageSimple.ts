@@ -226,6 +226,48 @@ export class SimpleObjectStorageService {
     return `/public-objects/signatures/${filename}`;
   }
 
+  // Download an object as buffer (for PDF generation, etc.)
+  async downloadObjectAsBuffer(filePath: string): Promise<Buffer | null> {
+    try {
+      // R2 download
+      if (useR2 && r2Client) {
+        // Remove /public-objects/ prefix if present
+        let key = filePath;
+        if (key.startsWith('/public-objects/')) {
+          key = key.replace('/public-objects/', '');
+        }
+        
+        const command = new GetObjectCommand({
+          Bucket: r2BucketName,
+          Key: key,
+        });
+
+        const response = await r2Client.send(command);
+        
+        if (response.Body) {
+          // Convert stream to buffer
+          const chunks: Uint8Array[] = [];
+          // @ts-ignore
+          for await (const chunk of response.Body) {
+            chunks.push(chunk);
+          }
+          return Buffer.concat(chunks);
+        }
+        return null;
+      }
+
+      // Replit fallback
+      const file = await this.searchPublicObject(filePath.replace('/public-objects/', ''));
+      if (!file) return null;
+
+      const [buffer] = await (file as File).download();
+      return buffer;
+    } catch (error) {
+      console.error("Error downloading file as buffer:", error);
+      return null;
+    }
+  }
+
   // Download an object to the response (R2 or Replit)
   async downloadObject(file: File | { key: string }, res: Response) {
     try {

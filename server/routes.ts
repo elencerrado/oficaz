@@ -5244,7 +5244,43 @@ Responde directamente a este email para contactar con la persona.
       const company = await storage.getCompany(req.user!.companyId);
       const employee = await storage.getUser(report.employeeId);
       
-      console.log('PDF Generation - Employee:', employee?.fullName, 'Has signature:', !!employee?.signatureImage, 'Signature length:', employee?.signatureImage?.length || 0);
+      // Import object storage to download signature images
+      const { SimpleObjectStorageService } = await import('./objectStorageSimple.js');
+      const objectStorage = new SimpleObjectStorageService();
+      
+      // Helper function to get signature as base64
+      async function getSignatureBase64(signaturePath: string | null | undefined): Promise<string | null> {
+        if (!signaturePath) return null;
+        
+        // If already base64 data URL, return as-is
+        if (signaturePath.startsWith('data:image/')) {
+          return signaturePath;
+        }
+        
+        // If it's an Object Storage path, download and convert to base64
+        if (signaturePath.startsWith('/public-objects/')) {
+          try {
+            const buffer = await objectStorage.downloadObjectAsBuffer(signaturePath);
+            if (buffer) {
+              const base64 = buffer.toString('base64');
+              // Determine content type from extension
+              const ext = signaturePath.split('.').pop()?.toLowerCase() || 'png';
+              const mimeType = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : 'image/png';
+              return `data:${mimeType};base64,${base64}`;
+            }
+          } catch (e) {
+            console.error('Failed to download signature from Object Storage:', e);
+          }
+        }
+        
+        return null;
+      }
+      
+      // Get employee signature as base64
+      const employeeSignatureBase64 = await getSignatureBase64(employee?.signatureImage);
+      const clientSignatureBase64 = await getSignatureBase64(report.signatureImage);
+      
+      console.log('PDF Generation - Employee:', employee?.fullName, 'Has signature:', !!employeeSignatureBase64, 'Client signature:', !!clientSignatureBase64);
       
       const doc = new jsPDF();
       
@@ -5387,25 +5423,17 @@ Responde directamente a este email para contactar con la persona.
       doc.text('Firma del empleado:', 16, yPos + 6);
       
       // Add employee signature image if exists
-      if (employee?.signatureImage) {
+      if (employeeSignatureBase64) {
         try {
-          const sigData = employee.signatureImage;
-          // Determine format from data URL or use PNG as default
+          // Extract format from data URL
           let format = 'PNG';
-          let imgData = sigData;
-          
-          if (sigData.startsWith('data:image/')) {
-            // Extract format from data URL
-            const match = sigData.match(/data:image\/(\w+);base64,/);
-            if (match) {
-              format = match[1].toUpperCase();
-              if (format === 'JPEG') format = 'JPEG';
-              if (format === 'JPG') format = 'JPEG';
-            }
-            imgData = sigData; // jsPDF can handle full data URLs
+          const match = employeeSignatureBase64.match(/data:image\/(\w+);base64,/);
+          if (match) {
+            format = match[1].toUpperCase();
+            if (format === 'JPG') format = 'JPEG';
           }
           
-          doc.addImage(imgData, format, 20, yPos + 10, 70, 25);
+          doc.addImage(employeeSignatureBase64, format, 20, yPos + 10, 70, 25);
         } catch (e: any) {
           console.log('Could not add employee signature image:', e.message);
         }
@@ -5420,20 +5448,16 @@ Responde directamente a este email para contactar con la persona.
       doc.text('Firma del cliente:', 113, yPos + 6);
       
       // Add client signature if exists
-      if (report.signatureImage) {
+      if (clientSignatureBase64) {
         try {
-          const clientSigData = report.signatureImage;
           let clientFormat = 'PNG';
-          
-          if (clientSigData.startsWith('data:image/')) {
-            const match = clientSigData.match(/data:image\/(\w+);base64,/);
-            if (match) {
-              clientFormat = match[1].toUpperCase();
-              if (clientFormat === 'JPG') clientFormat = 'JPEG';
-            }
+          const match = clientSignatureBase64.match(/data:image\/(\w+);base64,/);
+          if (match) {
+            clientFormat = match[1].toUpperCase();
+            if (clientFormat === 'JPG') clientFormat = 'JPEG';
           }
           
-          doc.addImage(clientSigData, clientFormat, 117, yPos + 10, 70, 25);
+          doc.addImage(clientSignatureBase64, clientFormat, 117, yPos + 10, 70, 25);
         } catch (e: any) {
           console.log('Could not add client signature image:', e.message);
         }
