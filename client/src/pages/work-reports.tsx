@@ -1079,7 +1079,7 @@ export default function WorkReportsPage() {
       </Dialog>
 
       <Dialog open={isClientSignatureModalOpen} onOpenChange={setIsClientSignatureModalOpen}>
-        <DialogContent className="fixed inset-0 w-full h-full max-w-none max-h-none m-0 p-0 rounded-none bg-white dark:bg-gray-900 flex flex-col">
+        <DialogContent className="fixed inset-0 w-screen h-screen max-w-none max-h-none translate-x-0 translate-y-0 top-0 left-0 p-0 rounded-none bg-white dark:bg-gray-900 flex flex-col border-0">
           <DialogHeader className="flex flex-row items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-amber-50 dark:bg-amber-900/30 space-y-0">
             <DialogTitle className="text-xl font-semibold text-amber-900 dark:text-amber-100 flex items-center gap-2">
               <PenTool className="w-6 h-6" />
