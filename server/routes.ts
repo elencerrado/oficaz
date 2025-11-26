@@ -5300,44 +5300,34 @@ Responde directamente a este email para contactar con la persona.
         return `${hours} horas ${mins} minutos`;
       };
       
-      // Header with company name
+      // Header with company name and client prominently displayed
       doc.setFillColor(59, 130, 246);
-      doc.rect(0, 0, 210, 35, 'F');
+      doc.rect(0, 0, 210, 45, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
-      doc.text(company?.name || 'Empresa', 14, 18);
-      doc.setFontSize(14);
+      doc.text(company?.name || 'Empresa', 14, 16);
+      doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
-      doc.text('PARTE DE TRABAJO', 14, 28);
+      doc.text('PARTE DE TRABAJO', 14, 26);
+      
+      // Client name prominently in header
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Cliente: ${report.clientName || 'No especificado'}`, 14, 38);
+      
+      // Reference number on the right
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`REF: PT-${report.id}`, 196, 16, { align: 'right' });
+      doc.text(report.status === 'submitted' ? 'ENVIADO' : 'BORRADOR', 196, 24, { align: 'right' });
       
       // Reset text color
       doc.setTextColor(0, 0, 0);
       
-      let yPos = 50;
+      let yPos = 58;
       
-      // Employee info section
-      doc.setFillColor(245, 247, 250);
-      doc.rect(14, yPos - 5, 182, 25, 'F');
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text('EMPLEADO:', 20, yPos + 3);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(12);
-      doc.text(employee?.fullName || 'Empleado', 50, yPos + 3);
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text('ESTADO:', 120, yPos + 3);
-      doc.setFont('helvetica', 'normal');
-      doc.text(report.status === 'submitted' ? 'Enviado' : 'Borrador', 145, yPos + 3);
-      doc.setFont('helvetica', 'bold');
-      doc.text('REF:', 20, yPos + 13);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`PT-${report.id}`, 35, yPos + 13);
-      
-      yPos += 35;
-      
-      // Details section
+      // Details section - all fields in a clean list format
       doc.setDrawColor(229, 231, 235);
       doc.setLineWidth(0.5);
       
@@ -5346,7 +5336,7 @@ Responde directamente a este email para contactar con la persona.
       doc.setFontSize(10);
       doc.text('FECHA:', 14, yPos);
       doc.setFont('helvetica', 'normal');
-      doc.text(formatDate(report.reportDate), 40, yPos);
+      doc.text(formatDate(report.reportDate), 45, yPos);
       
       yPos += 10;
       
@@ -5354,7 +5344,7 @@ Responde directamente a este email para contactar con la persona.
       doc.setFont('helvetica', 'bold');
       doc.text('HORARIO:', 14, yPos);
       doc.setFont('helvetica', 'normal');
-      doc.text(`${report.startTime} - ${report.endTime} (${formatDuration(report.durationMinutes)})`, 40, yPos);
+      doc.text(`${report.startTime} - ${report.endTime} (${formatDuration(report.durationMinutes)})`, 45, yPos);
       
       yPos += 10;
       
@@ -5362,15 +5352,15 @@ Responde directamente a este email para contactar con la persona.
       doc.setFont('helvetica', 'bold');
       doc.text('UBICACIÓN:', 14, yPos);
       doc.setFont('helvetica', 'normal');
-      doc.text(report.location, 40, yPos);
+      doc.text(report.location, 45, yPos);
       
       yPos += 10;
       
-      // Client
+      // Employee as a regular field
       doc.setFont('helvetica', 'bold');
-      doc.text('CLIENTE:', 14, yPos);
+      doc.text('EMPLEADO:', 14, yPos);
       doc.setFont('helvetica', 'normal');
-      doc.text(report.clientName || 'No especificado', 40, yPos);
+      doc.text(employee?.fullName || 'Empleado', 45, yPos);
       
       yPos += 15;
       
