@@ -354,71 +354,16 @@ export default function AdminWorkReportsPage() {
           <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
             <span className="text-sm sm:text-lg font-medium">{getFilterTitle()} ({filteredReports.length})</span>
             
-            {/* Desktop: buttons grouped together */}
-            <div className="hidden sm:flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2"
-              >
-                <Filter className="w-4 h-4" />
-                Filtros
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => exportToFormat('pdf')}
-                disabled={isExporting || filteredReports.length === 0}
-                data-testid="button-export-pdf"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                PDF
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => exportToFormat('excel')}
-                disabled={isExporting || filteredReports.length === 0}
-                data-testid="button-export-excel"
-              >
-                <FileSpreadsheet className="w-4 h-4 mr-2" />
-                Excel
-              </Button>
-            </div>
-
-            {/* Mobile: buttons in single row */}
-            <div className="sm:hidden grid grid-cols-3 gap-2 w-full">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center justify-center gap-1"
-              >
-                <Filter className="w-4 h-4" />
-                <span className="text-xs">Filtros</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => exportToFormat('pdf')}
-                disabled={isExporting || filteredReports.length === 0}
-                className="flex items-center justify-center gap-1"
-              >
-                <Download className="w-4 h-4" />
-                <span className="text-xs">PDF</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => exportToFormat('excel')}
-                disabled={isExporting || filteredReports.length === 0}
-                className="flex items-center justify-center gap-1"
-              >
-                <FileSpreadsheet className="w-4 h-4" />
-                <span className="text-xs">Excel</span>
-              </Button>
-            </div>
+            {/* Filters button */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2"
+            >
+              <Filter className="w-4 h-4" />
+              Filtros
+            </Button>
           </CardTitle>
         </CardHeader>
 
