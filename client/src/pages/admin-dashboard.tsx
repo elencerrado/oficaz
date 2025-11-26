@@ -239,114 +239,39 @@ export default function AdminDashboard() {
     enabled: !!activeSession, // Only run when there's an active session
   });
 
-  // Fetch employees list for permission checking
-  const { data: employees = [] } = useQuery({
-    queryKey: ['/api/employees'],
-    staleTime: 300000, // Cache for 5 minutes
+  // ✨ OPTIMIZED: Single consolidated query for all dashboard data
+  // This replaces 10+ individual queries with one API call for faster loading
+  const { data: dashboardData, isLoading: isDashboardLoading } = useQuery<{
+    employees: any[];
+    recentSessions: any[];
+    messages: any[];
+    activeReminders: any[];
+    vacationRequests: any[];
+    approvedVacations: any[];
+    pendingVacations: any[];
+    incompleteSessions: any[];
+    modificationRequests: any[];
+    unreadMessagesCount: number;
+    unsignedPayrollsCount: number;
+    documentRequests: any[];
+    customHolidays: any[];
+  }>({
+    queryKey: ['/api/admin/dashboard/summary'],
+    staleTime: 30000, // Cache for 30 seconds
+    refetchInterval: 60000, // Refetch every minute
+    enabled: user?.role === 'admin' || user?.role === 'manager',
   });
 
-  // Fetch recent work sessions
-  const { data: recentSessions = [] } = useQuery({
-    queryKey: ['/api/work-sessions/company', companySettings?.workingHoursPerDay],
-    enabled: !!companySettings, // Wait for company settings to be loaded
-    staleTime: 0, // Force fresh data to avoid showing outdated sessions
-    refetchInterval: 30000, // Refetch every 30 seconds
-    select: (data: any[]) => {
-      if (!data?.length) return [];
-      
-      // Create separate events for clock-in and clock-out, including session status for completed sessions
-      const events: any[] = [];
-      const maxDailyHours = companySettings?.workingHoursPerDay || 8;
-      
-      data.forEach((session: any) => {
-        // Add clock-in event
-        events.push({
-          id: `${session.id}-in`,
-          userName: session.userName,
-          type: 'entry',
-          timestamp: session.clockIn,
-          sessionId: session.id
-        });
-        
-        // Add clock-out event if exists
-        if (session.clockOut) {
-          events.push({
-            id: `${session.id}-out`,
-            userName: session.userName,
-            type: 'exit',
-            timestamp: session.clockOut,
-            sessionId: session.id
-          });
-        }
-      });
-      
-      // Sort by timestamp (most recent first) and take first 5
-      return events
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        .slice(0, 5);
-    },
-  });
-
-  // Fetch recent messages - one per employee
-  const { data: messages } = useQuery({
-    queryKey: ['/api/messages'],
-    select: (data: any[]) => {
-      if (!data?.length) return [];
-      
-      // Group messages by sender and get the latest one for each
-      const messagesBySender = data.reduce((acc, message) => {
-        if (!acc[message.senderId] || new Date(message.createdAt) > new Date(acc[message.senderId].createdAt)) {
-          acc[message.senderId] = message;
-        }
-        return acc;
-      }, {});
-      
-      return Object.values(messagesBySender).slice(0, 4);
-    },
-  });
-
-  // Fetch active reminders for dashboard
-  const { data: activeReminders } = useQuery({
-    queryKey: ['/api/reminders/dashboard'],
-    enabled: hasAccess('reminders'),
-    select: (data: any[]) => {
-      if (!data?.length) return [];
-      
-      // Show only first 3 active reminders - backend already filters active ones
-      return data
-        .sort((a: any, b: any) => {
-          // Prioritize reminders with dates
-          if (a.reminderDate && !b.reminderDate) return -1;
-          if (!a.reminderDate && b.reminderDate) return 1;
-          if (a.reminderDate && b.reminderDate) {
-            return new Date(a.reminderDate).getTime() - new Date(b.reminderDate).getTime();
-          }
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        })
-        .slice(0, 3);
-    },
-  });
-
-  // Fetch vacation requests for calendar (no polling - WebSocket updates)
-  const { data: vacationRequests } = useQuery({
-    queryKey: ['/api/vacation-requests/company'],
-    staleTime: 0,
-    select: (data: any[]) => data || [],
-  });
-
-  const approvedVacations = vacationRequests?.filter((req: any) => req.status === 'approved') || [];
-  const pendingVacations = vacationRequests?.filter((req: any) => req.status === 'pending') || [];
-
-  // Fetch pending items for quick summary card (no polling - WebSocket updates)
-  const { data: incompleteSessions = [] } = useQuery({
-    queryKey: ['/api/work-sessions/company?status=incomplete'],
-    enabled: hasAccess('timeTracking'),
-  });
-
-  const { data: modificationRequests = [] } = useQuery({
-    queryKey: ['/api/admin/work-sessions/modification-requests?status=pending'],
-    enabled: hasAccess('timeTracking'),
-  });
+  // Extract data from consolidated response
+  const employees = dashboardData?.employees || [];
+  const recentSessions = dashboardData?.recentSessions || [];
+  const messages = dashboardData?.messages || [];
+  const activeReminders = dashboardData?.activeReminders || [];
+  const vacationRequests = dashboardData?.vacationRequests || [];
+  const approvedVacations = dashboardData?.approvedVacations || [];
+  const pendingVacations = dashboardData?.pendingVacations || [];
+  const incompleteSessions = dashboardData?.incompleteSessions || [];
+  const modificationRequests = dashboardData?.modificationRequests || [];
   
   // WebSocket connection for real-time updates
   useEffect(() => {
@@ -368,18 +293,15 @@ export default function AdminDashboard() {
         const message = JSON.parse(event.data);
         console.log('📡 WebSocket message received:', message);
 
-        // Invalidate queries based on message type
-        if (message.type === 'vacation_request_created' || message.type === 'vacation_request_updated') {
-          queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
-        }
-        
-        if (message.type === 'modification_request_created' || message.type === 'modification_request_updated') {
-          queryClient.invalidateQueries({ queryKey: ['/api/admin/work-sessions/modification-requests?status=pending'] });
-        }
-        
-        if (message.type === 'work_session_created' || message.type === 'work_session_updated' || message.type === 'work_session_deleted') {
-          queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company?status=incomplete'] });
-          queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
+        // Invalidate consolidated dashboard query for any updates
+        if (message.type === 'vacation_request_created' || 
+            message.type === 'vacation_request_updated' ||
+            message.type === 'modification_request_created' || 
+            message.type === 'modification_request_updated' ||
+            message.type === 'work_session_created' || 
+            message.type === 'work_session_updated' || 
+            message.type === 'work_session_deleted') {
+          queryClient.invalidateQueries({ queryKey: ['/api/admin/dashboard/summary'] });
         }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
@@ -402,30 +324,11 @@ export default function AdminDashboard() {
     };
   }, [user, queryClient]);
 
-  const { data: unreadMessagesData } = useQuery({
-    queryKey: ['/api/messages/unread-count'],
-    enabled: hasAccess('messages'),
-  });
-  const unreadMessagesCount = unreadMessagesData?.count || 0;
-
-  const { data: allDocuments = [] } = useQuery({
-    queryKey: ['/api/documents/all'],
-    enabled: hasAccess('documents'),
-  });
-
-  // Count unsigned payrolls (documents pending employee signature)
-  const unsignedPayrollsCount = allDocuments.filter((doc: any) => 
-    doc.originalName && 
-    doc.originalName.toLowerCase().includes('nómina') && 
-    !doc.isAccepted
-  ).length;
-
-  // Fetch pending document upload requests
-  const { data: documentRequests = [] } = useQuery({
-    queryKey: ['/api/document-notifications'],
-    enabled: hasAccess('documents'),
-    select: (data: any[]) => data?.filter((req: any) => !req.isCompleted) || [],
-  });
+  // Extract remaining data from consolidated response
+  const unreadMessagesCount = dashboardData?.unreadMessagesCount || 0;
+  const unsignedPayrollsCount = dashboardData?.unsignedPayrollsCount || 0;
+  const documentRequests = dashboardData?.documentRequests || [];
+  const customHolidays = dashboardData?.customHolidays || [];
 
   // Calculate total pending items
   const totalPending = 
@@ -622,41 +525,38 @@ export default function AdminDashboard() {
     { name: "Navidad", date: "2025-12-25", type: "national" }
   ];
 
-  // Fetch custom holidays from database
-  const { data: customHolidays = [] } = useQuery({
-    queryKey: ['/api/holidays/custom'],
-    select: (data: any[]) => {
-      if (!data || !Array.isArray(data)) return [];
+  // ✨ OPTIMIZED: Process custom holidays from consolidated response
+  const processedCustomHolidays = useMemo(() => {
+    if (!customHolidays || !Array.isArray(customHolidays)) return [];
+    
+    // Expand date ranges into individual days for calendar display
+    const expandedHolidays: any[] = [];
+    
+    customHolidays.filter((h: any) => h && h.startDate).forEach((h: any) => {
+      const start = new Date(h.startDate);
+      const end = new Date(h.endDate);
       
-      // Expand date ranges into individual days for calendar display
-      const expandedHolidays: any[] = [];
-      
-      data.filter(h => h && h.startDate).forEach((h: any) => {
-        const start = new Date(h.startDate);
-        const end = new Date(h.endDate);
-        
-        // Create entry for each day in the range
-        for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-          expandedHolidays.push({
-            ...h,
-            type: 'custom', // Display type for UI
-            originalType: h.type, // Preserve original DB type (regional, etc)
-            date: date.toISOString().split('T')[0], // Format as YYYY-MM-DD
-            isMultiDay: start.getTime() !== end.getTime(),
-            originalStart: h.startDate,
-            originalEnd: h.endDate
-          });
-        }
-      });
-      
-      return expandedHolidays;
-    },
-  });
+      // Create entry for each day in the range
+      for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+        expandedHolidays.push({
+          ...h,
+          type: 'custom', // Display type for UI
+          originalType: h.type, // Preserve original DB type (regional, etc)
+          date: date.toISOString().split('T')[0], // Format as YYYY-MM-DD
+          isMultiDay: start.getTime() !== end.getTime(),
+          originalStart: h.startDate,
+          originalEnd: h.endDate
+        });
+      }
+    });
+    
+    return expandedHolidays;
+  }, [customHolidays]);
 
   // ✨ OPTIMIZED: Memoize holidays array to prevent recalculation on every render
   const allHolidays = useMemo(() => {
-    return [...nationalHolidays, ...customHolidays];
-  }, [customHolidays]);
+    return [...nationalHolidays, ...processedCustomHolidays];
+  }, [processedCustomHolidays]);
 
   // ✨ OPTIMIZATION: Calculate work hours once and reuse (prevents duplicate calculations)
   const currentWorkHours = useMemo(() => {
@@ -1302,7 +1202,7 @@ export default function AdminDashboard() {
                     selectedDate={selectedDate}
                     onDateSelect={handleDateSelect}
                     nationalHolidays={nationalHolidays}
-                    customHolidays={customHolidays.filter(h => h.date)}
+                    customHolidays={processedCustomHolidays.filter(h => h.date)}
                     approvedVacations={approvedVacations}
                     pendingVacations={pendingVacations}
                     className="w-full mx-auto"

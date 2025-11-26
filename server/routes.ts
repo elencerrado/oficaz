@@ -5968,6 +5968,119 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Admin Dashboard consolidated endpoint - loads all data in single request
+  app.get('/api/admin/dashboard/summary', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const user = req.user!;
+      const companyId = user.companyId;
+      
+      // Fetch all data in parallel for maximum speed
+      const [
+        employees,
+        vacationRequests,
+        incompleteSessions,
+        modificationRequests,
+        allDocuments,
+        documentNotifications,
+        unreadMessagesData,
+        messages,
+        reminders,
+        recentWorkSessions,
+        customHolidays,
+      ] = await Promise.all([
+        storage.getUsersByCompany(companyId),
+        storage.getVacationRequestsByCompany(companyId),
+        storage.getWorkSessionsByCompany(companyId, 100, 0, { status: 'incomplete' }),
+        storage.getCompanyModificationRequests(companyId, 'pending'),
+        storage.getDocumentsByCompany(companyId),
+        storage.getDocumentNotificationsByCompany(companyId),
+        storage.getUnreadMessageCount(user.id),
+        storage.getMessagesByUser(user.id),
+        storage.getRemindersByCompany(companyId, user.id),
+        storage.getWorkSessionsByCompany(companyId, 20),
+        storage.getCustomHolidaysByCompany(companyId),
+      ]);
+      
+      // Process data
+      const pendingVacations = vacationRequests.filter((req: any) => req.status === 'pending');
+      const approvedVacations = vacationRequests.filter((req: any) => req.status === 'approved');
+      
+      const unsignedPayrollsCount = allDocuments.filter((doc: any) => 
+        doc.originalName && 
+        doc.originalName.toLowerCase().includes('nómina') && 
+        !doc.isAccepted
+      ).length;
+      
+      const pendingDocumentRequests = documentNotifications.filter((req: any) => !req.isCompleted);
+      
+      // Active reminders (not completed)
+      const activeReminders = reminders
+        .filter((r: any) => !r.isCompleted)
+        .sort((a: any, b: any) => {
+          if (a.reminderDate && !b.reminderDate) return -1;
+          if (!a.reminderDate && b.reminderDate) return 1;
+          if (a.reminderDate && b.reminderDate) {
+            return new Date(a.reminderDate).getTime() - new Date(b.reminderDate).getTime();
+          }
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        })
+        .slice(0, 3);
+      
+      // Process recent sessions into entry/exit events
+      const recentEvents: any[] = [];
+      recentWorkSessions.forEach((session: any) => {
+        recentEvents.push({
+          id: `${session.id}-in`,
+          userName: session.userName,
+          type: 'entry',
+          timestamp: session.clockIn,
+          sessionId: session.id
+        });
+        if (session.clockOut) {
+          recentEvents.push({
+            id: `${session.id}-out`,
+            userName: session.userName,
+            type: 'exit',
+            timestamp: session.clockOut,
+            sessionId: session.id
+          });
+        }
+      });
+      const sortedEvents = recentEvents
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, 5);
+      
+      // Process messages - group by sender, get latest per sender (first 20 messages)
+      const recentMsgs = messages.slice(0, 20);
+      const messagesBySender: any = {};
+      recentMsgs.forEach((message: any) => {
+        if (!messagesBySender[message.senderId] || new Date(message.createdAt) > new Date(messagesBySender[message.senderId].createdAt)) {
+          messagesBySender[message.senderId] = message;
+        }
+      });
+      const processedMessages = Object.values(messagesBySender).slice(0, 4);
+      
+      res.json({
+        employees,
+        vacationRequests,
+        pendingVacations,
+        approvedVacations,
+        incompleteSessions,
+        modificationRequests,
+        unsignedPayrollsCount,
+        documentRequests: pendingDocumentRequests,
+        unreadMessagesCount: unreadMessagesData,
+        messages: processedMessages,
+        activeReminders,
+        recentSessions: sortedEvents,
+        customHolidays,
+      });
+    } catch (error: any) {
+      console.error('Error fetching admin dashboard summary:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Update user profile
   app.patch('/api/users/profile', authenticateToken, async (req: AuthRequest, res) => {
     try {
