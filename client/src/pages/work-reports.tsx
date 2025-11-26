@@ -386,14 +386,15 @@ export default function WorkReportsPage() {
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} data-testid="button-cancel-create">
+            <DialogFooter className="grid grid-cols-2 gap-3 sm:flex sm:flex-row sm:justify-end">
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} data-testid="button-cancel-create" className="w-full sm:w-auto">
                 Cancelar
               </Button>
               <Button 
                 onClick={() => createMutation.mutate(formData)}
                 disabled={createMutation.isPending || !formData.location || !formData.description}
                 data-testid="button-submit-create"
+                className="w-full sm:w-auto"
               >
                 {createMutation.isPending ? 'Creando...' : 'Crear Parte'}
               </Button>
@@ -592,14 +593,15 @@ export default function WorkReportsPage() {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} data-testid="button-cancel-edit">
+          <DialogFooter className="grid grid-cols-2 gap-3 sm:flex sm:flex-row sm:justify-end">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} data-testid="button-cancel-edit" className="w-full sm:w-auto">
               Cancelar
             </Button>
             <Button 
               onClick={() => selectedReport && updateMutation.mutate({ id: selectedReport.id, data: formData })}
               disabled={updateMutation.isPending || !formData.location || !formData.description}
               data-testid="button-submit-edit"
+              className="w-full sm:w-auto"
             >
               {updateMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
             </Button>
@@ -625,8 +627,8 @@ export default function WorkReportsPage() {
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} data-testid="button-cancel-delete">
+          <DialogFooter className="grid grid-cols-2 gap-3 sm:flex sm:flex-row sm:justify-end">
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} data-testid="button-cancel-delete" className="w-full sm:w-auto">
               Cancelar
             </Button>
             <Button 
@@ -634,6 +636,7 @@ export default function WorkReportsPage() {
               onClick={() => selectedReport && deleteMutation.mutate(selectedReport.id)}
               disabled={deleteMutation.isPending}
               data-testid="button-confirm-delete"
+              className="w-full sm:w-auto"
             >
               {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar'}
             </Button>
