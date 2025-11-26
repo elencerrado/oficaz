@@ -541,7 +541,7 @@ export default function AdminWorkReportsPage() {
                 return (
                   <div 
                     key={report.id} 
-                    className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                    className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
                     data-testid={`card-admin-report-${report.id}`}
                   >
                     <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800">
@@ -575,7 +575,7 @@ export default function AdminWorkReportsPage() {
                     
                     <div className="p-4">
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-2">
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
                           <div>
                             <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
                               <Calendar className="w-3.5 h-3.5" />
@@ -599,7 +599,7 @@ export default function AdminWorkReportsPage() {
                           </div>
                         </div>
                         
-                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-2">
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
                           <div>
                             <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
                               <MapPin className="w-3.5 h-3.5" />
@@ -618,7 +618,7 @@ export default function AdminWorkReportsPage() {
                           )}
                         </div>
 
-                        <div className="md:col-span-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                        <div className="md:col-span-2 bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
                           <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
                             <FileText className="w-3.5 h-3.5" />
                             Trabajo realizado
