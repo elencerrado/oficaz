@@ -741,15 +741,13 @@ export default function AdminWorkReportsPage() {
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Firma del empleado</p>
                     {selectedReport.employeeSignature ? (
-                      <div className="bg-white dark:bg-gray-900 rounded border border-gray-100 dark:border-gray-700 p-2">
-                        <img 
-                          src={selectedReport.employeeSignature} 
-                          alt="Firma del empleado" 
-                          className="max-h-20 w-auto mx-auto dark:invert dark:brightness-90"
-                        />
-                      </div>
+                      <img 
+                        src={selectedReport.employeeSignature} 
+                        alt="Firma del empleado" 
+                        className="max-h-20 w-auto mx-auto dark:invert dark:brightness-90"
+                      />
                     ) : (
-                      <div className="h-20 bg-gray-100 dark:bg-gray-900 rounded flex items-center justify-center">
+                      <div className="h-20 flex items-center justify-center">
                         <span className="text-gray-400 text-sm">Sin firma registrada</span>
                       </div>
                     )}
@@ -760,15 +758,13 @@ export default function AdminWorkReportsPage() {
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Firma del cliente</p>
                     {selectedReport.signatureImage ? (
-                      <div className="bg-white dark:bg-gray-900 rounded border border-gray-100 dark:border-gray-700 p-2">
-                        <img 
-                          src={selectedReport.signatureImage} 
-                          alt="Firma del cliente" 
-                          className="max-h-20 w-auto mx-auto dark:invert dark:brightness-90"
-                        />
-                      </div>
+                      <img 
+                        src={selectedReport.signatureImage} 
+                        alt="Firma del cliente" 
+                        className="max-h-20 w-auto mx-auto dark:invert dark:brightness-90"
+                      />
                     ) : (
-                      <div className="h-20 bg-gray-100 dark:bg-gray-900 rounded flex items-center justify-center">
+                      <div className="h-20 flex items-center justify-center">
                         <span className="text-gray-400 text-sm">Sin firma del cliente</span>
                       </div>
                     )}
