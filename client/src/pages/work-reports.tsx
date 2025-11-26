@@ -817,7 +817,7 @@ export default function WorkReportsPage() {
 
                     </div>
 
-                    <div className="flex gap-2 md:flex-shrink-0">
+                    <div className="flex gap-2 md:flex-shrink-0 justify-end">
                       <Button 
                         variant="outline" 
                         size="sm" 
