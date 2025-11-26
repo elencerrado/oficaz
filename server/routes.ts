@@ -28,6 +28,9 @@ import { startPushNotificationScheduler } from './pushNotificationScheduler.js';
 import { initializeWebSocketServer, getWebSocketServer } from './websocket.js';
 import { JWT_SECRET } from './utils/jwt-secret.js';
 import Groq from 'groq-sdk';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 // Initialize Stripe with intelligent key detection
 // Priority: Use production keys if available, otherwise fall back to test keys
@@ -5128,10 +5131,6 @@ Responde directamente a este email para contactar con la persona.
 
       const company = await storage.getCompany(req.user!.companyId);
       
-      // Use jsPDF for PDF generation
-      const { jsPDF } = require('jspdf');
-      require('jspdf-autotable');
-      
       const doc = new jsPDF();
       
       // Header
@@ -5198,9 +5197,6 @@ Responde directamente a este email para contactar con la persona.
 
       const company = await storage.getCompany(req.user!.companyId);
       
-      // Use xlsx for Excel generation
-      const XLSX = require('xlsx');
-      
       const data = reports.map(r => ({
         'Fecha': r.reportDate,
         'Empleado': r.employeeName,
@@ -5248,7 +5244,6 @@ Responde directamente a este email para contactar con la persona.
       const company = await storage.getCompany(req.user!.companyId);
       const employee = await storage.getUser(report.employeeId);
       
-      const { jsPDF } = require('jspdf');
       const doc = new jsPDF();
       
       // Formato fecha en español
