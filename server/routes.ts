@@ -5244,6 +5244,8 @@ Responde directamente a este email para contactar con la persona.
       const company = await storage.getCompany(req.user!.companyId);
       const employee = await storage.getUser(report.employeeId);
       
+      console.log('PDF Generation - Employee:', employee?.fullName, 'Has signature:', !!employee?.signatureImage, 'Signature length:', employee?.signatureImage?.length || 0);
+      
       const doc = new jsPDF();
       
       // Formato fecha en español
@@ -5387,9 +5389,25 @@ Responde directamente a este email para contactar con la persona.
       // Add employee signature image if exists
       if (employee?.signatureImage) {
         try {
-          doc.addImage(employee.signatureImage, 'PNG', 20, yPos + 10, 70, 25);
-        } catch (e) {
-          console.log('Could not add employee signature image');
+          const sigData = employee.signatureImage;
+          // Determine format from data URL or use PNG as default
+          let format = 'PNG';
+          let imgData = sigData;
+          
+          if (sigData.startsWith('data:image/')) {
+            // Extract format from data URL
+            const match = sigData.match(/data:image\/(\w+);base64,/);
+            if (match) {
+              format = match[1].toUpperCase();
+              if (format === 'JPEG') format = 'JPEG';
+              if (format === 'JPG') format = 'JPEG';
+            }
+            imgData = sigData; // jsPDF can handle full data URLs
+          }
+          
+          doc.addImage(imgData, format, 20, yPos + 10, 70, 25);
+        } catch (e: any) {
+          console.log('Could not add employee signature image:', e.message);
         }
       }
       
@@ -5404,9 +5422,20 @@ Responde directamente a este email para contactar con la persona.
       // Add client signature if exists
       if (report.signatureImage) {
         try {
-          doc.addImage(report.signatureImage, 'PNG', 117, yPos + 10, 70, 25);
-        } catch (e) {
-          console.log('Could not add client signature image');
+          const clientSigData = report.signatureImage;
+          let clientFormat = 'PNG';
+          
+          if (clientSigData.startsWith('data:image/')) {
+            const match = clientSigData.match(/data:image\/(\w+);base64,/);
+            if (match) {
+              clientFormat = match[1].toUpperCase();
+              if (clientFormat === 'JPG') clientFormat = 'JPEG';
+            }
+          }
+          
+          doc.addImage(clientSigData, clientFormat, 117, yPos + 10, 70, 25);
+        } catch (e: any) {
+          console.log('Could not add client signature image:', e.message);
         }
       }
       
