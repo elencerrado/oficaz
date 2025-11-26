@@ -481,9 +481,6 @@ export default function AdminWorkReportsPage() {
                         <span className="font-semibold">{report.employeeName}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className={`${statusStyle.bg} ${statusStyle.text} border-0`}>
-                          {statusStyle.label}
-                        </Badge>
                         <button
                           onClick={() => handleViewReport(report)}
                           className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
@@ -587,15 +584,13 @@ export default function AdminWorkReportsPage() {
           {selectedReport && (
             <div className="py-4 space-y-6">
               {/* Cabecera del documento */}
-              <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-4 text-white">
-                <div className="flex items-center justify-between">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2">
+                  <User className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                   <div>
-                    <p className="text-sm opacity-80">Empleado</p>
-                    <p className="text-lg font-bold">{selectedReport.employeeName}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Empleado</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{selectedReport.employeeName}</p>
                   </div>
-                  <Badge className={`${STATUS_STYLES[selectedReport.status].bg} ${STATUS_STYLES[selectedReport.status].text} border-0 text-sm`}>
-                    {STATUS_STYLES[selectedReport.status].label}
-                  </Badge>
                 </div>
               </div>
 
