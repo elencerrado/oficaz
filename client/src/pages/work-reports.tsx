@@ -27,7 +27,8 @@ import {
   CheckCircle,
   ArrowLeft,
   PenTool,
-  RotateCcw
+  RotateCcw,
+  Send
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -821,6 +822,7 @@ export default function WorkReportsPage() {
                         variant="outline" 
                         size="sm" 
                         onClick={() => openEditDialog(report)}
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                         data-testid={`button-edit-${report.id}`}
                       >
                         <Edit className="w-4 h-4" />
@@ -834,6 +836,17 @@ export default function WorkReportsPage() {
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
+                      {report.status === 'draft' && (
+                        <Button 
+                          size="sm" 
+                          onClick={() => updateMutation.mutate({ id: report.id, data: { status: 'submitted' } })}
+                          disabled={updateMutation.isPending}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                          data-testid={`button-submit-${report.id}`}
+                        >
+                          <Send className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
