@@ -5230,6 +5230,212 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Generate PDF for individual work report (with space for client signature)
+  app.get('/api/work-reports/:id/pdf', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const reportId = parseInt(req.params.id);
+      const report = await storage.getWorkReport(reportId);
+      
+      if (!report) {
+        return res.status(404).json({ message: 'Parte de trabajo no encontrado' });
+      }
+      
+      // Verify user has access to this report
+      if (report.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'No autorizado' });
+      }
+      
+      const company = await storage.getCompany(req.user!.companyId);
+      const employee = await storage.getUser(report.employeeId);
+      
+      const { jsPDF } = require('jspdf');
+      const doc = new jsPDF();
+      
+      // Formato fecha en español
+      const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        return `${days[date.getUTCDay()]}, ${date.getUTCDate()} de ${months[date.getUTCMonth()]} de ${date.getUTCFullYear()}`;
+      };
+      
+      const formatDuration = (minutes: number) => {
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        if (hours === 0) return `${mins} minutos`;
+        if (mins === 0) return `${hours} horas`;
+        return `${hours} horas ${mins} minutos`;
+      };
+      
+      // Header with company name
+      doc.setFillColor(59, 130, 246);
+      doc.rect(0, 0, 210, 35, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text(company?.name || 'Empresa', 14, 18);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'normal');
+      doc.text('PARTE DE TRABAJO', 14, 28);
+      
+      // Reset text color
+      doc.setTextColor(0, 0, 0);
+      
+      let yPos = 50;
+      
+      // Employee info section
+      doc.setFillColor(245, 247, 250);
+      doc.rect(14, yPos - 5, 182, 25, 'F');
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('EMPLEADO:', 20, yPos + 3);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(12);
+      doc.text(employee?.fullName || 'Empleado', 50, yPos + 3);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('ESTADO:', 120, yPos + 3);
+      doc.setFont('helvetica', 'normal');
+      doc.text(report.status === 'submitted' ? 'Enviado' : 'Borrador', 145, yPos + 3);
+      doc.setFont('helvetica', 'bold');
+      doc.text('REF:', 20, yPos + 13);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`PT-${report.id}`, 35, yPos + 13);
+      
+      yPos += 35;
+      
+      // Details section
+      doc.setDrawColor(229, 231, 235);
+      doc.setLineWidth(0.5);
+      
+      // Date
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('FECHA:', 14, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.text(formatDate(report.reportDate), 40, yPos);
+      
+      yPos += 10;
+      
+      // Time
+      doc.setFont('helvetica', 'bold');
+      doc.text('HORARIO:', 14, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${report.startTime} - ${report.endTime} (${formatDuration(report.durationMinutes)})`, 40, yPos);
+      
+      yPos += 10;
+      
+      // Location
+      doc.setFont('helvetica', 'bold');
+      doc.text('UBICACIÓN:', 14, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.text(report.location, 40, yPos);
+      
+      yPos += 10;
+      
+      // Client
+      doc.setFont('helvetica', 'bold');
+      doc.text('CLIENTE:', 14, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.text(report.clientName || 'No especificado', 40, yPos);
+      
+      yPos += 15;
+      
+      // Description section
+      doc.setFillColor(245, 247, 250);
+      doc.rect(14, yPos - 5, 182, 8, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('TRABAJO REALIZADO:', 16, yPos);
+      yPos += 8;
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      const descLines = doc.splitTextToSize(report.description, 175);
+      doc.text(descLines, 16, yPos);
+      yPos += descLines.length * 5 + 10;
+      
+      // Notes if any
+      if (report.notes) {
+        doc.setFillColor(254, 243, 199);
+        const notesLines = doc.splitTextToSize(report.notes, 170);
+        doc.rect(14, yPos - 5, 182, notesLines.length * 5 + 12, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.text('NOTAS:', 16, yPos + 2);
+        doc.setFont('helvetica', 'normal');
+        doc.text(notesLines, 16, yPos + 10);
+        yPos += notesLines.length * 5 + 20;
+      }
+      
+      // Signatures section
+      yPos = Math.max(yPos + 10, 200);
+      
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.3);
+      
+      // Horizontal line before signatures
+      doc.line(14, yPos - 5, 196, yPos - 5);
+      
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('FIRMAS', 14, yPos + 3);
+      
+      yPos += 15;
+      
+      // Employee signature box
+      doc.setDrawColor(200, 200, 200);
+      doc.rect(14, yPos, 85, 45);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Firma del empleado:', 16, yPos + 6);
+      
+      // Add employee signature image if exists
+      if (employee?.signatureImage) {
+        try {
+          doc.addImage(employee.signatureImage, 'PNG', 20, yPos + 10, 70, 25);
+        } catch (e) {
+          console.log('Could not add employee signature image');
+        }
+      }
+      
+      doc.setFont('helvetica', 'bold');
+      doc.text(employee?.fullName || '', 16, yPos + 40);
+      
+      // Client signature box (with space for manual signature)
+      doc.rect(111, yPos, 85, 45);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Firma del cliente:', 113, yPos + 6);
+      
+      // Add client signature if exists
+      if (report.signatureImage) {
+        try {
+          doc.addImage(report.signatureImage, 'PNG', 117, yPos + 10, 70, 25);
+        } catch (e) {
+          console.log('Could not add client signature image');
+        }
+      }
+      
+      doc.setFont('helvetica', 'bold');
+      doc.text(report.signedBy || '____________________', 113, yPos + 40);
+      
+      // Footer
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(128, 128, 128);
+      doc.text(`Generado el ${new Date().toLocaleDateString('es-ES')} a las ${new Date().toLocaleTimeString('es-ES')}`, 14, 285);
+      doc.text(`${company?.name || 'Empresa'} - Sistema de Gestión Oficaz`, 196, 285, { align: 'right' });
+      
+      const pdfBuffer = doc.output('arraybuffer');
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=parte-trabajo-${report.id}-${report.reportDate}.pdf`);
+      res.send(Buffer.from(pdfBuffer));
+    } catch (error: any) {
+      console.error('Single work report PDF error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Create demo documents for Juan Ramírez only
   app.post('/api/documents/create-demo', authenticateToken, async (req: AuthRequest, res) => {
     try {

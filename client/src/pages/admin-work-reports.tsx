@@ -24,8 +24,12 @@ import {
   CheckCircle,
   Download,
   FileSpreadsheet,
-  Users
+  Users,
+  Eye,
+  X,
+  Pen
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, parseISO } from 'date-fns';
@@ -44,10 +48,13 @@ interface WorkReportWithEmployee {
   description: string;
   clientName?: string | null;
   notes?: string | null;
+  signedBy?: string | null;
+  signatureImage?: string | null;
   status: 'draft' | 'submitted';
   createdAt: string;
   updatedAt: string;
   employeeName: string;
+  employeeSignature?: string | null;
 }
 
 interface Employee {
@@ -81,6 +88,9 @@ export default function AdminWorkReportsPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [activeStatsFilter, setActiveStatsFilter] = useState<'today' | 'week' | 'month' | null>('month');
   const [showFilters, setShowFilters] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<WorkReportWithEmployee | null>(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState<number | null>(null);
 
   const getDateRange = useCallback(() => {
     const today = new Date();
@@ -205,6 +215,38 @@ export default function AdminWorkReportsPage() {
     return `${hours}h ${mins}min`;
   };
 
+  const handleViewReport = (report: WorkReportWithEmployee) => {
+    setSelectedReport(report);
+    setViewModalOpen(true);
+  };
+
+  const handleDownloadPdf = async (report: WorkReportWithEmployee) => {
+    setIsDownloadingPdf(report.id);
+    try {
+      const response = await fetch(`/api/work-reports/${report.id}/pdf`, {
+        headers: getAuthHeaders() as Record<string, string>
+      });
+
+      if (!response.ok) throw new Error('Error al generar PDF');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `parte-trabajo-${report.id}-${report.reportDate}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({ title: 'PDF descargado', description: 'El parte de trabajo se ha descargado correctamente.' });
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'No se pudo generar el PDF.', variant: 'destructive' });
+    } finally {
+      setIsDownloadingPdf(null);
+    }
+  };
+
   const totalMinutes = filteredReports.reduce((sum, r) => sum + r.durationMinutes, 0);
   const totalHours = Math.floor(totalMinutes / 60);
   const remainingMinutes = totalMinutes % 60;
@@ -215,7 +257,7 @@ export default function AdminWorkReportsPage() {
   }, [reports]);
 
   const completedCount = useMemo(() => {
-    return filteredReports.filter(r => r.status === 'completed').length;
+    return filteredReports.filter(r => r.status === 'submitted').length;
   }, [filteredReports]);
 
   const getFilterTitle = () => {
@@ -507,9 +549,28 @@ export default function AdminWorkReportsPage() {
                         <User className="w-4 h-4" />
                         <span className="font-semibold">{report.employeeName}</span>
                       </div>
-                      <Badge className={`${statusStyle.bg} ${statusStyle.text} border-0`}>
-                        {statusStyle.label}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge className={`${statusStyle.bg} ${statusStyle.text} border-0`}>
+                          {statusStyle.label}
+                        </Badge>
+                        <button
+                          onClick={() => handleViewReport(report)}
+                          className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors text-white"
+                          title="Ver parte completo"
+                          data-testid={`button-view-report-${report.id}`}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDownloadPdf(report)}
+                          disabled={isDownloadingPdf === report.id}
+                          className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors text-white disabled:opacity-50"
+                          title="Descargar PDF"
+                          data-testid={`button-download-pdf-${report.id}`}
+                        >
+                          <Download className={`w-4 h-4 ${isDownloadingPdf === report.id ? 'animate-pulse' : ''}`} />
+                        </button>
+                      </div>
                     </div>
                     
                     <div className="p-4">
@@ -581,6 +642,158 @@ export default function AdminWorkReportsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de visualización del parte */}
+      <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
+          <DialogHeader className="border-b border-gray-200 dark:border-gray-700 pb-4">
+            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-600" />
+              Parte de Trabajo
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedReport && (
+            <div className="py-4 space-y-6">
+              {/* Cabecera del documento */}
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-4 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm opacity-80">Empleado</p>
+                    <p className="text-lg font-bold">{selectedReport.employeeName}</p>
+                  </div>
+                  <Badge className={`${STATUS_STYLES[selectedReport.status].bg} ${STATUS_STYLES[selectedReport.status].text} border-0 text-sm`}>
+                    {STATUS_STYLES[selectedReport.status].label}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Información del parte */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-1">
+                    <Calendar className="w-4 h-4" />
+                    Fecha
+                  </div>
+                  <p className="text-gray-900 dark:text-white font-medium capitalize">
+                    {format(parseISO(selectedReport.reportDate), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
+                  </p>
+                </div>
+                
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-1">
+                    <Clock className="w-4 h-4" />
+                    Horario
+                  </div>
+                  <p className="text-gray-900 dark:text-white font-medium">
+                    {selectedReport.startTime} - {selectedReport.endTime}
+                    <span className="ml-2 text-blue-600 dark:text-blue-400">
+                      ({formatDuration(selectedReport.durationMinutes)})
+                    </span>
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-1">
+                    <MapPin className="w-4 h-4" />
+                    Ubicación
+                  </div>
+                  <p className="text-gray-900 dark:text-white font-medium">{selectedReport.location}</p>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-1">
+                    <User className="w-4 h-4" />
+                    Cliente
+                  </div>
+                  <p className="text-gray-900 dark:text-white font-medium">
+                    {selectedReport.clientName || 'No especificado'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Descripción del trabajo */}
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-2">
+                  <FileText className="w-4 h-4" />
+                  Trabajo realizado
+                </div>
+                <p className="text-gray-900 dark:text-white whitespace-pre-wrap">{selectedReport.description}</p>
+              </div>
+
+              {/* Notas */}
+              {selectedReport.notes && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4 border-l-4 border-amber-400">
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    <span className="font-medium">Notas:</span> {selectedReport.notes}
+                  </p>
+                </div>
+              )}
+
+              {/* Sección de firmas */}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Pen className="w-5 h-5" />
+                  Firmas
+                </h3>
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Firma del empleado */}
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Firma del empleado</p>
+                    {selectedReport.employeeSignature ? (
+                      <div className="bg-white dark:bg-gray-800 rounded border border-gray-100 dark:border-gray-600 p-2">
+                        <img 
+                          src={selectedReport.employeeSignature} 
+                          alt="Firma del empleado" 
+                          className="max-h-20 w-auto mx-auto"
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-20 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center">
+                        <span className="text-gray-400 text-sm">Sin firma registrada</span>
+                      </div>
+                    )}
+                    <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-2">{selectedReport.employeeName}</p>
+                  </div>
+
+                  {/* Firma del cliente */}
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Firma del cliente</p>
+                    {selectedReport.signatureImage ? (
+                      <div className="bg-white dark:bg-gray-800 rounded border border-gray-100 dark:border-gray-600 p-2">
+                        <img 
+                          src={selectedReport.signatureImage} 
+                          alt="Firma del cliente" 
+                          className="max-h-20 w-auto mx-auto"
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-20 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center">
+                        <span className="text-gray-400 text-sm">Sin firma del cliente</span>
+                      </div>
+                    )}
+                    <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-2">
+                      {selectedReport.signedBy || 'Cliente'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botón de descarga */}
+              <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                <Button
+                  onClick={() => handleDownloadPdf(selectedReport)}
+                  disabled={isDownloadingPdf === selectedReport.id}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  {isDownloadingPdf === selectedReport.id ? 'Generando...' : 'Descargar PDF'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

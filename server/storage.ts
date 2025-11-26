@@ -289,7 +289,7 @@ export interface IStorage {
   createWorkReport(report: schema.InsertWorkReport & { durationMinutes: number }): Promise<schema.WorkReport>;
   getWorkReport(id: number): Promise<schema.WorkReport | undefined>;
   getWorkReportsByUser(userId: number, filters?: { startDate?: string; endDate?: string }): Promise<schema.WorkReport[]>;
-  getWorkReportsByCompany(companyId: number, filters?: { employeeId?: number; startDate?: string; endDate?: string }): Promise<(schema.WorkReport & { employeeName: string })[]>;
+  getWorkReportsByCompany(companyId: number, filters?: { employeeId?: number; startDate?: string; endDate?: string }): Promise<(schema.WorkReport & { employeeName: string; employeeSignature?: string | null })[]>;
   updateWorkReport(id: number, updates: Partial<schema.InsertWorkReport> & { durationMinutes?: number }): Promise<schema.WorkReport | undefined>;
   deleteWorkReport(id: number): Promise<boolean>;
 }
@@ -3494,7 +3494,7 @@ export class DrizzleStorage implements IStorage {
   async getWorkReportsByCompany(
     companyId: number, 
     filters?: { employeeId?: number; startDate?: string; endDate?: string }
-  ): Promise<(schema.WorkReport & { employeeName: string })[]> {
+  ): Promise<(schema.WorkReport & { employeeName: string; employeeSignature?: string | null })[]> {
     const conditions = [eq(schema.workReports.companyId, companyId)];
     
     if (filters?.employeeId) {
@@ -3520,10 +3520,13 @@ export class DrizzleStorage implements IStorage {
       description: schema.workReports.description,
       clientName: schema.workReports.clientName,
       notes: schema.workReports.notes,
+      signedBy: schema.workReports.signedBy,
+      signatureImage: schema.workReports.signatureImage,
       status: schema.workReports.status,
       createdAt: schema.workReports.createdAt,
       updatedAt: schema.workReports.updatedAt,
       employeeName: schema.users.fullName,
+      employeeSignature: schema.users.signatureImage,
     })
       .from(schema.workReports)
       .innerJoin(schema.users, eq(schema.workReports.employeeId, schema.users.id))
