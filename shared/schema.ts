@@ -275,6 +275,9 @@ export const users = pgTable("users", {
   // Foto de perfil
   profilePicture: text("profile_picture"), // URL de la foto de perfil
   
+  // Firma del empleado (para partes de trabajo)
+  signatureImage: text("signature_image"), // URL de la imagen de firma
+  
   // Vacaciones
   totalVacationDays: decimal("total_vacation_days", { precision: 4, scale: 1 }).notNull().default("0.0"), // Calculado automáticamente
   usedVacationDays: decimal("used_vacation_days", { precision: 4, scale: 1 }).notNull().default("0.0"), // Auto
