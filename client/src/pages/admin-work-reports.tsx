@@ -531,16 +531,22 @@ export default function AdminWorkReportsPage() {
                           </p>
                         </div>
                         
-                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
-                            <MapPin className="w-3.5 h-3.5" />
-                            Ubicación
+                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-2">
+                          <div>
+                            <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
+                              <MapPin className="w-3.5 h-3.5" />
+                              Ubicación
+                            </div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{report.location}</p>
                           </div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">{report.location}</p>
                           {report.clientName && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                              <span className="text-xs text-gray-500">Cliente:</span> {report.clientName}
-                            </p>
+                            <div>
+                              <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
+                                <User className="w-3.5 h-3.5" />
+                                Cliente
+                              </div>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">{report.clientName}</p>
+                            </div>
                           )}
                         </div>
 
