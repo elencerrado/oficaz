@@ -4901,6 +4901,294 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // ========================================
+  // WORK REPORTS (Partes de Trabajo) - Pro Feature
+  // Independent from time tracking - employees document each job/visit
+  // ========================================
+
+  // Helper function to calculate duration in minutes from start and end time strings
+  function calculateDurationMinutes(startTime: string, endTime: string): number {
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
+    
+    let startMinutes = startHour * 60 + startMin;
+    let endMinutes = endHour * 60 + endMin;
+    
+    // Handle overnight shifts (end time is next day)
+    if (endMinutes < startMinutes) {
+      endMinutes += 24 * 60;
+    }
+    
+    return endMinutes - startMinutes;
+  }
+
+  // Employee: Create work report
+  app.post('/api/work-reports', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      // Check if company has Pro plan
+      const subscription = await storage.getSubscriptionByCompanyId(req.user!.companyId);
+      if (!subscription || (subscription.plan !== 'pro' && subscription.plan !== 'master')) {
+        return res.status(403).json({ message: 'Esta función requiere el plan Pro' });
+      }
+
+      const { reportDate, location, locationCoords, startTime, endTime, description, clientName, notes, status } = req.body;
+
+      if (!reportDate || !location || !startTime || !endTime || !description) {
+        return res.status(400).json({ message: 'Faltan campos obligatorios: reportDate, location, startTime, endTime, description' });
+      }
+
+      const durationMinutes = calculateDurationMinutes(startTime, endTime);
+
+      const report = await storage.createWorkReport({
+        companyId: req.user!.companyId,
+        employeeId: req.user!.id,
+        reportDate,
+        location,
+        locationCoords: locationCoords || null,
+        startTime,
+        endTime,
+        durationMinutes,
+        description,
+        clientName: clientName || null,
+        notes: notes || null,
+        status: status || 'completed',
+      });
+
+      res.status(201).json(report);
+    } catch (error: any) {
+      console.error('Work report creation error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Employee: Get own work reports
+  app.get('/api/work-reports', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      // Check if company has Pro plan
+      const subscription = await storage.getSubscriptionByCompanyId(req.user!.companyId);
+      if (!subscription || (subscription.plan !== 'pro' && subscription.plan !== 'master')) {
+        return res.status(403).json({ message: 'Esta función requiere el plan Pro' });
+      }
+
+      const { startDate, endDate } = req.query;
+      
+      const reports = await storage.getWorkReportsByUser(req.user!.id, {
+        startDate: startDate as string | undefined,
+        endDate: endDate as string | undefined,
+      });
+
+      res.json(reports);
+    } catch (error: any) {
+      console.error('Work reports fetch error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Employee: Update own work report
+  app.patch('/api/work-reports/:id', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Verify ownership
+      const existingReport = await storage.getWorkReport(id);
+      if (!existingReport) {
+        return res.status(404).json({ message: 'Parte de trabajo no encontrado' });
+      }
+      
+      if (existingReport.employeeId !== req.user!.id) {
+        return res.status(403).json({ message: 'No tienes permiso para editar este parte' });
+      }
+
+      const { reportDate, location, locationCoords, startTime, endTime, description, clientName, notes, status } = req.body;
+      
+      const updates: any = {};
+      if (reportDate) updates.reportDate = reportDate;
+      if (location) updates.location = location;
+      if (locationCoords !== undefined) updates.locationCoords = locationCoords;
+      if (startTime) updates.startTime = startTime;
+      if (endTime) updates.endTime = endTime;
+      if (description) updates.description = description;
+      if (clientName !== undefined) updates.clientName = clientName;
+      if (notes !== undefined) updates.notes = notes;
+      if (status) updates.status = status;
+      
+      // Recalculate duration if times changed
+      if (startTime || endTime) {
+        const finalStart = startTime || existingReport.startTime;
+        const finalEnd = endTime || existingReport.endTime;
+        updates.durationMinutes = calculateDurationMinutes(finalStart, finalEnd);
+      }
+
+      const updatedReport = await storage.updateWorkReport(id, updates);
+      res.json(updatedReport);
+    } catch (error: any) {
+      console.error('Work report update error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Employee: Delete own work report
+  app.delete('/api/work-reports/:id', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Verify ownership
+      const existingReport = await storage.getWorkReport(id);
+      if (!existingReport) {
+        return res.status(404).json({ message: 'Parte de trabajo no encontrado' });
+      }
+      
+      if (existingReport.employeeId !== req.user!.id) {
+        return res.status(403).json({ message: 'No tienes permiso para eliminar este parte' });
+      }
+
+      await storage.deleteWorkReport(id);
+      res.status(204).send();
+    } catch (error: any) {
+      console.error('Work report deletion error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin/Manager: Get all company work reports with filters
+  app.get('/api/admin/work-reports', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      // Check if company has Pro plan
+      const subscription = await storage.getSubscriptionByCompanyId(req.user!.companyId);
+      if (!subscription || (subscription.plan !== 'pro' && subscription.plan !== 'master')) {
+        return res.status(403).json({ message: 'Esta función requiere el plan Pro' });
+      }
+
+      const { employeeId, startDate, endDate } = req.query;
+      
+      const reports = await storage.getWorkReportsByCompany(req.user!.companyId, {
+        employeeId: employeeId ? parseInt(employeeId as string) : undefined,
+        startDate: startDate as string | undefined,
+        endDate: endDate as string | undefined,
+      });
+
+      res.json(reports);
+    } catch (error: any) {
+      console.error('Admin work reports fetch error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin/Manager: Export work reports to PDF
+  app.get('/api/admin/work-reports/export/pdf', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const { employeeId, startDate, endDate } = req.query;
+      
+      const reports = await storage.getWorkReportsByCompany(req.user!.companyId, {
+        employeeId: employeeId ? parseInt(employeeId as string) : undefined,
+        startDate: startDate as string | undefined,
+        endDate: endDate as string | undefined,
+      });
+
+      const company = await storage.getCompany(req.user!.companyId);
+      
+      // Use jsPDF for PDF generation
+      const { jsPDF } = require('jspdf');
+      require('jspdf-autotable');
+      
+      const doc = new jsPDF();
+      
+      // Header
+      doc.setFontSize(18);
+      doc.text(company?.name || 'Empresa', 14, 22);
+      doc.setFontSize(12);
+      doc.text('Partes de Trabajo', 14, 32);
+      
+      if (startDate || endDate) {
+        doc.setFontSize(10);
+        const periodText = `Período: ${startDate || 'Inicio'} - ${endDate || 'Fin'}`;
+        doc.text(periodText, 14, 40);
+      }
+
+      // Table data
+      const tableData = reports.map(r => [
+        r.reportDate,
+        r.employeeName,
+        r.location,
+        r.startTime + ' - ' + r.endTime,
+        Math.floor(r.durationMinutes / 60) + 'h ' + (r.durationMinutes % 60) + 'm',
+        r.clientName || '-',
+        r.description.substring(0, 50) + (r.description.length > 50 ? '...' : '')
+      ]);
+
+      (doc as any).autoTable({
+        startY: startDate || endDate ? 48 : 40,
+        head: [['Fecha', 'Empleado', 'Ubicación', 'Horario', 'Duración', 'Cliente', 'Descripción']],
+        body: tableData,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [59, 130, 246] },
+      });
+
+      // Summary
+      const totalMinutes = reports.reduce((sum, r) => sum + r.durationMinutes, 0);
+      const totalHours = Math.floor(totalMinutes / 60);
+      const remainingMinutes = totalMinutes % 60;
+      
+      const finalY = (doc as any).lastAutoTable.finalY + 10;
+      doc.setFontSize(10);
+      doc.text(`Total: ${reports.length} partes | ${totalHours}h ${remainingMinutes}m`, 14, finalY);
+
+      const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=partes-trabajo-${startDate || 'all'}.pdf`);
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error('PDF export error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin/Manager: Export work reports to Excel
+  app.get('/api/admin/work-reports/export/excel', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const { employeeId, startDate, endDate } = req.query;
+      
+      const reports = await storage.getWorkReportsByCompany(req.user!.companyId, {
+        employeeId: employeeId ? parseInt(employeeId as string) : undefined,
+        startDate: startDate as string | undefined,
+        endDate: endDate as string | undefined,
+      });
+
+      const company = await storage.getCompany(req.user!.companyId);
+      
+      // Use xlsx for Excel generation
+      const XLSX = require('xlsx');
+      
+      const data = reports.map(r => ({
+        'Fecha': r.reportDate,
+        'Empleado': r.employeeName,
+        'Ubicación': r.location,
+        'Hora Inicio': r.startTime,
+        'Hora Fin': r.endTime,
+        'Duración (min)': r.durationMinutes,
+        'Duración (h)': (r.durationMinutes / 60).toFixed(2),
+        'Cliente': r.clientName || '',
+        'Descripción': r.description,
+        'Notas': r.notes || '',
+        'Estado': r.status === 'completed' ? 'Completado' : r.status === 'pending' ? 'Pendiente' : 'Cancelado',
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Partes de Trabajo');
+      
+      const excelBuffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename=partes-trabajo-${startDate || 'all'}.xlsx`);
+      res.send(excelBuffer);
+    } catch (error: any) {
+      console.error('Excel export error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Create demo documents for Juan Ramírez only
   app.post('/api/documents/create-demo', authenticateToken, async (req: AuthRequest, res) => {
     try {
