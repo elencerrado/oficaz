@@ -579,7 +579,7 @@ export default function AdminWorkReportsPage() {
                         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
                           <div>
                             <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
-                              <Calendar className="w-3.5 h-3.5" />
+                              <CalendarIcon className="w-3.5 h-3.5" />
                               Fecha
                             </div>
                             <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
@@ -671,7 +671,7 @@ export default function AdminWorkReportsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-1">
-                    <Calendar className="w-4 h-4" />
+                    <CalendarIcon className="w-4 h-4" />
                     Fecha
                   </div>
                   <p className="text-gray-900 dark:text-white font-medium capitalize">
