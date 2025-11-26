@@ -594,10 +594,10 @@ export default function WorkReportsPage() {
             <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white">
               <canvas
                 ref={canvasRef}
-                width={1400}
-                height={600}
+                width={800}
+                height={350}
                 className="w-full block touch-none cursor-crosshair"
-                style={{ aspectRatio: '7/3' }}
+                style={{ aspectRatio: '16/7' }}
                 onMouseDown={startDrawing}
                 onMouseMove={draw}
                 onMouseUp={stopDrawing}
@@ -1275,8 +1275,8 @@ export default function WorkReportsPage() {
               <div className="flex-1 border-2 border-dashed border-amber-400 dark:border-amber-600 rounded-xl bg-white overflow-hidden min-h-[200px]">
                 <canvas
                   ref={clientCanvasRef}
-                  width={1600}
-                  height={800}
+                  width={1000}
+                  height={500}
                   className="w-full h-full touch-none cursor-crosshair"
                   style={{ touchAction: 'none', aspectRatio: '2/1' }}
                   onMouseDown={startClientDrawing}
