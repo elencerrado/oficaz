@@ -699,15 +699,18 @@ export default function WorkReportsPage() {
               )}
             </div>
             <DialogFooter className="grid grid-cols-3 gap-3">
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} data-testid="button-cancel-create" className="w-full">
+              <Button 
+                onClick={() => setIsCreateDialogOpen(false)} 
+                data-testid="button-cancel-create" 
+                className="w-full bg-red-600 hover:bg-red-700 text-white"
+              >
                 Cancelar
               </Button>
               <Button 
-                variant="outline"
                 onClick={() => createMutation.mutate({ ...formData, status: 'draft', signatureImage: clientSignatureData || undefined })}
                 disabled={createMutation.isPending || !formData.location || !formData.description}
                 data-testid="button-save-draft"
-                className="w-full border-yellow-300 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-600 dark:text-yellow-300 dark:hover:bg-yellow-900/30"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white"
               >
                 {createMutation.isPending ? 'Guardando...' : 'Guardar borrador'}
               </Button>
@@ -986,20 +989,23 @@ export default function WorkReportsPage() {
             )}
           </div>
           <DialogFooter className={`grid gap-3 ${selectedReport?.status === 'draft' ? 'grid-cols-3' : 'grid-cols-2'}`}>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} data-testid="button-cancel-edit" className="w-full">
+            <Button 
+              onClick={() => setIsEditDialogOpen(false)} 
+              data-testid="button-cancel-edit" 
+              className="w-full bg-red-600 hover:bg-red-700 text-white"
+            >
               Cancelar
             </Button>
             {selectedReport?.status === 'draft' ? (
               <>
                 <Button
-                  variant="outline"
                   onClick={() => selectedReport && updateMutation.mutate({ 
                     id: selectedReport.id, 
                     data: { ...formData, status: 'draft', signatureImage: clientSignatureData || undefined } 
                   })}
                   disabled={updateMutation.isPending || !formData.location || !formData.description}
                   data-testid="button-save-draft-edit"
-                  className="w-full border-yellow-300 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-600 dark:text-yellow-300 dark:hover:bg-yellow-900/30"
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white"
                 >
                   {updateMutation.isPending ? 'Guardando...' : 'Guardar borrador'}
                 </Button>
@@ -1023,7 +1029,7 @@ export default function WorkReportsPage() {
                 })}
                 disabled={updateMutation.isPending || !formData.location || !formData.description}
                 data-testid="button-submit-edit"
-                className="w-full"
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
               >
                 {updateMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
               </Button>
