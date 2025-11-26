@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { usePageHeader } from '@/components/layout/page-header';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { getAuthHeaders } from '@/lib/auth';
@@ -9,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import StatsCard from '@/components/StatsCard';
 import { 
   ClipboardList, 
   Clock, 
@@ -21,7 +23,8 @@ import {
   CheckCircle,
   Download,
   FileSpreadsheet,
-  Users
+  Users,
+  TrendingUp
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -62,14 +65,25 @@ const STATUS_STYLES = {
 export default function AdminWorkReportsPage() {
   usePageTitle('Partes de Trabajo - Admin');
   const { user, isAuthenticated, isLoading: authLoading, subscription } = useAuth();
+  const { setHeader, resetHeader } = usePageHeader();
   const { toast } = useToast();
+
+  useEffect(() => {
+    setHeader({
+      title: 'Partes de Trabajo',
+      subtitle: 'Visualiza y exporta los partes de trabajo de todos los empleados'
+    });
+    return resetHeader;
+  }, []);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('this-month');
   const [employeeFilter, setEmployeeFilter] = useState('all');
   const [isExporting, setIsExporting] = useState(false);
+  const [activeStatsFilter, setActiveStatsFilter] = useState<'today' | 'week' | 'month' | null>('month');
+  const [showFilters, setShowFilters] = useState(false);
 
-  const getDateRange = () => {
+  const getDateRange = useCallback(() => {
     const today = new Date();
     switch (dateFilter) {
       case 'today':
@@ -89,7 +103,7 @@ export default function AdminWorkReportsPage() {
       default:
         return {};
     }
-  };
+  }, [dateFilter]);
 
   const { startDate, endDate } = getDateRange();
 
@@ -98,13 +112,13 @@ export default function AdminWorkReportsPage() {
     enabled: isAuthenticated && !authLoading
   });
 
-  const buildQueryParams = () => {
+  const buildQueryParams = useCallback(() => {
     const params = new URLSearchParams();
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
     if (employeeFilter !== 'all') params.append('employeeId', employeeFilter);
     return params.toString() ? `?${params.toString()}` : '';
-  };
+  }, [startDate, endDate, employeeFilter]);
   
   const { data: reports = [], isLoading: reportsLoading } = useQuery<WorkReportWithEmployee[]>({
     queryKey: [`/api/admin/work-reports${buildQueryParams()}`],
@@ -121,6 +135,36 @@ export default function AdminWorkReportsPage() {
       return matchesSearch;
     });
   }, [reports, searchTerm]);
+
+  const handleTodayFilter = useCallback(() => {
+    if (activeStatsFilter === 'today') {
+      setActiveStatsFilter(null);
+      setDateFilter('all');
+    } else {
+      setActiveStatsFilter('today');
+      setDateFilter('today');
+    }
+  }, [activeStatsFilter]);
+
+  const handleThisWeekFilter = useCallback(() => {
+    if (activeStatsFilter === 'week') {
+      setActiveStatsFilter(null);
+      setDateFilter('all');
+    } else {
+      setActiveStatsFilter('week');
+      setDateFilter('this-week');
+    }
+  }, [activeStatsFilter]);
+
+  const handleThisMonthFilter = useCallback(() => {
+    if (activeStatsFilter === 'month') {
+      setActiveStatsFilter(null);
+      setDateFilter('all');
+    } else {
+      setActiveStatsFilter('month');
+      setDateFilter('this-month');
+    }
+  }, [activeStatsFilter]);
 
   const exportToFormat = async (format: 'pdf' | 'excel') => {
     setIsExporting(true);
@@ -171,9 +215,27 @@ export default function AdminWorkReportsPage() {
     return names.size;
   }, [reports]);
 
+  const completedCount = useMemo(() => {
+    return filteredReports.filter(r => r.status === 'completed').length;
+  }, [filteredReports]);
+
+  const getFilterTitle = () => {
+    switch (dateFilter) {
+      case 'today':
+        return 'Partes de hoy';
+      case 'this-week':
+        return 'Partes de esta semana';
+      case 'this-month':
+        return 'Partes de este mes';
+      case 'all':
+      default:
+        return 'Todos los partes';
+    }
+  };
+
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -190,201 +252,257 @@ export default function AdminWorkReportsPage() {
     );
   }
 
+  if (reportsLoading) {
+    return (
+      <div className="px-6 py-4">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-muted rounded w-1/3"></div>
+          <div className="h-16 bg-muted rounded-lg"></div>
+          <div className="h-96 bg-muted rounded-lg"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50 dark:bg-gray-900" style={{ overflowX: 'clip' }}>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Partes de Trabajo</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">Visualiza y exporta los partes de trabajo de todos los empleados</p>
+    <div>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">
+        <StatsCard
+          title="Total Partes"
+          subtitle="Registrados"
+          value={filteredReports.length}
+          color="blue"
+          icon={ClipboardList}
+          onClick={handleThisMonthFilter}
+          isActive={activeStatsFilter === 'month'}
+        />
+        
+        <StatsCard
+          title="Horas Totales"
+          subtitle="Trabajadas"
+          value={`${totalHours}h${remainingMinutes > 0 ? ` ${remainingMinutes}m` : ''}`}
+          color="green"
+          icon={Clock}
+          onClick={handleTodayFilter}
+          isActive={activeStatsFilter === 'today'}
+        />
+        
+        <StatsCard
+          title="Empleados"
+          subtitle="Activos"
+          value={uniqueEmployees}
+          color="purple"
+          icon={Users}
+          onClick={handleThisWeekFilter}
+          isActive={activeStatsFilter === 'week'}
+        />
+        
+        <StatsCard
+          title="Completados"
+          subtitle="Partes"
+          value={completedCount}
+          color="green"
+          icon={CheckCircle}
+        />
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4 mb-6">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            placeholder="Buscar por empleado, ubicación, cliente o descripción..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-            data-testid="input-admin-search-reports"
-          />
-        </div>
-        <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
-          <SelectTrigger className="w-[200px]" data-testid="select-employee-filter">
-            <Users className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Filtrar por empleado" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los empleados</SelectItem>
-            {employees.map((emp) => (
-              <SelectItem key={emp.id} value={emp.id.toString()}>{emp.fullName}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={dateFilter} onValueChange={setDateFilter}>
-          <SelectTrigger className="w-[180px]" data-testid="select-admin-date-filter">
-            <Filter className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Filtrar por fecha" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="today">Hoy</SelectItem>
-            <SelectItem value="this-week">Esta semana</SelectItem>
-            <SelectItem value="this-month">Este mes</SelectItem>
-            <SelectItem value="all">Todo</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => exportToFormat('pdf')}
-            disabled={isExporting || filteredReports.length === 0}
-            data-testid="button-export-pdf"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            PDF
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => exportToFormat('excel')}
-            disabled={isExporting || filteredReports.length === 0}
-            data-testid="button-export-excel"
-          >
-            <FileSpreadsheet className="w-4 h-4 mr-2" />
-            Excel
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card className="bg-white dark:bg-gray-800">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Total Partes</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{filteredReports.length}</p>
-              </div>
-              <ClipboardList className="w-8 h-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-white dark:bg-gray-800">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Horas Totales</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                  {totalHours}h {remainingMinutes > 0 ? `${remainingMinutes}m` : ''}
-                </p>
-              </div>
-              <Clock className="w-8 h-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-white dark:bg-gray-800">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Empleados Activos</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{uniqueEmployees}</p>
-              </div>
-              <Users className="w-8 h-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-white dark:bg-gray-800">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Completados</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                  {filteredReports.filter(r => r.status === 'completed').length}
-                </p>
-              </div>
-              <CheckCircle className="w-8 h-8 text-emerald-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {reportsLoading ? (
-        <div className="flex flex-col items-center justify-center py-12 gap-4">
-          <LoadingSpinner size="lg" />
-          <p className="text-gray-500 dark:text-gray-400">Cargando partes de trabajo...</p>
-        </div>
-      ) : filteredReports.length === 0 ? (
-        <Card className="bg-white dark:bg-gray-800">
-          <CardContent className="py-12 text-center">
-            <ClipboardList className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              {searchTerm || employeeFilter !== 'all' ? 'No se encontraron partes' : 'Sin partes de trabajo'}
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400">
-              {searchTerm || employeeFilter !== 'all' 
-                ? 'Intenta con otros filtros de búsqueda' 
-                : 'Los empleados aún no han registrado partes de trabajo en este período'}
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {filteredReports.map((report) => {
-            const statusStyle = STATUS_STYLES[report.status];
-            return (
-              <Card 
-                key={report.id} 
-                className={`bg-white dark:bg-gray-800 border ${statusStyle.border} hover:shadow-md transition-shadow`}
-                data-testid={`card-admin-report-${report.id}`}
+      {/* Filters & List Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+            <span className="text-sm sm:text-lg font-medium">{getFilterTitle()} ({filteredReports.length})</span>
+            
+            {/* Desktop: buttons grouped together */}
+            <div className="hidden sm:flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2"
               >
-                <CardContent className="p-4">
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-0">
-                          <User className="w-3 h-3 mr-1" />
-                          {report.employeeName}
-                        </Badge>
-                        <Badge className={`${statusStyle.bg} ${statusStyle.text} border-0`}>
-                          {statusStyle.label}
-                        </Badge>
-                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {format(parseISO(report.reportDate), 'EEEE, d MMMM yyyy', { locale: es })}
-                        </div>
-                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {report.startTime} - {report.endTime} ({formatDuration(report.durationMinutes)})
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start gap-2">
-                        <MapPin className="w-4 h-4 mt-1 text-gray-400 flex-shrink-0" />
-                        <span className="font-medium text-gray-900 dark:text-white">{report.location}</span>
-                      </div>
+                <Filter className="w-4 h-4" />
+                Filtros
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => exportToFormat('pdf')}
+                disabled={isExporting || filteredReports.length === 0}
+                data-testid="button-export-pdf"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                PDF
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => exportToFormat('excel')}
+                disabled={isExporting || filteredReports.length === 0}
+                data-testid="button-export-excel"
+              >
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                Excel
+              </Button>
+            </div>
 
-                      {report.clientName && (
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                          <User className="w-4 h-4 text-gray-400" />
-                          Cliente: {report.clientName}
+            {/* Mobile: buttons in single row */}
+            <div className="sm:hidden grid grid-cols-3 gap-2 w-full">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center justify-center gap-1"
+              >
+                <Filter className="w-4 h-4" />
+                <span className="text-xs">Filtros</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => exportToFormat('pdf')}
+                disabled={isExporting || filteredReports.length === 0}
+                className="flex items-center justify-center gap-1"
+              >
+                <Download className="w-4 h-4" />
+                <span className="text-xs">PDF</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => exportToFormat('excel')}
+                disabled={isExporting || filteredReports.length === 0}
+                className="flex items-center justify-center gap-1"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span className="text-xs">Excel</span>
+              </Button>
+            </div>
+          </CardTitle>
+        </CardHeader>
+
+        {/* Collapsible Filters */}
+        {showFilters && (
+          <div className="px-6 pb-4 border-b">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Buscar por empleado, ubicación, cliente o descripción..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                  data-testid="input-admin-search-reports"
+                />
+              </div>
+              <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
+                <SelectTrigger className="w-full lg:w-[200px]" data-testid="select-employee-filter">
+                  <Users className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Filtrar por empleado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los empleados</SelectItem>
+                  {employees.map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id.toString()}>{emp.fullName}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={dateFilter} onValueChange={(value) => {
+                setDateFilter(value);
+                if (value === 'today') setActiveStatsFilter('today');
+                else if (value === 'this-week') setActiveStatsFilter('week');
+                else if (value === 'this-month') setActiveStatsFilter('month');
+                else setActiveStatsFilter(null);
+              }}>
+                <SelectTrigger className="w-full lg:w-[180px]" data-testid="select-admin-date-filter">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Filtrar por fecha" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">Hoy</SelectItem>
+                  <SelectItem value="this-week">Esta semana</SelectItem>
+                  <SelectItem value="this-month">Este mes</SelectItem>
+                  <SelectItem value="all">Todo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+
+        <CardContent className="p-0">
+          {filteredReports.length === 0 ? (
+            <div className="py-12 text-center">
+              <ClipboardList className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+              <h3 className="text-lg font-medium mb-2">
+                {searchTerm || employeeFilter !== 'all' ? 'No se encontraron partes' : 'Sin partes de trabajo'}
+              </h3>
+              <p className="text-muted-foreground">
+                {searchTerm || employeeFilter !== 'all' 
+                  ? 'Intenta con otros filtros de búsqueda' 
+                  : 'Los empleados aún no han registrado partes de trabajo en este período'}
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {filteredReports.map((report) => {
+                const statusStyle = STATUS_STYLES[report.status];
+                return (
+                  <div 
+                    key={report.id} 
+                    className="p-4 hover:bg-muted/50 transition-colors"
+                    data-testid={`card-admin-report-${report.id}`}
+                  >
+                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-0">
+                            <User className="w-3 h-3 mr-1" />
+                            {report.employeeName}
+                          </Badge>
+                          <Badge className={`${statusStyle.bg} ${statusStyle.text} border-0`}>
+                            {statusStyle.label}
+                          </Badge>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <Calendar className="w-4 h-4 mr-1" />
+                            {format(parseISO(report.reportDate), 'EEEE, d MMMM yyyy', { locale: es })}
+                          </div>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <Clock className="w-4 h-4 mr-1" />
+                            {report.startTime} - {report.endTime} ({formatDuration(report.durationMinutes)})
+                          </div>
                         </div>
-                      )}
+                        
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-4 h-4 mt-1 text-muted-foreground flex-shrink-0" />
+                          <span className="font-medium">{report.location}</span>
+                        </div>
 
-                      <div className="flex items-start gap-2">
-                        <FileText className="w-4 h-4 mt-1 text-gray-400 flex-shrink-0" />
-                        <p className="text-gray-700 dark:text-gray-300">{report.description}</p>
+                        {report.clientName && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <User className="w-4 h-4" />
+                            Cliente: {report.clientName}
+                          </div>
+                        )}
+
+                        <div className="flex items-start gap-2">
+                          <FileText className="w-4 h-4 mt-1 text-muted-foreground flex-shrink-0" />
+                          <p className="text-foreground">{report.description}</p>
+                        </div>
+
+                        {report.notes && (
+                          <p className="text-sm text-muted-foreground italic pl-6">
+                            Notas: {report.notes}
+                          </p>
+                        )}
                       </div>
-
-                      {report.notes && (
-                        <p className="text-sm text-gray-500 dark:text-gray-400 italic pl-6">
-                          Notas: {report.notes}
-                        </p>
-                      )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
