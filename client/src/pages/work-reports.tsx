@@ -962,26 +962,26 @@ export default function WorkReportsPage() {
 
                     </div>
 
-                    <div className="flex gap-2 md:flex-shrink-0 justify-end">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => openEditDialog(report)}
-                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                        data-testid={`button-edit-${report.id}`}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => openDeleteDialog(report)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        data-testid={`button-delete-${report.id}`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                      {report.status === 'draft' && (
+                    {report.status === 'draft' && (
+                      <div className="flex gap-2 md:flex-shrink-0 justify-end">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => openEditDialog(report)}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                          data-testid={`button-edit-${report.id}`}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => openDeleteDialog(report)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          data-testid={`button-delete-${report.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                         <Button 
                           size="sm" 
                           onClick={() => updateMutation.mutate({ id: report.id, data: { status: 'submitted' } })}
@@ -991,8 +991,8 @@ export default function WorkReportsPage() {
                         >
                           <Send className="w-4 h-4" />
                         </Button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
