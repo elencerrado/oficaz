@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import StatsCard from '@/components/StatsCard';
+import { cn } from '@/lib/utils';
 import { 
   ClipboardList, 
   Clock, 
@@ -23,8 +24,7 @@ import {
   CheckCircle,
   Download,
   FileSpreadsheet,
-  Users,
-  TrendingUp
+  Users
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -256,9 +256,9 @@ export default function AdminWorkReportsPage() {
     return (
       <div className="px-6 py-4">
         <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-muted rounded w-1/3"></div>
-          <div className="h-16 bg-muted rounded-lg"></div>
-          <div className="h-96 bg-muted rounded-lg"></div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+          <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+          <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
         </div>
       </div>
     );
@@ -308,10 +308,10 @@ export default function AdminWorkReportsPage() {
       </div>
 
       {/* Filters & List Card */}
-      <Card>
-        <CardHeader>
+      <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+        <CardHeader className="border-b border-gray-200 dark:border-gray-700">
           <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-            <span className="text-sm sm:text-lg font-medium">{getFilterTitle()} ({filteredReports.length})</span>
+            <span className="text-sm sm:text-lg font-medium text-gray-900 dark:text-white">{getFilterTitle()} ({filteredReports.length})</span>
             
             {/* Desktop: buttons grouped together */}
             <div className="hidden sm:flex items-center gap-2">
@@ -319,7 +319,7 @@ export default function AdminWorkReportsPage() {
                 variant="outline" 
                 size="sm" 
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <Filter className="w-4 h-4" />
                 Filtros
@@ -329,6 +329,7 @@ export default function AdminWorkReportsPage() {
                 size="sm" 
                 onClick={() => exportToFormat('pdf')}
                 disabled={isExporting || filteredReports.length === 0}
+                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
                 data-testid="button-export-pdf"
               >
                 <Download className="w-4 h-4 mr-2" />
@@ -339,6 +340,7 @@ export default function AdminWorkReportsPage() {
                 size="sm" 
                 onClick={() => exportToFormat('excel')}
                 disabled={isExporting || filteredReports.length === 0}
+                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
                 data-testid="button-export-excel"
               >
                 <FileSpreadsheet className="w-4 h-4 mr-2" />
@@ -352,7 +354,7 @@ export default function AdminWorkReportsPage() {
                 variant="outline" 
                 size="sm" 
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center justify-center gap-1"
+                className="flex items-center justify-center gap-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
               >
                 <Filter className="w-4 h-4" />
                 <span className="text-xs">Filtros</span>
@@ -362,7 +364,7 @@ export default function AdminWorkReportsPage() {
                 size="sm" 
                 onClick={() => exportToFormat('pdf')}
                 disabled={isExporting || filteredReports.length === 0}
-                className="flex items-center justify-center gap-1"
+                className="flex items-center justify-center gap-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
               >
                 <Download className="w-4 h-4" />
                 <span className="text-xs">PDF</span>
@@ -372,7 +374,7 @@ export default function AdminWorkReportsPage() {
                 size="sm" 
                 onClick={() => exportToFormat('excel')}
                 disabled={isExporting || filteredReports.length === 0}
-                className="flex items-center justify-center gap-1"
+                className="flex items-center justify-center gap-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
               >
                 <FileSpreadsheet className="w-4 h-4" />
                 <span className="text-xs">Excel</span>
@@ -383,48 +385,97 @@ export default function AdminWorkReportsPage() {
 
         {/* Collapsible Filters */}
         {showFilters && (
-          <div className="px-6 pb-4 border-b border-border">
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="Buscar por empleado, ubicación, cliente o descripción..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                  data-testid="input-admin-search-reports"
-                />
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
+              <div className="flex flex-col space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Buscar</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Buscar por empleado, ubicación..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                    data-testid="input-admin-search-reports"
+                  />
+                </div>
               </div>
-              <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
-                <SelectTrigger className="w-full lg:w-[200px]" data-testid="select-employee-filter">
-                  <Users className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Filtrar por empleado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los empleados</SelectItem>
-                  {employees.map((emp) => (
-                    <SelectItem key={emp.id} value={emp.id.toString()}>{emp.fullName}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={dateFilter} onValueChange={(value) => {
-                setDateFilter(value);
-                if (value === 'today') setActiveStatsFilter('today');
-                else if (value === 'this-week') setActiveStatsFilter('week');
-                else if (value === 'this-month') setActiveStatsFilter('month');
-                else setActiveStatsFilter(null);
-              }}>
-                <SelectTrigger className="w-full lg:w-[180px]" data-testid="select-admin-date-filter">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Filtrar por fecha" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="today">Hoy</SelectItem>
-                  <SelectItem value="this-week">Esta semana</SelectItem>
-                  <SelectItem value="this-month">Este mes</SelectItem>
-                  <SelectItem value="all">Todo</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex flex-col space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Empleado</label>
+                <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
+                  <SelectTrigger className="h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white" data-testid="select-employee-filter">
+                    <Users className="w-4 h-4 mr-2 text-gray-500" />
+                    <SelectValue placeholder="Filtrar por empleado" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                    <SelectItem value="all" className="text-gray-900 dark:text-white">Todos los empleados</SelectItem>
+                    {employees.map((emp) => (
+                      <SelectItem key={emp.id} value={emp.id.toString()} className="text-gray-900 dark:text-white">{emp.fullName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Período</label>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={dateFilter === 'today' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setDateFilter('today');
+                      setActiveStatsFilter('today');
+                    }}
+                    className={cn(
+                      "h-10 text-xs font-normal flex-1",
+                      dateFilter !== 'today' && "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    )}
+                  >
+                    Hoy
+                  </Button>
+                  <Button
+                    variant={dateFilter === 'this-week' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setDateFilter('this-week');
+                      setActiveStatsFilter('week');
+                    }}
+                    className={cn(
+                      "h-10 text-xs font-normal flex-1",
+                      dateFilter !== 'this-week' && "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    )}
+                  >
+                    Semana
+                  </Button>
+                  <Button
+                    variant={dateFilter === 'this-month' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setDateFilter('this-month');
+                      setActiveStatsFilter('month');
+                    }}
+                    className={cn(
+                      "h-10 text-xs font-normal flex-1",
+                      dateFilter !== 'this-month' && "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    )}
+                  >
+                    Mes
+                  </Button>
+                  <Button
+                    variant={dateFilter === 'all' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setDateFilter('all');
+                      setActiveStatsFilter(null);
+                    }}
+                    className={cn(
+                      "h-10 text-xs font-normal flex-1",
+                      dateFilter !== 'all' && "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    )}
+                  >
+                    Todo
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -432,24 +483,24 @@ export default function AdminWorkReportsPage() {
         <CardContent className="p-0">
           {filteredReports.length === 0 ? (
             <div className="py-12 text-center">
-              <ClipboardList className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium mb-2">
+              <ClipboardList className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                 {searchTerm || employeeFilter !== 'all' ? 'No se encontraron partes' : 'Sin partes de trabajo'}
               </h3>
-              <p className="text-muted-foreground">
+              <p className="text-gray-500 dark:text-gray-400">
                 {searchTerm || employeeFilter !== 'all' 
                   ? 'Intenta con otros filtros de búsqueda' 
                   : 'Los empleados aún no han registrado partes de trabajo en este período'}
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {filteredReports.map((report) => {
                 const statusStyle = STATUS_STYLES[report.status];
                 return (
                   <div 
                     key={report.id} 
-                    className="p-4 hover:bg-muted/50 transition-colors"
+                    className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                     data-testid={`card-admin-report-${report.id}`}
                   >
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
@@ -462,35 +513,35 @@ export default function AdminWorkReportsPage() {
                           <Badge className={`${statusStyle.bg} ${statusStyle.text} border-0`}>
                             {statusStyle.label}
                           </Badge>
-                          <div className="flex items-center text-sm text-muted-foreground">
+                          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                             <Calendar className="w-4 h-4 mr-1" />
                             {format(parseISO(report.reportDate), 'EEEE, d MMMM yyyy', { locale: es })}
                           </div>
-                          <div className="flex items-center text-sm text-muted-foreground">
+                          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                             <Clock className="w-4 h-4 mr-1" />
                             {report.startTime} - {report.endTime} ({formatDuration(report.durationMinutes)})
                           </div>
                         </div>
                         
                         <div className="flex items-start gap-2">
-                          <MapPin className="w-4 h-4 mt-1 text-muted-foreground flex-shrink-0" />
-                          <span className="font-medium">{report.location}</span>
+                          <MapPin className="w-4 h-4 mt-1 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                          <span className="font-medium text-gray-900 dark:text-white">{report.location}</span>
                         </div>
 
                         {report.clientName && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <User className="w-4 h-4" />
+                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                            <User className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                             Cliente: {report.clientName}
                           </div>
                         )}
 
                         <div className="flex items-start gap-2">
-                          <FileText className="w-4 h-4 mt-1 text-muted-foreground flex-shrink-0" />
-                          <p className="text-foreground">{report.description}</p>
+                          <FileText className="w-4 h-4 mt-1 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                          <p className="text-gray-700 dark:text-gray-300">{report.description}</p>
                         </div>
 
                         {report.notes && (
-                          <p className="text-sm text-muted-foreground italic pl-6">
+                          <p className="text-sm text-gray-500 dark:text-gray-400 italic pl-6">
                             Notas: {report.notes}
                           </p>
                         )}
