@@ -5300,6 +5300,13 @@ Responde directamente a este email para contactar con la persona.
         return `${hours} horas ${mins} minutos`;
       };
       
+      // Generate reference with year/month format: PT25/11-01
+      const reportDate = new Date(report.reportDate);
+      const year = reportDate.getFullYear().toString().slice(-2);
+      const month = (reportDate.getMonth() + 1).toString().padStart(2, '0');
+      const refNumber = report.id.toString().padStart(2, '0');
+      const reference = `PT${year}/${month}-${refNumber}`;
+      
       // Header with company name and client prominently displayed (white background)
       doc.setTextColor(0, 0, 0);
       doc.setFontSize(20);
@@ -5313,9 +5320,7 @@ Responde directamente a este email para contactar con la persona.
       // Reference number on the right
       doc.setFontSize(10);
       doc.setTextColor(0, 0, 0);
-      doc.text(`REF: PT-${report.id}`, 196, 18, { align: 'right' });
-      doc.setTextColor(100, 100, 100);
-      doc.text(report.status === 'submitted' ? 'ENVIADO' : 'BORRADOR', 196, 27, { align: 'right' });
+      doc.text(`REF: ${reference}`, 196, 22, { align: 'right' });
       
       // Separator line
       doc.setDrawColor(200, 200, 200);
