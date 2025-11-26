@@ -5144,6 +5144,9 @@ Responde directamente a este email para contactar con la persona.
 
       const { reportDate, refCode, location, startTime, endTime, description, clientName, notes } = req.body;
       
+      console.log('Admin work report update - req.body:', JSON.stringify(req.body));
+      console.log('Admin work report update - refCode value:', refCode);
+      
       const updates: any = {};
       if (reportDate !== undefined) updates.reportDate = reportDate;
       if (refCode !== undefined) updates.refCode = refCode;
