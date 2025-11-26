@@ -635,6 +635,18 @@ export default function WorkReportsPage() {
                           Notas: {report.notes}
                         </p>
                       )}
+
+                      {signatureData?.signatureUrl && (
+                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                          <PenTool className="w-4 h-4 text-gray-400" />
+                          <span className="text-xs text-gray-500 dark:text-gray-400">Firma:</span>
+                          <img 
+                            src={signatureData.signatureUrl} 
+                            alt="Firma del empleado"
+                            className="h-8 max-w-[120px] object-contain"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex gap-2 md:flex-shrink-0">
