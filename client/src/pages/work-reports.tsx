@@ -814,16 +814,6 @@ export default function WorkReportsPage() {
                         </div>
                       )}
 
-                      {signatureData?.signatureUrl && (
-                        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-                          <span className="text-xs text-gray-400">Mi firma:</span>
-                          <img 
-                            src={signatureData.signatureUrl} 
-                            alt="Mi firma"
-                            className="h-6 max-w-[80px] object-contain opacity-60"
-                          />
-                        </div>
-                      )}
                     </div>
 
                     <div className="flex gap-2 md:flex-shrink-0">
