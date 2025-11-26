@@ -105,18 +105,12 @@ export default function WorkReportsPage() {
 
   const { startDate, endDate } = getDateRange();
 
+  const queryParams = startDate || endDate 
+    ? `?${new URLSearchParams({ ...(startDate && { startDate }), ...(endDate && { endDate }) }).toString()}`
+    : '';
+  
   const { data: reports = [], isLoading: reportsLoading } = useQuery<WorkReport[]>({
-    queryKey: ['/api/work-reports', startDate, endDate],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
-      const response = await fetch(`/api/work-reports?${params}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (!response.ok) throw new Error('Failed to fetch work reports');
-      return response.json();
-    },
+    queryKey: [`/api/work-reports${queryParams}`],
     enabled: isAuthenticated && !authLoading
   });
 
@@ -135,7 +129,7 @@ export default function WorkReportsPage() {
       return apiRequest('POST', '/api/work-reports', data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/work-reports'] });
+      queryClient.invalidateQueries({ predicate: (query) => (query.queryKey[0] as string).startsWith('/api/work-reports') });
       setIsCreateDialogOpen(false);
       resetForm();
       toast({ title: 'Parte creado', description: 'El parte de trabajo se ha creado correctamente.' });
@@ -150,7 +144,7 @@ export default function WorkReportsPage() {
       return apiRequest('PATCH', `/api/work-reports/${id}`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/work-reports'] });
+      queryClient.invalidateQueries({ predicate: (query) => (query.queryKey[0] as string).startsWith('/api/work-reports') });
       setIsEditDialogOpen(false);
       setSelectedReport(null);
       resetForm();
@@ -166,7 +160,7 @@ export default function WorkReportsPage() {
       return apiRequest('DELETE', `/api/work-reports/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/work-reports'] });
+      queryClient.invalidateQueries({ predicate: (query) => (query.queryKey[0] as string).startsWith('/api/work-reports') });
       setIsDeleteDialogOpen(false);
       setSelectedReport(null);
       toast({ title: 'Parte eliminado', description: 'El parte de trabajo se ha eliminado correctamente.' });

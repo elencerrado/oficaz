@@ -52,6 +52,8 @@ import Settings from "@/pages/settings";
 import EmployeeProfile from "@/pages/employee-profile";
 import EmployeeSchedule from "@/pages/employee-schedule";
 import NotificationDevices from "@/pages/notification-devices";
+import WorkReports from "@/pages/work-reports";
+import AdminWorkReports from "@/pages/admin-work-reports";
 
 // Super admin pages - lazy loaded (rarely accessed)
 const SuperAdminSecurity = lazy(() => import("@/pages/super-admin-security"));
@@ -525,6 +527,18 @@ function Router() {
               <EmployeeReminders />
             ) : (
               <Reminders />
+            )}
+          </AppLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/:companyAlias/partes-trabajo">
+        <ProtectedRoute>
+          <AppLayout>
+            {user?.role === 'employee' ? (
+              <WorkReports />
+            ) : (
+              <AdminWorkReports />
             )}
           </AppLayout>
         </ProtectedRoute>

@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { usePageTitle } from '@/hooks/use-page-title';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { getAuthHeaders } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -94,29 +95,19 @@ export default function AdminWorkReportsPage() {
 
   const { data: employees = [] } = useQuery<Employee[]>({
     queryKey: ['/api/employees'],
-    queryFn: async () => {
-      const response = await fetch('/api/employees', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (!response.ok) throw new Error('Failed to fetch employees');
-      return response.json();
-    },
     enabled: isAuthenticated && !authLoading
   });
 
+  const buildQueryParams = () => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    if (employeeFilter !== 'all') params.append('employeeId', employeeFilter);
+    return params.toString() ? `?${params.toString()}` : '';
+  };
+  
   const { data: reports = [], isLoading: reportsLoading } = useQuery<WorkReportWithEmployee[]>({
-    queryKey: ['/api/admin/work-reports', startDate, endDate, employeeFilter],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
-      if (employeeFilter !== 'all') params.append('employeeId', employeeFilter);
-      const response = await fetch(`/api/admin/work-reports?${params}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (!response.ok) throw new Error('Failed to fetch work reports');
-      return response.json();
-    },
+    queryKey: [`/api/admin/work-reports${buildQueryParams()}`],
     enabled: isAuthenticated && !authLoading
   });
 
@@ -140,7 +131,7 @@ export default function AdminWorkReportsPage() {
       if (employeeFilter !== 'all') params.append('employeeId', employeeFilter);
 
       const response = await fetch(`/api/admin/work-reports/export/${format}?${params}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers: getAuthHeaders() as Record<string, string>
       });
 
       if (!response.ok) throw new Error('Export failed');
