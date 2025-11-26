@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { usePageTitle } from '@/hooks/use-page-title';
-import FeatureRestrictedPage from '@/components/feature-restricted-page';
+import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,15 +24,13 @@ import {
   Filter,
   User,
   FileText,
-  CheckCircle,
-  AlertCircle
+  CheckCircle
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { usePageHeader } from '@/components/layout/page-header';
 
 interface WorkReport {
   id: number;
@@ -60,11 +58,10 @@ const STATUS_STYLES = {
 
 export default function WorkReportsPage() {
   usePageTitle('Partes de Trabajo');
-  const { user, company, isAuthenticated, isLoading: authLoading } = useAuth();
-  const { hasFeature, isLoading: featureLoading } = useFeatureCheck();
+  const { user, company, isAuthenticated, isLoading: authLoading, subscription } = useAuth();
+  const { hasAccess } = useFeatureCheck();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const PageHeader = usePageHeader();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -135,10 +132,7 @@ export default function WorkReportsPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      return apiRequest('/api/work-reports', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
+      return apiRequest('POST', '/api/work-reports', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-reports'] });
@@ -153,10 +147,7 @@ export default function WorkReportsPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: typeof formData }) => {
-      return apiRequest(`/api/work-reports/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data)
-      });
+      return apiRequest('PATCH', `/api/work-reports/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-reports'] });
@@ -172,7 +163,7 @@ export default function WorkReportsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/work-reports/${id}`, { method: 'DELETE' });
+      return apiRequest('DELETE', `/api/work-reports/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-reports'] });
@@ -230,24 +221,31 @@ export default function WorkReportsPage() {
   const totalHours = Math.floor(totalMinutes / 60);
   const remainingMinutes = totalMinutes % 60;
 
-  if (authLoading || featureLoading) {
+  if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-        <LoadingSpinner message="Cargando..." />
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
 
-  if (!hasFeature('workReports')) {
-    return <FeatureRestrictedPage feature="Partes de Trabajo" requiredPlan="Pro" />;
+  const isPro = subscription?.plan === 'pro' || subscription?.plan === 'master';
+  if (!isPro) {
+    return (
+      <FeatureRestrictedPage 
+        featureName="Partes de Trabajo" 
+        description="Registra y gestiona los partes de trabajo de tus empleados con esta funcionalidad exclusiva del plan Pro." 
+        requiredPlan="Pro" 
+      />
+    );
   }
 
   return (
     <div className="px-6 py-4 min-h-screen bg-gray-50 dark:bg-gray-900" style={{ overflowX: 'clip' }}>
-      <PageHeader 
-        title="Partes de Trabajo"
-        description="Registra y gestiona tus partes de trabajo diarios"
-      />
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Partes de Trabajo</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1">Registra y gestiona tus partes de trabajo diarios</p>
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="flex-1 relative">
@@ -432,8 +430,9 @@ export default function WorkReportsPage() {
       </div>
 
       {reportsLoading ? (
-        <div className="flex justify-center py-12">
-          <LoadingSpinner message="Cargando partes de trabajo..." />
+        <div className="flex flex-col items-center justify-center py-12 gap-4">
+          <LoadingSpinner size="lg" />
+          <p className="text-gray-500 dark:text-gray-400">Cargando partes de trabajo...</p>
         </div>
       ) : filteredReports.length === 0 ? (
         <Card className="bg-white dark:bg-gray-800">
