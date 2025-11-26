@@ -3512,6 +3512,7 @@ export class DrizzleStorage implements IStorage {
       companyId: schema.workReports.companyId,
       employeeId: schema.workReports.employeeId,
       reportDate: schema.workReports.reportDate,
+      refCode: schema.workReports.refCode,
       location: schema.workReports.location,
       locationCoords: schema.workReports.locationCoords,
       startTime: schema.workReports.startTime,
