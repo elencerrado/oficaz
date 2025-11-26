@@ -291,7 +291,7 @@ export default function WorkReportsPage() {
               Nuevo Parte
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Nuevo Parte de Trabajo</DialogTitle>
               <DialogDescription>Registra un nuevo parte de trabajo con los detalles de la visita.</DialogDescription>
@@ -501,7 +501,7 @@ export default function WorkReportsPage() {
       </div>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Parte de Trabajo</DialogTitle>
             <DialogDescription>Modifica los detalles del parte de trabajo.</DialogDescription>
