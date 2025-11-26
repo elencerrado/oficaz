@@ -349,7 +349,7 @@ export default function AdminWorkReportsPage() {
       </div>
 
       {/* Filters & List Card */}
-      <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+      <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
         <CardHeader className="border-b border-gray-200 dark:border-gray-700">
           <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
             <span className="text-sm sm:text-lg font-medium text-gray-900 dark:text-white">{getFilterTitle()} ({filteredReports.length})</span>
