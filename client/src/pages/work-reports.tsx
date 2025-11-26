@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { usePageTitle } from '@/hooks/use-page-title';
@@ -25,7 +25,9 @@ import {
   User,
   FileText,
   CheckCircle,
-  ArrowLeft
+  ArrowLeft,
+  PenTool,
+  RotateCcw
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -69,9 +71,12 @@ export default function WorkReportsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<WorkReport | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('this-month');
+  const [isDrawing, setIsDrawing] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [formData, setFormData] = useState({
     reportDate: format(new Date(), 'yyyy-MM-dd'),
@@ -172,6 +177,112 @@ export default function WorkReportsPage() {
       toast({ title: 'Error', description: error.message || 'No se pudo eliminar el parte.', variant: 'destructive' });
     }
   });
+
+  const { data: signatureData } = useQuery<{ signatureUrl: string | null }>({
+    queryKey: ['/api/work-reports/signature'],
+    enabled: isAuthenticated && !authLoading
+  });
+
+  const signatureMutation = useMutation({
+    mutationFn: async (signatureData: string) => {
+      return apiRequest('POST', '/api/work-reports/signature', { signatureData });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-reports/signature'] });
+      setIsSignatureDialogOpen(false);
+      toast({ title: 'Firma guardada', description: 'Tu firma se ha guardado y se aplicará a todos tus partes de trabajo.' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'No se pudo guardar la firma.', variant: 'destructive' });
+    }
+  });
+
+  const initCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#1f2937';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+  };
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  };
+
+  const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    if ('touches' in e) {
+      return {
+        x: e.touches[0].clientX - rect.left,
+        y: e.touches[0].clientY - rect.top
+      };
+    }
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+  };
+
+  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    setIsDrawing(true);
+    const { x, y } = getCoordinates(e);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const draw = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDrawing) return;
+    e.preventDefault();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const { x, y } = getCoordinates(e);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => {
+    setIsDrawing(false);
+  };
+
+  const saveSignature = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL('image/png');
+    signatureMutation.mutate(dataUrl);
+  };
+
+  const handleCreateClick = () => {
+    if (!signatureData?.signatureUrl) {
+      setIsSignatureDialogOpen(true);
+    } else {
+      setIsCreateDialogOpen(true);
+    }
+  };
+
+  useEffect(() => {
+    if (isSignatureDialogOpen) {
+      setTimeout(initCanvas, 100);
+    }
+  }, [isSignatureDialogOpen]);
 
   const resetForm = () => {
     setFormData({
@@ -278,19 +389,72 @@ export default function WorkReportsPage() {
         <p className="text-gray-600 dark:text-white/70 text-sm">Registra y gestiona tus partes de trabajo diarios</p>
       </div>
 
-      {/* New Report Button */}
-      <div className="px-6 pb-4">
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button 
-              onClick={() => { resetForm(); setIsCreateDialogOpen(true); }} 
-              className="bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 text-gray-900 dark:text-white border-gray-200 dark:border-white/20"
-              data-testid="button-new-report"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Nuevo Parte
+      {/* Signature Dialog */}
+      <Dialog open={isSignatureDialogOpen} onOpenChange={setIsSignatureDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PenTool className="w-5 h-5" />
+              Dibuja tu firma
+            </DialogTitle>
+            <DialogDescription>
+              Tu firma se guardará y se aplicará automáticamente a todos tus partes de trabajo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-white">
+              <canvas
+                ref={canvasRef}
+                width={350}
+                height={150}
+                className="w-full touch-none cursor-crosshair"
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+                onTouchStart={startDrawing}
+                onTouchMove={draw}
+                onTouchEnd={stopDrawing}
+              />
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+              Dibuja tu firma con el dedo o ratón
+            </p>
+          </div>
+          <DialogFooter className="grid grid-cols-2 gap-3">
+            <Button variant="outline" onClick={clearCanvas} className="w-full">
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Limpiar
             </Button>
-          </DialogTrigger>
+            <Button onClick={saveSignature} disabled={signatureMutation.isPending} className="w-full">
+              {signatureMutation.isPending ? 'Guardando...' : 'Guardar Firma'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Report Button */}
+      <div className="px-6 pb-4 flex items-center gap-3">
+        <Button 
+          onClick={() => { resetForm(); handleCreateClick(); }} 
+          className="bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 text-gray-900 dark:text-white border-gray-200 dark:border-white/20"
+          data-testid="button-new-report"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Nuevo Parte
+        </Button>
+        {signatureData?.signatureUrl && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsSignatureDialogOpen(true)}
+            className="text-gray-600 dark:text-gray-300"
+          >
+            <PenTool className="w-4 h-4 mr-2" />
+            Cambiar firma
+          </Button>
+        )}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Nuevo Parte de Trabajo</DialogTitle>
