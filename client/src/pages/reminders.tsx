@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { usePageTitle } from '@/hooks/use-page-title';
 import FeatureRestrictedPage from '@/components/feature-restricted-page';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -800,8 +801,9 @@ export default function Reminders() {
 
         {/* Reminders Grid */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+          <div className="flex flex-col items-center justify-center py-12">
+            <LoadingSpinner className="w-8 h-8 text-primary mb-3" />
+            <p className="text-sm text-muted-foreground">Cargando recordatorios...</p>
           </div>
         ) : sortedReminders.length === 0 ? (
           <div className="text-center py-12 bg-card rounded-lg shadow-sm">
