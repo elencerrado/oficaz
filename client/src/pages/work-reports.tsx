@@ -78,11 +78,12 @@ export default function WorkReportsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('this-month');
   const [isDrawing, setIsDrawing] = useState(false);
-  const [isReportDrawing, setIsReportDrawing] = useState(false);
-  const [showReportSignature, setShowReportSignature] = useState(false);
-  const [reportSignatureData, setReportSignatureData] = useState<string>('');
+  const [isClientSignatureModalOpen, setIsClientSignatureModalOpen] = useState(false);
+  const [clientSignatureData, setClientSignatureData] = useState<string>('');
+  const [clientSignedBy, setClientSignedBy] = useState('');
+  const [isClientDrawing, setIsClientDrawing] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const reportCanvasRef = useRef<HTMLCanvasElement>(null);
+  const clientCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const [formData, setFormData] = useState({
     reportDate: format(new Date(), 'yyyy-MM-dd'),
@@ -303,88 +304,99 @@ export default function WorkReportsPage() {
       signedBy: '',
       status: 'completed'
     });
-    setReportSignatureData('');
-    setShowReportSignature(false);
+    setClientSignatureData('');
+    setClientSignedBy('');
   };
 
-  const initReportCanvas = () => {
-    const canvas = reportCanvasRef.current;
+  const initClientCanvas = () => {
+    const canvas = clientCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = '#1f2937';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
   };
 
-  const clearReportCanvas = () => {
-    const canvas = reportCanvasRef.current;
+  const clearClientCanvas = () => {
+    const canvas = clientCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    setReportSignatureData('');
   };
 
-  const startReportDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+  const startClientDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
-    const canvas = reportCanvasRef.current;
+    const canvas = clientCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    setIsReportDrawing(true);
+    setIsClientDrawing(true);
     const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
     let x, y;
     if ('touches' in e) {
-      x = e.touches[0].clientX - rect.left;
-      y = e.touches[0].clientY - rect.top;
+      x = (e.touches[0].clientX - rect.left) * scaleX;
+      y = (e.touches[0].clientY - rect.top) * scaleY;
     } else {
-      x = e.clientX - rect.left;
-      y = e.clientY - rect.top;
+      x = (e.clientX - rect.left) * scaleX;
+      y = (e.clientY - rect.top) * scaleY;
     }
     ctx.beginPath();
     ctx.moveTo(x, y);
   };
 
-  const drawReport = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isReportDrawing) return;
+  const drawClient = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isClientDrawing) return;
     e.preventDefault();
-    const canvas = reportCanvasRef.current;
+    const canvas = clientCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
     let x, y;
     if ('touches' in e) {
-      x = e.touches[0].clientX - rect.left;
-      y = e.touches[0].clientY - rect.top;
+      x = (e.touches[0].clientX - rect.left) * scaleX;
+      y = (e.touches[0].clientY - rect.top) * scaleY;
     } else {
-      x = e.clientX - rect.left;
-      y = e.clientY - rect.top;
+      x = (e.clientX - rect.left) * scaleX;
+      y = (e.clientY - rect.top) * scaleY;
     }
     ctx.lineTo(x, y);
     ctx.stroke();
   };
 
-  const stopReportDrawing = () => {
-    if (isReportDrawing) {
-      setIsReportDrawing(false);
-      const canvas = reportCanvasRef.current;
-      if (canvas) {
-        setReportSignatureData(canvas.toDataURL('image/png'));
-      }
+  const stopClientDrawing = () => {
+    setIsClientDrawing(false);
+  };
+
+  const saveClientSignature = () => {
+    const canvas = clientCanvasRef.current;
+    if (canvas) {
+      const dataUrl = canvas.toDataURL('image/png');
+      setClientSignatureData(dataUrl);
+      setFormData(prev => ({ ...prev, signedBy: clientSignedBy }));
     }
+    setIsClientSignatureModalOpen(false);
+  };
+
+  const openClientSignatureModal = () => {
+    setIsClientSignatureModalOpen(true);
   };
 
   useEffect(() => {
-    if (showReportSignature) {
-      setTimeout(initReportCanvas, 100);
+    if (isClientSignatureModalOpen) {
+      setTimeout(initClientCanvas, 100);
     }
-  }, [showReportSignature]);
+  }, [isClientSignatureModalOpen]);
 
   const openEditDialog = (report: WorkReport) => {
     setSelectedReport(report);
@@ -399,8 +411,8 @@ export default function WorkReportsPage() {
       signedBy: report.signedBy || '',
       status: report.status
     });
-    setReportSignatureData(report.signatureImage || '');
-    setShowReportSignature(!!report.signatureImage || !!report.signedBy);
+    setClientSignatureData(report.signatureImage || '');
+    setClientSignedBy(report.signedBy || '');
     setIsEditDialogOpen(true);
   };
 
@@ -690,61 +702,36 @@ export default function WorkReportsPage() {
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium text-amber-900 dark:text-amber-100 flex items-center gap-2">
                     <PenTool className="w-4 h-4" />
-                    Firma del parte <span className="text-amber-600 dark:text-amber-400 text-xs font-normal">(opcional)</span>
+                    Firma del cliente <span className="text-amber-600 dark:text-amber-400 text-xs font-normal">(opcional)</span>
                   </h4>
+                </div>
+                {clientSignatureData ? (
+                  <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-amber-200 dark:border-amber-700">
+                    <img src={clientSignatureData} alt="Firma del cliente" className="h-12 max-w-[120px] object-contain" />
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-300">Firmado por: <strong>{formData.signedBy}</strong></p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => { setClientSignedBy(formData.signedBy); openClientSignatureModal(); }}
+                      className="text-amber-700 border-amber-300"
+                    >
+                      Cambiar
+                    </Button>
+                  </div>
+                ) : (
                   <Button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowReportSignature(!showReportSignature)}
-                    className="text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-800/30"
+                    variant="outline"
+                    onClick={() => { setClientSignedBy(''); openClientSignatureModal(); }}
+                    className="w-full border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-300 dark:hover:bg-amber-900/30"
+                    data-testid="button-add-client-signature"
                   >
-                    {showReportSignature ? 'Ocultar' : 'Añadir firma'}
+                    <PenTool className="w-4 h-4 mr-2" />
+                    Añadir firma del cliente
                   </Button>
-                </div>
-                {showReportSignature && (
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <Label className="text-sm">Firmado por</Label>
-                      <Input
-                        placeholder="Nombre de quien firma"
-                        value={formData.signedBy}
-                        onChange={(e) => setFormData({ ...formData, signedBy: e.target.value })}
-                        className="bg-white dark:bg-gray-800"
-                        data-testid="input-signed-by"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm">Firma</Label>
-                      <div className="border-2 border-dashed border-amber-300 dark:border-amber-600 rounded-lg p-2 bg-white">
-                        <canvas
-                          ref={reportCanvasRef}
-                          width={300}
-                          height={100}
-                          className="w-full touch-none cursor-crosshair"
-                          onMouseDown={startReportDrawing}
-                          onMouseMove={drawReport}
-                          onMouseUp={stopReportDrawing}
-                          onMouseLeave={stopReportDrawing}
-                          onTouchStart={startReportDrawing}
-                          onTouchMove={drawReport}
-                          onTouchEnd={stopReportDrawing}
-                        />
-                      </div>
-                      <div className="flex justify-end">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={clearReportCanvas}
-                          className="text-gray-500"
-                        >
-                          <RotateCcw className="w-3 h-3 mr-1" />
-                          Limpiar
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
                 )}
               </div>
             </div>
@@ -753,7 +740,7 @@ export default function WorkReportsPage() {
                 Cancelar
               </Button>
               <Button 
-                onClick={() => createMutation.mutate({ ...formData, signatureImage: reportSignatureData || undefined })}
+                onClick={() => createMutation.mutate({ ...formData, signatureImage: clientSignatureData || undefined })}
                 disabled={createMutation.isPending || !formData.location || !formData.description}
                 data-testid="button-submit-create"
                 className="w-full"
@@ -1014,57 +1001,36 @@ export default function WorkReportsPage() {
               <div className="flex items-center justify-between">
                 <h4 className="font-medium text-amber-900 dark:text-amber-100 flex items-center gap-2">
                   <PenTool className="w-4 h-4" />
-                  Firma del parte
+                  Firma del cliente <span className="text-amber-600 dark:text-amber-400 text-xs font-normal">(opcional)</span>
                 </h4>
+              </div>
+              {clientSignatureData ? (
+                <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-amber-200 dark:border-amber-700">
+                  <img src={clientSignatureData} alt="Firma del cliente" className="h-12 max-w-[120px] object-contain" />
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Firmado por: <strong>{formData.signedBy}</strong></p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setClientSignedBy(formData.signedBy); openClientSignatureModal(); }}
+                    className="text-amber-700 border-amber-300"
+                  >
+                    Cambiar
+                  </Button>
+                </div>
+              ) : (
                 <Button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowReportSignature(!showReportSignature)}
-                  className="text-amber-700 dark:text-amber-300"
+                  variant="outline"
+                  onClick={() => { setClientSignedBy(''); openClientSignatureModal(); }}
+                  className="w-full border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-300 dark:hover:bg-amber-900/30"
+                  data-testid="button-edit-add-client-signature"
                 >
-                  {showReportSignature ? 'Ocultar' : 'Editar firma'}
+                  <PenTool className="w-4 h-4 mr-2" />
+                  Añadir firma del cliente
                 </Button>
-              </div>
-              {showReportSignature && (
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <Label className="text-sm">Firmado por</Label>
-                    <Input
-                      value={formData.signedBy}
-                      onChange={(e) => setFormData({ ...formData, signedBy: e.target.value })}
-                      className="bg-white dark:bg-gray-800"
-                      data-testid="input-edit-signed-by"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm">Firma</Label>
-                    {reportSignatureData && !isReportDrawing ? (
-                      <div className="flex items-center gap-3">
-                        <img src={reportSignatureData} alt="Firma actual" className="h-12 border rounded" />
-                        <Button variant="ghost" size="sm" onClick={clearReportCanvas}>
-                          Cambiar
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="border-2 border-dashed border-amber-300 rounded-lg p-2 bg-white">
-                        <canvas
-                          ref={reportCanvasRef}
-                          width={300}
-                          height={100}
-                          className="w-full touch-none cursor-crosshair"
-                          onMouseDown={startReportDrawing}
-                          onMouseMove={drawReport}
-                          onMouseUp={stopReportDrawing}
-                          onMouseLeave={stopReportDrawing}
-                          onTouchStart={startReportDrawing}
-                          onTouchMove={drawReport}
-                          onTouchEnd={stopReportDrawing}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
               )}
             </div>
           </div>
@@ -1075,7 +1041,7 @@ export default function WorkReportsPage() {
             <Button
               onClick={() => selectedReport && updateMutation.mutate({ 
                 id: selectedReport.id, 
-                data: { ...formData, signatureImage: reportSignatureData || undefined } 
+                data: { ...formData, signatureImage: clientSignatureData || undefined } 
               })}
               disabled={updateMutation.isPending || !formData.location || !formData.description}
               data-testid="button-submit-edit"
@@ -1109,6 +1075,86 @@ export default function WorkReportsPage() {
               {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isClientSignatureModalOpen} onOpenChange={setIsClientSignatureModalOpen}>
+        <DialogContent className="fixed inset-0 w-full h-full max-w-none max-h-none m-0 p-0 rounded-none bg-white dark:bg-gray-900 flex flex-col">
+          <DialogHeader className="flex flex-row items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-amber-50 dark:bg-amber-900/30 space-y-0">
+            <DialogTitle className="text-xl font-semibold text-amber-900 dark:text-amber-100 flex items-center gap-2">
+              <PenTool className="w-6 h-6" />
+              Firma del Cliente
+            </DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsClientSignatureModalOpen(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              Cancelar
+            </Button>
+          </DialogHeader>
+
+          <div className="flex-1 flex flex-col p-6 gap-6 overflow-auto">
+            <div className="space-y-2">
+              <Label className="text-lg font-medium text-gray-700 dark:text-gray-200">Nombre del firmante</Label>
+              <Input
+                placeholder="Escriba su nombre completo"
+                value={clientSignedBy}
+                onChange={(e) => setClientSignedBy(e.target.value)}
+                className="text-xl py-4 px-4 h-14 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600"
+                data-testid="input-client-signed-by"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-lg font-medium text-gray-700 dark:text-gray-200">Firme aquí</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearClientCanvas}
+                  className="text-gray-500"
+                >
+                  <RotateCcw className="w-4 h-4 mr-1" />
+                  Limpiar
+                </Button>
+              </div>
+              <div className="flex-1 border-2 border-dashed border-amber-400 dark:border-amber-600 rounded-xl bg-white overflow-hidden min-h-[200px]">
+                <canvas
+                  ref={clientCanvasRef}
+                  width={800}
+                  height={400}
+                  className="w-full h-full touch-none cursor-crosshair"
+                  style={{ touchAction: 'none' }}
+                  onMouseDown={startClientDrawing}
+                  onMouseMove={drawClient}
+                  onMouseUp={stopClientDrawing}
+                  onMouseLeave={stopClientDrawing}
+                  onTouchStart={startClientDrawing}
+                  onTouchMove={drawClient}
+                  onTouchEnd={stopClientDrawing}
+                />
+              </div>
+              <p className="text-center text-gray-400 dark:text-gray-500 text-sm mt-2">
+                Dibuje su firma con el dedo o ratón
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+            <Button
+              onClick={saveClientSignature}
+              disabled={!clientSignedBy.trim()}
+              className="w-full h-14 text-lg bg-amber-600 hover:bg-amber-700 text-white"
+              data-testid="button-save-client-signature"
+            >
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Confirmar Firma
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
