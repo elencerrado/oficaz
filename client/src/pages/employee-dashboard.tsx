@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
-import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard, AlarmClock, CalendarDays, Sun, Moon, Monitor } from 'lucide-react';
+import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard, AlarmClock, CalendarDays, Sun, Moon, Monitor, ClipboardList } from 'lucide-react';
 import { useTheme } from '@/lib/theme-provider';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -747,6 +747,16 @@ export default function EmployeeDashboard() {
       notificationType: 'green',
       feature: 'messages'
     },
+    ...((subscription?.plan === 'pro' || subscription?.plan === 'master') ? [
+      { 
+        icon: ClipboardList, 
+        title: 'Partes', 
+        route: `/${companyAlias}/partes-trabajo`,
+        notification: false,
+        notificationType: 'none',
+        feature: 'timeTracking'
+      }
+    ] : []),
   ];
 
   const currentYear = new Date().getFullYear();
@@ -989,7 +999,7 @@ export default function EmployeeDashboard() {
 
         {/* Menu Grid - Compacto */}
         <div className="mb-2">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {menuItems.map((item, index) => {
               const isFeatureDisabled = item.feature && !hasAccess(item.feature);
               
@@ -1022,14 +1032,14 @@ export default function EmployeeDashboard() {
                       
                       handleNavigation(item.route);
                     }}
-                    className={`relative w-24 h-24 transition-all duration-200 rounded-2xl flex items-center justify-center mb-2 backdrop-blur-xl border ${
+                    className={`relative w-[72px] h-[72px] transition-all duration-200 rounded-2xl flex items-center justify-center mb-2 backdrop-blur-xl border ${
                       isFeatureDisabled 
                         ? 'bg-gray-200 dark:bg-gray-500/20 border-gray-300 dark:border-gray-400/30 cursor-not-allowed opacity-40' 
                         : 'bg-[#007AFF] hover:bg-[#0056CC] border-[#007AFF] hover:border-[#0056CC]'
                     }`}
                     disabled={isFeatureDisabled}
                   >
-                    <item.icon className={`h-12 w-12 transition-all duration-200 ${
+                    <item.icon className={`h-9 w-9 transition-all duration-200 ${
                       isFeatureDisabled 
                         ? 'text-gray-300 dark:text-gray-400/50' 
                         : 'text-white drop-shadow-lg'
@@ -1047,7 +1057,7 @@ export default function EmployeeDashboard() {
                       <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform -skew-x-12"></div>
                     )}
                   </button>
-                  <span className={`text-sm font-medium text-center leading-tight transition-all duration-300 ${
+                  <span className={`text-xs font-medium text-center leading-tight transition-all duration-300 ${
                     isFeatureDisabled 
                       ? 'text-gray-400 dark:text-white/30' 
                       : 'text-gray-700 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white group-hover:scale-105'
