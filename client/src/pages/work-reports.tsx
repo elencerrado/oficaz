@@ -762,7 +762,7 @@ export default function WorkReportsPage() {
                     <Button
                       type="button"
                       onClick={() => { setClientSignedBy(''); openClientSignatureModal(); }}
-                      className="w-full bg-yellow-500 hover:bg-yellow-600 text-white"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                       data-testid="button-add-client-signature"
                     >
                       <PenTool className="w-4 h-4 mr-2" />
@@ -1092,7 +1092,7 @@ export default function WorkReportsPage() {
                   <Button
                     type="button"
                     onClick={() => { setClientSignedBy(''); openClientSignatureModal(); }}
-                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-white"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                     data-testid="button-edit-add-client-signature"
                   >
                     <PenTool className="w-4 h-4 mr-2" />
