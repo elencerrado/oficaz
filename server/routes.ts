@@ -5401,7 +5401,7 @@ Responde directamente a este email para contactar con la persona.
       }
       
       // Signatures section
-      yPos = Math.max(yPos + 10, 200);
+      yPos = Math.max(yPos + 10, 190);
       
       doc.setDrawColor(0, 0, 0);
       doc.setLineWidth(0.3);
@@ -5415,9 +5415,9 @@ Responde directamente a este email para contactar con la persona.
       
       yPos += 15;
       
-      // Employee signature box
+      // Employee signature box (larger for better quality)
       doc.setDrawColor(200, 200, 200);
-      doc.rect(14, yPos, 85, 45);
+      doc.rect(14, yPos, 85, 55);
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       doc.text('Firma del empleado:', 16, yPos + 6);
@@ -5433,17 +5433,17 @@ Responde directamente a este email para contactar con la persona.
             if (format === 'JPG') format = 'JPEG';
           }
           
-          doc.addImage(employeeSignatureBase64, format, 20, yPos + 10, 70, 25);
+          doc.addImage(employeeSignatureBase64, format, 18, yPos + 10, 75, 32);
         } catch (e: any) {
           console.log('Could not add employee signature image:', e.message);
         }
       }
       
       doc.setFont('helvetica', 'bold');
-      doc.text(employee?.fullName || '', 16, yPos + 40);
+      doc.text(employee?.fullName || '', 16, yPos + 50);
       
-      // Client signature box (with space for manual signature)
-      doc.rect(111, yPos, 85, 45);
+      // Client signature box (larger for better quality)
+      doc.rect(111, yPos, 85, 55);
       doc.setFont('helvetica', 'normal');
       doc.text('Firma del cliente:', 113, yPos + 6);
       
@@ -5457,14 +5457,14 @@ Responde directamente a este email para contactar con la persona.
             if (clientFormat === 'JPG') clientFormat = 'JPEG';
           }
           
-          doc.addImage(clientSignatureBase64, clientFormat, 117, yPos + 10, 70, 25);
+          doc.addImage(clientSignatureBase64, clientFormat, 115, yPos + 10, 75, 32);
         } catch (e: any) {
           console.log('Could not add client signature image:', e.message);
         }
       }
       
       doc.setFont('helvetica', 'bold');
-      doc.text(report.signedBy || '____________________', 113, yPos + 40);
+      doc.text(report.signedBy || '____________________', 113, yPos + 50);
       
       // Footer
       doc.setFontSize(8);

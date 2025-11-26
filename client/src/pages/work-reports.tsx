@@ -248,9 +248,11 @@ export default function WorkReportsPage() {
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = '#1f2937';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
   };
 
   const clearCanvas = () => {
@@ -262,19 +264,20 @@ export default function WorkReportsPage() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   };
 
-  const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
+  const getCoordinates = (e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
     if ('touches' in e) {
       return {
-        x: e.touches[0].clientX - rect.left,
-        y: e.touches[0].clientY - rect.top
+        x: (e.touches[0].clientX - rect.left) * scaleX,
+        y: (e.touches[0].clientY - rect.top) * scaleY
       };
     }
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
     };
   };
 
@@ -285,7 +288,7 @@ export default function WorkReportsPage() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     setIsDrawing(true);
-    const { x, y } = getCoordinates(e);
+    const { x, y } = getCoordinates(e, canvas);
     ctx.beginPath();
     ctx.moveTo(x, y);
   };
@@ -297,7 +300,7 @@ export default function WorkReportsPage() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const { x, y } = getCoordinates(e);
+    const { x, y } = getCoordinates(e, canvas);
     ctx.lineTo(x, y);
     ctx.stroke();
   };
@@ -351,9 +354,11 @@ export default function WorkReportsPage() {
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = '#1f2937';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
   };
 
   const clearClientCanvas = () => {
@@ -544,8 +549,8 @@ export default function WorkReportsPage() {
             <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-white">
               <canvas
                 ref={canvasRef}
-                width={350}
-                height={150}
+                width={700}
+                height={300}
                 className="w-full touch-none cursor-crosshair"
                 onMouseDown={startDrawing}
                 onMouseMove={draw}
