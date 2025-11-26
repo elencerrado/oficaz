@@ -514,21 +514,28 @@ export default function AdminWorkReportsPage() {
                     
                     <div className="p-4">
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
-                            <Calendar className="w-3.5 h-3.5" />
-                            <Clock className="w-3.5 h-3.5" />
-                            Fecha y horario
+                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-2">
+                          <div>
+                            <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
+                              <Calendar className="w-3.5 h-3.5" />
+                              Fecha
+                            </div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
+                              {format(parseISO(report.reportDate), 'EEE, d MMM yyyy', { locale: es })}
+                            </p>
                           </div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                            {format(parseISO(report.reportDate), 'EEE, d MMM yyyy', { locale: es })}
-                          </p>
-                          <p className="text-sm text-gray-700 dark:text-gray-300">
-                            {report.startTime} - {report.endTime}
-                            <span className="ml-1 text-xs text-blue-600 dark:text-blue-400 font-medium">
-                              ({formatDuration(report.durationMinutes)})
-                            </span>
-                          </p>
+                          <div>
+                            <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
+                              <Clock className="w-3.5 h-3.5" />
+                              Horario
+                            </div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              {report.startTime} - {report.endTime}
+                              <span className="ml-1 text-xs text-blue-600 dark:text-blue-400 font-medium">
+                                ({formatDuration(report.durationMinutes)})
+                              </span>
+                            </p>
+                          </div>
                         </div>
                         
                         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-2">
