@@ -3,7 +3,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { usePageTitle } from '@/hooks/use-page-title';
 import FeatureRestrictedPage from '@/components/feature-restricted-page';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -800,12 +799,7 @@ export default function Reminders() {
         </div>
 
         {/* Reminders Grid */}
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <LoadingSpinner className="w-8 h-8 text-primary mb-3" />
-            <p className="text-sm text-muted-foreground">Cargando recordatorios...</p>
-          </div>
-        ) : sortedReminders.length === 0 ? (
+        {!isLoading && sortedReminders.length === 0 ? (
           <div className="text-center py-12 bg-card rounded-lg shadow-sm">
             <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-foreground mb-2">No hay recordatorios</h3>
@@ -818,7 +812,7 @@ export default function Reminders() {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 transition-opacity duration-300 ${isLoading ? 'opacity-50' : ''}`}>
             {sortedReminders.map((reminder: Reminder) => (
               <Card
                 key={reminder.id}
