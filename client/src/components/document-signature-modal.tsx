@@ -43,60 +43,35 @@ export function DocumentSignatureModal({
     if (canvas) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // High quality canvas setup - same as work reports
-        const rect = canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        
-        // Scale canvas for HiDPI displays
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        
-        ctx.scale(dpr, dpr);
-        
-        // White background
+        // Match work-reports.tsx exactly - no DPR scaling
         ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, rect.width, rect.height);
-        
-        // High quality drawing style - matching work reports
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.strokeStyle = '#1a1a1a';
-        ctx.lineWidth = 5; // Thicker line for better visibility
+        ctx.lineWidth = 4;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-        
         lastPointRef.current = null;
       }
     }
   }, []);
 
-  const getEventPos = useCallback((event: React.MouseEvent | React.TouchEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-
+  const getEventPos = useCallback((event: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
+    // Exact same logic as work-reports.tsx getCoordinates
     const rect = canvas.getBoundingClientRect();
-    
-    let clientX, clientY;
-
-    if ('touches' in event) {
-      clientX = event.touches[0]?.clientX || 0;
-      clientY = event.touches[0]?.clientY || 0;
-    } else {
-      clientX = event.clientX;
-      clientY = event.clientY;
-    }
-
-    // Calculate the scaling factor between CSS size and canvas internal size
-    // This accounts for any CSS transforms, zoom, or DPR mismatches
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const dpr = window.devicePixelRatio || 1;
-
-    // Return coordinates accounting for both offset and scaling
-    // Divide by DPR because context is already scaled
+    
+    if ('touches' in event) {
+      return {
+        x: (event.touches[0].clientX - rect.left) * scaleX,
+        y: (event.touches[0].clientY - rect.top) * scaleY
+      };
+    }
     return {
-      x: ((clientX - rect.left) * scaleX) / dpr,
-      y: ((clientY - rect.top) * scaleY) / dpr,
+      x: (event.clientX - rect.left) * scaleX,
+      y: (event.clientY - rect.top) * scaleY
     };
   }, []);
 
@@ -107,7 +82,7 @@ export function DocumentSignatureModal({
     if (!canvas || !ctx) return;
 
     setIsDrawing(true);
-    const { x, y } = getEventPos(event);
+    const { x, y } = getEventPos(event, canvas);
     lastPointRef.current = { x, y };
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -121,7 +96,7 @@ export function DocumentSignatureModal({
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx) return;
 
-    const { x, y } = getEventPos(event);
+    const { x, y } = getEventPos(event, canvas);
     
     // Use quadratic curves for smoother lines - same as work reports
     if (lastPointRef.current) {
