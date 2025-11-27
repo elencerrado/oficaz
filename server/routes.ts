@@ -5877,6 +5877,73 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Circular document upload - one file, multiple recipients sharing the same physical file
+  app.post('/api/documents/upload-circular', authenticateToken, requireRole(['admin', 'manager']), upload.single('file'), async (req: AuthRequest, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+
+      const employeeIds = req.body.employeeIds ? JSON.parse(req.body.employeeIds) : [];
+      if (!Array.isArray(employeeIds) || employeeIds.length === 0) {
+        return res.status(400).json({ message: 'Employee IDs required for circular document' });
+      }
+
+      const user = req.user!;
+      const originalName = req.file.originalname; // Keep original name for circulars
+      const requiresSignature = req.body.requiresSignature === 'true';
+
+      // Verify all employees belong to same company
+      for (const employeeId of employeeIds) {
+        const employee = await storage.getUser(employeeId);
+        if (!employee || employee.companyId !== user.companyId) {
+          return res.status(403).json({ message: 'Cannot send documents to employees outside your company' });
+        }
+      }
+
+      console.log(`CIRCULAR UPLOAD: User ${user.id} uploading "${originalName}" to ${employeeIds.length} employees`);
+
+      // Create one document record per employee, all pointing to the SAME physical file
+      const documents = [];
+      for (const employeeId of employeeIds) {
+        const document = await storage.createDocument({
+          userId: employeeId,
+          fileName: req.file.filename, // Same physical file for all
+          originalName: originalName,
+          fileSize: req.file.size,
+          filePath: req.file.filename,
+          mimeType: req.file.mimetype || null,
+          uploadedBy: user.id,
+          requiresSignature: requiresSignature,
+        });
+        documents.push(document);
+
+        // Send push notification
+        try {
+          const { sendNewDocumentNotification } = await import('./pushNotificationScheduler.js');
+          await sendNewDocumentNotification(employeeId, originalName, document.id);
+        } catch (error) {
+          console.error(`Error sending notification to employee ${employeeId}:`, error);
+        }
+      }
+
+      console.log(`CIRCULAR UPLOAD COMPLETE: Created ${documents.length} document records for file "${originalName}"`);
+
+      res.status(201).json({ 
+        message: `Circular enviada a ${documents.length} empleados`,
+        documents: documents,
+        fileInfo: {
+          originalName,
+          fileName: req.file.filename,
+          size: req.file.size
+        }
+      });
+    } catch (error) {
+      console.error("Error uploading circular document:", error);
+      res.status(500).json({ message: "Failed to upload circular document" });
+    }
+  });
+
   // Send document request to employees
   app.post('/api/documents/request', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
@@ -6054,7 +6121,69 @@ Responde directamente a este email para contactar con la persona.
         res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(document.originalName)}"`);
       }
 
-      // Send file with absolute path
+      // Check if document has signature and is a PDF - overlay signature dynamically
+      const ext = path.extname(document.originalName || document.fileName).toLowerCase();
+      if (ext === '.pdf' && document.digitalSignature && document.isAccepted) {
+        try {
+          console.log(`Generating signed PDF for document ${id}...`);
+          
+          // Read the base PDF
+          const pdfBytes = fs.readFileSync(filePath);
+          const pdfDoc = await PDFDocument.load(pdfBytes);
+          
+          // Get the last page to add signature
+          const pages = pdfDoc.getPages();
+          const lastPage = pages[pages.length - 1];
+          const { width, height } = lastPage.getSize();
+          
+          // Extract base64 image data from stored signature
+          const base64Data = document.digitalSignature.replace(/^data:image\/\w+;base64,/, '');
+          const signatureImageBytes = Buffer.from(base64Data, 'base64');
+          
+          // Embed the signature image
+          const signatureImage = await pdfDoc.embedPng(signatureImageBytes);
+          const signatureDims = signatureImage.scale(0.5);
+          
+          // Calculate position - bottom right corner with margin
+          const signatureWidth = Math.min(signatureDims.width, 150);
+          const signatureHeight = (signatureDims.height / signatureDims.width) * signatureWidth;
+          const margin = 50;
+          const xPos = width - signatureWidth - margin;
+          const yPos = margin + 30;
+          
+          // Draw signature box background (white)
+          lastPage.drawRectangle({
+            x: xPos - 10,
+            y: yPos - 10,
+            width: signatureWidth + 20,
+            height: signatureHeight + 40,
+            color: rgb(1, 1, 1),
+            borderColor: rgb(0.8, 0.8, 0.8),
+            borderWidth: 1,
+          });
+          
+          // Draw signature
+          lastPage.drawImage(signatureImage, {
+            x: xPos,
+            y: yPos + 20,
+            width: signatureWidth,
+            height: signatureHeight,
+          });
+          
+          // Generate and send the signed PDF
+          const signedPdfBytes = await pdfDoc.save();
+          res.setHeader('Content-Length', signedPdfBytes.length);
+          res.send(Buffer.from(signedPdfBytes));
+          
+          console.log(`Signed PDF generated and sent for document ${id}`);
+          return;
+        } catch (pdfError) {
+          console.error(`Error generating signed PDF for document ${id}:`, pdfError);
+          // Fall back to original file if signature overlay fails
+        }
+      }
+
+      // Send original file (no signature or non-PDF)
       const absolutePath = path.resolve(filePath);
       res.sendFile(absolutePath);
     } catch (error: any) {
@@ -6279,72 +6408,10 @@ Responde directamente a este email para contactar con la persona.
         return res.status(403).json({ message: 'You can only sign your own documents' });
       }
 
-      // Check if it's a PDF and embed signature directly into the PDF
-      const ext = path.extname(document.originalName || document.fileName).toLowerCase();
-      if (ext === '.pdf') {
-        const filePath = path.join(uploadDir, document.fileName);
-        
-        if (!fs.existsSync(filePath)) {
-          return res.status(404).json({ message: 'PDF file not found on server. Cannot embed signature.' });
-        }
-        
-        try {
-          // Read the original PDF
-          const pdfBytes = fs.readFileSync(filePath);
-          const pdfDoc = await PDFDocument.load(pdfBytes);
-          
-          // Get the last page to add signature
-          const pages = pdfDoc.getPages();
-          const lastPage = pages[pages.length - 1];
-          const { width, height } = lastPage.getSize();
-          
-          // Extract base64 image data from data URL
-          const base64Data = digitalSignature.replace(/^data:image\/\w+;base64,/, '');
-          const signatureImageBytes = Buffer.from(base64Data, 'base64');
-          
-          // Embed the signature image
-          const signatureImage = await pdfDoc.embedPng(signatureImageBytes);
-          const signatureDims = signatureImage.scale(0.5); // Scale to 50%
-          
-          // Calculate position - bottom right corner with margin
-          const signatureWidth = Math.min(signatureDims.width, 150);
-          const signatureHeight = (signatureDims.height / signatureDims.width) * signatureWidth;
-          const margin = 50;
-          const xPos = width - signatureWidth - margin;
-          const yPos = margin + 30; // 30px above bottom margin
-          
-          // Draw signature box background (white)
-          lastPage.drawRectangle({
-            x: xPos - 10,
-            y: yPos - 10,
-            width: signatureWidth + 20,
-            height: signatureHeight + 40,
-            color: rgb(1, 1, 1),
-            borderColor: rgb(0.8, 0.8, 0.8),
-            borderWidth: 1,
-          });
-          
-          // Draw signature
-          lastPage.drawImage(signatureImage, {
-            x: xPos,
-            y: yPos + 20,
-            width: signatureWidth,
-            height: signatureHeight,
-          });
-          
-          // Save the modified PDF
-          const modifiedPdfBytes = await pdfDoc.save();
-          fs.writeFileSync(filePath, Buffer.from(modifiedPdfBytes));
-          
-          console.log(`Document ${id} - Signature embedded into PDF by user ${req.user!.id}`);
-        } catch (pdfError: any) {
-          console.error(`Error embedding signature into PDF ${id}:`, pdfError);
-          return res.status(500).json({ 
-            message: `Failed to embed signature into PDF: ${pdfError.message || 'Unknown error'}` 
-          });
-        }
-      }
-
+      // NOTE: Signature is stored in database only, NOT embedded into PDF file
+      // This allows circular documents (shared file) to have per-employee signatures
+      // The signature is overlaid dynamically when the document is downloaded
+      
       const updatedDocument = await storage.markDocumentAsAcceptedAndSigned(id, digitalSignature);
       console.log(`Document ${id} accepted and signed by user ${req.user!.id}`);
       

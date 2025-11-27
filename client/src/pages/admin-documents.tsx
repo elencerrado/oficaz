@@ -276,7 +276,7 @@ export default function AdminDocuments() {
     employee.email.toLowerCase().includes(employeeSearchTerm.toLowerCase())
   );
 
-  // Upload document mutation  
+  // Upload document mutation (silent version for batch uploads)
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       const response = await fetch('/api/documents/upload-admin', {
@@ -289,25 +289,7 @@ export default function AdminDocuments() {
       if (!response.ok) throw new Error('Error al subir documento');
       return response.json();
     },
-    onSuccess: () => {
-      // Forzar actualización inmediata tras subir
-      queryClient.invalidateQueries({ queryKey: ['/api/documents/all'] });
-      queryClient.refetchQueries({ queryKey: ['/api/documents/all'] });
-      
-      toast({
-        title: 'Documento subido',
-        description: 'El documento se ha subido correctamente',
-      });
-      setIsUploading(false);
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'Error al subir el documento',
-        variant: 'destructive',
-      });
-      setIsUploading(false);
-    },
+    // Note: Toast is shown by handleBatchUpload, not here, to avoid multiple toasts
   });
 
   // Delete document mutation
@@ -498,7 +480,6 @@ export default function AdminDocuments() {
   const handleFileUpload = async (file: File, targetEmployeeId?: number, cleanFileName?: string, requiresSignature?: boolean) => {
     if (!file) return;
     
-    setIsUploading(true);
     const formData = new FormData();
     
     // Don't rename the file here, just send metadata
@@ -518,24 +499,41 @@ export default function AdminDocuments() {
       formData.append('requiresSignature', 'true');
     }
     
-    uploadMutation.mutate(formData);
+    // Use mutateAsync to wait for each upload to complete
+    // This ensures each circular document gets its own physical file
+    await uploadMutation.mutateAsync(formData);
   };
 
   const handleBatchUpload = async () => {
     setIsUploading(true);
     try {
       if (uploadMode === 'circular') {
-        // Circular mode: Upload each file to ALL selected employees
-        // IMPORTANT: For circular documents, keep original filename (don't rename)
-        // Each employee gets their own copy with the same original name
-        let totalUploads = 0;
+        // Circular mode: Upload file ONCE, create records for ALL selected employees
+        // One physical file shared by all recipients, signature overlaid dynamically on download
         for (const analysis of uploadAnalysis) {
-          for (const employeeId of uploadSelectedEmployees) {
-            // Use original filename for circulars - don't modify it
-            await handleFileUpload(analysis.file, employeeId, analysis.file.name, uploadRequiresSignature);
-            totalUploads++;
+          const formData = new FormData();
+          formData.append('file', analysis.file);
+          formData.append('employeeIds', JSON.stringify(uploadSelectedEmployees));
+          if (uploadRequiresSignature) {
+            formData.append('requiresSignature', 'true');
+          }
+          
+          const response = await fetch('/api/documents/upload-circular', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('authData') ? JSON.parse(localStorage.getItem('authData')!).token : ''}`,
+            },
+            body: formData,
+          });
+          
+          if (!response.ok) {
+            throw new Error('Error al enviar circular');
           }
         }
+        
+        // Refresh document list
+        queryClient.invalidateQueries({ queryKey: ['/api/documents/all'] });
+        queryClient.refetchQueries({ queryKey: ['/api/documents/all'] });
         
         toast({
           title: "Circular enviada",
