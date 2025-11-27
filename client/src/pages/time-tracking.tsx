@@ -288,6 +288,9 @@ export default function TimeTracking() {
 
   // Infinite scroll with IntersectionObserver
   useEffect(() => {
+    // Only set up observer when in sessions tab
+    if (activeTab !== 'sessions') return;
+    
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some(entry => entry.isIntersecting) && !isLoading) {
@@ -297,15 +300,21 @@ export default function TimeTracking() {
       { threshold: 0.1, rootMargin: '100px' }
     );
     
-    if (loadMoreDesktopRef.current) {
-      observer.observe(loadMoreDesktopRef.current);
-    }
-    if (loadMoreMobileRef.current) {
-      observer.observe(loadMoreMobileRef.current);
-    }
+    // Small delay to ensure refs are mounted after tab switch
+    const timeoutId = setTimeout(() => {
+      if (loadMoreDesktopRef.current) {
+        observer.observe(loadMoreDesktopRef.current);
+      }
+      if (loadMoreMobileRef.current) {
+        observer.observe(loadMoreMobileRef.current);
+      }
+    }, 50);
     
-    return () => observer.disconnect();
-  }, [isLoading]);
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, [isLoading, activeTab]);
 
   // Helper function to check if a specific session is incomplete
   const isSessionIncomplete = useCallback((session: any) => {
