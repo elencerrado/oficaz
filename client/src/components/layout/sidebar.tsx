@@ -87,7 +87,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     },
     ...((subscription?.plan === 'pro' || subscription?.plan === 'master') && 
        (user?.role === 'admin' || user?.role === 'manager' || 
-        user?.workReportMode === 'manual' || user?.workReportMode === 'both') ? [
+        (user?.workReportMode && user?.workReportMode !== 'disabled')) ? [
       { 
         name: 'Partes de Trabajo', 
         href: `/${companyAlias}/partes-trabajo`, 
