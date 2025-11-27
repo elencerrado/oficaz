@@ -398,6 +398,8 @@ export default function AdminWorkReportsPage() {
           icon={ClipboardList}
           onClick={handleThisMonthFilter}
           isActive={activeStatsFilter === 'month'}
+          isLoading={reportsLoading}
+          index={0}
         />
         
         <StatsCard
@@ -408,6 +410,8 @@ export default function AdminWorkReportsPage() {
           icon={Clock}
           onClick={handleTodayFilter}
           isActive={activeStatsFilter === 'today'}
+          isLoading={reportsLoading}
+          index={1}
         />
         
         <StatsCard
@@ -418,6 +422,8 @@ export default function AdminWorkReportsPage() {
           icon={Users}
           onClick={handleThisWeekFilter}
           isActive={activeStatsFilter === 'week'}
+          isLoading={reportsLoading}
+          index={2}
         />
         
         <StatsCard
@@ -426,6 +432,8 @@ export default function AdminWorkReportsPage() {
           value={stats.completedCount}
           color="green"
           icon={CheckCircle}
+          isLoading={reportsLoading}
+          index={3}
         />
       </div>
 
