@@ -905,22 +905,22 @@ export default function Reminders() {
                   {/* Footer section - always at bottom */}
                   <div className="mt-auto">
                     {/* Assigned users avatars */}
-                    <div className="flex items-center justify-between">
-                      <AssignedUsersAvatars 
-                        assignedUserIds={reminder.assignedUserIds} 
-                        employees={employees} 
-                        maxDisplay={3}
-                        currentUserId={user?.id}
-                        completedByUserIds={reminder.completedByUserIds}
-                      />
-                      {isCompletedByAssignedOnly(reminder) && (
+                    <AssignedUsersAvatars 
+                      assignedUserIds={reminder.assignedUserIds} 
+                      employees={employees} 
+                      maxDisplay={3}
+                      currentUserId={user?.id}
+                      completedByUserIds={reminder.completedByUserIds}
+                    />
+
+                    <div className="flex items-center justify-between mt-4">
+                      {isCompletedByAssignedOnly(reminder) ? (
                         <span className="text-xs text-orange-600 font-medium">
                           Completado por todos
                         </span>
+                      ) : (
+                        <span></span>
                       )}
-                    </div>
-
-                    <div className="flex items-center justify-end mt-4">
                       <Button
                         variant="ghost"
                         size="sm"
