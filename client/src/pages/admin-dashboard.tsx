@@ -68,6 +68,9 @@ export default function AdminDashboard() {
   
   // ⚠️ PROTECTED - DO NOT MODIFY - Message system states identical to employee system
   const [temporaryMessage, setTemporaryMessage] = useState<string | null>(null);
+  
+  // Staggered card animation state
+  const [visibleCards, setVisibleCards] = useState<number[]>([]);
 
   // Hook para destacar el día de hoy en el calendario con estilos inline
   useEffect(() => {
@@ -680,8 +683,30 @@ export default function AdminDashboard() {
   // Show skeleton loading on initial load
   const isInitialLoading = isDashboardLoading && !dashboardData;
 
+  // Staggered card animation effect
+  useEffect(() => {
+    if (!isInitialLoading && dashboardData) {
+      // Reset visible cards when data loads
+      setVisibleCards([]);
+      // Stagger the appearance of each card (7 cards total)
+      const totalCards = 7;
+      const delays = Array.from({ length: totalCards }, (_, i) => i);
+      delays.forEach((cardIndex) => {
+        setTimeout(() => {
+          setVisibleCards(prev => [...prev, cardIndex]);
+        }, cardIndex * 80); // 80ms delay between each card
+      });
+    }
+  }, [isInitialLoading, dashboardData]);
+
+  // Helper function to get card animation class
+  const getCardAnimationClass = (cardIndex: number) => {
+    const isVisible = visibleCards.includes(cardIndex);
+    return `transition-all duration-300 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`;
+  };
+
   return (
-    <div className={`transition-opacity duration-500 ${isInitialLoading ? 'opacity-0' : 'opacity-100'}`}>
+    <div>
 
       {/* Skeleton Loading State */}
       {isInitialLoading && (
@@ -740,7 +765,7 @@ export default function AdminDashboard() {
       )}
 
       {/* Trial Status Management */}
-      <div className="mb-6">
+      <div className={`mb-6 ${getCardAnimationClass(0)}`}>
         <TrialManager />
       </div>
 
@@ -793,7 +818,7 @@ export default function AdminDashboard() {
         <div className="space-y-6">
           
           {/* Quick Clock In/Out */}
-          <Card className={`transition-opacity duration-300 ${isDashboardLoading ? 'opacity-60' : 'opacity-100'}`}>
+          <Card className={getCardAnimationClass(1)}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5" />
@@ -965,7 +990,7 @@ export default function AdminDashboard() {
 
           {/* Quick Summary of Pending Items */}
           {totalPending > 0 && (
-            <Card className={`transition-opacity duration-300 ${isDashboardLoading ? 'opacity-60' : 'opacity-100'}`}>
+            <Card className={getCardAnimationClass(2)}>
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5" />
@@ -1106,7 +1131,7 @@ export default function AdminDashboard() {
 
           {/* Recent Messages */}
           {hasAccess('messages') && (
-            <Card className={`transition-opacity duration-300 ${isDashboardLoading ? 'opacity-60' : 'opacity-100'}`}>
+            <Card className={getCardAnimationClass(3)}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
@@ -1154,7 +1179,7 @@ export default function AdminDashboard() {
 
           {/* Active Reminders */}
           {hasAccess('reminders') && (
-            <Card className={`transition-opacity duration-300 ${isDashboardLoading ? 'opacity-60' : 'opacity-100'}`}>
+            <Card className={getCardAnimationClass(4)}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Bell className="h-5 w-5" />
@@ -1207,7 +1232,7 @@ export default function AdminDashboard() {
           )}
 
           {/* Recent Clock-ins */}
-          <Card className={`cursor-pointer hover:shadow-md transition-all duration-300 ${isDashboardLoading ? 'opacity-60' : 'opacity-100'}`} onClick={() => setLocation('/test/fichajes')}>
+          <Card className={`cursor-pointer hover:shadow-md ${getCardAnimationClass(5)}`} onClick={() => setLocation('/test/fichajes')}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
@@ -1246,7 +1271,7 @@ export default function AdminDashboard() {
 
         {/* Right Column - Calendar with Events */}
         <div>
-          <Card className={`h-fit transition-opacity duration-300 ${isDashboardLoading ? 'opacity-60' : 'opacity-100'}`}>
+          <Card className={`h-fit ${getCardAnimationClass(6)}`}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CalendarDays className="h-5 w-5" />
