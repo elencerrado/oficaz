@@ -167,13 +167,13 @@ export default function AdminDocuments() {
   const [showRequestDialog, setShowRequestDialog] = useState(false);
 
   // Fetch employees (optimized - employees don't change often)
-  const { data: employees = [] } = useQuery<Employee[]>({
+  const { data: employees = [], isLoading: loadingEmployees } = useQuery<Employee[]>({
     queryKey: ['/api/employees'],
     staleTime: 5 * 60 * 1000, // ⚡ Cache for 5 minutes
   });
 
   // Fetch document notifications (sent requests) - optimized polling
-  const { data: sentRequests = [] } = useQuery<any[]>({
+  const { data: sentRequests = [], isLoading: loadingRequests } = useQuery<any[]>({
     queryKey: ['/api/document-notifications'],
     refetchInterval: 60000, // Reduced from 3s to 60s
     staleTime: 45000,
@@ -182,7 +182,7 @@ export default function AdminDocuments() {
   });
 
   // Fetch all documents with optimized refresh
-  const { data: allDocuments = [] } = useQuery<any[]>({
+  const { data: allDocuments = [], isLoading: loadingDocuments } = useQuery<any[]>({
     queryKey: ['/api/documents/all'],
     queryFn: async () => {
       return await apiRequest('GET', '/api/documents/all');
@@ -820,19 +820,21 @@ export default function AdminDocuments() {
           <StatsCard
             title="Total Documentos"
             subtitle="En sistema"
-            value={(allDocuments || []).length}
+            value={loadingDocuments ? '-' : (allDocuments || []).length}
             color="blue"
             icon={FileText}
             onClick={() => {
               setActiveTab('explorer');
               setFilterPendingSignature(false);
             }}
+            isLoading={loadingDocuments}
+            index={0}
           />
 
           <StatsCard
             title="Pendientes Firma"
             subtitle="Nóminas sin firmar"
-            value={(allDocuments || []).filter(doc => {
+            value={loadingDocuments ? '-' : (allDocuments || []).filter(doc => {
               const fileName = doc.originalName || doc.fileName || '';
               const analysis = analyzeFileName(fileName, employees);
               return analysis.documentType === 'Nómina' && !doc.isAccepted;
@@ -845,27 +847,33 @@ export default function AdminDocuments() {
               setSearchTerm('');
               setSelectedEmployee('all');
             }}
+            isLoading={loadingDocuments}
+            index={1}
           />
 
           <StatsCard
             title="Solicitudes"
             subtitle="Pendientes"
-            value={(sentRequests || []).filter(req => !req.isCompleted).length}
+            value={loadingRequests ? '-' : (sentRequests || []).filter(req => !req.isCompleted).length}
             color="yellow"
             icon={Send}
             onClick={() => setActiveTab('requests')}
+            isLoading={loadingRequests}
+            index={2}
           />
 
           <StatsCard
             title="Empleados"
             subtitle="Total activos"
-            value={(employees || []).length}
+            value={loadingEmployees ? '-' : (employees || []).length}
             color="purple"
             icon={Users}
             onClick={() => {
               setActiveTab('explorer');
               setFilterPendingSignature(false);
             }}
+            isLoading={loadingEmployees}
+            index={3}
           />
         </div>
 
