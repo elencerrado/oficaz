@@ -608,11 +608,6 @@ export default function Messages() {
     });
   };
 
-  // Loading state
-  if (messagesLoading) {
-    return <PageLoading />;
-  }
-
   // Admin/Manager view
   if (user?.role === 'admin' || user?.role === 'manager') {
     return (
@@ -633,8 +628,8 @@ export default function Messages() {
                     <MessageCircle className="w-6 h-6 text-muted-foreground" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground truncate">
-                      {(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length} mensaje{(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length !== 1 ? 's' : ''} sin leer
+                    <h3 className={`font-semibold text-foreground truncate transition-opacity duration-300 ${messagesLoading ? 'opacity-50' : ''}`}>
+                      {messagesLoading ? '0' : (messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length} mensaje{(messagesLoading ? false : (messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length !== 1) ? 's' : ''} sin leer
                     </h3>
                     <div className="text-sm text-muted-foreground truncate">
                       Conversaciones
@@ -654,7 +649,7 @@ export default function Messages() {
                 </div>
               </div>
               
-              <div className="p-4 space-y-4 overflow-y-auto flex-1">
+              <div className={`p-4 space-y-4 overflow-y-auto flex-1 transition-opacity duration-300 ${messagesLoading ? 'opacity-50' : ''}`}>
                 {/* Search */}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10 pointer-events-none" />
@@ -732,7 +727,7 @@ export default function Messages() {
                   {/* Messages - Scrollable middle section */}
                   <div 
                     ref={desktopMessagesContainerRef} 
-                    className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900/30"
+                    className={`flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900/30 transition-opacity duration-300 ${messagesLoading ? 'opacity-50' : ''}`}
                   >
                     <div className="space-y-6">
                       {messagesGroupedByDate.length > 0 ? (
@@ -879,7 +874,7 @@ export default function Messages() {
                   />
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto">
+              <div className={`flex-1 overflow-y-auto transition-opacity duration-300 ${messagesLoading ? 'opacity-50' : ''}`}>
                 <div className="space-y-2 py-4">
                   {filteredEmployees.map((employee) => (
                     <div
@@ -965,7 +960,7 @@ export default function Messages() {
               {/* Messages - Scrollable area with bounce prevention */}
               <div 
                 ref={mobileMessagesContainerRef}
-                className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
+                className={`flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col transition-opacity duration-300 ${messagesLoading ? 'opacity-50' : ''}`}
                 style={{ 
                   paddingBottom: '16px',
                   paddingTop: '8px',
