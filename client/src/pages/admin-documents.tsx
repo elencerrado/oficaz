@@ -165,6 +165,9 @@ export default function AdminDocuments() {
 
   // Request dialog state
   const [showRequestDialog, setShowRequestDialog] = useState(false);
+  const [sendMode, setSendMode] = useState<'individual' | 'circular'>('individual');
+  const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
+  const [requiresSignature, setRequiresSignature] = useState(false);
 
   // Fetch employees (optimized - employees don't change often)
   const { data: employees = [], isLoading: loadingEmployees } = useQuery<Employee[]>({
@@ -215,6 +218,8 @@ export default function AdminDocuments() {
       documentType: string;
       message: string;
       dueDate?: string;
+      requiresSignature?: boolean;
+      isCircular?: boolean;
     }) => {
       return await apiRequest('POST', '/api/documents/request', data);
     },
@@ -225,12 +230,17 @@ export default function AdminDocuments() {
       queryClient.refetchQueries({ queryKey: ['/api/documents/all'] });
       
       toast({
-        title: 'Solicitud enviada',
-        description: 'Se ha enviado la solicitud de documento a los empleados seleccionados',
+        title: sendMode === 'circular' ? 'Circular enviada' : 'Solicitud enviada',
+        description: sendMode === 'circular' 
+          ? `Se ha enviado la circular a ${selectedEmployees.length} empleados`
+          : 'Se ha enviado la solicitud de documento a los empleados seleccionados',
       });
       setSelectedEmployees([]);
       setDocumentType('');
       setMessage('');
+      setRequiresSignature(false);
+      setSendMode('individual');
+      setEmployeeSearchTerm('');
       setShowRequestDialog(false);
     },
     onError: (error: any) => {
@@ -241,6 +251,24 @@ export default function AdminDocuments() {
       });
     },
   });
+
+  // Helper: Handle mode change
+  const handleModeChange = (mode: 'individual' | 'circular') => {
+    setSendMode(mode);
+    if (mode === 'circular') {
+      // Select all employees in circular mode
+      setSelectedEmployees(employees.map((e: Employee) => e.id));
+    } else {
+      // Clear selection in individual mode
+      setSelectedEmployees([]);
+    }
+  };
+
+  // Filter employees by search term
+  const filteredEmployeesForDialog = employees.filter((employee: Employee) =>
+    employee.fullName.toLowerCase().includes(employeeSearchTerm.toLowerCase()) ||
+    employee.email.toLowerCase().includes(employeeSearchTerm.toLowerCase())
+  );
 
   // Upload document mutation  
   const uploadMutation = useMutation({
@@ -616,7 +644,11 @@ export default function AdminDocuments() {
     sendDocumentMutation.mutate({
       employeeIds: selectedEmployees,
       documentType: documentTypeName,
-      message: message || `Por favor, sube tu ${documentTypeName.toLowerCase()}`,
+      message: message || (sendMode === 'circular' 
+        ? `Circular: ${documentTypeName}` 
+        : `Por favor, sube tu ${documentTypeName.toLowerCase()}`),
+      requiresSignature,
+      isCircular: sendMode === 'circular',
     });
   };
 
@@ -1768,17 +1800,58 @@ export default function AdminDocuments() {
           </DialogContent>
         </Dialog>
 
-        {/* Send Request Dialog */}
-        <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        {/* Send Request Dialog - Enhanced with Individual/Circular modes */}
+        <Dialog open={showRequestDialog} onOpenChange={(open) => {
+          if (!open) {
+            setEmployeeSearchTerm('');
+            setSendMode('individual');
+            setRequiresSignature(false);
+          }
+          setShowRequestDialog(open);
+        }}>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center">
                 <Send className="h-5 w-5 mr-2" />
-                Enviar Nueva Solicitud de Documento
+                {sendMode === 'circular' ? 'Enviar Circular / Documento Masivo' : 'Enviar Documento Individual'}
               </DialogTitle>
             </DialogHeader>
             
             <div className="space-y-4">
+              {/* Mode Toggle: Individual vs Circular */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Tipo de Envío
+                </label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={sendMode === 'individual' ? 'default' : 'outline'}
+                    className="flex-1"
+                    onClick={() => handleModeChange('individual')}
+                    data-testid="button-mode-individual"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Individual
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={sendMode === 'circular' ? 'default' : 'outline'}
+                    className="flex-1"
+                    onClick={() => handleModeChange('circular')}
+                    data-testid="button-mode-circular"
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Circular (Todos)
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {sendMode === 'circular' 
+                    ? 'Envía un documento a todos los empleados. Puedes desmarcar los que no lo necesiten.'
+                    : 'Envía un documento a empleados específicos seleccionándolos manualmente.'}
+                </p>
+              </div>
+
               {/* Document Type Selection */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
@@ -1804,50 +1877,127 @@ export default function AdminDocuments() {
               {/* Message */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Mensaje (opcional)
+                  {sendMode === 'circular' ? 'Descripción de la Circular' : 'Mensaje (opcional)'}
                 </label>
                 <Input
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Mensaje personalizado para los empleados"
+                  placeholder={sendMode === 'circular' 
+                    ? "Ej: Nuevas condiciones laborales, Circular informativa..."
+                    : "Mensaje personalizado para los empleados"}
                   data-testid="input-request-message"
                 />
               </div>
 
-              {/* Employee Selection */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Empleados ({selectedEmployees.length} seleccionados)
-                </label>
-                <div className="max-h-64 overflow-y-auto border rounded-lg p-2 space-y-1 bg-card">
-                  {employees.map((employee: Employee) => (
-                    <div
-                      key={employee.id}
-                      onClick={() => toggleEmployee(employee.id)}
-                      className={`flex items-center p-2 rounded cursor-pointer transition-colors ${
-                        selectedEmployees.includes(employee.id)
-                          ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700'
-                          : 'hover:bg-muted'
-                      }`}
-                      data-testid={`employee-item-${employee.id}`}
-                    >
-                      <div className={`w-4 h-4 border rounded mr-3 flex items-center justify-center ${
-                        selectedEmployees.includes(employee.id)
-                          ? 'bg-blue-600 border-blue-600'
-                          : 'border-gray-300 dark:border-gray-600'
-                      }`}>
-                        {selectedEmployees.includes(employee.id) && (
-                          <div className="w-2 h-2 bg-white rounded-sm" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium text-foreground">{employee.fullName}</div>
-                        <div className="text-sm text-muted-foreground">{employee.email}</div>
-                      </div>
-                    </div>
-                  ))}
+              {/* Requires Signature Checkbox */}
+              <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg border">
+                <div
+                  onClick={() => setRequiresSignature(!requiresSignature)}
+                  className={`w-5 h-5 border-2 rounded flex items-center justify-center cursor-pointer transition-colors ${
+                    requiresSignature
+                      ? 'bg-blue-600 border-blue-600'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'
+                  }`}
+                  data-testid="checkbox-requires-signature"
+                >
+                  {requiresSignature && (
+                    <Check className="h-3 w-3 text-white" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="font-medium text-foreground flex items-center">
+                    <FileSignature className="h-4 w-4 mr-2 text-blue-600" />
+                    Requiere Firma Digital
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Los empleados deberán firmar digitalmente el documento para confirmarlo
+                  </p>
                 </div>
               </div>
+
+              {/* Employee Selection with Search */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-foreground">
+                    Empleados ({selectedEmployees.length} de {employees.length} seleccionados)
+                  </label>
+                  {sendMode === 'circular' && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedEmployees(employees.map((e: Employee) => e.id))}
+                      className="text-xs h-7"
+                    >
+                      Seleccionar todos
+                    </Button>
+                  )}
+                </div>
+                
+                {/* Search Input */}
+                <div className="relative mb-2">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={employeeSearchTerm}
+                    onChange={(e) => setEmployeeSearchTerm(e.target.value)}
+                    placeholder="Buscar empleado por nombre o email..."
+                    className="pl-9"
+                    data-testid="input-employee-search"
+                  />
+                </div>
+                
+                <div className="max-h-48 overflow-y-auto border rounded-lg p-2 space-y-1 bg-card">
+                  {filteredEmployeesForDialog.length === 0 ? (
+                    <div className="text-center py-4 text-muted-foreground text-sm">
+                      No se encontraron empleados
+                    </div>
+                  ) : (
+                    filteredEmployeesForDialog.map((employee: Employee) => (
+                      <div
+                        key={employee.id}
+                        onClick={() => toggleEmployee(employee.id)}
+                        className={`flex items-center p-2 rounded cursor-pointer transition-colors ${
+                          selectedEmployees.includes(employee.id)
+                            ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700'
+                            : 'hover:bg-muted border border-transparent'
+                        }`}
+                        data-testid={`employee-item-${employee.id}`}
+                      >
+                        <div className={`w-4 h-4 border rounded mr-3 flex items-center justify-center transition-colors ${
+                          selectedEmployees.includes(employee.id)
+                            ? 'bg-blue-600 border-blue-600'
+                            : 'border-gray-300 dark:border-gray-600'
+                        }`}>
+                          {selectedEmployees.includes(employee.id) && (
+                            <Check className="h-3 w-3 text-white" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-foreground">{employee.fullName}</div>
+                          <div className="text-sm text-muted-foreground">{employee.email}</div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Summary before sending */}
+              {selectedEmployees.length > 0 && documentType && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="text-sm text-blue-800 dark:text-blue-200">
+                    <strong>Resumen:</strong> Se enviará {sendMode === 'circular' ? 'la circular' : 'la solicitud'} de{' '}
+                    <span className="font-medium">{documentTypes.find(t => t.id === documentType)?.name}</span>
+                    {' '}a <span className="font-medium">{selectedEmployees.length} empleado{selectedEmployees.length !== 1 ? 's' : ''}</span>
+                    {requiresSignature && (
+                      <span className="ml-1">
+                        <FileSignature className="h-3 w-3 inline mr-1" />
+                        (requiere firma)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end space-x-3 pt-4 border-t">
                 <Button 
@@ -1863,7 +2013,11 @@ export default function AdminDocuments() {
                   disabled={sendDocumentMutation.isPending || selectedEmployees.length === 0 || !documentType}
                   data-testid="button-send-request"
                 >
-                  {sendDocumentMutation.isPending ? 'Enviando...' : 'Enviar Solicitud'}
+                  {sendDocumentMutation.isPending 
+                    ? 'Enviando...' 
+                    : sendMode === 'circular'
+                      ? `Enviar Circular (${selectedEmployees.length})`
+                      : 'Enviar Solicitud'}
                 </Button>
               </div>
             </div>
