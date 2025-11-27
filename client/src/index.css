@@ -1619,30 +1619,24 @@ body button[role="switch"] > span {
 
 /* Schedule loading wave animation - efecto ola */
 @keyframes schedule-wave {
-  0%, 35%, 65%, 100% {
-    opacity: 0.15;
-  }
-  45% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 1;
-  }
-  55% {
-    opacity: 0.5;
-  }
+  0% { opacity: 0.08; }
+  8% { opacity: 0.4; }
+  10% { opacity: 1; }
+  12% { opacity: 0.4; }
+  20%, 100% { opacity: 0.08; }
 }
 
 .schedule-cell-wave {
-  animation: schedule-wave 2.5s ease-in-out infinite;
+  opacity: 0.08;
+  animation: schedule-wave 3s ease-in-out infinite;
 }
 
 .schedule-cell-wave-0 { animation-delay: 0ms; }
-.schedule-cell-wave-1 { animation-delay: 250ms; }
-.schedule-cell-wave-2 { animation-delay: 500ms; }
-.schedule-cell-wave-3 { animation-delay: 750ms; }
-.schedule-cell-wave-4 { animation-delay: 1000ms; }
-.schedule-cell-wave-5 { animation-delay: 1250ms; }
-.schedule-cell-wave-6 { animation-delay: 1500ms; }
+.schedule-cell-wave-1 { animation-delay: 300ms; }
+.schedule-cell-wave-2 { animation-delay: 600ms; }
+.schedule-cell-wave-3 { animation-delay: 900ms; }
+.schedule-cell-wave-4 { animation-delay: 1200ms; }
+.schedule-cell-wave-5 { animation-delay: 1500ms; }
+.schedule-cell-wave-6 { animation-delay: 1800ms; }
 
 
