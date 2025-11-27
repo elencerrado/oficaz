@@ -168,6 +168,12 @@ export default function AdminDocuments() {
   const [sendMode, setSendMode] = useState<'individual' | 'circular'>('individual');
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
   const [requiresSignature, setRequiresSignature] = useState(false);
+  
+  // Upload Preview Dialog state - Individual/Circular mode
+  const [uploadMode, setUploadMode] = useState<'individual' | 'circular'>('individual');
+  const [uploadRequiresSignature, setUploadRequiresSignature] = useState(false);
+  const [uploadSelectedEmployees, setUploadSelectedEmployees] = useState<number[]>([]);
+  const [uploadEmployeeSearch, setUploadEmployeeSearch] = useState('');
 
   // Fetch employees (optimized - employees don't change often)
   const { data: employees = [], isLoading: loadingEmployees } = useQuery<Employee[]>({
@@ -513,28 +519,56 @@ export default function AdminDocuments() {
   const handleBatchUpload = async () => {
     setIsUploading(true);
     try {
-      for (const analysis of uploadAnalysis) {
-        if (analysis.employee) {
-          const cleanFileName = generateCleanFileName(
-            analysis.file.name, 
-            analysis.employee, 
-            analysis.documentType
-          );
-          await handleFileUpload(analysis.file, analysis.employee.id, cleanFileName);
+      if (uploadMode === 'circular') {
+        // Circular mode: Upload each file to ALL selected employees
+        let totalUploads = 0;
+        for (const analysis of uploadAnalysis) {
+          for (const employeeId of uploadSelectedEmployees) {
+            const employee = employees.find((e: Employee) => e.id === employeeId);
+            if (employee) {
+              const cleanFileName = generateCleanFileName(
+                analysis.file.name, 
+                employee, 
+                analysis.documentType
+              );
+              await handleFileUpload(analysis.file, employeeId, cleanFileName);
+              totalUploads++;
+            }
+          }
         }
+        
+        toast({
+          title: "Circular enviada",
+          description: `${uploadAnalysis.length} documento(s) enviado(s) a ${uploadSelectedEmployees.length} empleado(s)${uploadRequiresSignature ? ' (requiere firma)' : ''}`,
+        });
+      } else {
+        // Individual mode: Upload each file to its assigned employee
+        for (const analysis of uploadAnalysis) {
+          if (analysis.employee) {
+            const cleanFileName = generateCleanFileName(
+              analysis.file.name, 
+              analysis.employee, 
+              analysis.documentType
+            );
+            await handleFileUpload(analysis.file, analysis.employee.id, cleanFileName);
+          }
+        }
+        
+        toast({
+          title: "Documentos procesados",
+          description: `${uploadAnalysis.length} documento(s) subido(s) correctamente${uploadRequiresSignature ? ' (requiere firma)' : ''}`,
+        });
       }
       
       // Forzar actualización inmediata tras batch upload
       queryClient.invalidateQueries({ queryKey: ['/api/documents/all'] });
       queryClient.refetchQueries({ queryKey: ['/api/documents/all'] });
       
-      toast({
-        title: "Documentos procesados",
-        description: `${uploadAnalysis.length} documento(s) subido(s) correctamente con nombres corregidos`,
-      });
-      
       setShowUploadPreview(false);
       setUploadAnalysis([]);
+      setUploadMode('individual');
+      setUploadSelectedEmployees([]);
+      setUploadRequiresSignature(false);
     } catch (error) {
       toast({
         title: "Error en el procesamiento",
@@ -599,6 +633,19 @@ export default function AdminDocuments() {
       };
     });
     
+    // Smart detection: if NO employee was detected in any file, auto-set to Circular mode
+    const hasNoEmployee = analysisResults.some(a => !a.employee);
+    if (hasNoEmployee) {
+      setUploadMode('circular');
+      // Auto-select all employees for circular mode
+      setUploadSelectedEmployees(employees.map((e: Employee) => e.id));
+    } else {
+      setUploadMode('individual');
+      setUploadSelectedEmployees([]);
+    }
+    setUploadRequiresSignature(false);
+    setUploadEmployeeSearch('');
+    
     setUploadAnalysis(analysisResults);
     setShowUploadPreview(true);
   };
@@ -620,6 +667,22 @@ export default function AdminDocuments() {
         : [...prev, employeeId]
     );
   };
+  
+  // Toggle employee selection for upload circular mode
+  const toggleUploadEmployee = (employeeId: number) => {
+    setUploadSelectedEmployees(prev =>
+      prev.includes(employeeId)
+        ? prev.filter(id => id !== employeeId)
+        : [...prev, employeeId]
+    );
+  };
+  
+  // Filtered employees for upload dialog search
+  const filteredUploadEmployees = employees.filter((employee: Employee) => {
+    const search = uploadEmployeeSearch.toLowerCase();
+    return employee.fullName.toLowerCase().includes(search) ||
+           (employee.email?.toLowerCase().includes(search) || false);
+  });
 
   const handleSendRequest = () => {
     if (selectedEmployees.length === 0) {
@@ -976,6 +1039,19 @@ export default function AdminDocuments() {
                           suggestedName: analysis.employee ? generateCleanFileName(file.name, analysis.employee, documentTypeId) : undefined
                         };
                       });
+                      
+                      // Smart detection: if NO employee was detected, auto-set to Circular mode
+                      const hasNoEmployee = analysisResults.some(a => !a.employee);
+                      if (hasNoEmployee) {
+                        setUploadMode('circular');
+                        setUploadSelectedEmployees(employees.map((emp: Employee) => emp.id));
+                      } else {
+                        setUploadMode('individual');
+                        setUploadSelectedEmployees([]);
+                      }
+                      setUploadRequiresSignature(false);
+                      setUploadEmployeeSearch('');
+                      
                       setUploadAnalysis(analysisResults);
                       setShowUploadPreview(true);
                     }
@@ -1573,126 +1649,287 @@ export default function AdminDocuments() {
           </Card>
         )}
 
-        {/* Smart Upload Preview Dialog */}
-        <Dialog open={showUploadPreview} onOpenChange={setShowUploadPreview}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        {/* Smart Upload Preview Dialog - Enhanced with Individual/Circular modes */}
+        <Dialog open={showUploadPreview} onOpenChange={(open) => {
+          if (!open) {
+            setUploadEmployeeSearch('');
+            setUploadRequiresSignature(false);
+          }
+          setShowUploadPreview(open);
+        }}>
+          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center">
                 <Upload className="h-5 w-5 mr-2" />
-                Análisis Inteligente de Archivos ({uploadAnalysis.length})
+                {uploadMode === 'circular' 
+                  ? `Subir Circular / Documento para Todos (${uploadAnalysis.length} archivo${uploadAnalysis.length !== 1 ? 's' : ''})` 
+                  : `Subir Documento Individual (${uploadAnalysis.length} archivo${uploadAnalysis.length !== 1 ? 's' : ''})`}
               </DialogTitle>
             </DialogHeader>
             
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                He analizado los nombres de archivo para detectar automáticamente el empleado y tipo de documento. 
-                Puedes revisar y ajustar antes de subir.
-              </p>
-              
-              <div className="space-y-3">
-                {uploadAnalysis.map((analysis, index) => (
-                  <div key={index} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-foreground mb-1">
-                          {analysis.file.name}
-                        </h3>
-                        {analysis.suggestedName && (
-                          <div className="mb-2">
-                            <label className="block text-xs font-medium text-muted-foreground mb-1">
-                              📝 Nombre sugerido (editable):
-                            </label>
-                            <input
-                              type="text"
-                              value={analysis.suggestedName}
-                              onChange={(e) => updateSuggestedName(index, e.target.value)}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
-                              placeholder="Edita el nombre del archivo..."
-                            />
-                          </div>
-                        )}
-                        <p className="text-sm text-muted-foreground">
-                          {formatFileSize(analysis.file.size)}
-                        </p>
+              {/* Mode Toggle: Individual vs Circular */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Tipo de Subida
+                </label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={uploadMode === 'individual' ? 'default' : 'outline'}
+                    className="flex-1"
+                    onClick={() => {
+                      setUploadMode('individual');
+                      setUploadSelectedEmployees([]);
+                    }}
+                    data-testid="upload-mode-individual"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Individual
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={uploadMode === 'circular' ? 'default' : 'outline'}
+                    className="flex-1"
+                    onClick={() => {
+                      setUploadMode('circular');
+                      setUploadSelectedEmployees(employees.map((e: Employee) => e.id));
+                    }}
+                    data-testid="upload-mode-circular"
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Circular (Para Todos)
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {uploadMode === 'circular' 
+                    ? '📢 Se enviará el mismo documento a todos los empleados seleccionados. Puedes desmarcar los que no lo necesiten.'
+                    : '👤 Cada archivo se asigna a un empleado específico basándose en el nombre del archivo.'}
+                </p>
+                {uploadMode === 'circular' && uploadAnalysis.some(a => !a.employee) && (
+                  <div className="flex items-center mt-2 p-2 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded text-sm text-blue-800 dark:text-blue-200">
+                    <AlertTriangle className="h-4 w-4 mr-2 flex-shrink-0" />
+                    <span>Se detectó automáticamente modo Circular porque el archivo no contiene nombre de empleado.</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Files Preview Section */}
+              <div className="border rounded-lg p-3 bg-muted/30">
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Archivos a subir ({uploadAnalysis.length})
+                </label>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {uploadAnalysis.map((analysis, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-card rounded border">
+                      <div className="flex items-center flex-1 min-w-0">
+                        <FileText className="h-4 w-4 mr-2 flex-shrink-0 text-muted-foreground" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{analysis.file.name}</p>
+                          <p className="text-xs text-muted-foreground">{formatFileSize(analysis.file.size)}</p>
+                        </div>
                       </div>
-                      <Badge variant={
-                        analysis.confidence === 'high' ? 'default' : 
-                        analysis.confidence === 'medium' ? 'secondary' : 'destructive'
-                      }>
-                        {analysis.confidence === 'high' ? 'Alta confianza' :
-                         analysis.confidence === 'medium' ? 'Media confianza' : 'Revisar manualmente'}
+                      <Badge variant={analysis.documentType !== 'otros' ? 'default' : 'secondary'} className="ml-2 flex-shrink-0">
+                        {documentTypes.find(t => t.id === analysis.documentType)?.name || 'Otros'}
                       </Badge>
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Employee Selection */}
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">
-                          Empleado Destinatario
-                        </label>
-                        <Select 
-                          value={analysis.employee?.id?.toString() || ''} 
-                          onValueChange={(value) => updateAnalysisEmployee(index, parseInt(value))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar empleado" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {employees.map((employee: Employee) => (
-                              <SelectItem key={employee.id} value={employee.id.toString()}>
-                                <div className="flex items-center">
-                                  <User className="h-4 w-4 mr-2" />
-                                  {employee.fullName}
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {analysis.employee && (
-                          <div className="flex items-center mt-1 text-xs text-green-600">
-                            <Check className="h-3 w-3 mr-1" />
-                            Detectado automáticamente
-                          </div>
-                        )}
+                  ))}
+                </div>
+              </div>
+
+              {/* Conditional Content based on Mode */}
+              {uploadMode === 'individual' ? (
+                /* Individual Mode: Show employee selector per file */
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-foreground">
+                    Asignar empleados a cada archivo
+                  </label>
+                  {uploadAnalysis.map((analysis, index) => (
+                    <div key={index} className="border rounded-lg p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-foreground truncate flex-1">{analysis.file.name}</span>
+                        <Badge variant={
+                          analysis.confidence === 'high' ? 'default' : 
+                          analysis.confidence === 'medium' ? 'secondary' : 'destructive'
+                        } className="ml-2">
+                          {analysis.confidence === 'high' ? 'Auto-detectado' :
+                           analysis.confidence === 'medium' ? 'Revisar' : 'Manual'}
+                        </Badge>
                       </div>
                       
-                      {/* Document Type */}
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">
-                          Tipo de Documento
-                        </label>
-                        <Select value={analysis.documentType} disabled>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {documentTypes.map((type) => (
-                              <SelectItem key={type.id} value={type.id}>
-                                <div className="flex items-center">
-                                  <type.icon className="h-4 w-4 mr-2" />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">Empleado</label>
+                          <Select 
+                            value={analysis.employee?.id?.toString() || ''} 
+                            onValueChange={(value) => updateAnalysisEmployee(index, parseInt(value))}
+                          >
+                            <SelectTrigger className="h-9">
+                              <SelectValue placeholder="Seleccionar empleado" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {employees.map((employee: Employee) => (
+                                <SelectItem key={employee.id} value={employee.id.toString()}>
+                                  {employee.fullName}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">Tipo</label>
+                          <Select value={analysis.documentType} disabled>
+                            <SelectTrigger className="h-9">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {documentTypes.map((type) => (
+                                <SelectItem key={type.id} value={type.id}>
                                   {type.name}
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {analysis.documentType !== 'otros' && (
-                          <div className="flex items-center mt-1 text-xs text-green-600">
-                            <Check className="h-3 w-3 mr-1" />
-                            Detectado automáticamente
-                          </div>
-                        )}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
+                      
+                      {analysis.suggestedName && (
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">Nombre sugerido</label>
+                          <input
+                            type="text"
+                            value={analysis.suggestedName}
+                            onChange={(e) => updateSuggestedName(index, e.target.value)}
+                            className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      )}
+                      
+                      {!analysis.employee && (
+                        <div className="flex items-center p-2 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded text-xs text-yellow-800 dark:text-yellow-200">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          Selecciona un empleado manualmente
+                        </div>
+                      )}
                     </div>
-                    
-                    {!analysis.employee && (
-                      <div className="flex items-center p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
-                        <AlertTriangle className="h-4 w-4 mr-2" />
-                        No se pudo detectar automáticamente el empleado. Por favor, selecciona uno manualmente.
+                  ))}
+                </div>
+              ) : (
+                /* Circular Mode: Show searchable employee list with checkboxes */
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-foreground">
+                      Empleados destinatarios ({uploadSelectedEmployees.length} de {employees.length})
+                    </label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setUploadSelectedEmployees(employees.map((e: Employee) => e.id))}
+                      className="text-xs h-7"
+                    >
+                      Seleccionar todos
+                    </Button>
+                  </div>
+                  
+                  {/* Search Input */}
+                  <div className="relative mb-2">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={uploadEmployeeSearch}
+                      onChange={(e) => setUploadEmployeeSearch(e.target.value)}
+                      placeholder="Buscar empleado por nombre o email..."
+                      className="pl-9"
+                      data-testid="upload-employee-search"
+                    />
+                  </div>
+                  
+                  <div className="max-h-40 overflow-y-auto border rounded-lg p-2 space-y-1 bg-card">
+                    {filteredUploadEmployees.length === 0 ? (
+                      <div className="text-center py-3 text-muted-foreground text-sm">
+                        No se encontraron empleados
                       </div>
+                    ) : (
+                      filteredUploadEmployees.map((employee: Employee) => (
+                        <div
+                          key={employee.id}
+                          onClick={() => toggleUploadEmployee(employee.id)}
+                          className={`flex items-center p-2 rounded cursor-pointer transition-colors ${
+                            uploadSelectedEmployees.includes(employee.id)
+                              ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700'
+                              : 'hover:bg-muted border border-transparent'
+                          }`}
+                          data-testid={`upload-employee-${employee.id}`}
+                        >
+                          <div className={`w-4 h-4 border rounded mr-3 flex items-center justify-center transition-colors ${
+                            uploadSelectedEmployees.includes(employee.id)
+                              ? 'bg-blue-600 border-blue-600'
+                              : 'border-gray-300 dark:border-gray-600'
+                          }`}>
+                            {uploadSelectedEmployees.includes(employee.id) && (
+                              <Check className="h-3 w-3 text-white" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium text-foreground text-sm">{employee.fullName}</div>
+                            <div className="text-xs text-muted-foreground">{employee.email}</div>
+                          </div>
+                        </div>
+                      ))
                     )}
                   </div>
-                ))}
+                </div>
+              )}
+
+              {/* Requires Signature Checkbox */}
+              <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg border">
+                <div
+                  onClick={() => setUploadRequiresSignature(!uploadRequiresSignature)}
+                  className={`w-5 h-5 border-2 rounded flex items-center justify-center cursor-pointer transition-colors ${
+                    uploadRequiresSignature
+                      ? 'bg-blue-600 border-blue-600'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'
+                  }`}
+                  data-testid="upload-requires-signature"
+                >
+                  {uploadRequiresSignature && (
+                    <Check className="h-3 w-3 text-white" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="font-medium text-foreground flex items-center text-sm">
+                    <FileSignature className="h-4 w-4 mr-2 text-blue-600" />
+                    Requiere Firma Digital
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Los empleados deberán firmar digitalmente el documento para confirmarlo
+                  </p>
+                </div>
+              </div>
+
+              {/* Summary before uploading */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="text-sm text-blue-800 dark:text-blue-200">
+                  <strong>Resumen:</strong>{' '}
+                  {uploadMode === 'circular' ? (
+                    <>
+                      Se subirá{uploadAnalysis.length > 1 ? 'n' : ''} <span className="font-medium">{uploadAnalysis.length} archivo{uploadAnalysis.length !== 1 ? 's' : ''}</span>
+                      {' '}para <span className="font-medium">{uploadSelectedEmployees.length} empleado{uploadSelectedEmployees.length !== 1 ? 's' : ''}</span>
+                    </>
+                  ) : (
+                    <>
+                      Se subirá{uploadAnalysis.length > 1 ? 'n' : ''} <span className="font-medium">{uploadAnalysis.length} archivo{uploadAnalysis.length !== 1 ? 's' : ''}</span>
+                      {' '}a sus empleados asignados
+                    </>
+                  )}
+                  {uploadRequiresSignature && (
+                    <span className="ml-1">
+                      <FileSignature className="h-3 w-3 inline mr-1" />
+                      (requiere firma)
+                    </span>
+                  )}
+                </div>
               </div>
               
               <div className="flex justify-end space-x-3 pt-4 border-t">
@@ -1705,9 +1942,17 @@ export default function AdminDocuments() {
                 </Button>
                 <Button 
                   onClick={handleBatchUpload}
-                  disabled={isUploading || uploadAnalysis.some(a => !a.employee)}
+                  disabled={
+                    isUploading || 
+                    (uploadMode === 'individual' && uploadAnalysis.some(a => !a.employee)) ||
+                    (uploadMode === 'circular' && uploadSelectedEmployees.length === 0)
+                  }
                 >
-                  {isUploading ? 'Subiendo...' : `Subir ${uploadAnalysis.length} Documento(s)`}
+                  {isUploading 
+                    ? 'Subiendo...' 
+                    : uploadMode === 'circular'
+                      ? `Subir Circular (${uploadSelectedEmployees.length} empleados)`
+                      : `Subir ${uploadAnalysis.length} Documento${uploadAnalysis.length !== 1 ? 's' : ''}`}
                 </Button>
               </div>
             </div>
