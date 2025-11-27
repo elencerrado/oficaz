@@ -54,12 +54,14 @@ const colorConfig = {
 };
 
 function useCountAnimation(targetValue: number | string, isLoading: boolean, delay: number = 0) {
-  const [displayValue, setDisplayValue] = useState<string>('0');
-  const wasLoading = useRef(true);
+  const [displayValue, setDisplayValue] = useState<string>(String(targetValue));
+  const wasLoading = useRef(isLoading);
+  const hasAnimated = useRef(false);
   const animationRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (wasLoading.current && !isLoading) {
+    if (wasLoading.current && !isLoading && !hasAnimated.current) {
+      hasAnimated.current = true;
       const valueStr = String(targetValue);
       const numericMatch = valueStr.match(/^([\d.]+)/);
       
@@ -100,6 +102,8 @@ function useCountAnimation(targetValue: number | string, isLoading: boolean, del
       } else {
         setDisplayValue(valueStr);
       }
+    } else if (!isLoading && !wasLoading.current) {
+      setDisplayValue(String(targetValue));
     }
     
     wasLoading.current = isLoading;
