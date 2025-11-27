@@ -853,7 +853,7 @@ export default function VacationManagement() {
           <StatsCard
             title="Solicitudes"
             subtitle="Pendientes"
-            value={stats.pending}
+            value={loadingRequests ? '-' : stats.pending}
             color="yellow"
             icon={Clock}
             onClick={() => {
@@ -861,12 +861,14 @@ export default function VacationManagement() {
               setSelectedStatus('pending');
               setSearchTerm('');
             }}
+            isLoading={loadingRequests}
+            index={0}
           />
 
           <StatsCard
             title="Solicitudes"
             subtitle="Aprobadas"
-            value={stats.approved}
+            value={loadingRequests ? '-' : stats.approved}
             color="green"
             icon={Check}
             onClick={() => {
@@ -874,15 +876,19 @@ export default function VacationManagement() {
               setSelectedStatus('approved');
               setSearchTerm('');
             }}
+            isLoading={loadingRequests}
+            index={1}
           />
 
           <StatsCard
             title="Empleados"
             subtitle="De Vacaciones"
-            value={stats.onVacation}
+            value={loadingRequests || loadingEmployees ? '-' : stats.onVacation}
             color="blue"
             icon={Plane}
             onClick={() => setActiveTab('employees')}
+            isLoading={loadingRequests || loadingEmployees}
+            index={2}
           />
 
           <StatsCard
@@ -892,6 +898,8 @@ export default function VacationManagement() {
             color="purple"
             icon={CalendarDays}
             onClick={() => setActiveTab('holidays')}
+            isLoading={false}
+            index={3}
           />
         </div>
       </div>
