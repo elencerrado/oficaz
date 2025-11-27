@@ -5205,6 +5205,49 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Admin/Manager: Create work report on behalf of an employee
+  app.post('/api/admin/work-reports', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      // Check if company has Pro plan
+      const subscription = await storage.getSubscriptionByCompanyId(req.user!.companyId);
+      if (!subscription || (subscription.plan !== 'pro' && subscription.plan !== 'master')) {
+        return res.status(403).json({ message: 'Esta función requiere el plan Pro' });
+      }
+
+      const { employeeId, reportDate, refCode, location, startTime, endTime, durationMinutes, description, clientName, notes, status } = req.body;
+
+      if (!employeeId || !reportDate || !location || !startTime || !endTime || !description) {
+        return res.status(400).json({ message: 'Faltan campos obligatorios' });
+      }
+
+      // Verify the employee belongs to the same company
+      const employee = await storage.getUser(employeeId);
+      if (!employee || employee.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'No tienes permiso para crear partes para este empleado' });
+      }
+
+      const report = await storage.createWorkReport({
+        companyId: req.user!.companyId,
+        employeeId,
+        reportDate,
+        refCode: refCode || null,
+        location,
+        startTime,
+        endTime,
+        durationMinutes: durationMinutes || calculateDurationMinutes(startTime, endTime),
+        description,
+        clientName: clientName || null,
+        notes: notes || null,
+        status: status || 'submitted'
+      });
+
+      res.status(201).json(report);
+    } catch (error: any) {
+      console.error('Admin work report create error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Admin/Manager: Export work reports to PDF
   app.get('/api/admin/work-reports/export/pdf', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {

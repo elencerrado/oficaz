@@ -31,7 +31,8 @@ import {
   X,
   Pen,
   Edit,
-  Settings
+  Settings,
+  Plus
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -124,6 +125,18 @@ export default function AdminWorkReportsPage() {
   const [editingReport, setEditingReport] = useState<WorkReportWithEmployee | null>(null);
   const [configModalOpen, setConfigModalOpen] = useState(false);
   const [employeeWorkModes, setEmployeeWorkModes] = useState<Record<number, string>>({});
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
+  const [createFormData, setCreateFormData] = useState({
+    reportDate: format(new Date(), 'yyyy-MM-dd'),
+    refCode: '',
+    location: '',
+    startTime: '09:00',
+    endTime: '17:00',
+    description: '',
+    clientName: '',
+    notes: ''
+  });
   const [editFormData, setEditFormData] = useState<EditFormData>({
     reportDate: '',
     refCode: '',
@@ -448,6 +461,28 @@ export default function AdminWorkReportsPage() {
             <span className="text-sm sm:text-lg font-medium">{filterTitle} ({filteredReports.length})</span>
             
             <div className="flex items-center gap-2">
+              {/* Create button */}
+              <Button 
+                size="sm" 
+                onClick={() => {
+                  setSelectedEmployeeId('');
+                  setCreateFormData({
+                    reportDate: format(new Date(), 'yyyy-MM-dd'),
+                    refCode: '',
+                    location: '',
+                    startTime: '09:00',
+                    endTime: '17:00',
+                    description: '',
+                    clientName: '',
+                    notes: ''
+                  });
+                  setCreateModalOpen(true);
+                }}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Plus className="w-4 h-4" />
+                Crear Parte
+              </Button>
               {/* Config button */}
               <Button 
                 variant="outline" 
@@ -990,6 +1025,200 @@ export default function AdminWorkReportsPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de creación de parte */}
+      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
+          <DialogHeader className="border-b border-gray-200 dark:border-gray-700 pb-4">
+            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Plus className="w-5 h-5 text-blue-600" />
+              Crear Parte de Trabajo
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label>Empleado *</Label>
+              <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
+                <SelectTrigger className="bg-white dark:bg-gray-800">
+                  <SelectValue placeholder="Seleccionar empleado" />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.filter(emp => emp.role !== 'admin').map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id.toString()}>{emp.fullName}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Fecha *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal bg-white dark:bg-gray-800"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {createFormData.reportDate 
+                        ? format(parseISO(createFormData.reportDate), "d 'de' MMMM, yyyy", { locale: es })
+                        : "Seleccionar fecha"
+                      }
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={createFormData.reportDate ? parseISO(createFormData.reportDate) : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          setCreateFormData(prev => ({ ...prev, reportDate: format(date, 'yyyy-MM-dd') }));
+                        }
+                      }}
+                      locale={es}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-ref-code">Código ref.</Label>
+                <Input
+                  id="create-ref-code"
+                  value={createFormData.refCode}
+                  onChange={(e) => setCreateFormData(prev => ({ ...prev, refCode: e.target.value }))}
+                  placeholder="Ej: OBR-2024-001"
+                  className="bg-white dark:bg-gray-800"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="create-location">Ubicación *</Label>
+              <Input
+                id="create-location"
+                value={createFormData.location}
+                onChange={(e) => setCreateFormData(prev => ({ ...prev, location: e.target.value }))}
+                placeholder="Ubicación del trabajo"
+                className="bg-white dark:bg-gray-800"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="create-start">Hora inicio *</Label>
+                <Input
+                  id="create-start"
+                  type="time"
+                  value={createFormData.startTime}
+                  onChange={(e) => setCreateFormData(prev => ({ ...prev, startTime: e.target.value }))}
+                  className="bg-white dark:bg-gray-800"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-end">Hora fin *</Label>
+                <Input
+                  id="create-end"
+                  type="time"
+                  value={createFormData.endTime}
+                  onChange={(e) => setCreateFormData(prev => ({ ...prev, endTime: e.target.value }))}
+                  className="bg-white dark:bg-gray-800"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="create-client">Cliente</Label>
+              <Input
+                id="create-client"
+                value={createFormData.clientName}
+                onChange={(e) => setCreateFormData(prev => ({ ...prev, clientName: e.target.value }))}
+                placeholder="Nombre del cliente"
+                className="bg-white dark:bg-gray-800"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="create-description">Trabajo realizado *</Label>
+              <Textarea
+                id="create-description"
+                value={createFormData.description}
+                onChange={(e) => setCreateFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Describe el trabajo realizado..."
+                className="bg-white dark:bg-gray-800 min-h-[100px]"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="create-notes">Notas adicionales</Label>
+              <Textarea
+                id="create-notes"
+                value={createFormData.notes}
+                onChange={(e) => setCreateFormData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Notas adicionales..."
+                className="bg-white dark:bg-gray-800 min-h-[60px]"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <Button
+                variant="outline"
+                onClick={() => setCreateModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!selectedEmployeeId) {
+                    toast({ title: 'Error', description: 'Selecciona un empleado', variant: 'destructive' });
+                    return;
+                  }
+                  if (!createFormData.location || !createFormData.description) {
+                    toast({ title: 'Error', description: 'Completa los campos obligatorios', variant: 'destructive' });
+                    return;
+                  }
+                  try {
+                    const [startH, startM] = createFormData.startTime.split(':').map(Number);
+                    const [endH, endM] = createFormData.endTime.split(':').map(Number);
+                    const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+                    
+                    await apiRequest('POST', '/api/admin/work-reports', {
+                      employeeId: parseInt(selectedEmployeeId),
+                      reportDate: createFormData.reportDate,
+                      refCode: createFormData.refCode || null,
+                      location: createFormData.location,
+                      startTime: createFormData.startTime,
+                      endTime: createFormData.endTime,
+                      durationMinutes: durationMinutes > 0 ? durationMinutes : 0,
+                      description: createFormData.description,
+                      clientName: createFormData.clientName || null,
+                      notes: createFormData.notes || null,
+                      status: 'submitted'
+                    });
+                    
+                    queryClient.invalidateQueries({ queryKey: ['/api/admin/work-reports'] });
+                    toast({
+                      title: 'Parte creado',
+                      description: 'El parte de trabajo ha sido creado correctamente.',
+                    });
+                    setCreateModalOpen(false);
+                  } catch (error) {
+                    toast({
+                      title: 'Error',
+                      description: 'No se pudo crear el parte de trabajo.',
+                      variant: 'destructive',
+                    });
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Crear Parte
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
