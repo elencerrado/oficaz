@@ -6122,10 +6122,12 @@ Responde directamente a este email para contactar con la persona.
       }
 
       // Check if document has signature and is a PDF - overlay signature dynamically
+      // SECURITY: Access already validated above (Layer 1-4). Each document record has its own signature.
+      // Circular documents share physical file but have separate DB records with individual signatures.
       const ext = path.extname(document.originalName || document.fileName).toLowerCase();
       if (ext === '.pdf' && document.digitalSignature && document.isAccepted) {
         try {
-          console.log(`Generating signed PDF for document ${id}...`);
+          console.log(`SECURITY: Generating signed PDF for document ${id} (owner: ${document.userId}, requester: ${user.id})`);
           
           // Read the base PDF
           const pdfBytes = fs.readFileSync(filePath);
