@@ -74,6 +74,25 @@ export default function EmployeeDashboard() {
     clientName: '',
     notes: ''
   });
+
+  // Queries para autocompletado de partes de obra anteriores
+  const { data: refCodeSuggestions } = useQuery<string[]>({
+    queryKey: ['/api/work-reports/ref-codes'],
+    enabled: showWorkReportModal,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: locationSuggestions } = useQuery<string[]>({
+    queryKey: ['/api/work-reports/locations'],
+    enabled: showWorkReportModal,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: clientSuggestions } = useQuery<string[]>({
+    queryKey: ['/api/work-reports/clients'],
+    enabled: showWorkReportModal,
+    staleTime: 5 * 60 * 1000,
+  });
   
 
   // Función para generar mensajes dinámicos según la hora
@@ -1362,12 +1381,18 @@ export default function EmployeeDashboard() {
               </Label>
               <Input
                 id="refCode"
+                list="refCodeList"
                 value={workReportForm.refCode}
                 onChange={(e) => setWorkReportForm({ ...workReportForm, refCode: e.target.value })}
                 placeholder="Ej: OBR-2024-001"
                 className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                 data-testid="input-work-report-refcode"
               />
+              <datalist id="refCodeList">
+                {refCodeSuggestions?.map((code, index) => (
+                  <option key={index} value={code} />
+                ))}
+              </datalist>
             </div>
 
             {/* Ubicación */}
@@ -1377,12 +1402,18 @@ export default function EmployeeDashboard() {
               </Label>
               <Input
                 id="location"
+                list="locationList"
                 value={workReportForm.location}
                 onChange={(e) => setWorkReportForm({ ...workReportForm, location: e.target.value })}
                 placeholder="Dirección o nombre del lugar de trabajo"
                 className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                 data-testid="input-work-report-location"
               />
+              <datalist id="locationList">
+                {locationSuggestions?.map((loc, index) => (
+                  <option key={index} value={loc} />
+                ))}
+              </datalist>
             </div>
 
             {/* Cliente (opcional) */}
@@ -1392,12 +1423,18 @@ export default function EmployeeDashboard() {
               </Label>
               <Input
                 id="clientName"
+                list="clientList"
                 value={workReportForm.clientName}
                 onChange={(e) => setWorkReportForm({ ...workReportForm, clientName: e.target.value })}
                 placeholder="Nombre del cliente"
                 className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                 data-testid="input-work-report-client"
               />
+              <datalist id="clientList">
+                {clientSuggestions?.map((client, index) => (
+                  <option key={index} value={client} />
+                ))}
+              </datalist>
             </div>
 
             {/* Descripción del trabajo */}
