@@ -137,6 +137,9 @@ export default function AdminWorkReportsPage() {
     clientName: '',
     notes: ''
   });
+  const [showCreateRefCodeSuggestions, setShowCreateRefCodeSuggestions] = useState(false);
+  const [showCreateLocationSuggestions, setShowCreateLocationSuggestions] = useState(false);
+  const [showCreateClientSuggestions, setShowCreateClientSuggestions] = useState(false);
   const [editFormData, setEditFormData] = useState<EditFormData>({
     reportDate: '',
     refCode: '',
@@ -177,6 +180,47 @@ export default function AdminWorkReportsPage() {
     enabled: isAuthenticated && !authLoading,
     staleTime: 5 * 60 * 1000 // ⚡ Cache for 5 minutes
   });
+
+  // Autocomplete data for create modal
+  const { data: companyLocations = [] } = useQuery<string[]>({
+    queryKey: ['/api/admin/work-reports/locations'],
+    enabled: isAuthenticated && !authLoading,
+    staleTime: 60000
+  });
+
+  const { data: companyClients = [] } = useQuery<string[]>({
+    queryKey: ['/api/admin/work-reports/clients'],
+    enabled: isAuthenticated && !authLoading,
+    staleTime: 60000
+  });
+
+  const { data: companyRefCodes = [] } = useQuery<string[]>({
+    queryKey: ['/api/admin/work-reports/ref-codes'],
+    enabled: isAuthenticated && !authLoading,
+    staleTime: 60000
+  });
+
+  // Filter suggestions based on input
+  const filteredLocationSuggestions = useMemo(() => {
+    if (!createFormData.location) return companyLocations.slice(0, 5);
+    return companyLocations
+      .filter(loc => loc.toLowerCase().includes(createFormData.location.toLowerCase()))
+      .slice(0, 5);
+  }, [createFormData.location, companyLocations]);
+
+  const filteredClientSuggestions = useMemo(() => {
+    if (!createFormData.clientName) return companyClients.slice(0, 5);
+    return companyClients
+      .filter(client => client.toLowerCase().includes(createFormData.clientName.toLowerCase()))
+      .slice(0, 5);
+  }, [createFormData.clientName, companyClients]);
+
+  const filteredRefCodeSuggestions = useMemo(() => {
+    if (!createFormData.refCode) return companyRefCodes.slice(0, 5);
+    return companyRefCodes
+      .filter(code => code.toLowerCase().includes(createFormData.refCode.toLowerCase()))
+      .slice(0, 5);
+  }, [createFormData.refCode, companyRefCodes]);
 
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
@@ -1084,27 +1128,69 @@ export default function AdminWorkReportsPage() {
                   </PopoverContent>
                 </Popover>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 relative">
                 <Label htmlFor="create-ref-code">Código ref.</Label>
                 <Input
                   id="create-ref-code"
                   value={createFormData.refCode}
                   onChange={(e) => setCreateFormData(prev => ({ ...prev, refCode: e.target.value }))}
+                  onFocus={() => setShowCreateRefCodeSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowCreateRefCodeSuggestions(false), 150)}
                   placeholder="Ej: OBR-2024-001"
                   className="bg-white dark:bg-gray-800"
+                  autoComplete="off"
                 />
+                {showCreateRefCodeSuggestions && filteredRefCodeSuggestions.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                    {filteredRefCodeSuggestions.map((code, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                        onMouseDown={() => {
+                          setCreateFormData(prev => ({ ...prev, refCode: code }));
+                          setShowCreateRefCodeSuggestions(false);
+                        }}
+                      >
+                        <FileText className="w-3 h-3 text-blue-400" />
+                        {code}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 relative">
               <Label htmlFor="create-location">Ubicación *</Label>
               <Input
                 id="create-location"
                 value={createFormData.location}
                 onChange={(e) => setCreateFormData(prev => ({ ...prev, location: e.target.value }))}
+                onFocus={() => setShowCreateLocationSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowCreateLocationSuggestions(false), 150)}
                 placeholder="Ubicación del trabajo"
                 className="bg-white dark:bg-gray-800"
+                autoComplete="off"
               />
+              {showCreateLocationSuggestions && filteredLocationSuggestions.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                  {filteredLocationSuggestions.map((loc, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                      onMouseDown={() => {
+                        setCreateFormData(prev => ({ ...prev, location: loc }));
+                        setShowCreateLocationSuggestions(false);
+                      }}
+                    >
+                      <MapPin className="w-3 h-3 text-gray-400" />
+                      {loc}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -1130,15 +1216,36 @@ export default function AdminWorkReportsPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 relative">
               <Label htmlFor="create-client">Cliente</Label>
               <Input
                 id="create-client"
                 value={createFormData.clientName}
                 onChange={(e) => setCreateFormData(prev => ({ ...prev, clientName: e.target.value }))}
+                onFocus={() => setShowCreateClientSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowCreateClientSuggestions(false), 150)}
                 placeholder="Nombre del cliente"
                 className="bg-white dark:bg-gray-800"
+                autoComplete="off"
               />
+              {showCreateClientSuggestions && filteredClientSuggestions.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                  {filteredClientSuggestions.map((client, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                      onMouseDown={() => {
+                        setCreateFormData(prev => ({ ...prev, clientName: client }));
+                        setShowCreateClientSuggestions(false);
+                      }}
+                    >
+                      <User className="w-3 h-3 text-gray-400" />
+                      {client}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

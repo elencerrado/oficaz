@@ -5248,6 +5248,39 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Admin/Manager: Get unique locations from all company work reports
+  app.get('/api/admin/work-reports/locations', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const locations = await storage.getCompanyWorkReportLocations(req.user!.companyId);
+      res.json(locations);
+    } catch (error: any) {
+      console.error('Admin locations fetch error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin/Manager: Get unique clients from all company work reports
+  app.get('/api/admin/work-reports/clients', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const clients = await storage.getCompanyWorkReportClients(req.user!.companyId);
+      res.json(clients);
+    } catch (error: any) {
+      console.error('Admin clients fetch error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin/Manager: Get unique refCodes from all company work reports
+  app.get('/api/admin/work-reports/ref-codes', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const refCodes = await storage.getCompanyWorkReportRefCodes(req.user!.companyId);
+      res.json(refCodes);
+    } catch (error: any) {
+      console.error('Admin ref-codes fetch error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Admin/Manager: Export work reports to PDF
   app.get('/api/admin/work-reports/export/pdf', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {

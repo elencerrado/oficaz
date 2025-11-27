@@ -297,6 +297,10 @@ export interface IStorage {
   getWorkReportRefCodes(userId: number): Promise<string[]>;
   getWorkReportLocations(userId: number): Promise<string[]>;
   getWorkReportClients(userId: number): Promise<string[]>;
+  // Admin: Company-wide autocomplete
+  getCompanyWorkReportLocations(companyId: number): Promise<string[]>;
+  getCompanyWorkReportClients(companyId: number): Promise<string[]>;
+  getCompanyWorkReportRefCodes(companyId: number): Promise<string[]>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -3595,6 +3599,46 @@ export class DrizzleStorage implements IStorage {
     return results
       .map(r => r.clientName)
       .filter((name): name is string => !!name && name.trim() !== '');
+  }
+
+  // Admin: Company-wide autocomplete queries
+  async getCompanyWorkReportLocations(companyId: number): Promise<string[]> {
+    const results = await db.selectDistinct({ location: schema.workReports.location })
+      .from(schema.workReports)
+      .where(eq(schema.workReports.companyId, companyId))
+      .orderBy(schema.workReports.location);
+    
+    return results
+      .map(r => r.location)
+      .filter((loc): loc is string => !!loc && loc.trim() !== '');
+  }
+
+  async getCompanyWorkReportClients(companyId: number): Promise<string[]> {
+    const results = await db.selectDistinct({ clientName: schema.workReports.clientName })
+      .from(schema.workReports)
+      .where(and(
+        eq(schema.workReports.companyId, companyId),
+        isNotNull(schema.workReports.clientName)
+      ))
+      .orderBy(schema.workReports.clientName);
+    
+    return results
+      .map(r => r.clientName)
+      .filter((name): name is string => !!name && name.trim() !== '');
+  }
+
+  async getCompanyWorkReportRefCodes(companyId: number): Promise<string[]> {
+    const results = await db.selectDistinct({ refCode: schema.workReports.refCode })
+      .from(schema.workReports)
+      .where(and(
+        eq(schema.workReports.companyId, companyId),
+        isNotNull(schema.workReports.refCode)
+      ))
+      .orderBy(schema.workReports.refCode);
+    
+    return results
+      .map(r => r.refCode)
+      .filter((code): code is string => !!code && code.trim() !== '');
   }
 }
 
