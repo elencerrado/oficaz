@@ -1797,13 +1797,13 @@ export default function Schedules() {
                             
                             return (
                               <DroppableCell
-                                key={dayIndex}
+                                key={`${viewMode}-${format(weekRange.start, 'yyyy-MM-dd')}-${dayIndex}`}
                                 employeeId={employee.id}
                                 day={day}
                                 isDisabled={isDisabled}
                                 className={`${getCellStyle(employee.id, day)} flex flex-col w-full min-h-[120px] rounded-lg border border-border/30 relative ${
                                   !isDisabled ? 'hover:bg-gray-100 dark:hover:bg-gray-700/70 transition-colors' : 'cursor-not-allowed'
-                                }`}
+                                } schedule-cell-loading schedule-cell-loading-${dayIndex}`}
                                 style={getCellHeightStyle(employee.id, day)}
                                 onClick={() => {
                                   if (!isDisabled && getShiftsForEmployee(employee.id).filter(shift => format(parseISO(shift.startAt), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')).length === 0) {
@@ -1916,7 +1916,7 @@ export default function Schedules() {
                         
                         return (
                           <DroppableCell
-                            key={dayIndex}
+                            key={`${viewMode}-${format(weekRange.start, 'yyyy-MM-dd')}-${dayIndex}`}
                             employeeId={employee.id}
                             day={day}
                             isDisabled={isDisabled}
@@ -1924,7 +1924,7 @@ export default function Schedules() {
                               viewMode === 'day' 
                                 ? 'flex flex-row' // Modo día: layout horizontal 
                                 : 'flex flex-col' // Modo semana: layout vertical
-                            } ${!isDisabled ? 'hover:bg-gray-100 dark:hover:bg-gray-700/70 transition-colors' : 'cursor-not-allowed'}`}
+                            } ${!isDisabled ? 'hover:bg-gray-100 dark:hover:bg-gray-700/70 transition-colors' : 'cursor-not-allowed'} schedule-cell-loading schedule-cell-loading-${dayIndex}`}
                             style={getCellHeightStyle(employee.id, day)}
                             onClick={() => {
                               if (!isDisabled && getShiftsForEmployee(employee.id).filter(shift => format(parseISO(shift.startAt), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')).length === 0) {

@@ -1617,4 +1617,28 @@ body button[role="switch"] > span {
   background-color: rgb(29, 78, 216) !important;
 }
 
+/* Schedule loading sweep animation */
+@keyframes schedule-sweep {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.schedule-cell-loading {
+  animation: schedule-sweep 0.4s ease-out forwards;
+}
+
+.schedule-cell-loading-0 { animation-delay: 0ms; }
+.schedule-cell-loading-1 { animation-delay: 40ms; }
+.schedule-cell-loading-2 { animation-delay: 80ms; }
+.schedule-cell-loading-3 { animation-delay: 120ms; }
+.schedule-cell-loading-4 { animation-delay: 160ms; }
+.schedule-cell-loading-5 { animation-delay: 200ms; }
+.schedule-cell-loading-6 { animation-delay: 240ms; }
+
 
