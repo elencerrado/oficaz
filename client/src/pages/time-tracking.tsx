@@ -2502,20 +2502,20 @@ export default function TimeTracking() {
                     const breakStart = new Date(breakPeriod.breakStart);
                     const breakEnd = new Date(breakPeriod.breakEnd);
                     
-                    // Posición del descanso relativa al inicio de la sesión (no del día)
-                    const breakStartRelativeToSession = (breakStart.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+                    // Posición del descanso relativa al día (no a la sesión) para posicionamiento correcto
+                    const breakStartOffset = (breakStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
                     const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
                     
-                    const breakLeftPercentageInSession = (breakStartRelativeToSession / sessionDuration) * 100;
-                    const breakWidthPercentageInSession = Math.max((breakDuration / sessionDuration) * 100, 2); // Mínimo 2%
+                    const breakLeftPercentage = (breakStartOffset / totalDayDuration) * 100;
+                    const breakWidthPercentage = Math.max((breakDuration / totalDayDuration) * 100, 0.5); // Mínimo 0.5%
                     
                     return (
                       <div
                         key={`${sessionIndex}-${breakIndex}`}
                         className="absolute top-0.5 h-4 bg-orange-400 rounded-sm"
                         style={{
-                          left: `${breakLeftPercentageInSession}%`,
-                          width: `${breakWidthPercentageInSession}%`
+                          left: `${breakLeftPercentage}%`,
+                          width: `${breakWidthPercentage}%`
                         }}
                         title={`Descanso: ${formatTime(breakStart)} - ${formatTime(breakEnd)}`}
                       />
