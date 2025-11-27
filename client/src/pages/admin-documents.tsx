@@ -1184,11 +1184,12 @@ export default function AdminDocuments() {
                                 return format(localDate, 'd MMM yyyy HH:mm', { locale: es });
                               })()}
                             </span>
-                            {/* Signature status for nóminas */}
+                            {/* Signature status for nóminas or documents requiring signature */}
                             {(() => {
                               const fileName = document.originalName || document.fileName || '';
                               const analysis = analyzeFileName(fileName, employees);
-                              return analysis.documentType === 'Nómina' && (
+                              const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                              return requiresSignatureBadge && (
                                 <Badge 
                                   variant={document.isAccepted ? 'default' : 'outline'}
                                   className={`text-xs ${
@@ -1440,8 +1441,8 @@ export default function AdminDocuments() {
                                                       return format(localDate, 'd MMM yyyy', { locale: es });
                                                     })()}
                                                   </div>
-                                                  {/* Signature status for nóminas in grid view */}
-                                                  {type === 'nomina' && (
+                                                  {/* Signature status for nóminas or documents requiring signature in grid view */}
+                                                  {(type === 'nomina' || document.requiresSignature) && (
                                                     <div>
                                                       <Badge 
                                                         variant={document.isAccepted ? 'default' : 'outline'}
@@ -1451,7 +1452,7 @@ export default function AdminDocuments() {
                                                             : 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300'
                                                         }`}
                                                       >
-                                                        {document.isAccepted ? '✓ Firmada' : 'Pendiente'}
+                                                        {document.isAccepted ? '✓ Firmada' : 'Pendiente firma'}
                                                       </Badge>
                                                     </div>
                                                   )}
