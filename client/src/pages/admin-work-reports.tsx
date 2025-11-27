@@ -157,7 +157,8 @@ export default function AdminWorkReportsPage() {
 
   const { data: employees = [] } = useQuery<Employee[]>({
     queryKey: ['/api/employees'],
-    enabled: isAuthenticated && !authLoading
+    enabled: isAuthenticated && !authLoading,
+    staleTime: 5 * 60 * 1000 // ⚡ Cache for 5 minutes
   });
 
   const queryParams = useMemo(() => {

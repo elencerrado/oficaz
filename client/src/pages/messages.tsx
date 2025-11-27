@@ -117,8 +117,9 @@ export default function Messages() {
   const { data: messages = [], isLoading: messagesLoading } = useQuery<Message[]>({
     queryKey: ['/api/messages'],
     enabled: !!user,
-    staleTime: 30000,
-    refetchInterval: 10000,
+    staleTime: 45000, // ⚡ Optimized: increased cache time
+    refetchInterval: 30000, // ⚡ Optimized: reduced from 10s to 30s
+    refetchIntervalInBackground: false, // ⚡ Optimized: stop background polling
   });
 
   const { data: managers = [] } = useQuery<Manager[]>({

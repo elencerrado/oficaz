@@ -1063,6 +1063,7 @@ export default function Schedules() {
   // Queries
   const { data: employees = [], isLoading: loadingEmployees } = useQuery<Employee[]>({
     queryKey: ['/api/employees'],
+    staleTime: 5 * 60 * 1000, // ⚡ Cache for 5 minutes - employees don't change often
     select: (data: Employee[]) => data?.filter((emp: Employee) => emp.status === 'active') || [],
   });
 

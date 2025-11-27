@@ -59,9 +59,9 @@ export default function VacationRequests() {
   const { data: requests = [], isLoading } = useQuery<any[]>({
     queryKey: ['/api/vacation-requests'],
     enabled: !!user,
-    staleTime: 30000,
-    refetchInterval: 10000,
-    refetchIntervalInBackground: true,
+    staleTime: 45000, // ⚡ Optimized: increased cache time
+    refetchInterval: 60000, // ⚡ Optimized: reduced from 10s to 60s
+    refetchIntervalInBackground: false, // ⚡ Optimized: stop background polling
   });
 
 

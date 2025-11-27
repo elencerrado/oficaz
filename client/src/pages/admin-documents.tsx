@@ -166,9 +166,10 @@ export default function AdminDocuments() {
   // Request dialog state
   const [showRequestDialog, setShowRequestDialog] = useState(false);
 
-  // Fetch employees
+  // Fetch employees (optimized - employees don't change often)
   const { data: employees = [] } = useQuery<Employee[]>({
     queryKey: ['/api/employees'],
+    staleTime: 5 * 60 * 1000, // ⚡ Cache for 5 minutes
   });
 
   // Fetch document notifications (sent requests) - optimized polling

@@ -88,10 +88,12 @@ export default function Employees() {
 
   const { data: employees = [], isLoading: employeesLoading } = useQuery({
     queryKey: ['/api/employees'],
+    staleTime: 5 * 60 * 1000, // ⚡ Cache for 5 minutes
   });
 
   const { data: companySessions = [] } = useQuery({
     queryKey: ['/api/work-sessions/company'],
+    staleTime: 60 * 1000, // ⚡ Cache for 1 minute
   });
 
   const addEmployeeMutation = useMutation({
