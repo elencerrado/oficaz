@@ -1619,15 +1619,15 @@ body button[role="switch"] > span {
 
 /* Schedule loading wave animation - efecto ola */
 @keyframes schedule-wave {
-  0% { opacity: 0.08; }
-  8% { opacity: 0.4; }
+  0% { opacity: 0.3; }
+  8% { opacity: 0.6; }
   10% { opacity: 1; }
-  12% { opacity: 0.4; }
-  20%, 100% { opacity: 0.08; }
+  12% { opacity: 0.6; }
+  20%, 100% { opacity: 0.3; }
 }
 
 .schedule-cell-wave {
-  opacity: 0.08;
+  opacity: 0.3;
   animation: schedule-wave 3s ease-in-out infinite;
 }
 
