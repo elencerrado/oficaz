@@ -47,11 +47,11 @@ export function DocumentSignatureModal({
         const rect = canvas.getBoundingClientRect();
         const dpr = window.devicePixelRatio || 1;
         
-        // Use higher resolution for better quality
-        canvas.width = rect.width * dpr * 2;
-        canvas.height = rect.height * dpr * 2;
+        // Scale canvas for HiDPI displays
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
         
-        ctx.scale(dpr * 2, dpr * 2);
+        ctx.scale(dpr, dpr);
         
         // White background
         ctx.fillStyle = 'white';
@@ -75,8 +75,6 @@ export function DocumentSignatureModal({
     if (!canvas) return { x: 0, y: 0 };
 
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width / 2; // Account for 2x scale
-    const scaleY = canvas.height / rect.height / 2;
     
     let clientX, clientY;
 
@@ -88,9 +86,10 @@ export function DocumentSignatureModal({
       clientY = event.clientY;
     }
 
+    // Return coordinates in CSS units (context is already scaled by DPR)
     return {
-      x: (clientX - rect.left) * scaleX,
-      y: (clientY - rect.top) * scaleY,
+      x: clientX - rect.left,
+      y: clientY - rect.top,
     };
   }, []);
 

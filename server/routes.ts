@@ -30,6 +30,7 @@ import { JWT_SECRET } from './utils/jwt-secret.js';
 import Groq from 'groq-sdk';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
+import { PDFDocument, rgb } from 'pdf-lib';
 import * as XLSX from 'xlsx';
 
 // Initialize Stripe with intelligent key detection
@@ -6272,6 +6273,72 @@ Responde directamente a este email para contactar con la persona.
       // Security check: Only document owner can sign
       if (document.userId !== req.user!.id) {
         return res.status(403).json({ message: 'You can only sign your own documents' });
+      }
+
+      // Check if it's a PDF and embed signature directly into the PDF
+      const ext = path.extname(document.originalName || document.fileName).toLowerCase();
+      if (ext === '.pdf') {
+        const filePath = path.join(uploadDir, document.fileName);
+        
+        if (!fs.existsSync(filePath)) {
+          return res.status(404).json({ message: 'PDF file not found on server. Cannot embed signature.' });
+        }
+        
+        try {
+          // Read the original PDF
+          const pdfBytes = fs.readFileSync(filePath);
+          const pdfDoc = await PDFDocument.load(pdfBytes);
+          
+          // Get the last page to add signature
+          const pages = pdfDoc.getPages();
+          const lastPage = pages[pages.length - 1];
+          const { width, height } = lastPage.getSize();
+          
+          // Extract base64 image data from data URL
+          const base64Data = digitalSignature.replace(/^data:image\/\w+;base64,/, '');
+          const signatureImageBytes = Buffer.from(base64Data, 'base64');
+          
+          // Embed the signature image
+          const signatureImage = await pdfDoc.embedPng(signatureImageBytes);
+          const signatureDims = signatureImage.scale(0.5); // Scale to 50%
+          
+          // Calculate position - bottom right corner with margin
+          const signatureWidth = Math.min(signatureDims.width, 150);
+          const signatureHeight = (signatureDims.height / signatureDims.width) * signatureWidth;
+          const margin = 50;
+          const xPos = width - signatureWidth - margin;
+          const yPos = margin + 30; // 30px above bottom margin
+          
+          // Draw signature box background (white)
+          lastPage.drawRectangle({
+            x: xPos - 10,
+            y: yPos - 10,
+            width: signatureWidth + 20,
+            height: signatureHeight + 40,
+            color: rgb(1, 1, 1),
+            borderColor: rgb(0.8, 0.8, 0.8),
+            borderWidth: 1,
+          });
+          
+          // Draw signature
+          lastPage.drawImage(signatureImage, {
+            x: xPos,
+            y: yPos + 20,
+            width: signatureWidth,
+            height: signatureHeight,
+          });
+          
+          // Save the modified PDF
+          const modifiedPdfBytes = await pdfDoc.save();
+          fs.writeFileSync(filePath, Buffer.from(modifiedPdfBytes));
+          
+          console.log(`Document ${id} - Signature embedded into PDF by user ${req.user!.id}`);
+        } catch (pdfError: any) {
+          console.error(`Error embedding signature into PDF ${id}:`, pdfError);
+          return res.status(500).json({ 
+            message: `Failed to embed signature into PDF: ${pdfError.message || 'Unknown error'}` 
+          });
+        }
       }
 
       const updatedDocument = await storage.markDocumentAsAcceptedAndSigned(id, digitalSignature);
