@@ -2665,28 +2665,15 @@ export default function TimeTracking() {
     );
   };
 
-  // Loading check AFTER all hooks
-  if (isLoading) {
-    return (
-      <div className="px-6 py-4">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-muted rounded w-1/3"></div>
-          <div className="h-16 bg-muted rounded-lg"></div>
-          <div className="h-96 bg-muted rounded-lg"></div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">
+      <div className={`grid grid-cols-4 gap-2 md:gap-6 mb-3 transition-opacity duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'}`}>
         <StatsCard
           title="Incompletos"
           subtitle="Sesiones"
-          value={`${incompleteSessions}`}
+          value={isLoading ? '-' : `${incompleteSessions}`}
           color="red"
           icon={AlertCircle}
           onClick={handleIncompleteFilter}
@@ -2696,7 +2683,7 @@ export default function TimeTracking() {
         <StatsCard
           title="Media Diaria"
           subtitle="Horas/día"
-          value={`${averageHoursPerEmployee.toFixed(1)}h`}
+          value={isLoading ? '-' : `${averageHoursPerEmployee.toFixed(1)}h`}
           color="orange"
           icon={TrendingUp}
           onClick={handleTodayFilter}
@@ -2706,7 +2693,7 @@ export default function TimeTracking() {
         <StatsCard
           title="Media Semanal"
           subtitle="Horas/sem"
-          value={`${averageHoursPerWeek.toFixed(1)}h`}
+          value={isLoading ? '-' : `${averageHoursPerWeek.toFixed(1)}h`}
           color="blue"
           icon={CalendarDays}
           onClick={handleThisWeekFilter}
@@ -2716,7 +2703,7 @@ export default function TimeTracking() {
         <StatsCard
           title="Media Mensual"
           subtitle="Horas/mes"
-          value={`${averageHoursPerMonth.toFixed(1)}h`}
+          value={isLoading ? '-' : `${averageHoursPerMonth.toFixed(1)}h`}
           color="purple"
           icon={BarChart3}
           onClick={handleThisMonthFilter}
@@ -3111,7 +3098,7 @@ export default function TimeTracking() {
           </div>
         )}
 
-        <CardContent className="p-0">
+        <CardContent className={`p-0 transition-opacity duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'}`}>
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
@@ -3772,7 +3759,7 @@ export default function TimeTracking() {
           </div>
 
           {/* Grid de empleados */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 transition-opacity duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'}`}>
             {(Array.isArray(employees) ? employees : []).filter((emp: any) => 
               summarySearch === '' || 
               emp.fullName.toLowerCase().includes(summarySearch.toLowerCase())
