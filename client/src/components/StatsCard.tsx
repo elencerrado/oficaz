@@ -1,4 +1,5 @@
 import { LucideIcon } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 
 interface StatsCardProps {
   title: string;
@@ -52,6 +53,71 @@ const colorConfig = {
   }
 };
 
+function useCountAnimation(targetValue: number | string, isLoading: boolean, delay: number = 0) {
+  const [displayValue, setDisplayValue] = useState<string>('0');
+  const wasLoading = useRef(true);
+  const animationRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (wasLoading.current && !isLoading) {
+      const valueStr = String(targetValue);
+      const numericMatch = valueStr.match(/^([\d.]+)/);
+      
+      if (numericMatch) {
+        const targetNum = parseFloat(numericMatch[1]);
+        const suffix = valueStr.slice(numericMatch[1].length);
+        const hasDecimal = numericMatch[1].includes('.');
+        const duration = 600;
+        const startTime = performance.now() + delay;
+        
+        const animate = (currentTime: number) => {
+          const elapsed = currentTime - startTime;
+          
+          if (elapsed < 0) {
+            setDisplayValue('0' + suffix);
+            animationRef.current = requestAnimationFrame(animate);
+            return;
+          }
+          
+          const progress = Math.min(elapsed / duration, 1);
+          const easeOut = 1 - Math.pow(1 - progress, 3);
+          const currentNum = targetNum * easeOut;
+          
+          if (hasDecimal) {
+            setDisplayValue(currentNum.toFixed(1) + suffix);
+          } else {
+            setDisplayValue(Math.round(currentNum) + suffix);
+          }
+          
+          if (progress < 1) {
+            animationRef.current = requestAnimationFrame(animate);
+          } else {
+            setDisplayValue(valueStr);
+          }
+        };
+        
+        animationRef.current = requestAnimationFrame(animate);
+      } else {
+        setDisplayValue(valueStr);
+      }
+    }
+    
+    wasLoading.current = isLoading;
+    
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [targetValue, isLoading, delay]);
+
+  if (isLoading) {
+    return '0';
+  }
+  
+  return displayValue;
+}
+
 export default function StatsCard({ 
   title, 
   subtitle, 
@@ -65,6 +131,7 @@ export default function StatsCard({
   index = 0
 }: StatsCardProps) {
   const config = colorConfig[color];
+  const animatedValue = useCountAnimation(value, isLoading, index * 100);
   
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -100,7 +167,7 @@ export default function StatsCard({
             </div>
           </div>
           <div className="flex justify-center">
-            <span className="text-lg font-bold text-foreground">{value}</span>
+            <span className="text-lg font-bold text-foreground">{animatedValue}</span>
           </div>
           <div className="flex flex-col items-center justify-center">
             <p className="text-[8px] font-medium text-muted-foreground leading-none">{title}</p>
@@ -112,7 +179,7 @@ export default function StatsCard({
           <div className={`w-6 h-6 ${config.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
             {Icon && <Icon className="w-3 h-3 text-white" />}
           </div>
-          <span className="text-xl font-bold text-foreground">{value}</span>
+          <span className="text-xl font-bold text-foreground">{animatedValue}</span>
         </div>
 
         <div className="hidden sm:flex flex-col items-center justify-center">
