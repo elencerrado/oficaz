@@ -1295,23 +1295,8 @@ export default function EmployeesSimple() {
                           <input
                             type="radio"
                             name="workReportMode"
-                            value="on_clockout"
-                            checked={editEmployee.workReportMode === 'on_clockout'}
-                            onChange={() => setEditEmployee({ ...editEmployee, workReportMode: 'on_clockout' })}
-                            className="mt-0.5"
-                          />
-                          <div>
-                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Al fichar salida</span>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Popup automático al fichar salida. Sin borradores.</p>
-                          </div>
-                        </label>
-                        
-                        <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
-                          <input
-                            type="radio"
-                            name="workReportMode"
                             value="both"
-                            checked={editEmployee.workReportMode === 'both'}
+                            checked={editEmployee.workReportMode === 'both' || editEmployee.workReportMode === 'on_clockout'}
                             onChange={() => setEditEmployee({ ...editEmployee, workReportMode: 'both' })}
                             className="mt-0.5"
                           />
