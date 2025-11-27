@@ -663,39 +663,52 @@ export default function Messages() {
                 </div>
                 
                 <div className="space-y-2">
-                  {filteredEmployees.map((employee) => (
-                    <div
-                      key={employee.id}
-                      className={`p-3 rounded-lg cursor-pointer border transition-all duration-200 hover-lift ${
-                        selectedChat === employee.id
-                          ? 'bg-oficaz-primary text-white border-oficaz-primary'
-                          : 'bg-muted hover:bg-muted/80 border-border'
-                      }`}
-                      onClick={() => setSelectedChat(employee.id)}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <UserAvatar 
-                          fullName={employee.fullName || ''} 
-                          size="md" 
-                          userId={employee.id}
-                          profilePicture={employee.profilePicture}
-                        />
-                        
-                        <div className="flex-1 min-w-0">
-                          <p className={`truncate font-medium text-sm ${
-                            selectedChat === employee.id ? 'text-white' : 'text-foreground'
-                          }`}>
-                            {employee.fullName}
-                          </p>
-                          <div className={`truncate text-xs ${
-                            selectedChat === employee.id ? 'text-white/90' : 'text-muted-foreground'
-                          }`}>
-                            {getRoleDisplay(employee)}
+                  {filteredEmployees.map((employee) => {
+                    const unreadCount = (messages as Message[] || []).filter(
+                      m => !m.isRead && m.senderId === employee.id
+                    ).length;
+                    
+                    return (
+                      <div
+                        key={employee.id}
+                        className={`p-3 rounded-lg cursor-pointer border transition-all duration-200 hover-lift ${
+                          selectedChat === employee.id
+                            ? 'bg-oficaz-primary text-white border-oficaz-primary'
+                            : 'bg-muted hover:bg-muted/80 border-border'
+                        }`}
+                        onClick={() => setSelectedChat(employee.id)}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="relative">
+                            <UserAvatar 
+                              fullName={employee.fullName || ''} 
+                              size="md" 
+                              userId={employee.id}
+                              profilePicture={employee.profilePicture}
+                            />
+                            {unreadCount > 0 && (
+                              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                              </span>
+                            )}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <p className={`truncate font-medium text-sm ${
+                              selectedChat === employee.id ? 'text-white' : 'text-foreground'
+                            }`}>
+                              {employee.fullName}
+                            </p>
+                            <div className={`truncate text-xs ${
+                              selectedChat === employee.id ? 'text-white/90' : 'text-muted-foreground'
+                            }`}>
+                              {getRoleDisplay(employee)}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -876,30 +889,43 @@ export default function Messages() {
               </div>
               <div className={`flex-1 overflow-y-auto transition-opacity duration-300 ${messagesLoading ? 'opacity-50' : ''}`}>
                 <div className="space-y-2 py-4">
-                  {filteredEmployees.map((employee) => (
-                    <div
-                      key={employee.id}
-                      className="p-4 bg-card rounded-lg border border-border cursor-pointer hover:bg-muted"
-                      onClick={() => setSelectedChat(employee.id)}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <UserAvatar 
-                          fullName={employee.fullName || ''} 
-                          size="md" 
-                          userId={employee.id}
-                          profilePicture={employee.profilePicture}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-foreground truncate">
-                            {employee.fullName}
-                          </p>
-                          <div className="text-sm text-muted-foreground truncate">
-                            {getRoleDisplay(employee)}
+                  {filteredEmployees.map((employee) => {
+                    const unreadCount = (messages as Message[] || []).filter(
+                      m => !m.isRead && m.senderId === employee.id
+                    ).length;
+                    
+                    return (
+                      <div
+                        key={employee.id}
+                        className="p-4 bg-card rounded-lg border border-border cursor-pointer hover:bg-muted"
+                        onClick={() => setSelectedChat(employee.id)}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="relative">
+                            <UserAvatar 
+                              fullName={employee.fullName || ''} 
+                              size="md" 
+                              userId={employee.id}
+                              profilePicture={employee.profilePicture}
+                            />
+                            {unreadCount > 0 && (
+                              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-foreground truncate">
+                              {employee.fullName}
+                            </p>
+                            <div className="text-sm text-muted-foreground truncate">
+                              {getRoleDisplay(employee)}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>)
