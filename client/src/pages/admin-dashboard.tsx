@@ -69,9 +69,13 @@ export default function AdminDashboard() {
   // ⚠️ PROTECTED - DO NOT MODIFY - Message system states identical to employee system
   const [temporaryMessage, setTemporaryMessage] = useState<string | null>(null);
   
-  // Staggered card animation state (only runs once on initial load)
-  const [visibleCards, setVisibleCards] = useState<number[]>([]);
-  const hasAnimatedOnce = useRef(false);
+  // Staggered card animation - only runs ONCE per session (persisted in sessionStorage)
+  const [hasAnimated, setHasAnimated] = useState(() => 
+    sessionStorage.getItem('adminDashboardAnimated') === 'true'
+  );
+  const [visibleCards, setVisibleCards] = useState<number[]>(() => 
+    sessionStorage.getItem('adminDashboardAnimated') === 'true' ? [0, 1, 2, 3, 4, 5, 6] : []
+  );
 
   // Hook para destacar el día de hoy en el calendario con estilos inline
   useEffect(() => {
@@ -684,20 +688,24 @@ export default function AdminDashboard() {
   // Show skeleton loading on initial load
   const isInitialLoading = isDashboardLoading && !dashboardData;
 
-  // Staggered card animation effect - only runs ONCE on initial load
+  // Staggered card animation effect - only runs ONCE per session
   useEffect(() => {
-    if (!isInitialLoading && dashboardData && !hasAnimatedOnce.current) {
-      hasAnimatedOnce.current = true;
+    if (!isInitialLoading && dashboardData && !hasAnimated) {
       // Stagger the appearance of each card (7 cards total)
       const totalCards = 7;
       const delays = Array.from({ length: totalCards }, (_, i) => i);
       delays.forEach((cardIndex) => {
         setTimeout(() => {
           setVisibleCards(prev => [...prev, cardIndex]);
-        }, cardIndex * 80); // 80ms delay between each card
+          // Mark animation complete after last card
+          if (cardIndex === totalCards - 1) {
+            sessionStorage.setItem('adminDashboardAnimated', 'true');
+            setHasAnimated(true);
+          }
+        }, cardIndex * 80);
       });
     }
-  }, [isInitialLoading, dashboardData]);
+  }, [isInitialLoading, dashboardData, hasAnimated]);
 
   // Helper function to get card animation class
   const getCardAnimationClass = (cardIndex: number) => {
@@ -707,63 +715,6 @@ export default function AdminDashboard() {
 
   return (
     <div>
-
-      {/* Skeleton Loading State */}
-      {isInitialLoading && (
-        <div className="absolute inset-0 opacity-100">
-          <div className="space-y-6 animate-pulse">
-            {/* Trial Manager skeleton */}
-            <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-            
-            {/* Two column layout skeleton */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left column */}
-              <div className="space-y-6">
-                {/* Quick clock card */}
-                <div className="rounded-lg border bg-card p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-5 h-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                  </div>
-                  <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                </div>
-                {/* Pending items card */}
-                <div className="rounded-lg border bg-card p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-5 h-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="h-5 w-40 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="h-14 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="h-14 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="h-14 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                  </div>
-                </div>
-                {/* Messages card */}
-                <div className="rounded-lg border bg-card p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-5 h-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="h-5 w-36 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                  </div>
-                </div>
-              </div>
-              {/* Right column - Calendar */}
-              <div className="rounded-lg border bg-card p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-5 h-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                  <div className="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                </div>
-                <div className="h-80 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Trial Status Management */}
       <div className={`mb-6 ${getCardAnimationClass(0)}`}>
         <TrialManager />
