@@ -816,7 +816,7 @@ export default function Reminders() {
             {sortedReminders.map((reminder: Reminder) => (
               <Card
                 key={reminder.id}
-                className={`transition-all hover:shadow-md ${
+                className={`transition-all hover:shadow-md flex flex-col h-full ${
                   reminder.isCompleted ? 'opacity-75' : ''
                 } ${reminder.isArchived ? 'opacity-60' : ''}`}
                 style={{ backgroundColor: reminder.color }}
@@ -877,74 +877,79 @@ export default function Reminders() {
                     {reminder.title}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0">
-                  {reminder.content && (
-                    <p className={`text-sm text-gray-700 dark:text-gray-800 mb-3 ${isCompletedByCurrentUser(reminder) ? 'line-through' : ''}`}>
-                      {reminder.content}
-                    </p>
-                  )}
-                  
-                  {reminder.reminderDate && (
-                    <div className="flex items-center gap-1 mb-3">
-                      <Calendar className="w-3 h-3 text-gray-600 dark:text-gray-700" />
-                      <span className={`text-xs ${
-                        isPast(new Date(reminder.reminderDate)) && !isCompletedByCurrentUser(reminder)
-                          ? 'text-red-600 font-medium' 
-                          : 'text-gray-600 dark:text-gray-700'
-                      }`}>
-                        {formatReminderDate(reminder.reminderDate)}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Assigned users avatars */}
-                  <AssignedUsersAvatars 
-                    assignedUserIds={reminder.assignedUserIds} 
-                    employees={employees} 
-                    maxDisplay={3}
-                    currentUserId={user?.id}
-                    completedByUserIds={reminder.completedByUserIds}
-                  />
-                  
-                  {/* Status indicator for assigned completion */}
-                  {isCompletedByAssignedOnly(reminder) && (
-                    <div className="mt-3 p-2 bg-orange-50 border border-orange-200 rounded-md">
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-orange-600" />
-                        <span className="text-xs text-orange-700 font-medium">
-                          Completado por todos los asignados
+                <CardContent className="pt-0 flex-1 flex flex-col">
+                  <div className="flex-1">
+                    {reminder.content && (
+                      <p className={`text-sm text-gray-700 dark:text-gray-800 mb-3 line-clamp-3 ${isCompletedByCurrentUser(reminder) ? 'line-through' : ''}`}>
+                        {reminder.content}
+                      </p>
+                    )}
+                    
+                    {reminder.reminderDate && (
+                      <div className="flex items-center gap-1 mb-3">
+                        <Calendar className="w-3 h-3 text-gray-600 dark:text-gray-700" />
+                        <span className={`text-xs ${
+                          isPast(new Date(reminder.reminderDate)) && !isCompletedByCurrentUser(reminder)
+                            ? 'text-red-600 font-medium' 
+                            : 'text-gray-600 dark:text-gray-700'
+                        }`}>
+                          {formatReminderDate(reminder.reminderDate)}
                         </span>
                       </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between mt-4">
-                    <Badge variant="secondary" className={`text-xs ${PRIORITY_COLORS[reminder.priority]}`}>
-                      {reminder.priority === 'high' ? 'Alta' : reminder.priority === 'medium' ? 'Media' : 'Baja'}
-                    </Badge>
+                    )}
+                  </div>
+                  
+                  {/* Footer section - always at bottom */}
+                  <div className="mt-auto">
+                    {/* Assigned users avatars */}
+                    <AssignedUsersAvatars 
+                      assignedUserIds={reminder.assignedUserIds} 
+                      employees={employees} 
+                      maxDisplay={3}
+                      currentUserId={user?.id}
+                      completedByUserIds={reminder.completedByUserIds}
+                    />
                     
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleComplete(reminder)}
-                      className={`h-7 px-3 text-xs font-medium transition-colors ${
-                        isCompletedByCurrentUser(reminder)
-                          ? 'bg-green-100 text-green-800 hover:bg-green-200 border border-green-300'
-                          : 'bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300'
-                      }`}
-                    >
-                      {isCompletedByCurrentUser(reminder) ? (
-                        <span className="flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3" />
-                          Completado
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          Marcar como hecho
-                        </span>
-                      )}
-                    </Button>
+                    {/* Status indicator for assigned completion */}
+                    {isCompletedByAssignedOnly(reminder) && (
+                      <div className="mt-3 p-2 bg-orange-50 border border-orange-200 rounded-md">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-orange-600" />
+                          <span className="text-xs text-orange-700 font-medium">
+                            Completado por todos los asignados
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between mt-4">
+                      <Badge variant="secondary" className={`text-xs ${PRIORITY_COLORS[reminder.priority]}`}>
+                        {reminder.priority === 'high' ? 'Alta' : reminder.priority === 'medium' ? 'Media' : 'Baja'}
+                      </Badge>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleComplete(reminder)}
+                        className={`h-7 px-3 text-xs font-medium transition-colors ${
+                          isCompletedByCurrentUser(reminder)
+                            ? 'bg-green-100 text-green-800 hover:bg-green-200 border border-green-300'
+                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300'
+                        }`}
+                      >
+                        {isCompletedByCurrentUser(reminder) ? (
+                          <span className="flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3" />
+                            Completado
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            Marcar como hecho
+                          </span>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
