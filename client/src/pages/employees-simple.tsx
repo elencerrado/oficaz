@@ -433,7 +433,7 @@ export default function EmployeesSimple() {
       address: employee.address || '',
       emergencyContactName: employee.emergencyContactName || '',
       emergencyContactPhone: employee.emergencyContactPhone || '',
-      workReportMode: employee.workReportMode || 'disabled',
+      workReportMode: employee.workReportMode === 'on_clockout' ? 'both' : (employee.workReportMode || 'disabled'),
     });
     setShowEditModal(true);
   };

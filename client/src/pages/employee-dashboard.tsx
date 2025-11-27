@@ -865,7 +865,7 @@ export default function EmployeeDashboard() {
       feature: 'messages'
     },
     ...((subscription?.plan === 'pro' || subscription?.plan === 'master') && 
-       (user?.workReportMode === 'manual' || user?.workReportMode === 'both') ? [
+       (user?.workReportMode === 'manual' || user?.workReportMode === 'both' || user?.workReportMode === 'on_clockout') ? [
       { 
         icon: ClipboardList, 
         title: 'Partes', 
