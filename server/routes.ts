@@ -6718,7 +6718,16 @@ Responde directamente a este email para contactar con la persona.
         .slice(0, 5);
       
       // Process messages - group by sender, get latest per sender (first 20 messages)
-      const recentMsgs = messages.slice(0, 20);
+      // Add sender name and profile picture from employees list
+      const employeeMap = new Map(employees.map((emp: any) => [emp.id, emp]));
+      const recentMsgs = messages.slice(0, 20).map((message: any) => {
+        const sender = employeeMap.get(message.senderId);
+        return {
+          ...message,
+          senderName: sender?.fullName || sender?.name || 'Empleado',
+          senderProfilePicture: sender?.profilePicture || null,
+        };
+      });
       const messagesBySender: any = {};
       recentMsgs.forEach((message: any) => {
         if (!messagesBySender[message.senderId] || new Date(message.createdAt) > new Date(messagesBySender[message.senderId].createdAt)) {
