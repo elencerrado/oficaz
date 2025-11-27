@@ -1327,7 +1327,7 @@ export default function EmployeeDashboard() {
 
       {/* Modal de Parte de Obra al fichar salida */}
       <Dialog open={showWorkReportModal} onOpenChange={(open) => !open && handleCloseWorkReportModal()}>
-        <DialogContent className="sm:max-w-[500px] bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
           <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <ClipboardList className="h-5 w-5 text-blue-600" />
             Parte de Obra
