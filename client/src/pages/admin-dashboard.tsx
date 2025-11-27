@@ -69,8 +69,9 @@ export default function AdminDashboard() {
   // ⚠️ PROTECTED - DO NOT MODIFY - Message system states identical to employee system
   const [temporaryMessage, setTemporaryMessage] = useState<string | null>(null);
   
-  // Staggered card animation state
+  // Staggered card animation state (only runs once on initial load)
   const [visibleCards, setVisibleCards] = useState<number[]>([]);
+  const hasAnimatedOnce = useRef(false);
 
   // Hook para destacar el día de hoy en el calendario con estilos inline
   useEffect(() => {
@@ -683,11 +684,10 @@ export default function AdminDashboard() {
   // Show skeleton loading on initial load
   const isInitialLoading = isDashboardLoading && !dashboardData;
 
-  // Staggered card animation effect
+  // Staggered card animation effect - only runs ONCE on initial load
   useEffect(() => {
-    if (!isInitialLoading && dashboardData) {
-      // Reset visible cards when data loads
-      setVisibleCards([]);
+    if (!isInitialLoading && dashboardData && !hasAnimatedOnce.current) {
+      hasAnimatedOnce.current = true;
       // Stagger the appearance of each card (7 cards total)
       const totalCards = 7;
       const delays = Array.from({ length: totalCards }, (_, i) => i);
