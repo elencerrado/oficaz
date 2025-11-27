@@ -124,18 +124,7 @@ export function TrialManager() {
 
 
 
-  if (loadingTrial) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center p-6">
-          <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
-          <span className="ml-2">Cargando estado de prueba...</span>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!trialStatus) return null;
+  if (loadingTrial || !trialStatus) return null;
 
   // If account is active (paid), don't show anything - subscription is working
   if (trialStatus.status === 'active' && !trialStatus.isTrialActive) {
