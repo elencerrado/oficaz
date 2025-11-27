@@ -677,8 +677,67 @@ export default function AdminDashboard() {
     return events;
   }, [allHolidays, approvedVacations, pendingVacations]);
 
+  // Show skeleton loading on initial load
+  const isInitialLoading = isDashboardLoading && !dashboardData;
+
   return (
-    <div>
+    <div className={`transition-opacity duration-500 ${isInitialLoading ? 'opacity-0' : 'opacity-100'}`}>
+
+      {/* Skeleton Loading State */}
+      {isInitialLoading && (
+        <div className="absolute inset-0 opacity-100">
+          <div className="space-y-6 animate-pulse">
+            {/* Trial Manager skeleton */}
+            <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+            
+            {/* Two column layout skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left column */}
+              <div className="space-y-6">
+                {/* Quick clock card */}
+                <div className="rounded-lg border bg-card p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-5 h-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  </div>
+                  <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                </div>
+                {/* Pending items card */}
+                <div className="rounded-lg border bg-card p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-5 h-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="h-5 w-40 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="h-14 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="h-14 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="h-14 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  </div>
+                </div>
+                {/* Messages card */}
+                <div className="rounded-lg border bg-card p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-5 h-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="h-5 w-36 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  </div>
+                </div>
+              </div>
+              {/* Right column - Calendar */}
+              <div className="rounded-lg border bg-card p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-5 h-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  <div className="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                </div>
+                <div className="h-80 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Trial Status Management */}
       <div className="mb-6">
@@ -734,7 +793,7 @@ export default function AdminDashboard() {
         <div className="space-y-6">
           
           {/* Quick Clock In/Out */}
-          <Card>
+          <Card className={`transition-opacity duration-300 ${isDashboardLoading ? 'opacity-60' : 'opacity-100'}`}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5" />
@@ -1187,7 +1246,7 @@ export default function AdminDashboard() {
 
         {/* Right Column - Calendar with Events */}
         <div>
-          <Card className="h-fit">
+          <Card className={`h-fit transition-opacity duration-300 ${isDashboardLoading ? 'opacity-60' : 'opacity-100'}`}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CalendarDays className="h-5 w-5" />
