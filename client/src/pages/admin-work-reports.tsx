@@ -455,7 +455,9 @@ export default function AdminWorkReportsPage() {
                 onClick={() => {
                   const modes: Record<number, string> = {};
                   employees.forEach(emp => {
-                    modes[emp.id] = emp.workReportMode || 'manual';
+                    let mode = emp.workReportMode || 'manual';
+                    if (mode === 'on_clockout') mode = 'both';
+                    modes[emp.id] = mode;
                   });
                   setEmployeeWorkModes(modes);
                   setConfigModalOpen(true);
