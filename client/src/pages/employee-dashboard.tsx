@@ -500,6 +500,13 @@ export default function EmployeeDashboard() {
       const message = generateDynamicMessage('salida');
       showTemporaryMessage(message);
       
+      // Debug: verificar valores para el popup de parte de obra
+      console.log('🔍 DEBUG clockOut:', {
+        workReportMode: user?.workReportMode,
+        plan: subscription?.plan,
+        userId: user?.id
+      });
+      
       // Mostrar popup de parte de obra si el usuario tiene configurado on_clockout o both
       const workReportMode = user?.workReportMode;
       if ((subscription?.plan === 'pro' || subscription?.plan === 'master') && 
@@ -1314,6 +1321,136 @@ export default function EmployeeDashboard() {
           onClose={() => setIsAlarmModalOpen(false)}
         />
       )}
+
+      {/* PWA Install Prompt - solo en dashboard de empleados */}
+      <PWAInstallPrompt />
+
+      {/* Modal de Parte de Obra al fichar salida */}
+      <Dialog open={showWorkReportModal} onOpenChange={(open) => !open && handleCloseWorkReportModal()}>
+        <DialogContent className="sm:max-w-[500px] bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+          <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-blue-600" />
+            Parte de Obra
+          </DialogTitle>
+          <DialogDescription className="text-gray-600 dark:text-gray-400">
+            Registra los detalles del trabajo realizado durante tu jornada.
+          </DialogDescription>
+          
+          <div className="space-y-4 py-2">
+            {/* Horas pre-llenadas */}
+            {completedSessionData && (
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 flex justify-between items-center">
+                <div className="text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">Entrada: </span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {new Date(completedSessionData.clockIn).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                <div className="text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">Salida: </span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {new Date(completedSessionData.clockOut).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Código de obra (opcional) */}
+            <div className="space-y-2">
+              <Label htmlFor="refCode" className="text-gray-700 dark:text-gray-300">
+                Código de Obra <span className="text-gray-400 text-sm">(opcional)</span>
+              </Label>
+              <Input
+                id="refCode"
+                value={workReportForm.refCode}
+                onChange={(e) => setWorkReportForm({ ...workReportForm, refCode: e.target.value })}
+                placeholder="Ej: OBR-2024-001"
+                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                data-testid="input-work-report-refcode"
+              />
+            </div>
+
+            {/* Ubicación */}
+            <div className="space-y-2">
+              <Label htmlFor="location" className="text-gray-700 dark:text-gray-300">
+                Ubicación <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="location"
+                value={workReportForm.location}
+                onChange={(e) => setWorkReportForm({ ...workReportForm, location: e.target.value })}
+                placeholder="Dirección o nombre del lugar de trabajo"
+                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                data-testid="input-work-report-location"
+              />
+            </div>
+
+            {/* Cliente (opcional) */}
+            <div className="space-y-2">
+              <Label htmlFor="clientName" className="text-gray-700 dark:text-gray-300">
+                Cliente <span className="text-gray-400 text-sm">(opcional)</span>
+              </Label>
+              <Input
+                id="clientName"
+                value={workReportForm.clientName}
+                onChange={(e) => setWorkReportForm({ ...workReportForm, clientName: e.target.value })}
+                placeholder="Nombre del cliente"
+                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                data-testid="input-work-report-client"
+              />
+            </div>
+
+            {/* Descripción del trabajo */}
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-gray-700 dark:text-gray-300">
+                Descripción del Trabajo <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                id="description"
+                value={workReportForm.description}
+                onChange={(e) => setWorkReportForm({ ...workReportForm, description: e.target.value })}
+                placeholder="Describe las tareas realizadas..."
+                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 min-h-[100px]"
+                data-testid="textarea-work-report-description"
+              />
+            </div>
+
+            {/* Notas (opcional) */}
+            <div className="space-y-2">
+              <Label htmlFor="notes" className="text-gray-700 dark:text-gray-300">
+                Notas adicionales <span className="text-gray-400 text-sm">(opcional)</span>
+              </Label>
+              <Textarea
+                id="notes"
+                value={workReportForm.notes}
+                onChange={(e) => setWorkReportForm({ ...workReportForm, notes: e.target.value })}
+                placeholder="Observaciones, incidencias, materiales utilizados..."
+                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 min-h-[60px]"
+                data-testid="textarea-work-report-notes"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 justify-end pt-2">
+            <Button
+              variant="outline"
+              onClick={handleCloseWorkReportModal}
+              className="border-gray-300 dark:border-gray-600"
+              data-testid="button-cancel-work-report"
+            >
+              Omitir
+            </Button>
+            <Button
+              onClick={handleSubmitWorkReport}
+              disabled={createWorkReportMutation.isPending}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              data-testid="button-submit-work-report"
+            >
+              {createWorkReportMutation.isPending ? 'Enviando...' : 'Enviar Parte'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -1664,136 +1801,6 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
           </AlertDialogContent>
         </AlertDialog>
       </div>
-      
-      {/* PWA Install Prompt - solo en dashboard de empleados */}
-      <PWAInstallPrompt />
-
-      {/* Modal de Parte de Obra al fichar salida */}
-      <Dialog open={showWorkReportModal} onOpenChange={(open) => !open && handleCloseWorkReportModal()}>
-        <DialogContent className="sm:max-w-[500px] bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
-          <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <ClipboardList className="h-5 w-5 text-blue-600" />
-            Parte de Obra
-          </DialogTitle>
-          <DialogDescription className="text-gray-600 dark:text-gray-400">
-            Registra los detalles del trabajo realizado durante tu jornada.
-          </DialogDescription>
-          
-          <div className="space-y-4 py-2">
-            {/* Horas pre-llenadas */}
-            {completedSessionData && (
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 flex justify-between items-center">
-                <div className="text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">Entrada: </span>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {new Date(completedSessionData.clockIn).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-                <div className="text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">Salida: </span>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {new Date(completedSessionData.clockOut).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Código de obra (opcional) */}
-            <div className="space-y-2">
-              <Label htmlFor="refCode" className="text-gray-700 dark:text-gray-300">
-                Código de Obra <span className="text-gray-400 text-sm">(opcional)</span>
-              </Label>
-              <Input
-                id="refCode"
-                value={workReportForm.refCode}
-                onChange={(e) => setWorkReportForm({ ...workReportForm, refCode: e.target.value })}
-                placeholder="Ej: OBR-2024-001"
-                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-                data-testid="input-work-report-refcode"
-              />
-            </div>
-
-            {/* Ubicación */}
-            <div className="space-y-2">
-              <Label htmlFor="location" className="text-gray-700 dark:text-gray-300">
-                Ubicación <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="location"
-                value={workReportForm.location}
-                onChange={(e) => setWorkReportForm({ ...workReportForm, location: e.target.value })}
-                placeholder="Dirección o nombre del lugar de trabajo"
-                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-                data-testid="input-work-report-location"
-              />
-            </div>
-
-            {/* Cliente (opcional) */}
-            <div className="space-y-2">
-              <Label htmlFor="clientName" className="text-gray-700 dark:text-gray-300">
-                Cliente <span className="text-gray-400 text-sm">(opcional)</span>
-              </Label>
-              <Input
-                id="clientName"
-                value={workReportForm.clientName}
-                onChange={(e) => setWorkReportForm({ ...workReportForm, clientName: e.target.value })}
-                placeholder="Nombre del cliente"
-                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-                data-testid="input-work-report-client"
-              />
-            </div>
-
-            {/* Descripción del trabajo */}
-            <div className="space-y-2">
-              <Label htmlFor="description" className="text-gray-700 dark:text-gray-300">
-                Descripción del Trabajo <span className="text-red-500">*</span>
-              </Label>
-              <Textarea
-                id="description"
-                value={workReportForm.description}
-                onChange={(e) => setWorkReportForm({ ...workReportForm, description: e.target.value })}
-                placeholder="Describe las tareas realizadas..."
-                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 min-h-[100px]"
-                data-testid="textarea-work-report-description"
-              />
-            </div>
-
-            {/* Notas (opcional) */}
-            <div className="space-y-2">
-              <Label htmlFor="notes" className="text-gray-700 dark:text-gray-300">
-                Notas adicionales <span className="text-gray-400 text-sm">(opcional)</span>
-              </Label>
-              <Textarea
-                id="notes"
-                value={workReportForm.notes}
-                onChange={(e) => setWorkReportForm({ ...workReportForm, notes: e.target.value })}
-                placeholder="Observaciones, incidencias, materiales utilizados..."
-                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 min-h-[60px]"
-                data-testid="textarea-work-report-notes"
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-3 justify-end pt-2">
-            <Button
-              variant="outline"
-              onClick={handleCloseWorkReportModal}
-              className="border-gray-300 dark:border-gray-600"
-              data-testid="button-cancel-work-report"
-            >
-              Omitir
-            </Button>
-            <Button
-              onClick={handleSubmitWorkReport}
-              disabled={createWorkReportMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              data-testid="button-submit-work-report"
-            >
-              {createWorkReportMutation.isPending ? 'Enviando...' : 'Enviar Parte'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
