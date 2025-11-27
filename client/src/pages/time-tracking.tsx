@@ -2502,12 +2502,17 @@ export default function TimeTracking() {
                     const breakStart = new Date(breakPeriod.breakStart);
                     const breakEnd = new Date(breakPeriod.breakEnd);
                     
-                    // Posición del descanso relativa al día (no a la sesión) para posicionamiento correcto
-                    const breakStartOffset = (breakStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
-                    const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+                    // Validar que el descanso esté dentro de la sesión
+                    const clampedBreakStart = new Date(Math.max(breakStart.getTime(), sessionStart.getTime()));
+                    const clampedBreakEnd = new Date(Math.min(breakEnd.getTime(), sessionEnd.getTime()));
                     
-                    const breakLeftPercentage = (breakStartOffset / totalDayDuration) * 100;
-                    const breakWidthPercentage = Math.max((breakDuration / totalDayDuration) * 100, 0.5); // Mínimo 0.5%
+                    // Posición del descanso relativa al día
+                    const breakStartOffset = (clampedBreakStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
+                    const breakDurationHours = (clampedBreakEnd.getTime() - clampedBreakStart.getTime()) / (1000 * 60 * 60);
+                    
+                    // Calcular porcentajes con límites
+                    const breakLeftPercentage = Math.max(0, Math.min((breakStartOffset / totalDayDuration) * 100, 100));
+                    const breakWidthPercentage = Math.max(0.5, Math.min((breakDurationHours / totalDayDuration) * 100, 100 - breakLeftPercentage));
                     
                     return (
                       <div
