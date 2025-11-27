@@ -4987,6 +4987,22 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Employee: Get unique ref codes for autocomplete
+  app.get('/api/work-reports/ref-codes', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const reports = await storage.getWorkReportsByUser(req.user!.id, {});
+      const refCodes = reports
+        .map(r => r.refCode)
+        .filter((code): code is string => !!code && code.trim() !== '')
+        .filter((code, index, self) => self.indexOf(code) === index)
+        .sort();
+      res.json(refCodes);
+    } catch (error: any) {
+      console.error('Ref codes fetch error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Employee: Update own work report
   app.patch('/api/work-reports/:id', authenticateToken, async (req: AuthRequest, res) => {
     try {

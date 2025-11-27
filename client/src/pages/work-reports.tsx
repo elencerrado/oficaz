@@ -139,21 +139,25 @@ export default function WorkReportsPage() {
     enabled: isAuthenticated && !authLoading
   });
 
-  const { uniqueLocations, uniqueClients } = useMemo(() => {
+  const { uniqueLocations, uniqueClients, uniqueRefCodes } = useMemo(() => {
     const locations = new Set<string>();
     const clients = new Set<string>();
+    const refCodes = new Set<string>();
     allReports.forEach(report => {
       if (report.location) locations.add(report.location);
       if (report.clientName) clients.add(report.clientName);
+      if (report.refCode) refCodes.add(report.refCode);
     });
     return {
       uniqueLocations: Array.from(locations).sort(),
-      uniqueClients: Array.from(clients).sort()
+      uniqueClients: Array.from(clients).sort(),
+      uniqueRefCodes: Array.from(refCodes).sort()
     };
   }, [allReports]);
 
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [showClientSuggestions, setShowClientSuggestions] = useState(false);
+  const [showRefCodeSuggestions, setShowRefCodeSuggestions] = useState(false);
 
   const filteredLocationSuggestions = useMemo(() => {
     if (!formData.location) return uniqueLocations.slice(0, 5);
@@ -168,6 +172,13 @@ export default function WorkReportsPage() {
       .filter(client => client.toLowerCase().includes(formData.clientName.toLowerCase()))
       .slice(0, 5);
   }, [formData.clientName, uniqueClients]);
+
+  const filteredRefCodeSuggestions = useMemo(() => {
+    if (!formData.refCode) return uniqueRefCodes.slice(0, 5);
+    return uniqueRefCodes
+      .filter(code => code.toLowerCase().includes(formData.refCode.toLowerCase()))
+      .slice(0, 5);
+  }, [formData.refCode, uniqueRefCodes]);
 
   const filteredReports = useMemo(() => {
     return reports.filter(report => {
@@ -673,15 +684,35 @@ export default function WorkReportsPage() {
                         placeholder="Seleccionar fecha"
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 relative">
                       <Label className="text-sm">Código ref. <span className="text-gray-400 text-xs">(opcional)</span></Label>
                       <Input
                         placeholder="Ej: OBR-2024-001"
                         value={formData.refCode}
                         onChange={(e) => setFormData({ ...formData, refCode: e.target.value })}
+                        onFocus={() => setShowRefCodeSuggestions(true)}
+                        onBlur={() => setTimeout(() => setShowRefCodeSuggestions(false), 200)}
                         className="bg-white dark:bg-gray-800"
                         data-testid="input-ref-code"
                       />
+                      {showRefCodeSuggestions && filteredRefCodeSuggestions.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                          {filteredRefCodeSuggestions.map((code, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                              onMouseDown={() => {
+                                setFormData({ ...formData, refCode: code });
+                                setShowRefCodeSuggestions(false);
+                              }}
+                            >
+                              <FileText className="w-3 h-3 text-blue-400" />
+                              {code}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -1027,15 +1058,35 @@ export default function WorkReportsPage() {
                       placeholder="Seleccionar fecha"
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative">
                     <Label className="text-sm">Código ref. <span className="text-gray-400 text-xs">(opcional)</span></Label>
                     <Input
                       placeholder="Ej: OBR-2024-001"
                       value={formData.refCode}
                       onChange={(e) => setFormData({ ...formData, refCode: e.target.value })}
+                      onFocus={() => setShowRefCodeSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowRefCodeSuggestions(false), 200)}
                       className="bg-white dark:bg-gray-800"
                       data-testid="input-edit-ref-code"
                     />
+                    {showRefCodeSuggestions && filteredRefCodeSuggestions.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                        {filteredRefCodeSuggestions.map((code, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                            onMouseDown={() => {
+                              setFormData({ ...formData, refCode: code });
+                              setShowRefCodeSuggestions(false);
+                            }}
+                          >
+                            <FileText className="w-3 h-3 text-blue-400" />
+                            {code}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
