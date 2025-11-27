@@ -86,10 +86,17 @@ export function DocumentSignatureModal({
       clientY = event.clientY;
     }
 
-    // Return coordinates in CSS units (context is already scaled by DPR)
+    // Calculate the scaling factor between CSS size and canvas internal size
+    // This accounts for any CSS transforms, zoom, or DPR mismatches
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const dpr = window.devicePixelRatio || 1;
+
+    // Return coordinates accounting for both offset and scaling
+    // Divide by DPR because context is already scaled
     return {
-      x: clientX - rect.left,
-      y: clientY - rect.top,
+      x: ((clientX - rect.left) * scaleX) / dpr,
+      y: ((clientY - rect.top) * scaleY) / dpr,
     };
   }, []);
 
