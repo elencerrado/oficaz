@@ -20,6 +20,7 @@ export function DocumentSignatureModal({
   isLoading = false
 }: DocumentSignatureModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const lastPointRef = useRef<{ x: number; y: number } | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
 
@@ -28,7 +29,10 @@ export function DocumentSignatureModal({
     if (canvas) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Fill with white background for clean signature
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        lastPointRef.current = null;
         setHasSignature(false);
       }
     }
@@ -39,20 +43,29 @@ export function DocumentSignatureModal({
     if (canvas) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // Set canvas size to match display size
+        // High quality canvas setup - same as work reports
         const rect = canvas.getBoundingClientRect();
         const dpr = window.devicePixelRatio || 1;
         
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
+        // Use higher resolution for better quality
+        canvas.width = rect.width * dpr * 2;
+        canvas.height = rect.height * dpr * 2;
         
-        ctx.scale(dpr, dpr);
+        ctx.scale(dpr * 2, dpr * 2);
         
-        // Configure drawing style
+        // White background
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, rect.width, rect.height);
+        
+        // High quality drawing style - matching work reports
+        ctx.strokeStyle = '#1a1a1a';
+        ctx.lineWidth = 5; // Thicker line for better visibility
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        ctx.strokeStyle = '#1f2937';
-        ctx.lineWidth = 2;
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
+        lastPointRef.current = null;
       }
     }
   }, []);
@@ -62,21 +75,22 @@ export function DocumentSignatureModal({
     if (!canvas) return { x: 0, y: 0 };
 
     const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width / 2; // Account for 2x scale
+    const scaleY = canvas.height / rect.height / 2;
+    
     let clientX, clientY;
 
     if ('touches' in event) {
-      // Touch event
       clientX = event.touches[0]?.clientX || 0;
       clientY = event.touches[0]?.clientY || 0;
     } else {
-      // Mouse event
       clientX = event.clientX;
       clientY = event.clientY;
     }
 
     return {
-      x: clientX - rect.left,
-      y: clientY - rect.top,
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
     };
   }, []);
 
@@ -87,9 +101,10 @@ export function DocumentSignatureModal({
     if (!canvas || !ctx) return;
 
     setIsDrawing(true);
-    const pos = getEventPos(event);
+    const { x, y } = getEventPos(event);
+    lastPointRef.current = { x, y };
     ctx.beginPath();
-    ctx.moveTo(pos.x, pos.y);
+    ctx.moveTo(x, y);
   }, [getEventPos]);
 
   const draw = useCallback((event: React.MouseEvent | React.TouchEvent) => {
@@ -100,23 +115,98 @@ export function DocumentSignatureModal({
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx) return;
 
-    const pos = getEventPos(event);
-    ctx.lineTo(pos.x, pos.y);
-    ctx.stroke();
+    const { x, y } = getEventPos(event);
+    
+    // Use quadratic curves for smoother lines - same as work reports
+    if (lastPointRef.current) {
+      const midX = (lastPointRef.current.x + x) / 2;
+      const midY = (lastPointRef.current.y + y) / 2;
+      ctx.quadraticCurveTo(lastPointRef.current.x, lastPointRef.current.y, midX, midY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(midX, midY);
+    }
+    
+    lastPointRef.current = { x, y };
     setHasSignature(true);
   }, [isDrawing, getEventPos]);
 
   const stopDrawing = useCallback((event: React.MouseEvent | React.TouchEvent) => {
     event.preventDefault();
+    if (isDrawing && lastPointRef.current) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.lineTo(lastPointRef.current.x, lastPointRef.current.y);
+          ctx.stroke();
+        }
+      }
+    }
     setIsDrawing(false);
-  }, []);
+    lastPointRef.current = null;
+  }, [isDrawing]);
 
   const handleSign = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas || !hasSignature) return;
 
-    // Convert canvas to data URL (base64)
-    const signatureData = canvas.toDataURL('image/png');
+    // Optimize signature: create a smaller canvas with the signature cropped to content
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Get image data to find signature bounds
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    
+    let minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0;
+    
+    // Find bounds of non-white pixels
+    for (let y = 0; y < canvas.height; y++) {
+      for (let x = 0; x < canvas.width; x++) {
+        const idx = (y * canvas.width + x) * 4;
+        // Check if pixel is not white (has signature content)
+        if (data[idx] < 250 || data[idx + 1] < 250 || data[idx + 2] < 250) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    
+    // Add padding around signature
+    const padding = 20;
+    minX = Math.max(0, minX - padding);
+    minY = Math.max(0, minY - padding);
+    maxX = Math.min(canvas.width, maxX + padding);
+    maxY = Math.min(canvas.height, maxY + padding);
+    
+    const width = maxX - minX;
+    const height = maxY - minY;
+    
+    // Create optimized canvas with cropped signature
+    const optimizedCanvas = document.createElement('canvas');
+    const targetWidth = Math.min(400, width); // Max 400px wide
+    const scale = targetWidth / width;
+    optimizedCanvas.width = targetWidth;
+    optimizedCanvas.height = height * scale;
+    
+    const optCtx = optimizedCanvas.getContext('2d');
+    if (optCtx) {
+      optCtx.fillStyle = 'white';
+      optCtx.fillRect(0, 0, optimizedCanvas.width, optimizedCanvas.height);
+      optCtx.imageSmoothingEnabled = true;
+      optCtx.imageSmoothingQuality = 'high';
+      optCtx.drawImage(
+        canvas, 
+        minX, minY, width, height,
+        0, 0, optimizedCanvas.width, optimizedCanvas.height
+      );
+    }
+    
+    // Convert to optimized PNG with good quality
+    const signatureData = optimizedCanvas.toDataURL('image/png', 0.9);
     onSign(signatureData);
   }, [hasSignature, onSign]);
 
