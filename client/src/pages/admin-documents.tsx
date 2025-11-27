@@ -495,7 +495,7 @@ export default function AdminDocuments() {
     return `${docTypeName}${dateInfo}${specialKeyword} - ${cleanEmployeeName}.${extension}`;
   };
 
-  const handleFileUpload = async (file: File, targetEmployeeId?: number, cleanFileName?: string) => {
+  const handleFileUpload = async (file: File, targetEmployeeId?: number, cleanFileName?: string, requiresSignature?: boolean) => {
     if (!file) return;
     
     setIsUploading(true);
@@ -513,6 +513,11 @@ export default function AdminDocuments() {
       formData.append('cleanFileName', cleanFileName);
     }
     
+    // Send requires signature flag
+    if (requiresSignature) {
+      formData.append('requiresSignature', 'true');
+    }
+    
     uploadMutation.mutate(formData);
   };
 
@@ -521,19 +526,14 @@ export default function AdminDocuments() {
     try {
       if (uploadMode === 'circular') {
         // Circular mode: Upload each file to ALL selected employees
+        // IMPORTANT: For circular documents, keep original filename (don't rename)
+        // Each employee gets their own copy with the same original name
         let totalUploads = 0;
         for (const analysis of uploadAnalysis) {
           for (const employeeId of uploadSelectedEmployees) {
-            const employee = employees.find((e: Employee) => e.id === employeeId);
-            if (employee) {
-              const cleanFileName = generateCleanFileName(
-                analysis.file.name, 
-                employee, 
-                analysis.documentType
-              );
-              await handleFileUpload(analysis.file, employeeId, cleanFileName);
-              totalUploads++;
-            }
+            // Use original filename for circulars - don't modify it
+            await handleFileUpload(analysis.file, employeeId, analysis.file.name, uploadRequiresSignature);
+            totalUploads++;
           }
         }
         
@@ -550,7 +550,7 @@ export default function AdminDocuments() {
               analysis.employee, 
               analysis.documentType
             );
-            await handleFileUpload(analysis.file, analysis.employee.id, cleanFileName);
+            await handleFileUpload(analysis.file, analysis.employee.id, cleanFileName, uploadRequiresSignature);
           }
         }
         

@@ -5833,6 +5833,9 @@ Responde directamente a este email para contactar con la persona.
 
       // Use clean filename if provided, otherwise use original
       const originalName = req.body.cleanFileName || req.file.originalname;
+      
+      // Check if document requires signature
+      const requiresSignature = req.body.requiresSignature === 'true';
 
       const document = await storage.createDocument({
         userId: targetEmployeeId,
@@ -5842,6 +5845,7 @@ Responde directamente a este email para contactar con la persona.
         filePath: req.file.filename, // Store only filename, not full path
         mimeType: req.file.mimetype || null,
         uploadedBy: req.user!.id,
+        requiresSignature: requiresSignature,
       });
 
       console.log(`Document uploaded: ${originalName} for user ${targetEmployeeId}`);

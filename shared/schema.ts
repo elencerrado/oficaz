@@ -412,6 +412,7 @@ export const documents = pgTable("documents", {
   filePath: text("file_path"),
   uploadedBy: integer("uploaded_by").references(() => users.id),
   // Document signature and acceptance tracking
+  requiresSignature: boolean("requires_signature").default(false).notNull(), // If true, employee must sign to accept
   isViewed: boolean("is_viewed").default(false).notNull(),
   isAccepted: boolean("is_accepted").default(false).notNull(),
   acceptedAt: timestamp("accepted_at"),
