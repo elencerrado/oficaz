@@ -7165,6 +7165,12 @@ Responde directamente a este email para contactar con la persona.
       if (updates.status !== undefined) allowedUpdates.status = updates.status;
       if (updates.role !== undefined) allowedUpdates.role = updates.role;
       if (updates.vacationDaysAdjustment !== undefined) allowedUpdates.vacationDaysAdjustment = updates.vacationDaysAdjustment.toString();
+      if (updates.workReportMode !== undefined) allowedUpdates.workReportMode = updates.workReportMode;
+      if (updates.personalEmail !== undefined) allowedUpdates.personalEmail = updates.personalEmail;
+      if (updates.personalPhone !== undefined) allowedUpdates.personalPhone = updates.personalPhone;
+      if (updates.address !== undefined) allowedUpdates.address = updates.address;
+      if (updates.emergencyContactName !== undefined) allowedUpdates.emergencyContactName = updates.emergencyContactName;
+      if (updates.emergencyContactPhone !== undefined) allowedUpdates.emergencyContactPhone = updates.emergencyContactPhone;
 
       console.log('📝 Final allowedUpdates:', allowedUpdates);
 
