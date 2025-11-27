@@ -2323,9 +2323,9 @@ export default function TimeTracking() {
           <div className="relative h-5">
             {/* Línea base gris */}
             <div className="h-5 bg-gray-200 rounded-sm relative overflow-hidden">
-              {/* Barra azul progresiva (se va llenando en tiempo real) */}
+              {/* Barra verde progresiva para sesión activa (se va llenando en tiempo real) */}
               <div
-                className="absolute top-0 h-5 bg-blue-500 rounded-sm transition-all duration-1000"
+                className="absolute top-0 h-5 bg-green-500 rounded-sm transition-all duration-1000"
                 style={{
                   left: '0%',
                   width: `${progressPercentage}%`
@@ -2408,10 +2408,10 @@ export default function TimeTracking() {
             
             {/* Estado actual en tiempo real con punto pulsante - MISMO LUGAR que salida */}
             <div className="absolute flex items-center" style={{ left: '100%', top: '0px', transform: 'translateX(-100%)' }}>
-              <span className={`text-xs font-medium mr-1 whitespace-nowrap ${activeBreakPeriod ? 'text-orange-600' : 'text-blue-600'}`}>
+              <span className={`text-xs font-medium mr-1 whitespace-nowrap ${activeBreakPeriod ? 'text-orange-600' : 'text-green-600'}`}>
                 {activeBreakPeriod ? 'En descanso' : 'Trabajando'}
               </span>
-              <div className={`w-2 h-2 rounded-full ${activeBreakPeriod ? 'bg-orange-500 animate-pulse' : 'bg-blue-500 animate-pulse'}`}></div>
+              <div className={`w-2 h-2 rounded-full ${activeBreakPeriod ? 'bg-orange-500 animate-pulse' : 'bg-green-500 animate-pulse'}`}></div>
             </div>
           </div>
         </div>
