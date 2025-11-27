@@ -17,6 +17,7 @@ import {
   Bell, 
   Plus, 
   Clock, 
+  Circle,
   Pin, 
   Archive, 
   Trash2, 
@@ -902,25 +903,25 @@ export default function Reminders() {
                   {/* Footer section - always at bottom */}
                   <div className="mt-auto">
                     {/* Assigned users avatars */}
-                    <AssignedUsersAvatars 
-                      assignedUserIds={reminder.assignedUserIds} 
-                      employees={employees} 
-                      maxDisplay={3}
-                      currentUserId={user?.id}
-                      completedByUserIds={reminder.completedByUserIds}
-                    />
+                    <div className="flex items-center justify-between">
+                      <AssignedUsersAvatars 
+                        assignedUserIds={reminder.assignedUserIds} 
+                        employees={employees} 
+                        maxDisplay={3}
+                        currentUserId={user?.id}
+                        completedByUserIds={reminder.completedByUserIds}
+                      />
+                      {isCompletedByAssignedOnly(reminder) && (
+                        <span className="text-xs text-orange-600 font-medium">
+                          Completado por todos
+                        </span>
+                      )}
+                    </div>
 
                     <div className="flex items-center justify-between mt-4">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className={`text-xs ${PRIORITY_COLORS[reminder.priority]}`}>
-                          {reminder.priority === 'high' ? 'Alta' : reminder.priority === 'medium' ? 'Media' : 'Baja'}
-                        </Badge>
-                        {isCompletedByAssignedOnly(reminder) && (
-                          <span className="text-xs text-orange-600 font-medium">
-                            Completado por todos
-                          </span>
-                        )}
-                      </div>
+                      <Badge variant="secondary" className={`text-xs ${PRIORITY_COLORS[reminder.priority]}`}>
+                        {reminder.priority === 'high' ? 'Alta' : reminder.priority === 'medium' ? 'Media' : 'Baja'}
+                      </Badge>
                       
                       <Button
                         variant="ghost"
@@ -939,7 +940,7 @@ export default function Reminders() {
                           </span>
                         ) : (
                           <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
+                            <Circle className="w-3 h-3" />
                             Marcar como hecho
                           </span>
                         )}
