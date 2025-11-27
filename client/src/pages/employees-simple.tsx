@@ -192,6 +192,7 @@ export default function EmployeesSimple() {
       address: editEmployee.address,
       emergencyContactName: editEmployee.emergencyContactName,
       emergencyContactPhone: editEmployee.emergencyContactPhone,
+      workReportMode: editEmployee.workReportMode === 'disabled' ? null : editEmployee.workReportMode,
     });
   };
 
