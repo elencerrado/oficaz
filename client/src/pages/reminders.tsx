@@ -825,8 +825,10 @@ export default function Reminders() {
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className={`text-xs ${PRIORITY_COLORS[reminder.priority]}`}>
+                        {reminder.priority === 'high' ? 'Alta' : reminder.priority === 'medium' ? 'Media' : 'Baja'}
+                      </Badge>
                       {reminder.isPinned && <Pin className="w-4 h-4 text-white drop-shadow-sm" />}
-                      {getPriorityIcon(reminder.priority)}
                     </div>
                     <div className="flex items-center gap-1">
                       <Button
@@ -918,11 +920,7 @@ export default function Reminders() {
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between mt-4">
-                      <Badge variant="secondary" className={`text-xs ${PRIORITY_COLORS[reminder.priority]}`}>
-                        {reminder.priority === 'high' ? 'Alta' : reminder.priority === 'medium' ? 'Media' : 'Baja'}
-                      </Badge>
-                      
+                    <div className="flex items-center justify-end mt-4">
                       <Button
                         variant="ghost"
                         size="sm"
