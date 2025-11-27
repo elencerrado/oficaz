@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
@@ -130,6 +130,8 @@ export default function TimeTracking() {
   // Infinite scroll state
   const [displayedCount, setDisplayedCount] = useState(15);
   const ITEMS_PER_LOAD = 15;
+  const loadMoreDesktopRef = useRef<HTMLDivElement>(null);
+  const loadMoreMobileRef = useRef<HTMLDivElement>(null);
   const [manualEntryData, setManualEntryData] = useState({
     employeeId: '',
     date: '',
@@ -284,16 +286,25 @@ export default function TimeTracking() {
     setDisplayedCount(15);
   }, [selectedEmployee, dateFilter, startDate, endDate, currentDate, currentMonth, activeStatsFilter]);
 
-  // Infinite scroll handler
+  // Infinite scroll with IntersectionObserver
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 300;
-      if (scrollBottom && !isLoading) {
-        setDisplayedCount(prev => prev + ITEMS_PER_LOAD);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some(entry => entry.isIntersecting) && !isLoading) {
+          setDisplayedCount(prev => prev + ITEMS_PER_LOAD);
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+    
+    if (loadMoreDesktopRef.current) {
+      observer.observe(loadMoreDesktopRef.current);
+    }
+    if (loadMoreMobileRef.current) {
+      observer.observe(loadMoreMobileRef.current);
+    }
+    
+    return () => observer.disconnect();
   }, [isLoading]);
 
   // Helper function to check if a specific session is incomplete
@@ -3423,19 +3434,21 @@ export default function TimeTracking() {
                     }
                   }
                   
-                  // Indicador de más elementos disponibles
-                  if (dailyEntries.length > displayedCount) {
-                    result.push(
-                      <tr key="load-more-indicator" className="h-12">
-                        <td colSpan={5} className="py-3 text-center">
-                          <div className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
-                            <ArrowDown className="w-4 h-4 animate-bounce" />
-                            <span>Desplaza para ver más ({dailyEntries.length - displayedCount} restantes)</span>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  }
+                  // Elemento observador para infinite scroll + indicador visual
+                  result.push(
+                    <tr key="load-more-observer" className="h-12">
+                      <td colSpan={5} className="py-3 text-center">
+                        <div ref={loadMoreDesktopRef} className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
+                          {dailyEntries.length > displayedCount && (
+                            <>
+                              <ArrowDown className="w-4 h-4 animate-bounce" />
+                              <span>Desplaza para ver más ({dailyEntries.length - displayedCount} restantes)</span>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
                   
                   return result;
                 })()}
@@ -3728,17 +3741,19 @@ export default function TimeTracking() {
                 }
               }
               
-              // Indicador de más elementos disponibles
-              if (dailyEntries.length > displayedCount) {
-                result.push(
-                  <div key="load-more-indicator-mobile" className="py-4 text-center mx-4">
-                    <div className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
-                      <ArrowDown className="w-4 h-4 animate-bounce" />
-                      <span>Desplaza para ver más ({dailyEntries.length - displayedCount} restantes)</span>
-                    </div>
+              // Elemento observador para infinite scroll + indicador visual (mobile)
+              result.push(
+                <div key="load-more-observer-mobile" className="py-4 text-center mx-4">
+                  <div ref={loadMoreMobileRef} className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
+                    {dailyEntries.length > displayedCount && (
+                      <>
+                        <ArrowDown className="w-4 h-4 animate-bounce" />
+                        <span>Desplaza para ver más ({dailyEntries.length - displayedCount} restantes)</span>
+                      </>
+                    )}
                   </div>
-                );
-              }
+                </div>
+              );
               
               return result;
             })()}
