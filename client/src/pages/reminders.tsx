@@ -925,10 +925,10 @@ export default function Reminders() {
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleComplete(reminder)}
-                        className={`h-7 px-3 text-xs font-medium transition-colors ${
+                        className={`h-7 px-3 text-xs font-medium transition-all ${
                           isCompletedByCurrentUser(reminder)
-                            ? 'bg-green-100 text-green-800 hover:bg-green-200 border border-green-300'
-                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300'
+                            ? 'bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-900 border border-green-300'
+                            : 'bg-white/90 text-gray-800 hover:bg-white hover:text-gray-900 border border-gray-300 hover:border-gray-400 hover:shadow-sm'
                         }`}
                       >
                         {isCompletedByCurrentUser(reminder) ? (
