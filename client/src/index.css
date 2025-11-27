@@ -1670,6 +1670,21 @@ body button[role="switch"] > span {
   animation: stats-fade-in 0.4s ease-out forwards;
 }
 
+/* Stats cards wave loading animation - ola de transparencia */
+@keyframes stats-wave {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.stats-wave-loading {
+  animation: stats-wave 1.2s ease-in-out infinite;
+}
+
+.stats-wave-0 { animation-delay: 0ms; }
+.stats-wave-1 { animation-delay: 150ms; }
+.stats-wave-2 { animation-delay: 300ms; }
+.stats-wave-3 { animation-delay: 450ms; }
+
 /* Table rows wave animation - efecto ola para filas */
 @keyframes row-wave-in {
   0% { opacity: 0; transform: translateY(8px); }

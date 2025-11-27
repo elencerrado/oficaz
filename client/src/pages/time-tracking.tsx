@@ -2710,7 +2710,8 @@ export default function TimeTracking() {
           icon={AlertCircle}
           onClick={handleIncompleteFilter}
           isActive={activeStatsFilter === 'incomplete'}
-          className={!isLoading ? 'stats-number-animate' : ''}
+          isLoading={isLoading}
+          index={0}
         />
         
         <StatsCard
@@ -2721,7 +2722,8 @@ export default function TimeTracking() {
           icon={TrendingUp}
           onClick={handleTodayFilter}
           isActive={activeStatsFilter === 'today'}
-          className={!isLoading ? 'stats-number-animate' : ''}
+          isLoading={isLoading}
+          index={1}
         />
         
         <StatsCard
@@ -2732,7 +2734,8 @@ export default function TimeTracking() {
           icon={CalendarDays}
           onClick={handleThisWeekFilter}
           isActive={activeStatsFilter === 'week'}
-          className={!isLoading ? 'stats-number-animate' : ''}
+          isLoading={isLoading}
+          index={2}
         />
         
         <StatsCard
@@ -2743,7 +2746,8 @@ export default function TimeTracking() {
           icon={BarChart3}
           onClick={handleThisMonthFilter}
           isActive={activeStatsFilter === 'month'}
-          className={!isLoading ? 'stats-number-animate' : ''}
+          isLoading={isLoading}
+          index={3}
         />
       </div>
 

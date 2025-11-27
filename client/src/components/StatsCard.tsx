@@ -9,6 +9,8 @@ interface StatsCardProps {
   onClick?: () => void;
   className?: string;
   isActive?: boolean;
+  isLoading?: boolean;
+  index?: number;
 }
 
 const colorConfig = {
@@ -58,7 +60,9 @@ export default function StatsCard({
   icon: Icon, 
   onClick,
   className = '',
-  isActive = false
+  isActive = false,
+  isLoading = false,
+  index = 0
 }: StatsCardProps) {
   const config = colorConfig[color];
   
@@ -78,7 +82,7 @@ export default function StatsCard({
         isActive 
           ? `${config.activeBorder} ${config.activeBg} shadow-md` 
           : `${config.hover}`
-      } mb-4 ${className} bg-card shadow-sm`}
+      } mb-4 ${className} bg-card shadow-sm ${isLoading ? `stats-wave-loading stats-wave-${index}` : ''}`}
       onClick={handleClick}
       onKeyPress={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
