@@ -991,10 +991,22 @@ export class DrizzleStorage implements IStorage {
     return result;
   }
 
-  async getMessagesByUser(userId: number): Promise<Message[]> {
-    return db.select().from(schema.messages)
+  async getMessagesByUser(userId: number): Promise<any[]> {
+    const results = await db.select({
+      id: schema.messages.id,
+      senderId: schema.messages.senderId,
+      receiverId: schema.messages.receiverId,
+      content: schema.messages.content,
+      isRead: schema.messages.isRead,
+      createdAt: schema.messages.createdAt,
+      senderName: schema.users.name,
+      senderProfilePicture: schema.users.profilePicture,
+    })
+      .from(schema.messages)
+      .leftJoin(schema.users, eq(schema.messages.senderId, schema.users.id))
       .where(or(eq(schema.messages.receiverId, userId), eq(schema.messages.senderId, userId)))
       .orderBy(desc(schema.messages.createdAt));
+    return results;
   }
 
   async markMessageAsRead(id: number): Promise<Message | undefined> {
