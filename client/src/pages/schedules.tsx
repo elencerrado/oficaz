@@ -1755,21 +1755,15 @@ export default function Schedules() {
             </CardHeader>
             
             <CardContent className="p-0 overflow-y-auto" style={{ height: 'calc(100vh - 160px)' }}>
-              {/* Indicador de carga mientras se obtienen los datos */}
-              {(loadingEmployees || loadingShifts) ? (
-                <div className="flex flex-col items-center justify-center h-full py-12">
-                  <LoadingSpinner className="w-8 h-8 text-primary mb-3" />
-                  <p className="text-sm text-muted-foreground">Cargando horarios...</p>
-                </div>
-              ) : employees.length === 0 ? (
+              {employees.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full py-12">
                   <Users className="w-12 h-12 text-muted-foreground/50 mb-3" />
                   <p className="text-sm text-muted-foreground">No hay empleados activos</p>
                 </div>
               ) : null}
               
-              {/* Filas de empleados - solo mostrar cuando los datos están cargados */}
-              {!loadingEmployees && !loadingShifts && employees.map((employee: Employee) => {
+              {/* Filas de empleados */}
+              {employees.map((employee: Employee) => {
                 return (
                   <div key={employee.id} className={viewMode === 'day' ? 'py-1 px-3' : 'py-1 px-2'}>
                     {viewMode === 'day' ? (
