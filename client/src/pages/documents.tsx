@@ -628,8 +628,8 @@ export default function Documents() {
                               {category === 'nominas' ? 'Nómina' :
                                category === 'contratos' ? 'Contrato' : 'Documento'}
                             </Badge>
-                            {/* Signature status badge for nóminas */}
-                            {category === 'nominas' && (
+                            {/* Signature status badge for nóminas or documents requiring signature */}
+                            {(category === 'nominas' || document.requiresSignature) && (
                               <Badge 
                                 variant={document.isAccepted ? 'default' : 'outline'}
                                 className={`text-xs px-2 py-0 ${
@@ -666,8 +666,8 @@ export default function Documents() {
                           >
                             <Download className="h-3 w-3" />
                           </Button>
-                          {/* Signature button for unsigned nóminas */}
-                          {category === 'nominas' && !document.isAccepted && document.isViewed && (
+                          {/* Signature button for unsigned documents (nóminas or requiresSignature) */}
+                          {(category === 'nominas' || document.requiresSignature) && !document.isAccepted && document.isViewed && (
                             <Button
                               variant="outline"
                               size="sm"
