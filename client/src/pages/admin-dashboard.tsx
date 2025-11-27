@@ -906,7 +906,7 @@ export default function AdminDashboard() {
 
           {/* Quick Summary of Pending Items */}
           {totalPending > 0 && (
-            <Card>
+            <Card className={`transition-opacity duration-300 ${isDashboardLoading ? 'opacity-60' : 'opacity-100'}`}>
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5" />
@@ -1047,7 +1047,7 @@ export default function AdminDashboard() {
 
           {/* Recent Messages */}
           {hasAccess('messages') && (
-            <Card>
+            <Card className={`transition-opacity duration-300 ${isDashboardLoading ? 'opacity-60' : 'opacity-100'}`}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
@@ -1095,7 +1095,7 @@ export default function AdminDashboard() {
 
           {/* Active Reminders */}
           {hasAccess('reminders') && (
-            <Card>
+            <Card className={`transition-opacity duration-300 ${isDashboardLoading ? 'opacity-60' : 'opacity-100'}`}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Bell className="h-5 w-5" />
@@ -1148,7 +1148,7 @@ export default function AdminDashboard() {
           )}
 
           {/* Recent Clock-ins */}
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setLocation('/test/fichajes')}>
+          <Card className={`cursor-pointer hover:shadow-md transition-all duration-300 ${isDashboardLoading ? 'opacity-60' : 'opacity-100'}`} onClick={() => setLocation('/test/fichajes')}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
