@@ -278,6 +278,10 @@ export const users = pgTable("users", {
   // Firma del empleado (para partes de trabajo)
   signatureImage: text("signature_image"), // URL de la imagen de firma
   
+  // Configuración de partes de obra/trabajo
+  // 'disabled' = sin acceso, 'manual' = icono en dash, 'on_clockout' = popup al fichar salida, 'both' = ambos
+  workReportMode: text("work_report_mode").default("disabled"),
+  
   // Vacaciones
   totalVacationDays: decimal("total_vacation_days", { precision: 4, scale: 1 }).notNull().default("0.0"), // Calculado automáticamente
   usedVacationDays: decimal("used_vacation_days", { precision: 4, scale: 1 }).notNull().default("0.0"), // Auto
