@@ -6153,21 +6153,10 @@ Responde directamente a este email para contactar con la persona.
           const xPos = width - signatureWidth - margin;
           const yPos = margin + 30;
           
-          // Draw signature box background (white)
-          lastPage.drawRectangle({
-            x: xPos - 10,
-            y: yPos - 10,
-            width: signatureWidth + 20,
-            height: signatureHeight + 40,
-            color: rgb(1, 1, 1),
-            borderColor: rgb(0.8, 0.8, 0.8),
-            borderWidth: 1,
-          });
-          
-          // Draw signature
+          // Draw signature directly (transparent PNG, no background rectangle)
           lastPage.drawImage(signatureImage, {
             x: xPos,
-            y: yPos + 20,
+            y: yPos,
             width: signatureWidth,
             height: signatureHeight,
           });
@@ -6325,21 +6314,10 @@ Responde directamente a este email para contactar con la persona.
           const xPos = width - signatureWidth - margin;
           const yPos = margin + 30;
           
-          // Draw signature box background (white)
-          lastPage.drawRectangle({
-            x: xPos - 10,
-            y: yPos - 10,
-            width: signatureWidth + 20,
-            height: signatureHeight + 40,
-            color: rgb(1, 1, 1),
-            borderColor: rgb(0.8, 0.8, 0.8),
-            borderWidth: 1,
-          });
-          
-          // Draw signature
+          // Draw signature directly (transparent PNG, no background rectangle)
           lastPage.drawImage(signatureImage, {
             x: xPos,
-            y: yPos + 20,
+            y: yPos,
             width: signatureWidth,
             height: signatureHeight,
           });

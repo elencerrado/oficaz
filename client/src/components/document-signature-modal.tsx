@@ -166,7 +166,7 @@ export function DocumentSignatureModal({
     const width = maxX - minX;
     const height = maxY - minY;
     
-    // Create optimized canvas with cropped signature
+    // Create optimized canvas with cropped signature (TRANSPARENT background)
     const optimizedCanvas = document.createElement('canvas');
     const targetWidth = Math.min(400, width); // Max 400px wide
     const scale = targetWidth / width;
@@ -175,19 +175,40 @@ export function DocumentSignatureModal({
     
     const optCtx = optimizedCanvas.getContext('2d');
     if (optCtx) {
-      optCtx.fillStyle = 'white';
-      optCtx.fillRect(0, 0, optimizedCanvas.width, optimizedCanvas.height);
-      optCtx.imageSmoothingEnabled = true;
-      optCtx.imageSmoothingQuality = 'high';
-      optCtx.drawImage(
-        canvas, 
-        minX, minY, width, height,
-        0, 0, optimizedCanvas.width, optimizedCanvas.height
-      );
+      // Clear with transparent background (no white fill)
+      optCtx.clearRect(0, 0, optimizedCanvas.width, optimizedCanvas.height);
+      
+      // Get the original image data and make white pixels transparent
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = width;
+      tempCanvas.height = height;
+      const tempCtx = tempCanvas.getContext('2d');
+      if (tempCtx) {
+        tempCtx.drawImage(canvas, minX, minY, width, height, 0, 0, width, height);
+        const imgData = tempCtx.getImageData(0, 0, width, height);
+        const pixels = imgData.data;
+        
+        // Make white/near-white pixels transparent
+        for (let i = 0; i < pixels.length; i += 4) {
+          const r = pixels[i];
+          const g = pixels[i + 1];
+          const b = pixels[i + 2];
+          // If pixel is white or near-white, make it transparent
+          if (r > 240 && g > 240 && b > 240) {
+            pixels[i + 3] = 0; // Set alpha to 0 (transparent)
+          }
+        }
+        tempCtx.putImageData(imgData, 0, 0);
+        
+        // Draw the transparent version scaled
+        optCtx.imageSmoothingEnabled = true;
+        optCtx.imageSmoothingQuality = 'high';
+        optCtx.drawImage(tempCanvas, 0, 0, optimizedCanvas.width, optimizedCanvas.height);
+      }
     }
     
-    // Convert to optimized PNG with good quality
-    const signatureData = optimizedCanvas.toDataURL('image/png', 0.9);
+    // Convert to PNG (preserves transparency)
+    const signatureData = optimizedCanvas.toDataURL('image/png');
     onSign(signatureData);
   }, [hasSignature, onSign]);
 
