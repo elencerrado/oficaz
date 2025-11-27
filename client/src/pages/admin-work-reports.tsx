@@ -188,13 +188,22 @@ export default function AdminWorkReportsPage() {
   });
 
   const filteredReports = useMemo(() => {
+    const searchLower = searchTerm.toLowerCase();
     return reports.filter(report => {
-      const matchesSearch = searchTerm === '' || 
-        report.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        report.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        report.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (report.clientName && report.clientName.toLowerCase().includes(searchTerm.toLowerCase()));
-      return matchesSearch;
+      if (searchTerm === '') return true;
+      
+      const formattedDate = format(parseISO(report.reportDate), "d 'de' MMMM yyyy", { locale: es }).toLowerCase();
+      const shortDate = format(parseISO(report.reportDate), 'dd/MM/yyyy');
+      
+      return (
+        report.location.toLowerCase().includes(searchLower) ||
+        report.description.toLowerCase().includes(searchLower) ||
+        report.employeeName.toLowerCase().includes(searchLower) ||
+        (report.clientName && report.clientName.toLowerCase().includes(searchLower)) ||
+        (report.refCode && report.refCode.toLowerCase().includes(searchLower)) ||
+        formattedDate.includes(searchLower) ||
+        shortDate.includes(searchLower)
+      );
     });
   }, [reports, searchTerm]);
 
@@ -458,7 +467,7 @@ export default function AdminWorkReportsPage() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
-                    placeholder="Buscar por empleado, ubicación..."
+                    placeholder="Buscar por cód. ref., empleado, lugar, cliente, fecha, trabajo..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 h-10"
