@@ -1009,7 +1009,7 @@ export default function AdminWorkReportsPage() {
             </p>
             
             <div className="space-y-3">
-              {employees.map((emp) => (
+              {employees.filter(emp => emp.role !== 'admin').map((emp) => (
                 <div 
                   key={emp.id} 
                   className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
