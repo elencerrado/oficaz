@@ -1641,7 +1641,7 @@ export default function Schedules() {
           No hay empleados registrados
         </div>
       ) : (
-        <Card className={`px-6 pt-4 pb-8 min-h-screen bg-card text-card-foreground border-border border shadow-sm flex flex-col relative transition-opacity duration-300 ${loadingShifts ? 'opacity-60' : 'opacity-100'}`} style={{ overflowX: 'clip' }}>
+        <Card className="px-6 pt-4 pb-8 min-h-screen bg-card text-card-foreground border-border border shadow-sm flex flex-col relative" style={{ overflowX: 'clip' }}>
             <CardHeader className="bg-muted/10 px-4 py-2 flex-shrink-0">
               {/* Header con mes y navegación */}
               <div>
@@ -1803,7 +1803,7 @@ export default function Schedules() {
                                 isDisabled={isDisabled}
                                 className={`${getCellStyle(employee.id, day)} flex flex-col w-full min-h-[120px] rounded-lg border border-border/30 relative ${
                                   !isDisabled ? 'hover:bg-gray-100 dark:hover:bg-gray-700/70 transition-colors' : 'cursor-not-allowed'
-                                } schedule-cell-loading schedule-cell-loading-${dayIndex}`}
+                                } schedule-cell-wave schedule-cell-wave-${dayIndex}`}
                                 style={getCellHeightStyle(employee.id, day)}
                                 onClick={() => {
                                   if (!isDisabled && getShiftsForEmployee(employee.id).filter(shift => format(parseISO(shift.startAt), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')).length === 0) {
@@ -1924,7 +1924,7 @@ export default function Schedules() {
                               viewMode === 'day' 
                                 ? 'flex flex-row' // Modo día: layout horizontal 
                                 : 'flex flex-col' // Modo semana: layout vertical
-                            } ${!isDisabled ? 'hover:bg-gray-100 dark:hover:bg-gray-700/70 transition-colors' : 'cursor-not-allowed'} schedule-cell-loading schedule-cell-loading-${dayIndex}`}
+                            } ${!isDisabled ? 'hover:bg-gray-100 dark:hover:bg-gray-700/70 transition-colors' : 'cursor-not-allowed'} schedule-cell-wave schedule-cell-wave-${dayIndex}`}
                             style={getCellHeightStyle(employee.id, day)}
                             onClick={() => {
                               if (!isDisabled && getShiftsForEmployee(employee.id).filter(shift => format(parseISO(shift.startAt), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')).length === 0) {

@@ -1617,28 +1617,35 @@ body button[role="switch"] > span {
   background-color: rgb(29, 78, 216) !important;
 }
 
-/* Schedule loading sweep animation */
-@keyframes schedule-sweep {
+/* Schedule loading wave animation - efecto ola */
+@keyframes schedule-wave {
   0% {
-    opacity: 0.3;
-    transform: scale(0.98);
+    opacity: 1;
+  }
+  25% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  75% {
+    opacity: 0.8;
   }
   100% {
     opacity: 1;
-    transform: scale(1);
   }
 }
 
-.schedule-cell-loading {
-  animation: schedule-sweep 0.4s ease-out forwards;
+.schedule-cell-wave {
+  animation: schedule-wave 1.2s ease-in-out forwards;
 }
 
-.schedule-cell-loading-0 { animation-delay: 0ms; }
-.schedule-cell-loading-1 { animation-delay: 40ms; }
-.schedule-cell-loading-2 { animation-delay: 80ms; }
-.schedule-cell-loading-3 { animation-delay: 120ms; }
-.schedule-cell-loading-4 { animation-delay: 160ms; }
-.schedule-cell-loading-5 { animation-delay: 200ms; }
-.schedule-cell-loading-6 { animation-delay: 240ms; }
+.schedule-cell-wave-0 { animation-delay: 0ms; }
+.schedule-cell-wave-1 { animation-delay: 120ms; }
+.schedule-cell-wave-2 { animation-delay: 240ms; }
+.schedule-cell-wave-3 { animation-delay: 360ms; }
+.schedule-cell-wave-4 { animation-delay: 480ms; }
+.schedule-cell-wave-5 { animation-delay: 600ms; }
+.schedule-cell-wave-6 { animation-delay: 720ms; }
 
 
