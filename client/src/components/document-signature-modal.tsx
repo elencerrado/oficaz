@@ -175,32 +175,35 @@ export function DocumentSignatureModal({
     
     const optCtx = optimizedCanvas.getContext('2d');
     if (optCtx) {
-      // Clear with transparent background (no white fill)
-      optCtx.clearRect(0, 0, optimizedCanvas.width, optimizedCanvas.height);
-      
-      // Get the original image data and make white pixels transparent
+      // Step 1: Get the cropped signature from original canvas at FULL resolution
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = width;
       tempCanvas.height = height;
       const tempCtx = tempCanvas.getContext('2d');
+      
       if (tempCtx) {
+        // Draw cropped area from original canvas
         tempCtx.drawImage(canvas, minX, minY, width, height, 0, 0, width, height);
+        
+        // Step 2: Get pixel data and make white pixels transparent
         const imgData = tempCtx.getImageData(0, 0, width, height);
         const pixels = imgData.data;
         
-        // Make white/near-white pixels transparent
         for (let i = 0; i < pixels.length; i += 4) {
           const r = pixels[i];
           const g = pixels[i + 1];
           const b = pixels[i + 2];
-          // If pixel is white or near-white, make it transparent
-          if (r > 240 && g > 240 && b > 240) {
-            pixels[i + 3] = 0; // Set alpha to 0 (transparent)
+          // If pixel is white or near-white (threshold 230), make it fully transparent
+          if (r > 230 && g > 230 && b > 230) {
+            pixels[i + 3] = 0; // Alpha = 0 (fully transparent)
           }
         }
+        
+        // Put modified pixel data back
         tempCtx.putImageData(imgData, 0, 0);
         
-        // Draw the transparent version scaled
+        // Step 3: Draw to output canvas (scaled)
+        optCtx.clearRect(0, 0, optimizedCanvas.width, optimizedCanvas.height);
         optCtx.imageSmoothingEnabled = true;
         optCtx.imageSmoothingQuality = 'high';
         optCtx.drawImage(tempCanvas, 0, 0, optimizedCanvas.width, optimizedCanvas.height);
