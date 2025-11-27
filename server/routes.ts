@@ -6282,6 +6282,11 @@ Responde directamente a este email para contactar con la persona.
       res.setHeader('X-Frame-Options', 'SAMEORIGIN');
       res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
       
+      // Prevent caching to ensure signed PDFs are always fresh
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
       // Check if it's a view request (preview) or download
       const isPreview = req.query.view === 'true' || req.query.preview === 'true';
       
