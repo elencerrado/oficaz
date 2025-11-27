@@ -1660,4 +1660,40 @@ body button[role="switch"] > span {
 .card-wave-8 { animation-delay: 400ms; }
 .card-wave-9 { animation-delay: 450ms; }
 
+/* Stats number fade-in animation */
+@keyframes stats-fade-in {
+  0% { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.stats-number-animate {
+  animation: stats-fade-in 0.4s ease-out forwards;
+}
+
+/* Table rows wave animation - efecto ola para filas */
+@keyframes row-wave-in {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.row-wave-loading {
+  animation: row-wave-in 0.35s ease-out forwards;
+}
+
+.row-wave-0 { animation-delay: 0ms; }
+.row-wave-1 { animation-delay: 40ms; }
+.row-wave-2 { animation-delay: 80ms; }
+.row-wave-3 { animation-delay: 120ms; }
+.row-wave-4 { animation-delay: 160ms; }
+.row-wave-5 { animation-delay: 200ms; }
+.row-wave-6 { animation-delay: 240ms; }
+.row-wave-7 { animation-delay: 280ms; }
+.row-wave-8 { animation-delay: 320ms; }
+.row-wave-9 { animation-delay: 360ms; }
+.row-wave-10 { animation-delay: 400ms; }
+.row-wave-11 { animation-delay: 440ms; }
+.row-wave-12 { animation-delay: 480ms; }
+.row-wave-13 { animation-delay: 520ms; }
+.row-wave-14 { animation-delay: 560ms; }
+
 

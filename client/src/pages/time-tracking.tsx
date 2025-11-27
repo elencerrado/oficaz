@@ -126,6 +126,10 @@ export default function TimeTracking() {
   const [showIncompleteWarningDialog, setShowIncompleteWarningDialog] = useState(false);
   const [pendingExportType, setPendingExportType] = useState<'pdf' | 'excel' | null>(null);
   const [incompleteSessionsCount, setIncompleteSessionsCount] = useState(0);
+  
+  // Infinite scroll state
+  const [displayedCount, setDisplayedCount] = useState(15);
+  const ITEMS_PER_LOAD = 15;
   const [manualEntryData, setManualEntryData] = useState({
     employeeId: '',
     date: '',
@@ -274,6 +278,23 @@ export default function TimeTracking() {
   });
   
   const auditLogs = auditLogsData;
+
+  // Reset displayed count when filters change
+  useEffect(() => {
+    setDisplayedCount(15);
+  }, [selectedEmployee, dateFilter, startDate, endDate, currentDate, currentMonth, activeStatsFilter]);
+
+  // Infinite scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 300;
+      if (scrollBottom && !isLoading) {
+        setDisplayedCount(prev => prev + ITEMS_PER_LOAD);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isLoading]);
 
   // Helper function to check if a specific session is incomplete
   const isSessionIncomplete = useCallback((session: any) => {
@@ -2669,7 +2690,7 @@ export default function TimeTracking() {
     <div>
 
       {/* Stats Cards */}
-      <div className={`grid grid-cols-4 gap-2 md:gap-6 mb-3 transition-opacity duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'}`}>
+      <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">
         <StatsCard
           title="Incompletos"
           subtitle="Sesiones"
@@ -2678,6 +2699,7 @@ export default function TimeTracking() {
           icon={AlertCircle}
           onClick={handleIncompleteFilter}
           isActive={activeStatsFilter === 'incomplete'}
+          className={!isLoading ? 'stats-number-animate' : ''}
         />
         
         <StatsCard
@@ -2688,6 +2710,7 @@ export default function TimeTracking() {
           icon={TrendingUp}
           onClick={handleTodayFilter}
           isActive={activeStatsFilter === 'today'}
+          className={!isLoading ? 'stats-number-animate' : ''}
         />
         
         <StatsCard
@@ -2698,6 +2721,7 @@ export default function TimeTracking() {
           icon={CalendarDays}
           onClick={handleThisWeekFilter}
           isActive={activeStatsFilter === 'week'}
+          className={!isLoading ? 'stats-number-animate' : ''}
         />
         
         <StatsCard
@@ -2708,6 +2732,7 @@ export default function TimeTracking() {
           icon={BarChart3}
           onClick={handleThisMonthFilter}
           isActive={activeStatsFilter === 'month'}
+          className={!isLoading ? 'stats-number-animate' : ''}
         />
       </div>
 
@@ -3196,7 +3221,10 @@ export default function TimeTracking() {
 
                   const result: JSX.Element[] = [];
                   
-                  dailyEntries.forEach((dayData: any, index: number) => {
+                  // Limitar a displayedCount para infinite scroll
+                  const visibleEntries = dailyEntries.slice(0, displayedCount);
+                  
+                  visibleEntries.forEach((dayData: any, index: number) => {
                     const dayDate = new Date(dayData.date);
                     const weekStart = startOfWeek(dayDate, { weekStartsOn: 1 });
                     const monthKey = format(dayDate, 'yyyy-MM');
@@ -3275,7 +3303,7 @@ export default function TimeTracking() {
                     }, 0);
                     
                     result.push(
-                      <tr key={`day-${dayData.date}-${dayData.userId}`} className="hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-700 h-12">
+                      <tr key={`day-${dayData.date}-${dayData.userId}`} className={`hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-700 h-12 row-wave-loading row-wave-${index % 15}`}>
                         <td className="py-2 px-4">
                           <div className="flex items-center gap-2">
                             <UserAvatar 
@@ -3395,6 +3423,20 @@ export default function TimeTracking() {
                     }
                   }
                   
+                  // Indicador de más elementos disponibles
+                  if (dailyEntries.length > displayedCount) {
+                    result.push(
+                      <tr key="load-more-indicator" className="h-12">
+                        <td colSpan={5} className="py-3 text-center">
+                          <div className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
+                            <ArrowDown className="w-4 h-4 animate-bounce" />
+                            <span>Desplaza para ver más ({dailyEntries.length - displayedCount} restantes)</span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  }
+                  
                   return result;
                 })()}
                 
@@ -3492,7 +3534,10 @@ export default function TimeTracking() {
 
               const result: JSX.Element[] = [];
               
-              dailyEntries.forEach((dayData: any, index: number) => {
+              // Limitar a displayedCount para infinite scroll
+              const visibleEntries = dailyEntries.slice(0, displayedCount);
+              
+              visibleEntries.forEach((dayData: any, index: number) => {
                 const dayDate = new Date(dayData.date);
                 const weekStart = startOfWeek(dayDate, { weekStartsOn: 1 });
                 const monthKey = format(dayDate, 'yyyy-MM');
@@ -3565,7 +3610,7 @@ export default function TimeTracking() {
                 const sessionIsIncomplete = isSessionIncomplete(session);
                 
                 result.push(
-                  <div key={`day-${dayData.date}-${dayData.userId}`} className="bg-background border border-border rounded-lg mx-4 mb-3 px-3 py-3 shadow-sm">
+                  <div key={`day-${dayData.date}-${dayData.userId}`} className={`bg-background border border-border rounded-lg mx-4 mb-3 px-3 py-3 shadow-sm row-wave-loading row-wave-${index % 15}`}>
                     {/* Header with employee and date */}
                     <div className="flex items-center justify-between mb-1 min-w-0">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -3681,6 +3726,18 @@ export default function TimeTracking() {
                     </div>
                   );
                 }
+              }
+              
+              // Indicador de más elementos disponibles
+              if (dailyEntries.length > displayedCount) {
+                result.push(
+                  <div key="load-more-indicator-mobile" className="py-4 text-center mx-4">
+                    <div className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
+                      <ArrowDown className="w-4 h-4 animate-bounce" />
+                      <span>Desplaza para ver más ({dailyEntries.length - displayedCount} restantes)</span>
+                    </div>
+                  </div>
+                );
               }
               
               return result;
