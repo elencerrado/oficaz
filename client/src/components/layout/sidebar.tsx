@@ -85,7 +85,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       icon: Bell,
       feature: 'reminders' as const
     },
-    ...((subscription?.plan === 'pro' || subscription?.plan === 'master') ? [
+    ...((subscription?.plan === 'pro' || subscription?.plan === 'master') && 
+       (user?.role === 'admin' || user?.role === 'manager' || 
+        user?.workReportMode === 'manual' || user?.workReportMode === 'both') ? [
       { 
         name: 'Partes de Trabajo', 
         href: `/${companyAlias}/partes-trabajo`, 

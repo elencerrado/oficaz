@@ -747,7 +747,8 @@ export default function EmployeeDashboard() {
       notificationType: 'green',
       feature: 'messages'
     },
-    ...((subscription?.plan === 'pro' || subscription?.plan === 'master') ? [
+    ...((subscription?.plan === 'pro' || subscription?.plan === 'master') && 
+       (user?.workReportMode === 'manual' || user?.workReportMode === 'both') ? [
       { 
         icon: ClipboardList, 
         title: 'Partes', 
