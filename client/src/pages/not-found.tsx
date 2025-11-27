@@ -15,7 +15,7 @@ export default function NotFound() {
       if (user.role === 'employee') {
         setLocation(`/${alias}/employee`);
       } else {
-        setLocation(`/${alias}/dashboard`);
+        setLocation(`/${alias}/inicio`);
       }
     } else {
       setLocation('/login');
