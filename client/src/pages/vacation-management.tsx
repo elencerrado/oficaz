@@ -1334,13 +1334,13 @@ export default function VacationManagement() {
                                       <span className="font-medium">{usedDays}</span>/{totalDays} días usados
                                     </div>
                                     <div className="flex items-center gap-2">
-                                      <div className="flex-1 bg-muted rounded-full h-2">
+                                      <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
                                         <div 
-                                          className="bg-primary h-2 rounded-full"
-                                          style={{ width: `${Math.min(100, usagePercent)}%` }}
+                                          className="bg-primary h-2 rounded-full transition-all duration-700 ease-out"
+                                          style={{ width: loadingRequests ? '0%' : `${Math.min(100, usagePercent)}%` }}
                                         />
                                       </div>
-                                      <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                                      <span className={`text-xs font-medium text-green-600 dark:text-green-400 transition-opacity duration-300 ${loadingRequests ? 'opacity-50' : ''}`}>
                                         {availableDays} rest.
                                       </span>
                                     </div>
@@ -1473,10 +1473,10 @@ export default function VacationManagement() {
                           {/* Progress Bar */}
                           <div className="mb-4">
                             <div className="flex items-center gap-2 mb-1">
-                              <div className="flex-1 bg-muted rounded-full h-2">
+                              <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
                                 <div 
-                                  className="bg-primary h-2 rounded-full"
-                                  style={{ width: `${Math.min(100, usagePercent)}%` }}
+                                  className="bg-primary h-2 rounded-full transition-all duration-700 ease-out"
+                                  style={{ width: loadingRequests ? '0%' : `${Math.min(100, usagePercent)}%` }}
                                 />
                               </div>
                             </div>
