@@ -545,13 +545,8 @@ export default function AdminWorkReportsPage() {
           </div>
         )}
 
-        <CardContent className="p-0 relative">
-          {isFetching && (
-            <div className="absolute top-2 right-2 z-10">
-              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
-          {filteredReports.length === 0 && !isFetching ? (
+        <CardContent className="p-0">
+          {filteredReports.length === 0 ? (
             <div className="py-12 text-center">
               <ClipboardList className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
@@ -564,7 +559,7 @@ export default function AdminWorkReportsPage() {
               </p>
             </div>
           ) : filteredReports.length > 0 ? (
-            <div className={cn("p-4 md:p-6 space-y-4 transition-opacity duration-200", isFetching && "opacity-60")}>
+            <div className="p-4 md:p-6 space-y-4">
               {filteredReports.map((report) => {
                 const statusStyle = STATUS_STYLES[report.status];
                 return (
