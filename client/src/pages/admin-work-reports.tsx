@@ -548,12 +548,12 @@ export default function AdminWorkReportsPage() {
             </div>
           ) : filteredReports.length > 0 ? (
             <div className="p-4 md:p-6 space-y-4">
-              {filteredReports.map((report) => {
+              {filteredReports.map((report, index) => {
                 const statusStyle = STATUS_STYLES[report.status];
                 return (
                   <div 
                     key={report.id} 
-                    className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                    className={`bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden card-wave-loading card-wave-${index % 10}`}
                     data-testid={`card-admin-report-${report.id}`}
                   >
                     <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">

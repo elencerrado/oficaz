@@ -1639,4 +1639,25 @@ body button[role="switch"] > span {
 .schedule-cell-wave-5 { animation-delay: 500ms; }
 .schedule-cell-wave-6 { animation-delay: 600ms; }
 
+/* Cards loading wave animation - efecto ola para listas */
+@keyframes cards-wave {
+  0% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+.card-wave-loading {
+  animation: cards-wave 0.4s ease-out forwards;
+}
+
+.card-wave-0 { animation-delay: 0ms; }
+.card-wave-1 { animation-delay: 50ms; }
+.card-wave-2 { animation-delay: 100ms; }
+.card-wave-3 { animation-delay: 150ms; }
+.card-wave-4 { animation-delay: 200ms; }
+.card-wave-5 { animation-delay: 250ms; }
+.card-wave-6 { animation-delay: 300ms; }
+.card-wave-7 { animation-delay: 350ms; }
+.card-wave-8 { animation-delay: 400ms; }
+.card-wave-9 { animation-delay: 450ms; }
+
 
