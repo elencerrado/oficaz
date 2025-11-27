@@ -6291,7 +6291,68 @@ Responde directamente a este email para contactar con la persona.
         res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(document.originalName)}"`);
       }
 
-      // Send file
+      // Check if document has signature and is a PDF - overlay signature dynamically
+      if (ext === '.pdf' && document.digitalSignature && document.isAccepted) {
+        try {
+          console.log(`[SECURITY] Generating signed PDF for document ${document.id} via signed URL`);
+          
+          // Read the base PDF
+          const pdfBytes = fs.readFileSync(filePath);
+          const pdfDoc = await PDFDocument.load(pdfBytes);
+          
+          // Get the last page to add signature
+          const pages = pdfDoc.getPages();
+          const lastPage = pages[pages.length - 1];
+          const { width, height } = lastPage.getSize();
+          
+          // Extract base64 image data from stored signature
+          const base64Data = document.digitalSignature.replace(/^data:image\/\w+;base64,/, '');
+          const signatureImageBytes = Buffer.from(base64Data, 'base64');
+          
+          // Embed the signature image
+          const signatureImage = await pdfDoc.embedPng(signatureImageBytes);
+          const signatureDims = signatureImage.scale(0.5);
+          
+          // Calculate position - bottom right corner with margin
+          const signatureWidth = Math.min(signatureDims.width, 150);
+          const signatureHeight = (signatureDims.height / signatureDims.width) * signatureWidth;
+          const margin = 50;
+          const xPos = width - signatureWidth - margin;
+          const yPos = margin + 30;
+          
+          // Draw signature box background (white)
+          lastPage.drawRectangle({
+            x: xPos - 10,
+            y: yPos - 10,
+            width: signatureWidth + 20,
+            height: signatureHeight + 40,
+            color: rgb(1, 1, 1),
+            borderColor: rgb(0.8, 0.8, 0.8),
+            borderWidth: 1,
+          });
+          
+          // Draw signature
+          lastPage.drawImage(signatureImage, {
+            x: xPos,
+            y: yPos + 20,
+            width: signatureWidth,
+            height: signatureHeight,
+          });
+          
+          // Generate and send the signed PDF
+          const signedPdfBytes = await pdfDoc.save();
+          res.setHeader('Content-Length', signedPdfBytes.length);
+          res.send(Buffer.from(signedPdfBytes));
+          
+          console.log(`[SECURITY] Signed PDF generated and sent for document ${document.id}`);
+          return;
+        } catch (pdfError) {
+          console.error(`[SECURITY] Error generating signed PDF for document ${document.id}:`, pdfError);
+          // Fall back to original file if signature overlay fails
+        }
+      }
+
+      // Send original file (no signature or non-PDF)
       const absolutePath = path.resolve(filePath);
       res.sendFile(absolutePath);
     } catch (error: any) {
