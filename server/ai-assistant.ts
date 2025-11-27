@@ -883,6 +883,108 @@ export async function assignScheduleInRange(
   };
 }
 
+// 6c. Assign ROTATING schedule (X days work, Y days off pattern)
+// Perfect for: "3 días trabajo, 3 días descanso", "4 días trabajo, 2 días libres"
+export async function assignRotatingSchedule(
+  context: AIFunctionContext,
+  params: {
+    employeeId: number;
+    title: string;
+    startDate: string; // YYYY-MM-DD - First day of work
+    endDate: string; // YYYY-MM-DD - Last possible work day
+    startTime: string; // HH:mm (e.g., "08:00")
+    endTime: string; // HH:mm (e.g., "14:00")
+    workDays: number; // Number of consecutive work days (e.g., 3)
+    restDays: number; // Number of consecutive rest days (e.g., 3)
+    location?: string;
+    notes?: string;
+    color?: string;
+  }
+) {
+  const { storage, companyId, adminUserId } = context;
+
+  // Verify employee belongs to company
+  const employee = await storage.getUser(params.employeeId);
+  if (!employee || employee.companyId !== companyId) {
+    throw new Error("Employee not found or doesn't belong to this company");
+  }
+
+  // Auto-assign color based on employee ID if not provided
+  const shiftColor = params.color || getEmployeeColor(params.employeeId);
+
+  // Parse date range
+  const start = new Date(params.startDate);
+  const end = new Date(params.endDate);
+  
+  const cycleLength = params.workDays + params.restDays;
+
+  // Generate work dates following the rotation pattern
+  const workDates: Date[] = [];
+  let currentDate = new Date(start);
+  let dayInCycle = 0; // Track position within the work/rest cycle
+  
+  while (currentDate <= end) {
+    // If we're in a "work" phase of the cycle (first N days)
+    if (dayInCycle < params.workDays) {
+      workDates.push(new Date(currentDate));
+    }
+    // Otherwise it's a rest day, don't add to workDates
+    
+    // Move to next day
+    currentDate.setDate(currentDate.getDate() + 1);
+    dayInCycle = (dayInCycle + 1) % cycleLength;
+  }
+
+  if (workDates.length === 0) {
+    return {
+      success: false,
+      error: `No hay fechas válidas en el rango ${params.startDate} a ${params.endDate}`,
+      createdCount: 0
+    };
+  }
+
+  // Create shifts for all work dates
+  const createdShifts = [];
+  for (const date of workDates) {
+    const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+    const startAt = new Date(`${dateStr}T${params.startTime}:00+01:00`); // CET
+    const endAt = new Date(`${dateStr}T${params.endTime}:00+01:00`);
+
+    const shift = await db.insert(schema.workShifts)
+      .values({
+        companyId,
+        employeeId: params.employeeId,
+        startAt,
+        endAt,
+        title: params.title,
+        location: params.location || null,
+        notes: params.notes || null,
+        color: shiftColor,
+        createdByUserId: adminUserId,
+      })
+      .returning();
+
+    createdShifts.push(shift[0]);
+  }
+
+  // Calculate rest day dates for summary
+  const restDaysCount = Math.floor((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1 - workDates.length;
+
+  return {
+    success: true,
+    createdCount: createdShifts.length,
+    employeeFullName: employee.fullName,
+    dateRange: `${params.startDate} a ${params.endDate}`,
+    pattern: `${params.workDays} días trabajo, ${params.restDays} días descanso`,
+    workDaysCreated: createdShifts.length,
+    restDaysSkipped: restDaysCount,
+    shifts: createdShifts.map(s => ({
+      date: new Date(s.startAt).toLocaleDateString('es-ES'),
+      title: s.title
+    }))
+  };
+}
+
 // 7. Request document from employee
 export async function requestDocument(
   context: AIFunctionContext,
@@ -2099,8 +2201,54 @@ export const AI_FUNCTIONS = [
     },
   },
   {
+    name: "assignRotatingSchedule",
+    description: "🔄 TURNOS ROTATIVOS con patrón de X días trabajo, Y días descanso. OBLIGATORIO usar cuando el usuario mencione: '3 días trabajo 3 días descanso', '4 días sí 2 días no', 'rotación de X días', 'trabaja N días y descansa M días'. El patrón se repite automáticamente hasta la fecha fin.",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeName: {
+          type: "string",
+          description: "Nombre del empleado",
+        },
+        title: {
+          type: "string",
+          description: "Nombre del turno (ej: 'Turno 08:00-14:00')",
+        },
+        startDate: {
+          type: "string",
+          description: "Primer día de trabajo en formato YYYY-MM-DD",
+        },
+        endDate: {
+          type: "string",
+          description: "Último día posible de trabajo en formato YYYY-MM-DD",
+        },
+        startTime: {
+          type: "string",
+          description: "Hora de inicio en formato HH:mm (ej: '08:00')",
+        },
+        endTime: {
+          type: "string",
+          description: "Hora de fin en formato HH:mm (ej: '14:00')",
+        },
+        workDays: {
+          type: "number",
+          description: "Número de días CONSECUTIVOS de TRABAJO (ej: 3 para '3 días trabajo')",
+        },
+        restDays: {
+          type: "number",
+          description: "Número de días CONSECUTIVOS de DESCANSO (ej: 3 para '3 días descanso')",
+        },
+        location: {
+          type: "string",
+          description: "Ubicación del turno (opcional)",
+        },
+      },
+      required: ["employeeName", "title", "startDate", "endDate", "startTime", "endTime", "workDays", "restDays"],
+    },
+  },
+  {
     name: "assignScheduleInRange",
-    description: "🗓️ CREAR TURNOS MASIVOS para SEMANAS/MESES completos. Usa esto cuando el usuario pida 'crear turnos toda la semana', 'asignar horario del 1 al 30', 'turnos de todo noviembre', etc. Salta fines de semana por defecto",
+    description: "🗓️ CREAR TURNOS MASIVOS para SEMANAS/MESES completos (todos los días laborables). Usa esto cuando el usuario pida 'crear turnos toda la semana', 'asignar horario del 1 al 30', 'turnos de todo noviembre'. NO usar para patrones rotativos.",
     parameters: {
       type: "object",
       properties: {
@@ -2469,6 +2617,8 @@ export async function executeAIFunction(
       return assignSchedule(context, params);
     case "assignScheduleInRange":
       return assignScheduleInRange(context, params);
+    case "assignRotatingSchedule":
+      return assignRotatingSchedule(context, params);
     case "requestDocument":
       return requestDocument(context, params);
     case "deleteWorkShift":

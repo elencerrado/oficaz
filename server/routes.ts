@@ -8670,6 +8670,12 @@ TURNOS (CREAR):
 - "próxima semana": ${nextMondayStr} al ${nextSaturdayStr} (lunes-sábado)
 - Defaults: 8-14h, "Oficina"
 
+🔄 TURNOS ROTATIVOS (assignRotatingSchedule):
+- OBLIGATORIO cuando mencionen: "X días trabajo Y días descanso", "rotación", "3 y 3", "4 y 2"
+- Ejemplo: "marta 3 días trabajo 3 días descanso de 8 a 14 hasta fin de diciembre"
+  → assignRotatingSchedule(employeeName: "marta", workDays: 3, restDays: 3, startTime: "08:00", endTime: "14:00", startDate: "próximo lunes", endDate: "2025-12-31")
+- SIEMPRE PREGUNTA el horario si no se menciona: "¿Qué horario tendrá Marta los días que trabaje? (ej: 08:00-14:00)"
+
 EMPLEADOS:
 - updateEmployee(): modifica campos
 - listEmployees(): SOLO si preguntan quiénes hay
@@ -8713,7 +8719,7 @@ Respuesta: "Listo", "Perfecto", "Ya está".`
           const functionArgs = JSON.parse(toolCall.function.arguments);
 
           // Resolve employee names to IDs before executing function
-          const functionsNeedingEmployeeResolution = ['getEmployeeShifts', 'assignSchedule', 'assignScheduleInRange', 'requestDocument', 'deleteWorkShift', 'deleteWorkShiftsInRange', 'updateWorkShiftTimes', 'updateWorkShiftsInRange', 'updateEmployeeShiftsColor', 'updateWorkShiftColor', 'updateWorkShiftDetails', 'detectWorkShiftOverlaps', 'createReminder'];
+          const functionsNeedingEmployeeResolution = ['getEmployeeShifts', 'assignSchedule', 'assignScheduleInRange', 'assignRotatingSchedule', 'requestDocument', 'deleteWorkShift', 'deleteWorkShiftsInRange', 'updateWorkShiftTimes', 'updateWorkShiftsInRange', 'updateEmployeeShiftsColor', 'updateWorkShiftColor', 'updateWorkShiftDetails', 'detectWorkShiftOverlaps', 'createReminder'];
           if (functionsNeedingEmployeeResolution.includes(functionName) && functionArgs.employeeName) {
             const resolution = await resolveEmployeeName(storage, companyId, functionArgs.employeeName);
             
