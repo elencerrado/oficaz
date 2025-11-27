@@ -6668,9 +6668,13 @@ Responde directamente a este email para contactar con la persona.
         storage.getCustomHolidaysByCompany(companyId),
       ]);
       
-      // Process data
-      const pendingVacations = vacationRequests.filter((req: any) => req.status === 'pending');
-      const approvedVacations = vacationRequests.filter((req: any) => req.status === 'approved');
+      // Process data - add userName from userFullName for frontend compatibility
+      const pendingVacations = vacationRequests
+        .filter((req: any) => req.status === 'pending')
+        .map((req: any) => ({ ...req, userName: req.userFullName || 'Empleado' }));
+      const approvedVacations = vacationRequests
+        .filter((req: any) => req.status === 'approved')
+        .map((req: any) => ({ ...req, userName: req.userFullName || 'Empleado' }));
       
       const unsignedPayrollsCount = allDocuments.filter((doc: any) => 
         doc.originalName && 
