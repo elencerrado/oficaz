@@ -64,6 +64,35 @@ export default function EmployeeDashboard() {
   // Estado para el modal de alarmas
   const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
   
+  // Estado para el modal de parte de obra al fichar salida
+  const [showWorkReportModal, setShowWorkReportModal] = useState(false);
+  const [completedSessionData, setCompletedSessionData] = useState<{ clockIn: string; clockOut: string } | null>(null);
+  const [workReportForm, setWorkReportForm] = useState({
+    refCode: '',
+    location: '',
+    description: '',
+    clientName: '',
+    notes: ''
+  });
+
+  // Queries para autocompletado de partes de obra anteriores
+  const { data: refCodeSuggestions } = useQuery<string[]>({
+    queryKey: ['/api/work-reports/ref-codes'],
+    enabled: showWorkReportModal,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: locationSuggestions } = useQuery<string[]>({
+    queryKey: ['/api/work-reports/locations'],
+    enabled: showWorkReportModal,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: clientSuggestions } = useQuery<string[]>({
+    queryKey: ['/api/work-reports/clients'],
+    enabled: showWorkReportModal,
+    staleTime: 5 * 60 * 1000,
+  });
   
 
   // Función para generar mensajes dinámicos según la hora
@@ -490,6 +519,24 @@ export default function EmployeeDashboard() {
       const message = generateDynamicMessage('salida');
       showTemporaryMessage(message);
       
+      // Debug: verificar valores para el popup de parte de obra
+      console.log('🔍 DEBUG clockOut:', {
+        workReportMode: user?.workReportMode,
+        plan: subscription?.plan,
+        userId: user?.id
+      });
+      
+      // Mostrar popup de parte de obra si el usuario tiene configurado on_clockout o both
+      const workReportMode = user?.workReportMode;
+      if ((subscription?.plan === 'pro' || subscription?.plan === 'master') && 
+          (workReportMode === 'on_clockout' || workReportMode === 'both')) {
+        const clockOutTime = new Date().toISOString();
+        setCompletedSessionData({
+          clockIn: data.sessionClockIn || activeSession?.clockIn || clockOutTime,
+          clockOut: clockOutTime
+        });
+        setShowWorkReportModal(true);
+      }
     },
     onError: (error: any) => {
       if (error.message?.includes('Invalid or expired token') || error.message?.includes('403')) {
@@ -546,6 +593,67 @@ export default function EmployeeDashboard() {
     },
   });
 
+  // Mutación para crear parte de obra al fichar salida
+  const createWorkReportMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest('POST', '/api/work-reports', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ predicate: (query) => (query.queryKey[0] as string).startsWith('/api/work-reports') });
+      toast({
+        title: 'Parte de Obra Enviado',
+        description: 'El parte de obra se ha registrado correctamente.',
+      });
+      setShowWorkReportModal(false);
+      setCompletedSessionData(null);
+      setWorkReportForm({ refCode: '', location: '', description: '', clientName: '', notes: '' });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo guardar el parte de obra.',
+        variant: 'destructive'
+      });
+    },
+  });
+
+  // Handler para enviar el parte de obra
+  const handleSubmitWorkReport = () => {
+    if (!completedSessionData || !workReportForm.location.trim() || !workReportForm.description.trim()) {
+      toast({
+        title: 'Campos requeridos',
+        description: 'Por favor completa la ubicación y descripción del trabajo.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    const clockInDate = new Date(completedSessionData.clockIn);
+    const clockOutDate = new Date(completedSessionData.clockOut);
+
+    const reportData = {
+      companyId: user?.companyId,
+      employeeId: user?.id,
+      reportDate: clockInDate.toISOString().split('T')[0],
+      refCode: workReportForm.refCode || null,
+      location: workReportForm.location,
+      startTime: clockInDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      endTime: clockOutDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      description: workReportForm.description,
+      clientName: workReportForm.clientName || null,
+      notes: workReportForm.notes || null,
+      status: 'submitted' // Se envía directamente, sin borrador
+    };
+
+    createWorkReportMutation.mutate(reportData);
+  };
+
+  // Handler para cerrar el modal sin guardar
+  const handleCloseWorkReportModal = () => {
+    setShowWorkReportModal(false);
+    setCompletedSessionData(null);
+    setWorkReportForm({ refCode: '', location: '', description: '', clientName: '', notes: '' });
+  };
 
   // Determine session state and status 
   const getSessionStatus = () => {
@@ -757,7 +865,7 @@ export default function EmployeeDashboard() {
       feature: 'messages'
     },
     ...((subscription?.plan === 'pro' || subscription?.plan === 'master') && 
-       (user?.workReportMode && user?.workReportMode !== 'disabled') ? [
+       (user?.workReportMode === 'manual' || user?.workReportMode === 'both') ? [
       { 
         icon: ClipboardList, 
         title: 'Partes', 
@@ -1236,6 +1344,150 @@ export default function EmployeeDashboard() {
       {/* PWA Install Prompt - solo en dashboard de empleados */}
       <PWAInstallPrompt />
 
+      {/* Modal de Parte de Obra al fichar salida */}
+      <Dialog open={showWorkReportModal} onOpenChange={(open) => !open && handleCloseWorkReportModal()}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+          <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-blue-600" />
+            Parte de Obra
+          </DialogTitle>
+          <DialogDescription className="text-gray-600 dark:text-gray-400">
+            Registra los detalles del trabajo realizado durante tu jornada.
+          </DialogDescription>
+          
+          <div className="space-y-4 py-2">
+            {/* Horas pre-llenadas */}
+            {completedSessionData && (
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 flex justify-between items-center">
+                <div className="text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">Entrada: </span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {new Date(completedSessionData.clockIn).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                <div className="text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">Salida: </span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {new Date(completedSessionData.clockOut).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Código de obra (opcional) */}
+            <div className="space-y-2">
+              <Label htmlFor="refCode" className="text-gray-700 dark:text-gray-300">
+                Código de Obra <span className="text-gray-400 text-sm">(opcional)</span>
+              </Label>
+              <Input
+                id="refCode"
+                list="refCodeList"
+                value={workReportForm.refCode}
+                onChange={(e) => setWorkReportForm({ ...workReportForm, refCode: e.target.value })}
+                placeholder="Ej: OBR-2024-001"
+                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                data-testid="input-work-report-refcode"
+              />
+              <datalist id="refCodeList">
+                {refCodeSuggestions?.map((code, index) => (
+                  <option key={index} value={code} />
+                ))}
+              </datalist>
+            </div>
+
+            {/* Ubicación */}
+            <div className="space-y-2">
+              <Label htmlFor="location" className="text-gray-700 dark:text-gray-300">
+                Ubicación <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="location"
+                list="locationList"
+                value={workReportForm.location}
+                onChange={(e) => setWorkReportForm({ ...workReportForm, location: e.target.value })}
+                placeholder="Dirección o nombre del lugar de trabajo"
+                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                data-testid="input-work-report-location"
+              />
+              <datalist id="locationList">
+                {locationSuggestions?.map((loc, index) => (
+                  <option key={index} value={loc} />
+                ))}
+              </datalist>
+            </div>
+
+            {/* Cliente (opcional) */}
+            <div className="space-y-2">
+              <Label htmlFor="clientName" className="text-gray-700 dark:text-gray-300">
+                Cliente <span className="text-gray-400 text-sm">(opcional)</span>
+              </Label>
+              <Input
+                id="clientName"
+                list="clientList"
+                value={workReportForm.clientName}
+                onChange={(e) => setWorkReportForm({ ...workReportForm, clientName: e.target.value })}
+                placeholder="Nombre del cliente"
+                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                data-testid="input-work-report-client"
+              />
+              <datalist id="clientList">
+                {clientSuggestions?.map((client, index) => (
+                  <option key={index} value={client} />
+                ))}
+              </datalist>
+            </div>
+
+            {/* Descripción del trabajo */}
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-gray-700 dark:text-gray-300">
+                Descripción del Trabajo <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                id="description"
+                value={workReportForm.description}
+                onChange={(e) => setWorkReportForm({ ...workReportForm, description: e.target.value })}
+                placeholder="Describe las tareas realizadas..."
+                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 min-h-[100px]"
+                data-testid="textarea-work-report-description"
+              />
+            </div>
+
+            {/* Notas (opcional) */}
+            <div className="space-y-2">
+              <Label htmlFor="notes" className="text-gray-700 dark:text-gray-300">
+                Notas adicionales <span className="text-gray-400 text-sm">(opcional)</span>
+              </Label>
+              <Textarea
+                id="notes"
+                value={workReportForm.notes}
+                onChange={(e) => setWorkReportForm({ ...workReportForm, notes: e.target.value })}
+                placeholder="Observaciones, incidencias, materiales utilizados..."
+                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 min-h-[60px]"
+                data-testid="textarea-work-report-notes"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 justify-end pt-2">
+            <Button
+              variant="outline"
+              onClick={handleCloseWorkReportModal}
+              className="border-gray-300 dark:border-gray-600"
+              data-testid="button-cancel-work-report"
+            >
+              Omitir
+            </Button>
+            <Button
+              onClick={handleSubmitWorkReport}
+              disabled={createWorkReportMutation.isPending}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              data-testid="button-submit-work-report"
+            >
+              {createWorkReportMutation.isPending ? 'Enviando...' : 'Enviar Parte'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

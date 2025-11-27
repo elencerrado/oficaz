@@ -1256,18 +1256,71 @@ export default function EmployeesSimple() {
                     </h4>
                     
                     <div className="space-y-3">
-                      <label className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
-                        <div>
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Habilitar partes de obra</span>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">El empleado podrá crear partes de obra desde su panel.</p>
-                        </div>
-                        <input
-                          type="checkbox"
-                          checked={editEmployee.workReportMode !== 'disabled'}
-                          onChange={(e) => setEditEmployee({ ...editEmployee, workReportMode: e.target.checked ? 'manual' : 'disabled' })}
-                          className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                      </label>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                        Configura cómo este empleado puede crear partes de obra/trabajo.
+                      </p>
+                      
+                      <div className="space-y-2">
+                        <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
+                          <input
+                            type="radio"
+                            name="workReportMode"
+                            value="disabled"
+                            checked={editEmployee.workReportMode === 'disabled'}
+                            onChange={() => setEditEmployee({ ...editEmployee, workReportMode: 'disabled' })}
+                            className="mt-0.5"
+                          />
+                          <div>
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Sin acceso</span>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">El empleado no puede crear partes de obra.</p>
+                          </div>
+                        </label>
+                        
+                        <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
+                          <input
+                            type="radio"
+                            name="workReportMode"
+                            value="manual"
+                            checked={editEmployee.workReportMode === 'manual'}
+                            onChange={() => setEditEmployee({ ...editEmployee, workReportMode: 'manual' })}
+                            className="mt-0.5"
+                          />
+                          <div>
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Acceso manual</span>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Icono en el dashboard. Crea partes cuando quiera.</p>
+                          </div>
+                        </label>
+                        
+                        <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
+                          <input
+                            type="radio"
+                            name="workReportMode"
+                            value="on_clockout"
+                            checked={editEmployee.workReportMode === 'on_clockout'}
+                            onChange={() => setEditEmployee({ ...editEmployee, workReportMode: 'on_clockout' })}
+                            className="mt-0.5"
+                          />
+                          <div>
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Al fichar salida</span>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Popup automático al fichar salida. Sin borradores.</p>
+                          </div>
+                        </label>
+                        
+                        <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
+                          <input
+                            type="radio"
+                            name="workReportMode"
+                            value="both"
+                            checked={editEmployee.workReportMode === 'both'}
+                            onChange={() => setEditEmployee({ ...editEmployee, workReportMode: 'both' })}
+                            className="mt-0.5"
+                          />
+                          <div>
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Ambas opciones</span>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Icono en dashboard + popup al fichar salida.</p>
+                          </div>
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>
