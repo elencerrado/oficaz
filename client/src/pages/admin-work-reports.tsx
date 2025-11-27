@@ -386,20 +386,8 @@ export default function AdminWorkReportsPage() {
     );
   }
 
-  if (reportsLoading) {
-    return (
-      <div className="px-6 py-4">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
-          <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-          <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div>
+    <div className={`transition-opacity duration-300 ${reportsLoading ? 'opacity-60' : 'opacity-100'}`}>
       {/* Stats Cards */}
       <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">
         <StatsCard
