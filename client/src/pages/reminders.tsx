@@ -909,23 +909,18 @@ export default function Reminders() {
                       currentUserId={user?.id}
                       completedByUserIds={reminder.completedByUserIds}
                     />
-                    
-                    {/* Status indicator for assigned completion */}
-                    {isCompletedByAssignedOnly(reminder) && (
-                      <div className="mt-3 p-2 bg-orange-50 border border-orange-200 rounded-md">
-                        <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-orange-600" />
-                          <span className="text-xs text-orange-700 font-medium">
-                            Completado por todos los asignados
-                          </span>
-                        </div>
-                      </div>
-                    )}
 
                     <div className="flex items-center justify-between mt-4">
-                      <Badge variant="secondary" className={`text-xs ${PRIORITY_COLORS[reminder.priority]}`}>
-                        {reminder.priority === 'high' ? 'Alta' : reminder.priority === 'medium' ? 'Media' : 'Baja'}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className={`text-xs ${PRIORITY_COLORS[reminder.priority]}`}>
+                          {reminder.priority === 'high' ? 'Alta' : reminder.priority === 'medium' ? 'Media' : 'Baja'}
+                        </Badge>
+                        {isCompletedByAssignedOnly(reminder) && (
+                          <span className="text-xs text-orange-600 font-medium">
+                            Completado por todos
+                          </span>
+                        )}
+                      </div>
                       
                       <Button
                         variant="ghost"
