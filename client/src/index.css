@@ -1617,19 +1617,19 @@ body button[role="switch"] > span {
   background-color: rgb(29, 78, 216) !important;
 }
 
-/* Schedule loading wave animation - efecto ola realista */
+/* Schedule loading wave animation - efecto ola */
 @keyframes schedule-wave {
   0%, 100% {
-    opacity: 0.8;
-  }
-  40% {
-    opacity: 0.6;
-  }
-  50% {
     opacity: 0.2;
   }
+  40% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
   60% {
-    opacity: 0.6;
+    opacity: 0.5;
   }
 }
 
