@@ -679,19 +679,12 @@ export default function Messages() {
                         onClick={() => setSelectedChat(employee.id)}
                       >
                         <div className="flex items-center space-x-3">
-                          <div className="relative">
-                            <UserAvatar 
-                              fullName={employee.fullName || ''} 
-                              size="md" 
-                              userId={employee.id}
-                              profilePicture={employee.profilePicture}
-                            />
-                            {unreadCount > 0 && (
-                              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
-                                {unreadCount > 9 ? '9+' : unreadCount}
-                              </span>
-                            )}
-                          </div>
+                          <UserAvatar 
+                            fullName={employee.fullName || ''} 
+                            size="md" 
+                            userId={employee.id}
+                            profilePicture={employee.profilePicture}
+                          />
                           
                           <div className="flex-1 min-w-0">
                             <p className={`truncate font-medium text-sm ${
@@ -705,6 +698,16 @@ export default function Messages() {
                               {getRoleDisplay(employee)}
                             </div>
                           </div>
+                          
+                          {unreadCount > 0 && (
+                            <span className={`min-w-[20px] h-[20px] text-[11px] font-bold rounded-full flex items-center justify-center px-1.5 flex-shrink-0 ${
+                              selectedChat === employee.id 
+                                ? 'bg-white text-oficaz-primary' 
+                                : 'bg-red-500 text-white'
+                            }`}>
+                              {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                          )}
                         </div>
                       </div>
                     );
@@ -901,19 +904,12 @@ export default function Messages() {
                         onClick={() => setSelectedChat(employee.id)}
                       >
                         <div className="flex items-center space-x-3">
-                          <div className="relative">
-                            <UserAvatar 
-                              fullName={employee.fullName || ''} 
-                              size="md" 
-                              userId={employee.id}
-                              profilePicture={employee.profilePicture}
-                            />
-                            {unreadCount > 0 && (
-                              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
-                                {unreadCount > 9 ? '9+' : unreadCount}
-                              </span>
-                            )}
-                          </div>
+                          <UserAvatar 
+                            fullName={employee.fullName || ''} 
+                            size="md" 
+                            userId={employee.id}
+                            profilePicture={employee.profilePicture}
+                          />
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-foreground truncate">
                               {employee.fullName}
@@ -922,6 +918,12 @@ export default function Messages() {
                               {getRoleDisplay(employee)}
                             </div>
                           </div>
+                          
+                          {unreadCount > 0 && (
+                            <span className="min-w-[20px] h-[20px] bg-red-500 text-white text-[11px] font-bold rounded-full flex items-center justify-center px-1.5 flex-shrink-0">
+                              {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                          )}
                         </div>
                       </div>
                     );
