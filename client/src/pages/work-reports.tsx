@@ -131,29 +131,28 @@ export default function WorkReportsPage() {
   
   const { data: reports = [], isLoading: reportsLoading } = useQuery<WorkReport[]>({
     queryKey: [`/api/work-reports${queryParams}`],
-    enabled: isAuthenticated && !authLoading
+    enabled: isAuthenticated && !authLoading,
+    staleTime: 30000
   });
 
-  const { data: allReports = [] } = useQuery<WorkReport[]>({
-    queryKey: ['/api/work-reports'],
-    enabled: isAuthenticated && !authLoading
+  // Use dedicated lightweight endpoints for autocomplete data (optimized DISTINCT queries)
+  const { data: uniqueLocations = [] } = useQuery<string[]>({
+    queryKey: ['/api/work-reports/locations'],
+    enabled: isAuthenticated && !authLoading,
+    staleTime: 60000 // Cache for 1 minute - locations don't change often
   });
 
-  const { uniqueLocations, uniqueClients, uniqueRefCodes } = useMemo(() => {
-    const locations = new Set<string>();
-    const clients = new Set<string>();
-    const refCodes = new Set<string>();
-    allReports.forEach(report => {
-      if (report.location) locations.add(report.location);
-      if (report.clientName) clients.add(report.clientName);
-      if (report.refCode) refCodes.add(report.refCode);
-    });
-    return {
-      uniqueLocations: Array.from(locations).sort(),
-      uniqueClients: Array.from(clients).sort(),
-      uniqueRefCodes: Array.from(refCodes).sort()
-    };
-  }, [allReports]);
+  const { data: uniqueClients = [] } = useQuery<string[]>({
+    queryKey: ['/api/work-reports/clients'],
+    enabled: isAuthenticated && !authLoading,
+    staleTime: 60000
+  });
+
+  const { data: uniqueRefCodes = [] } = useQuery<string[]>({
+    queryKey: ['/api/work-reports/ref-codes'],
+    enabled: isAuthenticated && !authLoading,
+    staleTime: 60000
+  });
 
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [showClientSuggestions, setShowClientSuggestions] = useState(false);

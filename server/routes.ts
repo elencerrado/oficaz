@@ -4987,18 +4987,35 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  // Employee: Get unique ref codes for autocomplete
+  // Employee: Get unique ref codes for autocomplete (optimized - uses DISTINCT query)
   app.get('/api/work-reports/ref-codes', authenticateToken, async (req: AuthRequest, res) => {
     try {
-      const reports = await storage.getWorkReportsByUser(req.user!.id, {});
-      const refCodes = reports
-        .map(r => r.refCode)
-        .filter((code): code is string => !!code && code.trim() !== '')
-        .filter((code, index, self) => self.indexOf(code) === index)
-        .sort();
+      const refCodes = await storage.getWorkReportRefCodes(req.user!.id);
       res.json(refCodes);
     } catch (error: any) {
       console.error('Ref codes fetch error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Employee: Get unique locations for autocomplete (optimized - uses DISTINCT query)
+  app.get('/api/work-reports/locations', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const locations = await storage.getWorkReportLocations(req.user!.id);
+      res.json(locations);
+    } catch (error: any) {
+      console.error('Locations fetch error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Employee: Get unique clients for autocomplete (optimized - uses DISTINCT query)
+  app.get('/api/work-reports/clients', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const clients = await storage.getWorkReportClients(req.user!.id);
+      res.json(clients);
+    } catch (error: any) {
+      console.error('Clients fetch error:', error);
       res.status(500).json({ message: error.message });
     }
   });

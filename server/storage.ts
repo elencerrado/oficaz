@@ -292,6 +292,11 @@ export interface IStorage {
   getWorkReportsByCompany(companyId: number, filters?: { employeeId?: number; startDate?: string; endDate?: string }): Promise<(schema.WorkReport & { employeeName: string; employeeSignature?: string | null })[]>;
   updateWorkReport(id: number, updates: Partial<schema.InsertWorkReport> & { durationMinutes?: number }): Promise<schema.WorkReport | undefined>;
   deleteWorkReport(id: number): Promise<boolean>;
+  
+  // Work Reports - Lightweight autocomplete queries (optimized)
+  getWorkReportRefCodes(userId: number): Promise<string[]>;
+  getWorkReportLocations(userId: number): Promise<string[]>;
+  getWorkReportClients(userId: number): Promise<string[]>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -3550,6 +3555,46 @@ export class DrizzleStorage implements IStorage {
       .where(eq(schema.workReports.id, id))
       .returning();
     return result.length > 0;
+  }
+
+  // Optimized lightweight autocomplete queries - only fetch distinct values
+  async getWorkReportRefCodes(userId: number): Promise<string[]> {
+    const results = await db.selectDistinct({ refCode: schema.workReports.refCode })
+      .from(schema.workReports)
+      .where(and(
+        eq(schema.workReports.employeeId, userId),
+        isNotNull(schema.workReports.refCode)
+      ))
+      .orderBy(schema.workReports.refCode);
+    
+    return results
+      .map(r => r.refCode)
+      .filter((code): code is string => !!code && code.trim() !== '');
+  }
+
+  async getWorkReportLocations(userId: number): Promise<string[]> {
+    const results = await db.selectDistinct({ location: schema.workReports.location })
+      .from(schema.workReports)
+      .where(eq(schema.workReports.employeeId, userId))
+      .orderBy(schema.workReports.location);
+    
+    return results
+      .map(r => r.location)
+      .filter((loc): loc is string => !!loc && loc.trim() !== '');
+  }
+
+  async getWorkReportClients(userId: number): Promise<string[]> {
+    const results = await db.selectDistinct({ clientName: schema.workReports.clientName })
+      .from(schema.workReports)
+      .where(and(
+        eq(schema.workReports.employeeId, userId),
+        isNotNull(schema.workReports.clientName)
+      ))
+      .orderBy(schema.workReports.clientName);
+    
+    return results
+      .map(r => r.clientName)
+      .filter((name): name is string => !!name && name.trim() !== '');
   }
 }
 
