@@ -30,7 +30,8 @@ import {
   Eye,
   X,
   Pen,
-  Edit
+  Edit,
+  Settings
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -68,6 +69,7 @@ interface Employee {
   id: number;
   fullName: string;
   role: string;
+  workReportMode?: string;
 }
 
 const STATUS_STYLES = {
@@ -120,6 +122,8 @@ export default function AdminWorkReportsPage() {
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<number | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingReport, setEditingReport] = useState<WorkReportWithEmployee | null>(null);
+  const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [employeeWorkModes, setEmployeeWorkModes] = useState<Record<number, string>>({});
   const [editFormData, setEditFormData] = useState<EditFormData>({
     reportDate: '',
     refCode: '',
@@ -443,16 +447,35 @@ export default function AdminWorkReportsPage() {
           <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
             <span className="text-sm sm:text-lg font-medium">{filterTitle} ({filteredReports.length})</span>
             
-            {/* Filters button */}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2"
-            >
-              <Filter className="w-4 h-4" />
-              Filtros
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* Config button */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  const modes: Record<number, string> = {};
+                  employees.forEach(emp => {
+                    modes[emp.id] = emp.workReportMode || 'manual';
+                  });
+                  setEmployeeWorkModes(modes);
+                  setConfigModalOpen(true);
+                }}
+                className="flex items-center gap-2"
+              >
+                <Settings className="w-4 h-4" />
+                Configurar
+              </Button>
+              {/* Filters button */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2"
+              >
+                <Filter className="w-4 h-4" />
+                Filtros
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
 
@@ -965,6 +988,89 @@ export default function AdminWorkReportsPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de configuración de modos de partes */}
+      <Dialog open={configModalOpen} onOpenChange={setConfigModalOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
+          <DialogHeader className="border-b border-gray-200 dark:border-gray-700 pb-4">
+            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Settings className="w-5 h-5 text-blue-600" />
+              Configurar Partes de Trabajo
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Configura cómo cada empleado puede crear partes de trabajo.
+            </p>
+            
+            <div className="space-y-3">
+              {employees.map((emp) => (
+                <div 
+                  key={emp.id} 
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                >
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-gray-500" />
+                    <span className="font-medium text-gray-900 dark:text-white">{emp.fullName}</span>
+                  </div>
+                  <Select 
+                    value={employeeWorkModes[emp.id] || 'manual'} 
+                    onValueChange={(value) => {
+                      setEmployeeWorkModes(prev => ({ ...prev, [emp.id]: value }));
+                    }}
+                  >
+                    <SelectTrigger className="w-[160px] h-9 text-sm bg-white dark:bg-gray-700">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="disabled">Sin acceso</SelectItem>
+                      <SelectItem value="manual">Acceso manual</SelectItem>
+                      <SelectItem value="both">Ambas opciones</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <Button
+                variant="outline"
+                onClick={() => setConfigModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={async () => {
+                  try {
+                    for (const [empId, mode] of Object.entries(employeeWorkModes)) {
+                      const emp = employees.find(e => e.id === parseInt(empId));
+                      if (emp && emp.workReportMode !== mode) {
+                        await apiRequest('PATCH', `/api/employees/${empId}`, { workReportMode: mode });
+                      }
+                    }
+                    queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+                    toast({
+                      title: 'Configuración guardada',
+                      description: 'Los modos de partes de trabajo han sido actualizados.',
+                    });
+                    setConfigModalOpen(false);
+                  } catch (error) {
+                    toast({
+                      title: 'Error',
+                      description: 'No se pudo guardar la configuración.',
+                      variant: 'destructive',
+                    });
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Guardar cambios
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
