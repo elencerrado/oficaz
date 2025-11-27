@@ -668,42 +668,44 @@ export default function AdminWorkReportsPage() {
                     className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
                     data-testid={`card-admin-report-${report.id}`}
                   >
-                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center gap-2 text-gray-900 dark:text-white">
-                        <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        <span className="font-semibold">{report.employeeName}</span>
-                        {report.refCode && (
-                          <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs">
-                            {report.refCode}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleEditReport(report)}
-                          className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
-                          title="Editar parte"
-                          data-testid={`button-edit-report-${report.id}`}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleViewReport(report)}
-                          className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
-                          title="Ver parte completo"
-                          data-testid={`button-view-report-${report.id}`}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDownloadPdf(report)}
-                          disabled={isDownloadingPdf === report.id}
-                          className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400 disabled:opacity-50"
-                          title="Descargar PDF"
-                          data-testid={`button-download-pdf-${report.id}`}
-                        >
-                          <Download className={`w-4 h-4 ${isDownloadingPdf === report.id ? 'animate-pulse' : ''}`} />
-                        </button>
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div className="flex items-center gap-2 text-gray-900 dark:text-white min-w-0">
+                          <User className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                          <span className="font-semibold truncate">{report.employeeName}</span>
+                          {report.refCode && (
+                            <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs flex-shrink-0">
+                              {report.refCode}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 sm:gap-2 self-end sm:self-auto">
+                          <button
+                            onClick={() => handleEditReport(report)}
+                            className="p-2 sm:p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
+                            title="Editar parte"
+                            data-testid={`button-edit-report-${report.id}`}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleViewReport(report)}
+                            className="p-2 sm:p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
+                            title="Ver parte completo"
+                            data-testid={`button-view-report-${report.id}`}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDownloadPdf(report)}
+                            disabled={isDownloadingPdf === report.id}
+                            className="p-2 sm:p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400 disabled:opacity-50"
+                            title="Descargar PDF"
+                            data-testid={`button-download-pdf-${report.id}`}
+                          >
+                            <Download className={`w-4 h-4 ${isDownloadingPdf === report.id ? 'animate-pulse' : ''}`} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                     
