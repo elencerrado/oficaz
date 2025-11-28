@@ -3996,6 +3996,34 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Optimized endpoint for Summary tab - returns aggregated stats per employee (no individual sessions)
+  app.get('/api/work-sessions/summary-stats', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      
+      // Parse date range
+      let startDate: Date | undefined;
+      let endDate: Date | undefined;
+      
+      if (req.query.startDate) {
+        startDate = new Date(req.query.startDate as string);
+        startDate.setHours(0, 0, 0, 0);
+      }
+      
+      if (req.query.endDate) {
+        endDate = new Date(req.query.endDate as string);
+        endDate.setHours(23, 59, 59, 999);
+      }
+      
+      // Get aggregated stats using optimized SQL query
+      const stats = await storage.getWorkSessionsStats(companyId, startDate, endDate);
+      
+      res.json(stats);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.patch('/api/work-sessions/:id', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);

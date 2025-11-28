@@ -197,10 +197,11 @@ export default function TimeTracking() {
   }>({
     queryKey: ['/api/work-sessions/company', `${queryParams}&limit=${SESSIONS_PER_PAGE}&offset=${offset}`],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
-    staleTime: 0,
+    staleTime: 30 * 1000, // 30 seconds - reduces API calls while keeping data fresh
     gcTime: 10 * 60 * 1000,
     retry: 2,
     retryDelay: 750,
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   // Accumulate sessions when data arrives
@@ -244,17 +245,31 @@ export default function TimeTracking() {
     retry: 1,
   });
 
-  // Separate query for Summary tab - loads sessions for the selected month
+  // Optimized query for Summary tab - returns only aggregated stats (no individual sessions)
   const summaryMonthStart = useMemo(() => startOfMonth(summaryWeek), [summaryWeek]);
   const summaryMonthEnd = useMemo(() => endOfMonth(summaryWeek), [summaryWeek]);
   
-  const { data: summarySessions = [] } = useQuery<any[]>({
-    queryKey: ['/api/work-sessions/company', `startDate=${format(summaryMonthStart, 'yyyy-MM-dd')}&endDate=${format(summaryMonthEnd, 'yyyy-MM-dd')}&limit=1000&offset=0`],
+  // Monthly stats query
+  const { data: monthlyStats = [] } = useQuery<{ employeeId: number; totalHours: number; totalBreakHours: number; sessionCount: number }[]>({
+    queryKey: ['/api/work-sessions/summary-stats', { startDate: format(summaryMonthStart, 'yyyy-MM-dd'), endDate: format(summaryMonthEnd, 'yyyy-MM-dd') }],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager') && activeTab === 'summary',
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
-    select: (data: any) => data?.sessions || [],
+    staleTime: 60 * 1000, // 1 minute - stats don't need to be super fresh
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
+  
+  // Weekly stats query (for the selected week within the month)
+  const weekEnd = useMemo(() => endOfWeek(summaryWeek, { weekStartsOn: 1 }), [summaryWeek]);
+  
+  const { data: weeklyStats = [] } = useQuery<{ employeeId: number; totalHours: number; totalBreakHours: number; sessionCount: number }[]>({
+    queryKey: ['/api/work-sessions/summary-stats', { startDate: format(summaryWeek, 'yyyy-MM-dd'), endDate: format(weekEnd, 'yyyy-MM-dd') }],
+    enabled: !!user && (user.role === 'admin' || user.role === 'manager') && activeTab === 'summary',
+    staleTime: 60 * 1000, // 1 minute
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+  
+  // Create lookup maps for fast access
+  const monthlyStatsMap = useMemo(() => new Map(monthlyStats.map(s => [s.employeeId, s])), [monthlyStats]);
+  const weeklyStatsMap = useMemo(() => new Map(weeklyStats.map(s => [s.employeeId, s])), [weeklyStats]);
   
   // Modification requests count
   const { data: pendingRequestsData } = useQuery<{ count: number }>({
@@ -296,10 +311,22 @@ export default function TimeTracking() {
         const message = JSON.parse(event.data);
         
         if (message.type === 'work_session_created' || message.type === 'work_session_updated') {
-          console.log(`📡 WebSocket update received: ${message.type}`);
-          // Refetch data when changes occur
-          refetch();
-          // Also refetch pending requests count
+          console.log(`📡 WebSocket update received: ${message.type}`, message.data?.id);
+          
+          // Optimized: Only invalidate cache without immediate refetch
+          // This marks data as stale, but won't trigger refetch until component is focused/visible
+          queryClient.invalidateQueries({ 
+            queryKey: ['/api/work-sessions/company'],
+            refetchType: 'none' // Don't refetch immediately, just mark stale
+          });
+          
+          // Invalidate summary stats (lightweight operation)
+          queryClient.invalidateQueries({ 
+            queryKey: ['/api/work-sessions/summary-stats'],
+            refetchType: 'none'
+          });
+          
+          // Only refetch pending requests count (small payload)
           queryClient.invalidateQueries({ queryKey: ['/api/admin/work-sessions/modification-requests/count'] });
         }
       } catch (error) {
@@ -3892,42 +3919,13 @@ export default function TimeTracking() {
               summarySearch === '' || 
               emp.fullName.toLowerCase().includes(summarySearch.toLowerCase())
             ).map((employee) => {
-              // Calculate monthly hours using summarySessions (loaded for the selected month)
-              const monthlySessions = (Array.isArray(summarySessions) ? summarySessions : []).filter((s: any) => 
-                s.userId === employee.id
-              );
+              // Get pre-calculated stats from optimized endpoint (O(1) lookup)
+              const monthStats = monthlyStatsMap.get(employee.id);
+              const weekStats = weeklyStatsMap.get(employee.id);
               
-              const monthlyHours = monthlySessions.reduce((total: number, session: any) => {
-                if (!session.clockOut) return total;
-                const hours = differenceInMinutes(new Date(session.clockOut), new Date(session.clockIn)) / 60;
-                const breakMinutes = ((session.breakPeriods || session.breaks) || []).reduce((sum: number, b: any) => {
-                  const endTime = b.breakEnd || b.endTime;
-                  const startTime = b.breakStart || b.startTime;
-                  if (!endTime) return sum;
-                  return sum + differenceInMinutes(new Date(endTime), new Date(startTime));
-                }, 0);
-                return total + hours - (breakMinutes / 60);
-              }, 0);
-
-              // Calculate weekly hours (based on selected week)
-              const weekEnd = endOfWeek(summaryWeek, { weekStartsOn: 1 });
-              const weeklySessions = (Array.isArray(summarySessions) ? summarySessions : []).filter((s: any) => 
-                s.userId === employee.id &&
-                new Date(s.clockIn) >= summaryWeek &&
-                new Date(s.clockIn) <= weekEnd
-              );
-              
-              const weeklyHours = weeklySessions.reduce((total: number, session: any) => {
-                if (!session.clockOut) return total;
-                const hours = differenceInMinutes(new Date(session.clockOut), new Date(session.clockIn)) / 60;
-                const breakMinutes = ((session.breakPeriods || session.breaks) || []).reduce((sum: number, b: any) => {
-                  const endTime = b.breakEnd || b.endTime;
-                  const startTime = b.breakStart || b.startTime;
-                  if (!endTime) return sum;
-                  return sum + differenceInMinutes(new Date(endTime), new Date(startTime));
-                }, 0);
-                return total + hours - (breakMinutes / 60);
-              }, 0);
+              // Net hours = total work hours - break hours (already calculated server-side)
+              const monthlyHours = (monthStats?.totalHours || 0) - (monthStats?.totalBreakHours || 0);
+              const weeklyHours = (weekStats?.totalHours || 0) - (weekStats?.totalBreakHours || 0);
 
               const monthlyTarget = 160;
               const weeklyTarget = 40;

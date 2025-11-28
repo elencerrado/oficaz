@@ -749,6 +749,76 @@ export class DrizzleStorage implements IStorage {
     return { sessions: enrichedSessions, totalCount };
   }
 
+  // Optimized aggregated stats for Summary tab (no individual sessions loaded)
+  async getWorkSessionsStats(
+    companyId: number,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<{ employeeId: number; totalHours: number; totalBreakHours: number; sessionCount: number }[]> {
+    // Build conditions
+    const conditions = [eq(schema.users.companyId, companyId)];
+    
+    if (startDate) {
+      conditions.push(gte(schema.workSessions.clockIn, startDate));
+    }
+    if (endDate) {
+      conditions.push(lte(schema.workSessions.clockIn, endDate));
+    }
+    
+    // Single optimized SQL query that calculates totals per employee
+    const stats = await db.select({
+      employeeId: schema.workSessions.userId,
+      sessionCount: sql<number>`count(*)::int`,
+      // Calculate total work hours (clockOut - clockIn) in hours
+      totalHours: sql<number>`
+        COALESCE(
+          SUM(
+            CASE 
+              WHEN ${schema.workSessions.clockOut} IS NOT NULL 
+              THEN EXTRACT(EPOCH FROM (${schema.workSessions.clockOut} - ${schema.workSessions.clockIn})) / 3600.0
+              ELSE 0 
+            END
+          ), 
+          0
+        )::float
+      `,
+    }).from(schema.workSessions)
+      .innerJoin(schema.users, eq(schema.workSessions.userId, schema.users.id))
+      .where(and(...conditions))
+      .groupBy(schema.workSessions.userId);
+
+    // Get break periods totals separately (more efficient than subquery)
+    const breakStats = await db.select({
+      userId: schema.breakPeriods.userId,
+      totalBreakHours: sql<number>`
+        COALESCE(
+          SUM(
+            CASE 
+              WHEN ${schema.breakPeriods.breakEnd} IS NOT NULL 
+              THEN EXTRACT(EPOCH FROM (${schema.breakPeriods.breakEnd} - ${schema.breakPeriods.breakStart})) / 3600.0
+              ELSE 0 
+            END
+          ), 
+          0
+        )::float
+      `,
+    }).from(schema.breakPeriods)
+      .innerJoin(schema.workSessions, eq(schema.breakPeriods.workSessionId, schema.workSessions.id))
+      .innerJoin(schema.users, eq(schema.workSessions.userId, schema.users.id))
+      .where(and(...conditions))
+      .groupBy(schema.breakPeriods.userId);
+
+    // Merge break stats into main stats
+    const breakMap = new Map(breakStats.map(b => [b.userId, b.totalBreakHours]));
+    
+    return stats.map(s => ({
+      employeeId: s.employeeId,
+      totalHours: Number(s.totalHours) || 0,
+      totalBreakHours: breakMap.get(s.employeeId) || 0,
+      sessionCount: s.sessionCount,
+    }));
+  }
+
   // Break Periods
   async createBreakPeriod(breakPeriod: InsertBreakPeriod): Promise<BreakPeriod> {
     const [result] = await db.insert(schema.breakPeriods).values(breakPeriod).returning();

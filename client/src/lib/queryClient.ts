@@ -180,8 +180,23 @@ export const getQueryFn: <T>(options: {
     const authHeaders = getAuthHeaders();
     // Build URL with query params if second element exists
     let url = queryKey[0] as string;
-    if (queryKey[1] && typeof queryKey[1] === 'string' && queryKey[1].length > 0) {
-      url = `${url}?${queryKey[1]}`;
+    if (queryKey[1]) {
+      if (typeof queryKey[1] === 'string' && queryKey[1].length > 0) {
+        // Legacy: string query params
+        url = `${url}?${queryKey[1]}`;
+      } else if (typeof queryKey[1] === 'object') {
+        // New: object query params for better cache management
+        const params = new URLSearchParams();
+        Object.entries(queryKey[1]).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            params.append(key, String(value));
+          }
+        });
+        const queryString = params.toString();
+        if (queryString) {
+          url = `${url}?${queryString}`;
+        }
+      }
     }
     // Query with auth headers
     const res = await fetch(url, {
