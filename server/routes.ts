@@ -6112,12 +6112,13 @@ Responde directamente a este email para contactar con la persona.
       res.setHeader('X-Frame-Options', 'SAMEORIGIN');
       res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
       
+      // Add cache headers for better performance
+      res.setHeader('Cache-Control', 'private, max-age=300'); // 5 min cache for same document
+      
       // Set disposition based on whether it's preview or download
       if (isPreview) {
-        console.log(`Setting inline disposition for preview: ${document.originalName} (${contentType})`);
         res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(document.originalName)}"`);
       } else {
-        console.log(`Setting attachment disposition for download: ${document.originalName} (${contentType})`);
         res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(document.originalName)}"`);
       }
 
@@ -6127,10 +6128,8 @@ Responde directamente a este email para contactar con la persona.
       const ext = path.extname(document.originalName || document.fileName).toLowerCase();
       if (ext === '.pdf' && document.digitalSignature && document.isAccepted) {
         try {
-          console.log(`SECURITY: Generating signed PDF for document ${id} (owner: ${document.userId}, requester: ${user.id})`);
-          
-          // Read the base PDF
-          const pdfBytes = fs.readFileSync(filePath);
+          // Read the base PDF asynchronously for better performance
+          const pdfBytes = await fs.promises.readFile(filePath);
           const pdfDoc = await PDFDocument.load(pdfBytes);
           
           // Get the last page to add signature
@@ -6165,8 +6164,6 @@ Responde directamente a este email para contactar con la persona.
           const signedPdfBytes = await pdfDoc.save();
           res.setHeader('Content-Length', signedPdfBytes.length);
           res.send(Buffer.from(signedPdfBytes));
-          
-          console.log(`Signed PDF generated and sent for document ${id}`);
           return;
         } catch (pdfError) {
           console.error(`Error generating signed PDF for document ${id}:`, pdfError);
