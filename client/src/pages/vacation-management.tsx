@@ -965,7 +965,13 @@ export default function VacationManagement() {
                 {filteredRequests.map((request: VacationRequest) => (
                   <div
                     key={request.id}
-                    className="p-4 border border-border rounded-lg hover:bg-muted/10 bg-card"
+                    className={`p-4 border rounded-lg ${
+                      request.status === 'pending'
+                        ? 'bg-yellow-50/50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800'
+                        : request.status === 'approved'
+                        ? 'bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
+                        : 'bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
+                    }`}
                   >
                     {/* Desktop: layout horizontal */}
                     <div className="hidden md:flex items-center justify-between">
