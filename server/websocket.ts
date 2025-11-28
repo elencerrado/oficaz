@@ -14,7 +14,8 @@ interface WSMessage {
   type: 'work_session_updated' | 'work_session_created' | 'work_session_deleted' | 
         'vacation_request_created' | 'vacation_request_updated' | 
         'modification_request_created' | 'modification_request_updated' |
-        'document_request_created' | 'document_uploaded';
+        'document_request_created' | 'document_uploaded' |
+        'message_received' | 'work_report_created' | 'reminder_all_completed';
   companyId: number;
   data?: any;
 }

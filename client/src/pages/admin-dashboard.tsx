@@ -309,8 +309,46 @@ export default function AdminDashboard() {
             message.type === 'modification_request_updated' ||
             message.type === 'work_session_created' || 
             message.type === 'work_session_updated' || 
-            message.type === 'work_session_deleted') {
+            message.type === 'work_session_deleted' ||
+            message.type === 'message_received' ||
+            message.type === 'document_uploaded' ||
+            message.type === 'work_report_created' ||
+            message.type === 'reminder_all_completed') {
           queryClient.invalidateQueries({ queryKey: ['/api/admin/dashboard/summary'] });
+        }
+        
+        // 🔔 Toast notifications for new employee actions
+        if (message.type === 'message_received' && message.data) {
+          toast({
+            title: "💬 Nuevo mensaje",
+            description: `${message.data.senderName} te ha enviado un mensaje`,
+            duration: 8000
+          });
+        }
+        
+        if (message.type === 'document_uploaded' && message.data) {
+          const docType = message.data.requestType ? ` (${message.data.requestType})` : '';
+          toast({
+            title: "📄 Documento subido",
+            description: `${message.data.employeeName} ha subido un documento${docType}`,
+            duration: 8000
+          });
+        }
+        
+        if (message.type === 'work_report_created' && message.data) {
+          toast({
+            title: "📋 Nuevo parte de trabajo",
+            description: `${message.data.employeeName} ha enviado un parte desde ${message.data.location}`,
+            duration: 8000
+          });
+        }
+        
+        if (message.type === 'reminder_all_completed' && message.data) {
+          toast({
+            title: "✅ Recordatorio completado",
+            description: `Todos (${message.data.completedCount}) han completado: ${message.data.title}`,
+            duration: 8000
+          });
         }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);

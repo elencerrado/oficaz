@@ -4957,6 +4957,23 @@ Responde directamente a este email para contactar con la persona.
         notes: notes || null,
         status: status || 'completed',
       });
+      
+      // 📡 WebSocket: Notify admin/manager when employee creates work report
+      const user = await storage.getUser(req.user!.id);
+      const wsServer = getWebSocketServer();
+      if (wsServer) {
+        wsServer.broadcastToCompany(req.user!.companyId, {
+          type: 'work_report_created',
+          companyId: req.user!.companyId,
+          data: { 
+            reportId: report.id, 
+            employeeId: req.user!.id,
+            employeeName: user?.fullName || 'Empleado',
+            location: location,
+            reportDate: reportDate
+          }
+        });
+      }
 
       res.status(201).json(report);
     } catch (error: any) {
@@ -5725,6 +5742,26 @@ Responde directamente a este email para contactar con la persona.
       });
 
       console.log('Document created:', document);
+      
+      // 📡 WebSocket: Notify admin/manager when employee uploads document (especially for requested docs)
+      if (req.user!.role === 'employee') {
+        const user = await storage.getUser(req.user!.id);
+        const wsServer = getWebSocketServer();
+        if (wsServer) {
+          wsServer.broadcastToCompany(req.user!.companyId, {
+            type: 'document_uploaded',
+            companyId: req.user!.companyId,
+            data: { 
+              documentId: document.id, 
+              employeeId: req.user!.id,
+              employeeName: user?.fullName || 'Empleado',
+              documentName: finalOriginalName,
+              requestType: req.body.requestType || null
+            }
+          });
+        }
+      }
+      
       res.status(201).json(document);
     } catch (error: any) {
       console.error('Error uploading document:', error);
@@ -6466,6 +6503,31 @@ Responde directamente a este email para contactar con la persona.
       });
 
       const message = await storage.createMessage(data);
+      
+      // Get sender info for WebSocket notification
+      const sender = await storage.getUser(req.user!.id);
+      const senderName = sender?.fullName || 'Usuario';
+      
+      // 📡 WebSocket: Notify admin/manager of new message from employee
+      if (req.user!.role === 'employee' && data.receiverId) {
+        const receiver = await storage.getUser(data.receiverId);
+        if (receiver && (receiver.role === 'admin' || receiver.role === 'manager')) {
+          const wsServer = getWebSocketServer();
+          if (wsServer) {
+            wsServer.broadcastToCompany(req.user!.companyId, {
+              type: 'message_received',
+              companyId: req.user!.companyId,
+              data: { 
+                messageId: message.id, 
+                senderId: req.user!.id,
+                senderName: senderName,
+                receiverId: data.receiverId,
+                subject: data.subject || 'Nuevo mensaje'
+              }
+            });
+          }
+        }
+      }
       
       // 📱 Send push notification to receiver(s) - ASYNC (no bloquea endpoint)
       import('./pushNotificationScheduler.js').then(async ({ sendMessageNotification }) => {
@@ -8209,6 +8271,23 @@ Responde directamente a este email para contactar con la persona.
         } else {
           // If no users assigned, use individual completion status of creator
           updateData.isCompleted = newCompletedByUserIds.includes(creatorId);
+        }
+        
+        // 📡 WebSocket: Notify all admin/manager in company when ALL assigned users complete the reminder
+        if (updateData.isCompleted && !existingReminder.isCompleted && assignedUserIds.length > 0) {
+          const wsServer = getWebSocketServer();
+          if (wsServer) {
+            wsServer.broadcastToCompany(req.user!.companyId, {
+              type: 'reminder_all_completed',
+              companyId: req.user!.companyId,
+              data: { 
+                reminderId: reminderId,
+                title: existingReminder.title,
+                creatorId: creatorId,
+                completedCount: assignedUserIds.length
+              }
+            });
+          }
         }
       }
       
