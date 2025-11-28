@@ -3957,11 +3957,17 @@ Responde directamente a este email para contactar con la persona.
       }
       
       if (req.query.startDate) {
-        filters.startDate = new Date(req.query.startDate as string);
+        // Set to start of day (00:00:00)
+        const startDate = new Date(req.query.startDate as string);
+        startDate.setHours(0, 0, 0, 0);
+        filters.startDate = startDate;
       }
       
       if (req.query.endDate) {
-        filters.endDate = new Date(req.query.endDate as string);
+        // Set to end of day (23:59:59.999) to include all sessions from that day
+        const endDate = new Date(req.query.endDate as string);
+        endDate.setHours(23, 59, 59, 999);
+        filters.endDate = endDate;
       }
       
       if (req.query.status && ['active', 'completed', 'incomplete'].includes(req.query.status as string)) {
