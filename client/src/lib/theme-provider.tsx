@@ -35,6 +35,19 @@ const isAdminRoute = () => {
     '/settings',
     '/employee-profile',
     '/super-admin',
+    '/work-reports',
+    '/schedules',
+    // Direct employee routes (Spanish)
+    '/inicio',
+    '/fichajes',
+    '/misfichajes',
+    '/horas',
+    '/vacaciones',
+    '/documentos',
+    '/mensajes',
+    '/cuadrante',
+    '/partes-trabajo',
+    '/usuario',
     // Direct admin routes for company alias paths
     '/recordatorios',
     '/empleados',
@@ -52,7 +65,7 @@ const isAdminRoute = () => {
     '/oficaz/reminders',
     '/oficaz/employee-reminders',
     '/oficaz/employees-simple',
-    '/oficaz/configuracion', // Spanish version of settings
+    '/oficaz/configuracion',
     '/oficaz/settings',
     '/oficaz/employee-profile',
     '/oficaz/super-admin',
@@ -65,7 +78,9 @@ const isAdminRoute = () => {
     '/oficaz/vacaciones',
     '/oficaz/documentos',
     '/oficaz/mensajes',
-    '/oficaz/cuadrante'
+    '/oficaz/cuadrante',
+    '/oficaz/partes-trabajo',
+    '/oficaz/usuario'
   ];
   
   // Also check for company alias patterns like /companyName/recordatorios, /companyName/empleados
