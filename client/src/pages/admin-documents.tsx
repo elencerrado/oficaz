@@ -849,49 +849,19 @@ export default function AdminDocuments() {
 
       console.log('[SECURITY] Using signed URL for view');
 
-      // For iOS devices, use direct link approach
-      if (isIOS()) {
-        // Properly append view parameter to URL
-        const url = new URL(signedUrl, window.location.origin);
-        url.searchParams.set('view', 'true');
-        
-        // Create a temporary link element and click it
-        const link = document.createElement('a');
-        link.href = url.toString();
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        toast({
-          title: "Documento abierto",
-          description: "El documento se ha abierto en una nueva pestaña",
-        });
-        
-        setViewingDocId(null);
-        return;
-      }
-
-      // For desktop browsers, use blob approach
-      // Properly append preview parameter to URL
+      // Use direct link approach for all browsers - prevents popup blocking
       const url = new URL(signedUrl, window.location.origin);
       url.searchParams.set('preview', 'true');
       
-      const response = await fetch(url.toString());
-
-      if (!response.ok) {
-        throw new Error('Error al acceder al documento');
-      }
-
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      
-      // Open in new tab to avoid Chrome blocking
-      window.open(blobUrl, '_blank');
-      
-      // Clean up blob URL after opening
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      // Create a temporary link element and click it
+      // This approach works reliably and isn't blocked as a popup
+      const link = document.createElement('a');
+      link.href = url.toString();
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       
     } catch (error: any) {
       toast({
