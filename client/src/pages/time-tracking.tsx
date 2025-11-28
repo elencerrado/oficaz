@@ -2953,7 +2953,7 @@ export default function TimeTracking() {
                         {dateFilter === 'month' ? format(currentMonth, 'MMM yyyy', { locale: es }) : 'Mes'}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-2" align="start">
+                    <PopoverContent className="w-48 p-2" align="start" sideOffset={4}>
                       <div className="space-y-1 max-h-60 overflow-y-auto">
                         {availableMonths.map((monthKey: string) => {
                           const [year, month] = monthKey.split('-');
