@@ -1391,6 +1391,31 @@ export default function VacationManagement() {
                                   })
                                 }
                                 
+                                {/* Línea vertical roja para el día actual */}
+                                {(() => {
+                                  const today = new Date();
+                                  today.setHours(0, 0, 0, 0);
+                                  const rangeStart = new Date(timelineRange.start);
+                                  rangeStart.setHours(0, 0, 0, 0);
+                                  const rangeEnd = new Date(timelineRange.end);
+                                  rangeEnd.setHours(0, 0, 0, 0);
+                                  
+                                  if (today >= rangeStart && today <= rangeEnd) {
+                                    const position = (eachDayOfInterval({
+                                      start: timelineRange.start,
+                                      end: today
+                                    }).length - 1) / timelineRange.days.length * 100;
+                                    
+                                    return (
+                                      <div
+                                        className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20"
+                                        style={{ left: `${position}%` }}
+                                      />
+                                    );
+                                  }
+                                  return null;
+                                })()}
+                                
                                 {/* Contenedor específico para barras de vacaciones */}
                                 <div className="absolute inset-0 overflow-hidden">
                                   {renderVacationBar(employee, timelineRange)}
@@ -1529,6 +1554,31 @@ export default function VacationManagement() {
                                   );
                                 })
                               }
+                              
+                              {/* Línea vertical roja para el día actual - Móvil */}
+                              {(() => {
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                const rangeStart = new Date(timelineRange.start);
+                                rangeStart.setHours(0, 0, 0, 0);
+                                const rangeEnd = new Date(timelineRange.end);
+                                rangeEnd.setHours(0, 0, 0, 0);
+                                
+                                if (today >= rangeStart && today <= rangeEnd) {
+                                  const position = (eachDayOfInterval({
+                                    start: timelineRange.start,
+                                    end: today
+                                  }).length - 1) / timelineRange.days.length * 100;
+                                  
+                                  return (
+                                    <div
+                                      className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20"
+                                      style={{ left: `${position}%` }}
+                                    />
+                                  );
+                                }
+                                return null;
+                              })()}
                               
                               {/* Contenedor específico para barras de vacaciones */}
                               <div className="absolute inset-0 overflow-hidden">
