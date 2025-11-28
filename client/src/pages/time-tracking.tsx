@@ -8,14 +8,13 @@ import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatsCard from '@/components/StatsCard';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { TabNavigation } from '@/components/ui/tab-navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
 import { DatePickerPeriod, DatePickerDay } from '@/components/ui/date-picker';
 import { 
@@ -182,16 +181,13 @@ export default function TimeTracking() {
   const {
     data: infiniteData,
     isLoading,
-    isFetching,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-    refetch,
   } = useInfiniteQuery({
     queryKey: ['/api/work-sessions/company', queryParams],
     queryFn: async ({ pageParam = 0 }) => {
       const url = `/api/work-sessions/company?${queryParams}&limit=${SESSIONS_PER_PAGE}&offset=${pageParam}`;
-      console.log(`📥 Fetching page: offset=${pageParam}, url=${url}`);
       const response = await fetch(url, {
         credentials: 'include',
         headers: {
@@ -201,9 +197,7 @@ export default function TimeTracking() {
         },
       });
       if (!response.ok) throw new Error('Failed to fetch sessions');
-      const data = await response.json();
-      console.log(`📦 Received: ${data.sessions?.length || 0} sessions, hasMore=${data.hasMore}, totalCount=${data.totalCount}`);
-      return data;
+      return await response.json();
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
@@ -324,61 +318,38 @@ export default function TimeTracking() {
 
     const ws = new WebSocket(wsUrl);
 
-    ws.onopen = () => {
-      console.log('✓ WebSocket connected - real-time updates enabled');
-    };
-
     ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
         
         if (message.type === 'work_session_created' || message.type === 'work_session_updated') {
-          console.log(`📡 WebSocket update received: ${message.type}`, message.data?.id);
-          
-          // Optimized: Only invalidate cache without immediate refetch
-          // This marks data as stale, but won't trigger refetch until component is focused/visible
           queryClient.invalidateQueries({ 
             queryKey: ['/api/work-sessions/company'],
-            refetchType: 'none' // Don't refetch immediately, just mark stale
+            refetchType: 'none'
           });
-          
-          // Invalidate summary stats (lightweight operation)
           queryClient.invalidateQueries({ 
             queryKey: ['/api/work-sessions/summary-stats'],
             refetchType: 'none'
           });
-          
-          // Only refetch pending requests count (small payload)
           queryClient.invalidateQueries({ queryKey: ['/api/admin/work-sessions/modification-requests/count'] });
         }
-      } catch (error) {
-        console.error('WebSocket message parse error:', error);
+      } catch {
+        // Silent fail for malformed messages
       }
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    ws.onclose = () => {
-      console.log('✗ WebSocket disconnected');
     };
 
     // Cleanup on unmount
     return () => {
       ws.close();
     };
-  }, [user, refetch, queryClient]);
+  }, [user, queryClient]);
 
-  // Lazy loading of audit logs (Performance Optimization)
-  // Only load audit logs when the dialog is opened and a session is selected
-  const { data: auditLogsData = [], isLoading: isLoadingAuditLogs } = useQuery<any[]>({
+  // Lazy loading of audit logs - only when dialog is opened
+  const { data: auditLogs = [], isLoading: isLoadingAuditLogs } = useQuery<any[]>({
     queryKey: [`/api/admin/work-sessions/${selectedSessionForAudit}/audit-log`],
     enabled: !!selectedSessionForAudit && showAuditDialog,
     staleTime: 30 * 1000,
   });
-  
-  const auditLogs = auditLogsData;
 
   // Reset displayed count when filters change
   useEffect(() => {
