@@ -1029,7 +1029,11 @@ export class DrizzleStorage implements IStorage {
   async getUnreadMessageCount(userId: number): Promise<number> {
     const [result] = await db.select({ count: sql<number>`count(*)` })
       .from(schema.messages)
-      .where(and(eq(schema.messages.receiverId, userId), eq(schema.messages.isRead, false)));
+      .where(and(
+        eq(schema.messages.receiverId, userId), 
+        eq(schema.messages.isRead, false),
+        ne(schema.messages.senderId, userId)
+      ));
     return result.count;
   }
 
