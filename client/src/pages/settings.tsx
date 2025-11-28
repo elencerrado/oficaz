@@ -686,19 +686,17 @@ const AccountManagement = () => {
           
           {/* Usage Statistics */}
           {usageData?.current && (
-            <div className="space-y-4">
+            <div className={`grid gap-4 ${typeof usageData.current.ai_tokens_limit === 'number' && usageData.current.ai_tokens_limit > 0 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
               {/* Usuarios */}
               <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-xl border border-blue-100 dark:border-blue-900/30">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
-                      <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <span className="font-medium text-foreground">Usuarios</span>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
+                    <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                    {usageData.current.employee_count} / {usageData.current.max_users || subscription?.maxUsers || '∞'}
-                  </span>
+                  <span className="font-medium text-foreground">Usuarios</span>
+                </div>
+                <div className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-2">
+                  {usageData.current.employee_count} / {usageData.current.max_users || subscription?.maxUsers || '∞'}
                 </div>
                 <div className="h-2 bg-blue-100 dark:bg-blue-900/30 rounded-full overflow-hidden">
                   <div 
@@ -712,18 +710,16 @@ const AccountManagement = () => {
               
               {/* Almacenamiento */}
               <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg">
-                      <HardDrive className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <span className="font-medium text-foreground">Almacenamiento</span>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg">
+                    <HardDrive className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                    {parseFloat(usageData.current.storage_used_gb || '0') < 1 
-                      ? `${usageData.current.storage_used_mb} MB` 
-                      : `${usageData.current.storage_used_gb} GB`} / {usageData.current.storage_limit_gb || 1} GB
-                  </span>
+                  <span className="font-medium text-foreground">Almacenamiento</span>
+                </div>
+                <div className="text-lg font-semibold text-emerald-600 dark:text-emerald-400 mb-2">
+                  {parseFloat(usageData.current.storage_used_gb || '0') < 1 
+                    ? `${usageData.current.storage_used_mb} MB` 
+                    : `${usageData.current.storage_used_gb} GB`} / {usageData.current.storage_limit_gb || 1} GB
                 </div>
                 <div className="h-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-full overflow-hidden">
                   <div 
@@ -738,16 +734,14 @@ const AccountManagement = () => {
               {/* Asistente IA - Solo si el plan tiene límite de tokens */}
               {typeof usageData.current.ai_tokens_limit === 'number' && usageData.current.ai_tokens_limit > 0 && (
                 <div className="p-4 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/20 dark:to-violet-950/20 rounded-xl border border-purple-100 dark:border-purple-900/30">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
-                        <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                      </div>
-                      <span className="font-medium text-foreground">Asistente IA</span>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
+                      <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                     </div>
-                    <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">
-                      {((Number(usageData.current.ai_tokens_used) || 0) / 1000000).toFixed(2)}M / {(Number(usageData.current.ai_tokens_limit) / 1000000).toFixed(0)}M tokens
-                    </span>
+                    <span className="font-medium text-foreground">Asistente IA</span>
+                  </div>
+                  <div className="text-lg font-semibold text-purple-600 dark:text-purple-400 mb-2">
+                    {((Number(usageData.current.ai_tokens_used) || 0) / 1000000).toFixed(2)}M / {(Number(usageData.current.ai_tokens_limit) / 1000000).toFixed(0)}M tokens
                   </div>
                   <div className="h-2 bg-purple-100 dark:bg-purple-900/30 rounded-full overflow-hidden">
                     <div 
