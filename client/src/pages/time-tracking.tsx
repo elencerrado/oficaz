@@ -181,12 +181,14 @@ export default function TimeTracking() {
   const [totalCount, setTotalCount] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const SESSIONS_PER_PAGE = 50;
+  const lastProcessedOffset = useRef(-1);
 
   // Reset pagination when filters change
   useEffect(() => {
     setOffset(0);
     setAllSessions([]);
     setHasMore(true);
+    lastProcessedOffset.current = -1;
   }, [queryParams]);
 
   // Optimized query with server-side pagination
@@ -204,13 +206,22 @@ export default function TimeTracking() {
     refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
-  // Accumulate sessions when data arrives
+  // Accumulate sessions when data arrives - fixed race condition
   useEffect(() => {
-    if (sessionsData) {
+    if (sessionsData && sessionsData.sessions) {
+      // Prevent duplicate processing of the same offset
+      if (lastProcessedOffset.current === offset) return;
+      lastProcessedOffset.current = offset;
+      
       if (offset === 0) {
         setAllSessions(sessionsData.sessions);
       } else {
-        setAllSessions(prev => [...prev, ...sessionsData.sessions]);
+        setAllSessions(prev => {
+          // Avoid duplicates by checking session IDs
+          const existingIds = new Set(prev.map(s => s.id));
+          const newSessions = sessionsData.sessions.filter((s: any) => !existingIds.has(s.id));
+          return [...prev, ...newSessions];
+        });
       }
       setTotalCount(sessionsData.totalCount);
       setHasMore(sessionsData.hasMore);
