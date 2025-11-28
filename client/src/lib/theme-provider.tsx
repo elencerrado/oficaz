@@ -70,7 +70,7 @@ const isAdminRoute = () => {
   
   // Also check for company alias patterns like /companyName/recordatorios, /companyName/empleados
   // Support both Spanish and English route names
-  const hasCompanyAliasAdminRoute = /^\/[^\/]+\/(recordatorios|empleados|inicio|fichajes|misfichajes|horas|vacaciones|documentos|documents|mensajes|messages|cuadrante|configuracion|usuario|settings|profile|reminders|employees|time-tracking|vacation-requests|vacation-management|admin-documents|employee-dashboard|admin-dashboard|partes-trabajo|work-reports)/.test(path);
+  const hasCompanyAliasAdminRoute = /^\/[^\/]+\/(recordatorios|empleados|inicio|fichajes|misfichajes|horas|vacaciones|documentos|documents|mensajes|messages|cuadrante|configuracion|usuario|settings|profile|reminders|employees|time-tracking|vacation-requests|vacation-management|admin-documents|employee-dashboard|admin-dashboard|partes-trabajo|work-reports|dispositivos|control-tiempo|schedules)/.test(path);
   
   return adminRoutes.some(route => path.startsWith(route)) || hasCompanyAliasAdminRoute;
 };
@@ -147,29 +147,40 @@ export function ThemeProvider({
 
   // Listen to route changes to re-evaluate theme application
   useEffect(() => {
+    let lastAppliedPath = '';
+    
     const handleLocationChange = () => {
-      // Small delay to ensure DOM has updated with new route
-      setTimeout(() => {
-        const root = window.document.documentElement;
+      const currentPath = window.location.pathname;
+      
+      // Skip if we already applied theme for this path
+      if (currentPath === lastAppliedPath) return;
+      lastAppliedPath = currentPath;
+      
+      const root = window.document.documentElement;
+      const isAdmin = isAdminRoute();
+      
+      // Determine target theme
+      let targetTheme: string;
+      if (!isAdmin) {
+        targetTheme = 'light';
+      } else if (theme === 'system') {
+        targetTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      } else {
+        targetTheme = theme;
+      }
+      
+      // Only update if theme actually changed
+      if (!root.classList.contains(targetTheme)) {
         root.classList.remove('light', 'dark');
-
-        if (!isAdminRoute()) {
-          root.classList.add('light');
-          // Only force light color scheme if NOT in employee mode
-          if (!root.classList.contains('employee-mode')) {
-            root.style.colorScheme = 'light';
-          }
+        root.classList.add(targetTheme);
+        
+        // Only force light color scheme for non-admin non-employee-mode
+        if (!isAdmin && !root.classList.contains('employee-mode')) {
+          root.style.colorScheme = 'light';
         } else {
-          if (theme === 'system') {
-            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches 
-              ? 'dark' 
-              : 'light';
-            root.classList.add(systemTheme);
-          } else {
-            root.classList.add(theme);
-          }
+          root.style.colorScheme = targetTheme;
         }
-      }, 10); // Small delay for route to update
+      }
     };
 
     // Enhanced route change detection for mobile compatibility
