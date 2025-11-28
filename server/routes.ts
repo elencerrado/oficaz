@@ -9723,12 +9723,22 @@ Respuesta breve cuando termines: "Listo", "Perfecto", "Ya está".`
             ))
         : [{ count: 0 }];
 
+      // Calculate real storage usage from document file sizes
+      const storageResult = userIds.length > 0
+        ? await db.select({ totalBytes: sql<string>`COALESCE(SUM(file_size), 0)` })
+            .from(documents)
+            .where(inArray(documents.userId, userIds))
+        : [{ totalBytes: '0' }];
+      
+      const totalBytes = parseInt(String(storageResult[0]?.totalBytes || 0));
+      const storageUsedMB = (totalBytes / (1024 * 1024)).toFixed(2);
+
       const currentStats = {
         employee_count: parseInt(String(employeeCount[0]?.count || 0)),
         active_employees: parseInt(String(employeeCount[0]?.count || 0)),
         time_entries_count: parseInt(String(timeEntriesCount[0]?.count || 0)),
         documents_uploaded: parseInt(String(documentsCount[0]?.count || 0)),
-        storage_used_mb: '0.5', // Placeholder - would need actual file size calculation
+        storage_used_mb: storageUsedMB,
         api_calls: parseInt(String(timeEntriesCount[0]?.count || 0)) * 2
       };
 
