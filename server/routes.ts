@@ -9694,6 +9694,17 @@ Respuesta breve cuando termines: "Listo", "Perfecto", "Ya está".`
     try {
       const companyId = req.user!.companyId;
       
+      // Get subscription plan and its storage limit
+      const subscriptionData = await db.execute(sql`
+        SELECT s.plan, sp.storage_limit_gb, sp.max_users
+        FROM subscriptions s
+        LEFT JOIN subscription_plans sp ON LOWER(s.plan) = LOWER(sp.name)
+        WHERE s.company_id = ${companyId}
+      `);
+      const planData = subscriptionData.rows[0] as { plan: string; storage_limit_gb: number; max_users: number } | undefined;
+      const storageLimitGB = planData?.storage_limit_gb || 25; // Default to Basic plan limit
+      const maxUsers = planData?.max_users || 10;
+      
       // Get real-time stats from actual data using proper ORM
       const employeeCount = await db.select({ count: count() })
         .from(users)
@@ -9732,13 +9743,17 @@ Respuesta breve cuando termines: "Listo", "Perfecto", "Ya está".`
       
       const totalBytes = parseInt(String(storageResult[0]?.totalBytes || 0));
       const storageUsedMB = (totalBytes / (1024 * 1024)).toFixed(2);
+      const storageUsedGB = (totalBytes / (1024 * 1024 * 1024)).toFixed(2);
 
       const currentStats = {
         employee_count: parseInt(String(employeeCount[0]?.count || 0)),
         active_employees: parseInt(String(employeeCount[0]?.count || 0)),
+        max_users: maxUsers,
         time_entries_count: parseInt(String(timeEntriesCount[0]?.count || 0)),
         documents_uploaded: parseInt(String(documentsCount[0]?.count || 0)),
         storage_used_mb: storageUsedMB,
+        storage_used_gb: storageUsedGB,
+        storage_limit_gb: storageLimitGB,
         api_calls: parseInt(String(timeEntriesCount[0]?.count || 0)) * 2
       };
 

@@ -123,6 +123,7 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   displayName: varchar("display_name", { length: 100 }).notNull(),
   monthlyPrice: decimal("monthly_price", { precision: 10, scale: 2 }).notNull(), // Precio fijo mensual (ej: 29.99 euros/mes)
   maxUsers: integer("max_users"), // null = unlimited
+  storageLimitGB: integer("storage_limit_gb").default(25), // Storage limit in GB: Basic=25, Pro=100, Master=250
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

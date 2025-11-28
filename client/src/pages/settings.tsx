@@ -689,13 +689,19 @@ const AccountManagement = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-blue-600">
-                  {usageData.current.employee_count}/{subscription?.maxUsers || '∞'}
+                  {usageData.current.employee_count}/{usageData.current.max_users || subscription?.maxUsers || '∞'}
                 </p>
                 <p className="text-sm text-muted-foreground">Usuarios</p>
               </div>
               <div className="text-center p-3 bg-muted rounded-lg">
-                <p className="text-2xl font-bold text-green-600">{usageData.current.storage_used_mb} MB</p>
-                <p className="text-sm text-muted-foreground">Almacenamiento</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {parseFloat(usageData.current.storage_used_gb || '0') < 1 
+                    ? `${usageData.current.storage_used_mb} MB` 
+                    : `${usageData.current.storage_used_gb} GB`}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  de {usageData.current.storage_limit_gb || 25} GB
+                </p>
               </div>
             </div>
           )}
