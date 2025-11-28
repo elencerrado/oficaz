@@ -610,6 +610,20 @@ const AccountManagement = () => {
                 }
               }
             `}</style>
+            <style>{`
+              @keyframes iconPop {
+                0% { opacity: 0; transform: scale(0.5) rotate(-10deg); }
+                100% { opacity: 1; transform: scale(1) rotate(0deg); }
+              }
+              @keyframes textSlide {
+                0% { opacity: 0; transform: translateY(10px); }
+                100% { opacity: 1; transform: translateY(0); }
+              }
+              @keyframes badgeFade {
+                0% { opacity: 0; transform: scale(0.8); }
+                100% { opacity: 1; transform: scale(1); }
+              }
+            `}</style>
             <div className="flex items-center justify-between relative z-10">
               <div className="flex items-center space-x-3">
                 <img 
@@ -621,56 +635,14 @@ const AccountManagement = () => {
                     animation: 'iconPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both'
                   }}
                 />
-                <style>{`
-                  @keyframes iconPop {
-                    0% {
-                      opacity: 0;
-                      transform: scale(0.5) rotate(-10deg);
-                    }
-                    100% {
-                      opacity: 1;
-                      transform: scale(1) rotate(0deg);
-                    }
-                  }
-                `}</style>
-                <div 
-                  style={{
-                    animation: 'textSlide 0.5s ease-out 0.3s both'
-                  }}
-                >
-                  <style>{`
-                    @keyframes textSlide {
-                      0% {
-                        opacity: 0;
-                        transform: translateY(10px);
-                      }
-                      100% {
-                        opacity: 1;
-                        transform: translateY(0);
-                      }
-                    }
-                  `}</style>
+                <div style={{ animation: 'textSlide 0.5s ease-out 0.3s both' }}>
                   <p className="font-semibold text-foreground">Plan {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1)}</p>
                 </div>
               </div>
               <div 
                 className="flex items-center space-x-2"
-                style={{
-                  animation: 'badgeFade 0.4s ease-out 0.5s both'
-                }}
+                style={{ animation: 'badgeFade 0.4s ease-out 0.5s both' }}
               >
-                <style>{`
-                  @keyframes badgeFade {
-                    0% {
-                      opacity: 0;
-                      transform: scale(0.8);
-                    }
-                    100% {
-                      opacity: 1;
-                      transform: scale(1);
-                    }
-                  }
-                `}</style>
                 <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                 <Badge variant="secondary" className={`transition-colors ${
                   trialStatus?.status === 'trial' 
