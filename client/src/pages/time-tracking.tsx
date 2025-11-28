@@ -143,29 +143,35 @@ export default function TimeTracking() {
   // Build query params for server-side filtering (Performance Optimization)
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
-    params.append('limit', '40');
     
     // Employee filter
     if (selectedEmployee !== 'all') {
       params.append('employeeId', selectedEmployee);
     }
     
-    // Date filters
+    // Date filters - use higher limit when showing "all" records
     if (dateFilter === 'custom' && startDate && endDate) {
       params.append('startDate', startDate);
       params.append('endDate', endDate);
+      params.append('limit', '200');
     } else if (dateFilter === 'today') {
       const today = new Date();
       params.append('startDate', format(startOfDay(today), 'yyyy-MM-dd'));
       params.append('endDate', format(endOfDay(today), 'yyyy-MM-dd'));
+      params.append('limit', '100');
     } else if (dateFilter === 'day') {
       params.append('startDate', format(startOfDay(currentDate), 'yyyy-MM-dd'));
       params.append('endDate', format(endOfDay(currentDate), 'yyyy-MM-dd'));
+      params.append('limit', '100');
     } else if (dateFilter === 'month') {
       const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
       const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
       params.append('startDate', format(startOfDay(monthStart), 'yyyy-MM-dd'));
       params.append('endDate', format(endOfDay(monthEnd), 'yyyy-MM-dd'));
+      params.append('limit', '500');
+    } else {
+      // 'all' filter - get all records (high limit)
+      params.append('limit', '2000');
     }
     
     // Status filter for incomplete sessions
