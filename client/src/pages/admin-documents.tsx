@@ -718,9 +718,17 @@ export default function AdminDocuments() {
     });
   };
 
+  const normalizeText = (text: string): string => {
+    return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  };
+
   const filteredDocuments = allDocuments.filter((doc: Document) => {
-    const matchesSearch = doc.originalName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         doc.user?.fullName.toLowerCase().includes(searchTerm.toLowerCase());
+    const normalizedSearch = normalizeText(searchTerm);
+    const normalizedFileName = normalizeText(doc.originalName || '');
+    const normalizedEmployeeName = normalizeText(doc.user?.fullName || '');
+    
+    const matchesSearch = normalizedFileName.includes(normalizedSearch) ||
+                         normalizedEmployeeName.includes(normalizedSearch);
     const matchesEmployee = selectedEmployee === 'all' || doc.userId.toString() === selectedEmployee;
     
     // Filter by pending signature (unsigned payrolls OR documents with requiresSignature flag)
