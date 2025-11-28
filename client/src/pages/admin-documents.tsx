@@ -723,12 +723,14 @@ export default function AdminDocuments() {
                          doc.user?.fullName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesEmployee = selectedEmployee === 'all' || doc.userId.toString() === selectedEmployee;
     
-    // Filter by pending signature (only unsigned payrolls)
+    // Filter by pending signature (unsigned payrolls OR documents with requiresSignature flag)
     let matchesPendingSignature = true;
     if (filterPendingSignature) {
       const fileName = doc.originalName || doc.fileName || '';
       const analysis = analyzeFileName(fileName, employees);
-      matchesPendingSignature = analysis.documentType === 'Nómina' && !doc.isAccepted;
+      const isPayroll = analysis.documentType === 'Nómina';
+      const requiresSignature = (doc as any).requiresSignature === true;
+      matchesPendingSignature = (isPayroll || requiresSignature) && !doc.isAccepted;
     }
     
     return matchesSearch && matchesEmployee && matchesPendingSignature;
@@ -915,11 +917,13 @@ export default function AdminDocuments() {
 
           <StatsCard
             title="Pendientes Firma"
-            subtitle="Nóminas sin firmar"
+            subtitle="Documentos sin firmar"
             value={loadingDocuments ? '-' : (allDocuments || []).filter(doc => {
               const fileName = doc.originalName || doc.fileName || '';
               const analysis = analyzeFileName(fileName, employees);
-              return analysis.documentType === 'Nómina' && !doc.isAccepted;
+              const isPayroll = analysis.documentType === 'Nómina';
+              const requiresSignature = doc.requiresSignature === true;
+              return (isPayroll || requiresSignature) && !doc.isAccepted;
             }).length}
             color="orange"
             icon={FileSignature}
