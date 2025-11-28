@@ -951,11 +951,7 @@ export default function VacationManagement() {
                   </Button>
                 )}
               </div>
-            {loadingRequests ? (
-              <div className="flex justify-center py-8">
-                <LoadingSpinner />
-              </div>
-            ) : filteredRequests.length === 0 ? (
+            {filteredRequests.length === 0 && !loadingRequests ? (
               <div className="text-center py-8 text-muted-foreground">
                 {vacationRequests.length === 0 
                   ? "No hay solicitudes de vacaciones" 
@@ -1154,11 +1150,7 @@ export default function VacationManagement() {
           {activeTab === 'employees' && (
             <div className="space-y-6">
               {/* Timeline de Vacaciones tipo Gantt */}
-              {loadingEmployees ? (
-                <div className="flex justify-center py-8">
-                  <LoadingSpinner />
-                </div>
-              ) : employees.length === 0 ? (
+              {employees.length === 0 && !loadingEmployees ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No hay empleados registrados
                 </div>
