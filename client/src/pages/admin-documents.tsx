@@ -44,7 +44,8 @@ import {
   Folder,
   FolderOpen,
   Receipt,
-  FileSignature
+  FileSignature,
+  Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -174,6 +175,10 @@ export default function AdminDocuments() {
   const [uploadRequiresSignature, setUploadRequiresSignature] = useState(false);
   const [uploadSelectedEmployees, setUploadSelectedEmployees] = useState<number[]>([]);
   const [uploadEmployeeSearch, setUploadEmployeeSearch] = useState('');
+  
+  // Loading state for document operations
+  const [viewingDocId, setViewingDocId] = useState<number | null>(null);
+  const [downloadingDocId, setDownloadingDocId] = useState<number | null>(null);
 
   // Fetch employees (optimized - employees don't change often)
   const { data: employees = [], isLoading: loadingEmployees } = useQuery<Employee[]>({
@@ -761,10 +766,14 @@ export default function AdminDocuments() {
   };
 
   const handleDownload = async (docId: number, fileName: string) => {
+    setDownloadingDocId(docId);
     try {
       // 🔒 SECURITY: Use signed URL instead of JWT token
       const signedUrl = await generateSignedUrl(docId);
-      if (!signedUrl) return;
+      if (!signedUrl) {
+        setDownloadingDocId(null);
+        return;
+      }
 
       console.log('[SECURITY] Using signed URL for download');
 
@@ -788,6 +797,8 @@ export default function AdminDocuments() {
         description: 'No se pudo descargar el documento',
         variant: 'destructive',
       });
+    } finally {
+      setDownloadingDocId(null);
     }
   };
 
@@ -826,10 +837,15 @@ export default function AdminDocuments() {
       markViewedMutation.mutate(docId);
     }
     
+    setViewingDocId(docId);
+    
     try {
       // 🔒 SECURITY: Use signed URL instead of JWT token
       const signedUrl = await generateSignedUrl(docId);
-      if (!signedUrl) return;
+      if (!signedUrl) {
+        setViewingDocId(null);
+        return;
+      }
 
       console.log('[SECURITY] Using signed URL for view');
 
@@ -853,6 +869,7 @@ export default function AdminDocuments() {
           description: "El documento se ha abierto en una nueva pestaña",
         });
         
+        setViewingDocId(null);
         return;
       }
 
@@ -882,6 +899,8 @@ export default function AdminDocuments() {
         description: error.message || "No se pudo abrir el documento",
         variant: "destructive"
       });
+    } finally {
+      setViewingDocId(null);
     }
   };
 
@@ -1211,16 +1230,26 @@ export default function AdminDocuments() {
                               size="sm"
                               onClick={() => handleViewDocument(document.id)}
                               className="h-8 w-8 p-0"
+                              disabled={viewingDocId === document.id}
                             >
-                              <Eye className="h-4 w-4" />
+                              {viewingDocId === document.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleDownload(document.id, document.originalName)}
                               className="h-8 w-8 p-0"
+                              disabled={downloadingDocId === document.id}
                             >
-                              <Download className="h-4 w-4" />
+                              {downloadingDocId === document.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Download className="h-4 w-4" />
+                              )}
                             </Button>
                             {/* Sign button for payroll documents owned by current user */}
                             {(() => {
@@ -1394,16 +1423,26 @@ export default function AdminDocuments() {
                                                       size="sm"
                                                       onClick={() => handleViewDocument(document.id)}
                                                       className="h-7 w-7 p-0"
+                                                      disabled={viewingDocId === document.id}
                                                     >
-                                                      <Eye className="h-3 w-3" />
+                                                      {viewingDocId === document.id ? (
+                                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                                      ) : (
+                                                        <Eye className="h-3 w-3" />
+                                                      )}
                                                     </Button>
                                                     <Button
                                                       variant="outline"
                                                       size="sm"
                                                       onClick={() => handleDownload(document.id, document.originalName)}
                                                       className="h-7 w-7 p-0"
+                                                      disabled={downloadingDocId === document.id}
                                                     >
-                                                      <Download className="h-3 w-3" />
+                                                      {downloadingDocId === document.id ? (
+                                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                                      ) : (
+                                                        <Download className="h-3 w-3" />
+                                                      )}
                                                     </Button>
                                                     {/* Sign button for payroll documents owned by current user in grid view */}
                                                     {type === 'nomina' && 
