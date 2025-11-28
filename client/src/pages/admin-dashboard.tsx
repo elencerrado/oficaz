@@ -861,26 +861,16 @@ export default function AdminDashboard() {
                               size="lg"
                               onClick={() => clockOutMutation.mutate()}
                               disabled={clockOutMutation.isPending}
-                              className="w-[120px] h-[48px] font-medium rounded-lg bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white border-0 shadow-lg shadow-red-500/30 hover:shadow-red-500/50 transition-all duration-300 relative overflow-hidden group"
+                              className="w-[120px] h-[48px] font-medium rounded-lg bg-red-500 hover:bg-red-600 text-white border-0 shadow-lg shadow-red-500/25 hover:shadow-red-500/40 transition-all duration-300"
                             >
-                              <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
                               {clockOutMutation.isPending ? (
                                 <>
-                                  <motion.div 
-                                    className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full mr-2"
-                                    animate={{ rotate: 360 }}
-                                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                  />
+                                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                                   Fichando...
                                 </>
                               ) : (
                                 <>
-                                  <motion.div
-                                    animate={{ x: [0, 3, 0] }}
-                                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                                  >
-                                    <LogOut className="h-5 w-5 mr-2" />
-                                  </motion.div>
+                                  <LogOut className="h-5 w-5 mr-2" />
                                   Salir
                                 </>
                               )}
@@ -904,21 +894,12 @@ export default function AdminDashboard() {
                               >
                                 {startBreakMutation.isPending ? (
                                   <>
-                                    <motion.div 
-                                      className="h-4 w-4 border-2 border-orange-300 border-t-orange-600 rounded-full mr-2"
-                                      animate={{ rotate: 360 }}
-                                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                    />
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600 mr-2"></div>
                                     Iniciando...
                                   </>
                                 ) : (
                                   <>
-                                    <motion.div
-                                      animate={{ rotate: [0, -10, 10, 0] }}
-                                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                                    >
-                                      <Coffee className="h-4 w-4 mr-2" />
-                                    </motion.div>
+                                    <Coffee className="h-4 w-4 mr-2" />
                                     Descanso
                                   </>
                                 )}
@@ -941,21 +922,12 @@ export default function AdminDashboard() {
                               >
                                 {endBreakMutation.isPending ? (
                                   <>
-                                    <motion.div 
-                                      className="h-4 w-4 border-2 border-green-300 border-t-green-600 rounded-full mr-2"
-                                      animate={{ rotate: 360 }}
-                                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                    />
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600 mr-2"></div>
                                     Finalizando...
                                   </>
                                 ) : (
                                   <>
-                                    <motion.div
-                                      animate={{ scale: [1, 1.1, 1] }}
-                                      transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                                    >
-                                      <Coffee className="h-4 w-4 mr-2" />
-                                    </motion.div>
+                                    <Coffee className="h-4 w-4 mr-2" />
                                     Finalizar
                                   </>
                                 )}
@@ -977,26 +949,16 @@ export default function AdminDashboard() {
                             size="lg"
                             onClick={() => clockInMutation.mutate()}
                             disabled={clockInMutation.isPending}
-                            className="w-[120px] h-[48px] font-medium rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-0 shadow-lg shadow-green-500/30 hover:shadow-green-500/50 transition-all duration-300 relative overflow-hidden group"
+                            className="w-[120px] h-[48px] font-medium rounded-lg bg-green-500 hover:bg-green-600 text-white border-0 shadow-lg shadow-green-500/25 hover:shadow-green-500/40 transition-all duration-300"
                           >
-                            <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
                             {clockInMutation.isPending ? (
                               <>
-                                <motion.div 
-                                  className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full mr-2"
-                                  animate={{ rotate: 360 }}
-                                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                />
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                                 Fichando...
                               </>
                             ) : (
                               <>
-                                <motion.div
-                                  animate={{ x: [0, -3, 0] }}
-                                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                                >
-                                  <LogIn className="h-5 w-5 mr-2" />
-                                </motion.div>
+                                <LogIn className="h-5 w-5 mr-2" />
                                 Entrar
                               </>
                             )}
