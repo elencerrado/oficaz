@@ -700,7 +700,9 @@ const AccountManagement = () => {
                     : `${usageData.current.storage_used_gb} GB`}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  de {usageData.current.storage_limit_gb || 25} GB
+                  de {(usageData.current.storage_limit_gb || 1) < 1 
+                    ? `${(usageData.current.storage_limit_gb || 1) * 1024} MB`
+                    : `${usageData.current.storage_limit_gb || 1} GB`}
                 </p>
               </div>
             </div>
