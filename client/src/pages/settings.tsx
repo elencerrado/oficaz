@@ -32,7 +32,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb, Info, MessageSquare, Send, Paperclip, HardDrive } from 'lucide-react';
+import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb, Info, MessageSquare, Send, Paperclip, HardDrive, Sparkles } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeaders } from '@/lib/auth';
@@ -734,6 +734,31 @@ const AccountManagement = () => {
                   />
                 </div>
               </div>
+              
+              {/* Asistente IA - Solo si el plan tiene límite de tokens */}
+              {typeof usageData.current.ai_tokens_limit === 'number' && usageData.current.ai_tokens_limit > 0 && (
+                <div className="p-4 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/20 dark:to-violet-950/20 rounded-xl border border-purple-100 dark:border-purple-900/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
+                        <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <span className="font-medium text-foreground">Asistente IA</span>
+                    </div>
+                    <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">
+                      {((Number(usageData.current.ai_tokens_used) || 0) / 1000000).toFixed(2)}M / {(Number(usageData.current.ai_tokens_limit) / 1000000).toFixed(0)}M tokens
+                    </span>
+                  </div>
+                  <div className="h-2 bg-purple-100 dark:bg-purple-900/30 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-purple-500 to-violet-500 rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${Math.min(((Number(usageData.current.ai_tokens_used) || 0) / Number(usageData.current.ai_tokens_limit)) * 100, 100)}%` 
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
