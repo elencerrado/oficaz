@@ -1000,33 +1000,30 @@ export default function VacationManagement() {
                         </div>
                       </div>
                       
-                      <div className="flex gap-2 ml-4">
+                      <div className="flex gap-1 ml-4">
                         {request.status === 'pending' && canManageRequest(request) ? (
                           <>
-                            <Button
-                              size="sm"
+                            <button
                               onClick={() => openRequestModal(request, 'approve')}
-                              className="bg-green-600 hover:bg-green-700 text-white"
+                              className="p-1.5 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                              title="Aprobar solicitud"
                             >
-                              <Check className="w-4 h-4 mr-1" />
-                              Aprobar
-                            </Button>
-                            <Button
-                              size="sm"
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
                               onClick={() => openRequestModal(request, 'edit')}
-                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                              className="p-1.5 rounded text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                              title="Modificar solicitud"
                             >
-                              <Edit className="w-4 h-4 mr-1" />
-                              Modificar
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
                               onClick={() => openRequestModal(request, 'deny')}
+                              className="p-1.5 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                              title="Denegar solicitud"
                             >
-                              <X className="w-4 h-4 mr-1" />
-                              Denegar
-                            </Button>
+                              <X className="w-4 h-4" />
+                            </button>
                           </>
                         ) : request.status === 'pending' ? (
                           <Badge variant="outline" className="text-xs text-yellow-700 bg-yellow-50">
@@ -1035,17 +1032,15 @@ export default function VacationManagement() {
                               : 'Sin permisos para gestionar'}
                           </Badge>
                         ) : (
-                          <div className="flex gap-2">
+                          <div className="flex gap-1 items-center">
                             {(request.status === 'approved' || request.status === 'denied') && canManageRequest(request) && (
-                              <Button
-                                size="sm"
-                                variant="outline"
+                              <button
                                 onClick={() => openRequestModal(request, 'revert')}
-                                className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                                className="p-1.5 rounded text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+                                title="Revertir a pendiente"
                               >
-                                <RotateCcw className="w-4 h-4 mr-1" />
-                                Revertir
-                              </Button>
+                                <RotateCcw className="w-4 h-4" />
+                              </button>
                             )}
                             <Badge variant="outline" className="text-xs">
                               {request.status === 'approved' ? 'Aprobada' : 'Denegada'}
@@ -1089,53 +1084,47 @@ export default function VacationManagement() {
 
                       {/* Mobile action buttons */}
                       {request.status === 'pending' && canManageRequest(request) ? (
-                        <div className="grid grid-cols-3 gap-2 w-full">
-                          <Button
-                            size="sm"
+                        <div className="flex gap-1 justify-end">
+                          <button
                             onClick={() => openRequestModal(request, 'approve')}
-                            className="bg-green-600 hover:bg-green-700 text-white h-9 w-full flex items-center justify-center"
+                            className="p-2 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
                             title="Aprobar solicitud"
                           >
-                            <Check className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
+                            <Check className="w-5 h-5" />
+                          </button>
+                          <button
                             onClick={() => openRequestModal(request, 'edit')}
-                            className="bg-blue-600 hover:bg-blue-700 text-white h-9 w-full flex items-center justify-center"
+                            className="p-2 rounded text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                             title="Editar solicitud"
                           >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
+                            <Edit className="w-5 h-5" />
+                          </button>
+                          <button
                             onClick={() => openRequestModal(request, 'deny')}
-                            className="h-9 w-full flex items-center justify-center"
+                            className="p-2 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                             title="Denegar solicitud"
                           >
-                            <X className="w-4 h-4" />
-                          </Button>
+                            <X className="w-5 h-5" />
+                          </button>
                         </div>
                       ) : request.status === 'pending' ? (
-                        <div className="p-2 bg-yellow-50 rounded-lg text-center">
-                          <p className="text-xs text-yellow-700">
+                        <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-center">
+                          <p className="text-xs text-yellow-700 dark:text-yellow-400">
                             {user?.role === 'manager' && request.userId === user?.id 
                               ? 'No puedes gestionar tus propias solicitudes' 
                               : 'Sin permisos para gestionar esta solicitud'}
                           </p>
                         </div>
                       ) : (
-                        <div className="flex w-full">
+                        <div className="flex justify-end">
                           {(request.status === 'approved' || request.status === 'denied') && canManageRequest(request) && (
-                            <Button
-                              size="sm"
-                              variant="outline"
+                            <button
                               onClick={() => openRequestModal(request, 'revert')}
-                              className="text-orange-600 border-orange-300 hover:bg-orange-50 h-9 w-full flex items-center justify-center"
+                              className="p-2 rounded text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
                               title="Revertir a pendiente"
                             >
-                              <RotateCcw className="w-4 h-4" />
-                            </Button>
+                              <RotateCcw className="w-5 h-5" />
+                            </button>
                           )}
                         </div>
                       )}
