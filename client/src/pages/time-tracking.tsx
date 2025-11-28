@@ -225,14 +225,26 @@ export default function TimeTracking() {
 
   // Get total count from last page
   const totalCount = infiniteData?.pages?.[infiniteData.pages.length - 1]?.totalCount || 0;
-  const hasMore = hasNextPage ?? false;
+  
+  // hasMore is true if we have more items to display (either locally or on server)
+  const hasMoreToDisplay = displayedCount < allSessions.length || (hasNextPage ?? false);
 
-  // Load more function for infinite scroll
+  // Load more function for infinite scroll - first show more from loaded data, then fetch from server
   const loadMoreSessions = useCallback(() => {
+    // First, check if we have more sessions loaded that we haven't displayed yet
+    if (displayedCount < allSessions.length) {
+      // Show more from already-loaded sessions
+      setDisplayedCount(prev => Math.min(prev + ITEMS_PER_LOAD, allSessions.length + ITEMS_PER_LOAD));
+      return;
+    }
+    
+    // If we've displayed all loaded sessions and there are more on the server, fetch next page
     if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
+      // Also increase displayedCount to show the newly loaded sessions
+      setDisplayedCount(prev => prev + ITEMS_PER_LOAD);
     }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [displayedCount, allSessions.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // For backwards compatibility
   const sessions = allSessions;
@@ -380,7 +392,7 @@ export default function TimeTracking() {
     
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some(entry => entry.isIntersecting) && !isLoading && !isFetchingNextPage && hasMore) {
+        if (entries.some(entry => entry.isIntersecting) && !isLoading && !isFetchingNextPage && hasMoreToDisplay) {
           loadMoreSessions();
         }
       },
@@ -401,7 +413,7 @@ export default function TimeTracking() {
       clearTimeout(timeoutId);
       observer.disconnect();
     };
-  }, [isLoading, isFetchingNextPage, hasMore, activeTab, loadMoreSessions]);
+  }, [isLoading, isFetchingNextPage, hasMoreToDisplay, activeTab, loadMoreSessions]);
 
   // Helper function to check if a specific session is incomplete
   const isSessionIncomplete = useCallback((session: any) => {
@@ -3516,14 +3528,14 @@ export default function TimeTracking() {
                     <tr key="load-more-observer" className="h-12">
                       <td colSpan={5} className="py-3 text-center">
                         <div ref={loadMoreDesktopRef} className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
-                          {hasMore ? (
+                          {hasMoreToDisplay ? (
                             <>
                               {isFetchingNextPage ? (
                                 <span>Cargando más fichajes...</span>
                               ) : (
                                 <>
                                   <ArrowDown className="w-4 h-4 animate-bounce" />
-                                  <span>Desplaza para ver más ({totalCount - allSessions.length} restantes de {totalCount})</span>
+                                  <span>Desplaza para ver más ({totalCount - Math.min(displayedCount, allSessions.length)} restantes de {totalCount})</span>
                                 </>
                               )}
                             </>
@@ -3830,14 +3842,14 @@ export default function TimeTracking() {
               result.push(
                 <div key="load-more-observer-mobile" className="py-4 text-center mx-4">
                   <div ref={loadMoreMobileRef} className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
-                    {hasMore ? (
+                    {hasMoreToDisplay ? (
                       <>
                         {isFetchingNextPage ? (
                           <span>Cargando más fichajes...</span>
                         ) : (
                           <>
                             <ArrowDown className="w-4 h-4 animate-bounce" />
-                            <span>Desplaza para ver más ({totalCount - allSessions.length} restantes de {totalCount})</span>
+                            <span>Desplaza para ver más ({totalCount - Math.min(displayedCount, allSessions.length)} restantes de {totalCount})</span>
                           </>
                         )}
                       </>
