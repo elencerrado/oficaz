@@ -259,8 +259,7 @@ export default function WorkReportsPage() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = '#1a1a1a';
     ctx.lineWidth = 4;
     ctx.lineCap = 'round';
@@ -275,8 +274,7 @@ export default function WorkReportsPage() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     lastPointRef.current = null;
   };
 
@@ -389,8 +387,7 @@ export default function WorkReportsPage() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = '#1a1a1a';
     ctx.lineWidth = 5;
     ctx.lineCap = 'round';
@@ -405,8 +402,7 @@ export default function WorkReportsPage() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     lastClientPointRef.current = null;
   };
 
