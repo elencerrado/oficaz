@@ -181,52 +181,54 @@ export default function TimeTracking() {
   const [totalCount, setTotalCount] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const SESSIONS_PER_PAGE = 50;
-  const lastProcessedOffset = useRef(-1);
+  const processedSessionIds = useRef<Set<number>>(new Set());
 
   // Reset pagination when filters change
   useEffect(() => {
     setOffset(0);
     setAllSessions([]);
     setHasMore(true);
-    lastProcessedOffset.current = -1;
+    processedSessionIds.current = new Set();
   }, [queryParams]);
 
   // Optimized query with server-side pagination
-  const { data: sessionsData, isLoading, refetch, isFetching } = useQuery<{
+  const { data: sessionsData, isLoading, refetch, isFetching, dataUpdatedAt } = useQuery<{
     sessions: any[];
     totalCount: number;
     hasMore: boolean;
   }>({
     queryKey: ['/api/work-sessions/company', `${queryParams}&limit=${SESSIONS_PER_PAGE}&offset=${offset}`],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
-    staleTime: 30 * 1000, // 30 seconds - reduces API calls while keeping data fresh
+    staleTime: 30 * 1000,
     gcTime: 10 * 60 * 1000,
     retry: 2,
     retryDelay: 750,
-    refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchOnWindowFocus: true,
   });
 
-  // Accumulate sessions when data arrives - fixed race condition
+  // Accumulate sessions when NEW data arrives (using dataUpdatedAt to detect fresh data)
   useEffect(() => {
-    if (sessionsData && sessionsData.sessions) {
-      // Prevent duplicate processing of the same offset
-      if (lastProcessedOffset.current === offset) return;
-      lastProcessedOffset.current = offset;
+    if (!sessionsData?.sessions || !dataUpdatedAt) return;
+    
+    if (offset === 0) {
+      // First page: replace all
+      setAllSessions(sessionsData.sessions);
+      processedSessionIds.current = new Set(sessionsData.sessions.map((s: any) => s.id));
+    } else {
+      // Subsequent pages: add only new sessions not already processed
+      const newSessions = sessionsData.sessions.filter(
+        (s: any) => !processedSessionIds.current.has(s.id)
+      );
       
-      if (offset === 0) {
-        setAllSessions(sessionsData.sessions);
-      } else {
-        setAllSessions(prev => {
-          // Avoid duplicates by checking session IDs
-          const existingIds = new Set(prev.map(s => s.id));
-          const newSessions = sessionsData.sessions.filter((s: any) => !existingIds.has(s.id));
-          return [...prev, ...newSessions];
-        });
+      if (newSessions.length > 0) {
+        newSessions.forEach((s: any) => processedSessionIds.current.add(s.id));
+        setAllSessions(prev => [...prev, ...newSessions]);
       }
-      setTotalCount(sessionsData.totalCount);
-      setHasMore(sessionsData.hasMore);
     }
-  }, [sessionsData, offset]);
+    
+    setTotalCount(sessionsData.totalCount);
+    setHasMore(sessionsData.hasMore);
+  }, [dataUpdatedAt, offset]);
 
   // Load more function for infinite scroll
   const loadMoreSessions = useCallback(() => {
