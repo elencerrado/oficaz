@@ -123,7 +123,8 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   displayName: varchar("display_name", { length: 100 }).notNull(),
   monthlyPrice: decimal("monthly_price", { precision: 10, scale: 2 }).notNull(), // Precio fijo mensual (ej: 29.99 euros/mes)
   maxUsers: integer("max_users"), // null = unlimited
-  storageLimitGB: integer("storage_limit_gb").default(25), // Storage limit in GB: Basic=25, Pro=100, Master=250
+  storageLimitGB: integer("storage_limit_gb").default(25), // Storage limit in GB: Basic=1, Pro=5, Master=25
+  aiTokensLimitMonthly: integer("ai_tokens_limit_monthly").default(0), // AI tokens limit per month: Master=5000000 (5M)
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -150,6 +151,8 @@ export const subscriptions = pgTable("subscriptions", {
   maxUsers: integer("max_users").default(5).notNull(),
   useCustomSettings: boolean("use_custom_settings").default(false).notNull(),
   customMonthlyPrice: decimal("custom_monthly_price", { precision: 10, scale: 2 }),
+  aiTokensUsed: integer("ai_tokens_used").default(0), // AI tokens used this month
+  aiTokensResetDate: timestamp("ai_tokens_reset_date"), // Date when tokens reset (start of billing cycle)
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
