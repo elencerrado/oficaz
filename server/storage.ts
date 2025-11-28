@@ -920,6 +920,7 @@ export class DrizzleStorage implements IStorage {
         d.is_accepted as "isAccepted",
         d.accepted_at as "acceptedAt",
         d.signed_at as "signedAt",
+        d.requires_signature as "requiresSignature",
         u.full_name as "userFullName",
         u.profile_picture as "userProfilePicture"
       FROM documents d 
@@ -940,6 +941,7 @@ export class DrizzleStorage implements IStorage {
       isAccepted: row.isAccepted || false,
       acceptedAt: row.acceptedAt,
       signedAt: row.signedAt,
+      requiresSignature: row.requiresSignature || false,
       user: {
         fullName: row.userFullName || 'Usuario desconocido',
         profilePicture: row.userProfilePicture || null
