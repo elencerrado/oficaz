@@ -618,7 +618,7 @@ export class DrizzleStorage implements IStorage {
 
   async getWorkSessionsByCompany(
     companyId: number, 
-    limit: number = 50, 
+    limit?: number, 
     offset: number = 0,
     filters?: {
       employeeId?: number;
@@ -646,8 +646,8 @@ export class DrizzleStorage implements IStorage {
       conditions.push(eq(schema.workSessions.status, filters.status));
     }
     
-    // First, get all work sessions for the company with user info
-    const sessions = await db.select({
+    // Build query - apply limit only if specified
+    let query = db.select({
       id: schema.workSessions.id,
       userId: schema.workSessions.userId,
       clockIn: schema.workSessions.clockIn,
@@ -666,8 +666,12 @@ export class DrizzleStorage implements IStorage {
       .innerJoin(schema.users, eq(schema.workSessions.userId, schema.users.id))
       .where(and(...conditions))
       .orderBy(desc(schema.workSessions.clockIn))
-      .limit(limit)
       .offset(offset);
+    
+    // Apply limit only if specified (undefined = no limit, get all records)
+    const sessions = limit !== undefined 
+      ? await query.limit(limit) 
+      : await query;
 
     // Quick exit for empty results
     if (sessions.length === 0) {

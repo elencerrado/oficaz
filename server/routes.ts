@@ -3940,8 +3940,8 @@ Responde directamente a este email para contactar con la persona.
 
   app.get('/api/work-sessions/company', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
-      // Pagination parameters
-      const limit = parseInt(req.query.limit as string) || 40; // Default 40 sessions
+      // Pagination parameters - no limit by default (scroll infinite handles progressive display)
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       const offset = parseInt(req.query.offset as string) || 0;
       
       // Server-side filters for performance optimization
