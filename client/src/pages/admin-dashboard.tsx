@@ -5,6 +5,7 @@ import { usePageHeader } from '@/components/layout/page-header';
 import { usePageTitle } from '@/hooks/use-page-title';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -849,88 +850,158 @@ export default function AdminDashboard() {
                     if (shouldShowActiveButtons) {
                       return (
                         <>
-                          <Button
-                            size="lg"
-                            onClick={() => clockOutMutation.mutate()}
-                            disabled={clockOutMutation.isPending}
-                            className="w-[120px] h-[48px] font-medium rounded-lg bg-red-500 hover:bg-red-600 text-white border-red-500"
+                          <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                           >
-                            {clockOutMutation.isPending ? (
-                              <>
-                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                                Fichando...
-                              </>
-                            ) : (
-                              <>
-                                <LogOut className="h-5 w-5 mr-2" />
-                                Salir
-                              </>
-                            )}
-                          </Button>
+                            <Button
+                              size="lg"
+                              onClick={() => clockOutMutation.mutate()}
+                              disabled={clockOutMutation.isPending}
+                              className="w-[120px] h-[48px] font-medium rounded-lg bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white border-0 shadow-lg shadow-red-500/30 hover:shadow-red-500/50 transition-all duration-300 relative overflow-hidden group"
+                            >
+                              <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
+                              {clockOutMutation.isPending ? (
+                                <>
+                                  <motion.div 
+                                    className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full mr-2"
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                  />
+                                  Fichando...
+                                </>
+                              ) : (
+                                <>
+                                  <motion.div
+                                    animate={{ x: [0, 3, 0] }}
+                                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                                  >
+                                    <LogOut className="h-5 w-5 mr-2" />
+                                  </motion.div>
+                                  Salir
+                                </>
+                              )}
+                            </Button>
+                          </motion.div>
                           
                           {!activeBreak ? (
-                            <Button
-                              size="lg"
-                              variant="outline"
-                              onClick={() => startBreakMutation.mutate()}
-                              disabled={startBreakMutation.isPending}
-                              className="w-[120px] h-[48px] border-orange-400 text-orange-600 hover:border-orange-500 hover:text-orange-700"
+                            <motion.div
+                              initial={{ scale: 0.9, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ type: "spring", stiffness: 400, damping: 25, delay: 0.1 }}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
                             >
-                              {startBreakMutation.isPending ? (
-                                <>
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600 mr-2"></div>
-                                  Iniciando...
-                                </>
-                              ) : (
-                                <>
-                                  <Coffee className="h-4 w-4 mr-2" />
-                                  Descanso
-                                </>
-                              )}
-                            </Button>
+                              <Button
+                                size="lg"
+                                variant="outline"
+                                onClick={() => startBreakMutation.mutate()}
+                                disabled={startBreakMutation.isPending}
+                                className="w-[120px] h-[48px] border-2 border-orange-400 text-orange-600 hover:border-orange-500 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-all duration-300"
+                              >
+                                {startBreakMutation.isPending ? (
+                                  <>
+                                    <motion.div 
+                                      className="h-4 w-4 border-2 border-orange-300 border-t-orange-600 rounded-full mr-2"
+                                      animate={{ rotate: 360 }}
+                                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                    />
+                                    Iniciando...
+                                  </>
+                                ) : (
+                                  <>
+                                    <motion.div
+                                      animate={{ rotate: [0, -10, 10, 0] }}
+                                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                                    >
+                                      <Coffee className="h-4 w-4 mr-2" />
+                                    </motion.div>
+                                    Descanso
+                                  </>
+                                )}
+                              </Button>
+                            </motion.div>
                           ) : (
-                            <Button
-                              size="lg"
-                              variant="outline"
-                              onClick={() => endBreakMutation.mutate()}
-                              disabled={endBreakMutation.isPending}
-                              className="w-[120px] h-[48px] border-green-400 text-green-600 hover:border-green-500 hover:text-green-700"
+                            <motion.div
+                              initial={{ scale: 0.9, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ type: "spring", stiffness: 400, damping: 25, delay: 0.1 }}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
                             >
-                              {endBreakMutation.isPending ? (
-                                <>
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600 mr-2"></div>
-                                  Finalizando...
-                                </>
-                              ) : (
-                                <>
-                                  <Coffee className="h-4 w-4 mr-2" />
-                                  Finalizar
-                                </>
-                              )}
-                            </Button>
+                              <Button
+                                size="lg"
+                                variant="outline"
+                                onClick={() => endBreakMutation.mutate()}
+                                disabled={endBreakMutation.isPending}
+                                className="w-[120px] h-[48px] border-2 border-green-400 text-green-600 hover:border-green-500 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/20 transition-all duration-300"
+                              >
+                                {endBreakMutation.isPending ? (
+                                  <>
+                                    <motion.div 
+                                      className="h-4 w-4 border-2 border-green-300 border-t-green-600 rounded-full mr-2"
+                                      animate={{ rotate: 360 }}
+                                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                    />
+                                    Finalizando...
+                                  </>
+                                ) : (
+                                  <>
+                                    <motion.div
+                                      animate={{ scale: [1, 1.1, 1] }}
+                                      transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                                    >
+                                      <Coffee className="h-4 w-4 mr-2" />
+                                    </motion.div>
+                                    Finalizar
+                                  </>
+                                )}
+                              </Button>
+                            </motion.div>
                           )}
                         </>
                       );
                     } else {
                       return (
-                        <Button
-                          size="lg"
-                          onClick={() => clockInMutation.mutate()}
-                          disabled={clockInMutation.isPending}
-                          className="w-[120px] h-[48px] font-medium rounded-lg bg-green-500 hover:bg-green-600 text-white border-green-500"
+                        <motion.div
+                          initial={{ scale: 0.9, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                         >
-                          {clockInMutation.isPending ? (
-                            <>
-                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                              Fichando...
-                            </>
-                          ) : (
-                            <>
-                              <LogIn className="h-5 w-5 mr-2" />
-                              Entrar
-                            </>
-                          )}
-                        </Button>
+                          <Button
+                            size="lg"
+                            onClick={() => clockInMutation.mutate()}
+                            disabled={clockInMutation.isPending}
+                            className="w-[120px] h-[48px] font-medium rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-0 shadow-lg shadow-green-500/30 hover:shadow-green-500/50 transition-all duration-300 relative overflow-hidden group"
+                          >
+                            <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
+                            {clockInMutation.isPending ? (
+                              <>
+                                <motion.div 
+                                  className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full mr-2"
+                                  animate={{ rotate: 360 }}
+                                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                />
+                                Fichando...
+                              </>
+                            ) : (
+                              <>
+                                <motion.div
+                                  animate={{ x: [0, -3, 0] }}
+                                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                                >
+                                  <LogIn className="h-5 w-5 mr-2" />
+                                </motion.div>
+                                Entrar
+                              </>
+                            )}
+                          </Button>
+                        </motion.div>
                       );
                     }
                   })()}
