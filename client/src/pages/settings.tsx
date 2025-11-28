@@ -576,20 +576,101 @@ const AccountManagement = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg border border-blue-200 dark:border-blue-800/50 space-y-3 transition-colors">
-            <div className="flex items-center justify-between">
+          <div 
+            className="relative p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg border border-blue-200 dark:border-blue-800/50 space-y-3 transition-colors overflow-hidden animate-in slide-in-from-left-4 fade-in duration-500 ease-out"
+            style={{
+              animation: 'planBandEntry 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards'
+            }}
+          >
+            {/* Shimmer effect overlay */}
+            <div 
+              className="absolute inset-0 -translate-x-full"
+              style={{
+                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+                animation: 'shimmer 1.5s ease-in-out 0.3s forwards'
+              }}
+            />
+            <style>{`
+              @keyframes planBandEntry {
+                0% {
+                  opacity: 0;
+                  transform: translateX(-20px) scale(0.98);
+                }
+                100% {
+                  opacity: 1;
+                  transform: translateX(0) scale(1);
+                }
+              }
+              @keyframes shimmer {
+                0% {
+                  transform: translateX(-100%);
+                }
+                100% {
+                  transform: translateX(200%);
+                }
+              }
+            `}</style>
+            <div className="flex items-center justify-between relative z-10">
               <div className="flex items-center space-x-3">
                 <img 
                   src={flameIcon} 
                   alt="Plan icon" 
-                  className="h-12 w-12 object-contain animate-in zoom-in-95 duration-500 ease-out"
-                  style={{ filter: `hue-rotate(${subscription?.plan === 'basic' ? '120deg' : subscription?.plan === 'pro' ? '40deg' : subscription?.plan === 'master' ? '340deg' : '0deg'})` }}
+                  className="h-12 w-12 object-contain"
+                  style={{ 
+                    filter: `hue-rotate(${subscription?.plan === 'basic' ? '120deg' : subscription?.plan === 'pro' ? '40deg' : subscription?.plan === 'master' ? '340deg' : '0deg'})`,
+                    animation: 'iconPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both'
+                  }}
                 />
-                <div>
+                <style>{`
+                  @keyframes iconPop {
+                    0% {
+                      opacity: 0;
+                      transform: scale(0.5) rotate(-10deg);
+                    }
+                    100% {
+                      opacity: 1;
+                      transform: scale(1) rotate(0deg);
+                    }
+                  }
+                `}</style>
+                <div 
+                  style={{
+                    animation: 'textSlide 0.5s ease-out 0.3s both'
+                  }}
+                >
+                  <style>{`
+                    @keyframes textSlide {
+                      0% {
+                        opacity: 0;
+                        transform: translateY(10px);
+                      }
+                      100% {
+                        opacity: 1;
+                        transform: translateY(0);
+                      }
+                    }
+                  `}</style>
                   <p className="font-semibold text-foreground">Plan {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1)}</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div 
+                className="flex items-center space-x-2"
+                style={{
+                  animation: 'badgeFade 0.4s ease-out 0.5s both'
+                }}
+              >
+                <style>{`
+                  @keyframes badgeFade {
+                    0% {
+                      opacity: 0;
+                      transform: scale(0.8);
+                    }
+                    100% {
+                      opacity: 1;
+                      transform: scale(1);
+                    }
+                  }
+                `}</style>
                 <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                 <Badge variant="secondary" className={`transition-colors ${
                   trialStatus?.status === 'trial' 
