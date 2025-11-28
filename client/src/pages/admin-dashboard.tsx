@@ -861,7 +861,7 @@ export default function AdminDashboard() {
                               size="lg"
                               onClick={() => clockOutMutation.mutate()}
                               disabled={clockOutMutation.isPending}
-                              className="w-[120px] h-[48px] font-medium rounded-lg bg-red-500 hover:bg-red-600 text-white border-0 shadow-lg shadow-red-500/25 hover:shadow-red-500/40 transition-all duration-300"
+                              className="w-[120px] h-[48px] font-medium rounded-lg bg-red-500 hover:bg-red-600 text-white border-0 transition-all duration-300"
                             >
                               {clockOutMutation.isPending ? (
                                 <>
@@ -949,7 +949,7 @@ export default function AdminDashboard() {
                             size="lg"
                             onClick={() => clockInMutation.mutate()}
                             disabled={clockInMutation.isPending}
-                            className="w-[120px] h-[48px] font-medium rounded-lg bg-green-500 hover:bg-green-600 text-white border-0 shadow-lg shadow-green-500/25 hover:shadow-green-500/40 transition-all duration-300"
+                            className="w-[120px] h-[48px] font-medium rounded-lg bg-green-500 hover:bg-green-600 text-white border-0 transition-all duration-300"
                           >
                             {clockInMutation.isPending ? (
                               <>
