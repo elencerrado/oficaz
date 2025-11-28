@@ -723,12 +723,15 @@ export default function AdminDocuments() {
   };
 
   const filteredDocuments = allDocuments.filter((doc: Document) => {
-    const normalizedSearch = normalizeText(searchTerm);
     const normalizedFileName = normalizeText(doc.originalName || '');
     const normalizedEmployeeName = normalizeText(doc.user?.fullName || '');
+    const combinedText = `${normalizedFileName} ${normalizedEmployeeName}`;
     
-    const matchesSearch = normalizedFileName.includes(normalizedSearch) ||
-                         normalizedEmployeeName.includes(normalizedSearch);
+    // Split search term into words and check if ALL words are found
+    const searchWords = normalizeText(searchTerm).split(/\s+/).filter(word => word.length > 0);
+    const matchesSearch = searchWords.length === 0 || 
+                         searchWords.every(word => combinedText.includes(word));
+    
     const matchesEmployee = selectedEmployee === 'all' || doc.userId.toString() === selectedEmployee;
     
     // Filter by pending signature (unsigned payrolls OR documents with requiresSignature flag)
