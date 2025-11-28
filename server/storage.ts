@@ -198,6 +198,7 @@ export interface IStorage {
   // Subscription Plans operations
   getAllSubscriptionPlans(): Promise<SubscriptionPlan[]>;
   getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined>;
+  getSubscriptionPlanByName(name: string): Promise<SubscriptionPlan | undefined>;
   createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
   updateSubscriptionPlan(id: number, updates: Partial<InsertSubscriptionPlan>): Promise<SubscriptionPlan | undefined>;
   deleteSubscriptionPlan(id: number): Promise<boolean>;
@@ -1604,6 +1605,11 @@ export class DrizzleStorage implements IStorage {
 
   async getSubscriptionPlan(id: number): Promise<any | undefined> {
     const [plan] = await db.select().from(schema.subscriptionPlans).where(eq(schema.subscriptionPlans.id, id));
+    return plan;
+  }
+
+  async getSubscriptionPlanByName(name: string): Promise<any | undefined> {
+    const [plan] = await db.select().from(schema.subscriptionPlans).where(eq(schema.subscriptionPlans.name, name));
     return plan;
   }
 

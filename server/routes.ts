@@ -8497,6 +8497,35 @@ Responde directamente a este email para contactar con la persona.
         });
       }
 
+      // Get plan token limit
+      const planInfo = await storage.getSubscriptionPlanByName(subscription.effectivePlan || subscription.plan);
+      const tokenLimit = planInfo?.aiTokensLimitMonthly || 0;
+      
+      // Check if token reset is needed (monthly cycle)
+      const tokenCheckDate = new Date();
+      const resetDate = subscription.aiTokensResetDate ? new Date(subscription.aiTokensResetDate) : null;
+      let currentTokensUsed = subscription.aiTokensUsed || 0;
+      
+      if (!resetDate || tokenCheckDate.getMonth() !== resetDate.getMonth() || tokenCheckDate.getFullYear() !== resetDate.getFullYear()) {
+        // New billing month - reset tokens
+        currentTokensUsed = 0;
+        await storage.updateCompanySubscription(companyId, {
+          aiTokensUsed: 0,
+          aiTokensResetDate: tokenCheckDate
+        });
+        console.log(`🔄 AI tokens reset for company ${companyId} - new billing period`);
+      }
+      
+      // Check if token limit exceeded
+      if (tokenLimit > 0 && currentTokensUsed >= tokenLimit) {
+        return res.status(429).json({ 
+          message: "Has alcanzado el límite mensual de consultas al asistente IA. El límite se reinicia el próximo mes." 
+        });
+      }
+      
+      // Track tokens used in this request
+      let totalTokensUsed = 0;
+
       // Initialize AI client - OpenAI GPT-4o-mini (optimized for low latency in EU)
       // Note: Groq has high latency from Europe (~20-30s per call), OpenAI is faster (~2-5s)
       const OpenAI = (await import('openai')).default;
@@ -8870,12 +8899,27 @@ Respuesta breve cuando termines: "Listo", "Perfecto", "Ya está".`
         max_completion_tokens: 512, // Optimized for speed
       });
 
+      // Track tokens from this API call
+      if (response.usage) {
+        totalTokensUsed += response.usage.total_tokens || 0;
+        console.log(`📊 Tokens used this call: ${response.usage.total_tokens} (total: ${totalTokensUsed})`);
+      }
+
       const assistantMessage = response.choices[0]?.message;
 
       // If NO tool calls, AI has finished → return response
       if (!assistantMessage?.tool_calls || assistantMessage.tool_calls.length === 0) {
         console.log(`✅ AI Assistant finished after ${iteration} iteration(s)`);
         console.log(`🔧 Tool calls made: ${allToolCalls.join(', ') || 'none'}`);
+        console.log(`📊 Total tokens used: ${totalTokensUsed}`);
+        
+        // Save tokens to database
+        if (totalTokensUsed > 0) {
+          await storage.updateCompanySubscription(companyId, {
+            aiTokensUsed: currentTokensUsed + totalTokensUsed
+          });
+        }
+        
         res.json({
           message: assistantMessage?.content || "No entendí tu solicitud. ¿Puedes reformularla?",
           functionCalled: allToolCalls.join(", ") || null,
@@ -9039,8 +9083,17 @@ Respuesta breve cuando termines: "Listo", "Perfecto", "Ya está".`
         // Continue loop → AI can make more tool calls in next iteration
       }
 
-      // Safety: If we reach MAX_ITERATIONS, return error
+      // Safety: If we reach MAX_ITERATIONS, save tokens and return error
       console.log(`⚠️ AI Assistant reached MAX_ITERATIONS (${MAX_ITERATIONS})`);
+      console.log(`📊 Total tokens used before limit: ${totalTokensUsed}`);
+      
+      // Save tokens even if we hit the limit
+      if (totalTokensUsed > 0) {
+        await storage.updateCompanySubscription(companyId, {
+          aiTokensUsed: currentTokensUsed + totalTokensUsed
+        });
+      }
+      
       res.status(500).json({
         message: "El asistente alcanzó el límite de iteraciones. Por favor, intenta reformular tu solicitud de forma más simple.",
         error: "MAX_ITERATIONS_REACHED"
@@ -9694,16 +9747,27 @@ Respuesta breve cuando termines: "Listo", "Perfecto", "Ya está".`
     try {
       const companyId = req.user!.companyId;
       
-      // Get subscription plan and its storage limit
+      // Get subscription plan and its storage/AI limits
       const subscriptionData = await db.execute(sql`
-        SELECT s.plan, sp.storage_limit_gb, sp.max_users
+        SELECT s.plan, s.ai_tokens_used, s.ai_tokens_reset_date, 
+               sp.storage_limit_gb, sp.max_users, sp.ai_tokens_limit_monthly
         FROM subscriptions s
         LEFT JOIN subscription_plans sp ON LOWER(s.plan) = LOWER(sp.name)
         WHERE s.company_id = ${companyId}
       `);
-      const planData = subscriptionData.rows[0] as { plan: string; storage_limit_gb: number; max_users: number } | undefined;
+      const planData = subscriptionData.rows[0] as { 
+        plan: string; 
+        storage_limit_gb: number; 
+        max_users: number;
+        ai_tokens_used: number;
+        ai_tokens_reset_date: Date | null;
+        ai_tokens_limit_monthly: number;
+      } | undefined;
       const storageLimitGB = planData?.storage_limit_gb || 25; // Default to Basic plan limit
       const maxUsers = planData?.max_users || 10;
+      const aiTokensUsed = planData?.ai_tokens_used || 0;
+      const aiTokensLimit = planData?.ai_tokens_limit_monthly || 0;
+      const aiTokensResetDate = planData?.ai_tokens_reset_date;
       
       // Get real-time stats from actual data using proper ORM
       const employeeCount = await db.select({ count: count() })
@@ -9754,7 +9818,10 @@ Respuesta breve cuando termines: "Listo", "Perfecto", "Ya está".`
         storage_used_mb: storageUsedMB,
         storage_used_gb: storageUsedGB,
         storage_limit_gb: storageLimitGB,
-        api_calls: parseInt(String(timeEntriesCount[0]?.count || 0)) * 2
+        api_calls: parseInt(String(timeEntriesCount[0]?.count || 0)) * 2,
+        ai_tokens_used: aiTokensUsed,
+        ai_tokens_limit: aiTokensLimit,
+        ai_tokens_reset_date: aiTokensResetDate
       };
 
       res.json({
