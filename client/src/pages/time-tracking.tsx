@@ -592,61 +592,29 @@ export default function TimeTracking() {
     };
   }, [employees, sessions]);
 
+  // Client-side filtering only for search text (date/employee filters are handled server-side)
+  // Server already filters by date, employee, and status via queryParams
   const filteredSessions = useMemo(() => {
     return sessionsList.filter((session: any) => {
-      const sessionDate = new Date(session.clockIn);
+      // Only filter by search text - everything else is handled by server
+      const matchesSearch = !searchTerm || session.userName?.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesEmployee = selectedEmployee === 'all' || session.userId.toString() === selectedEmployee;
-      const matchesSearch = session.userName?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      let matchesDate = true;
-      if (dateFilter === 'today') {
-        const today = new Date();
-        const dayStart = new Date(today);
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(today);
-        dayEnd.setHours(23, 59, 59, 999);
-        matchesDate = sessionDate >= dayStart && sessionDate <= dayEnd;
-      } else if (dateFilter === 'day') {
-        const dayStart = new Date(currentDate);
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(currentDate);
-        dayEnd.setHours(23, 59, 59, 999);
-        matchesDate = sessionDate >= dayStart && sessionDate <= dayEnd;
-      } else if (dateFilter === 'month') {
-        const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-        const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
-        monthEnd.setHours(23, 59, 59, 999);
-        matchesDate = sessionDate >= monthStart && sessionDate <= monthEnd;
-      } else if (dateFilter === 'custom' && (startDate || endDate)) {
-        const filterStart = startDate ? new Date(startDate) : new Date(0);
-        const filterEnd = endDate ? new Date(endDate) : new Date();
-        if (endDate) filterEnd.setHours(23, 59, 59, 999);
-        matchesDate = sessionDate >= filterStart && sessionDate <= filterEnd;
-      } else if (dateFilter === 'all') {
-        matchesDate = true; // No aplicar filtro de fecha
-      }
-
-      // Filtro específico para sesiones incompletas
+      // Incomplete filter logic for client-side validation
       if (activeStatsFilter === 'incomplete') {
         if (!session.clockOut) {
-          // Solo mostrar sesiones sin clockOut que excedan las horas máximas configuradas
           const clockInTime = new Date(session.clockIn).getTime();
           const now = Date.now();
           const hoursElapsed = (now - clockInTime) / (1000 * 60 * 60);
           const maxHours = (companySettings as any)?.workingHoursPerDay || 8;
-          
-          // Solo mostrar como incompleta si han pasado más horas que las configuradas
-          return matchesEmployee && matchesSearch && matchesDate && hoursElapsed > maxHours;
+          return matchesSearch && hoursElapsed > maxHours;
         } else {
-          // Si tiene clockOut, no es incompleta
           return false;
         }
       }
       
-      return matchesEmployee && matchesSearch && matchesDate;
+      return matchesSearch;
     });
-  }, [sessionsList, selectedEmployee, searchTerm, dateFilter, currentDate, currentMonth, startDate, endDate, activeStatsFilter, companySettings]);
+  }, [sessionsList, searchTerm, activeStatsFilter, companySettings]);
 
   // Generate dynamic title based on filter
   const getFilterTitle = () => {
