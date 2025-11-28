@@ -243,6 +243,18 @@ export default function TimeTracking() {
     gcTime: 4 * 60 * 60 * 1000, // 4 hours
     retry: 1,
   });
+
+  // Separate query for Summary tab - loads sessions for the selected month
+  const summaryMonthStart = useMemo(() => startOfMonth(summaryWeek), [summaryWeek]);
+  const summaryMonthEnd = useMemo(() => endOfMonth(summaryWeek), [summaryWeek]);
+  
+  const { data: summarySessions = [] } = useQuery<any[]>({
+    queryKey: ['/api/work-sessions/company', `startDate=${format(summaryMonthStart, 'yyyy-MM-dd')}&endDate=${format(summaryMonthEnd, 'yyyy-MM-dd')}&limit=1000&offset=0`],
+    enabled: !!user && (user.role === 'admin' || user.role === 'manager') && activeTab === 'summary',
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    select: (data: any) => data?.sessions || [],
+  });
   
   // Modification requests count
   const { data: pendingRequestsData } = useQuery<{ count: number }>({
@@ -3880,28 +3892,26 @@ export default function TimeTracking() {
               summarySearch === '' || 
               emp.fullName.toLowerCase().includes(summarySearch.toLowerCase())
             ).map((employee) => {
-              // Calculate monthly hours (based on the month of the selected week)
-              const monthStart = startOfMonth(summaryWeek);
-              const monthEnd = endOfMonth(summaryWeek);
-              const monthlySessions = (Array.isArray(sessions) ? sessions : []).filter((s: any) => 
-                s.userId === employee.id &&
-                new Date(s.clockIn) >= monthStart &&
-                new Date(s.clockIn) <= monthEnd
+              // Calculate monthly hours using summarySessions (loaded for the selected month)
+              const monthlySessions = (Array.isArray(summarySessions) ? summarySessions : []).filter((s: any) => 
+                s.userId === employee.id
               );
               
               const monthlyHours = monthlySessions.reduce((total: number, session: any) => {
                 if (!session.clockOut) return total;
                 const hours = differenceInMinutes(new Date(session.clockOut), new Date(session.clockIn)) / 60;
-                const breakMinutes = (session.breaks || []).reduce((sum: number, b: any) => {
-                  if (!b.endTime) return sum;
-                  return sum + differenceInMinutes(new Date(b.endTime), new Date(b.startTime));
+                const breakMinutes = ((session.breakPeriods || session.breaks) || []).reduce((sum: number, b: any) => {
+                  const endTime = b.breakEnd || b.endTime;
+                  const startTime = b.breakStart || b.startTime;
+                  if (!endTime) return sum;
+                  return sum + differenceInMinutes(new Date(endTime), new Date(startTime));
                 }, 0);
                 return total + hours - (breakMinutes / 60);
               }, 0);
 
               // Calculate weekly hours (based on selected week)
               const weekEnd = endOfWeek(summaryWeek, { weekStartsOn: 1 });
-              const weeklySessions = (Array.isArray(sessions) ? sessions : []).filter((s: any) => 
+              const weeklySessions = (Array.isArray(summarySessions) ? summarySessions : []).filter((s: any) => 
                 s.userId === employee.id &&
                 new Date(s.clockIn) >= summaryWeek &&
                 new Date(s.clockIn) <= weekEnd
@@ -3910,9 +3920,11 @@ export default function TimeTracking() {
               const weeklyHours = weeklySessions.reduce((total: number, session: any) => {
                 if (!session.clockOut) return total;
                 const hours = differenceInMinutes(new Date(session.clockOut), new Date(session.clockIn)) / 60;
-                const breakMinutes = (session.breaks || []).reduce((sum: number, b: any) => {
-                  if (!b.endTime) return sum;
-                  return sum + differenceInMinutes(new Date(b.endTime), new Date(b.startTime));
+                const breakMinutes = ((session.breakPeriods || session.breaks) || []).reduce((sum: number, b: any) => {
+                  const endTime = b.breakEnd || b.endTime;
+                  const startTime = b.breakStart || b.startTime;
+                  if (!endTime) return sum;
+                  return sum + differenceInMinutes(new Date(endTime), new Date(startTime));
                 }, 0);
                 return total + hours - (breakMinutes / 60);
               }, 0);
