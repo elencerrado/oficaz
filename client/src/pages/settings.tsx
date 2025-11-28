@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { motion, useInView } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -92,6 +93,156 @@ const getPlanIconColor = (plan: string) => {
     default:
       return '#6B7280'; // Gris por defecto
   }
+};
+
+// Animated counter component
+const AnimatedCounter = ({ 
+  value, 
+  suffix = '', 
+  decimals = 0,
+  duration = 1.5 
+}: { 
+  value: number; 
+  suffix?: string; 
+  decimals?: number;
+  duration?: number;
+}) => {
+  const [displayValue, setDisplayValue] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true });
+  
+  useEffect(() => {
+    if (!isInView) return;
+    
+    const startTime = Date.now();
+    const endValue = value;
+    
+    const animate = () => {
+      const now = Date.now();
+      const progress = Math.min((now - startTime) / (duration * 1000), 1);
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      const currentValue = endValue * easeOut;
+      
+      setDisplayValue(currentValue);
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+    
+    requestAnimationFrame(animate);
+  }, [value, isInView, duration]);
+  
+  return (
+    <span ref={ref}>
+      {decimals > 0 ? displayValue.toFixed(decimals) : Math.floor(displayValue)}
+      {suffix}
+    </span>
+  );
+};
+
+// Animated stat card component
+const AnimatedStatCard = ({ 
+  index,
+  icon: Icon,
+  title,
+  value,
+  maxValue,
+  suffix,
+  colorTheme,
+  decimals = 0
+}: {
+  index: number;
+  icon: any;
+  title: string;
+  value: number;
+  maxValue: number | string;
+  suffix?: string;
+  colorTheme: 'blue' | 'emerald' | 'purple';
+  decimals?: number;
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true });
+  const [progressWidth, setProgressWidth] = useState(0);
+  
+  const colorClasses = {
+    blue: {
+      bg: 'from-blue-50/80 to-indigo-50/80 dark:from-blue-950/30 dark:to-indigo-950/30',
+      border: 'border-blue-100/50 dark:border-blue-800/30',
+      iconBg: 'bg-blue-100/80 dark:bg-blue-900/50',
+      iconColor: 'text-blue-600 dark:text-blue-400',
+      textColor: 'text-blue-600 dark:text-blue-400',
+      progressBg: 'bg-blue-100/50 dark:bg-blue-900/30',
+      progressBar: 'from-blue-500 to-indigo-500'
+    },
+    emerald: {
+      bg: 'from-emerald-50/80 to-teal-50/80 dark:from-emerald-950/30 dark:to-teal-950/30',
+      border: 'border-emerald-100/50 dark:border-emerald-800/30',
+      iconBg: 'bg-emerald-100/80 dark:bg-emerald-900/50',
+      iconColor: 'text-emerald-600 dark:text-emerald-400',
+      textColor: 'text-emerald-600 dark:text-emerald-400',
+      progressBg: 'bg-emerald-100/50 dark:bg-emerald-900/30',
+      progressBar: 'from-emerald-500 to-teal-500'
+    },
+    purple: {
+      bg: 'from-purple-50/80 to-violet-50/80 dark:from-purple-950/30 dark:to-violet-950/30',
+      border: 'border-purple-100/50 dark:border-purple-800/30',
+      iconBg: 'bg-purple-100/80 dark:bg-purple-900/50',
+      iconColor: 'text-purple-600 dark:text-purple-400',
+      textColor: 'text-purple-600 dark:text-purple-400',
+      progressBg: 'bg-purple-100/50 dark:bg-purple-900/30',
+      progressBar: 'from-purple-500 to-violet-500'
+    }
+  };
+  
+  const colors = colorClasses[colorTheme];
+  const percentage = typeof maxValue === 'number' ? Math.min((value / maxValue) * 100, 100) : 0;
+  
+  useEffect(() => {
+    if (isInView) {
+      const timer = setTimeout(() => {
+        setProgressWidth(percentage);
+      }, 300 + index * 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isInView, percentage, index]);
+  
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
+      transition={{ 
+        duration: 0.5, 
+        delay: index * 0.1,
+        ease: [0.25, 0.46, 0.45, 0.94]
+      }}
+      className={`p-4 bg-gradient-to-br ${colors.bg} backdrop-blur-sm rounded-xl border ${colors.border} shadow-sm hover:shadow-md transition-shadow duration-300`}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <motion.div 
+          initial={{ scale: 0, rotate: -180 }}
+          animate={isInView ? { scale: 1, rotate: 0 } : {}}
+          transition={{ delay: index * 0.1 + 0.2, type: "spring", stiffness: 200 }}
+          className={`p-2 ${colors.iconBg} rounded-lg`}
+        >
+          <Icon className={`h-4 w-4 ${colors.iconColor}`} />
+        </motion.div>
+        <span className="font-medium text-foreground">{title}</span>
+      </div>
+      <div className={`text-lg font-semibold ${colors.textColor} mb-2`}>
+        <AnimatedCounter value={value} decimals={decimals} /> {suffix} / {maxValue}{suffix ? '' : ''}
+      </div>
+      <div className={`h-2 ${colors.progressBg} rounded-full overflow-hidden`}>
+        <motion.div 
+          className={`h-full bg-gradient-to-r ${colors.progressBar} rounded-full`}
+          initial={{ width: 0 }}
+          animate={{ width: `${progressWidth}%` }}
+          transition={{ duration: 1, delay: index * 0.15 + 0.3, ease: "easeOut" }}
+        />
+      </div>
+    </motion.div>
+  );
 };
 
 
@@ -684,74 +835,47 @@ const AccountManagement = () => {
             </div>
           </div>
           
-          {/* Usage Statistics */}
+          {/* Usage Statistics - Animated Cards */}
           {usageData?.current && (
             <div className={`grid gap-4 ${typeof usageData.current.ai_tokens_limit === 'number' && usageData.current.ai_tokens_limit > 0 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
               {/* Usuarios */}
-              <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-xl border border-blue-100 dark:border-blue-900/30">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
-                    <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <span className="font-medium text-foreground">Usuarios</span>
-                </div>
-                <div className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-2">
-                  {usageData.current.employee_count} / {usageData.current.max_users || subscription?.maxUsers || '∞'}
-                </div>
-                <div className="h-2 bg-blue-100 dark:bg-blue-900/30 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500"
-                    style={{ 
-                      width: `${Math.min((usageData.current.employee_count / (usageData.current.max_users || subscription?.maxUsers || 100)) * 100, 100)}%` 
-                    }}
-                  />
-                </div>
-              </div>
+              <AnimatedStatCard
+                index={0}
+                icon={Users}
+                title="Usuarios"
+                value={usageData.current.employee_count}
+                maxValue={usageData.current.max_users || subscription?.maxUsers || 100}
+                colorTheme="blue"
+              />
               
               {/* Almacenamiento */}
-              <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg">
-                    <HardDrive className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <span className="font-medium text-foreground">Almacenamiento</span>
-                </div>
-                <div className="text-lg font-semibold text-emerald-600 dark:text-emerald-400 mb-2">
-                  {parseFloat(usageData.current.storage_used_gb || '0') < 1 
-                    ? `${usageData.current.storage_used_mb} MB` 
-                    : `${usageData.current.storage_used_gb} GB`} / {usageData.current.storage_limit_gb || 1} GB
-                </div>
-                <div className="h-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500"
-                    style={{ 
-                      width: `${Math.min((parseFloat(usageData.current.storage_used_gb || '0') / (usageData.current.storage_limit_gb || 1)) * 100, 100)}%` 
-                    }}
-                  />
-                </div>
-              </div>
+              <AnimatedStatCard
+                index={1}
+                icon={HardDrive}
+                title="Almacenamiento"
+                value={parseFloat(usageData.current.storage_used_gb || '0') < 1 
+                  ? parseFloat(usageData.current.storage_used_mb || '0')
+                  : parseFloat(usageData.current.storage_used_gb || '0')}
+                maxValue={parseFloat(usageData.current.storage_used_gb || '0') < 1 
+                  ? (usageData.current.storage_limit_gb || 1) * 1024
+                  : usageData.current.storage_limit_gb || 1}
+                suffix={parseFloat(usageData.current.storage_used_gb || '0') < 1 ? ' MB' : ' GB'}
+                colorTheme="emerald"
+                decimals={2}
+              />
               
               {/* Asistente IA - Solo si el plan tiene límite de tokens */}
               {typeof usageData.current.ai_tokens_limit === 'number' && usageData.current.ai_tokens_limit > 0 && (
-                <div className="p-4 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/20 dark:to-violet-950/20 rounded-xl border border-purple-100 dark:border-purple-900/30">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
-                      <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <span className="font-medium text-foreground">Asistente IA</span>
-                  </div>
-                  <div className="text-lg font-semibold text-purple-600 dark:text-purple-400 mb-2">
-                    {((Number(usageData.current.ai_tokens_used) || 0) / 1000000).toFixed(2)}M / {(Number(usageData.current.ai_tokens_limit) / 1000000).toFixed(0)}M tokens
-                  </div>
-                  <div className="h-2 bg-purple-100 dark:bg-purple-900/30 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-purple-500 to-violet-500 rounded-full transition-all duration-500"
-                      style={{ 
-                        width: `${Math.min(((Number(usageData.current.ai_tokens_used) || 0) / Number(usageData.current.ai_tokens_limit)) * 100, 100)}%` 
-                      }}
-                    />
-                  </div>
-                </div>
+                <AnimatedStatCard
+                  index={2}
+                  icon={Sparkles}
+                  title="Asistente IA"
+                  value={(Number(usageData.current.ai_tokens_used) || 0) / 1000000}
+                  maxValue={Number(usageData.current.ai_tokens_limit) / 1000000}
+                  suffix="M tokens"
+                  colorTheme="purple"
+                  decimals={2}
+                />
               )}
             </div>
           )}
