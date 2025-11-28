@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { UserThemeManager } from "@/components/user-theme-manager";
 import { GlobalDemoBanner } from "@/components/global-demo-banner";
 import CookieBanner from "@/components/CookieBanner";
+import { AdminWebSocketNotifications } from "@/components/AdminWebSocketNotifications";
 
 /**
  * GlobalOverlays: Persistent UI elements that should never re-render due to routing.
@@ -18,6 +19,7 @@ export const GlobalOverlays = React.memo(function GlobalOverlays() {
       <GlobalDemoBanner />
       <Toaster />
       <CookieBanner />
+      <AdminWebSocketNotifications />
     </>
   );
 });
