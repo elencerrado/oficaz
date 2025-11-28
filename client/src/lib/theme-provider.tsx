@@ -159,14 +159,18 @@ export function ThemeProvider({
       const root = window.document.documentElement;
       const isAdmin = isAdminRoute();
       
+      // CRITICAL: Read theme from localStorage to get the CURRENT value
+      // This fixes the issue where theme changes weren't persisting across navigation
+      const currentTheme = (localStorage.getItem(storageKey) as Theme) || theme;
+      
       // Determine target theme
       let targetTheme: string;
       if (!isAdmin) {
         targetTheme = 'light';
-      } else if (theme === 'system') {
+      } else if (currentTheme === 'system') {
         targetTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       } else {
-        targetTheme = theme;
+        targetTheme = currentTheme;
       }
       
       // Only update if theme actually changed
@@ -233,7 +237,7 @@ export function ThemeProvider({
       window.history.pushState = originalPushState;
       window.history.replaceState = originalReplaceState;
     };
-  }, [theme]);
+  }, [theme, storageKey]);
 
   // Initialize pathname tracking
   useEffect(() => {
