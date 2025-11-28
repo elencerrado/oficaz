@@ -3940,8 +3940,8 @@ Responde directamente a este email para contactar con la persona.
 
   app.get('/api/work-sessions/company', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
-      // Pagination parameters - no limit by default (scroll infinite handles progressive display)
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      // Pagination parameters - default 50 per page for fast loading
+      const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
       
       // Server-side filters for performance optimization
@@ -3977,9 +3977,14 @@ Responde directamente a este email para contactar con la persona.
         employees.map(employee => storage.markOldSessionsAsIncomplete(employee.id))
       );
       
-      const sessions = await storage.getWorkSessionsByCompany(req.user!.companyId, limit, offset, filters);
+      const result = await storage.getWorkSessionsByCompany(req.user!.companyId, limit, offset, filters);
       
-      res.json(sessions);
+      // Return paginated response with total count for infinite scroll
+      res.json({
+        sessions: result.sessions,
+        totalCount: result.totalCount,
+        hasMore: offset + result.sessions.length < result.totalCount
+      });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -6957,14 +6962,14 @@ Responde directamente a este email para contactar con la persona.
       const [
         employees,
         vacationRequests,
-        incompleteSessions,
+        incompleteSessionsResult,
         modificationRequests,
         allDocuments,
         documentNotifications,
         unreadMessagesData,
         messages,
         reminders,
-        recentWorkSessions,
+        recentWorkSessionsResult,
         customHolidays,
       ] = await Promise.all([
         storage.getUsersByCompany(companyId),
@@ -6979,6 +6984,10 @@ Responde directamente a este email para contactar con la persona.
         storage.getWorkSessionsByCompany(companyId, 20),
         storage.getCustomHolidaysByCompany(companyId),
       ]);
+      
+      // Extract sessions from paginated results
+      const incompleteSessions = incompleteSessionsResult.sessions;
+      const recentWorkSessions = recentWorkSessionsResult.sessions;
       
       // Process data - add userName from user.fullName for frontend compatibility
       const pendingVacations = vacationRequests

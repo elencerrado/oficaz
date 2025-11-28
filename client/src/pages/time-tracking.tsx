@@ -141,7 +141,6 @@ export default function TimeTracking() {
   });
 
   // Build query params for server-side filtering (Performance Optimization)
-  // Note: Scroll infinite handles progressive rendering, so we can load all records
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
     
@@ -167,7 +166,6 @@ export default function TimeTracking() {
       params.append('startDate', format(startOfDay(monthStart), 'yyyy-MM-dd'));
       params.append('endDate', format(endOfDay(monthEnd), 'yyyy-MM-dd'));
     }
-    // No limit param = server returns all records (scroll handles progressive display)
     
     // Status filter for incomplete sessions
     if (activeStatsFilter === 'incomplete') {
@@ -177,17 +175,56 @@ export default function TimeTracking() {
     return params.toString();
   }, [selectedEmployee, dateFilter, startDate, endDate, currentDate, currentMonth, activeStatsFilter]);
 
-  // Optimized query with server-side filtering (NO POLLING - WebSocket handles real-time updates)
-  const { data: sessions = [], isLoading, refetch } = useQuery({
-    queryKey: ['/api/work-sessions/company', queryParams],
+  // Server-side pagination state
+  const [offset, setOffset] = useState(0);
+  const [allSessions, setAllSessions] = useState<any[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const SESSIONS_PER_PAGE = 50;
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setOffset(0);
+    setAllSessions([]);
+    setHasMore(true);
+  }, [queryParams]);
+
+  // Optimized query with server-side pagination
+  const { data: sessionsData, isLoading, refetch, isFetching } = useQuery<{
+    sessions: any[];
+    totalCount: number;
+    hasMore: boolean;
+  }>({
+    queryKey: ['/api/work-sessions/company', `${queryParams}&limit=${SESSIONS_PER_PAGE}&offset=${offset}`],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
     staleTime: 0,
     gcTime: 10 * 60 * 1000,
     retry: 2,
     retryDelay: 750,
-    placeholderData: (previousData) => previousData, // Keep previous data while loading new data (prevents flashing)
-    // Removed aggressive polling - WebSocket will handle real-time updates
   });
+
+  // Accumulate sessions when data arrives
+  useEffect(() => {
+    if (sessionsData) {
+      if (offset === 0) {
+        setAllSessions(sessionsData.sessions);
+      } else {
+        setAllSessions(prev => [...prev, ...sessionsData.sessions]);
+      }
+      setTotalCount(sessionsData.totalCount);
+      setHasMore(sessionsData.hasMore);
+    }
+  }, [sessionsData, offset]);
+
+  // Load more function for infinite scroll
+  const loadMoreSessions = useCallback(() => {
+    if (hasMore && !isFetching) {
+      setOffset(prev => prev + SESSIONS_PER_PAGE);
+    }
+  }, [hasMore, isFetching]);
+
+  // For backwards compatibility
+  const sessions = allSessions;
 
   // Employees with ultra-aggressive caching 
   const { data: employees = [] } = useQuery<any[]>({
@@ -287,15 +324,15 @@ export default function TimeTracking() {
     setDisplayedCount(15);
   }, [selectedEmployee, dateFilter, startDate, endDate, currentDate, currentMonth, activeStatsFilter]);
 
-  // Infinite scroll with IntersectionObserver
+  // Infinite scroll with IntersectionObserver - now triggers server-side pagination
   useEffect(() => {
     // Only set up observer when in sessions tab
     if (activeTab !== 'sessions') return;
     
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some(entry => entry.isIntersecting) && !isLoading) {
-          setDisplayedCount(prev => prev + ITEMS_PER_LOAD);
+        if (entries.some(entry => entry.isIntersecting) && !isLoading && !isFetching && hasMore) {
+          loadMoreSessions();
         }
       },
       { threshold: 0.1, rootMargin: '100px' }
@@ -315,7 +352,7 @@ export default function TimeTracking() {
       clearTimeout(timeoutId);
       observer.disconnect();
     };
-  }, [isLoading, activeTab]);
+  }, [isLoading, isFetching, hasMore, activeTab, loadMoreSessions]);
 
   // Helper function to check if a specific session is incomplete
   const isSessionIncomplete = useCallback((session: any) => {
@@ -3462,11 +3499,19 @@ export default function TimeTracking() {
                     <tr key="load-more-observer" className="h-12">
                       <td colSpan={5} className="py-3 text-center">
                         <div ref={loadMoreDesktopRef} className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
-                          {dailyEntries.length > displayedCount && (
+                          {hasMore ? (
                             <>
-                              <ArrowDown className="w-4 h-4 animate-bounce" />
-                              <span>Desplaza para ver más ({dailyEntries.length - displayedCount} restantes)</span>
+                              {isFetching ? (
+                                <span>Cargando más fichajes...</span>
+                              ) : (
+                                <>
+                                  <ArrowDown className="w-4 h-4 animate-bounce" />
+                                  <span>Desplaza para ver más ({totalCount - allSessions.length} restantes de {totalCount})</span>
+                                </>
+                              )}
                             </>
+                          ) : (
+                            <span className="text-gray-300 dark:text-gray-600">Has visto todos los {totalCount} fichajes</span>
                           )}
                         </div>
                       </td>
@@ -3768,11 +3813,19 @@ export default function TimeTracking() {
               result.push(
                 <div key="load-more-observer-mobile" className="py-4 text-center mx-4">
                   <div ref={loadMoreMobileRef} className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
-                    {dailyEntries.length > displayedCount && (
+                    {hasMore ? (
                       <>
-                        <ArrowDown className="w-4 h-4 animate-bounce" />
-                        <span>Desplaza para ver más ({dailyEntries.length - displayedCount} restantes)</span>
+                        {isFetching ? (
+                          <span>Cargando más fichajes...</span>
+                        ) : (
+                          <>
+                            <ArrowDown className="w-4 h-4 animate-bounce" />
+                            <span>Desplaza para ver más ({totalCount - allSessions.length} restantes de {totalCount})</span>
+                          </>
+                        )}
                       </>
+                    ) : (
+                      <span className="text-gray-300 dark:text-gray-600">Has visto todos los {totalCount} fichajes</span>
                     )}
                   </div>
                 </div>

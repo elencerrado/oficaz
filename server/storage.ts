@@ -90,7 +90,7 @@ export interface IStorage {
     startDate?: Date;
     endDate?: Date;
     status?: 'active' | 'completed' | 'incomplete';
-  }): Promise<WorkSessionWithAudit[]>;
+  }): Promise<{ sessions: WorkSessionWithAudit[]; totalCount: number }>;
   markOldSessionsAsIncomplete(userId: number): Promise<void>;
 
   // Break periods
@@ -618,7 +618,7 @@ export class DrizzleStorage implements IStorage {
 
   async getWorkSessionsByCompany(
     companyId: number, 
-    limit?: number, 
+    limit: number = 50, 
     offset: number = 0,
     filters?: {
       employeeId?: number;
@@ -626,7 +626,7 @@ export class DrizzleStorage implements IStorage {
       endDate?: Date;
       status?: 'active' | 'completed' | 'incomplete';
     }
-  ): Promise<WorkSessionWithAudit[]> {
+  ): Promise<{ sessions: WorkSessionWithAudit[]; totalCount: number }> {
     // Build WHERE conditions dynamically
     const conditions = [eq(schema.users.companyId, companyId)];
     
@@ -646,8 +646,17 @@ export class DrizzleStorage implements IStorage {
       conditions.push(eq(schema.workSessions.status, filters.status));
     }
     
-    // Build query - apply limit only if specified
-    let query = db.select({
+    // Get total count first (fast indexed query)
+    const [countResult] = await db.select({ 
+      count: sql<number>`count(*)::int` 
+    }).from(schema.workSessions)
+      .innerJoin(schema.users, eq(schema.workSessions.userId, schema.users.id))
+      .where(and(...conditions));
+    
+    const totalCount = countResult?.count || 0;
+    
+    // Get paginated sessions
+    const sessions = await db.select({
       id: schema.workSessions.id,
       userId: schema.workSessions.userId,
       clockIn: schema.workSessions.clockIn,
@@ -666,16 +675,12 @@ export class DrizzleStorage implements IStorage {
       .innerJoin(schema.users, eq(schema.workSessions.userId, schema.users.id))
       .where(and(...conditions))
       .orderBy(desc(schema.workSessions.clockIn))
+      .limit(limit)
       .offset(offset);
-    
-    // Apply limit only if specified (undefined = no limit, get all records)
-    const sessions = limit !== undefined 
-      ? await query.limit(limit) 
-      : await query;
 
     // Quick exit for empty results
     if (sessions.length === 0) {
-      return [];
+      return { sessions: [], totalCount };
     }
 
     // Get all session IDs for batch break periods query
@@ -731,7 +736,7 @@ export class DrizzleStorage implements IStorage {
     }
 
     // Combine sessions with their break periods and modifier names efficiently
-    return sessions.map(session => {
+    const enrichedSessions = sessions.map(session => {
       return {
         ...session,
         breakPeriods: breakPeriodsMap.get(session.id) || [],
@@ -740,6 +745,8 @@ export class DrizzleStorage implements IStorage {
         lastModifiedByName: session.lastModifiedBy ? modifiersMap.get(session.lastModifiedBy) : null,
       };
     });
+    
+    return { sessions: enrichedSessions, totalCount };
   }
 
   // Break Periods
