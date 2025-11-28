@@ -112,6 +112,7 @@ export interface IStorage {
   getDocumentsByCompany(companyId: number): Promise<any[]>;
   getDocument(id: number): Promise<Document | undefined>;
   deleteDocument(id: number): Promise<boolean>;
+  deleteOrphanedDocuments(documentIds: number[]): Promise<{ deleted: number; failed: number[] }>;
   
   // Document signature methods
   markDocumentAsViewed(id: number): Promise<Document | undefined>;
@@ -955,17 +956,30 @@ export class DrizzleStorage implements IStorage {
   }
 
   async deleteDocument(id: number): Promise<boolean> {
-    // 🚨 CRITICAL AUDIT LOG - Track all document deletions
-    const stackTrace = new Error().stack;
-    console.log('🚨🚨🚨 DELETE DOCUMENT CALLED 🚨🚨🚨');
-    console.log(`🗑️  Document ID: ${id}`);
-    console.log(`📍 Stack trace:`);
-    console.log(stackTrace);
-    console.log('🚨🚨🚨 END DELETE DOCUMENT LOG 🚨🚨🚨');
-    
     const result = await db.delete(schema.documents).where(eq(schema.documents.id, id));
-    console.log(`🗑️  Delete result for document ${id}: ${result.rowCount > 0 ? 'SUCCESS' : 'FAILED (not found)'}`);
     return result.rowCount > 0;
+  }
+
+  async deleteOrphanedDocuments(documentIds: number[]): Promise<{ deleted: number; failed: number[] }> {
+    const failed: number[] = [];
+    let deleted = 0;
+
+    for (const id of documentIds) {
+      try {
+        const result = await db.delete(schema.documents).where(eq(schema.documents.id, id));
+        if (result.rowCount > 0) {
+          deleted++;
+          console.log(`🧹 ORPHAN CLEANUP: Deleted document record ${id}`);
+        } else {
+          failed.push(id);
+        }
+      } catch (error) {
+        console.error(`🧹 ORPHAN CLEANUP ERROR: Failed to delete document ${id}:`, error);
+        failed.push(id);
+      }
+    }
+
+    return { deleted, failed };
   }
 
   // Document signature methods

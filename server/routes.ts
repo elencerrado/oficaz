@@ -5748,18 +5748,15 @@ Responde directamente a este email para contactar con la persona.
           validDocuments.push(document);
         } else {
           orphanedDocuments.push(document);
-          console.log(`CLEANUP: User ${req.user!.id} - Found orphaned document ${document.id} - ${document.originalName}`);
         }
       }
       
-      // ⚠️ CLEANUP TEMPORARILY DISABLED FOR DEBUGGING
-      // Clean up orphaned documents from database
+      // 🧹 Automatic cleanup of orphaned documents
       if (orphanedDocuments.length > 0) {
-        console.log(`⚠️ CLEANUP DISABLED: User ${req.user!.id} - Would have removed ${orphanedDocuments.length} orphaned document records`);
-        for (const orphanDoc of orphanedDocuments) {
-          console.log(`⚠️ CLEANUP DISABLED: User ${req.user!.id} - Would have deleted document ${orphanDoc.id} - ${orphanDoc.originalName}`);
-        }
-        // TEMPORARILY DISABLED: await storage.deleteDocument(orphanDoc.id);
+        const orphanIds = orphanedDocuments.map(d => d.id);
+        console.log(`🧹 ORPHAN CLEANUP: User ${req.user!.id} - Found ${orphanedDocuments.length} orphaned documents: ${orphanIds.join(', ')}`);
+        const result = await storage.deleteOrphanedDocuments(orphanIds);
+        console.log(`🧹 ORPHAN CLEANUP COMPLETE: Deleted ${result.deleted} records, failed: ${result.failed.length > 0 ? result.failed.join(', ') : 'none'}`);
       }
       
       res.json(validDocuments);
@@ -5779,23 +5776,19 @@ Responde directamente a este email para contactar con la persona.
       
       for (const document of allDocuments) {
         const filePath = path.join(uploadDir, document.fileName);
-        console.log(`🔍 CLEANUP DEBUG: Doc ${document.id} | fileName: ${document.fileName} | filePath DB: ${document.filePath} | looking for: ${filePath} | exists: ${fs.existsSync(filePath)}`);
         if (fs.existsSync(filePath)) {
           validDocuments.push(document);
         } else {
           orphanedDocuments.push(document);
-          console.log(`CLEANUP: Found orphaned document ${document.id} - ${document.originalName} (file not found: ${filePath})`);
         }
       }
       
-      // ⚠️ CLEANUP TEMPORARILY DISABLED FOR DEBUGGING
-      // Clean up orphaned documents from database
+      // 🧹 Automatic cleanup of orphaned documents
       if (orphanedDocuments.length > 0) {
-        console.log(`⚠️ CLEANUP DISABLED: Would have removed ${orphanedDocuments.length} orphaned document records`);
-        for (const orphanDoc of orphanedDocuments) {
-          console.log(`⚠️ CLEANUP DISABLED: Would have deleted document ${orphanDoc.id} - ${orphanDoc.originalName}`);
-        }
-        // TEMPORARILY DISABLED: await storage.deleteDocument(orphanDoc.id);
+        const orphanIds = orphanedDocuments.map((d: any) => d.id);
+        console.log(`🧹 ORPHAN CLEANUP (admin): Found ${orphanedDocuments.length} orphaned documents: ${orphanIds.join(', ')}`);
+        const result = await storage.deleteOrphanedDocuments(orphanIds);
+        console.log(`🧹 ORPHAN CLEANUP COMPLETE: Deleted ${result.deleted} records, failed: ${result.failed.length > 0 ? result.failed.join(', ') : 'none'}`);
       }
       
       res.json(validDocuments);
