@@ -698,12 +698,9 @@ const AccountManagement = () => {
                   {parseFloat(usageData.current.storage_used_gb || '0') < 1 
                     ? `${usageData.current.storage_used_mb} MB` 
                     : `${usageData.current.storage_used_gb} GB`}
+                  /{usageData.current.storage_limit_gb || 1} GB
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  de {(usageData.current.storage_limit_gb || 1) < 1 
-                    ? `${(usageData.current.storage_limit_gb || 1) * 1024} MB`
-                    : `${usageData.current.storage_limit_gb || 1} GB`}
-                </p>
+                <p className="text-sm text-muted-foreground">Almacenamiento</p>
               </div>
             </div>
           )}
