@@ -296,7 +296,7 @@ export default function VacationManagement() {
           data-vacation-bar
           className={`absolute rounded-md cursor-pointer transition-all ${
             period.status === 'approved' 
-              ? 'bg-blue-500 border-blue-600 hover:bg-blue-600' 
+              ? 'bg-green-500 border-green-600 hover:bg-green-600' 
               : 'bg-yellow-400 border-yellow-500 hover:bg-yellow-500'
           } border opacity-90 hover:opacity-100 flex items-center justify-center`}
           style={{
@@ -1159,7 +1159,7 @@ export default function VacationManagement() {
                       <div className="flex items-center gap-6">
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
-                            <div className="w-3 h-3 bg-primary rounded-sm"></div>
+                            <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
                             <span>Aprobado</span>
                           </div>
                           <div className="flex items-center gap-1">
@@ -1226,7 +1226,7 @@ export default function VacationManagement() {
                     {/* Leyenda móvil */}
                     <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">
-                        <div className="w-2.5 h-2.5 bg-blue-500 rounded-sm"></div>
+                        <div className="w-2.5 h-2.5 bg-green-500 rounded-sm"></div>
                         <span>Aprobado</span>
                       </div>
                       <div className="flex items-center gap-1">
