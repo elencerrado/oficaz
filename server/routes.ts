@@ -6933,11 +6933,12 @@ Responde directamente a este email para contactar con la persona.
         .filter((req: any) => req.status === 'approved')
         .map((req: any) => ({ ...req, userName: req.user?.fullName || req.userFullName || 'Empleado' }));
       
-      const unsignedPayrollsCount = allDocuments.filter((doc: any) => 
-        doc.originalName && 
-        doc.originalName.toLowerCase().includes('nómina') && 
-        !doc.isAccepted
-      ).length;
+      // Count documents pending signature: nóminas OR documents with requiresSignature flag
+      const unsignedPayrollsCount = allDocuments.filter((doc: any) => {
+        const isPayroll = doc.originalName && doc.originalName.toLowerCase().includes('nómina');
+        const requiresSignature = doc.requiresSignature === true;
+        return (isPayroll || requiresSignature) && !doc.isAccepted;
+      }).length;
       
       const pendingDocumentRequests = documentNotifications.filter((req: any) => !req.isCompleted);
       

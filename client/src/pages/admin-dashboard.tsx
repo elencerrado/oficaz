@@ -1023,8 +1023,8 @@ export default function AdminDashboard() {
                           <FileText className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                         </div>
                         <div>
-                          <p className="font-medium text-sm">Nóminas pendientes de firma</p>
-                          <p className="text-xs text-muted-foreground">Por empleados</p>
+                          <p className="font-medium text-sm">Documentos pendientes de firma</p>
+                          <p className="text-xs text-muted-foreground">Nóminas y circulares</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
