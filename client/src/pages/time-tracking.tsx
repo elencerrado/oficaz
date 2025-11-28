@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { usePageHeader } from '@/components/layout/page-header';
@@ -175,67 +175,59 @@ export default function TimeTracking() {
     return params.toString();
   }, [selectedEmployee, dateFilter, startDate, endDate, currentDate, currentMonth, activeStatsFilter]);
 
-  // Server-side pagination state
-  const [offset, setOffset] = useState(0);
-  const [allSessions, setAllSessions] = useState<any[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
+  // Server-side pagination with useInfiniteQuery
   const SESSIONS_PER_PAGE = 50;
-  const processedSessionIds = useRef<Set<number>>(new Set());
 
-  // Reset pagination when filters change
-  useEffect(() => {
-    setOffset(0);
-    setAllSessions([]);
-    setHasMore(true);
-    processedSessionIds.current = new Set();
-  }, [queryParams]);
-
-  // Optimized query with server-side pagination
-  const { data: sessionsData, isLoading, refetch, isFetching, dataUpdatedAt } = useQuery<{
-    sessions: any[];
-    totalCount: number;
-    hasMore: boolean;
-  }>({
-    queryKey: ['/api/work-sessions/company', `${queryParams}&limit=${SESSIONS_PER_PAGE}&offset=${offset}`],
+  // useInfiniteQuery for proper infinite scroll
+  const {
+    data: infiniteData,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: ['/api/work-sessions/company', queryParams],
+    queryFn: async ({ pageParam = 0 }) => {
+      const url = `/api/work-sessions/company?${queryParams}&limit=${SESSIONS_PER_PAGE}&offset=${pageParam}`;
+      const response = await fetch(url, {
+        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${JSON.parse(localStorage.getItem('authData') || sessionStorage.getItem('authData') || '{}').token || ''}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch sessions');
+      return response.json();
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage.hasMore) return undefined;
+      return allPages.length * SESSIONS_PER_PAGE;
+    },
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
     staleTime: 30 * 1000,
     gcTime: 10 * 60 * 1000,
     retry: 2,
     retryDelay: 750,
-    refetchOnWindowFocus: true,
   });
 
-  // Accumulate sessions when NEW data arrives (using dataUpdatedAt to detect fresh data)
-  useEffect(() => {
-    if (!sessionsData?.sessions || !dataUpdatedAt) return;
-    
-    if (offset === 0) {
-      // First page: replace all
-      setAllSessions(sessionsData.sessions);
-      processedSessionIds.current = new Set(sessionsData.sessions.map((s: any) => s.id));
-    } else {
-      // Subsequent pages: add only new sessions not already processed
-      const newSessions = sessionsData.sessions.filter(
-        (s: any) => !processedSessionIds.current.has(s.id)
-      );
-      
-      if (newSessions.length > 0) {
-        newSessions.forEach((s: any) => processedSessionIds.current.add(s.id));
-        setAllSessions(prev => [...prev, ...newSessions]);
-      }
-    }
-    
-    setTotalCount(sessionsData.totalCount);
-    setHasMore(sessionsData.hasMore);
-  }, [dataUpdatedAt, offset]);
+  // Flatten all pages into single sessions array
+  const allSessions = useMemo(() => {
+    if (!infiniteData?.pages) return [];
+    return infiniteData.pages.flatMap(page => page.sessions || []);
+  }, [infiniteData]);
+
+  // Get total count from last page
+  const totalCount = infiniteData?.pages?.[infiniteData.pages.length - 1]?.totalCount || 0;
+  const hasMore = hasNextPage ?? false;
 
   // Load more function for infinite scroll
   const loadMoreSessions = useCallback(() => {
-    if (hasMore && !isFetching) {
-      setOffset(prev => prev + SESSIONS_PER_PAGE);
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
-  }, [hasMore, isFetching]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // For backwards compatibility
   const sessions = allSessions;
@@ -376,14 +368,14 @@ export default function TimeTracking() {
     setDisplayedCount(15);
   }, [selectedEmployee, dateFilter, startDate, endDate, currentDate, currentMonth, activeStatsFilter]);
 
-  // Infinite scroll with IntersectionObserver - now triggers server-side pagination
+  // Infinite scroll with IntersectionObserver - triggers fetchNextPage
   useEffect(() => {
     // Only set up observer when in sessions tab
     if (activeTab !== 'sessions') return;
     
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some(entry => entry.isIntersecting) && !isLoading && !isFetching && hasMore) {
+        if (entries.some(entry => entry.isIntersecting) && !isLoading && !isFetchingNextPage && hasMore) {
           loadMoreSessions();
         }
       },
@@ -404,7 +396,7 @@ export default function TimeTracking() {
       clearTimeout(timeoutId);
       observer.disconnect();
     };
-  }, [isLoading, isFetching, hasMore, activeTab, loadMoreSessions]);
+  }, [isLoading, isFetchingNextPage, hasMore, activeTab, loadMoreSessions]);
 
   // Helper function to check if a specific session is incomplete
   const isSessionIncomplete = useCallback((session: any) => {
@@ -3521,7 +3513,7 @@ export default function TimeTracking() {
                         <div ref={loadMoreDesktopRef} className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
                           {hasMore ? (
                             <>
-                              {isFetching ? (
+                              {isFetchingNextPage ? (
                                 <span>Cargando más fichajes...</span>
                               ) : (
                                 <>
@@ -3835,7 +3827,7 @@ export default function TimeTracking() {
                   <div ref={loadMoreMobileRef} className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
                     {hasMore ? (
                       <>
-                        {isFetching ? (
+                        {isFetchingNextPage ? (
                           <span>Cargando más fichajes...</span>
                         ) : (
                           <>
