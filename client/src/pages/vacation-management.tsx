@@ -967,10 +967,10 @@ export default function VacationManagement() {
                     key={request.id}
                     className={`p-4 border rounded-lg ${
                       request.status === 'pending'
-                        ? 'bg-yellow-50/50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800'
+                        ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700'
                         : request.status === 'approved'
-                        ? 'bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
-                        : 'bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700'
+                        : 'bg-rose-50 dark:bg-rose-950/30 border-rose-300 dark:border-rose-700'
                     }`}
                   >
                     {/* Desktop: layout horizontal */}
