@@ -534,25 +534,29 @@ export default function TimeTracking() {
   }, []);
   // ⚠️ END PROTECTED SECTION
 
+  // Generate last 24 months for month selector (independent of loaded data)
+  const availableMonths = useMemo(() => {
+    const months: string[] = [];
+    const now = new Date();
+    for (let i = 0; i < 24; i++) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push(format(date, 'yyyy-MM'));
+    }
+    return months;
+  }, []);
+
   // ⚠️ PROTECTED: Data processing and filtering functions - DO NOT MODIFY
   // These functions are CRITICAL for data accuracy and filtering logic
-  const { employeesList, sessionsList, availableMonths } = useMemo(() => {
+  const { employeesList, sessionsList } = useMemo(() => {
     const allEmployees = (employees as any[]) || [];
     // Include admin for employee list so admin can see their own time tracking
     const filteredEmployees = allEmployees;
     // Include all sessions including admin sessions
     const filteredSessions = (sessions as any[]) || [];
 
-    const months = filteredSessions.reduce((acc: string[], session: any) => {
-      const monthKey = format(new Date(session.clockIn), 'yyyy-MM');
-      if (!acc.includes(monthKey)) acc.push(monthKey);
-      return acc;
-    }, []).sort().reverse();
-
     return {
       employeesList: filteredEmployees,
-      sessionsList: filteredSessions,
-      availableMonths: months
+      sessionsList: filteredSessions
     };
   }, [employees, sessions]);
 
