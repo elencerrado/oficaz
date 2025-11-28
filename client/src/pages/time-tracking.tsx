@@ -191,14 +191,19 @@ export default function TimeTracking() {
     queryKey: ['/api/work-sessions/company', queryParams],
     queryFn: async ({ pageParam = 0 }) => {
       const url = `/api/work-sessions/company?${queryParams}&limit=${SESSIONS_PER_PAGE}&offset=${pageParam}`;
+      console.log(`📥 Fetching page: offset=${pageParam}, url=${url}`);
       const response = await fetch(url, {
         credentials: 'include',
         headers: {
           'Authorization': `Bearer ${JSON.parse(localStorage.getItem('authData') || sessionStorage.getItem('authData') || '{}').token || ''}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
         },
       });
       if (!response.ok) throw new Error('Failed to fetch sessions');
-      return response.json();
+      const data = await response.json();
+      console.log(`📦 Received: ${data.sessions?.length || 0} sessions, hasMore=${data.hasMore}, totalCount=${data.totalCount}`);
+      return data;
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
