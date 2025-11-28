@@ -2823,7 +2823,7 @@ export default function TimeTracking() {
         <Card>
           <CardHeader>
             <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-              <span className="text-sm sm:text-lg font-medium">{getFilterTitle()} ({filteredSessions.length})</span>
+              <span className="text-sm sm:text-lg font-medium">{getFilterTitle()} ({totalCount})</span>
               
               {/* Desktop: buttons grouped together */}
               <div className="hidden sm:flex items-center gap-2">
