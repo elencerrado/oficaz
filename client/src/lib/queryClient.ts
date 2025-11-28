@@ -178,8 +178,13 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const authHeaders = getAuthHeaders();
+    // Build URL with query params if second element exists
+    let url = queryKey[0] as string;
+    if (queryKey[1] && typeof queryKey[1] === 'string' && queryKey[1].length > 0) {
+      url = `${url}?${queryKey[1]}`;
+    }
     // Query with auth headers
-    const res = await fetch(queryKey[0] as string, {
+    const res = await fetch(url, {
       credentials: "include",
       headers: {
         'Cache-Control': 'no-cache',
@@ -214,8 +219,8 @@ export const getQueryFn: <T>(options: {
               console.log('✅ Token refreshed, retrying query...');
               consecutiveAuthErrors = 0; // Reset counter after successful refresh
               
-              // Retry the query with new token
-              const retryRes = await fetch(queryKey[0] as string, {
+              // Retry the query with new token (use same URL with query params)
+              const retryRes = await fetch(url, {
                 credentials: "include",
                 headers: {
                   'Cache-Control': 'no-cache',
