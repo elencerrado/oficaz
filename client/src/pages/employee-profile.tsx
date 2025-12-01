@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { ArrowLeft, User, Mail, Phone, Edit3, Save, X, Camera, Trash2, PenTool, RotateCcw, Check, Info } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, Edit3, Save, X, Camera, Trash2, PenTool, RotateCcw, Check, Info, Shield } from 'lucide-react';
 import { useLocation, Link } from 'wouter';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -582,7 +582,7 @@ export default function EmployeeProfile() {
               Mi Firma Digital
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Esta firma se usará para firmar documentos y nóminas
+              Esta firma se usará para firmar documentos, nóminas, circulares y partes de trabajo
             </p>
           </div>
 
@@ -609,11 +609,22 @@ export default function EmployeeProfile() {
                 </div>
               )}
               
-              <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-blue-700 dark:text-blue-300">
-                  Tu firma digital se usará automáticamente para firmar documentos que requieran tu aprobación.
-                </p>
+              {/* Condiciones legales */}
+              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                <div className="flex items-start gap-2">
+                  <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                      Condiciones de uso de tu firma digital:
+                    </p>
+                    <ul className="text-xs text-amber-700 dark:text-amber-300 space-y-1 list-disc list-inside">
+                      <li>Tu firma solo se utilizará con tu consentimiento expreso en cada documento</li>
+                      <li>La empresa no puede usar tu firma sin tu autorización previa</li>
+                      <li>Para firmar cualquier documento deberás confirmar el uso de tu firma almacenada</li>
+                      <li>Puedes modificar o eliminar tu firma en cualquier momento</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-center">
@@ -669,6 +680,17 @@ export default function EmployeeProfile() {
                     </p>
                   </div>
                 )}
+              </div>
+
+              {/* Aviso legal al crear firma */}
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-start gap-2">
+                  <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    Al guardar tu firma, aceptas que se almacenará de forma segura y solo se utilizará 
+                    con tu consentimiento explícito para firmar documentos laborales.
+                  </p>
+                </div>
               </div>
 
               <div className="flex justify-between space-x-4">
