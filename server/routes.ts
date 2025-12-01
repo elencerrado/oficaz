@@ -9179,7 +9179,7 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
             console.log(`✅ Function ${functionName} result:`, JSON.stringify(result, null, 2));
             
             // Capture navigateTo URL from functions that support navigation
-            const functionsWithNavigation = ['navigateToPage', 'getEmployeeWorkHours', 'getVacationBalance', 'getPendingApprovals'];
+            const functionsWithNavigation = ['navigateToPage', 'getEmployeeWorkHours', 'getVacationBalance', 'getPendingApprovals', 'generateTimeReport'];
             if (functionsWithNavigation.includes(functionName) && result.navigateTo) {
               navigateToUrl = result.navigateTo;
             }

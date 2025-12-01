@@ -61,6 +61,9 @@ export default function TimeTracking() {
     return resetHeader;
   }, []);
 
+  // State for auto-export trigger from AI
+  const [pendingAutoExport, setPendingAutoExport] = useState<'pdf' | 'excel' | null>(null);
+
   // Read URL params to activate filters on load
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -68,6 +71,7 @@ export default function TimeTracking() {
     const employeeIdParam = urlParams.get('employeeId');
     const startDateParam = urlParams.get('startDate');
     const endDateParam = urlParams.get('endDate');
+    const exportParam = urlParams.get('export');
     
     if (filterParam === 'incomplete') {
       setActiveStatsFilter('incomplete');
@@ -87,8 +91,13 @@ export default function TimeTracking() {
       setSelectedEndDate(new Date(endDateParam));
     }
     
+    // Trigger auto-export if requested by AI
+    if (exportParam === 'pdf' || exportParam === 'excel') {
+      setPendingAutoExport(exportParam);
+    }
+    
     // Clean URL after reading params to avoid confusion
-    if (filterParam || employeeIdParam || startDateParam || endDateParam) {
+    if (filterParam || employeeIdParam || startDateParam || endDateParam || exportParam) {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
@@ -1958,6 +1967,22 @@ export default function TimeTracking() {
     setPendingExportType(null);
     setIncompleteSessionsCount(0);
   }, []);
+
+  // Auto-export triggered by AI navigation
+  useEffect(() => {
+    if (pendingAutoExport && filteredSessions && filteredSessions.length > 0) {
+      // Small delay to ensure UI is ready
+      const timer = setTimeout(() => {
+        if (pendingAutoExport === 'pdf') {
+          handleExportPDF();
+        } else if (pendingAutoExport === 'excel') {
+          handleExportExcel();
+        }
+        setPendingAutoExport(null);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [pendingAutoExport, filteredSessions, handleExportPDF, handleExportExcel]);
 
   // Helper function to create Excel data for a set of sessions
   const createExcelDataForSessions = (sessions: any[]) => {
