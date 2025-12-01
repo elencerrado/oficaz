@@ -2634,7 +2634,7 @@ export default function Settings() {
       <TabNavigation
           tabs={[
             { id: 'company', label: 'Empresa', icon: Building2 },
-            { id: 'policies', label: 'Configuración', icon: SettingsIcon },
+            { id: 'policies', label: 'Políticas', icon: SettingsIcon },
             { id: 'profile', label: 'Mi Perfil', icon: Users },
             ...(user?.role === 'admin' ? [{ id: 'account', label: 'Mi Cuenta', icon: CreditCard }] : [])
           ]}
@@ -3068,10 +3068,10 @@ export default function Settings() {
                     <div>
                       <CardTitle className="flex items-center space-x-2">
                         <Clock className="h-5 w-5" />
-                        <span>Gestión de horarios</span>
+                        <span>Horarios</span>
                       </CardTitle>
                       <CardDescription>
-                        Configura cómo los empleados pueden gestionar sus horarios
+                        Jornada laboral de la empresa
                       </CardDescription>
                     </div>
                     {user?.role === 'admin' && Number(companyData.workingHoursPerDay) !== Number(company?.workingHoursPerDay || 8) && (
@@ -3164,10 +3164,10 @@ export default function Settings() {
                     <div>
                       <CardTitle className="flex items-center space-x-2">
                         <CalendarIcon className="h-5 w-5" />
-                        <span>Política de vacaciones</span>
+                        <span>Vacaciones</span>
                       </CardTitle>
                       <CardDescription>
-                        Configuración del sistema de vacaciones según normativa española
+                        Política de vacaciones según normativa española
                       </CardDescription>
                     </div>
                     {user?.role === 'admin' && Number(companyData.vacationDaysPerMonth) !== Number(company?.vacationDaysPerMonth || 2.5) && (
