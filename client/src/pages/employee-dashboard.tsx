@@ -72,7 +72,9 @@ export default function EmployeeDashboard() {
     location: '',
     description: '',
     clientName: '',
-    notes: ''
+    notes: '',
+    startTime: '',
+    endTime: ''
   });
 
   // Queries para autocompletado de partes de obra anteriores
@@ -531,10 +533,17 @@ export default function EmployeeDashboard() {
       if ((subscription?.plan === 'pro' || subscription?.plan === 'master') && 
           (workReportMode === 'on_clockout' || workReportMode === 'both')) {
         const clockOutTime = new Date().toISOString();
+        const clockInTime = data.sessionClockIn || activeSession?.clockIn || clockOutTime;
         setCompletedSessionData({
-          clockIn: data.sessionClockIn || activeSession?.clockIn || clockOutTime,
+          clockIn: clockInTime,
           clockOut: clockOutTime
         });
+        // Inicializar los campos de hora editables
+        setWorkReportForm(prev => ({
+          ...prev,
+          startTime: new Date(clockInTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          endTime: new Date(clockOutTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })
+        }));
         setShowWorkReportModal(true);
       }
     },
@@ -606,7 +615,7 @@ export default function EmployeeDashboard() {
       });
       setShowWorkReportModal(false);
       setCompletedSessionData(null);
-      setWorkReportForm({ refCode: '', location: '', description: '', clientName: '', notes: '' });
+      setWorkReportForm({ refCode: '', location: '', description: '', clientName: '', notes: '', startTime: '', endTime: '' });
     },
     onError: (error: any) => {
       toast({
@@ -629,7 +638,6 @@ export default function EmployeeDashboard() {
     }
 
     const clockInDate = new Date(completedSessionData.clockIn);
-    const clockOutDate = new Date(completedSessionData.clockOut);
 
     const reportData = {
       companyId: user?.companyId,
@@ -637,8 +645,8 @@ export default function EmployeeDashboard() {
       reportDate: clockInDate.toISOString().split('T')[0],
       refCode: workReportForm.refCode || null,
       location: workReportForm.location,
-      startTime: clockInDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
-      endTime: clockOutDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      startTime: workReportForm.startTime, // Usar valor editable del formulario
+      endTime: workReportForm.endTime, // Usar valor editable del formulario
       description: workReportForm.description,
       clientName: workReportForm.clientName || null,
       notes: workReportForm.notes || null,
@@ -652,7 +660,7 @@ export default function EmployeeDashboard() {
   const handleCloseWorkReportModal = () => {
     setShowWorkReportModal(false);
     setCompletedSessionData(null);
-    setWorkReportForm({ refCode: '', location: '', description: '', clientName: '', notes: '' });
+    setWorkReportForm({ refCode: '', location: '', description: '', clientName: '', notes: '', startTime: '', endTime: '' });
   };
 
   // Determine session state and status 
@@ -1356,20 +1364,30 @@ export default function EmployeeDashboard() {
           </DialogDescription>
           
           <div className="space-y-4 py-2">
-            {/* Horas pre-llenadas */}
+            {/* Horas editables */}
             {completedSessionData && (
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 flex justify-between items-center">
-                <div className="text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">Entrada: </span>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {new Date(completedSessionData.clockIn).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 flex gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="startTime" className="text-sm text-gray-500 dark:text-gray-400">Entrada</Label>
+                  <Input
+                    id="startTime"
+                    type="time"
+                    value={workReportForm.startTime}
+                    onChange={(e) => setWorkReportForm({ ...workReportForm, startTime: e.target.value })}
+                    className="mt-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                    data-testid="input-work-report-start-time"
+                  />
                 </div>
-                <div className="text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">Salida: </span>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {new Date(completedSessionData.clockOut).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+                <div className="flex-1">
+                  <Label htmlFor="endTime" className="text-sm text-gray-500 dark:text-gray-400">Salida</Label>
+                  <Input
+                    id="endTime"
+                    type="time"
+                    value={workReportForm.endTime}
+                    onChange={(e) => setWorkReportForm({ ...workReportForm, endTime: e.target.value })}
+                    className="mt-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                    data-testid="input-work-report-end-time"
+                  />
                 </div>
               </div>
             )}
