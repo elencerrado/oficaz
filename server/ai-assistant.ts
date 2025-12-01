@@ -135,6 +135,7 @@ export async function getEmployeeWorkHours(
   context: AIFunctionContext,
   params: {
     employeeName?: string; // Optional: specific employee (resolves by name)
+    employeeId?: number; // Optional: specific employee (already resolved ID from routes.ts)
     period: 'today' | 'yesterday' | 'this_week' | 'last_week' | 'this_month' | 'last_month' | 'custom';
     startDate?: string; // Required if period = 'custom' (YYYY-MM-DD)
     endDate?: string; // Required if period = 'custom' (YYYY-MM-DD)
@@ -206,11 +207,18 @@ export async function getEmployeeWorkHours(
     return { success: false, error: "Empresa no encontrada" };
   }
   
-  // If specific employee, resolve name to ID
+  // Handle employee ID - either passed directly or resolved from name
   let targetEmployeeId: number | undefined;
   let targetEmployeeName: string | undefined;
   
-  if (params.employeeName) {
+  // If employeeId was already resolved by routes.ts, use it directly
+  if (params.employeeId) {
+    targetEmployeeId = params.employeeId;
+    const employee = await storage.getUser(targetEmployeeId);
+    targetEmployeeName = employee?.fullName;
+  }
+  // Otherwise try to resolve from name
+  else if (params.employeeName) {
     const resolved = await resolveEmployeeName(storage, companyId, params.employeeName);
     if ('error' in resolved) {
       return { success: false, error: resolved.error };
@@ -304,6 +312,7 @@ export async function getVacationBalance(
   context: AIFunctionContext,
   params: {
     employeeName?: string; // Optional: specific employee, if not provided returns all
+    employeeId?: number; // Optional: already resolved ID from routes.ts
   }
 ) {
   const { storage, companyId } = context;
@@ -315,13 +324,21 @@ export async function getVacationBalance(
   
   const employees = await storage.getUsersByCompany(companyId);
   let targetEmployees = employees.filter(e => e.status === 'active');
+  let targetEmployeeId: number | undefined;
   
-  if (params.employeeName) {
+  // If employeeId was already resolved by routes.ts, use it directly
+  if (params.employeeId) {
+    targetEmployeeId = params.employeeId;
+    targetEmployees = targetEmployees.filter(e => e.id === targetEmployeeId);
+  }
+  // Otherwise try to resolve from name
+  else if (params.employeeName) {
     const resolved = await resolveEmployeeName(storage, companyId, params.employeeName);
     if ('error' in resolved) {
       return { success: false, error: resolved.error };
     }
-    targetEmployees = targetEmployees.filter(e => e.id === resolved.employeeId);
+    targetEmployeeId = resolved.employeeId;
+    targetEmployees = targetEmployees.filter(e => e.id === targetEmployeeId);
   }
   
   // Get all vacation requests for the company
@@ -360,7 +377,7 @@ export async function getVacationBalance(
     });
   }
   
-  if (params.employeeName && balances.length === 1) {
+  if ((params.employeeName || params.employeeId) && balances.length === 1) {
     const b = balances[0];
     return {
       success: true,
