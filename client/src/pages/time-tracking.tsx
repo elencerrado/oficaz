@@ -3920,8 +3920,9 @@ export default function TimeTracking() {
               const monthlyHours = (monthStats?.totalHours || 0) - (monthStats?.totalBreakHours || 0);
               const weeklyHours = (weekStats?.totalHours || 0) - (weekStats?.totalBreakHours || 0);
 
-              const monthlyTarget = 160;
-              const weeklyTarget = 40;
+              const workingHoursPerDay = (companySettings as any)?.workingHoursPerDay || 8;
+              const weeklyTarget = workingHoursPerDay * 5;
+              const monthlyTarget = weeklyTarget * 4;
               const monthlyProgress = (monthlyHours / monthlyTarget) * 100;
               const weeklyProgress = (weeklyHours / weeklyTarget) * 100;
 
