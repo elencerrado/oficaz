@@ -77,7 +77,7 @@ export default function WorkReportsPage() {
   const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<WorkReport | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateFilter, setDateFilter] = useState('this-month');
+  const [dateFilter, setDateFilter] = useState('all');
   const [isDrawing, setIsDrawing] = useState(false);
   const [isClientSignatureModalOpen, setIsClientSignatureModalOpen] = useState(false);
   const [clientSignatureData, setClientSignatureData] = useState<string>('');
