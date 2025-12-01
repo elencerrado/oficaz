@@ -1124,28 +1124,47 @@ export default function EmployeeDashboard() {
     setLongPressItem(null);
   };
 
-  // Handlers para swipe del carrusel - solo deslizamiento horizontal intencionado
+  // Handlers para swipe del carrusel - con efecto rebote tipo iOS
   const isSwiping = useRef(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
   
   const handleTouchStart = (e: React.TouchEvent) => {
     if (showSwapMenu) return;
     touchStartX.current = e.touches[0].clientX;
-    touchEndX.current = e.touches[0].clientX; // Inicializar con el mismo valor
+    touchEndX.current = e.touches[0].clientX;
     isSwiping.current = false;
+    setIsAnimating(false);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (showSwapMenu) return;
     touchEndX.current = e.touches[0].clientX;
-    // Marcar que hubo movimiento real
-    if (Math.abs(touchStartX.current - touchEndX.current) > 10) {
+    const diff = touchStartX.current - touchEndX.current;
+    
+    if (Math.abs(diff) > 10) {
       isSwiping.current = true;
+      
+      // Efecto de resistencia en los bordes (rubber band)
+      let offset = -diff;
+      const isAtStart = menuPage === 0 && diff < 0;
+      const isAtEnd = menuPage === totalPages - 1 && diff > 0;
+      
+      if (isAtStart || isAtEnd) {
+        // Reducir el movimiento en los bordes (resistencia)
+        offset = offset * 0.3;
+      }
+      
+      setDragOffset(offset);
     }
   };
 
   const handleTouchEnd = () => {
     if (showSwapMenu) return;
-    // Solo procesar si hubo movimiento real de swipe
+    
+    setIsAnimating(true);
+    setDragOffset(0);
+    
     if (!isSwiping.current) return;
     
     const diff = touchStartX.current - touchEndX.current;
@@ -1419,8 +1438,11 @@ export default function EmployeeDashboard() {
           >
             {/* Contenedor deslizable */}
             <div 
-              className="flex transition-transform duration-300 ease-out"
-              style={{ transform: `translateX(-${menuPage * 100}%)` }}
+              className="flex"
+              style={{ 
+                transform: `translateX(calc(-${menuPage * 100}% + ${dragOffset}px))`,
+                transition: isAnimating ? 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 1.04)' : 'none'
+              }}
             >
               {menuPages.map((pageItems, pageIndex) => (
                 <div key={pageIndex} className="w-full flex-shrink-0 px-2">
