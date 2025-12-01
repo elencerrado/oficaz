@@ -599,12 +599,13 @@ body {
 }
 
 /* EMPLOYEE MODE - NOTCH COLOR RESPONSIVE A DARK/LIGHT */
+/* IMPORTANT: Must match bg-employee-gradient (#2A3441) */
 html.employee-mode.dark {
-  background: #232B36 !important;
+  background: #2A3441 !important;
 }
 
 html.employee-mode.dark body {
-  background: #232B36 !important;
+  background: #2A3441 !important;
 }
 
 html.employee-mode.light {
@@ -664,11 +665,11 @@ body {
 #root {
   min-height: 100vh;
   min-height: -webkit-fill-available;
-  background: #232B36 !important;
+  background: #2A3441 !important;
   position: relative;
 }
 
-/* Prevent white area on overscroll */
+/* Prevent white area on overscroll - must match bg-employee-gradient */
 body::before {
   content: '';
   position: fixed;
@@ -676,7 +677,7 @@ body::before {
   left: 0;
   right: 0;
   height: 100px;
-  background: #232B36;
+  background: #2A3441;
   z-index: -1;
 }
 
@@ -687,7 +688,7 @@ body::after {
   left: 0;
   right: 0;
   height: 100px;
-  background: #232B36;
+  background: #2A3441;
   z-index: -1;
 }
 
