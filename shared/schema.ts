@@ -15,7 +15,7 @@ export const companies = pgTable("companies", {
   address: text("address"),
   province: text("province"),
   // employeeTimeEditPermission migrado a tabla features como 'employee_time_edit_permission'
-  workingHoursPerDay: integer("working_hours_per_day").default(8),
+  workingHoursPerDay: decimal("working_hours_per_day", { precision: 3, scale: 1 }).default("8"),
   defaultVacationDays: integer("default_vacation_days").default(30),
   vacationDaysPerMonth: decimal("vacation_days_per_month", { precision: 3, scale: 1 }).default("2.5"),
   logoUrl: text("logo_url"),
