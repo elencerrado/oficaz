@@ -65,10 +65,30 @@ export default function TimeTracking() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const filterParam = urlParams.get('filter');
+    const employeeIdParam = urlParams.get('employeeId');
+    const startDateParam = urlParams.get('startDate');
+    const endDateParam = urlParams.get('endDate');
     
     if (filterParam === 'incomplete') {
       setActiveStatsFilter('incomplete');
-      // Clean URL after reading params to avoid confusion
+    }
+    
+    // Apply employee filter from URL
+    if (employeeIdParam) {
+      setSelectedEmployee(employeeIdParam);
+    }
+    
+    // Apply date range filter from URL
+    if (startDateParam && endDateParam) {
+      setDateFilter('custom');
+      setStartDate(startDateParam);
+      setEndDate(endDateParam);
+      setSelectedStartDate(new Date(startDateParam));
+      setSelectedEndDate(new Date(endDateParam));
+    }
+    
+    // Clean URL after reading params to avoid confusion
+    if (filterParam || employeeIdParam || startDateParam || endDateParam) {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
