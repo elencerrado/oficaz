@@ -1187,11 +1187,11 @@ export default function EmployeeDashboard() {
   // Work alarms are now handled automatically by PWA push notifications
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col overflow-hidden">
-      {/* Fixed Content Container - Sin scroll, todo cabe en pantalla */}
-      <div className="flex-1 flex flex-col px-4 pt-3 pb-0 min-h-0">
+    <div className="bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col overflow-hidden" style={{ height: '100dvh', maxHeight: '-webkit-fill-available' }}>
+      {/* Fixed Content Container - Sin scroll, usa dvh para móviles reales */}
+      <div className="flex-1 flex flex-col px-4 pt-2 pb-0 min-h-0">
         {/* Header - Compacto */}
-        <div className="flex justify-between items-center py-2 flex-shrink-0">
+        <div className="flex justify-between items-center py-1 flex-shrink-0">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -1671,8 +1671,8 @@ export default function EmployeeDashboard() {
         </div>
       </div>
 
-      {/* Small Oficaz logo at bottom */}
-      <div className="text-center pb-2 flex-shrink-0">
+      {/* Small Oficaz logo at bottom - con safe area para iOS */}
+      <div className="text-center flex-shrink-0" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
         <div className="flex items-center justify-center space-x-1 text-gray-500 dark:text-gray-400 text-xs">
           <span className="font-semibold text-blue-500 dark:text-blue-400">Oficaz</span>
           <span>© {currentYear}</span>
