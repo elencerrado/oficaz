@@ -6929,20 +6929,21 @@ Responde directamente a este email para contactar con la persona.
         return res.status(404).json({ message: 'Empresa no encontrada' });
       }
 
-      // If vacationDaysPerMonth changed, recalculate vacation days for all employees
-      if (vacationDaysPerMonth && vacationDaysPerMonth !== currentCompany.vacationDaysPerMonth) {
-        const employees = await storage.getUsersByCompany(user.companyId);
-        for (const employee of employees) {
-          await storage.updateUserVacationDays(employee.id);
-        }
+      // Always recalculate vacation days for all employees when saving company settings
+      // This ensures days are always up-to-date with current vacationDaysPerMonth
+      const employees = await storage.getUsersByCompany(user.companyId);
+      for (const employee of employees) {
+        await storage.updateUserVacationDays(employee.id);
       }
+      console.log(`Recalculated vacation days for ${employees.length} employees using ${vacationDaysPerMonth || updatedCompany.vacationDaysPerMonth} days/month`);
 
       res.json({ 
         message: 'Empresa actualizada correctamente',
         company: {
           ...updatedCompany,
           logoUrl: updatedCompany.logoUrl || null
-        }
+        },
+        vacationDaysRecalculated: employees.length
       });
     } catch (error) {
       console.error('Error updating company:', error);
