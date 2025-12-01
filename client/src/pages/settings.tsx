@@ -3097,21 +3097,48 @@ export default function Settings() {
                     </div>
                   )}
                   
-                  <div>
-                    <Label htmlFor="workingHours">Horas de trabajo por día</Label>
-                    <Input
-                      id="workingHours"
-                      type="number"
-                      min="1"
-                      max="12"
-                      value={companyData.workingHoursPerDay}
-                      onChange={(e) => setCompanyData(prev => ({ ...prev, workingHoursPerDay: parseInt(e.target.value) }))}
-                      className="mt-1"
-                      disabled={user?.role !== 'admin'}
-                    />
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Usado para calcular las horas esperadas y generar alertas
-                    </p>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center">
+                          <Clock className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <Label htmlFor="workingHours" className="text-base font-medium text-gray-900 dark:text-gray-100">
+                          Horas por día
+                        </Label>
+                      </div>
+                      <Input
+                        id="workingHours"
+                        type="number"
+                        min="1"
+                        max="12"
+                        value={companyData.workingHoursPerDay}
+                        onChange={(e) => setCompanyData(prev => ({ ...prev, workingHoursPerDay: parseInt(e.target.value) }))}
+                        className="text-lg h-12 font-medium"
+                        disabled={user?.role !== 'admin'}
+                      />
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                        Para calcular horas esperadas y alertas
+                      </p>
+                    </div>
+                    
+                    <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 border border-emerald-200 dark:border-emerald-800/50 rounded-xl p-5">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-600 dark:bg-emerald-500 flex items-center justify-center">
+                          <Calculator className="h-4 w-4 text-white" />
+                        </div>
+                        <Label className="text-base font-medium text-gray-900 dark:text-gray-100">
+                          Horas semanales calculadas
+                        </Label>
+                      </div>
+                      <div className="text-4xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">
+                        {companyData.workingHoursPerDay * 5}
+                        <span className="text-lg font-normal text-gray-500 dark:text-gray-400 ml-2">horas</span>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {companyData.workingHoursPerDay} horas × 5 días
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
