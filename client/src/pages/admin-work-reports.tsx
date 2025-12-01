@@ -373,17 +373,25 @@ export default function AdminWorkReportsPage() {
     });
   }, []);
 
-  // Handler Card 3: Rotar empleados
+  // Handler Card 3: Rotar empleados (incluye "todos" en la rotación)
   const handleEmployeeRotation = useCallback(() => {
     if (uniqueEmployeesList.length === 0) return;
     
-    const nextIndex = (employeeRotationIndex + 1) % uniqueEmployeesList.length;
-    setEmployeeRotationIndex(nextIndex);
-    setEmployeeFilter(String(uniqueEmployeesList[nextIndex].id));
+    // Rotación: -1 (todos) → 0 → 1 → ... → n-1 → -1 (todos) → ...
+    const nextIndex = employeeRotationIndex + 1;
+    if (nextIndex >= uniqueEmployeesList.length) {
+      // Volver a "todos"
+      setEmployeeRotationIndex(-1);
+      setEmployeeFilter('all');
+      setActiveStatsFilter(null);
+    } else {
+      setEmployeeRotationIndex(nextIndex);
+      setEmployeeFilter(String(uniqueEmployeesList[nextIndex].id));
+      setActiveStatsFilter('employee');
+    }
     setDateFilter('all');
     setProjectFilter('all');
     setProjectRotationIndex(-1);
-    setActiveStatsFilter('employee');
   }, [employeeRotationIndex, uniqueEmployeesList]);
 
   // Handler doble click Card 3: Mostrar todos los empleados
@@ -395,17 +403,25 @@ export default function AdminWorkReportsPage() {
     setActiveStatsFilter(null);
   }, []);
 
-  // Handler Card 4: Rotar proyectos
+  // Handler Card 4: Rotar proyectos (incluye "todos" en la rotación)
   const handleProjectRotation = useCallback(() => {
     if (uniqueProjectsList.length === 0) return;
     
-    const nextIndex = (projectRotationIndex + 1) % uniqueProjectsList.length;
-    setProjectRotationIndex(nextIndex);
-    setProjectFilter(uniqueProjectsList[nextIndex]);
+    // Rotación: -1 (todos) → 0 → 1 → ... → n-1 → -1 (todos) → ...
+    const nextIndex = projectRotationIndex + 1;
+    if (nextIndex >= uniqueProjectsList.length) {
+      // Volver a "todos"
+      setProjectRotationIndex(-1);
+      setProjectFilter('all');
+      setActiveStatsFilter(null);
+    } else {
+      setProjectRotationIndex(nextIndex);
+      setProjectFilter(uniqueProjectsList[nextIndex]);
+      setActiveStatsFilter('project');
+    }
     setDateFilter('all');
     setEmployeeFilter('all');
     setEmployeeRotationIndex(-1);
-    setActiveStatsFilter('project');
   }, [projectRotationIndex, uniqueProjectsList]);
 
   // Handler doble click Card 4: Mostrar todos los proyectos
