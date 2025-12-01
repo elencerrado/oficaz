@@ -3064,13 +3064,27 @@ export default function Settings() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Clock className="h-5 w-5" />
-                    <span>Gestión de horarios</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Configura cómo los empleados pueden gestionar sus horarios
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center space-x-2">
+                        <Clock className="h-5 w-5" />
+                        <span>Gestión de horarios</span>
+                      </CardTitle>
+                      <CardDescription>
+                        Configura cómo los empleados pueden gestionar sus horarios
+                      </CardDescription>
+                    </div>
+                    {user?.role === 'admin' && Number(companyData.workingHoursPerDay) !== Number(company?.workingHoursPerDay || 8) && (
+                      <Button
+                        size="sm"
+                        onClick={() => updateCompanyMutation.mutate(companyData)}
+                        disabled={updateCompanyMutation.isPending}
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        {updateCompanyMutation.isPending ? 'Guardando...' : 'Guardar'}
+                      </Button>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {user?.role === 'manager' && (
@@ -3146,13 +3160,27 @@ export default function Settings() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <CalendarIcon className="h-5 w-5" />
-                    <span>Política de vacaciones</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Configuración del sistema de vacaciones según normativa española
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center space-x-2">
+                        <CalendarIcon className="h-5 w-5" />
+                        <span>Política de vacaciones</span>
+                      </CardTitle>
+                      <CardDescription>
+                        Configuración del sistema de vacaciones según normativa española
+                      </CardDescription>
+                    </div>
+                    {user?.role === 'admin' && Number(companyData.vacationDaysPerMonth) !== Number(company?.vacationDaysPerMonth || 2.5) && (
+                      <Button
+                        size="sm"
+                        onClick={() => updateCompanyMutation.mutate(companyData)}
+                        disabled={updateCompanyMutation.isPending}
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        {updateCompanyMutation.isPending ? 'Guardando...' : 'Guardar'}
+                      </Button>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-lg p-4">
@@ -3222,17 +3250,6 @@ export default function Settings() {
                 </CardContent>
               </Card>
 
-              {user?.role === 'admin' && (
-                <div className="flex justify-end">
-                  <Button
-                    onClick={() => updateCompanyMutation.mutate(companyData)}
-                    disabled={updateCompanyMutation.isPending}
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    {updateCompanyMutation.isPending ? 'Guardando...' : 'Guardar configuración'}
-                  </Button>
-                </div>
-              )}
             </div>
           )}
 
