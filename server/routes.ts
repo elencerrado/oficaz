@@ -8955,6 +8955,7 @@ Responde directamente a este email para contactar con la persona.
       let iteration = 0;
       let currentMessages = conversationHistory;
       let allToolCalls: string[] = []; // Track all function calls made
+      let navigateToUrl: string | null = null; // Track navigation URL from navigateToPage function
 
       while (iteration < MAX_ITERATIONS) {
         iteration++;
@@ -9039,7 +9040,8 @@ Respuesta breve cuando termines: "Listo", "Perfecto", "Ya está".`
         res.json({
           message: assistantMessage?.content || "No entendí tu solicitud. ¿Puedes reformularla?",
           functionCalled: allToolCalls.join(", ") || null,
-          result: null
+          result: null,
+          navigateTo: navigateToUrl // Include navigation URL if present
         });
         return; // Exit endpoint
       }
@@ -9168,6 +9170,12 @@ Respuesta breve cuando termines: "Listo", "Perfecto", "Ya está".`
           try {
             const result = await executeAIFunction(functionName, functionArgs, context);
             console.log(`✅ Function ${functionName} result:`, JSON.stringify(result, null, 2));
+            
+            // Capture navigateTo URL from navigateToPage function
+            if (functionName === 'navigateToPage' && result.success && result.navigateTo) {
+              navigateToUrl = result.navigateTo;
+            }
+            
             toolResults.push({
               role: "tool" as const,
               tool_call_id: toolCall.id,

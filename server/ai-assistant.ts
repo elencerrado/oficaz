@@ -1868,6 +1868,96 @@ export async function copyEmployeeShifts(
   };
 }
 
+// Navigation function to redirect user to specific pages with filters
+export async function navigateToPage(
+  context: AIFunctionContext,
+  params: {
+    page: "vacation-requests" | "time-tracking" | "schedules" | "employees" | "documents" | "reminders";
+    filter?: "pending" | "approved" | "denied" | "all";
+  }
+) {
+  const { storage, companyId } = context;
+  
+  // Get company alias for URL building
+  const company = await storage.getCompany(companyId);
+  if (!company) {
+    return {
+      success: false,
+      error: "No se encontró la empresa"
+    };
+  }
+
+  // Build the navigation URL based on page type
+  let path = "";
+  let queryParams = "";
+  let description = "";
+
+  switch (params.page) {
+    case "vacation-requests":
+      path = `/${company.companyAlias}/vacaciones`;
+      queryParams = `?tab=requests${params.filter ? `&status=${params.filter}` : '&status=pending'}`;
+      
+      // Get count of requests for the description
+      const vacationRequests = await storage.getVacationRequestsByCompany(companyId);
+      const pendingCount = vacationRequests.filter(r => r.status === 'pending').length;
+      const approvedCount = vacationRequests.filter(r => r.status === 'approved').length;
+      const deniedCount = vacationRequests.filter(r => r.status === 'denied').length;
+      
+      if (params.filter === 'pending' || !params.filter) {
+        description = pendingCount === 0 
+          ? "No hay solicitudes de vacaciones pendientes"
+          : `Hay ${pendingCount} solicitud${pendingCount > 1 ? 'es' : ''} de vacaciones pendiente${pendingCount > 1 ? 's' : ''}`;
+      } else if (params.filter === 'approved') {
+        description = `Hay ${approvedCount} solicitud${approvedCount > 1 ? 'es' : ''} aprobada${approvedCount > 1 ? 's' : ''}`;
+      } else if (params.filter === 'denied') {
+        description = `Hay ${deniedCount} solicitud${deniedCount > 1 ? 'es' : ''} denegada${deniedCount > 1 ? 's' : ''}`;
+      } else {
+        description = `Hay ${vacationRequests.length} solicitud${vacationRequests.length > 1 ? 'es' : ''} en total`;
+      }
+      break;
+      
+    case "time-tracking":
+      path = `/${company.companyAlias}/fichajes`;
+      description = "Te llevo a la página de fichajes";
+      break;
+      
+    case "schedules":
+      path = `/${company.companyAlias}/cuadrante`;
+      description = "Te llevo al cuadrante de horarios";
+      break;
+      
+    case "employees":
+      path = `/${company.companyAlias}/configuracion`;
+      queryParams = "?tab=employees";
+      description = "Te llevo a la gestión de empleados";
+      break;
+      
+    case "documents":
+      path = `/${company.companyAlias}/documentos`;
+      description = "Te llevo a la gestión de documentos";
+      break;
+      
+    case "reminders":
+      path = `/${company.companyAlias}/inicio`;
+      description = "Te llevo al panel con los recordatorios";
+      break;
+      
+    default:
+      return {
+        success: false,
+        error: "Página no reconocida"
+      };
+  }
+
+  return {
+    success: true,
+    navigateTo: path + queryParams,
+    description,
+    page: params.page,
+    filter: params.filter
+  };
+}
+
 // Function definitions for OpenAI function calling
 export const AI_FUNCTIONS = [
   // ========================================
@@ -2582,6 +2672,26 @@ export const AI_FUNCTIONS = [
       required: ["fromEmployeeName", "toEmployeeName"],
     },
   },
+  {
+    name: "navigateToPage",
+    description: "🧭 NAVEGAR a una página específica de la aplicación. USA ESTA FUNCIÓN cuando el usuario pregunte sobre solicitudes pendientes, vacaciones, fichajes, cuadrantes, etc. y necesite ver la página correspondiente. Por ejemplo: '¿qué solicitudes de vacaciones hay pendientes?' → navegar a vacaciones con filtro pendiente. '¿quién está fichado hoy?' → navegar a fichajes. La función lleva al usuario directamente a la página con los filtros aplicados.",
+    parameters: {
+      type: "object",
+      properties: {
+        page: {
+          type: "string",
+          enum: ["vacation-requests", "time-tracking", "schedules", "employees", "documents", "reminders"],
+          description: "Página a la que navegar: vacation-requests (solicitudes de vacaciones), time-tracking (fichajes), schedules (cuadrantes), employees (empleados), documents (documentos), reminders (recordatorios)",
+        },
+        filter: {
+          type: "string",
+          enum: ["pending", "approved", "denied", "all"],
+          description: "Filtro a aplicar (solo para vacation-requests): pending (pendientes), approved (aprobadas), denied (denegadas), all (todas)",
+        },
+      },
+      required: ["page"],
+    },
+  },
 ];
 
 // Execute AI function by name
@@ -2641,6 +2751,8 @@ export async function executeAIFunction(
       return swapEmployeeShifts(context, params);
     case "copyEmployeeShifts":
       return copyEmployeeShifts(context, params);
+    case "navigateToPage":
+      return navigateToPage(context, params);
     default:
       throw new Error(`Unknown function: ${functionName}`);
   }

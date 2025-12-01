@@ -118,6 +118,21 @@ export default function VacationManagement() {
   const queryClient = useQueryClient();
   const search = useSearch();
 
+  // Read query params from URL to configure initial state (for AI navigation)
+  useEffect(() => {
+    const searchParams = new URLSearchParams(search);
+    const tabParam = searchParams.get('tab');
+    const statusParam = searchParams.get('status');
+    
+    if (tabParam && ['employees', 'requests', 'holidays'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+    
+    if (statusParam && ['all', 'pending', 'approved', 'denied'].includes(statusParam)) {
+      setSelectedStatus(statusParam);
+    }
+  }, [search]);
+
   // Cerrar tooltip al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
