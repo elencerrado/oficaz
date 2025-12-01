@@ -1391,10 +1391,10 @@ export default function EmployeeDashboard() {
 
         {/* Menu Grid - Carrusel estilo iPhone */}
         <div className="mb-2 relative">
-          {/* Contenedor del carrusel con overflow hidden */}
+          {/* Contenedor del carrusel con overflow visible para notificaciones */}
           <div 
             ref={menuContainerRef}
-            className="overflow-hidden"
+            className="overflow-x-clip overflow-y-visible pt-3"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
