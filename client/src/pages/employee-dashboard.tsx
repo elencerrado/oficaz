@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
-import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard, AlarmClock, CalendarDays, Sun, Moon, Monitor, ClipboardList, X } from 'lucide-react';
+import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard, AlarmClock, CalendarDays, Sun, Moon, Monitor, ClipboardList, X, PenTool, RotateCcw, CheckCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,7 +18,9 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { format } from 'date-fns';
+import { DatePickerDay } from '@/components/ui/date-picker';
 
 interface WorkSession {
   id: number;
@@ -68,14 +70,29 @@ export default function EmployeeDashboard() {
   const [showWorkReportModal, setShowWorkReportModal] = useState(false);
   const [completedSessionData, setCompletedSessionData] = useState<{ clockIn: string; clockOut: string } | null>(null);
   const [workReportForm, setWorkReportForm] = useState({
+    reportDate: format(new Date(), 'yyyy-MM-dd'),
     refCode: '',
     location: '',
     description: '',
     clientName: '',
     notes: '',
     startTime: '',
-    endTime: ''
+    endTime: '',
+    signedBy: ''
   });
+
+  // Estado para la firma del cliente
+  const [isClientSignatureModalOpen, setIsClientSignatureModalOpen] = useState(false);
+  const [clientSignatureData, setClientSignatureData] = useState<string>('');
+  const [clientSignedBy, setClientSignedBy] = useState('');
+  const [isClientDrawing, setIsClientDrawing] = useState(false);
+  const clientCanvasRef = useRef<HTMLCanvasElement>(null);
+  const lastClientPointRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Estados para mostrar sugerencias
+  const [showRefCodeSuggestions, setShowRefCodeSuggestions] = useState(false);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [showClientSuggestions, setShowClientSuggestions] = useState(false);
 
   // Queries para autocompletado de partes de obra anteriores
   const { data: refCodeSuggestions } = useQuery<string[]>({
@@ -95,7 +112,142 @@ export default function EmployeeDashboard() {
     enabled: showWorkReportModal,
     staleTime: 5 * 60 * 1000,
   });
-  
+
+  // Sugerencias filtradas
+  const filteredRefCodeSuggestions = useMemo(() => {
+    const suggestions = refCodeSuggestions || [];
+    if (!workReportForm.refCode) return suggestions.slice(0, 5);
+    return suggestions
+      .filter(code => code.toLowerCase().includes(workReportForm.refCode.toLowerCase()))
+      .slice(0, 5);
+  }, [workReportForm.refCode, refCodeSuggestions]);
+
+  const filteredLocationSuggestions = useMemo(() => {
+    const suggestions = locationSuggestions || [];
+    if (!workReportForm.location) return suggestions.slice(0, 5);
+    return suggestions
+      .filter(loc => loc.toLowerCase().includes(workReportForm.location.toLowerCase()))
+      .slice(0, 5);
+  }, [workReportForm.location, locationSuggestions]);
+
+  const filteredClientSuggestions = useMemo(() => {
+    const suggestions = clientSuggestions || [];
+    if (!workReportForm.clientName) return suggestions.slice(0, 5);
+    return suggestions
+      .filter(client => client.toLowerCase().includes(workReportForm.clientName.toLowerCase()))
+      .slice(0, 5);
+  }, [workReportForm.clientName, clientSuggestions]);
+
+  // Funciones para firma del cliente
+  const initClientCanvas = () => {
+    const canvas = clientCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    lastClientPointRef.current = null;
+  };
+
+  const clearClientCanvas = () => {
+    const canvas = clientCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    lastClientPointRef.current = null;
+  };
+
+  const getClientCoordinates = (e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    if ('touches' in e) {
+      return {
+        x: (e.touches[0].clientX - rect.left) * scaleX,
+        y: (e.touches[0].clientY - rect.top) * scaleY
+      };
+    }
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
+    };
+  };
+
+  const startClientDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    const canvas = clientCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    setIsClientDrawing(true);
+    const { x, y } = getClientCoordinates(e, canvas);
+    lastClientPointRef.current = { x, y };
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const drawClient = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isClientDrawing) return;
+    e.preventDefault();
+    const canvas = clientCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const { x, y } = getClientCoordinates(e, canvas);
+    
+    if (lastClientPointRef.current) {
+      const midX = (lastClientPointRef.current.x + x) / 2;
+      const midY = (lastClientPointRef.current.y + y) / 2;
+      ctx.quadraticCurveTo(lastClientPointRef.current.x, lastClientPointRef.current.y, midX, midY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(midX, midY);
+    }
+    
+    lastClientPointRef.current = { x, y };
+  };
+
+  const stopClientDrawing = () => {
+    if (isClientDrawing && lastClientPointRef.current) {
+      const canvas = clientCanvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.lineTo(lastClientPointRef.current.x, lastClientPointRef.current.y);
+          ctx.stroke();
+        }
+      }
+    }
+    setIsClientDrawing(false);
+    lastClientPointRef.current = null;
+  };
+
+  const saveClientSignature = () => {
+    const canvas = clientCanvasRef.current;
+    if (canvas) {
+      const dataUrl = canvas.toDataURL('image/png');
+      setClientSignatureData(dataUrl);
+      setWorkReportForm(prev => ({ ...prev, signedBy: clientSignedBy }));
+    }
+    setIsClientSignatureModalOpen(false);
+  };
+
+  const openClientSignatureModal = () => {
+    setIsClientSignatureModalOpen(true);
+  };
+
+  useEffect(() => {
+    if (isClientSignatureModalOpen) {
+      setTimeout(initClientCanvas, 100);
+    }
+  }, [isClientSignatureModalOpen]);
 
   // Función para generar mensajes dinámicos según la hora
   const generateDynamicMessage = (actionType: 'entrada' | 'salida') => {
@@ -538,12 +690,16 @@ export default function EmployeeDashboard() {
           clockIn: clockInTime,
           clockOut: clockOutTime
         });
-        // Inicializar los campos de hora editables
+        // Inicializar los campos del formulario
+        const clockInDate = new Date(clockInTime);
         setWorkReportForm(prev => ({
           ...prev,
-          startTime: new Date(clockInTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          reportDate: format(clockInDate, 'yyyy-MM-dd'),
+          startTime: clockInDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
           endTime: new Date(clockOutTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })
         }));
+        setClientSignatureData('');
+        setClientSignedBy('');
         setShowWorkReportModal(true);
       }
     },
@@ -615,7 +771,9 @@ export default function EmployeeDashboard() {
       });
       setShowWorkReportModal(false);
       setCompletedSessionData(null);
-      setWorkReportForm({ refCode: '', location: '', description: '', clientName: '', notes: '', startTime: '', endTime: '' });
+      setWorkReportForm({ reportDate: format(new Date(), 'yyyy-MM-dd'), refCode: '', location: '', description: '', clientName: '', notes: '', startTime: '', endTime: '', signedBy: '' });
+      setClientSignatureData('');
+      setClientSignedBy('');
     },
     onError: (error: any) => {
       toast({
@@ -628,7 +786,7 @@ export default function EmployeeDashboard() {
 
   // Handler para enviar el parte de obra
   const handleSubmitWorkReport = () => {
-    if (!completedSessionData || !workReportForm.location.trim() || !workReportForm.description.trim()) {
+    if (!workReportForm.location.trim() || !workReportForm.description.trim()) {
       toast({
         title: 'Campos requeridos',
         description: 'Por favor completa la ubicación y descripción del trabajo.',
@@ -637,19 +795,19 @@ export default function EmployeeDashboard() {
       return;
     }
 
-    const clockInDate = new Date(completedSessionData.clockIn);
-
     const reportData = {
       companyId: user?.companyId,
       employeeId: user?.id,
-      reportDate: clockInDate.toISOString().split('T')[0],
+      reportDate: workReportForm.reportDate,
       refCode: workReportForm.refCode || null,
       location: workReportForm.location,
-      startTime: workReportForm.startTime, // Usar valor editable del formulario
-      endTime: workReportForm.endTime, // Usar valor editable del formulario
+      startTime: workReportForm.startTime,
+      endTime: workReportForm.endTime,
       description: workReportForm.description,
       clientName: workReportForm.clientName || null,
       notes: workReportForm.notes || null,
+      signedBy: workReportForm.signedBy || null,
+      signatureImage: clientSignatureData || undefined,
       status: 'submitted' // Se envía directamente, sin borrador
     };
 
@@ -660,7 +818,9 @@ export default function EmployeeDashboard() {
   const handleCloseWorkReportModal = () => {
     setShowWorkReportModal(false);
     setCompletedSessionData(null);
-    setWorkReportForm({ refCode: '', location: '', description: '', clientName: '', notes: '', startTime: '', endTime: '' });
+    setWorkReportForm({ reportDate: format(new Date(), 'yyyy-MM-dd'), refCode: '', location: '', description: '', clientName: '', notes: '', startTime: '', endTime: '', signedBy: '' });
+    setClientSignatureData('');
+    setClientSignedBy('');
   };
 
   // Determine session state and status 
@@ -1354,154 +1514,312 @@ export default function EmployeeDashboard() {
 
       {/* Modal de Parte de Obra al fichar salida */}
       <Dialog open={showWorkReportModal} onOpenChange={(open) => !open && handleCloseWorkReportModal()}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
-          <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <ClipboardList className="h-5 w-5 text-blue-600" />
-            Parte de Obra
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogTitle className="flex items-center gap-2">
+            <ClipboardList className="w-5 h-5 text-blue-600" />
+            Nuevo Parte de Trabajo
           </DialogTitle>
-          <DialogDescription className="text-gray-600 dark:text-gray-400">
-            Registra los detalles del trabajo realizado durante tu jornada.
-          </DialogDescription>
-          
-          <div className="space-y-4 py-2">
-            {/* Horas editables */}
-            {completedSessionData && (
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 flex gap-4">
-                <div className="flex-1">
-                  <Label htmlFor="startTime" className="text-sm text-gray-500 dark:text-gray-400">Entrada</Label>
-                  <Input
-                    id="startTime"
-                    type="time"
-                    value={workReportForm.startTime}
-                    onChange={(e) => setWorkReportForm({ ...workReportForm, startTime: e.target.value })}
-                    className="mt-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
-                    data-testid="input-work-report-start-time"
-                  />
+          <DialogDescription className="sr-only">Formulario para crear un parte de trabajo</DialogDescription>
+          <div className="space-y-6 py-4">
+            <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+              <h4 className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Cuándo y dónde
+              </h4>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label className="text-sm">Fecha del trabajo</Label>
+                    <DatePickerDay
+                      date={workReportForm.reportDate ? new Date(workReportForm.reportDate + 'T12:00:00') : new Date()}
+                      onDateChange={(date) => setWorkReportForm({ ...workReportForm, reportDate: date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd') })}
+                      className="w-full justify-start bg-white dark:bg-gray-800"
+                      placeholder="Seleccionar fecha"
+                    />
+                  </div>
+                  <div className="space-y-2 relative">
+                    <Label className="text-sm">Código ref. <span className="text-gray-400 text-xs">(opcional)</span></Label>
+                    <Input
+                      placeholder="Ej: OBR-2024-001"
+                      value={workReportForm.refCode}
+                      onChange={(e) => setWorkReportForm({ ...workReportForm, refCode: e.target.value })}
+                      onFocus={() => setShowRefCodeSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowRefCodeSuggestions(false), 200)}
+                      className="bg-white dark:bg-gray-800"
+                      data-testid="input-work-report-refcode"
+                    />
+                    {showRefCodeSuggestions && filteredRefCodeSuggestions.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                        {filteredRefCodeSuggestions.map((code, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                            onMouseDown={() => {
+                              setWorkReportForm({ ...workReportForm, refCode: code });
+                              setShowRefCodeSuggestions(false);
+                            }}
+                          >
+                            <FileText className="w-3 h-3 text-blue-400" />
+                            {code}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <Label htmlFor="endTime" className="text-sm text-gray-500 dark:text-gray-400">Salida</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label className="text-sm flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      Hora inicio
+                    </Label>
+                    <Input
+                      type="time"
+                      value={workReportForm.startTime}
+                      onChange={(e) => setWorkReportForm({ ...workReportForm, startTime: e.target.value })}
+                      className="bg-white dark:bg-gray-800"
+                      data-testid="input-work-report-start-time"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      Hora fin
+                    </Label>
+                    <Input
+                      type="time"
+                      value={workReportForm.endTime}
+                      onChange={(e) => setWorkReportForm({ ...workReportForm, endTime: e.target.value })}
+                      className="bg-white dark:bg-gray-800"
+                      data-testid="input-work-report-end-time"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2 relative">
+                  <Label className="text-sm flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    Ubicación
+                  </Label>
                   <Input
-                    id="endTime"
-                    type="time"
-                    value={workReportForm.endTime}
-                    onChange={(e) => setWorkReportForm({ ...workReportForm, endTime: e.target.value })}
-                    className="mt-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
-                    data-testid="input-work-report-end-time"
+                    placeholder="Ej: Calle Mayor 15, Madrid"
+                    value={workReportForm.location}
+                    onChange={(e) => setWorkReportForm({ ...workReportForm, location: e.target.value })}
+                    onFocus={() => setShowLocationSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
+                    className="bg-white dark:bg-gray-800"
+                    data-testid="input-work-report-location"
                   />
+                  {showLocationSuggestions && filteredLocationSuggestions.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                      {filteredLocationSuggestions.map((loc, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                          onMouseDown={() => {
+                            setWorkReportForm({ ...workReportForm, location: loc });
+                            setShowLocationSuggestions(false);
+                          }}
+                        >
+                          <MapPin className="w-3 h-3 text-gray-400" />
+                          {loc}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* Código de obra (opcional) */}
+            <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+              <h4 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Detalles del trabajo
+              </h4>
+              <div className="space-y-3">
+                <div className="space-y-2 relative">
+                  <Label className="text-sm flex items-center gap-1">
+                    <User className="w-3 h-3" />
+                    Cliente <span className="text-gray-400 text-xs">(opcional)</span>
+                  </Label>
+                  <Input
+                    placeholder="Nombre del cliente"
+                    value={workReportForm.clientName}
+                    onChange={(e) => setWorkReportForm({ ...workReportForm, clientName: e.target.value })}
+                    onFocus={() => setShowClientSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowClientSuggestions(false), 200)}
+                    className="bg-white dark:bg-gray-800"
+                    data-testid="input-work-report-client"
+                  />
+                  {showClientSuggestions && filteredClientSuggestions.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                      {filteredClientSuggestions.map((client, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                          onMouseDown={() => {
+                            setWorkReportForm({ ...workReportForm, clientName: client });
+                            setShowClientSuggestions(false);
+                          }}
+                        >
+                          <User className="w-3 h-3 text-gray-400" />
+                          {client}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm">¿Qué trabajo realizaste?</Label>
+                  <Textarea
+                    placeholder="Describe las tareas completadas..."
+                    value={workReportForm.description}
+                    onChange={(e) => setWorkReportForm({ ...workReportForm, description: e.target.value })}
+                    rows={3}
+                    className="bg-white dark:bg-gray-800"
+                    data-testid="textarea-work-report-description"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm">Notas adicionales <span className="text-gray-400 text-xs">(opcional)</span></Label>
+                  <Textarea
+                    placeholder="Observaciones, incidencias..."
+                    value={workReportForm.notes}
+                    onChange={(e) => setWorkReportForm({ ...workReportForm, notes: e.target.value })}
+                    rows={2}
+                    className="bg-white dark:bg-gray-800"
+                    data-testid="textarea-work-report-notes"
+                  />
+                </div>
+                {clientSignatureData ? (
+                  <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700">
+                    <img src={clientSignatureData} alt="Firma del cliente" className="h-12 max-w-[120px] object-contain" />
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-300">Firmado por: <strong>{workReportForm.signedBy}</strong></p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => { setClientSignedBy(workReportForm.signedBy); openClientSignatureModal(); }}
+                      className="text-amber-700 border-amber-300"
+                    >
+                      Cambiar
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={() => { setClientSignedBy(''); openClientSignatureModal(); }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    data-testid="button-add-client-signature"
+                  >
+                    <PenTool className="w-4 h-4 mr-2" />
+                    Añadir firma del cliente (opcional)
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Button 
+              onClick={handleCloseWorkReportModal} 
+              data-testid="button-cancel-work-report" 
+              className="w-full bg-red-600 hover:bg-red-700 text-white"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSubmitWorkReport}
+              disabled={createWorkReportMutation.isPending || !workReportForm.location || !workReportForm.description}
+              data-testid="button-submit-work-report"
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+            >
+              {createWorkReportMutation.isPending ? 'Enviando...' : 'Enviar'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de firma del cliente */}
+      <Dialog open={isClientSignatureModalOpen} onOpenChange={setIsClientSignatureModalOpen}>
+        <DialogContent className="fixed inset-0 w-screen h-screen max-w-none max-h-none translate-x-0 translate-y-0 top-0 left-0 p-0 rounded-none bg-white dark:bg-gray-900 flex flex-col border-0">
+          <DialogTitle className="flex flex-row items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-amber-50 dark:bg-amber-900/30 space-y-0">
+            <span className="text-xl font-semibold text-amber-900 dark:text-amber-100 flex items-center gap-2">
+              <PenTool className="w-6 h-6" />
+              Firma del Cliente
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsClientSignatureModalOpen(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              Cancelar
+            </Button>
+          </DialogTitle>
+          <DialogDescription className="sr-only">Panel para capturar la firma del cliente</DialogDescription>
+
+          <div className="flex-1 flex flex-col p-6 gap-6 overflow-auto">
             <div className="space-y-2">
-              <Label htmlFor="refCode" className="text-gray-700 dark:text-gray-300">
-                Código de Obra <span className="text-gray-400 text-sm">(opcional)</span>
-              </Label>
+              <Label className="text-lg font-medium text-gray-700 dark:text-gray-200">Nombre del firmante</Label>
               <Input
-                id="refCode"
-                list="refCodeList"
-                value={workReportForm.refCode}
-                onChange={(e) => setWorkReportForm({ ...workReportForm, refCode: e.target.value })}
-                placeholder="Ej: OBR-2024-001"
-                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-                data-testid="input-work-report-refcode"
-              />
-              <datalist id="refCodeList">
-                {refCodeSuggestions?.map((code, index) => (
-                  <option key={index} value={code} />
-                ))}
-              </datalist>
-            </div>
-
-            {/* Ubicación */}
-            <div className="space-y-2">
-              <Label htmlFor="location" className="text-gray-700 dark:text-gray-300">
-                Ubicación <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="location"
-                list="locationList"
-                value={workReportForm.location}
-                onChange={(e) => setWorkReportForm({ ...workReportForm, location: e.target.value })}
-                placeholder="Dirección o nombre del lugar de trabajo"
-                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-                data-testid="input-work-report-location"
-              />
-              <datalist id="locationList">
-                {locationSuggestions?.map((loc, index) => (
-                  <option key={index} value={loc} />
-                ))}
-              </datalist>
-            </div>
-
-            {/* Cliente (opcional) */}
-            <div className="space-y-2">
-              <Label htmlFor="clientName" className="text-gray-700 dark:text-gray-300">
-                Cliente <span className="text-gray-400 text-sm">(opcional)</span>
-              </Label>
-              <Input
-                id="clientName"
-                list="clientList"
-                value={workReportForm.clientName}
-                onChange={(e) => setWorkReportForm({ ...workReportForm, clientName: e.target.value })}
-                placeholder="Nombre del cliente"
-                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-                data-testid="input-work-report-client"
-              />
-              <datalist id="clientList">
-                {clientSuggestions?.map((client, index) => (
-                  <option key={index} value={client} />
-                ))}
-              </datalist>
-            </div>
-
-            {/* Descripción del trabajo */}
-            <div className="space-y-2">
-              <Label htmlFor="description" className="text-gray-700 dark:text-gray-300">
-                Descripción del Trabajo <span className="text-red-500">*</span>
-              </Label>
-              <Textarea
-                id="description"
-                value={workReportForm.description}
-                onChange={(e) => setWorkReportForm({ ...workReportForm, description: e.target.value })}
-                placeholder="Describe las tareas realizadas..."
-                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 min-h-[100px]"
-                data-testid="textarea-work-report-description"
+                placeholder="Escriba su nombre completo"
+                value={clientSignedBy}
+                onChange={(e) => setClientSignedBy(e.target.value)}
+                className="text-xl py-4 px-4 h-14 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600"
+                data-testid="input-client-signed-by"
+                autoFocus
               />
             </div>
 
-            {/* Notas (opcional) */}
-            <div className="space-y-2">
-              <Label htmlFor="notes" className="text-gray-700 dark:text-gray-300">
-                Notas adicionales <span className="text-gray-400 text-sm">(opcional)</span>
-              </Label>
-              <Textarea
-                id="notes"
-                value={workReportForm.notes}
-                onChange={(e) => setWorkReportForm({ ...workReportForm, notes: e.target.value })}
-                placeholder="Observaciones, incidencias, materiales utilizados..."
-                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 min-h-[60px]"
-                data-testid="textarea-work-report-notes"
-              />
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-lg font-medium text-gray-700 dark:text-gray-200">Firme aquí</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearClientCanvas}
+                  className="text-gray-500"
+                >
+                  <RotateCcw className="w-4 h-4 mr-1" />
+                  Limpiar
+                </Button>
+              </div>
+              <div className="flex-1 border-2 border-dashed border-amber-400 dark:border-amber-600 rounded-xl bg-white overflow-hidden min-h-[200px]">
+                <canvas
+                  ref={clientCanvasRef}
+                  width={1000}
+                  height={500}
+                  className="w-full h-full touch-none cursor-crosshair"
+                  style={{ touchAction: 'none', aspectRatio: '2/1' }}
+                  onMouseDown={startClientDrawing}
+                  onMouseMove={drawClient}
+                  onMouseUp={stopClientDrawing}
+                  onMouseLeave={stopClientDrawing}
+                  onTouchStart={startClientDrawing}
+                  onTouchMove={drawClient}
+                  onTouchEnd={stopClientDrawing}
+                />
+              </div>
+              <p className="text-center text-gray-400 dark:text-gray-500 text-sm mt-2">
+                Dibuje su firma con el dedo o ratón
+              </p>
             </div>
           </div>
 
-          <div className="flex gap-3 justify-end pt-2">
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
             <Button
-              variant="outline"
-              onClick={handleCloseWorkReportModal}
-              className="border-gray-300 dark:border-gray-600"
-              data-testid="button-cancel-work-report"
+              onClick={saveClientSignature}
+              disabled={!clientSignedBy.trim()}
+              className="w-full h-14 text-lg bg-amber-600 hover:bg-amber-700 text-white"
+              data-testid="button-save-client-signature"
             >
-              Omitir
-            </Button>
-            <Button
-              onClick={handleSubmitWorkReport}
-              disabled={createWorkReportMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              data-testid="button-submit-work-report"
-            >
-              {createWorkReportMutation.isPending ? 'Enviando...' : 'Enviar Parte'}
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Confirmar Firma
             </Button>
           </div>
         </DialogContent>
