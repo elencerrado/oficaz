@@ -3098,19 +3098,6 @@ export default function Settings() {
                     </div>
                   )}
                   
-                  {hasAccess('employee_time_edit_permission') && (
-                    <div>
-                      <div className="mt-1 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                          <p className="text-sm text-green-700">
-                            <strong>Funcionalidad habilitada:</strong> Los empleados pueden editar sus horarios según tu plan actual.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
                       <div className="flex items-center space-x-2 mb-3">
