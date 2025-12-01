@@ -1124,31 +1124,41 @@ export default function EmployeeDashboard() {
     setLongPressItem(null);
   };
 
-  // Handlers para swipe del carrusel
+  // Handlers para swipe del carrusel - solo deslizamiento horizontal intencionado
+  const isSwiping = useRef(false);
+  
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (showSwapMenu) return; // No swipe si está abierto el menú
+    if (showSwapMenu) return;
     touchStartX.current = e.touches[0].clientX;
+    touchEndX.current = e.touches[0].clientX; // Inicializar con el mismo valor
+    isSwiping.current = false;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (showSwapMenu) return;
     touchEndX.current = e.touches[0].clientX;
+    // Marcar que hubo movimiento real
+    if (Math.abs(touchStartX.current - touchEndX.current) > 10) {
+      isSwiping.current = true;
+    }
   };
 
   const handleTouchEnd = () => {
     if (showSwapMenu) return;
+    // Solo procesar si hubo movimiento real de swipe
+    if (!isSwiping.current) return;
+    
     const diff = touchStartX.current - touchEndX.current;
     const minSwipeDistance = 50;
 
     if (Math.abs(diff) > minSwipeDistance) {
       if (diff > 0 && menuPage < totalPages - 1) {
-        // Deslizar izquierda - siguiente página
         setMenuPage(menuPage + 1);
       } else if (diff < 0 && menuPage > 0) {
-        // Deslizar derecha - página anterior
         setMenuPage(menuPage - 1);
       }
     }
+    isSwiping.current = false;
   };
 
   const currentYear = new Date().getFullYear();
