@@ -1190,9 +1190,10 @@ export default function EmployeeDashboard() {
     <div 
       className="bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col overflow-hidden"
       style={{ 
-        height: '100%',
-        paddingTop: 'env(safe-area-inset-top)',
-        paddingBottom: 'env(safe-area-inset-bottom)'
+        height: '100dvh',
+        maxHeight: '-webkit-fill-available',
+        overscrollBehavior: 'none',
+        touchAction: 'none'
       }}
     >
       {/* Fixed Content Container - Sin scroll, usa dvh para móviles reales */}
