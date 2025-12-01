@@ -6931,8 +6931,12 @@ Responde directamente a este email para contactar con la persona.
 
       // Always recalculate vacation days for all employees when saving company settings
       // This ensures days are always up-to-date with current vacationDaysPerMonth
+      // IMPORTANT: Clear individual vacationDaysPerMonth overrides so all employees use company policy
       const employees = await storage.getUsersByCompany(user.companyId);
       for (const employee of employees) {
+        // Clear individual override so employee uses company value
+        await storage.updateUser(employee.id, { vacationDaysPerMonth: null });
+        // Then recalculate with company policy
         await storage.updateUserVacationDays(employee.id);
       }
       console.log(`Recalculated vacation days for ${employees.length} employees using ${vacationDaysPerMonth || updatedCompany.vacationDaysPerMonth} days/month`);
