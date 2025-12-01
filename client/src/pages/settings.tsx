@@ -2078,12 +2078,24 @@ export default function Settings() {
   const setupSignatureCanvas = useCallback(() => {
     const canvas = signatureCanvasRef.current;
     if (canvas) {
+      // High-DPI canvas for crisp signatures
+      const dpr = Math.max(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      
+      // Set canvas internal resolution to 2x or more for high quality
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      
       const ctx = canvas.getContext('2d');
       if (ctx) {
+        // Scale context to match DPI
+        ctx.scale(dpr, dpr);
+        
         ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, rect.width, rect.height);
         ctx.strokeStyle = '#1a1a1a';
-        ctx.lineWidth = 2.5;
+        // Fine line width - will be crisp at high DPI
+        ctx.lineWidth = 1.5;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.imageSmoothingEnabled = true;
@@ -2095,18 +2107,16 @@ export default function Settings() {
 
   const getEventPos = useCallback((event: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    
+    // Use CSS coordinates since context is scaled by DPR
     if ('touches' in event) {
       return {
-        x: (event.touches[0].clientX - rect.left) * scaleX,
-        y: (event.touches[0].clientY - rect.top) * scaleY
+        x: event.touches[0].clientX - rect.left,
+        y: event.touches[0].clientY - rect.top
       };
     }
     return {
-      x: (event.clientX - rect.left) * scaleX,
-      y: (event.clientY - rect.top) * scaleY
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
     };
   }, []);
 
@@ -2186,7 +2196,8 @@ export default function Settings() {
       }
     }
     
-    const padding = 20;
+    // Higher padding for better margins
+    const padding = 40;
     minX = Math.max(0, minX - padding);
     minY = Math.max(0, minY - padding);
     maxX = Math.min(canvas.width, maxX + padding);
@@ -2195,8 +2206,9 @@ export default function Settings() {
     const width = maxX - minX;
     const height = maxY - minY;
     
+    // Export at higher resolution (800px) for crisp PDF rendering
     const optimizedCanvas = document.createElement('canvas');
-    const targetWidth = Math.min(400, width);
+    const targetWidth = Math.min(800, width);
     const scale = targetWidth / width;
     optimizedCanvas.width = targetWidth;
     optimizedCanvas.height = height * scale;
@@ -2214,6 +2226,7 @@ export default function Settings() {
         const imgData = tempCtx.getImageData(0, 0, width, height);
         const pixels = imgData.data;
         
+        // Make white pixels transparent
         for (let i = 0; i < pixels.length; i += 4) {
           const r = pixels[i];
           const g = pixels[i + 1];
@@ -2225,6 +2238,7 @@ export default function Settings() {
         
         tempCtx.putImageData(imgData, 0, 0);
         
+        // Draw with high quality anti-aliasing
         optCtx.clearRect(0, 0, optimizedCanvas.width, optimizedCanvas.height);
         optCtx.imageSmoothingEnabled = true;
         optCtx.imageSmoothingQuality = 'high';
@@ -2232,7 +2246,8 @@ export default function Settings() {
       }
     }
     
-    const signatureDataUrl = optimizedCanvas.toDataURL('image/png');
+    // Export as high-quality PNG
+    const signatureDataUrl = optimizedCanvas.toDataURL('image/png', 1.0);
     saveSignatureMutation.mutate(signatureDataUrl);
   }, [hasDrawnSignature, saveSignatureMutation]);
 
