@@ -130,6 +130,332 @@ export async function getCompanyContext(
   };
 }
 
+// QUERY 4: Get employee work hours in a date range (with navigation support)
+export async function getEmployeeWorkHours(
+  context: AIFunctionContext,
+  params: {
+    employeeName?: string; // Optional: specific employee (resolves by name)
+    period: 'today' | 'yesterday' | 'this_week' | 'last_week' | 'this_month' | 'last_month' | 'custom';
+    startDate?: string; // Required if period = 'custom' (YYYY-MM-DD)
+    endDate?: string; // Required if period = 'custom' (YYYY-MM-DD)
+  }
+) {
+  const { storage, companyId } = context;
+  
+  // Calculate date range based on period
+  const now = new Date();
+  let startDate: Date;
+  let endDate: Date;
+  let periodDescription: string;
+  
+  switch (params.period) {
+    case 'today':
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+      periodDescription = 'hoy';
+      break;
+    case 'yesterday':
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      startDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+      endDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59);
+      periodDescription = 'ayer';
+      break;
+    case 'this_week':
+      const dayOfWeek = now.getDay();
+      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + mondayOffset);
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+      periodDescription = 'esta semana';
+      break;
+    case 'last_week':
+      const lastWeekDay = now.getDay();
+      const lastMondayOffset = lastWeekDay === 0 ? -13 : -6 - lastWeekDay;
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + lastMondayOffset);
+      const lastSunday = new Date(startDate);
+      lastSunday.setDate(lastSunday.getDate() + 6);
+      endDate = new Date(lastSunday.getFullYear(), lastSunday.getMonth(), lastSunday.getDate(), 23, 59, 59);
+      periodDescription = 'la semana pasada';
+      break;
+    case 'this_month':
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+      periodDescription = 'este mes';
+      break;
+    case 'last_month':
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+      periodDescription = 'el mes pasado';
+      break;
+    case 'custom':
+      if (!params.startDate || !params.endDate) {
+        return { success: false, error: "Para período personalizado necesitas especificar startDate y endDate" };
+      }
+      startDate = new Date(params.startDate);
+      endDate = new Date(params.endDate);
+      endDate.setHours(23, 59, 59);
+      periodDescription = `del ${startDate.toLocaleDateString('es-ES')} al ${endDate.toLocaleDateString('es-ES')}`;
+      break;
+    default:
+      return { success: false, error: "Período no válido" };
+  }
+  
+  // Get company for URL building
+  const company = await storage.getCompany(companyId);
+  if (!company) {
+    return { success: false, error: "Empresa no encontrada" };
+  }
+  
+  // If specific employee, resolve name to ID
+  let targetEmployeeId: number | undefined;
+  let targetEmployeeName: string | undefined;
+  
+  if (params.employeeName) {
+    const resolved = await resolveEmployeeName(storage, companyId, params.employeeName);
+    if ('error' in resolved) {
+      return { success: false, error: resolved.error };
+    }
+    targetEmployeeId = resolved.employeeId;
+    const employee = await storage.getUser(targetEmployeeId);
+    targetEmployeeName = employee?.fullName;
+  }
+  
+  // Get work sessions stats
+  const stats = await storage.getWorkSessionsStats(companyId, startDate, endDate);
+  
+  // Filter by employee if specified
+  let filteredStats = stats;
+  if (targetEmployeeId) {
+    filteredStats = stats.filter(s => s.employeeId === targetEmployeeId);
+  }
+  
+  // Calculate totals
+  const totalHours = filteredStats.reduce((sum, s) => sum + (s.totalHours - (s.totalBreakHours || 0)), 0);
+  const totalSessions = filteredStats.reduce((sum, s) => sum + s.sessionCount, 0);
+  
+  // Build navigation URL
+  const startDateStr = startDate.toISOString().split('T')[0];
+  const endDateStr = endDate.toISOString().split('T')[0];
+  let navigateTo = `/${company.companyAlias}/fichajes?startDate=${startDateStr}&endDate=${endDateStr}`;
+  if (targetEmployeeId) {
+    navigateTo += `&employeeId=${targetEmployeeId}`;
+  }
+  
+  // Build response message
+  let message: string;
+  if (targetEmployeeName) {
+    message = `${targetEmployeeName} trabajó ${totalHours.toFixed(1)} horas ${periodDescription} (${totalSessions} fichaje${totalSessions !== 1 ? 's' : ''})`;
+  } else {
+    message = `El equipo trabajó un total de ${totalHours.toFixed(1)} horas ${periodDescription} (${totalSessions} fichaje${totalSessions !== 1 ? 's' : ''})`;
+  }
+  
+  return {
+    success: true,
+    message,
+    data: {
+      totalHours: Number(totalHours.toFixed(2)),
+      totalSessions,
+      period: periodDescription,
+      employeeName: targetEmployeeName || 'Todos',
+      breakdown: filteredStats.map(s => ({
+        employeeId: s.employeeId,
+        hours: Number((s.totalHours - (s.totalBreakHours || 0)).toFixed(2)),
+        sessions: s.sessionCount
+      }))
+    },
+    navigateTo
+  };
+}
+
+// QUERY 5: Get company settings/policies
+export async function getCompanySettings(
+  context: AIFunctionContext
+) {
+  const { storage, companyId } = context;
+  
+  const company = await storage.getCompany(companyId);
+  if (!company) {
+    return { success: false, error: "Empresa no encontrada" };
+  }
+  
+  const workingHoursPerDay = Number(company.workingHoursPerDay) || 8;
+  const vacationDaysPerMonth = Number(company.vacationDaysPerMonth) || 2.5;
+  const vacationDaysPerYear = vacationDaysPerMonth * 12;
+  
+  return {
+    success: true,
+    settings: {
+      workingHoursPerDay,
+      workingHoursPerWeek: workingHoursPerDay * 5,
+      vacationDaysPerMonth,
+      vacationDaysPerYear: Math.round(vacationDaysPerYear),
+      workingHoursStart: company.workingHoursStart || "08:00",
+      workingHoursEnd: company.workingHoursEnd || "17:00",
+      workingDays: company.workingDays || [1, 2, 3, 4, 5],
+      timezone: company.timezone || "Europe/Madrid",
+      allowManagersToGrantRoles: company.allowManagersToGrantRoles || false
+    },
+    navigateTo: `/${company.companyAlias}/configuracion?tab=policies`
+  };
+}
+
+// QUERY 6: Get vacation balance for an employee
+export async function getVacationBalance(
+  context: AIFunctionContext,
+  params: {
+    employeeName?: string; // Optional: specific employee, if not provided returns all
+  }
+) {
+  const { storage, companyId } = context;
+  
+  const company = await storage.getCompany(companyId);
+  if (!company) {
+    return { success: false, error: "Empresa no encontrada" };
+  }
+  
+  const employees = await storage.getUsersByCompany(companyId);
+  let targetEmployees = employees.filter(e => e.status === 'active');
+  
+  if (params.employeeName) {
+    const resolved = await resolveEmployeeName(storage, companyId, params.employeeName);
+    if ('error' in resolved) {
+      return { success: false, error: resolved.error };
+    }
+    targetEmployees = targetEmployees.filter(e => e.id === resolved.employeeId);
+  }
+  
+  // Get all vacation requests for the company
+  const allVacationRequests = await storage.getVacationRequestsByCompany(companyId);
+  
+  const balances = [];
+  for (const emp of targetEmployees) {
+    const totalDays = await storage.calculateVacationDays(emp.id);
+    
+    // Calculate used and pending days from vacation requests
+    const empRequests = allVacationRequests.filter((r: any) => r.userId === emp.id);
+    let usedDays = 0;
+    let pendingDays = 0;
+    
+    for (const req of empRequests) {
+      const start = new Date(req.startDate);
+      const end = new Date(req.endDate);
+      const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      
+      if (req.status === 'approved') {
+        usedDays += days;
+      } else if (req.status === 'pending') {
+        pendingDays += days;
+      }
+    }
+    
+    const availableDays = Math.max(0, totalDays - usedDays - pendingDays);
+    
+    balances.push({
+      employeeId: emp.id,
+      employeeName: emp.fullName,
+      totalDays,
+      usedDays,
+      pendingDays,
+      availableDays
+    });
+  }
+  
+  if (params.employeeName && balances.length === 1) {
+    const b = balances[0];
+    return {
+      success: true,
+      message: `${b.employeeName} tiene ${b.availableDays} días de vacaciones disponibles (${b.usedDays} usados, ${b.pendingDays} pendientes de aprobación, de ${b.totalDays} totales)`,
+      balance: b,
+      navigateTo: `/${company.companyAlias}/vacaciones?tab=calendar&employeeId=${b.employeeId}`
+    };
+  }
+  
+  return {
+    success: true,
+    message: `Resumen de vacaciones para ${balances.length} empleados`,
+    balances,
+    navigateTo: `/${company.companyAlias}/vacaciones?tab=calendar`
+  };
+}
+
+// QUERY 7: Get all pending approvals (vacations, time modifications, work reports)
+export async function getPendingApprovals(
+  context: AIFunctionContext
+) {
+  const { storage, companyId } = context;
+  
+  const company = await storage.getCompany(companyId);
+  if (!company) {
+    return { success: false, error: "Empresa no encontrada" };
+  }
+  
+  // Get pending vacation requests
+  const vacationRequests = await storage.getVacationRequestsByCompany(companyId);
+  const pendingVacations = vacationRequests.filter(r => r.status === 'pending');
+  
+  // Get pending time modification requests
+  const timeRequests = await storage.getCompanyModificationRequests(companyId);
+  const pendingTimeModifications = timeRequests.filter(r => r.status === 'pending');
+  
+  // Get pending work reports
+  const workReports = await storage.getWorkReportsByCompany(companyId);
+  const pendingReports = workReports.filter(r => r.status === 'pending');
+  
+  const totalPending = pendingVacations.length + pendingTimeModifications.length + pendingReports.length;
+  
+  let message = "";
+  const parts = [];
+  if (pendingVacations.length > 0) parts.push(`${pendingVacations.length} vacaciones`);
+  if (pendingTimeModifications.length > 0) parts.push(`${pendingTimeModifications.length} modificaciones de fichaje`);
+  if (pendingReports.length > 0) parts.push(`${pendingReports.length} partes de trabajo`);
+  
+  if (totalPending === 0) {
+    message = "No hay solicitudes pendientes de aprobación";
+  } else {
+    message = `Tienes ${totalPending} solicitud${totalPending > 1 ? 'es' : ''} pendiente${totalPending > 1 ? 's' : ''}: ${parts.join(', ')}`;
+  }
+  
+  // Determine navigation based on what has most pending
+  let navigateTo = `/${company.companyAlias}/inicio`;
+  if (pendingVacations.length >= pendingTimeModifications.length && pendingVacations.length >= pendingReports.length && pendingVacations.length > 0) {
+    navigateTo = `/${company.companyAlias}/vacaciones?tab=requests&status=pending`;
+  } else if (pendingTimeModifications.length >= pendingReports.length && pendingTimeModifications.length > 0) {
+    navigateTo = `/${company.companyAlias}/fichajes?tab=requests&status=pending`;
+  } else if (pendingReports.length > 0) {
+    navigateTo = `/${company.companyAlias}/partes?status=pending`;
+  }
+  
+  // Get employee names for modification requests
+  const employees = await storage.getUsersByCompany(companyId);
+  const employeeMap = new Map(employees.map(e => [e.id, e.fullName]));
+  
+  return {
+    success: true,
+    message,
+    pending: {
+      vacations: pendingVacations.length,
+      timeModifications: pendingTimeModifications.length,
+      workReports: pendingReports.length,
+      total: totalPending
+    },
+    details: {
+      vacations: pendingVacations.slice(0, 5).map((v: any) => ({
+        id: v.id,
+        employeeName: v.user?.fullName || 'Desconocido',
+        startDate: new Date(v.startDate).toLocaleDateString('es-ES'),
+        endDate: new Date(v.endDate).toLocaleDateString('es-ES')
+      })),
+      timeModifications: pendingTimeModifications.slice(0, 5).map(t => ({
+        id: t.id,
+        employeeName: employeeMap.get(t.employeeId) || 'Desconocido',
+        type: t.requestType,
+        date: new Date(t.createdAt!).toLocaleDateString('es-ES')
+      }))
+    },
+    navigateTo
+  };
+}
+
 // ========================================
 // ✏️ MUTATION FUNCTIONS (Actions)
 // ========================================
@@ -348,6 +674,141 @@ export async function approveVacationRequests(
     success: true,
     approvedCount: results.length,
     requestIds: targetRequestIds,
+  };
+}
+
+// 3b. Deny vacation requests
+export async function denyVacationRequests(
+  context: AIFunctionContext,
+  params: {
+    requestIds: number[] | "all_pending";
+    adminComment?: string; // Required reason for denial
+  }
+) {
+  const { storage, companyId, adminUserId } = context;
+
+  // Get all pending requests if "all_pending" is specified
+  let targetRequestIds = params.requestIds;
+  if (params.requestIds === "all_pending") {
+    const companyUsers = await storage.getUsersByCompany(companyId);
+    const companyUserIds = companyUsers.map(u => u.id);
+    
+    const pendingRequests = await db.select()
+      .from(schema.vacationRequests)
+      .where(
+        and(
+          inArray(schema.vacationRequests.userId, companyUserIds),
+          eq(schema.vacationRequests.status, "pending")
+        )
+      );
+    targetRequestIds = pendingRequests.map((req: any) => req.id);
+  }
+
+  if (!Array.isArray(targetRequestIds)) {
+    throw new Error("requestIds must be an array or 'all_pending'");
+  }
+
+  const results = [];
+  for (const requestId of targetRequestIds) {
+    const updated = await storage.updateVacationRequest(requestId, {
+      status: "denied",
+      adminComment: params.adminComment || "Denegado por asistente de IA",
+      reviewedBy: adminUserId,
+      reviewedAt: new Date(),
+    } as any);
+    
+    // Send push notification
+    if (updated) {
+      try {
+        const { sendVacationNotification } = await import("./pushNotificationScheduler.js");
+        sendVacationNotification(updated.userId, "denied", {
+          startDate: updated.startDate,
+          endDate: updated.endDate,
+        });
+      } catch (error) {
+        console.error("Error sending vacation denial notification:", error);
+      }
+    }
+    
+    results.push(updated);
+  }
+
+  return {
+    success: true,
+    deniedCount: results.length,
+    requestIds: targetRequestIds,
+  };
+}
+
+// 3c. Update company settings/policies
+export async function updateCompanySettings(
+  context: AIFunctionContext,
+  params: {
+    workingHoursPerDay?: number; // e.g., 8
+    vacationDaysPerMonth?: number; // e.g., 2.5
+    workingHoursStart?: string; // e.g., "08:00"
+    workingHoursEnd?: string; // e.g., "17:00"
+    allowManagersToGrantRoles?: boolean;
+  }
+) {
+  const { storage, companyId } = context;
+
+  // Get current company
+  const company = await storage.getCompany(companyId);
+  if (!company) {
+    return { success: false, error: "Empresa no encontrada" };
+  }
+
+  // Build update object
+  const updates: any = {};
+  const changes: string[] = [];
+
+  if (params.workingHoursPerDay !== undefined) {
+    updates.workingHoursPerDay = params.workingHoursPerDay.toString();
+    changes.push(`horas de trabajo/día: ${params.workingHoursPerDay}`);
+  }
+
+  if (params.vacationDaysPerMonth !== undefined) {
+    updates.vacationDaysPerMonth = params.vacationDaysPerMonth.toString();
+    changes.push(`días de vacaciones/mes: ${params.vacationDaysPerMonth}`);
+  }
+
+  if (params.workingHoursStart !== undefined) {
+    updates.workingHoursStart = params.workingHoursStart;
+    changes.push(`hora de entrada: ${params.workingHoursStart}`);
+  }
+
+  if (params.workingHoursEnd !== undefined) {
+    updates.workingHoursEnd = params.workingHoursEnd;
+    changes.push(`hora de salida: ${params.workingHoursEnd}`);
+  }
+
+  if (params.allowManagersToGrantRoles !== undefined) {
+    updates.allowManagersToGrantRoles = params.allowManagersToGrantRoles;
+    changes.push(`permitir a managers asignar roles: ${params.allowManagersToGrantRoles ? 'sí' : 'no'}`);
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return { success: false, error: "No se especificaron cambios" };
+  }
+
+  // Update company
+  const updated = await storage.updateCompany(companyId, updates);
+
+  // If vacation days changed, recalculate for all employees
+  if (params.vacationDaysPerMonth !== undefined) {
+    const employees = await storage.getUsersByCompany(companyId);
+    for (const emp of employees) {
+      // Clear individual override so they use company policy
+      await storage.updateUser(emp.id, { vacationDaysPerMonth: null });
+    }
+  }
+
+  return {
+    success: true,
+    message: `Configuración actualizada: ${changes.join(', ')}`,
+    updatedSettings: updates,
+    navigateTo: `/${company.companyAlias}/configuracion?tab=policies`
   };
 }
 
@@ -1872,8 +2333,11 @@ export async function copyEmployeeShifts(
 export async function navigateToPage(
   context: AIFunctionContext,
   params: {
-    page: "vacation-requests" | "time-tracking" | "schedules" | "employees" | "documents" | "reminders";
+    page: "dashboard" | "vacation-requests" | "vacation-calendar" | "time-tracking" | "schedules" | "employees" | "documents" | "reminders" | "messages" | "work-reports" | "settings" | "settings-policies" | "settings-notifications" | "profile";
     filter?: "pending" | "approved" | "denied" | "all";
+    employeeName?: string; // Filter by employee name
+    startDate?: string; // YYYY-MM-DD
+    endDate?: string; // YYYY-MM-DD
   }
 ) {
   const { storage, companyId } = context;
@@ -1887,17 +2351,34 @@ export async function navigateToPage(
     };
   }
 
+  // Resolve employee name if provided
+  let employeeId: number | undefined;
+  let employeeFullName: string | undefined;
+  if (params.employeeName) {
+    const resolved = await resolveEmployeeName(storage, companyId, params.employeeName);
+    if ('error' in resolved) {
+      return { success: false, error: resolved.error };
+    }
+    employeeId = resolved.employeeId;
+    const emp = await storage.getUser(employeeId);
+    employeeFullName = emp?.fullName;
+  }
+
   // Build the navigation URL based on page type
   let path = "";
   let queryParams = "";
   let description = "";
 
   switch (params.page) {
+    case "dashboard":
+      path = `/${company.companyAlias}/inicio`;
+      description = "Te llevo al panel de inicio";
+      break;
+
     case "vacation-requests":
       path = `/${company.companyAlias}/vacaciones`;
       queryParams = `?tab=requests${params.filter ? `&status=${params.filter}` : '&status=pending'}`;
       
-      // Get count of requests for the description
       const vacationRequests = await storage.getVacationRequestsByCompany(companyId);
       const pendingCount = vacationRequests.filter(r => r.status === 'pending').length;
       const approvedCount = vacationRequests.filter(r => r.status === 'approved').length;
@@ -1915,15 +2396,51 @@ export async function navigateToPage(
         description = `Hay ${vacationRequests.length} solicitud${vacationRequests.length > 1 ? 'es' : ''} en total`;
       }
       break;
+
+    case "vacation-calendar":
+      path = `/${company.companyAlias}/vacaciones`;
+      queryParams = "?tab=calendar";
+      if (employeeId) {
+        queryParams += `&employeeId=${employeeId}`;
+        description = `Te llevo al calendario de vacaciones de ${employeeFullName}`;
+      } else {
+        description = "Te llevo al calendario de vacaciones";
+      }
+      break;
       
     case "time-tracking":
       path = `/${company.companyAlias}/fichajes`;
-      description = "Te llevo a la página de fichajes";
+      const timeQueryParts: string[] = [];
+      if (employeeId) {
+        timeQueryParts.push(`employeeId=${employeeId}`);
+      }
+      if (params.startDate) {
+        timeQueryParts.push(`startDate=${params.startDate}`);
+      }
+      if (params.endDate) {
+        timeQueryParts.push(`endDate=${params.endDate}`);
+      }
+      queryParams = timeQueryParts.length > 0 ? `?${timeQueryParts.join('&')}` : '';
+      
+      if (employeeFullName && params.startDate) {
+        description = `Te llevo a los fichajes de ${employeeFullName} desde ${params.startDate}`;
+      } else if (employeeFullName) {
+        description = `Te llevo a los fichajes de ${employeeFullName}`;
+      } else if (params.startDate) {
+        description = `Te llevo a los fichajes desde ${params.startDate}`;
+      } else {
+        description = "Te llevo a la página de fichajes";
+      }
       break;
       
     case "schedules":
       path = `/${company.companyAlias}/cuadrante`;
-      description = "Te llevo al cuadrante de horarios";
+      if (employeeId) {
+        queryParams = `?employeeId=${employeeId}`;
+        description = `Te llevo al cuadrante de ${employeeFullName}`;
+      } else {
+        description = "Te llevo al cuadrante de horarios";
+      }
       break;
       
     case "employees":
@@ -1934,12 +2451,75 @@ export async function navigateToPage(
       
     case "documents":
       path = `/${company.companyAlias}/documentos`;
-      description = "Te llevo a la gestión de documentos";
+      if (params.filter === 'pending') {
+        queryParams = "?status=pending";
+        description = "Te llevo a los documentos pendientes de firma";
+      } else {
+        description = "Te llevo a la gestión de documentos";
+      }
       break;
       
     case "reminders":
-      path = `/${company.companyAlias}/inicio`;
-      description = "Te llevo al panel con los recordatorios";
+      path = `/${company.companyAlias}/recordatorios`;
+      description = "Te llevo a los recordatorios";
+      break;
+
+    case "messages":
+      path = `/${company.companyAlias}/mensajes`;
+      if (params.filter === 'pending') {
+        queryParams = "?filter=unread";
+        description = "Te llevo a los mensajes sin leer";
+      } else {
+        description = "Te llevo a los mensajes";
+      }
+      break;
+
+    case "work-reports":
+      path = `/${company.companyAlias}/partes`;
+      const reportsQueryParts: string[] = [];
+      if (params.filter) {
+        reportsQueryParts.push(`status=${params.filter}`);
+      }
+      if (employeeId) {
+        reportsQueryParts.push(`employeeId=${employeeId}`);
+      }
+      if (params.startDate) {
+        reportsQueryParts.push(`startDate=${params.startDate}`);
+      }
+      if (params.endDate) {
+        reportsQueryParts.push(`endDate=${params.endDate}`);
+      }
+      queryParams = reportsQueryParts.length > 0 ? `?${reportsQueryParts.join('&')}` : '';
+      
+      if (params.filter === 'pending') {
+        description = "Te llevo a los partes de trabajo pendientes";
+      } else if (employeeFullName) {
+        description = `Te llevo a los partes de trabajo de ${employeeFullName}`;
+      } else {
+        description = "Te llevo a los partes de trabajo";
+      }
+      break;
+
+    case "settings":
+      path = `/${company.companyAlias}/configuracion`;
+      description = "Te llevo a la configuración";
+      break;
+
+    case "settings-policies":
+      path = `/${company.companyAlias}/configuracion`;
+      queryParams = "?tab=policies";
+      description = "Te llevo a las políticas de la empresa";
+      break;
+
+    case "settings-notifications":
+      path = `/${company.companyAlias}/configuracion`;
+      queryParams = "?tab=notifications";
+      description = "Te llevo a la configuración de notificaciones";
+      break;
+
+    case "profile":
+      path = `/${company.companyAlias}/perfil`;
+      description = "Te llevo a tu perfil";
       break;
       
     default:
@@ -1954,7 +2534,8 @@ export async function navigateToPage(
     navigateTo: path + queryParams,
     description,
     page: params.page,
-    filter: params.filter
+    filter: params.filter,
+    employeeName: employeeFullName
   };
 }
 
@@ -2003,6 +2584,65 @@ export const AI_FUNCTIONS = [
   {
     name: "getCompanyContext",
     description: "📊 CONSULTA un resumen del estado actual de la empresa (empleados, solicitudes pendientes, etc). Útil para entender el contexto general",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "getEmployeeWorkHours",
+    description: "⏱️ CONSULTA las horas trabajadas de un empleado o del equipo en un período. Devuelve total de horas, fichajes, y NAVEGA automáticamente a la página de fichajes con los filtros aplicados. Usa para preguntas como '¿cuántas horas trabajó Juan la semana pasada?'",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeName: {
+          type: "string",
+          description: "Nombre del empleado (opcional, si no se especifica devuelve todos)",
+        },
+        period: {
+          type: "string",
+          enum: ["today", "yesterday", "this_week", "last_week", "this_month", "last_month", "custom"],
+          description: "Período de tiempo. Usa 'last_week' para 'la semana pasada', 'this_month' para 'este mes', etc.",
+        },
+        startDate: {
+          type: "string",
+          description: "Fecha inicio YYYY-MM-DD (solo si period='custom')",
+        },
+        endDate: {
+          type: "string",
+          description: "Fecha fin YYYY-MM-DD (solo si period='custom')",
+        },
+      },
+      required: ["period"],
+    },
+  },
+  {
+    name: "getCompanySettings",
+    description: "⚙️ CONSULTA la configuración y políticas actuales de la empresa (horas trabajo/día, días vacaciones/mes, horarios, etc). Usa para responder preguntas sobre políticas o antes de modificarlas.",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "getVacationBalance",
+    description: "🏖️ CONSULTA el balance de vacaciones de un empleado o de todos. Devuelve días totales, usados, pendientes y disponibles. NAVEGA al calendario de vacaciones.",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeName: {
+          type: "string",
+          description: "Nombre del empleado (opcional, si no se especifica devuelve todos)",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "getPendingApprovals",
+    description: "📋 CONSULTA todas las solicitudes pendientes de aprobación (vacaciones, modificaciones de fichaje, partes de trabajo). Útil para saber qué hay pendiente y navegar a la página correspondiente.",
     parameters: {
       type: "object",
       properties: {},
@@ -2077,6 +2717,57 @@ export const AI_FUNCTIONS = [
         },
       },
       required: ["requestIds"],
+    },
+  },
+  {
+    name: "denyVacationRequests",
+    description: "❌ Denegar solicitudes de vacaciones pendientes. Usa cuando el usuario quiera rechazar vacaciones.",
+    parameters: {
+      type: "object",
+      properties: {
+        requestIds: {
+          oneOf: [
+            { type: "array", items: { type: "number" } },
+            { type: "string", enum: ["all_pending"] }
+          ],
+          description: "Array de IDs de solicitudes o 'all_pending' para denegar todas las pendientes",
+        },
+        adminComment: {
+          type: "string",
+          description: "Motivo del rechazo (recomendado incluir explicación)",
+        },
+      },
+      required: ["requestIds"],
+    },
+  },
+  {
+    name: "updateCompanySettings",
+    description: "⚙️ Modificar la configuración y políticas de la empresa. Usa para cambiar horas de trabajo, días de vacaciones, horarios, etc. SIEMPRE usa getCompanySettings primero para ver valores actuales.",
+    parameters: {
+      type: "object",
+      properties: {
+        workingHoursPerDay: {
+          type: "number",
+          description: "Horas de trabajo por día (ej: 8, 7.5)",
+        },
+        vacationDaysPerMonth: {
+          type: "number",
+          description: "Días de vacaciones por mes trabajado (ej: 2.5)",
+        },
+        workingHoursStart: {
+          type: "string",
+          description: "Hora de entrada (ej: '08:00', '09:00')",
+        },
+        workingHoursEnd: {
+          type: "string",
+          description: "Hora de salida (ej: '17:00', '18:00')",
+        },
+        allowManagersToGrantRoles: {
+          type: "boolean",
+          description: "Permitir a los managers asignar roles a empleados",
+        },
+      },
+      required: [],
     },
   },
   {
@@ -2680,13 +3371,25 @@ export const AI_FUNCTIONS = [
       properties: {
         page: {
           type: "string",
-          enum: ["vacation-requests", "time-tracking", "schedules", "employees", "documents", "reminders"],
-          description: "Página a la que navegar: vacation-requests (solicitudes de vacaciones), time-tracking (fichajes), schedules (cuadrantes), employees (empleados), documents (documentos), reminders (recordatorios)",
+          enum: ["dashboard", "vacation-requests", "vacation-calendar", "time-tracking", "schedules", "employees", "documents", "reminders", "messages", "work-reports", "settings", "settings-policies", "settings-notifications", "profile"],
+          description: "Página a la que navegar: dashboard (inicio), vacation-requests (solicitudes vacaciones), vacation-calendar (calendario vacaciones), time-tracking (fichajes), schedules (cuadrantes), employees (empleados), documents (documentos), reminders (recordatorios), messages (mensajes), work-reports (partes de trabajo), settings (configuración), settings-policies (políticas), settings-notifications (notificaciones), profile (perfil)",
         },
         filter: {
           type: "string",
           enum: ["pending", "approved", "denied", "all"],
-          description: "Filtro a aplicar (solo para vacation-requests): pending (pendientes), approved (aprobadas), denied (denegadas), all (todas)",
+          description: "Filtro a aplicar: pending (pendientes), approved (aprobadas), denied (denegadas), all (todas)",
+        },
+        employeeName: {
+          type: "string",
+          description: "Nombre del empleado para filtrar (opcional, se resuelve automáticamente)",
+        },
+        startDate: {
+          type: "string",
+          description: "Fecha inicio YYYY-MM-DD para filtrar fichajes o partes (opcional)",
+        },
+        endDate: {
+          type: "string",
+          description: "Fecha fin YYYY-MM-DD para filtrar fichajes o partes (opcional)",
         },
       },
       required: ["page"],
@@ -2708,6 +3411,14 @@ export async function executeAIFunction(
       return getEmployeeShifts(context, params);
     case "getCompanyContext":
       return getCompanyContext(context);
+    case "getEmployeeWorkHours":
+      return getEmployeeWorkHours(context, params);
+    case "getCompanySettings":
+      return getCompanySettings(context);
+    case "getVacationBalance":
+      return getVacationBalance(context, params);
+    case "getPendingApprovals":
+      return getPendingApprovals(context);
     // Action functions
     case "sendMessage":
       return sendMessage(context, params);
@@ -2715,6 +3426,10 @@ export async function executeAIFunction(
       return approveTimeModificationRequests(context, params);
     case "approveVacationRequests":
       return approveVacationRequests(context, params);
+    case "denyVacationRequests":
+      return denyVacationRequests(context, params);
+    case "updateCompanySettings":
+      return updateCompanySettings(context, params);
     case "createReminder":
       return createReminder(context, params);
     case "createEmployee":

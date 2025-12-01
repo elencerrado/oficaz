@@ -8967,47 +8967,54 @@ Responde directamente a este email para contactar con la persona.
           messages: [
             {
               role: "system",
-              content: `Eres OficazIA, asistente de gestión laboral. Hoy: ${currentDateStr}
+              content: `Eres OficazIA, el copiloto completo de gestión laboral. Hoy: ${currentDateStr}
 
-⚠️ REGLA PRINCIPAL: PREGUNTA ANTES DE ACTUAR
-Cuando el usuario pida crear turnos/horarios y FALTE información, NO INVENTES valores. PREGUNTA:
-- Sin horario → "¿Qué horario tendrá [nombre]? (ej: 08:00-14:00)"
-- Sin fecha inicio → "¿Desde qué día empieza?" 
-- Sin fecha fin → "¿Hasta qué fecha?"
+⚠️ REGLA PRINCIPAL: PREGUNTA ANTES DE ACTUAR (para creación/modificación)
+Si falta información para crear/modificar algo, PREGUNTA (no inventes):
+- Sin horario → "¿Qué horario tendrá [nombre]?"
+- Sin fecha → "¿Desde/hasta qué día?"
 - Nombre ambiguo → "¿Te refieres a [opciones]?"
 
-🚨 REGLA CRÍTICA: NUNCA llames a la misma función 2 veces. NO DUPLICAR LLAMADAS.
+🚨 REGLA: NUNCA dupliques llamadas a funciones.
+
+🧭 NAVEGACIÓN Y CONSULTAS (usa para RESPONDER + MOSTRAR):
+- getEmployeeWorkHours(period, employeeName?) → Calcula horas Y navega a fichajes con filtro
+- getVacationBalance(employeeName?) → Días disponibles Y navega a calendario vacaciones  
+- getPendingApprovals() → Lista TODO pendiente (vacaciones, modificaciones) Y navega
+- getCompanySettings() → Políticas actuales (días vacaciones, horas trabajo)
+- navigateToPage(page, filter?, employeeName?, startDate?, endDate?) → Navegar a cualquier página con filtros
+
+CUANDO PREGUNTEN "¿cuántas horas trabajó X?", "¿qué tiene pendiente?", "¿cuántos días de vacaciones?":
+1. USA la función de consulta correspondiente
+2. RESPONDE con la información
+3. El sistema NAVEGA automáticamente a la página con filtros
 
 🔄 TURNOS ROTATIVOS (assignRotatingSchedule):
-- OBLIGATORIO cuando mencionen: "X días trabajo Y días descanso", "rotación", "3 y 3", "4 y 2", "trabaja X descansa Y"
-- DATOS REQUERIDOS: empleado, horario (HH:mm-HH:mm), fecha inicio, fecha fin, días trabajo, días descanso
-- Si falta algún dato, PREGUNTA antes de ejecutar
-- Ejemplo completo: "marta 3 días trabajo 3 días descanso de 8 a 14 desde el lunes hasta fin de diciembre"
-  → assignRotatingSchedule(employeeName: "marta", workDays: 3, restDays: 3, startTime: "08:00", endTime: "14:00", startDate: "${nextMondayStr}", endDate: "2025-12-31", title: "Turno 08:00-14:00")
+- Para: "X días trabajo Y días descanso", "rotación", "3 y 3", "4 y 2"
+- Requiere: empleado, horario, fechas, días trabajo/descanso
 
 TURNOS NORMALES (assignScheduleInRange):
-- Para crear turnos todos los días laborables (sin rotación)
 - skipWeekends: false (SIEMPRE incluye sábado)
 - "esta semana": ${thisMondayStr} al ${thisSaturdayStr}
 - "próxima semana": ${nextMondayStr} al ${nextSaturdayStr}
 
-COPIAR TURNOS:
-- "turno de X como el de Y" → copyEmployeeShifts(fromEmployeeName: "Y", toEmployeeName: "X")
-- ⚠️ NO consultes turnos, USA copyEmployeeShifts DIRECTAMENTE
+COPIAR TURNOS: copyEmployeeShifts(from, to) - NO consultes, copia directo
 
-RECORDATORIOS (createReminder):
-- reminderDate: formato ISO con zona horaria España (UTC+1)
-- assignToEmployeeIds: ARRAY DE NÚMEROS [5, 3]
-- ⚠️ NUNCA llames sendMessage()
+✅ VACACIONES:
+- approveVacationRequests(requestIds) → Aprobar
+- denyVacationRequests(requestIds, adminComment) → Denegar (incluye motivo)
 
-EMPLEADOS:
-- updateEmployee(): modifica campos
-- listEmployees(): SOLO si preguntan quiénes hay
+⚙️ CONFIGURACIÓN:
+- updateCompanySettings(workingHoursPerDay?, vacationDaysPerMonth?, etc) → Modifica políticas
 
-INFORMES:
-- generateTimeReport(): PDF/Excel
+📝 RECORDATORIOS (createReminder):
+- reminderDate: ISO con zona España (UTC+1)
+- assignToEmployeeIds: ARRAY [5, 3]
 
-Respuesta breve cuando termines: "Listo", "Perfecto", "Ya está".`
+EMPLEADOS: updateEmployee(), listEmployees(), createEmployee()
+INFORMES: generateTimeReport(format, period, employeeName?)
+
+Respuestas breves: "Listo", "Perfecto", "Ya está".`
           },
           ...currentMessages
         ],
@@ -9055,7 +9062,7 @@ Respuesta breve cuando termines: "Listo", "Perfecto", "Ya está".`
           const functionArgs = JSON.parse(toolCall.function.arguments);
 
           // Resolve employee names to IDs before executing function
-          const functionsNeedingEmployeeResolution = ['getEmployeeShifts', 'assignSchedule', 'assignScheduleInRange', 'assignRotatingSchedule', 'requestDocument', 'deleteWorkShift', 'deleteWorkShiftsInRange', 'updateWorkShiftTimes', 'updateWorkShiftsInRange', 'updateEmployeeShiftsColor', 'updateWorkShiftColor', 'updateWorkShiftDetails', 'detectWorkShiftOverlaps', 'createReminder'];
+          const functionsNeedingEmployeeResolution = ['getEmployeeShifts', 'getEmployeeWorkHours', 'getVacationBalance', 'assignSchedule', 'assignScheduleInRange', 'assignRotatingSchedule', 'requestDocument', 'deleteWorkShift', 'deleteWorkShiftsInRange', 'updateWorkShiftTimes', 'updateWorkShiftsInRange', 'updateEmployeeShiftsColor', 'updateWorkShiftColor', 'updateWorkShiftDetails', 'detectWorkShiftOverlaps', 'createReminder'];
           if (functionsNeedingEmployeeResolution.includes(functionName) && functionArgs.employeeName) {
             const resolution = await resolveEmployeeName(storage, companyId, functionArgs.employeeName);
             
@@ -9171,8 +9178,9 @@ Respuesta breve cuando termines: "Listo", "Perfecto", "Ya está".`
             const result = await executeAIFunction(functionName, functionArgs, context);
             console.log(`✅ Function ${functionName} result:`, JSON.stringify(result, null, 2));
             
-            // Capture navigateTo URL from navigateToPage function
-            if (functionName === 'navigateToPage' && result.success && result.navigateTo) {
+            // Capture navigateTo URL from functions that support navigation
+            const functionsWithNavigation = ['navigateToPage', 'getEmployeeWorkHours', 'getVacationBalance', 'getPendingApprovals'];
+            if (functionsWithNavigation.includes(functionName) && result.navigateTo) {
               navigateToUrl = result.navigateTo;
             }
             
