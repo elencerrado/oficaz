@@ -3179,25 +3179,8 @@ export default function Settings() {
                       <span className="font-medium text-blue-900 dark:text-blue-100">Normativa española</span>
                     </div>
                     <p className="text-sm text-blue-800 dark:text-blue-300">
-                      El sistema calcula automáticamente 30 días naturales por año trabajado (2.5 días por mes) 
-                      desde la fecha de incorporación del empleado.
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="defaultVacationDays">Días de vacaciones anuales</Label>
-                    <Input
-                      id="defaultVacationDays"
-                      type="number"
-                      min="22"
-                      max="35"
-                      value={companyData.defaultVacationDays}
-                      onChange={(e) => setCompanyData(prev => ({ ...prev, defaultVacationDays: parseInt(e.target.value) }))}
-                      className="mt-1"
-                      disabled={user?.role !== 'admin'}
-                    />
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Mínimo legal: 22 días laborables (30 días naturales)
+                      El sistema calcula automáticamente los días de vacaciones desde la fecha de incorporación del empleado.
+                      El mínimo legal son 22 días laborables (30 días naturales = 2.5 días por mes).
                     </p>
                   </div>
                   
@@ -3210,13 +3193,35 @@ export default function Settings() {
                       min="1.8"
                       max="3"
                       value={companyData.vacationDaysPerMonth}
-                      onChange={(e) => setCompanyData(prev => ({ ...prev, vacationDaysPerMonth: parseFloat(e.target.value) }))}
+                      onChange={(e) => {
+                        const daysPerMonth = parseFloat(e.target.value) || 2.5;
+                        const annualDays = Math.round(daysPerMonth * 12);
+                        setCompanyData(prev => ({ 
+                          ...prev, 
+                          vacationDaysPerMonth: daysPerMonth,
+                          defaultVacationDays: annualDays
+                        }));
+                      }}
                       className="mt-1"
                       disabled={user?.role !== 'admin'}
                     />
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Valor estándar: 2.5 días (30 días ÷ 12 meses)
+                      Valor estándar: 2.5 días (mínimo legal: 1.83 días)
                     </p>
+                  </div>
+                  
+                  <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-gray-700 dark:text-gray-300">Días de vacaciones anuales</Label>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          Calculado automáticamente ({companyData.vacationDaysPerMonth} × 12 meses)
+                        </p>
+                      </div>
+                      <div className="text-2xl font-semibold text-blue-600 dark:text-blue-400">
+                        {Math.round(companyData.vacationDaysPerMonth * 12)} días
+                      </div>
+                    </div>
                   </div>
 
                   {/* Botón para recalcular días de vacaciones manualmente */}
