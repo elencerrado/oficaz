@@ -169,16 +169,16 @@ export default function AdminWorkReportsPage() {
     notes: ''
   });
 
-  // Lista de meses disponibles (últimos 24 meses)
+  // Lista de meses que contienen partes (extraídos de los reportes)
   const availableMonths = useMemo(() => {
-    const months: string[] = [];
-    const now = new Date();
-    for (let i = 0; i < 24; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push(format(date, 'yyyy-MM'));
-    }
-    return months;
-  }, []);
+    const monthsSet = new Set<string>();
+    reports.forEach(report => {
+      const reportDate = parseISO(report.reportDate);
+      monthsSet.add(format(reportDate, 'yyyy-MM'));
+    });
+    // Ordenar de más reciente a más antiguo
+    return Array.from(monthsSet).sort((a, b) => b.localeCompare(a));
+  }, [reports]);
 
   // Calcular rango de fechas según el filtro
   const dateRangeParams = useMemo(() => {
