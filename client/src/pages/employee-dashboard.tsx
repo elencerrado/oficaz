@@ -1190,9 +1190,9 @@ export default function EmployeeDashboard() {
     <div 
       className="bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col overflow-hidden"
       style={{ 
-        height: '100dvh',
-        maxHeight: '-webkit-fill-available',
-        overscrollBehavior: 'none'
+        height: '100%',
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)'
       }}
     >
       {/* Fixed Content Container - Sin scroll, usa dvh para móviles reales */}
@@ -1678,8 +1678,8 @@ export default function EmployeeDashboard() {
         </div>
       </div>
 
-      {/* Small Oficaz logo at bottom - con safe area para iOS */}
-      <div className="text-center flex-shrink-0" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+      {/* Small Oficaz logo at bottom */}
+      <div className="text-center flex-shrink-0 pb-2">
         <div className="flex items-center justify-center space-x-1 text-gray-500 dark:text-gray-400 text-xs">
           <span className="font-semibold text-blue-500 dark:text-blue-400">Oficaz</span>
           <span>© {currentYear}</span>
