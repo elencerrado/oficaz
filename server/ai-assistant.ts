@@ -1010,12 +1010,15 @@ export async function generateTimeReport(
     format?: 'pdf' | 'excel'; // Default: 'pdf'
   }
 ) {
+  console.log('📊 generateTimeReport called with params:', JSON.stringify(params, null, 2));
   const { storage, companyId } = context;
 
   // Resolve employee if name provided
   let employeeId: number | undefined;
   if (params.employeeName) {
+    console.log('📊 Resolving employee name:', params.employeeName);
     const resolution = await resolveEmployeeName(storage, companyId, params.employeeName);
+    console.log('📊 Resolution result:', JSON.stringify(resolution, null, 2));
     if ('error' in resolution) {
       return {
         success: false,
@@ -1023,6 +1026,7 @@ export async function generateTimeReport(
       };
     }
     employeeId = resolution.employeeId;
+    console.log('📊 Resolved employeeId:', employeeId);
   }
 
   // Calculate date range based on period

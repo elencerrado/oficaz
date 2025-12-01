@@ -9191,6 +9191,7 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
               content: JSON.stringify(result)
             });
           } catch (error: any) {
+            console.error(`❌ Function ${functionName} error:`, error.message, error.stack);
             toolResults.push({
               role: "tool" as const,
               tool_call_id: toolCall.id,
