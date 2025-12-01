@@ -3110,15 +3110,16 @@ export default function Settings() {
                       <Input
                         id="workingHours"
                         type="number"
+                        step="0.5"
                         min="1"
                         max="12"
                         value={companyData.workingHoursPerDay}
-                        onChange={(e) => setCompanyData(prev => ({ ...prev, workingHoursPerDay: parseInt(e.target.value) }))}
+                        onChange={(e) => setCompanyData(prev => ({ ...prev, workingHoursPerDay: parseFloat(e.target.value) || 8 }))}
                         className="text-lg h-12 font-medium"
                         disabled={user?.role !== 'admin'}
                       />
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                        Para calcular horas esperadas y alertas
+                        Por ejemplo: 8 horas, 7.5 horas
                       </p>
                     </div>
                     
@@ -3132,7 +3133,7 @@ export default function Settings() {
                         </Label>
                       </div>
                       <div className="text-4xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">
-                        {companyData.workingHoursPerDay * 5}
+                        {(companyData.workingHoursPerDay * 5).toFixed(1).replace(/\.0$/, '')}
                         <span className="text-lg font-normal text-gray-500 dark:text-gray-400 ml-2">horas</span>
                       </div>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
