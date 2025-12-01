@@ -33,7 +33,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb, Info, MessageSquare, Send, Paperclip, HardDrive, Sparkles } from 'lucide-react';
+import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb, Info, MessageSquare, Send, Paperclip, HardDrive, Sparkles, Calculator } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeaders } from '@/lib/auth';
@@ -3138,43 +3138,56 @@ export default function Settings() {
                     </p>
                   </div>
                   
-                  <div>
-                    <Label htmlFor="vacationDaysPerMonth">Días por mes trabajado</Label>
-                    <Input
-                      id="vacationDaysPerMonth"
-                      type="number"
-                      step="0.1"
-                      min="1.8"
-                      max="3"
-                      value={companyData.vacationDaysPerMonth}
-                      onChange={(e) => {
-                        const daysPerMonth = parseFloat(e.target.value) || 2.5;
-                        const annualDays = Math.round(daysPerMonth * 12);
-                        setCompanyData(prev => ({ 
-                          ...prev, 
-                          vacationDaysPerMonth: daysPerMonth,
-                          defaultVacationDays: annualDays
-                        }));
-                      }}
-                      className="mt-1"
-                      disabled={user?.role !== 'admin'}
-                    />
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Valor estándar: 2.5 días (mínimo legal: 1.83 días)
-                    </p>
-                  </div>
-                  
-                  <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label className="text-gray-700 dark:text-gray-300">Días de vacaciones anuales</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          Calculado automáticamente ({companyData.vacationDaysPerMonth} × 12 meses)
-                        </p>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                          <CalendarIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <Label htmlFor="vacationDaysPerMonth" className="text-base font-medium text-gray-900 dark:text-gray-100">
+                          Días por mes trabajado
+                        </Label>
                       </div>
-                      <div className="text-2xl font-semibold text-blue-600 dark:text-blue-400">
-                        {Math.round(companyData.vacationDaysPerMonth * 12)} días
+                      <Input
+                        id="vacationDaysPerMonth"
+                        type="number"
+                        step="0.1"
+                        min="1.8"
+                        max="3"
+                        value={companyData.vacationDaysPerMonth}
+                        onChange={(e) => {
+                          const daysPerMonth = parseFloat(e.target.value) || 2.5;
+                          const annualDays = Math.round(daysPerMonth * 12);
+                          setCompanyData(prev => ({ 
+                            ...prev, 
+                            vacationDaysPerMonth: daysPerMonth,
+                            defaultVacationDays: annualDays
+                          }));
+                        }}
+                        className="text-lg h-12 font-medium"
+                        disabled={user?.role !== 'admin'}
+                      />
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                        Estándar: 2.5 días · Mínimo legal: 1.83 días
+                      </p>
+                    </div>
+                    
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border border-blue-200 dark:border-blue-800/50 rounded-xl p-5">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-600 dark:bg-blue-500 flex items-center justify-center">
+                          <Calculator className="h-4 w-4 text-white" />
+                        </div>
+                        <Label className="text-base font-medium text-gray-900 dark:text-gray-100">
+                          Días anuales calculados
+                        </Label>
                       </div>
+                      <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+                        {Math.round(companyData.vacationDaysPerMonth * 12)}
+                        <span className="text-lg font-normal text-gray-500 dark:text-gray-400 ml-2">días</span>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {companyData.vacationDaysPerMonth} días × 12 meses
+                      </p>
                     </div>
                   </div>
 
