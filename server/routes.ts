@@ -6189,16 +6189,21 @@ Responde directamente a este email para contactar con la persona.
           const signatureImage = await pdfDoc.embedPng(signatureImageBytes);
           const signatureDims = signatureImage.scale(0.5);
           
-          // Apply signature to EVERY page
+          // Apply signature to EVERY page with proportional sizing
           for (const page of pages) {
             const { width, height } = page.getSize();
             
-            // Calculate position - bottom right corner with margin
-            const signatureWidth = Math.min(signatureDims.width, 150);
-            const signatureHeight = (signatureDims.height / signatureDims.width) * signatureWidth;
-            const margin = 50;
+            // Use 18% of page width for signature (proportional to page size)
+            // This ensures consistent appearance across different PDF resolutions
+            const targetSignatureWidth = width * 0.18;
+            const aspectRatio = signatureDims.height / signatureDims.width;
+            const signatureWidth = targetSignatureWidth;
+            const signatureHeight = signatureWidth * aspectRatio;
+            
+            // Position in bottom right with proportional margin (5% of page width)
+            const margin = width * 0.05;
             const xPos = width - signatureWidth - margin;
-            const yPos = margin + 30;
+            const yPos = margin + (height * 0.03); // Slight vertical offset
             
             // Draw signature directly (transparent PNG, no background rectangle)
             page.drawImage(signatureImage, {
@@ -6351,16 +6356,21 @@ Responde directamente a este email para contactar con la persona.
           const signatureImage = await pdfDoc.embedPng(signatureImageBytes);
           const signatureDims = signatureImage.scale(0.5);
           
-          // Apply signature to EVERY page
+          // Apply signature to EVERY page with proportional sizing
           for (const page of pages) {
             const { width, height } = page.getSize();
             
-            // Calculate position - bottom right corner with margin
-            const signatureWidth = Math.min(signatureDims.width, 150);
-            const signatureHeight = (signatureDims.height / signatureDims.width) * signatureWidth;
-            const margin = 50;
+            // Use 18% of page width for signature (proportional to page size)
+            // This ensures consistent appearance across different PDF resolutions
+            const targetSignatureWidth = width * 0.18;
+            const aspectRatio = signatureDims.height / signatureDims.width;
+            const signatureWidth = targetSignatureWidth;
+            const signatureHeight = signatureWidth * aspectRatio;
+            
+            // Position in bottom right with proportional margin (5% of page width)
+            const margin = width * 0.05;
             const xPos = width - signatureWidth - margin;
-            const yPos = margin + 30;
+            const yPos = margin + (height * 0.03); // Slight vertical offset
             
             // Draw signature directly (transparent PNG, no background rectangle)
             page.drawImage(signatureImage, {
