@@ -1447,7 +1447,7 @@ export default function EmployeeDashboard() {
                             onMouseDown={() => !isFeatureDisabled && handleLongPressStart(globalIndex)}
                             onMouseUp={handleLongPressEnd}
                             onMouseLeave={handleLongPressEnd}
-                            className={`relative w-[72px] h-[72px] transition-all duration-200 rounded-2xl flex items-center justify-center mb-2 backdrop-blur-xl border ${
+                            className={`relative w-20 h-20 sm:w-[72px] sm:h-[72px] transition-all duration-200 rounded-2xl flex items-center justify-center mb-2 backdrop-blur-xl border ${
                               isLongPressed
                                 ? 'bg-[#0056CC] border-[#0056CC] scale-110 shadow-xl'
                                 : isFeatureDisabled 
@@ -1456,7 +1456,7 @@ export default function EmployeeDashboard() {
                             }`}
                             disabled={isFeatureDisabled}
                           >
-                            <item.icon className={`h-9 w-9 transition-all duration-200 ${
+                            <item.icon className={`h-10 w-10 sm:h-9 sm:w-9 transition-all duration-200 ${
                               isFeatureDisabled 
                                 ? 'text-gray-300 dark:text-gray-400/50' 
                                 : 'text-white drop-shadow-lg'
@@ -1629,7 +1629,7 @@ export default function EmployeeDashboard() {
                         }
                       }}
                       disabled={startBreakMutation.isPending || endBreakMutation.isPending}
-                      className={`w-32 h-32 rounded-full ${
+                      className={`w-36 h-36 sm:w-32 sm:h-32 rounded-full ${
                         activeBreak 
                           ? 'bg-red-500 hover:bg-red-600' 
                           : 'bg-orange-500 hover:bg-orange-600'
@@ -1655,7 +1655,7 @@ export default function EmployeeDashboard() {
                   <Button
                     onClick={handleClockAction}
                     disabled={clockInMutation.isPending || clockOutMutation.isPending}
-                    className="w-32 h-32 rounded-full bg-[#007AFF] hover:bg-[#0056CC] text-white text-xl font-bold shadow-lg transition-all duration-300 relative overflow-hidden"
+                    className="w-36 h-36 sm:w-32 sm:h-32 rounded-full bg-[#007AFF] hover:bg-[#0056CC] text-white text-xl font-bold shadow-lg transition-all duration-300 relative overflow-hidden"
                   >
                     {clockInMutation.isPending || clockOutMutation.isPending ? (
                       <LoadingSpinner size="lg" className="text-white w-12 h-12" />
