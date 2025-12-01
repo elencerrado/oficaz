@@ -206,7 +206,7 @@ export default function EmployeeProfile() {
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.strokeStyle = '#1a1a1a';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 2.5;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.imageSmoothingEnabled = true;
