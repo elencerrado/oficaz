@@ -3153,9 +3153,7 @@ export default function Settings() {
                         <CalendarIcon className="h-5 w-5" />
                         <span>Vacaciones</span>
                       </CardTitle>
-                      <CardDescription>
-                        Política de vacaciones según normativa española
-                      </CardDescription>
+                      <CardDescription>Política de vacaciones según normativa</CardDescription>
                     </div>
                     {user?.role === 'admin' && Number(companyData.vacationDaysPerMonth) !== Number(company?.vacationDaysPerMonth || 2.5) && (
                       <Button
