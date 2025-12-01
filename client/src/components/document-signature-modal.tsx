@@ -1,8 +1,11 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { PenTool, RotateCcw, Check, X } from 'lucide-react';
+import { PenTool, RotateCcw, Check, X, Edit3, Info } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface DocumentSignatureModalProps {
   isOpen: boolean;
@@ -22,18 +25,48 @@ export function DocumentSignatureModal({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lastPointRef = useRef<{ x: number; y: number } | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [hasSignature, setHasSignature] = useState(false);
+  const [hasDrawnSignature, setHasDrawnSignature] = useState(false);
+  const [showDrawMode, setShowDrawMode] = useState(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const { data: signatureData, isLoading: signatureLoading } = useQuery<{ signatureUrl: string | null }>({
+    queryKey: ['/api/work-reports/signature'],
+    enabled: isOpen,
+    staleTime: 30000
+  });
+
+  const savedSignatureUrl = signatureData?.signatureUrl;
+  const hasSavedSignature = !!savedSignatureUrl;
+
+  const saveSignatureMutation = useMutation({
+    mutationFn: (signatureData: string) => 
+      apiRequest('POST', '/api/work-reports/signature', { signatureData }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-reports/signature'] });
+      toast({
+        title: 'Firma guardada',
+        description: 'Tu firma se ha guardado y se usará para futuros documentos.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error al guardar firma',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
 
   const clearCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // Fill with white background for clean signature
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         lastPointRef.current = null;
-        setHasSignature(false);
+        setHasDrawnSignature(false);
       }
     }
   }, []);
@@ -43,7 +76,6 @@ export function DocumentSignatureModal({
     if (canvas) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // Match work-reports.tsx exactly - no DPR scaling
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.strokeStyle = '#1a1a1a';
@@ -58,7 +90,6 @@ export function DocumentSignatureModal({
   }, []);
 
   const getEventPos = useCallback((event: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
-    // Exact same logic as work-reports.tsx getCoordinates
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
@@ -98,7 +129,6 @@ export function DocumentSignatureModal({
 
     const { x, y } = getEventPos(event, canvas);
     
-    // Use quadratic curves for smoother lines - same as work reports
     if (lastPointRef.current) {
       const midX = (lastPointRef.current.x + x) / 2;
       const midY = (lastPointRef.current.y + y) / 2;
@@ -109,7 +139,7 @@ export function DocumentSignatureModal({
     }
     
     lastPointRef.current = { x, y };
-    setHasSignature(true);
+    setHasDrawnSignature(true);
   }, [isDrawing, getEventPos]);
 
   const stopDrawing = useCallback((event: React.MouseEvent | React.TouchEvent) => {
@@ -128,25 +158,21 @@ export function DocumentSignatureModal({
     lastPointRef.current = null;
   }, [isDrawing]);
 
-  const handleSign = useCallback(() => {
+  const getOptimizedSignature = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !hasSignature) return;
+    if (!canvas || !hasDrawnSignature) return null;
 
-    // Optimize signature: create a smaller canvas with the signature cropped to content
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) return null;
     
-    // Get image data to find signature bounds
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
     
     let minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0;
     
-    // Find bounds of non-white pixels
     for (let y = 0; y < canvas.height; y++) {
       for (let x = 0; x < canvas.width; x++) {
         const idx = (y * canvas.width + x) * 4;
-        // Check if pixel is not white (has signature content)
         if (data[idx] < 250 || data[idx + 1] < 250 || data[idx + 2] < 250) {
           if (x < minX) minX = x;
           if (x > maxX) maxX = x;
@@ -156,7 +182,6 @@ export function DocumentSignatureModal({
       }
     }
     
-    // Add padding around signature
     const padding = 20;
     minX = Math.max(0, minX - padding);
     minY = Math.max(0, minY - padding);
@@ -166,26 +191,22 @@ export function DocumentSignatureModal({
     const width = maxX - minX;
     const height = maxY - minY;
     
-    // Create optimized canvas with cropped signature (TRANSPARENT background)
     const optimizedCanvas = document.createElement('canvas');
-    const targetWidth = Math.min(400, width); // Max 400px wide
+    const targetWidth = Math.min(400, width);
     const scale = targetWidth / width;
     optimizedCanvas.width = targetWidth;
     optimizedCanvas.height = height * scale;
     
     const optCtx = optimizedCanvas.getContext('2d');
     if (optCtx) {
-      // Step 1: Get the cropped signature from original canvas at FULL resolution
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = width;
       tempCanvas.height = height;
       const tempCtx = tempCanvas.getContext('2d');
       
       if (tempCtx) {
-        // Draw cropped area from original canvas
         tempCtx.drawImage(canvas, minX, minY, width, height, 0, 0, width, height);
         
-        // Step 2: Get pixel data and make white pixels transparent
         const imgData = tempCtx.getImageData(0, 0, width, height);
         const pixels = imgData.data;
         
@@ -193,16 +214,13 @@ export function DocumentSignatureModal({
           const r = pixels[i];
           const g = pixels[i + 1];
           const b = pixels[i + 2];
-          // If pixel is white or near-white (threshold 230), make it fully transparent
           if (r > 230 && g > 230 && b > 230) {
-            pixels[i + 3] = 0; // Alpha = 0 (fully transparent)
+            pixels[i + 3] = 0;
           }
         }
         
-        // Put modified pixel data back
         tempCtx.putImageData(imgData, 0, 0);
         
-        // Step 3: Draw to output canvas (scaled)
         optCtx.clearRect(0, 0, optimizedCanvas.width, optimizedCanvas.height);
         optCtx.imageSmoothingEnabled = true;
         optCtx.imageSmoothingQuality = 'high';
@@ -210,18 +228,52 @@ export function DocumentSignatureModal({
       }
     }
     
-    // Convert to PNG (preserves transparency)
-    const signatureData = optimizedCanvas.toDataURL('image/png');
+    return optimizedCanvas.toDataURL('image/png');
+  }, [hasDrawnSignature]);
+
+  const handleSignWithSavedSignature = useCallback(async () => {
+    if (!savedSignatureUrl) return;
+    
+    try {
+      const response = await fetch(savedSignatureUrl);
+      const blob = await response.blob();
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64data = reader.result as string;
+        onSign(base64data);
+      };
+      reader.readAsDataURL(blob);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo cargar la firma guardada. Por favor, dibuja una nueva.',
+        variant: 'destructive',
+      });
+      setShowDrawMode(true);
+    }
+  }, [savedSignatureUrl, onSign, toast]);
+
+  const handleSignWithNewSignature = useCallback(() => {
+    const signatureData = getOptimizedSignature();
+    if (!signatureData) return;
+    
+    saveSignatureMutation.mutate(signatureData);
     onSign(signatureData);
-  }, [hasSignature, onSign]);
+  }, [getOptimizedSignature, onSign, saveSignatureMutation]);
+
+  useEffect(() => {
+    if (isOpen && showDrawMode) {
+      setTimeout(() => setupCanvas(), 100);
+    }
+  }, [isOpen, showDrawMode, setupCanvas]);
 
   useEffect(() => {
     if (isOpen) {
-      setupCanvas();
+      setShowDrawMode(false);
+      setHasDrawnSignature(false);
     }
-  }, [isOpen, setupCanvas]);
+  }, [isOpen]);
 
-  // Prevent default touch behaviors on the canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -237,7 +289,174 @@ export function DocumentSignatureModal({
       canvas.removeEventListener('touchend', preventDefault);
       canvas.removeEventListener('touchmove', preventDefault);
     };
-  }, [isOpen]);
+  }, [isOpen, showDrawMode]);
+
+  const renderSavedSignatureView = () => (
+    <div className="space-y-4">
+      <div className="text-sm text-gray-600 dark:text-gray-400">
+        <p>Confirma que has leído y aceptas el contenido del documento:</p>
+        <p className="font-medium mt-1 text-gray-900 dark:text-gray-100 line-clamp-2">
+          {documentName}
+        </p>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-3">
+        <p className="text-sm font-medium">Tu firma guardada:</p>
+        <div className="relative border rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-4 flex items-center justify-center min-h-[120px]">
+          <img 
+            src={savedSignatureUrl!} 
+            alt="Tu firma" 
+            className="max-h-24 max-w-full object-contain dark:invert dark:brightness-90"
+          />
+        </div>
+        <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-blue-700 dark:text-blue-300">
+            Se registrará la fecha, hora y tu firma para este documento. Esta acción confirma tu aceptación del contenido.
+          </p>
+        </div>
+      </div>
+
+      <Separator />
+
+      <div className="flex flex-col gap-2 pt-2">
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isLoading}
+            className="flex-1"
+          >
+            <X className="h-4 w-4 mr-2" />
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSignWithSavedSignature}
+            disabled={isLoading}
+            className="flex-1 bg-green-600 hover:bg-green-700"
+          >
+            {isLoading ? (
+              <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            ) : (
+              <Check className="h-4 w-4 mr-2" />
+            )}
+            {isLoading ? 'Firmando...' : 'Firmar y Aceptar'}
+          </Button>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setShowDrawMode(true)}
+          disabled={isLoading}
+          className="text-sm text-gray-500"
+        >
+          <Edit3 className="h-3 w-3 mr-1" />
+          Cambiar mi firma
+        </Button>
+      </div>
+    </div>
+  );
+
+  const renderDrawSignatureView = () => (
+    <div className="space-y-4">
+      <div className="text-sm text-gray-600 dark:text-gray-400">
+        <p>Confirma que has leído y aceptas el contenido del documento:</p>
+        <p className="font-medium mt-1 text-gray-900 dark:text-gray-100 line-clamp-2">
+          {documentName}
+        </p>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium">
+            {hasSavedSignature ? 'Dibuja tu nueva firma:' : 'Dibuja tu firma:'}
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={clearCanvas}
+            disabled={!hasDrawnSignature}
+            className="h-8 px-3 text-xs"
+          >
+            <RotateCcw className="h-3 w-3 mr-1" />
+            Limpiar
+          </Button>
+        </div>
+        
+        <div className="relative border rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <canvas
+            ref={canvasRef}
+            width={600}
+            height={200}
+            className="w-full h-32 sm:h-40 touch-none cursor-crosshair"
+            style={{ 
+              touchAction: 'none',
+              WebkitUserSelect: 'none',
+              userSelect: 'none'
+            }}
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
+            onTouchStart={startDrawing}
+            onTouchMove={draw}
+            onTouchEnd={stopDrawing}
+          />
+          {!hasDrawnSignature && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <p className="text-gray-400 text-xs sm:text-sm">
+                Usa tu dedo o stylus para firmar aquí
+              </p>
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+          <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-amber-700 dark:text-amber-300">
+            Esta firma se guardará en tu perfil y se usará para firmar futuros documentos.
+          </p>
+        </div>
+      </div>
+
+      <Separator />
+
+      <div className="flex flex-col gap-2 pt-2">
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => hasSavedSignature ? setShowDrawMode(false) : onClose()}
+            disabled={isLoading || saveSignatureMutation.isPending}
+            className="flex-1"
+          >
+            <X className="h-4 w-4 mr-2" />
+            {hasSavedSignature ? 'Volver' : 'Cancelar'}
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSignWithNewSignature}
+            disabled={!hasDrawnSignature || isLoading || saveSignatureMutation.isPending}
+            className="flex-1"
+          >
+            {(isLoading || saveSignatureMutation.isPending) ? (
+              <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            ) : (
+              <Check className="h-4 w-4 mr-2" />
+            )}
+            {(isLoading || saveSignatureMutation.isPending) ? 'Guardando...' : 'Guardar y Firmar'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -249,87 +468,15 @@ export function DocumentSignatureModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            <p>Confirma que has leído y aceptas el contenido del documento:</p>
-            <p className="font-medium mt-1 text-gray-900 dark:text-gray-100 line-clamp-2">
-              {documentName}
-            </p>
+        {signatureLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
-
-          <Separator />
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">Dibuja tu firma:</p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={clearCanvas}
-                disabled={!hasSignature}
-                className="h-8 px-3 text-xs"
-              >
-                <RotateCcw className="h-3 w-3 mr-1" />
-                Limpiar
-              </Button>
-            </div>
-            
-            <div className="relative border rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-              <canvas
-                ref={canvasRef}
-                className="w-full h-32 sm:h-40 touch-none cursor-crosshair"
-                style={{ 
-                  touchAction: 'none',
-                  WebkitUserSelect: 'none',
-                  userSelect: 'none'
-                }}
-                onMouseDown={startDrawing}
-                onMouseMove={draw}
-                onMouseUp={stopDrawing}
-                onMouseLeave={stopDrawing}
-                onTouchStart={startDrawing}
-                onTouchMove={draw}
-                onTouchEnd={stopDrawing}
-              />
-              {!hasSignature && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <p className="text-gray-400 text-xs sm:text-sm">
-                    Usa tu dedo o stylus para firmar aquí
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="flex gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isLoading}
-              className="flex-1"
-            >
-              <X className="h-4 w-4 mr-2" />
-              Cancelar
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSign}
-              disabled={!hasSignature || isLoading}
-              className="flex-1"
-            >
-              {isLoading ? (
-                <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              ) : (
-                <Check className="h-4 w-4 mr-2" />
-              )}
-              {isLoading ? 'Firmando...' : 'Firmar y Aceptar'}
-            </Button>
-          </div>
-        </div>
+        ) : (
+          hasSavedSignature && !showDrawMode 
+            ? renderSavedSignatureView() 
+            : renderDrawSignatureView()
+        )}
       </DialogContent>
     </Dialog>
   );
