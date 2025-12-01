@@ -100,6 +100,15 @@ export default function EmployeeDashboard() {
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
 
+  // Estado para intercambio de iconos con long press
+  const [longPressItem, setLongPressItem] = useState<number | null>(null);
+  const [showSwapMenu, setShowSwapMenu] = useState(false);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const [customMenuOrder, setCustomMenuOrder] = useState<number[]>(() => {
+    const saved = localStorage.getItem('menuIconOrder');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   // Queries para autocompletado de partes de obra anteriores
   const { data: refCodeSuggestions } = useQuery<string[]>({
     queryKey: ['/api/work-reports/ref-codes'],
@@ -1051,28 +1060,83 @@ export default function EmployeeDashboard() {
     ] : []),
   ];
 
+  // Aplicar orden personalizado a los items del menú
+  const orderedMenuItems = useMemo(() => {
+    if (customMenuOrder.length === 0 || customMenuOrder.length !== menuItems.length) {
+      return menuItems.map((item, idx) => ({ ...item, originalIndex: idx }));
+    }
+    return customMenuOrder.map(idx => ({ ...menuItems[idx], originalIndex: idx }));
+  }, [menuItems, customMenuOrder]);
+
   // Dividir items en páginas de 6 (grid 3x2)
   const itemsPerPage = 6;
   const menuPages = useMemo(() => {
-    const pages: typeof menuItems[] = [];
-    for (let i = 0; i < menuItems.length; i += itemsPerPage) {
-      pages.push(menuItems.slice(i, i + itemsPerPage));
+    const pages: (typeof orderedMenuItems)[] = [];
+    for (let i = 0; i < orderedMenuItems.length; i += itemsPerPage) {
+      pages.push(orderedMenuItems.slice(i, i + itemsPerPage));
     }
     return pages;
-  }, [menuItems]);
+  }, [orderedMenuItems]);
 
   const totalPages = menuPages.length;
 
+  // Obtener items de otras páginas para el menú de intercambio
+  const getSwappableItems = (currentItemIndex: number) => {
+    const currentPage = Math.floor(currentItemIndex / itemsPerPage);
+    return orderedMenuItems
+      .map((item, idx) => ({ ...item, displayIndex: idx }))
+      .filter((_, idx) => Math.floor(idx / itemsPerPage) !== currentPage);
+  };
+
+  // Handlers para long press
+  const handleLongPressStart = (globalIndex: number) => {
+    longPressTimer.current = setTimeout(() => {
+      setLongPressItem(globalIndex);
+      setShowSwapMenu(true);
+    }, 500); // 500ms para activar long press
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  // Intercambiar posiciones de iconos
+  const handleSwapItems = (targetIndex: number) => {
+    if (longPressItem === null) return;
+    
+    // Crear nuevo orden
+    const currentOrder = customMenuOrder.length === menuItems.length 
+      ? [...customMenuOrder] 
+      : menuItems.map((_, idx) => idx);
+    
+    // Intercambiar posiciones
+    const temp = currentOrder[longPressItem];
+    currentOrder[longPressItem] = currentOrder[targetIndex];
+    currentOrder[targetIndex] = temp;
+    
+    // Guardar en localStorage y estado
+    localStorage.setItem('menuIconOrder', JSON.stringify(currentOrder));
+    setCustomMenuOrder(currentOrder);
+    setShowSwapMenu(false);
+    setLongPressItem(null);
+  };
+
   // Handlers para swipe del carrusel
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (showSwapMenu) return; // No swipe si está abierto el menú
     touchStartX.current = e.touches[0].clientX;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    if (showSwapMenu) return;
     touchEndX.current = e.touches[0].clientX;
   };
 
   const handleTouchEnd = () => {
+    if (showSwapMenu) return;
     const diff = touchStartX.current - touchEndX.current;
     const minSwipeDistance = 50;
 
@@ -1326,7 +1390,7 @@ export default function EmployeeDashboard() {
         </div>
 
         {/* Menu Grid - Carrusel estilo iPhone */}
-        <div className="mb-2">
+        <div className="mb-2 relative">
           {/* Contenedor del carrusel con overflow hidden */}
           <div 
             ref={menuContainerRef}
@@ -1344,15 +1408,16 @@ export default function EmployeeDashboard() {
                 <div key={pageIndex} className="w-full flex-shrink-0 px-2">
                   <div className="grid grid-cols-3 gap-3 justify-items-center">
                     {pageItems.map((item, index) => {
+                      const globalIndex = pageIndex * itemsPerPage + index;
                       const isFeatureDisabled = item.feature && !hasAccess(item.feature);
+                      const isLongPressed = longPressItem === globalIndex;
                       
                       return (
-                        <div key={index} className="flex flex-col items-center group">
+                        <div key={index} className="flex flex-col items-center group relative">
                           <button
                             onClick={() => {
-                              if (isFeatureDisabled) {
-                                return;
-                              }
+                              if (showSwapMenu) return;
+                              if (isFeatureDisabled) return;
                               
                               if (item.title === 'Vacaciones') {
                                 localStorage.setItem('lastVacationCheck', new Date().toISOString());
@@ -1369,10 +1434,18 @@ export default function EmployeeDashboard() {
                               
                               handleNavigation(item.route);
                             }}
+                            onTouchStart={() => !isFeatureDisabled && handleLongPressStart(globalIndex)}
+                            onTouchEnd={handleLongPressEnd}
+                            onTouchCancel={handleLongPressEnd}
+                            onMouseDown={() => !isFeatureDisabled && handleLongPressStart(globalIndex)}
+                            onMouseUp={handleLongPressEnd}
+                            onMouseLeave={handleLongPressEnd}
                             className={`relative w-[72px] h-[72px] transition-all duration-200 rounded-2xl flex items-center justify-center mb-2 backdrop-blur-xl border ${
-                              isFeatureDisabled 
-                                ? 'bg-gray-200 dark:bg-gray-500/20 border-gray-300 dark:border-gray-400/30 cursor-not-allowed opacity-40' 
-                                : 'bg-[#007AFF] hover:bg-[#0056CC] border-[#007AFF] hover:border-[#0056CC]'
+                              isLongPressed
+                                ? 'bg-[#0056CC] border-[#0056CC] scale-110 shadow-xl'
+                                : isFeatureDisabled 
+                                  ? 'bg-gray-200 dark:bg-gray-500/20 border-gray-300 dark:border-gray-400/30 cursor-not-allowed opacity-40' 
+                                  : 'bg-[#007AFF] hover:bg-[#0056CC] border-[#007AFF] hover:border-[#0056CC]'
                             }`}
                             disabled={isFeatureDisabled}
                           >
@@ -1389,7 +1462,7 @@ export default function EmployeeDashboard() {
                                 <div className="w-full h-full rounded-full animate-ping opacity-75 bg-white/30"></div>
                               </div>
                             )}
-                            {!isFeatureDisabled && (
+                            {!isFeatureDisabled && !isLongPressed && (
                               <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform -skew-x-12"></div>
                             )}
                           </button>
@@ -1408,6 +1481,39 @@ export default function EmployeeDashboard() {
               ))}
             </div>
           </div>
+          
+          {/* Menú de intercambio de iconos */}
+          {showSwapMenu && longPressItem !== null && (
+            <div className="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm rounded-xl flex items-center justify-center">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-2xl max-w-[280px] w-full mx-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Intercambiar con:</h4>
+                  <button 
+                    onClick={() => { setShowSwapMenu(false); setLongPressItem(null); }}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {getSwappableItems(longPressItem).map((swapItem) => (
+                    <button
+                      key={swapItem.displayIndex}
+                      onClick={() => handleSwapItems(swapItem.displayIndex)}
+                      className="flex flex-col items-center p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="w-12 h-12 rounded-xl bg-[#007AFF] flex items-center justify-center mb-1">
+                        <swapItem.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <span className="text-[10px] text-gray-600 dark:text-gray-300 text-center leading-tight">
+                        {swapItem.title}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Indicadores de página (puntitos) */}
           {totalPages > 1 && (
