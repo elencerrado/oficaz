@@ -38,10 +38,11 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { DatePickerPeriod } from '@/components/ui/date-picker';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfDay, endOfDay, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface WorkReportWithEmployee {
@@ -124,6 +125,17 @@ export default function AdminWorkReportsPage() {
   const [displayedCount, setDisplayedCount] = useState(5);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [showFilters, setShowFilters] = useState(false);
+  // Estados para filtro de mes desplegable
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+  const [isMonthDialogOpen, setIsMonthDialogOpen] = useState(false);
+  // Estados para filtro de rango
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<WorkReportWithEmployee | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<number | null>(null);
@@ -157,29 +169,41 @@ export default function AdminWorkReportsPage() {
     notes: ''
   });
 
-  const getDateRange = useCallback(() => {
+  // Lista de meses disponibles (últimos 24 meses)
+  const availableMonths = useMemo(() => {
+    const months: string[] = [];
+    const now = new Date();
+    for (let i = 0; i < 24; i++) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push(format(date, 'yyyy-MM'));
+    }
+    return months;
+  }, []);
+
+  // Calcular rango de fechas según el filtro
+  const dateRangeParams = useMemo(() => {
     const today = new Date();
     switch (dateFilter) {
       case 'today':
         const todayStr = format(today, 'yyyy-MM-dd');
         return { startDate: todayStr, endDate: todayStr };
-      case 'this-week':
+      case 'month':
+        const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+        const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
         return { 
-          startDate: format(startOfWeek(today, { weekStartsOn: 1 }), 'yyyy-MM-dd'),
-          endDate: format(endOfWeek(today, { weekStartsOn: 1 }), 'yyyy-MM-dd')
+          startDate: format(startOfDay(monthStart), 'yyyy-MM-dd'),
+          endDate: format(endOfDay(monthEnd), 'yyyy-MM-dd')
         };
-      case 'this-month':
-        return { 
-          startDate: format(startOfMonth(today), 'yyyy-MM-dd'),
-          endDate: format(endOfMonth(today), 'yyyy-MM-dd')
-        };
+      case 'custom':
+        if (startDate && endDate) {
+          return { startDate, endDate };
+        }
+        return {};
       case 'all':
       default:
         return {};
     }
-  }, [dateFilter]);
-
-  const { startDate, endDate } = getDateRange();
+  }, [dateFilter, currentMonth, startDate, endDate]);
 
   const { data: employees = [] } = useQuery<Employee[]>({
     queryKey: ['/api/employees'],
@@ -230,15 +254,15 @@ export default function AdminWorkReportsPage() {
 
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
+    if (dateRangeParams.startDate) params.append('startDate', dateRangeParams.startDate);
+    if (dateRangeParams.endDate) params.append('endDate', dateRangeParams.endDate);
     if (employeeFilter !== 'all') params.append('employeeId', employeeFilter);
     return params.toString() ? `?${params.toString()}` : '';
-  }, [startDate, endDate, employeeFilter]);
+  }, [dateRangeParams, employeeFilter]);
 
   const stableQueryKey = useMemo(() => 
-    ['/api/admin/work-reports', dateFilter, employeeFilter] as const,
-    [dateFilter, employeeFilter]
+    ['/api/admin/work-reports', dateFilter, currentMonth.getTime(), startDate, endDate, employeeFilter] as const,
+    [dateFilter, currentMonth, startDate, endDate, employeeFilter]
   );
   
   const { data: reports = [], isLoading: reportsLoading, isFetching } = useQuery<WorkReportWithEmployee[]>({
@@ -357,18 +381,25 @@ export default function AdminWorkReportsPage() {
     });
   }, []);
 
-  // Handler Card 2: Partes este mes
+  // Handler Card 2: Partes este mes (usa el mes actual)
   const handleThisMonthFilter = useCallback(() => {
     setActiveStatsFilter(prev => {
       if (prev === 'month') {
         setDateFilter('all');
         return null;
       }
-      setDateFilter('this-month');
+      // Establecer mes actual
+      const now = new Date();
+      setCurrentMonth(new Date(now.getFullYear(), now.getMonth(), 1));
+      setDateFilter('month');
       setEmployeeFilter('all');
       setProjectFilter('all');
       setEmployeeRotationIndex(-1);
       setProjectRotationIndex(-1);
+      setSelectedStartDate(null);
+      setSelectedEndDate(null);
+      setStartDate('');
+      setEndDate('');
       return 'month';
     });
   }, []);
@@ -552,15 +583,18 @@ export default function AdminWorkReportsPage() {
     switch (dateFilter) {
       case 'today':
         return 'Partes de hoy';
-      case 'this-week':
-        return 'Partes de esta semana';
-      case 'this-month':
-        return 'Partes de este mes';
+      case 'month':
+        return `Partes de ${format(currentMonth, 'MMMM yyyy', { locale: es })}`;
+      case 'custom':
+        if (startDate && endDate) {
+          return `Partes del ${format(new Date(startDate), 'd MMM', { locale: es })} al ${format(new Date(endDate), 'd MMM yyyy', { locale: es })}`;
+        }
+        return 'Partes personalizados';
       case 'all':
       default:
         return 'Todos los partes';
     }
-  }, [dateFilter]);
+  }, [dateFilter, currentMonth, startDate, endDate]);
 
   if (authLoading) {
     return (
@@ -741,55 +775,127 @@ export default function AdminWorkReportsPage() {
               <div className="flex flex-col space-y-2">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Período</label>
                 <div className="flex items-center gap-2">
+                  {/* Botón Hoy */}
                   <Button
-                    variant={dateFilter === 'today' ? 'default' : 'outline'}
+                    variant="outline"
                     size="sm"
                     onClick={() => {
                       setDateFilter('today');
                       setActiveStatsFilter(null);
                       setEmployeeRotationIndex(-1);
                       setProjectRotationIndex(-1);
+                      setSelectedStartDate(null);
+                      setSelectedEndDate(null);
+                      setStartDate('');
+                      setEndDate('');
                     }}
-                    className="h-10 text-xs font-normal flex-1"
+                    className={cn(
+                      "h-10 text-xs font-normal flex-1",
+                      dateFilter === 'today' 
+                        ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                        : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    )}
                   >
                     Hoy
                   </Button>
-                  <Button
-                    variant={dateFilter === 'this-week' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => {
-                      setDateFilter('this-week');
-                      setActiveStatsFilter(null);
-                      setEmployeeRotationIndex(-1);
-                      setProjectRotationIndex(-1);
+                  
+                  {/* Desplegable Mes */}
+                  <Popover open={isMonthDialogOpen} onOpenChange={setIsMonthDialogOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center",
+                          dateFilter === 'month' 
+                            ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                            : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        )}
+                      >
+                        {dateFilter === 'month' ? format(currentMonth, 'MMM yy', { locale: es }) : 'Mes'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-2" align="start" sideOffset={4}>
+                      <div className="space-y-1 max-h-60 overflow-y-auto">
+                        {availableMonths.map((monthKey: string) => {
+                          const [year, month] = monthKey.split('-');
+                          const monthDate = new Date(parseInt(year), parseInt(month) - 1);
+                          return (
+                            <Button
+                              key={monthKey}
+                              variant="ghost"
+                              className="w-full justify-start text-sm capitalize"
+                              onClick={() => {
+                                setCurrentMonth(monthDate);
+                                setDateFilter('month');
+                                setIsMonthDialogOpen(false);
+                                setActiveStatsFilter('month');
+                                setEmployeeRotationIndex(-1);
+                                setProjectRotationIndex(-1);
+                                setSelectedStartDate(null);
+                                setSelectedEndDate(null);
+                                setStartDate('');
+                                setEndDate('');
+                              }}
+                            >
+                              {format(monthDate, 'MMMM yyyy', { locale: es })}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  
+                  {/* Selector de Rango */}
+                  <DatePickerPeriod
+                    startDate={selectedStartDate || undefined}
+                    endDate={selectedEndDate || undefined}
+                    onStartDateChange={(date) => {
+                      setSelectedStartDate(date || null);
+                      setStartDate(date ? format(date, 'yyyy-MM-dd') : '');
+                      if (date && selectedEndDate) {
+                        setDateFilter('custom');
+                        setActiveStatsFilter(null);
+                      }
                     }}
-                    className="h-10 text-xs font-normal flex-1"
-                  >
-                    Semana
-                  </Button>
-                  <Button
-                    variant={dateFilter === 'this-month' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => {
-                      setDateFilter('this-month');
-                      setActiveStatsFilter('month');
-                      setEmployeeRotationIndex(-1);
-                      setProjectRotationIndex(-1);
+                    onEndDateChange={(date) => {
+                      setSelectedEndDate(date || null);
+                      setEndDate(date ? format(date, 'yyyy-MM-dd') : '');
+                      if (date && selectedStartDate) {
+                        setDateFilter('custom');
+                        setActiveStatsFilter(null);
+                        setEmployeeRotationIndex(-1);
+                        setProjectRotationIndex(-1);
+                      }
                     }}
-                    className="h-10 text-xs font-normal flex-1"
-                  >
-                    Mes
-                  </Button>
+                    className={cn(
+                      "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center",
+                      dateFilter === 'custom' 
+                        ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                        : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    )}
+                  />
+                  
+                  {/* Botón Todo */}
                   <Button
-                    variant={dateFilter === 'all' ? 'default' : 'outline'}
+                    variant="outline"
                     size="sm"
                     onClick={() => {
                       setDateFilter('all');
                       setActiveStatsFilter(null);
                       setEmployeeRotationIndex(-1);
                       setProjectRotationIndex(-1);
+                      setSelectedStartDate(null);
+                      setSelectedEndDate(null);
+                      setStartDate('');
+                      setEndDate('');
                     }}
-                    className="h-10 text-xs font-normal flex-1"
+                    className={cn(
+                      "h-10 text-xs font-normal flex-1",
+                      dateFilter === 'all' 
+                        ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                        : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    )}
                   >
                     Todo
                   </Button>
