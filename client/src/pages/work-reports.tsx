@@ -634,10 +634,10 @@ export default function WorkReportsPage() {
       </Dialog>
 
       {/* New Report Button */}
-      <div className="px-6 pb-4 flex items-center gap-3">
+      <div className={`px-6 pb-4 grid gap-3 ${signatureData?.signatureUrl ? 'grid-cols-2' : 'grid-cols-1'}`}>
         <Button 
           onClick={() => { resetForm(); handleCreateClick(); }} 
-          className="bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 text-gray-900 dark:text-white border-gray-200 dark:border-white/20"
+          className="w-full bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 text-gray-900 dark:text-white border-gray-200 dark:border-white/20"
           data-testid="button-new-report"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -646,9 +646,8 @@ export default function WorkReportsPage() {
         {signatureData?.signatureUrl && (
           <Button
             variant="outline"
-            size="sm"
             onClick={() => setIsSignatureDialogOpen(true)}
-            className="text-gray-600 dark:text-gray-300"
+            className="w-full text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600"
           >
             <PenTool className="w-4 h-4 mr-2" />
             Cambiar firma
