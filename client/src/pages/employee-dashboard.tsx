@@ -1188,8 +1188,8 @@ export default function EmployeeDashboard() {
 
   return (
     <div className="h-screen bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col overflow-hidden">
-      {/* Fixed Content Container - Sin scroll */}
-      <div className="flex-1 flex flex-col p-4">
+      {/* Fixed Content Container - Sin scroll, todo cabe en pantalla */}
+      <div className="flex-1 flex flex-col px-4 pt-3 pb-0 min-h-0">
         {/* Header - Compacto */}
         <div className="flex justify-between items-center py-2 flex-shrink-0">
           <div className="flex items-center gap-2">
@@ -1297,7 +1297,7 @@ export default function EmployeeDashboard() {
         </div>
 
         {/* Company Logo and Name - Más grande sin cajón */}
-        <div className="flex justify-center mb-3">
+        <div className="flex justify-center mb-2 flex-shrink-0">
           <Dialog>
             <DialogTrigger asChild>
               <button className="text-center hover:scale-105 transition-transform duration-200 cursor-pointer">
@@ -1390,11 +1390,11 @@ export default function EmployeeDashboard() {
         </div>
 
         {/* Menu Grid - Carrusel estilo iPhone */}
-        <div className="mb-2 relative">
+        <div className="mb-1 relative flex-shrink-0">
           {/* Contenedor del carrusel con overflow visible para notificaciones */}
           <div 
             ref={menuContainerRef}
-            className="overflow-x-clip overflow-y-visible pt-3"
+            className="overflow-x-clip overflow-y-visible pt-2"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -1517,7 +1517,7 @@ export default function EmployeeDashboard() {
           
           {/* Indicadores de página (puntitos) */}
           {totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-3">
+            <div className="flex justify-center gap-2 mt-2">
               {Array.from({ length: totalPages }).map((_, index) => (
                 <button
                   key={index}
@@ -1535,7 +1535,7 @@ export default function EmployeeDashboard() {
         </div>
 
         {/* Status Line and Last Clock In Info / Temporary Message - Compacto */}
-        <div className="text-center mb-2 mt-6 flex justify-center">
+        <div className="text-center mb-2 mt-3 flex justify-center flex-shrink-0">
           <div className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-white/20 p-2 w-[304px] shadow-md">
             {/* Status Line */}
             <div className={`text-xs mb-2 font-medium ${
@@ -1593,7 +1593,7 @@ export default function EmployeeDashboard() {
         </div>
 
         {/* Clock Button or Vacation Message - Compacto */}
-        <div className="flex-1 flex items-center justify-center pb-4">
+        <div className="flex-1 flex items-center justify-center pb-2 min-h-0">
           {isOnVacation ? (
             <div className="flex flex-col items-center">
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 flex items-center justify-center mb-3 shadow-lg">
@@ -1672,7 +1672,7 @@ export default function EmployeeDashboard() {
       </div>
 
       {/* Small Oficaz logo at bottom */}
-      <div className="text-center pb-3">
+      <div className="text-center pb-2 flex-shrink-0">
         <div className="flex items-center justify-center space-x-1 text-gray-500 dark:text-gray-400 text-xs">
           <span className="font-semibold text-blue-500 dark:text-blue-400">Oficaz</span>
           <span>© {currentYear}</span>
