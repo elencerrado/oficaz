@@ -5,7 +5,7 @@ import { Send, Loader2, Minimize2, RotateCcw } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useChatBridge } from "@/lib/chat-bridge";
+import { useChatBridge, triggerAINavigation } from "@/lib/chat-bridge";
 import oficazLogo from "@/assets/oficaz-logo.png";
 
 interface Message {
@@ -272,6 +272,14 @@ export function AIAssistantChat() {
         document.body.removeChild(link);
       }
 
+      // Navigate to page if navigateTo is present (from navigateToPage function)
+      // Uses SPA navigation via custom event to avoid full page reload
+      if (response.navigateTo) {
+        setTimeout(() => {
+          triggerAINavigation(response.navigateTo);
+        }, 1000); // Small delay to allow user to see the AI response
+      }
+
       // Invalidate relevant queries based on the function that was called
       if (response.functionCalled) {
         const functionsArray = response.functionCalled.split(", ");
@@ -328,6 +336,9 @@ export function AIAssistantChat() {
               break;
             case "generateTimeReport":
               // No query invalidation needed for reports
+              break;
+            case "navigateToPage":
+              // No query invalidation needed, navigation happens via window.location
               break;
           }
         }

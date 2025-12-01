@@ -20,6 +20,11 @@ let chatBridgeState: ChatBridgeState = {
   hasChatAccess: false,
 };
 
+// Navigation event for AI assistant to trigger SPA navigation
+export function triggerAINavigation(url: string) {
+  window.dispatchEvent(new CustomEvent('ai-assistant-navigate', { detail: { url } }));
+}
+
 // Cache last valid state to prevent unmounting during auth refetch
 let lastValidState: ChatBridgeState | null = null;
 

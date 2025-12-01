@@ -246,7 +246,22 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 function Router() {
   const { user, company } = useAuth();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  
+  // Listen for AI assistant navigation events (SPA navigation without full page reload)
+  useEffect(() => {
+    const handleAINavigation = (event: CustomEvent<{ url: string }>) => {
+      if (event.detail?.url) {
+        console.log('🧭 AI Navigation to:', event.detail.url);
+        setLocation(event.detail.url);
+      }
+    };
+    
+    window.addEventListener('ai-assistant-navigate', handleAINavigation as EventListener);
+    return () => {
+      window.removeEventListener('ai-assistant-navigate', handleAINavigation as EventListener);
+    };
+  }, [setLocation]);
   
   // Super admin routes handled separately - PROTECTED: Only if no regular user session exists
   if (location.startsWith('/super-admin')) {
