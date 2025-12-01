@@ -3271,29 +3271,6 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  // Recalculate vacation days for all employees
-  app.post('/api/settings/recalculate-vacation-days', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
-    try {
-      const companyId = req.user!.companyId;
-      const employees = await storage.getUsersByCompany(companyId);
-      
-      let updatedCount = 0;
-      for (const employee of employees) {
-        await storage.updateUserVacationDays(employee.id);
-        updatedCount++;
-      }
-
-      res.json({ 
-        success: true, 
-        message: `Días de vacaciones recalculados para ${updatedCount} empleados`,
-        updatedEmployees: updatedCount
-      });
-    } catch (error: any) {
-      console.error('Error recalculating vacation days:', error);
-      res.status(500).json({ message: error.message });
-    }
-  });
-
   // Get company by alias route
   app.get('/api/company/:alias', async (req, res) => {
     try {
