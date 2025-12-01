@@ -1643,9 +1643,9 @@ export default function AdminWorkReportsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="disabled">Sin acceso</SelectItem>
-                      <SelectItem value="manual">Acceso manual</SelectItem>
-                      <SelectItem value="both">Ambas opciones</SelectItem>
+                      <SelectItem value="disabled">No puede crear partes</SelectItem>
+                      <SelectItem value="manual">En página de partes</SelectItem>
+                      <SelectItem value="both">En página y al cerrar fichaje</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
