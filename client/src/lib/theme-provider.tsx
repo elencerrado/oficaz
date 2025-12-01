@@ -10,11 +10,12 @@ interface ThemeProviderContextType {
 const ThemeProviderContext = createContext<ThemeProviderContextType | undefined>(undefined);
 
 // Theme colors for PWA status bar - exported for use in other components
+// IMPORTANT: These must match the CSS --background variable in index.css
 export const THEME_COLORS = {
   employeeLight: '#f9fafb',  // gray-50
-  employeeDark: '#232B36',   // employee dark mode
+  employeeDark: '#0f172a',   // hsl(222, 47%, 11%) - slate-900, matches CSS .dark --background
   adminLight: '#FFFFFF',     // white
-  adminDark: '#020817',      // hsl(222.2 84% 4.9%)
+  adminDark: '#0f172a',      // hsl(222, 47%, 11%) - slate-900, matches CSS .dark --background
 };
 
 // Update meta theme-color for PWA status bar - exported for use in other components
