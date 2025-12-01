@@ -1236,11 +1236,12 @@ export default function AdminDocuments() {
                                 <Download className="h-4 w-4" />
                               )}
                             </Button>
-                            {/* Sign button for payroll documents owned by current user */}
+                            {/* Sign button for documents requiring signature owned by current user */}
                             {(() => {
                               const fileName = document.originalName || document.fileName || '';
                               const analysis = analyzeFileName(fileName, employees);
-                              return analysis.documentType === 'Nómina' && 
+                              const requiresSignature = analysis.documentType === 'Nómina' || document.requiresSignature;
+                              return requiresSignature && 
                                      document.userId === user?.id && 
                                      !document.isAccepted && 
                                      document.isViewed && (
@@ -1429,8 +1430,8 @@ export default function AdminDocuments() {
                                                         <Download className="h-3 w-3" />
                                                       )}
                                                     </Button>
-                                                    {/* Sign button for payroll documents owned by current user in grid view */}
-                                                    {type === 'nomina' && 
+                                                    {/* Sign button for documents requiring signature owned by current user in grid view */}
+                                                    {(type === 'nomina' || document.requiresSignature) && 
                                                      document.userId === user?.id && 
                                                      !document.isAccepted && 
                                                      document.isViewed && (
