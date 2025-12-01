@@ -9181,6 +9181,7 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
             // Capture navigateTo URL from functions that support navigation
             const functionsWithNavigation = ['navigateToPage', 'getEmployeeWorkHours', 'getVacationBalance', 'getPendingApprovals', 'generateTimeReport'];
             if (functionsWithNavigation.includes(functionName) && result.navigateTo) {
+              console.log(`🧭 Captured navigateTo from ${functionName}:`, result.navigateTo);
               navigateToUrl = result.navigateTo;
             }
             
