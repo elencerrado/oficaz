@@ -45,7 +45,8 @@ import {
   FolderOpen,
   Receipt,
   FileSignature,
-  Loader2
+  Loader2,
+  Undo2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -69,6 +70,7 @@ interface Document {
   isAccepted?: boolean;
   acceptedAt?: string;
   signedAt?: string;
+  requiresSignature?: boolean;
   user?: {
     fullName: string;
     profilePicture?: string;
@@ -175,6 +177,15 @@ export default function AdminDocuments() {
   const [uploadRequiresSignature, setUploadRequiresSignature] = useState(false);
   const [uploadSelectedEmployees, setUploadSelectedEmployees] = useState<number[]>([]);
   const [uploadEmployeeSearch, setUploadEmployeeSearch] = useState('');
+  
+  // Last circular upload tracking for undo functionality
+  const [lastCircularUpload, setLastCircularUpload] = useState<{
+    documentIds: number[];
+    fileName: string;
+    employeeCount: number;
+    timestamp: Date;
+  } | null>(null);
+  const [showUndoConfirm, setShowUndoConfirm] = useState(false);
   
   // Loading state for document operations
   const [viewingDocId, setViewingDocId] = useState<number | null>(null);
@@ -402,6 +413,48 @@ export default function AdminDocuments() {
     },
   });
 
+  // Undo last circular upload - delete multiple documents
+  const undoCircularMutation = useMutation({
+    mutationFn: async (documentIds: number[]) => {
+      const authData = localStorage.getItem('authData');
+      const token = authData ? JSON.parse(authData).token : '';
+      
+      // Delete each document
+      const results = await Promise.all(
+        documentIds.map(async (docId) => {
+          const response = await fetch(`/api/documents/${docId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          return response.ok;
+        })
+      );
+      
+      const successCount = results.filter(Boolean).length;
+      return { successCount, totalCount: documentIds.length };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/documents/all'] });
+      queryClient.refetchQueries({ queryKey: ['/api/documents/all'] });
+      toast({
+        title: 'Envío deshecho',
+        description: `Se han eliminado ${data.successCount} de ${data.totalCount} documentos`,
+      });
+      setLastCircularUpload(null);
+      setShowUndoConfirm(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error al deshacer',
+        description: error.message || 'No se pudieron eliminar todos los documentos',
+        variant: 'destructive',
+      });
+      setShowUndoConfirm(false);
+    },
+  });
+
   // Use analyzeFileName from shared utilities
 
   // ⚠️ PROTECTED - DO NOT MODIFY: Generate clean filename with document type, employee name and date
@@ -515,6 +568,9 @@ export default function AdminDocuments() {
       if (uploadMode === 'circular') {
         // Circular mode: Upload file ONCE, create records for ALL selected employees
         // One physical file shared by all recipients, signature overlaid dynamically on download
+        const allCreatedDocIds: number[] = [];
+        let lastFileName = '';
+        
         for (const analysis of uploadAnalysis) {
           const formData = new FormData();
           formData.append('file', analysis.file);
@@ -534,6 +590,23 @@ export default function AdminDocuments() {
           if (!response.ok) {
             throw new Error('Error al enviar circular');
           }
+          
+          // Capture created document IDs for undo functionality
+          const result = await response.json();
+          if (result.documents && Array.isArray(result.documents)) {
+            allCreatedDocIds.push(...result.documents.map((doc: any) => doc.id));
+          }
+          lastFileName = analysis.file.name;
+        }
+        
+        // Store last circular upload info for undo
+        if (allCreatedDocIds.length > 0) {
+          setLastCircularUpload({
+            documentIds: allCreatedDocIds,
+            fileName: lastFileName,
+            employeeCount: uploadSelectedEmployees.length,
+            timestamp: new Date()
+          });
         }
         
         // Refresh document list
@@ -992,19 +1065,46 @@ export default function AdminDocuments() {
 
         {/* Tab Content */}
         {activeTab === 'upload' && (
-          <Card>
-            <CardContent className="p-6">
-              <div
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  dragOver
-                    ? 'border-blue-400 bg-blue-50'
-                    : 'border-gray-300 hover:border-gray-400'
-                }`}
-              >
-                <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <>
+            {/* Undo Last Circular Upload */}
+            {lastCircularUpload && (
+              <Alert className="mb-4 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700">
+                <Undo2 className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="flex items-center justify-between">
+                  <span className="text-amber-700 dark:text-amber-300">
+                    Último envío: <strong>{lastCircularUpload.fileName}</strong> a {lastCircularUpload.employeeCount} empleado(s)
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowUndoConfirm(true)}
+                    className="text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30 border-amber-300 dark:border-amber-600 h-8"
+                    disabled={undoCircularMutation.isPending}
+                  >
+                    {undoCircularMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    ) : (
+                      <Undo2 className="h-4 w-4 mr-1" />
+                    )}
+                    Deshacer envío
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            <Card>
+              <CardContent className="p-6">
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                    dragOver
+                      ? 'border-blue-400 bg-blue-50'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                 <p className="text-lg font-medium text-foreground mb-2">
                   Arrastra documentos aquí
                 </p>
@@ -1066,6 +1166,68 @@ export default function AdminDocuments() {
               </div>
             </CardContent>
           </Card>
+          
+          {/* Undo Confirmation Dialog */}
+          <Dialog open={showUndoConfirm} onOpenChange={setShowUndoConfirm}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-amber-600">
+                  <AlertTriangle className="h-5 w-5" />
+                  Confirmar deshacer envío
+                </DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <p className="text-muted-foreground mb-4">
+                  ¿Estás seguro de que quieres eliminar el último envío?
+                </p>
+                {lastCircularUpload && (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-700">
+                    <p className="font-medium text-amber-800 dark:text-amber-200 mb-2">
+                      Se eliminarán:
+                    </p>
+                    <ul className="text-sm text-amber-700 dark:text-amber-300 space-y-1">
+                      <li>• Archivo: <strong>{lastCircularUpload.fileName}</strong></li>
+                      <li>• {lastCircularUpload.documentIds.length} copias enviadas a {lastCircularUpload.employeeCount} empleado(s)</li>
+                    </ul>
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground mt-4">
+                  Esta acción eliminará permanentemente todos los documentos de este envío.
+                </p>
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowUndoConfirm(false)}
+                  disabled={undoCircularMutation.isPending}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (lastCircularUpload) {
+                      undoCircularMutation.mutate(lastCircularUpload.documentIds);
+                    }
+                  }}
+                  disabled={undoCircularMutation.isPending}
+                >
+                  {undoCircularMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Eliminar envío
+                    </>
+                  )}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          </>
         )}
 
         {activeTab === 'explorer' && (
