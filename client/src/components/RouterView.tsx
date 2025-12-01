@@ -207,6 +207,38 @@ function AppLayoutContent({
     setSidebarContextOpen(isSidebarOpen);
   }, [isSidebarOpen, setSidebarContextOpen]);
 
+  // Sync theme-color for admin PWA mode
+  React.useEffect(() => {
+    const root = document.documentElement;
+    
+    // Remove employee-mode class if present (admin mode)
+    root.classList.remove('employee-mode');
+    
+    // Sync theme-color with current theme for admin
+    const syncAdminThemeColor = () => {
+      const isDark = root.classList.contains('dark');
+      updateThemeColor(isDark ? THEME_COLORS.adminDark : THEME_COLORS.adminLight);
+    };
+    
+    // Initial sync
+    syncAdminThemeColor();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          syncAdminThemeColor();
+        }
+      });
+    });
+    
+    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
+    
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <ReminderBanner />

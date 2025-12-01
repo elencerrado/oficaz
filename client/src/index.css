@@ -617,20 +617,21 @@ html.employee-mode.light body {
 }
 
 /* ADMIN MODE - NOTCH RESPONSIVE A DARK/LIGHT */
+/* Colors must match THEME_COLORS in theme-provider.tsx */
 html.light:not(.employee-mode) {
-  background: hsl(0 0% 100%) !important; /* Blanco por defecto para admin claro */
+  background: #FFFFFF !important; /* Blanco puro para admin claro */
 }
 
 html.light:not(.employee-mode) body {
-  background: hsl(0 0% 100%) !important;
+  background: #FFFFFF !important;
 }
 
 html.dark:not(.employee-mode) {
-  background: hsl(222.2 84% 4.9%) !important; /* Gris oscuro para admin oscuro */
+  background: #0f172a !important; /* slate-900 = hsl(222, 47%, 11%) para admin oscuro */
 }
 
 html.dark:not(.employee-mode) body {
-  background: hsl(222.2 84% 4.9%) !important;
+  background: #0f172a !important;
 }
 
 /* PÁGINAS PÚBLICAS OSCURAS - Login/Registro/Código - MAYOR ESPECIFICIDAD */
@@ -665,8 +666,17 @@ body {
 #root {
   min-height: 100vh;
   min-height: -webkit-fill-available;
-  background: #2A3441 !important;
   position: relative;
+}
+
+/* Employee mode #root background */
+html.employee-mode #root {
+  background: inherit !important;
+}
+
+/* Admin mode #root inherits from html/body */
+html:not(.employee-mode) #root {
+  background: inherit !important;
 }
 
 /* Pseudo-elements removed - were causing bounce effect on iOS PWA */
