@@ -1051,8 +1051,8 @@ export default function EmployeeDashboard() {
     ] : []),
   ];
 
-  // Dividir items en páginas de 9 (grid 3x3)
-  const itemsPerPage = 9;
+  // Dividir items en páginas de 6 (grid 3x2)
+  const itemsPerPage = 6;
   const menuPages = useMemo(() => {
     const pages: typeof menuItems[] = [];
     for (let i = 0; i < menuItems.length; i += itemsPerPage) {
