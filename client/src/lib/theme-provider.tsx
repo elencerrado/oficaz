@@ -9,6 +9,44 @@ interface ThemeProviderContextType {
 
 const ThemeProviderContext = createContext<ThemeProviderContextType | undefined>(undefined);
 
+// Theme colors for PWA status bar - exported for use in other components
+export const THEME_COLORS = {
+  employeeLight: '#f9fafb',  // gray-50
+  employeeDark: '#232B36',   // employee dark mode
+  adminLight: '#FFFFFF',     // white
+  adminDark: '#020817',      // hsl(222.2 84% 4.9%)
+};
+
+// Update meta theme-color for PWA status bar - exported for use in other components
+export const updateThemeColor = (color: string) => {
+  // Remove any existing theme-color meta tags without media queries
+  const existingMetas = document.querySelectorAll('meta[name="theme-color"]:not([media])');
+  existingMetas.forEach(meta => meta.remove());
+  
+  // Create or update the main theme-color (without media query, overrides the ones with media)
+  let metaThemeColor = document.querySelector('meta[name="theme-color"]:not([media])') as HTMLMetaElement;
+  if (!metaThemeColor) {
+    metaThemeColor = document.createElement('meta');
+    metaThemeColor.name = 'theme-color';
+    document.head.appendChild(metaThemeColor);
+  }
+  metaThemeColor.content = color;
+  
+  // Also update the media query ones for consistency
+  const lightMeta = document.querySelector('meta[name="theme-color"][media*="light"]') as HTMLMetaElement;
+  const darkMeta = document.querySelector('meta[name="theme-color"][media*="dark"]') as HTMLMetaElement;
+  
+  // For employee pages, sync both to current theme
+  const isEmployeePage = window.location.pathname.includes('employee-dashboard') || 
+                         window.location.pathname.includes('/inicio') ||
+                         document.documentElement.classList.contains('employee-mode');
+  
+  if (isEmployeePage) {
+    if (lightMeta) lightMeta.content = color;
+    if (darkMeta) darkMeta.content = color;
+  }
+};
+
 interface ThemeProviderProps {
   children: React.ReactNode;
   defaultTheme?: Theme;
@@ -104,6 +142,7 @@ export function ThemeProvider({
   useEffect(() => {
     const applyTheme = () => {
       const root = window.document.documentElement;
+      const isEmployee = root.classList.contains('employee-mode');
 
       // Always remove existing theme classes first
       root.classList.remove('light', 'dark');
@@ -113,8 +152,9 @@ export function ThemeProvider({
       if (!isAdminRoute()) {
         root.classList.add('light');
         // Only force light color scheme if NOT in employee mode
-        if (!root.classList.contains('employee-mode')) {
+        if (!isEmployee) {
           root.style.colorScheme = 'light';
+          updateThemeColor(THEME_COLORS.adminLight);
         }
         return;
       }
@@ -130,6 +170,13 @@ export function ThemeProvider({
       root.classList.add(appliedTheme);
       // Set color scheme for better browser integration
       root.style.colorScheme = appliedTheme;
+      
+      // Update PWA status bar color based on theme and page type
+      if (isEmployee) {
+        updateThemeColor(appliedTheme === 'dark' ? THEME_COLORS.employeeDark : THEME_COLORS.employeeLight);
+      } else {
+        updateThemeColor(appliedTheme === 'dark' ? THEME_COLORS.adminDark : THEME_COLORS.adminLight);
+      }
       
       // Force a reflow to ensure changes are applied immediately
       void root.offsetHeight;
@@ -188,17 +235,26 @@ export function ThemeProvider({
         targetTheme = currentTheme;
       }
       
+      const isEmployee = root.classList.contains('employee-mode');
+      
       // Only update if theme actually changed
       if (!root.classList.contains(targetTheme)) {
         root.classList.remove('light', 'dark');
         root.classList.add(targetTheme);
         
         // Only force light color scheme for non-admin non-employee-mode
-        if (!isAdmin && !root.classList.contains('employee-mode')) {
+        if (!isAdmin && !isEmployee) {
           root.style.colorScheme = 'light';
         } else {
           root.style.colorScheme = targetTheme;
         }
+      }
+      
+      // Always update theme-color for PWA status bar on route change
+      if (isEmployee) {
+        updateThemeColor(targetTheme === 'dark' ? THEME_COLORS.employeeDark : THEME_COLORS.employeeLight);
+      } else {
+        updateThemeColor(targetTheme === 'dark' ? THEME_COLORS.adminDark : THEME_COLORS.adminLight);
       }
     };
 

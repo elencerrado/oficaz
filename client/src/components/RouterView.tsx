@@ -13,6 +13,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { MobileHeader } from "@/components/layout/mobile-header";
 import { ReminderBanner } from "@/components/ui/reminder-banner";
 import { TestBanner } from "@/components/test-banner";
+import { updateThemeColor, THEME_COLORS } from "@/lib/theme-provider";
 
 import { lazy, Suspense } from "react";
 
@@ -135,11 +136,34 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     // Reset scroll for employees too
     useScrollReset();
     
-    // Apply employee-mode class to html for notch color
+    // Apply employee-mode class to html for notch color and sync PWA theme-color
     useEffect(() => {
-      document.documentElement.classList.add('employee-mode');
+      const root = document.documentElement;
+      root.classList.add('employee-mode');
+      
+      // Sync theme-color with current theme
+      const syncThemeColor = () => {
+        const isDark = root.classList.contains('dark');
+        updateThemeColor(isDark ? THEME_COLORS.employeeDark : THEME_COLORS.employeeLight);
+      };
+      
+      // Initial sync
+      syncThemeColor();
+      
+      // Listen for theme changes
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.attributeName === 'class') {
+            syncThemeColor();
+          }
+        });
+      });
+      
+      observer.observe(root, { attributes: true, attributeFilter: ['class'] });
+      
       return () => {
-        document.documentElement.classList.remove('employee-mode');
+        observer.disconnect();
+        root.classList.remove('employee-mode');
       };
     }, []);
     

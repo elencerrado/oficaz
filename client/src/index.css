@@ -598,13 +598,21 @@ body {
   position: relative;
 }
 
-/* EMPLOYEE MODE - NOTCH COLOR FIJO */
-html.employee-mode {
+/* EMPLOYEE MODE - NOTCH COLOR RESPONSIVE A DARK/LIGHT */
+html.employee-mode.dark {
   background: #232B36 !important;
 }
 
-html.employee-mode body {
+html.employee-mode.dark body {
   background: #232B36 !important;
+}
+
+html.employee-mode.light {
+  background: #f9fafb !important;
+}
+
+html.employee-mode.light body {
+  background: #f9fafb !important;
 }
 
 /* ADMIN MODE - NOTCH RESPONSIVE A DARK/LIGHT */
