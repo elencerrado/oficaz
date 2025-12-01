@@ -646,9 +646,8 @@ html.light.dark-notch:not(.employee-mode) body {
 body {
   /* Prevent bounce effect that shows white area */
   overscroll-behavior: none;
-  -webkit-overflow-scrolling: auto;
+  -webkit-overflow-scrolling: touch;
   overflow-x: hidden; /* Prevent horizontal scroll */
-  overflow-y: hidden; /* Prevent vertical scroll on body */
 }
 
 
@@ -670,28 +669,7 @@ body {
   position: relative;
 }
 
-/* Prevent white area on overscroll - must match bg-employee-gradient */
-body::before {
-  content: '';
-  position: fixed;
-  top: -100px;
-  left: 0;
-  right: 0;
-  height: 100px;
-  background: #2A3441;
-  z-index: -1;
-}
-
-body::after {
-  content: '';
-  position: fixed;
-  bottom: -100px;
-  left: 0;
-  right: 0;
-  height: 100px;
-  background: #2A3441;
-  z-index: -1;
-}
+/* Pseudo-elements removed - were causing bounce effect on iOS PWA */
 
 /* Animations for charts */
 @keyframes fadeInUp {
