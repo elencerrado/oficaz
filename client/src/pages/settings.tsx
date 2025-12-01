@@ -2186,32 +2186,23 @@ export default function Settings() {
         }));
       }
       
-      // Si se actualizaron políticas de vacaciones, recalcular días automáticamente
-      if (data.company && (data.company.vacationDaysPerMonth || data.company.defaultVacationDays)) {
-        try {
-          const recalcResponse = await fetch('/api/settings/recalculate-vacation-days', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...getAuthHeaders()
-            }
-          });
-          
-          if (recalcResponse.ok) {
-            const recalcResult = await recalcResponse.json();
-            toast({
-              title: 'Días de vacaciones recalculados',
-              description: `Se actualizaron los días de vacaciones de ${recalcResult.updatedEmployees} empleados`,
-            });
-          }
-        } catch (error) {
-          console.error('Error al recalcular días de vacaciones:', error);
-        }
+      // Los días de vacaciones ya se recalculan en el backend cuando se guarda la empresa
+      // Solo mostramos el mensaje si hubo recálculo
+      if (data.vacationDaysRecalculated) {
+        toast({
+          title: 'Días de vacaciones recalculados',
+          description: `Se actualizaron los días de vacaciones de ${data.vacationDaysRecalculated} empleados`,
+        });
       }
       
       // Force immediate refresh of auth data to update company info including logo
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
+      
+      // Invalidar queries de empleados y vacaciones para actualización inmediata
+      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users/employees'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
       
       // Refresh authentication context to update logo in all components
       refreshUser();
