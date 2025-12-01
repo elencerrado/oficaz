@@ -94,6 +94,12 @@ export default function EmployeeDashboard() {
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [showClientSuggestions, setShowClientSuggestions] = useState(false);
 
+  // Estado para el carrusel de iconos estilo iPhone
+  const [menuPage, setMenuPage] = useState(0);
+  const menuContainerRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
+
   // Queries para autocompletado de partes de obra anteriores
   const { data: refCodeSuggestions } = useQuery<string[]>({
     queryKey: ['/api/work-reports/ref-codes'],
@@ -1045,6 +1051,42 @@ export default function EmployeeDashboard() {
     ] : []),
   ];
 
+  // Dividir items en páginas de 9 (grid 3x3)
+  const itemsPerPage = 9;
+  const menuPages = useMemo(() => {
+    const pages: typeof menuItems[] = [];
+    for (let i = 0; i < menuItems.length; i += itemsPerPage) {
+      pages.push(menuItems.slice(i, i + itemsPerPage));
+    }
+    return pages;
+  }, [menuItems]);
+
+  const totalPages = menuPages.length;
+
+  // Handlers para swipe del carrusel
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const diff = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50;
+
+    if (Math.abs(diff) > minSwipeDistance) {
+      if (diff > 0 && menuPage < totalPages - 1) {
+        // Deslizar izquierda - siguiente página
+        setMenuPage(menuPage + 1);
+      } else if (diff < 0 && menuPage > 0) {
+        // Deslizar derecha - página anterior
+        setMenuPage(menuPage - 1);
+      }
+    }
+  };
+
   const currentYear = new Date().getFullYear();
 
   // Initialize notifications and page setup
@@ -1283,77 +1325,107 @@ export default function EmployeeDashboard() {
           </Dialog>
         </div>
 
-        {/* Menu Grid - Compacto */}
+        {/* Menu Grid - Carrusel estilo iPhone */}
         <div className="mb-2">
-          <div className="grid grid-cols-4 gap-2">
-            {menuItems.map((item, index) => {
-              const isFeatureDisabled = item.feature && !hasAccess(item.feature);
-              
-
-              
-              return (
-                <div key={index} className="flex flex-col items-center group">
-                  <button
-                    onClick={() => {
-                      if (isFeatureDisabled) {
-                        return; // Do nothing if feature is disabled
-                      }
+          {/* Contenedor del carrusel con overflow hidden */}
+          <div 
+            ref={menuContainerRef}
+            className="overflow-hidden"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* Contenedor deslizable */}
+            <div 
+              className="flex transition-transform duration-300 ease-out"
+              style={{ transform: `translateX(-${menuPage * 100}%)` }}
+            >
+              {menuPages.map((pageItems, pageIndex) => (
+                <div key={pageIndex} className="w-full flex-shrink-0 px-2">
+                  <div className="grid grid-cols-3 gap-3 justify-items-center">
+                    {pageItems.map((item, index) => {
+                      const isFeatureDisabled = item.feature && !hasAccess(item.feature);
                       
-                      if (item.title === 'Vacaciones') {
-                        // Update last check time and clear notification when user visits vacations page
-                        localStorage.setItem('lastVacationCheck', new Date().toISOString());
-                        if (hasVacationUpdates) {
-                          setHasVacationUpdates(false);
-                          localStorage.removeItem('hasVacationUpdates');
-                          localStorage.removeItem('vacationNotificationType');
-                        }
-                      }
-                      
-                      if (item.title === 'Documentos') {
-                        // Mark visit time for clearing non-payroll document notifications
-                        localStorage.setItem('lastDocumentPageVisit', new Date().toISOString());
-                        // Note: Green notifications for payrolls will only clear when document is signed
-                        // Green notifications for other documents will clear on next dashboard load
-                      }
-                      
-                      handleNavigation(item.route);
-                    }}
-                    className={`relative w-[72px] h-[72px] transition-all duration-200 rounded-2xl flex items-center justify-center mb-2 backdrop-blur-xl border ${
-                      isFeatureDisabled 
-                        ? 'bg-gray-200 dark:bg-gray-500/20 border-gray-300 dark:border-gray-400/30 cursor-not-allowed opacity-40' 
-                        : 'bg-[#007AFF] hover:bg-[#0056CC] border-[#007AFF] hover:border-[#0056CC]'
-                    }`}
-                    disabled={isFeatureDisabled}
-                  >
-                    <item.icon className={`h-9 w-9 transition-all duration-200 ${
-                      isFeatureDisabled 
-                        ? 'text-gray-300 dark:text-gray-400/50' 
-                        : 'text-white drop-shadow-lg'
-                    }`} />
-                    {item.notification && !isFeatureDisabled && (
-                      <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full border-2 border-white dark:border-gray-900 shadow-lg animate-bounce ${
-                        (item as any).notificationType === 'red' ? 'bg-gradient-to-r from-red-500 to-pink-500' : 
-                        (item as any).notificationType === 'green' ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-red-500 to-pink-500'
-                      }`}>
-                        <div className="w-full h-full rounded-full animate-ping opacity-75 bg-white/30"></div>
-                      </div>
-                    )}
-                    {/* Efecto de brillo en hover */}
-                    {!isFeatureDisabled && (
-                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform -skew-x-12"></div>
-                    )}
-                  </button>
-                  <span className={`text-xs font-medium text-center leading-tight transition-all duration-300 ${
-                    isFeatureDisabled 
-                      ? 'text-gray-400 dark:text-white/30' 
-                      : 'text-gray-700 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white group-hover:scale-105'
-                  }`}>
-                    {item.title}
-                  </span>
+                      return (
+                        <div key={index} className="flex flex-col items-center group">
+                          <button
+                            onClick={() => {
+                              if (isFeatureDisabled) {
+                                return;
+                              }
+                              
+                              if (item.title === 'Vacaciones') {
+                                localStorage.setItem('lastVacationCheck', new Date().toISOString());
+                                if (hasVacationUpdates) {
+                                  setHasVacationUpdates(false);
+                                  localStorage.removeItem('hasVacationUpdates');
+                                  localStorage.removeItem('vacationNotificationType');
+                                }
+                              }
+                              
+                              if (item.title === 'Documentos') {
+                                localStorage.setItem('lastDocumentPageVisit', new Date().toISOString());
+                              }
+                              
+                              handleNavigation(item.route);
+                            }}
+                            className={`relative w-[72px] h-[72px] transition-all duration-200 rounded-2xl flex items-center justify-center mb-2 backdrop-blur-xl border ${
+                              isFeatureDisabled 
+                                ? 'bg-gray-200 dark:bg-gray-500/20 border-gray-300 dark:border-gray-400/30 cursor-not-allowed opacity-40' 
+                                : 'bg-[#007AFF] hover:bg-[#0056CC] border-[#007AFF] hover:border-[#0056CC]'
+                            }`}
+                            disabled={isFeatureDisabled}
+                          >
+                            <item.icon className={`h-9 w-9 transition-all duration-200 ${
+                              isFeatureDisabled 
+                                ? 'text-gray-300 dark:text-gray-400/50' 
+                                : 'text-white drop-shadow-lg'
+                            }`} />
+                            {item.notification && !isFeatureDisabled && (
+                              <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full border-2 border-white dark:border-gray-900 shadow-lg animate-bounce ${
+                                (item as any).notificationType === 'red' ? 'bg-gradient-to-r from-red-500 to-pink-500' : 
+                                (item as any).notificationType === 'green' ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-red-500 to-pink-500'
+                              }`}>
+                                <div className="w-full h-full rounded-full animate-ping opacity-75 bg-white/30"></div>
+                              </div>
+                            )}
+                            {!isFeatureDisabled && (
+                              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform -skew-x-12"></div>
+                            )}
+                          </button>
+                          <span className={`text-xs font-medium text-center leading-tight transition-all duration-300 ${
+                            isFeatureDisabled 
+                              ? 'text-gray-400 dark:text-white/30' 
+                              : 'text-gray-700 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white group-hover:scale-105'
+                          }`}>
+                            {item.title}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
+          
+          {/* Indicadores de página (puntitos) */}
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-3">
+              {Array.from({ length: totalPages }).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setMenuPage(index)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    index === menuPage 
+                      ? 'bg-[#007AFF] w-4' 
+                      : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+                  }`}
+                  aria-label={`Página ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Status Line and Last Clock In Info / Temporary Message - Compacto */}
