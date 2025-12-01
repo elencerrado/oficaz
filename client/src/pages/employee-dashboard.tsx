@@ -1187,7 +1187,14 @@ export default function EmployeeDashboard() {
   // Work alarms are now handled automatically by PWA push notifications
 
   return (
-    <div className="bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col overflow-hidden" style={{ height: '100dvh', maxHeight: '-webkit-fill-available', overscrollBehavior: 'none', WebkitOverflowScrolling: 'auto' }}>
+    <div 
+      className="bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col fixed inset-0"
+      style={{ 
+        overscrollBehavior: 'none',
+        touchAction: 'manipulation',
+        WebkitOverflowScrolling: 'auto'
+      }}
+    >
       {/* Fixed Content Container - Sin scroll, usa dvh para móviles reales */}
       <div className="flex-1 flex flex-col px-4 pt-2 pb-0 min-h-0">
         {/* Header - Compacto */}
