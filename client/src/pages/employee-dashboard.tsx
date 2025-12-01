@@ -1502,8 +1502,8 @@ export default function EmployeeDashboard() {
           
           {/* Menú de intercambio de iconos */}
           {showSwapMenu && longPressItem !== null && (
-            <div className="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm rounded-xl flex items-center justify-center">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-2xl max-w-[280px] w-full mx-4">
+            <div className="absolute inset-0 z-50 flex items-center justify-center">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-2xl max-w-[280px] w-full mx-4 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Intercambiar con:</h4>
                   <button 
