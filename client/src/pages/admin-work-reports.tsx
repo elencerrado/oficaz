@@ -169,17 +169,6 @@ export default function AdminWorkReportsPage() {
     notes: ''
   });
 
-  // Lista de meses que contienen partes (extraídos de los reportes)
-  const availableMonths = useMemo(() => {
-    const monthsSet = new Set<string>();
-    reports.forEach(report => {
-      const reportDate = parseISO(report.reportDate);
-      monthsSet.add(format(reportDate, 'yyyy-MM'));
-    });
-    // Ordenar de más reciente a más antiguo
-    return Array.from(monthsSet).sort((a, b) => b.localeCompare(a));
-  }, [reports]);
-
   // Calcular rango de fechas según el filtro
   const dateRangeParams = useMemo(() => {
     const today = new Date();
@@ -279,6 +268,17 @@ export default function AdminWorkReportsPage() {
     staleTime: 30000,
     placeholderData: keepPreviousData
   });
+
+  // Lista de meses que contienen partes (extraídos de los reportes)
+  const availableMonths = useMemo(() => {
+    const monthsSet = new Set<string>();
+    reports.forEach(report => {
+      const reportDate = parseISO(report.reportDate);
+      monthsSet.add(format(reportDate, 'yyyy-MM'));
+    });
+    // Ordenar de más reciente a más antiguo
+    return Array.from(monthsSet).sort((a, b) => b.localeCompare(a));
+  }, [reports]);
 
   const filteredReports = useMemo(() => {
     const searchLower = searchTerm.toLowerCase();
