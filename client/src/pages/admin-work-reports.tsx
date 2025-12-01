@@ -23,7 +23,6 @@ import {
   Filter,
   User,
   FileText,
-  CheckCircle,
   Download,
   FileSpreadsheet,
   Users,
@@ -33,7 +32,8 @@ import {
   Edit,
   Settings,
   Plus,
-  ArrowDown
+  ArrowDown,
+  FolderKanban
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -117,7 +117,10 @@ export default function AdminWorkReportsPage() {
   const [dateFilter, setDateFilter] = useState('all');
   const [employeeFilter, setEmployeeFilter] = useState('all');
   const [isExporting, setIsExporting] = useState(false);
-  const [activeStatsFilter, setActiveStatsFilter] = useState<'today' | 'week' | 'month' | null>(null);
+  const [activeStatsFilter, setActiveStatsFilter] = useState<'all' | 'month' | 'employee' | 'project' | null>(null);
+  const [employeeRotationIndex, setEmployeeRotationIndex] = useState(-1);
+  const [projectRotationIndex, setProjectRotationIndex] = useState(-1);
+  const [projectFilter, setProjectFilter] = useState<string>('all');
   const [displayedCount, setDisplayedCount] = useState(5);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -256,6 +259,11 @@ export default function AdminWorkReportsPage() {
   const filteredReports = useMemo(() => {
     const searchLower = searchTerm.toLowerCase();
     return reports.filter(report => {
+      // Filtro por proyecto (refCode)
+      if (projectFilter !== 'all' && report.refCode !== projectFilter) {
+        return false;
+      }
+      
       if (searchTerm === '') return true;
       
       const formattedDate = format(parseISO(report.reportDate), "d 'de' MMMM yyyy", { locale: es }).toLowerCase();
@@ -271,7 +279,7 @@ export default function AdminWorkReportsPage() {
         shortDate.includes(searchLower)
       );
     });
-  }, [reports, searchTerm]);
+  }, [reports, searchTerm, projectFilter]);
 
   // Reportes visibles para infinite scroll
   const visibleReports = useMemo(() => {
@@ -283,7 +291,7 @@ export default function AdminWorkReportsPage() {
   // Resetear displayedCount cuando cambian los filtros
   useEffect(() => {
     setDisplayedCount(5);
-  }, [dateFilter, employeeFilter, searchTerm]);
+  }, [dateFilter, employeeFilter, searchTerm, projectFilter]);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -303,28 +311,53 @@ export default function AdminWorkReportsPage() {
     return () => observer.disconnect();
   }, [hasMoreToDisplay, filteredReports.length]);
 
-  const handleTodayFilter = useCallback(() => {
+  // Lista de empleados únicos que han enviado partes
+  const uniqueEmployeesList = useMemo(() => {
+    const employeeMap = new Map<number, string>();
+    reports.forEach(r => {
+      if (!employeeMap.has(r.employeeId)) {
+        employeeMap.set(r.employeeId, r.employeeName);
+      }
+    });
+    return Array.from(employeeMap.entries()).map(([id, name]) => ({ id, name }));
+  }, [reports]);
+
+  // Lista de proyectos únicos (refCodes)
+  const uniqueProjectsList = useMemo(() => {
+    const projects = new Set<string>();
+    reports.forEach(r => {
+      if (r.refCode) projects.add(r.refCode);
+    });
+    return Array.from(projects).sort();
+  }, [reports]);
+
+  // Partes de este mes
+  const thisMonthReports = useMemo(() => {
+    const today = new Date();
+    const monthStart = startOfMonth(today);
+    const monthEnd = endOfMonth(today);
+    return reports.filter(r => {
+      const reportDate = parseISO(r.reportDate);
+      return reportDate >= monthStart && reportDate <= monthEnd;
+    });
+  }, [reports]);
+
+  // Handler Card 1: Todos los partes
+  const handleAllReportsFilter = useCallback(() => {
     setActiveStatsFilter(prev => {
-      if (prev === 'today') {
-        setDateFilter('all');
+      if (prev === 'all') {
         return null;
       }
-      setDateFilter('today');
-      return 'today';
+      setDateFilter('all');
+      setEmployeeFilter('all');
+      setProjectFilter('all');
+      setEmployeeRotationIndex(-1);
+      setProjectRotationIndex(-1);
+      return 'all';
     });
   }, []);
 
-  const handleThisWeekFilter = useCallback(() => {
-    setActiveStatsFilter(prev => {
-      if (prev === 'week') {
-        setDateFilter('all');
-        return null;
-      }
-      setDateFilter('this-week');
-      return 'week';
-    });
-  }, []);
-
+  // Handler Card 2: Partes este mes
   const handleThisMonthFilter = useCallback(() => {
     setActiveStatsFilter(prev => {
       if (prev === 'month') {
@@ -332,8 +365,56 @@ export default function AdminWorkReportsPage() {
         return null;
       }
       setDateFilter('this-month');
+      setEmployeeFilter('all');
+      setProjectFilter('all');
+      setEmployeeRotationIndex(-1);
+      setProjectRotationIndex(-1);
       return 'month';
     });
+  }, []);
+
+  // Handler Card 3: Rotar empleados
+  const handleEmployeeRotation = useCallback(() => {
+    if (uniqueEmployeesList.length === 0) return;
+    
+    const nextIndex = (employeeRotationIndex + 1) % uniqueEmployeesList.length;
+    setEmployeeRotationIndex(nextIndex);
+    setEmployeeFilter(String(uniqueEmployeesList[nextIndex].id));
+    setDateFilter('all');
+    setProjectFilter('all');
+    setProjectRotationIndex(-1);
+    setActiveStatsFilter('employee');
+  }, [employeeRotationIndex, uniqueEmployeesList]);
+
+  // Handler doble click Card 3: Mostrar todos los empleados
+  const handleEmployeeShowAll = useCallback(() => {
+    setEmployeeRotationIndex(-1);
+    setEmployeeFilter('all');
+    setDateFilter('all');
+    setProjectFilter('all');
+    setActiveStatsFilter(null);
+  }, []);
+
+  // Handler Card 4: Rotar proyectos
+  const handleProjectRotation = useCallback(() => {
+    if (uniqueProjectsList.length === 0) return;
+    
+    const nextIndex = (projectRotationIndex + 1) % uniqueProjectsList.length;
+    setProjectRotationIndex(nextIndex);
+    setProjectFilter(uniqueProjectsList[nextIndex]);
+    setDateFilter('all');
+    setEmployeeFilter('all');
+    setEmployeeRotationIndex(-1);
+    setActiveStatsFilter('project');
+  }, [projectRotationIndex, uniqueProjectsList]);
+
+  // Handler doble click Card 4: Mostrar todos los proyectos
+  const handleProjectShowAll = useCallback(() => {
+    setProjectRotationIndex(-1);
+    setProjectFilter('all');
+    setDateFilter('all');
+    setEmployeeFilter('all');
+    setActiveStatsFilter(null);
   }, []);
 
   const exportToFormat = async (format: 'pdf' | 'excel') => {
@@ -439,13 +520,17 @@ export default function AdminWorkReportsPage() {
   }, [editingReport, editFormData, updateReportMutation]);
 
   const stats = useMemo(() => {
-    const totalMinutes = filteredReports.reduce((sum, r) => sum + r.durationMinutes, 0);
-    const totalHours = Math.floor(totalMinutes / 60);
-    const remainingMinutes = totalMinutes % 60;
-    const uniqueEmployees = new Set(reports.map(r => r.employeeName)).size;
-    const completedCount = filteredReports.filter(r => r.status === 'submitted').length;
-    return { totalMinutes, totalHours, remainingMinutes, uniqueEmployees, completedCount };
-  }, [filteredReports, reports]);
+    const totalReports = reports.length;
+    const thisMonthCount = thisMonthReports.length;
+    const uniqueEmployeesCount = uniqueEmployeesList.length;
+    const uniqueProjectsCount = uniqueProjectsList.length;
+    return { 
+      totalReports, 
+      thisMonthCount, 
+      uniqueEmployeesCount, 
+      uniqueProjectsCount 
+    };
+  }, [reports, thisMonthReports, uniqueEmployeesList, uniqueProjectsList]);
 
   const filterTitle = useMemo(() => {
     switch (dateFilter) {
@@ -484,48 +569,60 @@ export default function AdminWorkReportsPage() {
     <div className={`transition-opacity duration-300 ${reportsLoading ? 'opacity-60' : 'opacity-100'}`}>
       {/* Stats Cards */}
       <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">
+        {/* Card 1: Total de partes */}
         <StatsCard
           title="Total Partes"
-          subtitle="Registrados"
-          value={filteredReports.length}
+          subtitle="Todos"
+          value={stats.totalReports}
           color="blue"
           icon={ClipboardList}
-          onClick={handleThisMonthFilter}
-          isActive={activeStatsFilter === 'month'}
+          onClick={handleAllReportsFilter}
+          isActive={activeStatsFilter === 'all'}
           isLoading={reportsLoading}
           index={0}
         />
         
+        {/* Card 2: Partes este mes */}
         <StatsCard
-          title="Horas Totales"
-          subtitle="Trabajadas"
-          value={`${stats.totalHours}h${stats.remainingMinutes > 0 ? ` ${stats.remainingMinutes}m` : ''}`}
+          title="Este Mes"
+          subtitle="Partes"
+          value={stats.thisMonthCount}
           color="green"
-          icon={Clock}
-          onClick={handleTodayFilter}
-          isActive={activeStatsFilter === 'today'}
+          icon={CalendarIcon}
+          onClick={handleThisMonthFilter}
+          isActive={activeStatsFilter === 'month'}
           isLoading={reportsLoading}
           index={1}
         />
         
+        {/* Card 3: Empleados - click rota, doble click todos */}
         <StatsCard
-          title="Empleados"
-          subtitle="Activos"
-          value={stats.uniqueEmployees}
+          title={employeeRotationIndex >= 0 && uniqueEmployeesList[employeeRotationIndex] 
+            ? uniqueEmployeesList[employeeRotationIndex].name.split(' ')[0] 
+            : "Empleados"}
+          subtitle={employeeRotationIndex >= 0 ? `${employeeRotationIndex + 1}/${stats.uniqueEmployeesCount}` : "Con partes"}
+          value={stats.uniqueEmployeesCount}
           color="purple"
           icon={Users}
-          onClick={handleThisWeekFilter}
-          isActive={activeStatsFilter === 'week'}
+          onClick={handleEmployeeRotation}
+          onDoubleClick={handleEmployeeShowAll}
+          isActive={activeStatsFilter === 'employee'}
           isLoading={reportsLoading}
           index={2}
         />
         
+        {/* Card 4: Proyectos - click rota, doble click todos */}
         <StatsCard
-          title="Completados"
-          subtitle="Partes"
-          value={stats.completedCount}
-          color="green"
-          icon={CheckCircle}
+          title={projectRotationIndex >= 0 && uniqueProjectsList[projectRotationIndex] 
+            ? uniqueProjectsList[projectRotationIndex] 
+            : "Proyectos"}
+          subtitle={projectRotationIndex >= 0 ? `${projectRotationIndex + 1}/${stats.uniqueProjectsCount}` : "Cod. Ref"}
+          value={stats.uniqueProjectsCount}
+          color="orange"
+          icon={FolderKanban}
+          onClick={handleProjectRotation}
+          onDoubleClick={handleProjectShowAll}
+          isActive={activeStatsFilter === 'project'}
           isLoading={reportsLoading}
           index={3}
         />
@@ -633,7 +730,9 @@ export default function AdminWorkReportsPage() {
                     size="sm"
                     onClick={() => {
                       setDateFilter('today');
-                      setActiveStatsFilter('today');
+                      setActiveStatsFilter(null);
+                      setEmployeeRotationIndex(-1);
+                      setProjectRotationIndex(-1);
                     }}
                     className="h-10 text-xs font-normal flex-1"
                   >
@@ -644,7 +743,9 @@ export default function AdminWorkReportsPage() {
                     size="sm"
                     onClick={() => {
                       setDateFilter('this-week');
-                      setActiveStatsFilter('week');
+                      setActiveStatsFilter(null);
+                      setEmployeeRotationIndex(-1);
+                      setProjectRotationIndex(-1);
                     }}
                     className="h-10 text-xs font-normal flex-1"
                   >
@@ -656,6 +757,8 @@ export default function AdminWorkReportsPage() {
                     onClick={() => {
                       setDateFilter('this-month');
                       setActiveStatsFilter('month');
+                      setEmployeeRotationIndex(-1);
+                      setProjectRotationIndex(-1);
                     }}
                     className="h-10 text-xs font-normal flex-1"
                   >
@@ -667,6 +770,8 @@ export default function AdminWorkReportsPage() {
                     onClick={() => {
                       setDateFilter('all');
                       setActiveStatsFilter(null);
+                      setEmployeeRotationIndex(-1);
+                      setProjectRotationIndex(-1);
                     }}
                     className="h-10 text-xs font-normal flex-1"
                   >

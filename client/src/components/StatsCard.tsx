@@ -8,6 +8,7 @@ interface StatsCardProps {
   color: 'yellow' | 'green' | 'blue' | 'purple' | 'orange' | 'red';
   icon?: LucideIcon;
   onClick?: () => void;
+  onDoubleClick?: () => void;
   className?: string;
   isActive?: boolean;
   isLoading?: boolean;
@@ -129,6 +130,7 @@ export default function StatsCard({
   color, 
   icon: Icon, 
   onClick,
+  onDoubleClick,
   className = '',
   isActive = false,
   isLoading = false,
@@ -145,6 +147,14 @@ export default function StatsCard({
     }
   };
 
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onDoubleClick) {
+      onDoubleClick();
+    }
+  };
+
   return (
     <div
       role="button"
@@ -155,6 +165,7 @@ export default function StatsCard({
           : `${config.hover}`
       } mb-4 ${className} bg-card shadow-sm ${isLoading ? `stats-wave-loading stats-wave-${index}` : ''}`}
       onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
       onKeyPress={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
