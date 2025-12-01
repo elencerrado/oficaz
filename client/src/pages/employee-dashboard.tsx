@@ -1188,8 +1188,10 @@ export default function EmployeeDashboard() {
 
   return (
     <div 
-      className="h-screen bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col overflow-hidden"
+      className="bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col overflow-hidden"
       style={{ 
+        height: '100dvh',
+        maxHeight: '-webkit-fill-available',
         overscrollBehavior: 'none'
       }}
     >
