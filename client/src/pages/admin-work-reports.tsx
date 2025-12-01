@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { usePageTitle } from '@/hooks/use-page-title';
 import { usePageHeader } from '@/components/layout/page-header';
@@ -32,7 +32,8 @@ import {
   Pen,
   Edit,
   Settings,
-  Plus
+  Plus,
+  ArrowDown
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -113,10 +114,12 @@ export default function AdminWorkReportsPage() {
   }, []);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateFilter, setDateFilter] = useState('this-month');
+  const [dateFilter, setDateFilter] = useState('all');
   const [employeeFilter, setEmployeeFilter] = useState('all');
   const [isExporting, setIsExporting] = useState(false);
-  const [activeStatsFilter, setActiveStatsFilter] = useState<'today' | 'week' | 'month' | null>('month');
+  const [activeStatsFilter, setActiveStatsFilter] = useState<'today' | 'week' | 'month' | null>(null);
+  const [displayedCount, setDisplayedCount] = useState(5);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<WorkReportWithEmployee | null>(null);
@@ -269,6 +272,36 @@ export default function AdminWorkReportsPage() {
       );
     });
   }, [reports, searchTerm]);
+
+  // Reportes visibles para infinite scroll
+  const visibleReports = useMemo(() => {
+    return filteredReports.slice(0, displayedCount);
+  }, [filteredReports, displayedCount]);
+
+  const hasMoreToDisplay = displayedCount < filteredReports.length;
+
+  // Resetear displayedCount cuando cambian los filtros
+  useEffect(() => {
+    setDisplayedCount(5);
+  }, [dateFilter, employeeFilter, searchTerm]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreToDisplay) {
+          setDisplayedCount(prev => Math.min(prev + 5, filteredReports.length));
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMoreToDisplay, filteredReports.length]);
 
   const handleTodayFilter = useCallback(() => {
     setActiveStatsFilter(prev => {
@@ -650,17 +683,17 @@ export default function AdminWorkReportsPage() {
             <div className="py-12 text-center">
               <ClipboardList className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                {searchTerm || employeeFilter !== 'all' ? 'No se encontraron partes' : 'Sin partes de trabajo'}
+                {searchTerm || employeeFilter !== 'all' || dateFilter !== 'all' ? 'No se encontraron partes' : 'Sin partes de trabajo'}
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                {searchTerm || employeeFilter !== 'all' 
+                {searchTerm || employeeFilter !== 'all' || dateFilter !== 'all'
                   ? 'Intenta con otros filtros de búsqueda' 
-                  : 'Los empleados aún no han registrado partes de trabajo en este período'}
+                  : 'Los empleados aún no han registrado partes de trabajo'}
               </p>
             </div>
-          ) : filteredReports.length > 0 ? (
+          ) : visibleReports.length > 0 ? (
             <div className="p-4 md:p-6 space-y-4">
-              {filteredReports.map((report) => {
+              {visibleReports.map((report) => {
                 const statusStyle = STATUS_STYLES[report.status];
                 return (
                   <div 
@@ -774,6 +807,23 @@ export default function AdminWorkReportsPage() {
                   </div>
                 );
               })}
+              
+              {/* Infinite scroll observer */}
+              <div 
+                ref={loadMoreRef} 
+                className="py-4 text-center"
+              >
+                {hasMoreToDisplay ? (
+                  <div className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
+                    <ArrowDown className="w-4 h-4 animate-bounce" />
+                    <span>Desplaza para ver más ({filteredReports.length - displayedCount} restantes de {filteredReports.length})</span>
+                  </div>
+                ) : filteredReports.length > 5 ? (
+                  <span className="text-gray-300 dark:text-gray-600 text-sm">
+                    Has visto todos los {filteredReports.length} partes
+                  </span>
+                ) : null}
+              </div>
             </div>
           ) : null}
         </CardContent>
