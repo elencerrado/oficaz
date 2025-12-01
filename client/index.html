@@ -9,15 +9,17 @@
       // Suppress Vite HMR WebSocket errors and other development errors
       (function() {
         window.addEventListener('unhandledrejection', function(event) {
-          var message = event.reason && event.reason.message ? event.reason.message : '';
+          var message = event.reason && event.reason.message ? (event.reason.message.toString ? event.reason.message.toString() : String(event.reason.message)) : '';
+          var reasonStr = event.reason ? String(event.reason) : '';
           
-          // Suppress Vite HMR WebSocket errors
-          if (message.includes('Failed to construct') && message.includes('WebSocket') ||
-              message.includes('localhost:undefined') ||
-              message.includes('wss://localhost:undefined')) {
-            console.log('🔇 Suppressed Vite HMR error (development only)');
-            event.preventDefault();
-            return;
+          // Suppress Vite HMR WebSocket errors - comprehensive check
+          if (message.includes('WebSocket') || reasonStr.includes('WebSocket')) {
+            if (message.includes('localhost:undefined') || reasonStr.includes('localhost:undefined') ||
+                message.includes('wss://') || reasonStr.includes('wss://')) {
+              console.log('🔇 Suppressed Vite HMR error (development only)');
+              event.preventDefault();
+              return;
+            }
           }
           
           // Suppress network errors during navigation
@@ -34,7 +36,7 @@
         var originalError = console.error;
         console.error = function() {
           var message = arguments[0] ? arguments[0].toString() : '';
-          if (message.includes('WebSocket') && message.includes('localhost:undefined')) {
+          if (message.includes('WebSocket') && (message.includes('localhost') || message.includes('wss://'))) {
             return;
           }
           if (message.includes('Failed to construct') && message.includes('WebSocket')) {
