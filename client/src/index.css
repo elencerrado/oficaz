@@ -646,8 +646,9 @@ html.light.dark-notch:not(.employee-mode) body {
 body {
   /* Prevent bounce effect that shows white area */
   overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
+  -webkit-overflow-scrolling: auto;
   overflow-x: hidden; /* Prevent horizontal scroll */
+  overflow-y: hidden; /* Prevent vertical scroll on body */
 }
 
 

@@ -1188,11 +1188,9 @@ export default function EmployeeDashboard() {
 
   return (
     <div 
-      className="bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col fixed inset-0"
+      className="h-screen bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col overflow-hidden"
       style={{ 
-        overscrollBehavior: 'none',
-        touchAction: 'manipulation',
-        WebkitOverflowScrolling: 'auto'
+        overscrollBehavior: 'none'
       }}
     >
       {/* Fixed Content Container - Sin scroll, usa dvh para móviles reales */}
