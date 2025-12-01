@@ -719,7 +719,7 @@ export default function WorkReportsPage() {
                         type="time"
                         value={formData.startTime}
                         onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                        className="bg-white dark:bg-gray-800"
+                        className="bg-white dark:bg-gray-800 h-10 text-sm"
                         data-testid="input-start-time"
                       />
                     </div>
@@ -732,7 +732,7 @@ export default function WorkReportsPage() {
                         type="time"
                         value={formData.endTime}
                         onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                        className="bg-white dark:bg-gray-800"
+                        className="bg-white dark:bg-gray-800 h-10 text-sm"
                         data-testid="input-end-time"
                       />
                     </div>
@@ -1093,7 +1093,7 @@ export default function WorkReportsPage() {
                       type="time"
                       value={formData.startTime}
                       onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                      className="bg-white dark:bg-gray-800"
+                      className="bg-white dark:bg-gray-800 h-10 text-sm"
                       data-testid="input-edit-start-time"
                     />
                   </div>
@@ -1106,7 +1106,7 @@ export default function WorkReportsPage() {
                       type="time"
                       value={formData.endTime}
                       onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                      className="bg-white dark:bg-gray-800"
+                      className="bg-white dark:bg-gray-800 h-10 text-sm"
                       data-testid="input-edit-end-time"
                     />
                   </div>
