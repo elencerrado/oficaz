@@ -1127,6 +1127,7 @@ export default function EmployeeDashboard() {
   // Handlers para swipe del carrusel - con efecto rebote tipo iOS
   const isSwiping = useRef(false);
   const [dragOffset, setDragOffset] = useState(0);
+  const [bounceOffset, setBounceOffset] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -1135,6 +1136,7 @@ export default function EmployeeDashboard() {
     touchEndX.current = e.touches[0].clientX;
     isSwiping.current = false;
     setIsAnimating(false);
+    setBounceOffset(0);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -1151,7 +1153,6 @@ export default function EmployeeDashboard() {
       const isAtEnd = menuPage === totalPages - 1 && diff > 0;
       
       if (isAtStart || isAtEnd) {
-        // Reducir el movimiento en los bordes (resistencia)
         offset = offset * 0.3;
       }
       
@@ -1162,7 +1163,6 @@ export default function EmployeeDashboard() {
   const handleTouchEnd = () => {
     if (showSwapMenu) return;
     
-    setIsAnimating(true);
     setDragOffset(0);
     
     if (!isSwiping.current) return;
@@ -1172,12 +1172,34 @@ export default function EmployeeDashboard() {
 
     if (Math.abs(diff) > minSwipeDistance) {
       if (diff > 0 && menuPage < totalPages - 1) {
+        // Rebote: primero overshoot, luego vuelve
+        setBounceOffset(-15);
+        setIsAnimating(true);
         setMenuPage(menuPage + 1);
+        setTimeout(() => setBounceOffset(0), 150);
       } else if (diff < 0 && menuPage > 0) {
+        setBounceOffset(15);
+        setIsAnimating(true);
         setMenuPage(menuPage - 1);
+        setTimeout(() => setBounceOffset(0), 150);
+      } else {
+        // En los bordes, rebote de vuelta
+        setIsAnimating(true);
       }
+    } else {
+      setIsAnimating(true);
     }
     isSwiping.current = false;
+  };
+  
+  // También añadir rebote al cambiar página con los puntos
+  const handlePageDotClick = (index: number) => {
+    if (index === menuPage) return;
+    const direction = index > menuPage ? -1 : 1;
+    setBounceOffset(direction * 15);
+    setIsAnimating(true);
+    setMenuPage(index);
+    setTimeout(() => setBounceOffset(0), 150);
   };
 
   const currentYear = new Date().getFullYear();
@@ -1440,8 +1462,8 @@ export default function EmployeeDashboard() {
             <div 
               className="flex"
               style={{ 
-                transform: `translateX(calc(-${menuPage * 100}% + ${dragOffset}px))`,
-                transition: isAnimating ? 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 1.04)' : 'none'
+                transform: `translateX(calc(-${menuPage * 100}% + ${dragOffset + bounceOffset}px))`,
+                transition: isAnimating ? 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none'
               }}
             >
               {menuPages.map((pageItems, pageIndex) => (
@@ -1561,7 +1583,7 @@ export default function EmployeeDashboard() {
               {Array.from({ length: totalPages }).map((_, index) => (
                 <button
                   key={index}
-                  onClick={() => setMenuPage(index)}
+                  onClick={() => handlePageDotClick(index)}
                   className={`w-2 h-2 rounded-full transition-all duration-300 ${
                     index === menuPage 
                       ? 'bg-[#007AFF] w-4' 
