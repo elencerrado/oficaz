@@ -6906,6 +6906,9 @@ Responde directamente a este email para contactar con la persona.
         }
       }
 
+      // Sync defaultVacationPolicy with vacationDaysPerMonth for backwards compatibility
+      const syncedVacationPolicy = vacationDaysPerMonth ? vacationDaysPerMonth.toString() : undefined;
+      
       const updatedCompany = await storage.updateCompany(user.companyId, {
         name,
         cif,
@@ -6918,11 +6921,20 @@ Responde directamente a este email para contactar con la persona.
         logoUrl,
         workingHoursPerDay,
         defaultVacationDays,
-        vacationDaysPerMonth
+        vacationDaysPerMonth,
+        defaultVacationPolicy: syncedVacationPolicy
       });
 
       if (!updatedCompany) {
         return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
+      // If vacationDaysPerMonth changed, recalculate vacation days for all employees
+      if (vacationDaysPerMonth && vacationDaysPerMonth !== currentCompany.vacationDaysPerMonth) {
+        const employees = await storage.getUsersByCompany(user.companyId);
+        for (const employee of employees) {
+          await storage.updateUserVacationDays(employee.id);
+        }
       }
 
       res.json({ 

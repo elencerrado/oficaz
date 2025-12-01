@@ -413,8 +413,9 @@ export class DrizzleStorage implements IStorage {
     if (!user) return 0;
 
     const company = await this.getCompany(user.companyId);
-    const defaultDaysPerMonth = parseFloat(company?.defaultVacationPolicy || '2.5');
-    const userDaysPerMonth = user.vacationDaysPerMonth ? parseFloat(user.vacationDaysPerMonth) : defaultDaysPerMonth;
+    // Use vacationDaysPerMonth as primary source, fallback to defaultVacationPolicy for backwards compatibility
+    const companyDaysPerMonth = parseFloat(company?.vacationDaysPerMonth || company?.defaultVacationPolicy || '2.5');
+    const userDaysPerMonth = user.vacationDaysPerMonth ? parseFloat(user.vacationDaysPerMonth) : companyDaysPerMonth;
     
     const startDate = new Date(user.startDate);
     const currentDate = new Date();
