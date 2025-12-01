@@ -6178,33 +6178,36 @@ Responde directamente a este email para contactar con la persona.
           const pdfBytes = await fs.promises.readFile(filePath);
           const pdfDoc = await PDFDocument.load(pdfBytes);
           
-          // Get the last page to add signature
+          // Get ALL pages to add signature to each one
           const pages = pdfDoc.getPages();
-          const lastPage = pages[pages.length - 1];
-          const { width, height } = lastPage.getSize();
           
           // Extract base64 image data from stored signature
           const base64Data = document.digitalSignature.replace(/^data:image\/\w+;base64,/, '');
           const signatureImageBytes = Buffer.from(base64Data, 'base64');
           
-          // Embed the signature image
+          // Embed the signature image once (reused across all pages)
           const signatureImage = await pdfDoc.embedPng(signatureImageBytes);
           const signatureDims = signatureImage.scale(0.5);
           
-          // Calculate position - bottom right corner with margin
-          const signatureWidth = Math.min(signatureDims.width, 150);
-          const signatureHeight = (signatureDims.height / signatureDims.width) * signatureWidth;
-          const margin = 50;
-          const xPos = width - signatureWidth - margin;
-          const yPos = margin + 30;
-          
-          // Draw signature directly (transparent PNG, no background rectangle)
-          lastPage.drawImage(signatureImage, {
-            x: xPos,
-            y: yPos,
-            width: signatureWidth,
-            height: signatureHeight,
-          });
+          // Apply signature to EVERY page
+          for (const page of pages) {
+            const { width, height } = page.getSize();
+            
+            // Calculate position - bottom right corner with margin
+            const signatureWidth = Math.min(signatureDims.width, 150);
+            const signatureHeight = (signatureDims.height / signatureDims.width) * signatureWidth;
+            const margin = 50;
+            const xPos = width - signatureWidth - margin;
+            const yPos = margin + 30;
+            
+            // Draw signature directly (transparent PNG, no background rectangle)
+            page.drawImage(signatureImage, {
+              x: xPos,
+              y: yPos,
+              width: signatureWidth,
+              height: signatureHeight,
+            });
+          }
           
           // Generate and send the signed PDF
           const signedPdfBytes = await pdfDoc.save();
@@ -6337,40 +6340,43 @@ Responde directamente a este email para contactar con la persona.
           const pdfBytes = fs.readFileSync(filePath);
           const pdfDoc = await PDFDocument.load(pdfBytes);
           
-          // Get the last page to add signature
+          // Get ALL pages to add signature to each one
           const pages = pdfDoc.getPages();
-          const lastPage = pages[pages.length - 1];
-          const { width, height } = lastPage.getSize();
           
           // Extract base64 image data from stored signature
           const base64Data = document.digitalSignature.replace(/^data:image\/\w+;base64,/, '');
           const signatureImageBytes = Buffer.from(base64Data, 'base64');
           
-          // Embed the signature image
+          // Embed the signature image once (reused across all pages)
           const signatureImage = await pdfDoc.embedPng(signatureImageBytes);
           const signatureDims = signatureImage.scale(0.5);
           
-          // Calculate position - bottom right corner with margin
-          const signatureWidth = Math.min(signatureDims.width, 150);
-          const signatureHeight = (signatureDims.height / signatureDims.width) * signatureWidth;
-          const margin = 50;
-          const xPos = width - signatureWidth - margin;
-          const yPos = margin + 30;
-          
-          // Draw signature directly (transparent PNG, no background rectangle)
-          lastPage.drawImage(signatureImage, {
-            x: xPos,
-            y: yPos,
-            width: signatureWidth,
-            height: signatureHeight,
-          });
+          // Apply signature to EVERY page
+          for (const page of pages) {
+            const { width, height } = page.getSize();
+            
+            // Calculate position - bottom right corner with margin
+            const signatureWidth = Math.min(signatureDims.width, 150);
+            const signatureHeight = (signatureDims.height / signatureDims.width) * signatureWidth;
+            const margin = 50;
+            const xPos = width - signatureWidth - margin;
+            const yPos = margin + 30;
+            
+            // Draw signature directly (transparent PNG, no background rectangle)
+            page.drawImage(signatureImage, {
+              x: xPos,
+              y: yPos,
+              width: signatureWidth,
+              height: signatureHeight,
+            });
+          }
           
           // Generate and send the signed PDF
           const signedPdfBytes = await pdfDoc.save();
           res.setHeader('Content-Length', signedPdfBytes.length);
           res.send(Buffer.from(signedPdfBytes));
           
-          console.log(`[SECURITY] Signed PDF generated and sent for document ${document.id}`);
+          console.log(`[SECURITY] Signed PDF generated and sent for document ${document.id} (${pages.length} pages signed)`);
           return;
         } catch (pdfError) {
           console.error(`[SECURITY] Error generating signed PDF for document ${document.id}:`, pdfError);
