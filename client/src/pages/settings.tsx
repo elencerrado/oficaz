@@ -86,18 +86,10 @@ const contactFormSchema = z.object({
 
 type ContactFormData = z.infer<typeof contactFormSchema>;
 
-// Function to get plan icon color
-const getPlanIconColor = (plan: string) => {
-  switch(plan?.toLowerCase()) {
-    case 'basic':
-      return '#10B981'; // Verde
-    case 'pro':
-      return '#F59E0B'; // Naranja/Amarillo
-    case 'master':
-      return '#DC2626'; // Rojo
-    default:
-      return '#6B7280'; // Gris por defecto
-  }
+// Function to get plan icon color - Nuevo modelo: siempre Oficaz
+const getPlanIconColor = (_plan: string) => {
+  // Ahora hay un único plan "Oficaz" - usamos color primario
+  return '#3B82F6'; // Azul Oficaz
 };
 
 // Animated counter component
@@ -599,17 +591,13 @@ const AccountManagement = () => {
       }
     }
     
-    if (!subscription?.plan || !subscriptionPlans) {
-      // Default to correct plan prices while loading
-      return subscription?.plan === 'pro' ? '€39.95' : subscription?.plan === 'basic' ? '€19.95' : '€99.95';
+    // Nuevo modelo: precio base de Oficaz es 39€/mes
+    if (subscription?.baseMonthlyPrice) {
+      return `€${Number(subscription.baseMonthlyPrice).toFixed(2)}`;
     }
     
-    const plan = (subscriptionPlans as any[])?.find((p: any) => 
-      p.name === subscription.plan
-    );
-    
-    // pricePerUser is actually the full plan price, not per user
-    return plan?.pricePerUser ? `€${plan.pricePerUser}` : subscription?.plan === 'pro' ? '€39.95' : '€19.95';
+    // Default al precio base del plan Oficaz
+    return '€39.00';
   };
 
   if (!accountInfo && !subscription) {
@@ -678,12 +666,12 @@ const AccountManagement = () => {
                     alt="Plan icon" 
                     className="h-12 w-12 object-contain"
                     style={{ 
-                      filter: `hue-rotate(${subscription?.plan === 'basic' ? '120deg' : subscription?.plan === 'pro' ? '40deg' : subscription?.plan === 'master' ? '340deg' : '0deg'})`,
+                      filter: 'hue-rotate(200deg)', // Azul para plan Oficaz
                       animation: 'iconPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both'
                     }}
                   />
                   <div style={{ animation: 'textSlide 0.5s ease-out 0.3s both' }}>
-                    <p className="font-semibold text-foreground">Plan {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1)}</p>
+                    <p className="font-semibold text-foreground">Plan Oficaz</p>
                   </div>
                 </div>
                 <div 

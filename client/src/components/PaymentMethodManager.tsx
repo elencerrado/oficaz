@@ -67,12 +67,11 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
     staleTime: 30000,
   });
 
-  // Determine the actual plan and price to display
-  const actualPlan = selectedPlan || subscription?.plan || "basic";
-  const currentPlanData = subscriptionPlans?.find((plan: any) => plan.name === actualPlan);
+  // Determine the actual plan and price to display - Nuevo modelo: siempre Oficaz (39€)
+  const actualPlan = selectedPlan || subscription?.plan || "oficaz";
   
-  // Use custom monthly price if available, otherwise use standard plan price
-  const standardPrice = currentPlanData?.monthlyPrice || (actualPlan === "pro" ? 79.99 : 29.99);
+  // Use custom monthly price if available, otherwise use base Oficaz price (39€)
+  const standardPrice = subscription?.baseMonthlyPrice ? Number(subscription.baseMonthlyPrice) : 39.00;
   const actualPrice = selectedPlanPrice || subscription?.customMonthlyPrice || standardPrice;
 
 

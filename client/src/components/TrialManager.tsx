@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AlertCircle, CreditCard, Clock, Calendar, CheckCircle, Plus } from 'lucide-react';
+import { AlertCircle, CreditCard, Clock, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentMethodManager } from '@/components/PaymentMethodManager';
 import { useAuth } from '@/hooks/use-auth';
@@ -31,7 +29,6 @@ interface PaymentIntent {
 }
 
 export function TrialManager() {
-  const [selectedPlan, setSelectedPlan] = useState('basic');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { subscription } = useAuth();
@@ -42,21 +39,15 @@ export function TrialManager() {
     refetchInterval: 30000, // Check every 30 seconds
   });
 
-  // Obtener planes de suscripción disponibles
-  const { data: subscriptionPlans = [] } = useQuery({
-    queryKey: ['/api/public/subscription-plans'],
-    staleTime: 300000, // 5 minutos
-  });
-
   // Obtener métodos de pago para el modal
   const { data: paymentMethods = [] } = useQuery({
     queryKey: ['/api/account/payment-methods'],
     staleTime: 60000,
   });
 
-  // Función para obtener el precio de un plan
-  const getPlanPrice = (planName: string) => {
-    // Use custom monthly price if available (regardless of useCustomSettings)
+  // Función para obtener el precio del plan Oficaz
+  const getPlanPrice = (_planName: string) => {
+    // Use custom monthly price if available
     if (subscription?.customMonthlyPrice) {
       const customPrice = Number(subscription.customMonthlyPrice);
       if (customPrice > 0) {
@@ -64,17 +55,13 @@ export function TrialManager() {
       }
     }
     
-    const plan = subscriptionPlans.find((p: any) => p.name.toLowerCase() === planName.toLowerCase());
-    if (plan && plan.monthlyPrice) {
-      return Number(plan.monthlyPrice).toFixed(2);
+    // Nuevo modelo: precio base de Oficaz es 39€/mes
+    if (subscription?.baseMonthlyPrice) {
+      return Number(subscription.baseMonthlyPrice).toFixed(2);
     }
-    // Fallback prices for known plans
-    const fallbackPrices: { [key: string]: string } = {
-      'basic': '19.99',
-      'pro': '39.99',
-      'master': '79.99'
-    };
-    return fallbackPrices[planName.toLowerCase()] || '0.00';
+    
+    // Default al precio base del plan Oficaz
+    return '39.00';
   };
 
   // Estado para procesar pago
@@ -116,10 +103,10 @@ export function TrialManager() {
     }
   });
 
-  // Función para manejar la actualización del plan
+  // Función para manejar la activación del plan Oficaz
   const handleUpgrade = () => {
     setIsProcessingPayment(true);
-    createPaymentMutation.mutate({ plan: selectedPlan });
+    createPaymentMutation.mutate({ plan: 'oficaz' });
   };
 
 
@@ -150,39 +137,34 @@ export function TrialManager() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Seleccionar Plan:</label>
-              <Select value={selectedPlan} onValueChange={setSelectedPlan}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="basic">Basic - €3/empleado/mes</SelectItem>
-                  <SelectItem value="pro">Pro - €5/empleado/mes</SelectItem>
-                  <SelectItem value="master">Master - €8/empleado/mes</SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="p-4 bg-white rounded-lg border border-red-100">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h4 className="font-semibold text-lg">Plan Oficaz</h4>
+                <p className="text-sm text-muted-foreground">Todo lo que necesitas para gestionar tu empresa</p>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-bold">€{getPlanPrice('oficaz')}</span>
+                <span className="text-muted-foreground">/mes</span>
+              </div>
             </div>
-            <div className="md:col-span-2 flex items-end">
-              <Button 
-                onClick={handleUpgrade}
-                disabled={isProcessingPayment || createPaymentMutation.isPending}
-                className="w-full bg-red-600 hover:bg-red-700"
-              >
-                {isProcessingPayment ? (
-                  <>
-                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                    Procesando pago...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Pagar y Activar Cuenta
-                  </>
-                )}
-              </Button>
-            </div>
+            <Button 
+              onClick={handleUpgrade}
+              disabled={isProcessingPayment || createPaymentMutation.isPending}
+              className="w-full bg-red-600 hover:bg-red-700"
+            >
+              {isProcessingPayment ? (
+                <>
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                  Procesando pago...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Pagar y Activar Cuenta
+                </>
+              )}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -212,8 +194,8 @@ export function TrialManager() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-1 sm:space-x-2 flex-wrap">
               <span className="text-xs sm:text-sm font-medium text-foreground">
-                <span className="hidden sm:inline">Período de Prueba {trialStatus.plan.charAt(0).toUpperCase() + trialStatus.plan.slice(1)}</span>
-                <span className="sm:hidden">Prueba {trialStatus.plan.charAt(0).toUpperCase() + trialStatus.plan.slice(1)}</span>
+                <span className="hidden sm:inline">Período de Prueba Oficaz</span>
+                <span className="sm:hidden">Prueba Oficaz</span>
               </span>
               <Badge variant="outline" className={`text-xs border-current ${
                 trialStatus.daysRemaining <= 3
