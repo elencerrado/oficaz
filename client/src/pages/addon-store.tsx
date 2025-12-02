@@ -178,7 +178,9 @@ export default function AddonStore() {
   };
 
   const featureIncludedInPlan = (key: string) => {
-    return subscription?.features?.[key] === true;
+    // Add-ons are NEVER included in plans - they must always be purchased separately
+    // So we always return false for add-on keys
+    return false;
   };
 
   return (
