@@ -255,8 +255,8 @@ export default function AddonStore() {
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 ${getAddonColor(addon.key)}`}>
                         {getAddonIcon(addon.key)}
                       </div>
-                      <CardTitle className="text-lg">{addon.name}</CardTitle>
-                      <CardDescription className="text-sm">
+                      <CardTitle className="text-lg text-gray-900 dark:text-gray-100">{addon.name}</CardTitle>
+                      <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
                         {addon.shortDescription || addon.description}
                       </CardDescription>
                     </CardHeader>
@@ -301,7 +301,7 @@ export default function AddonStore() {
                   return (
                     <Card 
                       key={addon.id} 
-                      className={`relative overflow-hidden transition-all hover:shadow-lg ${
+                      className={`relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 ${
                         isPendingCancel ? 'border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-900/20' :
                         isInCooldown ? 'border-gray-200 bg-gray-50/50 dark:border-gray-700 dark:bg-gray-800/50' : ''
                       }`}
@@ -338,8 +338,8 @@ export default function AddonStore() {
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 ${getAddonColor(addon.key)}`}>
                           {getAddonIcon(addon.key)}
                         </div>
-                        <CardTitle className="text-lg">{addon.name}</CardTitle>
-                        <CardDescription className="text-sm">
+                        <CardTitle className="text-lg text-gray-900 dark:text-gray-100">{addon.name}</CardTitle>
+                        <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
                           {addon.shortDescription || addon.description}
                         </CardDescription>
                       </CardHeader>
