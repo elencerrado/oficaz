@@ -1642,6 +1642,15 @@ export class DrizzleStorage implements IStorage {
       };
     }
 
+    // Apply purchased add-ons as additional features
+    const companyAddons = await this.getCompanyAddons(companyId);
+    for (const companyAddon of companyAddons) {
+      if (companyAddon.status === 'active' && companyAddon.addon) {
+        // Enable the feature based on the addon's key
+        finalFeatures[companyAddon.addon.key] = true;
+      }
+    }
+
     return {
       ...subscription,
       maxUsers: plan.maxUsers,
