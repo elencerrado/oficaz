@@ -1,4 +1,7 @@
-// Sistema de restricciones de funcionalidades por plan
+// NEW MODEL: Feature access based on add-ons (not plans)
+// Free features: time_tracking, vacation, schedules - always available
+// Paid add-ons: messages, reminders, documents, ai_assistant, work_reports - require purchase
+
 export interface SubscriptionFeatures {
   messages: boolean;
   documents: boolean;
@@ -16,6 +19,7 @@ export interface SubscriptionFeatures {
   ai_assistant: boolean;
   reports: boolean;
   work_reports: boolean;
+  time_tracking: boolean;
 }
 
 export interface Subscription {
@@ -26,8 +30,47 @@ export interface Subscription {
   maxUsers: number;
 }
 
-// Trial and active subscriptions now use the same feature system
-// Features are determined by the subscription plan configuration in the database
+// Feature key mapping to addon keys in database
+const FEATURE_TO_ADDON_KEY: Record<string, string> = {
+  timeTracking: 'time_tracking',
+  time_tracking: 'time_tracking',
+  messages: 'messages',
+  documents: 'documents',
+  vacation: 'vacation',
+  schedules: 'schedules',
+  reminders: 'reminders',
+  ai_assistant: 'ai_assistant',
+  work_reports: 'work_reports',
+  reports: 'work_reports',
+  analytics: 'work_reports',
+  timeEditingPermissions: 'employee_time_edit_permission',
+  employee_time_edit_permission: 'employee_time_edit_permission',
+  employee_time_edit: 'employee_time_edit',
+  customization: 'customization',
+  logoUpload: 'logoUpload',
+  api: 'api',
+};
+
+// Feature display names
+const FEATURE_NAMES: Record<string, string> = {
+  messages: 'Mensajería Interna',
+  documents: 'Gestión Documental',
+  vacation: 'Vacaciones',
+  schedules: 'Cuadrante de horarios',
+  timeTracking: 'Fichajes',
+  time_tracking: 'Fichajes',
+  reminders: 'Recordatorios',
+  ai_assistant: 'Asistente IA',
+  work_reports: 'Partes de Trabajo',
+  reports: 'Partes de Trabajo',
+  analytics: 'Partes de Trabajo',
+  timeEditingPermissions: 'Editar tiempos empleados',
+  employee_time_edit_permission: 'Permisos edición tiempo',
+  employee_time_edit: 'Editar tiempos',
+  customization: 'Personalización',
+  logoUpload: 'Subir logo',
+  api: 'API',
+};
 
 export const checkFeatureAccess = (subscription: Subscription | null, feature: keyof SubscriptionFeatures): boolean => {
   if (!subscription) {
@@ -39,89 +82,29 @@ export const checkFeatureAccess = (subscription: Subscription | null, feature: k
     return false;
   }
   
-  // Core features that are ALWAYS available in any plan (never restricted)
-  const alwaysAvailableFeatures: (keyof SubscriptionFeatures)[] = [
-    'timeTracking', // Panel Principal siempre disponible, Fichajes siempre disponible
-    // Note: Configuración y Empleados no se verifican con features, están disponibles por rol
-  ];
+  // Get the addon key for this feature
+  const addonKey = FEATURE_TO_ADDON_KEY[feature] || feature;
   
-  if (alwaysAvailableFeatures.includes(feature)) {
-    return true;
-  }
-  
-  // Map frontend feature names to database feature names
-  const featureMapping: Record<keyof SubscriptionFeatures, string> = {
-    timeTracking: 'time',
-    messages: 'messages',
-    documents: 'documents',
-    vacation: 'vacation',
-    schedules: 'schedules',
-    reminders: 'reminders',
-    timeEditingPermissions: 'employee_time_edit_permission',
-    analytics: 'reports',
-    customization: 'customization',
-    logoUpload: 'logoUpload',
-    api: 'api',
-    employee_time_edit_permission: 'employee_time_edit_permission',
-    employee_time_edit: 'employee_time_edit',
-    ai_assistant: 'ai_assistant',
-    reports: 'reports',
-    work_reports: 'work_reports'
-  };
-  
-  // Get the database feature name
-  const dbFeatureName = featureMapping[feature] || feature;
-  
-  // For both trial and active subscriptions, use the features configured in the database
-  // Trial periods should have same features as the chosen plan, just time-limited
-  const hasFeature = (subscription.features as any)[dbFeatureName] || false;
+  // Check if the feature is available in subscription.features
+  // This is populated from the backend based on purchased addons and free features
+  const features = subscription.features as unknown as Record<string, boolean>;
+  const hasFeature = features[addonKey] || features[feature] || false;
   return hasFeature;
 };
 
-export const getRequiredPlanForFeature = (feature: keyof SubscriptionFeatures): string => {
-  const featurePlanMap: Record<keyof SubscriptionFeatures, string> = {
-    messages: 'Basic',
-    documents: 'Pro',
-    vacation: 'Basic',
-    schedules: 'Basic',
-    timeTracking: 'Basic',
-    timeEditingPermissions: 'Pro',
-    analytics: 'Pro',
-    customization: 'Master',
-    logoUpload: 'Pro',
-    api: 'Master',
-    reminders: 'Pro',
-    employee_time_edit_permission: 'Master',
-    employee_time_edit: 'Master',
-    ai_assistant: 'Pro',
-    reports: 'Pro',
-    work_reports: 'Pro'
-  };
-  
-  return featurePlanMap[feature] || 'Pro';
+// Get the display name for a feature
+export const getFeatureName = (feature: keyof SubscriptionFeatures): string => {
+  return FEATURE_NAMES[feature] || feature;
+};
+
+// DEPRECATED: Returns generic message since we no longer use plan names
+export const getRequiredPlanForFeature = (_feature: keyof SubscriptionFeatures): string => {
+  return 'Complemento requerido';
 };
 
 export const getFeatureRestrictionMessage = (feature: keyof SubscriptionFeatures): string => {
-  const featureNames: Record<keyof SubscriptionFeatures, string> = {
-    messages: 'Mensajes',
-    documents: 'Documentos',
-    vacation: 'Vacaciones',
-    schedules: 'Cuadrante de horarios',
-    timeTracking: 'Fichajes',
-    timeEditingPermissions: 'Editar horas empleados',
-    analytics: 'Analíticas',
-    customization: 'Personalización',
-    logoUpload: 'Subir logo',
-    api: 'API',
-    reminders: 'Recordatorios',
-    employee_time_edit_permission: 'Permisos edición tiempo empleados',
-    employee_time_edit: 'Empleados pueden editar sus tiempos',
-    ai_assistant: 'Asistente de IA',
-    reports: 'Partes de Trabajo',
-    work_reports: 'Partes de Trabajo'
-  };
-
-  return `La funcionalidad de ${featureNames[feature]} no está disponible en tu plan actual. Contacta con el administrador para actualizar tu suscripción.`;
+  const featureName = FEATURE_NAMES[feature] || feature;
+  return `La funcionalidad de ${featureName} no está disponible. Puedes añadirla desde la Tienda de Complementos.`;
 };
 
 export const checkUserLimit = (subscription: Subscription | null, currentUsers: number): boolean => {
@@ -129,4 +112,3 @@ export const checkUserLimit = (subscription: Subscription | null, currentUsers: 
   if (!subscription.maxUsers) return true; // Unlimited
   return currentUsers <= subscription.maxUsers;
 };
-

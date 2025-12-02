@@ -3990,6 +3990,252 @@ export class DrizzleStorage implements IStorage {
       .returning();
     return updated;
   }
+
+  // ============================================================================
+  // NEW MODEL: Feature Access Check (replaces plan-based feature checking)
+  // ============================================================================
+
+  /**
+   * Check if a company has access to a specific feature.
+   * NEW MODEL: Features are either free (included in base) or require addon purchase.
+   * 
+   * @param companyId - The company to check
+   * @param featureKey - The feature key (e.g., 'messages', 'documents', 'time_tracking')
+   * @returns true if the company has access to the feature
+   */
+  async hasFeatureAccess(companyId: number, featureKey: string): Promise<boolean> {
+    // First, check if this feature/addon exists and if it's free
+    const addon = await db.select({
+      id: schema.addons.id,
+      isFreeFeature: schema.addons.isFreeFeature,
+      requiresSubscription: schema.addons.requiresSubscription,
+    })
+      .from(schema.addons)
+      .where(eq(schema.addons.key, featureKey))
+      .limit(1);
+
+    // If addon doesn't exist, deny access
+    if (!addon[0]) {
+      return false;
+    }
+
+    // If it's a free feature (time_tracking, vacation, schedules), always grant access
+    if (addon[0].isFreeFeature) {
+      return true;
+    }
+
+    // For paid features, check if company has purchased and activated the addon
+    return this.hasActiveAddon(companyId, featureKey);
+  }
+
+  /**
+   * Get all features a company has access to (both free and purchased).
+   * 
+   * @param companyId - The company to check
+   * @returns Array of feature keys the company has access to
+   */
+  async getCompanyFeatures(companyId: number): Promise<string[]> {
+    // Get all free features
+    const freeFeatures = await db.select({ key: schema.addons.key })
+      .from(schema.addons)
+      .where(and(
+        eq(schema.addons.isFreeFeature, true),
+        eq(schema.addons.isActive, true)
+      ));
+
+    // Get all purchased (active) addons for this company
+    const purchasedAddons = await db.select({ key: schema.addons.key })
+      .from(schema.companyAddons)
+      .innerJoin(schema.addons, eq(schema.companyAddons.addonId, schema.addons.id))
+      .where(and(
+        eq(schema.companyAddons.companyId, companyId),
+        or(
+          eq(schema.companyAddons.status, 'active'),
+          eq(schema.companyAddons.status, 'pending_cancel')
+        )
+      ));
+
+    // Combine and deduplicate
+    const allFeatures = new Set([
+      ...freeFeatures.map(f => f.key),
+      ...purchasedAddons.map(f => f.key)
+    ]);
+
+    return Array.from(allFeatures);
+  }
+
+  // ============================================================================
+  // NEW MODEL: Seat/User Management
+  // ============================================================================
+
+  /**
+   * Get seat pricing for a specific role type.
+   */
+  async getSeatPricing(roleType: string): Promise<schema.SeatPricing | undefined> {
+    const [pricing] = await db.select()
+      .from(schema.seatPricing)
+      .where(eq(schema.seatPricing.roleType, roleType))
+      .limit(1);
+    return pricing;
+  }
+
+  /**
+   * Get all seat pricing options.
+   */
+  async getAllSeatPricing(): Promise<schema.SeatPricing[]> {
+    return db.select()
+      .from(schema.seatPricing)
+      .where(eq(schema.seatPricing.isActive, true))
+      .orderBy(schema.seatPricing.sortOrder);
+  }
+
+  /**
+   * Calculate the total number of users allowed for a company.
+   * NEW MODEL: includedX + extraX for each role type.
+   */
+  async getCompanyUserLimits(companyId: number): Promise<{
+    admins: { included: number; extra: number; total: number };
+    managers: { included: number; extra: number; total: number };
+    employees: { included: number; extra: number; total: number };
+    totalUsers: number;
+  }> {
+    const [subscription] = await db.select({
+      includedAdmins: schema.subscriptions.includedAdmins,
+      includedManagers: schema.subscriptions.includedManagers,
+      includedEmployees: schema.subscriptions.includedEmployees,
+      extraAdmins: schema.subscriptions.extraAdmins,
+      extraManagers: schema.subscriptions.extraManagers,
+      extraEmployees: schema.subscriptions.extraEmployees,
+    })
+      .from(schema.subscriptions)
+      .where(eq(schema.subscriptions.companyId, companyId))
+      .limit(1);
+
+    if (!subscription) {
+      // Default limits if no subscription found
+      return {
+        admins: { included: 1, extra: 0, total: 1 },
+        managers: { included: 1, extra: 0, total: 1 },
+        employees: { included: 10, extra: 0, total: 10 },
+        totalUsers: 12,
+      };
+    }
+
+    const admins = {
+      included: subscription.includedAdmins,
+      extra: subscription.extraAdmins,
+      total: subscription.includedAdmins + subscription.extraAdmins,
+    };
+    const managers = {
+      included: subscription.includedManagers,
+      extra: subscription.extraManagers,
+      total: subscription.includedManagers + subscription.extraManagers,
+    };
+    const employees = {
+      included: subscription.includedEmployees,
+      extra: subscription.extraEmployees,
+      total: subscription.includedEmployees + subscription.extraEmployees,
+    };
+
+    return {
+      admins,
+      managers,
+      employees,
+      totalUsers: admins.total + managers.total + employees.total,
+    };
+  }
+
+  /**
+   * Get current user counts by role for a company.
+   */
+  async getCompanyUserCounts(companyId: number): Promise<{
+    admins: number;
+    managers: number;
+    employees: number;
+    total: number;
+  }> {
+    const users = await db.select({
+      role: schema.users.role,
+      count: sql<number>`count(*)::int`,
+    })
+      .from(schema.users)
+      .where(and(
+        eq(schema.users.companyId, companyId),
+        eq(schema.users.isActive, true)
+      ))
+      .groupBy(schema.users.role);
+
+    const counts = {
+      admins: 0,
+      managers: 0,
+      employees: 0,
+      total: 0,
+    };
+
+    for (const row of users) {
+      if (row.role === 'admin') counts.admins = row.count;
+      else if (row.role === 'manager') counts.managers = row.count;
+      else if (row.role === 'employee') counts.employees = row.count;
+      counts.total += row.count;
+    }
+
+    return counts;
+  }
+
+  /**
+   * Check if a company can add more users of a specific role.
+   */
+  async canAddUserOfRole(companyId: number, role: 'admin' | 'manager' | 'employee'): Promise<{
+    canAdd: boolean;
+    currentCount: number;
+    limit: number;
+    needsExtraSeat: boolean;
+  }> {
+    const limits = await this.getCompanyUserLimits(companyId);
+    const counts = await this.getCompanyUserCounts(companyId);
+
+    let limit: number;
+    let currentCount: number;
+
+    if (role === 'admin') {
+      limit = limits.admins.total;
+      currentCount = counts.admins;
+    } else if (role === 'manager') {
+      limit = limits.managers.total;
+      currentCount = counts.managers;
+    } else {
+      limit = limits.employees.total;
+      currentCount = counts.employees;
+    }
+
+    const canAdd = currentCount < limit;
+    const needsExtraSeat = !canAdd;
+
+    return { canAdd, currentCount, limit, needsExtraSeat };
+  }
+
+  /**
+   * Update extra seats for a company.
+   */
+  async updateExtraSeats(
+    companyId: number, 
+    role: 'admin' | 'manager' | 'employee', 
+    extraCount: number
+  ): Promise<void> {
+    const updateData: Record<string, unknown> = { updatedAt: new Date() };
+
+    if (role === 'admin') {
+      updateData.extraAdmins = extraCount;
+    } else if (role === 'manager') {
+      updateData.extraManagers = extraCount;
+    } else {
+      updateData.extraEmployees = extraCount;
+    }
+
+    await db.update(schema.subscriptions)
+      .set(updateData)
+      .where(eq(schema.subscriptions.companyId, companyId));
+  }
 }
 
 export const storage = new DrizzleStorage();

@@ -14845,6 +14845,137 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
     }
   });
 
+  // ============================================================================
+  // NEW MODEL: Subscription & Seat Management Endpoints
+  // ============================================================================
+
+  // Get company subscription info with new model (base + addons + seats)
+  app.get('/api/subscription/info', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const user = req.user!;
+      
+      // Get subscription details
+      const subscription = await storage.getCompanySubscription(user.companyId);
+      if (!subscription) {
+        return res.status(404).json({ error: 'Suscripción no encontrada' });
+      }
+
+      // Get user limits (included + extra)
+      const userLimits = await storage.getCompanyUserLimits(user.companyId);
+      
+      // Get current user counts
+      const userCounts = await storage.getCompanyUserCounts(user.companyId);
+      
+      // Get all features the company has access to
+      const features = await storage.getCompanyFeatures(user.companyId);
+      
+      // Get purchased addons
+      const companyAddons = await storage.getCompanyAddons(user.companyId);
+
+      // Get seat pricing
+      const seatPricing = await storage.getAllSeatPricing();
+
+      res.json({
+        subscription: {
+          status: subscription.status,
+          baseMonthlyPrice: parseFloat(subscription.baseMonthlyPrice || '39.00'),
+          isTrialActive: subscription.isTrialActive,
+          trialEndDate: subscription.trialEndDate,
+          nextPaymentDate: subscription.nextPaymentDate,
+          stripeSubscriptionId: subscription.stripeSubscriptionId,
+        },
+        userLimits,
+        userCounts,
+        features,
+        companyAddons,
+        seatPricing: seatPricing.map(sp => ({
+          roleType: sp.roleType,
+          displayName: sp.displayName,
+          monthlyPrice: parseFloat(sp.monthlyPrice),
+          description: sp.description,
+        })),
+      });
+    } catch (error: any) {
+      console.error('Error getting subscription info:', error);
+      res.status(500).json({ error: 'Error al obtener información de suscripción' });
+    }
+  });
+
+  // Get seat pricing for extra users
+  app.get('/api/seats/pricing', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const seatPricing = await storage.getAllSeatPricing();
+      res.json(seatPricing.map(sp => ({
+        roleType: sp.roleType,
+        displayName: sp.displayName,
+        monthlyPrice: parseFloat(sp.monthlyPrice),
+        description: sp.description,
+      })));
+    } catch (error: any) {
+      console.error('Error getting seat pricing:', error);
+      res.status(500).json({ error: 'Error al obtener precios de usuarios' });
+    }
+  });
+
+  // Check if company can add a user of specific role
+  app.get('/api/seats/can-add/:role', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const user = req.user!;
+      const role = req.params.role as 'admin' | 'manager' | 'employee';
+      
+      if (!['admin', 'manager', 'employee'].includes(role)) {
+        return res.status(400).json({ error: 'Rol no válido' });
+      }
+
+      const result = await storage.canAddUserOfRole(user.companyId, role);
+      
+      // If can't add, get pricing for extra seat
+      let extraSeatPrice = null;
+      if (result.needsExtraSeat) {
+        const pricing = await storage.getSeatPricing(role);
+        extraSeatPrice = pricing ? parseFloat(pricing.monthlyPrice) : null;
+      }
+
+      res.json({
+        ...result,
+        extraSeatPrice,
+      });
+    } catch (error: any) {
+      console.error('Error checking seat availability:', error);
+      res.status(500).json({ error: 'Error al verificar disponibilidad de usuario' });
+    }
+  });
+
+  // Check feature access (new model: free features + purchased addons)
+  app.get('/api/features/:key/access', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const user = req.user!;
+      const featureKey = req.params.key;
+      
+      const hasAccess = await storage.hasFeatureAccess(user.companyId, featureKey);
+      
+      res.json({ 
+        feature: featureKey,
+        hasAccess,
+      });
+    } catch (error: any) {
+      console.error('Error checking feature access:', error);
+      res.status(500).json({ error: 'Error al verificar acceso a funcionalidad' });
+    }
+  });
+
+  // Get all features company has access to
+  app.get('/api/features/accessible', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const user = req.user!;
+      const features = await storage.getCompanyFeatures(user.companyId);
+      res.json({ features });
+    } catch (error: any) {
+      console.error('Error getting accessible features:', error);
+      res.status(500).json({ error: 'Error al obtener funcionalidades accesibles' });
+    }
+  });
+
   // Stripe Webhook - Handle payment events (raw body required for signature verification)
   app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'];

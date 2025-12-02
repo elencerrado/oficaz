@@ -1,7 +1,7 @@
 # Oficaz - Employee Management System
 
 ## Overview
-Oficaz is a comprehensive employee management system designed to streamline employee management for companies. It offers features like time tracking, vacation management, document handling, messaging, and administrative tools. The project aims to automate tasks, boost productivity, and allow businesses to focus on core operations through a modern, full-stack application with a vision to deliver a robust and efficient solution for employee management.
+Oficaz is a comprehensive employee management system designed to streamline employee management for companies. It offers features like time tracking, vacation management, document handling, messaging, and administrative tools. The project aims to automate tasks, boost productivity, and allow businesses to focus on core operations through a modern, full-stack application. The vision is to deliver a robust and efficient solution for employee management, enhancing business efficiency and growth.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -37,67 +37,29 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Frontend Architecture
-- **Framework**: React 18 with TypeScript
-- **Routing**: Wouter
-- **Styling**: Tailwind CSS with shadcn/ui
-- **State Management**: TanStack Query (React Query)
-- **Form Handling**: React Hook Form with Zod validation
-- **Error Handling**: Global ErrorBoundary (`client/src/components/ErrorBoundary.tsx`) captures all React errors.
-- **Query Resilience**: React Query with automatic retries, stale data handling, and automatic refetching.
-- **UI/UX Decisions**: Consistent header layouts (px-6 py-4), modern aesthetic (glassmorphism, shadows, rounded borders), responsive design, professional color scheme, animated elements, unified avatar system. Full dark mode support with `localStorage` persistence. Logo uses `dark:brightness-0 dark:invert` for dark mode compatibility.
-- **Page Titles**: All pages use `usePageTitle` hook for descriptive browser tab titles.
+- **Framework**: React 18 with TypeScript, Wouter for routing.
+- **Styling**: Tailwind CSS with shadcn/ui, full dark mode support.
+- **State Management**: TanStack Query (React Query) for data fetching and caching.
+- **Form Handling**: React Hook Form with Zod validation.
+- **Error Handling**: Global ErrorBoundary for React errors and robust query resilience.
+- **UI/UX Decisions**: Consistent header layouts, modern aesthetic (glassmorphism, shadows, rounded borders), responsive design, professional color scheme, animated elements, unified avatar system, and descriptive page titles.
 
 ### Backend Architecture
-- **Runtime**: Node.js with Express.js
-- **Language**: TypeScript with ES modules
-- **Database**: PostgreSQL with Drizzle ORM
+- **Runtime**: Node.js with Express.js (TypeScript, ES modules).
+- **Database**: PostgreSQL with Drizzle ORM.
 - **Authentication**: JWT-based with role-based access control, bcrypt hashing, silent auth error handling.
-- **File Uploads**: Multer with Sharp (image compression), with specific handling for iOS devices.
+- **File Uploads**: Multer with Sharp for image compression, handling iOS device specifics.
 - **Session Management**: Express sessions with PostgreSQL store.
-- **Security**: Helmet for CSP, CORS, rate limiting, HSTS, X-XSS-Protection, Referrer-Policy; SQL injection protection. SuperAdmin access via email verification with enhanced security.
-- **Core Modules**: Authentication, Time Tracking, Vacation Management, Document Management, Messaging, Administrative Features, Subscription Management, Reminders, Email Marketing (SuperAdmin), Time Tracking Modification & Audit System, PWA System, AI Assistant.
-- **AI Assistant System** (Pro/Master plans, Admin/Manager only): GPT-5 Nano assistant for administrative task automation with conversational context persistence (localStorage, 2-day auto-cleanup). **🔒 SECURITY: Only visible to admin and manager roles** - employees NEVER see the AI assistant, even on master plan. Frontend checks role via `userSummary.role`, backend enforces `requireRole(['admin', 'manager'])`. Includes COMPLETE work schedule ("cuadrante") management capabilities with ZERO loose ends - supports ALL operations (create, delete, modify, copy, swap) for BOTH individual shifts AND bulk operations (days, weeks, months, custom ranges). All schedule modifications validate input and handle overnight/cross-midnight shifts correctly.
-  - **UTC Helper (Nov 2025)**: Shared `getUTCDayBoundaries()` helper function ensures consistent timezone handling across all date-based AI operations. Prevents off-by-one timezone bugs when filtering shifts by date.
-  - **Chat UI (Nov 2025)**: Auto-scroll to bottom when chat opens or receives new messages for better UX.
-  - **Auto-color System (Nov 2025)**: Each employee gets unique color based on ID % 8 to visually distinguish schedules. 8 colors rotate: blue, green, amber, purple, red, cyan, orange, pink.
-  - **Real-time UI Sync (Nov 2025)**: All AI shift modification functions trigger immediate React Query cache invalidation for instant frontend updates without page reload.
-  - **Bulk Operations (Nov 2025)**: COMPLETE support for range-based operations across flexible time periods:
-    - **Create**: `assignSchedule` (single shift), `assignScheduleInRange` (bulk create for weeks/months, auto-skips weekends)
-    - **Delete**: `deleteWorkShift` (single date), `deleteWorkShiftsInRange` (bulk delete by range, supports employee filtering)
-    - **Modify**: `updateWorkShiftTimes` (single shift), `updateWorkShiftsInRange` (bulk modify times for entire ranges)
-    - **Copy/Swap**: `copyEmployeeShifts` (duplicate shifts to another employee), `swapEmployeeShifts` (exchange shifts between employees)
-    - **Color Management**: `updateWorkShiftColor` (single shift), `updateEmployeeShiftsColor` (bulk color change)
-    - **Details**: `updateWorkShiftDetails` (title, location, notes for single shift)
-  - **Advanced Shift Management (Nov 2025)**: AI can swap all shifts between two employees atomically (useful for schedule exchanges) or copy shifts from one employee to another (useful for replication). Both operations support optional date range filtering and handle employee name resolution automatically.
-  - **Intelligence Architecture (Nov 2025)**: AI follows "Consultar→Decidir→Actuar" (Query→Decide→Act) methodology to prevent errors. CRITICAL upgrade with 3 read-only query functions (listEmployees, getEmployeeShifts, getCompanyContext) that AI MUST use before executing mutations. System prompt enforces context awareness: AI must verify data exists before acting (no guessing shift titles/employee names), detect ambiguity vs continuation in conversation flow, and ask specific questions only when truly ambiguous. Prevents context bugs like creating new shifts when user meant to modify existing ones.
-  - **Smart Reminders (Nov 2025)**: AI can create reminders with natural language interpretation:
-    - **Date/Time Intelligence**: Interprets "mañana", "el lunes", "en 2 horas", "el 15 de diciembre a las 3pm", etc.
-    - **Title Inference**: Extracts title from context (e.g., "recuérdame llamar al proveedor" → title: "Llamar al proveedor")
-    - **Employee Assignment**: Resolves employee names to IDs automatically ("para juan y maria" → assigns to both)
-    - **Bulk Assignment**: Supports "para todos" to assign to all employees
-    - **Priority Detection**: Auto-sets "high" priority if user says "urgente" or "importante"
-    - **Default Notifications**: Enables push notifications by default for all reminders
-    - **Timezone Handling**: Spain timezone (UTC+1/+2) - AI creates dates with correct local time offset
-  - **Employee Data Management (Nov 2025)**: AI can modify ALL employee data fields via `updateEmployee()`:
-    - **Corporate Info**: Email corporativo, teléfono corporativo, cargo/puesto, fecha de incorporación, estado (activo/inactivo/baja/vacaciones), rol (admin/manager/employee)
-    - **Personal Info**: Email personal, teléfono personal, dirección, contacto de emergencia (nombre y teléfono)
-    - **Vacation Management**: `vacationDaysAdjustment` field allows adding/subtracting extra vacation days (e.g., +5 adds 5 days, -3 subtracts 3 days)
-    - **Real-time Updates**: Immediate UI sync via React Query cache invalidation (`/api/employees`, `/api/users/employees`)
-  - **Time Tracking Reports (Nov 2025)**: AI can generate work hours reports via `generateTimeReport()`:
-    - **Formats**: PDF (default) or Excel
-    - **Periods**: today, this_week, this_month, last_week, last_month, this_year, last_year, all, custom (with date range)
-    - **Filtering**: By employee name (optional, all employees if not specified)
-    - **Statistics**: Returns session count, total hours, and period summary
-    - **Integration**: Provides filtering instructions for manual export from UI
-- **Object Storage**: Replit Object Storage integration for persistent file storage.
+- **Security**: Helmet for CSP, CORS, rate limiting, HSTS, X-XSS-Protection, Referrer-Policy; SQL injection protection. SuperAdmin access requires email verification.
+- **Core Modules**: Authentication, Time Tracking (with audit trail), Vacation Management, Document Management, Messaging, Administrative Features, Subscription Management, Reminders, Email Marketing (SuperAdmin), PWA System, and AI Assistant.
+- **Subscription Model**: Single "Oficaz" plan with modular add-ons and role-based user pricing. Features are access-controlled based on purchased add-ons.
+- **AI Assistant System**: GPT-5 Nano assistant for admin/manager roles, providing administrative task automation with conversational context. Includes comprehensive work schedule management (create, delete, modify, copy, swap, bulk operations), smart reminder creation with natural language interpretation, employee data management, and time tracking report generation. Employs a "Consultar→Decidir→Actuar" methodology for error prevention and consistent timezone handling.
+- **Object Storage**: Replit Object Storage for persistent file storage.
 - **Account Management**: 30-day grace period for account deletion, immediate blocking of cancelled accounts.
-- **Data Integrity**: Break periods belong to current work session. Orphaned documents are removed.
-- **Email Marketing System** (SuperAdmin): Campaign management, prospect database, user segmentation, SendGrid integration, HTML content, audience targeting, tracking, Zod validation, marketing consent, unsubscribe system, contact tracking system.
-  - **Logo URL**: MUST use static URL `'https://oficaz.es/email-logo-white.png'`. Never use dynamic domain detection.
-  - **Image URL Architecture**: Email marketing images use RELATIVE paths (e.g., `/public-objects/email-marketing/email-123.jpg`) stored in database/campaigns for cross-environment compatibility. Upload endpoint returns relative paths only. Frontend renders images using browser's native relative URL resolution. Email sending process converts relative paths to absolute URLs with production domain dynamically. Migration endpoint `POST /api/super-admin/email-marketing/fix-image-urls` available to normalize existing hardcoded URLs to relative paths.
-- **Time Tracking Modification & Audit System**: Complete audit trail for all time tracking modifications, including employee-initiated modification requests, partial modifications, and PDF export with full audit trail.
-- **PWA System**: Complete PWA implementation for locked-phone notifications with interactive action buttons via Web Push API. Server-side scheduler for work alarms and daily incomplete session monitoring. Supports iOS PWA installation. Instant push notifications for various events. Notification actions use JWT authentication. Push subscriptions are removed on logout. Notification deduplication and alarm tags prevent duplicates. Asynchronous, parallel batch sending of notifications. SuperAdmin can enable/disable push notifications per subscription plan.
-- **Performance Optimizations**: Implemented optimizations including reduced re-renders, efficient calculations, generic hooks, reduced polling, optimized query caching, memoization of functions and arrays, and timeout cleanup.
+- **Data Integrity**: Break periods associated with current work session; orphaned documents removed.
+- **Email Marketing System (SuperAdmin)**: Campaign management, prospect database, user segmentation, SendGrid integration, HTML content, audience targeting, tracking, Zod validation, marketing consent, unsubscribe system, contact tracking. Uses static logo URL and relative image paths.
+- **PWA System**: Full PWA implementation for locked-phone notifications with interactive action buttons via Web Push API. Server-side scheduler for alarms and incomplete session monitoring. Supports iOS PWA installation and provides instant push notifications for various events. Includes notification deduplication, alarm tags, and asynchronous, parallel batch sending.
+- **Performance Optimizations**: Reduced re-renders, efficient calculations, generic hooks, reduced polling, optimized query caching, memoization, and timeout cleanup.
 
 ### Deployment Strategy
 - **Development Environment**: Node.js 20, PostgreSQL 16 (Replit managed), Vite dev server.
@@ -120,7 +82,7 @@ Preferred communication style: Simple, everyday language.
 - **File Handling**: Multer, Sharp
 - **Object Storage**: @google-cloud/storage (Replit Object Storage)
 - **Session Store**: connect-pg-simple
-- **Email Services**: Nodemailer (SMTP Configuration: nodemailer.createTransport(), credentials in environment variables)
+- **Email Services**: Nodemailer (SMTP Configuration)
 - **Payment Processing**: Stripe API
 - **Avatar Generation**: UI Avatars API
 - **Push Notifications**: web-push

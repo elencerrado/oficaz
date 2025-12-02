@@ -15,7 +15,13 @@ import {
   ShoppingCart,
   XCircle,
   Clock,
-  RefreshCw
+  RefreshCw,
+  MessageCircle,
+  Bell,
+  FolderOpen,
+  CalendarDays,
+  LayoutGrid,
+  Gift
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -23,13 +29,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import type { Addon, CompanyAddon } from '@shared/schema';
 
-interface AddonWithStatus extends Addon {
+interface AddonWithStatus extends Omit<Addon, 'isFreeFeature'> {
   isPurchased?: boolean;
   isPendingCancel?: boolean;
   isInCooldown?: boolean;
   cooldownEndsAt?: Date | string | null;
   cancellationEffectiveDate?: Date | string | null;
   companyAddon?: CompanyAddon;
+  isFreeFeature: boolean;
 }
 
 const getAddonIcon = (key: string) => {
@@ -38,6 +45,18 @@ const getAddonIcon = (key: string) => {
       return <Sparkles className="h-6 w-6" />;
     case 'work_reports':
       return <FileText className="h-6 w-6" />;
+    case 'messages':
+      return <MessageCircle className="h-6 w-6" />;
+    case 'reminders':
+      return <Bell className="h-6 w-6" />;
+    case 'documents':
+      return <FolderOpen className="h-6 w-6" />;
+    case 'time_tracking':
+      return <Clock className="h-6 w-6" />;
+    case 'vacation':
+      return <CalendarDays className="h-6 w-6" />;
+    case 'schedules':
+      return <LayoutGrid className="h-6 w-6" />;
     default:
       return <Store className="h-6 w-6" />;
   }
@@ -49,6 +68,18 @@ const getAddonColor = (key: string) => {
       return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
     case 'work_reports':
       return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+    case 'messages':
+      return 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400';
+    case 'reminders':
+      return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+    case 'documents':
+      return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+    case 'time_tracking':
+      return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+    case 'vacation':
+      return 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400';
+    case 'schedules':
+      return 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400';
     default:
       return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
   }
@@ -151,9 +182,13 @@ export default function AddonStore() {
       isInCooldown,
       cooldownEndsAt: companyAddon?.cooldownEndsAt,
       cancellationEffectiveDate: companyAddon?.cancellationEffectiveDate,
-      companyAddon
+      companyAddon,
+      isFreeFeature: (addon as any).isFreeFeature ?? false
     };
   });
+
+  const freeAddons = addonsWithStatus.filter(a => a.isFreeFeature);
+  const paidAddons = addonsWithStatus.filter(a => !a.isFreeFeature);
 
   const handlePurchase = (addon: AddonWithStatus) => {
     setSelectedAddon(addon);
@@ -195,161 +230,196 @@ export default function AddonStore() {
           <LoadingSpinner />
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {addonsWithStatus.map((addon) => {
-            const isIncludedInPlan = featureIncludedInPlan(addon.key);
-            const isPurchased = addon.isPurchased && !isIncludedInPlan;
-            const isPendingCancel = addon.isPendingCancel && !isIncludedInPlan;
-            const isInCooldown = addon.isInCooldown && !isIncludedInPlan && !isPurchased;
-            
-            const formatDate = (date: Date | string | null | undefined) => {
-              if (!date) return '';
-              return new Date(date).toLocaleDateString('es-ES', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-              });
-            };
-            
-            return (
-              <Card 
-                key={addon.id} 
-                className={`relative overflow-hidden transition-all hover:shadow-lg ${
-                  isIncludedInPlan ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/20' : 
-                  isPendingCancel ? 'border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-900/20' :
-                  isInCooldown ? 'border-gray-200 bg-gray-50/50 dark:border-gray-700 dark:bg-gray-800/50' : ''
-                }`}
-                data-testid={`addon-card-${addon.key}`}
-              >
-                {isIncludedInPlan && (
-                  <div className="absolute top-3 right-3">
-                    <Badge className="bg-green-500 text-white">
-                      <Crown className="h-3 w-3 mr-1" />
-                      Incluido en tu plan
-                    </Badge>
-                  </div>
-                )}
-                
-                {isPurchased && !isPendingCancel && (
-                  <div className="absolute top-3 right-3">
-                    <Badge className="bg-blue-500 text-white">
-                      <Check className="h-3 w-3 mr-1" />
-                      Activo
-                    </Badge>
-                  </div>
-                )}
-                
-                {isPendingCancel && (
-                  <div className="absolute top-3 right-3">
-                    <Badge className="bg-amber-500 text-white">
-                      <Clock className="h-3 w-3 mr-1" />
-                      Se cancela pronto
-                    </Badge>
-                  </div>
-                )}
-                
-                {isInCooldown && (
-                  <div className="absolute top-3 right-3">
-                    <Badge variant="secondary" className="bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                      <RefreshCw className="h-3 w-3 mr-1" />
-                      No disponible
-                    </Badge>
-                  </div>
-                )}
-
-                <CardHeader className="pb-3">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 ${getAddonColor(addon.key)}`}>
-                    {getAddonIcon(addon.key)}
-                  </div>
-                  <CardTitle className="text-lg">{addon.name}</CardTitle>
-                  <CardDescription className="text-sm">
-                    {addon.description}
-                  </CardDescription>
-                </CardHeader>
-                
-                <CardContent>
-                  <div className="mb-4">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                        {Number(addon.monthlyPrice).toFixed(2)}€
-                      </span>
-                      <span className="text-gray-500 dark:text-gray-400 text-sm">/mes</span>
+        <div className="space-y-8">
+          {freeAddons.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Gift className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Incluido en tu plan</h2>
+                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Gratis</Badge>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {freeAddons.map((addon) => (
+                  <Card 
+                    key={addon.id} 
+                    className="relative overflow-hidden border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/20"
+                    data-testid={`addon-card-${addon.key}`}
+                  >
+                    <div className="absolute top-3 right-3">
+                      <Badge className="bg-green-500 text-white">
+                        <Check className="h-3 w-3 mr-1" />
+                        Incluido
+                      </Badge>
                     </div>
-                  </div>
+                    <CardHeader className="pb-3">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 ${getAddonColor(addon.key)}`}>
+                        {getAddonIcon(addon.key)}
+                      </div>
+                      <CardTitle className="text-lg">{addon.name}</CardTitle>
+                      <CardDescription className="text-sm">
+                        {addon.shortDescription || addon.description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button 
+                        variant="outline" 
+                        className="w-full text-green-600 border-green-300 hover:bg-green-50 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/30" 
+                        disabled
+                        data-testid={`addon-included-${addon.key}`}
+                      >
+                        <Check className="h-4 w-4 mr-2" />
+                        Incluido en tu plan
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
 
-                  {isPendingCancel && addon.cancellationEffectiveDate && (
-                    <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800">
-                      <p className="text-sm text-amber-700 dark:text-amber-300">
-                        Activo hasta el {formatDate(addon.cancellationEffectiveDate)}
-                      </p>
-                    </div>
-                  )}
+          {paidAddons.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <ShoppingCart className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Complementos disponibles</h2>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {paidAddons.map((addon) => {
+                  const isPurchased = addon.isPurchased;
+                  const isPendingCancel = addon.isPendingCancel;
+                  const isInCooldown = addon.isInCooldown && !isPurchased;
+                  
+                  const formatDate = (date: Date | string | null | undefined) => {
+                    if (!date) return '';
+                    return new Date(date).toLocaleDateString('es-ES', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    });
+                  };
+                  
+                  return (
+                    <Card 
+                      key={addon.id} 
+                      className={`relative overflow-hidden transition-all hover:shadow-lg ${
+                        isPendingCancel ? 'border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-900/20' :
+                        isInCooldown ? 'border-gray-200 bg-gray-50/50 dark:border-gray-700 dark:bg-gray-800/50' : ''
+                      }`}
+                      data-testid={`addon-card-${addon.key}`}
+                    >
+                      {isPurchased && !isPendingCancel && (
+                        <div className="absolute top-3 right-3">
+                          <Badge className="bg-blue-500 text-white">
+                            <Check className="h-3 w-3 mr-1" />
+                            Activo
+                          </Badge>
+                        </div>
+                      )}
+                      
+                      {isPendingCancel && (
+                        <div className="absolute top-3 right-3">
+                          <Badge className="bg-amber-500 text-white">
+                            <Clock className="h-3 w-3 mr-1" />
+                            Se cancela pronto
+                          </Badge>
+                        </div>
+                      )}
+                      
+                      {isInCooldown && (
+                        <div className="absolute top-3 right-3">
+                          <Badge variant="secondary" className="bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                            <RefreshCw className="h-3 w-3 mr-1" />
+                            No disponible
+                          </Badge>
+                        </div>
+                      )}
 
-                  {isInCooldown && addon.cooldownEndsAt && (
-                    <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Disponible a partir del {formatDate(addon.cooldownEndsAt)}
-                      </p>
-                    </div>
-                  )}
+                      <CardHeader className="pb-3">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 ${getAddonColor(addon.key)}`}>
+                          {getAddonIcon(addon.key)}
+                        </div>
+                        <CardTitle className="text-lg">{addon.name}</CardTitle>
+                        <CardDescription className="text-sm">
+                          {addon.shortDescription || addon.description}
+                        </CardDescription>
+                      </CardHeader>
+                      
+                      <CardContent>
+                        <div className="mb-4">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                              {Number(addon.monthlyPrice).toFixed(2)}€
+                            </span>
+                            <span className="text-gray-500 dark:text-gray-400 text-sm">/mes</span>
+                          </div>
+                        </div>
 
-                  {isIncludedInPlan ? (
-                    <Button 
-                      variant="outline" 
-                      className="w-full" 
-                      disabled
-                      data-testid={`addon-included-${addon.key}`}
-                    >
-                      <Check className="h-4 w-4 mr-2" />
-                      Incluido en tu plan
-                    </Button>
-                  ) : isPendingCancel ? (
-                    <Button 
-                      variant="outline" 
-                      className="w-full text-gray-500"
-                      disabled
-                      data-testid={`addon-pending-cancel-${addon.key}`}
-                    >
-                      <Clock className="h-4 w-4 mr-2" />
-                      Cancelación programada
-                    </Button>
-                  ) : isPurchased ? (
-                    <Button 
-                      variant="outline" 
-                      className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                      onClick={() => handleCancel(addon)}
-                      data-testid={`addon-cancel-${addon.key}`}
-                    >
-                      <XCircle className="h-4 w-4 mr-2" />
-                      Cancelar complemento
-                    </Button>
-                  ) : isInCooldown ? (
-                    <Button 
-                      variant="outline"
-                      className="w-full"
-                      disabled
-                      data-testid={`addon-cooldown-${addon.key}`}
-                    >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      No disponible aún
-                    </Button>
-                  ) : (
-                    <Button 
-                      className="w-full"
-                      onClick={() => handlePurchase(addon)}
-                      data-testid={`addon-purchase-${addon.key}`}
-                    >
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      Añadir a mi suscripción
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
+                        {isPendingCancel && addon.cancellationEffectiveDate && (
+                          <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800">
+                            <p className="text-sm text-amber-700 dark:text-amber-300">
+                              Activo hasta el {formatDate(addon.cancellationEffectiveDate)}
+                            </p>
+                          </div>
+                        )}
+
+                        {isInCooldown && addon.cooldownEndsAt && (
+                          <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Disponible a partir del {formatDate(addon.cooldownEndsAt)}
+                            </p>
+                          </div>
+                        )}
+
+                        {isPendingCancel ? (
+                          <Button 
+                            variant="outline" 
+                            className="w-full text-gray-500"
+                            disabled
+                            data-testid={`addon-pending-cancel-${addon.key}`}
+                          >
+                            <Clock className="h-4 w-4 mr-2" />
+                            Cancelación programada
+                          </Button>
+                        ) : isPurchased ? (
+                          <Button 
+                            variant="outline" 
+                            className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            onClick={() => handleCancel(addon)}
+                            data-testid={`addon-cancel-${addon.key}`}
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Cancelar complemento
+                          </Button>
+                        ) : isInCooldown ? (
+                          <Button 
+                            variant="outline"
+                            className="w-full"
+                            disabled
+                            data-testid={`addon-cooldown-${addon.key}`}
+                          >
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            No disponible aún
+                          </Button>
+                        ) : (
+                          <Button 
+                            className="w-full"
+                            onClick={() => handlePurchase(addon)}
+                            data-testid={`addon-purchase-${addon.key}`}
+                          >
+                            <ShoppingCart className="h-4 w-4 mr-2" />
+                            Añadir a mi suscripción
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {addonsWithStatus.length === 0 && (
-            <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+            <div className="flex flex-col items-center justify-center py-12 text-center">
               <Store className="h-12 w-12 text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">No hay complementos disponibles</h3>
               <p className="text-gray-500 dark:text-gray-400 mt-1">Los complementos estarán disponibles próximamente.</p>
