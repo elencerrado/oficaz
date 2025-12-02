@@ -14698,6 +14698,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
     try {
       const user = req.user!;
       const { employees, managers, admins } = req.body;
+      const idempotencyKey = `seats-purchase-${user.companyId}-${Date.now()}`;
 
       // Validate input
       if (typeof employees !== 'number' || typeof managers !== 'number' || typeof admins !== 'number') {
@@ -14723,25 +14724,122 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         extraAdmins: currentLimits.admins.extra + admins,
       };
 
-      // Get seat pricing
-      const seatPricing = {
-        employees: 2,
-        managers: 4,
-        admins: 6,
-      };
+      // Get seat pricing from database
+      const dbSeatPricing = await storage.getAllSeatPricing();
+      const seatPricing: Record<string, number> = {};
+      for (const sp of dbSeatPricing) {
+        seatPricing[sp.roleType] = parseFloat(sp.monthlyPrice);
+      }
+      // Fallback values if not in database
+      if (!seatPricing.employee) seatPricing.employee = 2;
+      if (!seatPricing.manager) seatPricing.manager = 4;
+      if (!seatPricing.admin) seatPricing.admin = 6;
 
       // Calculate total additional monthly cost
       const additionalCost = 
-        employees * seatPricing.employees +
-        managers * seatPricing.managers +
-        admins * seatPricing.admins;
+        employees * seatPricing.employee +
+        managers * seatPricing.manager +
+        admins * seatPricing.admin;
+
+      // Get company subscription for Stripe integration
+      const subscription = await db.query.subscriptions.findFirst({
+        where: eq(subscriptions.companyId, user.companyId),
+      });
+
+      let stripeChargeInfo: { proratedAmount: number; proratedDays: number } | null = null;
+
+      // If company has active Stripe subscription, add seat items with proration
+      if (subscription?.stripeSubscriptionId && subscription?.status === 'active') {
+        try {
+          const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripeSubscriptionId) as any;
+          const currentPeriodEnd = stripeSubscription.current_period_end as number;
+          const currentPeriodStart = stripeSubscription.current_period_start as number;
+          const now = Math.floor(Date.now() / 1000);
+          
+          const totalDaysInPeriod = Math.ceil((currentPeriodEnd - currentPeriodStart) / 86400);
+          const remainingDays = Math.ceil((currentPeriodEnd - now) / 86400);
+          const proratedDays = Math.max(1, Math.min(remainingDays, totalDaysInPeriod));
+
+          // Process each seat type that has purchases
+          const seatTypes = [
+            { key: 'employee', count: employees, price: seatPricing.employee, name: 'Empleado Adicional' },
+            { key: 'manager', count: managers, price: seatPricing.manager, name: 'Manager Adicional' },
+            { key: 'admin', count: admins, price: seatPricing.admin, name: 'Admin Adicional' },
+          ];
+
+          for (const seat of seatTypes) {
+            if (seat.count <= 0) continue;
+
+            // Get or create Stripe product/price for this seat type
+            let seatPricingRecord = await storage.getSeatPricing(seat.key);
+            let stripePriceId = seatPricingRecord?.stripePriceId;
+
+            if (!stripePriceId) {
+              // Create Stripe product and price for this seat type
+              const stripeProduct = await stripe.products.create({
+                name: `Oficaz: ${seat.name}`,
+                description: `Usuario adicional tipo ${seat.name}`,
+                metadata: {
+                  seat_type: seat.key,
+                }
+              }, { idempotencyKey: `seat-product-${seat.key}` });
+
+              const stripePrice = await stripe.prices.create({
+                product: stripeProduct.id,
+                unit_amount: Math.round(seat.price * 100),
+                currency: 'eur',
+                recurring: { interval: 'month' },
+                nickname: seat.name,
+                metadata: {
+                  seat_type: seat.key,
+                }
+              }, { idempotencyKey: `seat-price-${seat.key}` });
+
+              stripePriceId = stripePrice.id;
+
+              // Update seat pricing with Stripe IDs
+              await db.execute(sql`
+                UPDATE seat_pricing 
+                SET stripe_product_id = ${stripeProduct.id}, stripe_price_id = ${stripePrice.id}
+                WHERE role_type = ${seat.key}
+              `);
+            }
+
+            // Add subscription item for the seats with proration
+            await stripe.subscriptionItems.create({
+              subscription: subscription.stripeSubscriptionId,
+              price: stripePriceId,
+              quantity: seat.count,
+              proration_behavior: 'create_prorations',
+              metadata: {
+                seat_type: seat.key,
+                company_id: user.companyId.toString(),
+              }
+            }, { idempotencyKey: `${idempotencyKey}-${seat.key}` });
+
+            console.log(`✅ Added ${seat.count} ${seat.key} seat(s) to Stripe subscription`);
+          }
+
+          stripeChargeInfo = {
+            proratedAmount: (additionalCost / totalDaysInPeriod) * proratedDays,
+            proratedDays,
+          };
+
+          console.log(`💰 Stripe seats added with proration: ${proratedDays} days, €${stripeChargeInfo.proratedAmount.toFixed(2)}`);
+        } catch (stripeError: any) {
+          console.error('Error adding seats to Stripe subscription:', stripeError);
+          // For paid subscriptions, we must fail if Stripe fails
+          if (subscription.status === 'active' && subscription.stripeSubscriptionId) {
+            return res.status(500).json({ 
+              error: 'Error al procesar el pago. Por favor, inténtalo de nuevo o contacta con soporte.',
+              details: stripeError.message
+            });
+          }
+        }
+      }
 
       // Update user limits in database
       await storage.updateCompanyUserLimits(user.companyId, newLimits);
-
-      // TODO: Integration with Stripe to update subscription pricing
-      // For now, we just update the limits and the billing will be handled manually
-      // In production, this would call Stripe to update subscription items
 
       console.log(`👥 Company ${user.companyId} purchased additional seats: +${employees} employees, +${managers} managers, +${admins} admins (€${additionalCost}/mes)`);
 
@@ -14754,6 +14852,11 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
           admins: currentLimits.admins.included + newLimits.extraAdmins,
         },
         additionalMonthlyCost: additionalCost,
+        billing: stripeChargeInfo ? {
+          proratedDays: stripeChargeInfo.proratedDays,
+          proratedAmount: stripeChargeInfo.proratedAmount.toFixed(2),
+          message: `Se te cobrará €${stripeChargeInfo.proratedAmount.toFixed(2)} por ${stripeChargeInfo.proratedDays} días de uso en este ciclo`
+        } : undefined,
       });
     } catch (error: any) {
       console.error('Error purchasing seats:', error);
