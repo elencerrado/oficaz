@@ -697,7 +697,7 @@ export default function EmployeeDashboard() {
       
       // Mostrar popup de parte de obra si el usuario tiene configurado on_clockout o both
       const workReportMode = user?.workReportMode;
-      if ((subscription?.plan === 'pro' || subscription?.plan === 'master') && 
+      if (hasAccess('work_reports') && 
           (workReportMode === 'on_clockout' || workReportMode === 'both')) {
         const clockOutTime = new Date().toISOString();
         const clockInTime = data.sessionClockIn || activeSession?.clockIn || clockOutTime;
@@ -1047,7 +1047,7 @@ export default function EmployeeDashboard() {
       notificationType: 'green',
       feature: 'messages'
     },
-    ...((subscription?.plan === 'pro' || subscription?.plan === 'master') && 
+    ...(hasAccess('work_reports') && 
        (user?.workReportMode === 'manual' || user?.workReportMode === 'both' || user?.workReportMode === 'on_clockout') ? [
       { 
         icon: ClipboardList, 
@@ -1055,7 +1055,7 @@ export default function EmployeeDashboard() {
         route: `/${companyAlias}/partes-trabajo`,
         notification: false,
         notificationType: 'none',
-        feature: 'timeTracking'
+        feature: 'work_reports'
       }
     ] : []),
   ];

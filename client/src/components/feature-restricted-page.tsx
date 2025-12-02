@@ -1,41 +1,22 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Lock, Crown, ArrowLeft } from 'lucide-react';
+import { Lock, ArrowLeft, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Link } from 'wouter';
 
 interface FeatureRestrictedPageProps {
   featureName: string;
   description: string;
-  requiredPlan?: string;
   icon?: React.ComponentType<{ className?: string }>;
 }
 
 export function FeatureRestrictedPage({ 
   featureName, 
   description, 
-  requiredPlan = "Pro",
   icon: Icon = Lock 
 }: FeatureRestrictedPageProps) {
-  const { company, subscription } = useAuth();
-  
-  const currentPlan = subscription?.plan || 'free';
+  const { company } = useAuth();
   const companyAlias = company?.companyAlias || 'test';
-
-  const planColors = {
-    free: 'bg-gray-500',
-    basic: 'bg-blue-500',
-    pro: 'bg-purple-500',
-    master: 'bg-yellow-500'
-  };
-
-  const planLabels = {
-    free: 'Free',
-    basic: 'Basic',
-    pro: 'Pro',
-    master: 'Master'
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
@@ -55,11 +36,17 @@ export function FeatureRestrictedPage({
           </div>
 
           <div className="text-sm text-gray-500 dark:text-gray-400 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-            <p>Esta funcionalidad no está disponible en tu plan actual.</p>
-            <p className="mt-1">Aumenta tu plan para disfrutar de esta opción.</p>
+            <p>Esta funcionalidad requiere un complemento adicional.</p>
+            <p className="mt-1">Visita la Tienda de Complementos para activarla.</p>
           </div>
 
-          <div>
+          <div className="space-y-2">
+            <Link href={`/${companyAlias}/tienda`}>
+              <Button className="w-full">
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Ir a la Tienda
+              </Button>
+            </Link>
             <Link href={`/${companyAlias}/inicio`}>
               <Button variant="outline" className="w-full">
                 <ArrowLeft className="w-4 h-4 mr-2" />

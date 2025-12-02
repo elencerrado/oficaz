@@ -2509,7 +2509,7 @@ export default function Settings() {
                         <Building2 className="w-6 h-6 text-gray-400" />
                       </div>
                     )}
-                    {/* Logo upload/change only for Pro+ plans */}
+                    {/* Logo upload/change */}
                     {isEditingCompany && hasAccess('logoUpload') && (
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center space-x-2">
@@ -2640,24 +2640,24 @@ export default function Settings() {
                         </Button>
                       </div>
                     )}
-                    {/* Restriction message for Basic plan users without logo */}
+                    {/* Restriction message for users without logo feature */}
                     {!hasAccess('logoUpload') && isEditingCompany && !companyData.logoUrl && (
                       <div className="flex-1">
                         <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg">
                           <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                           <p className="text-sm text-amber-700 dark:text-amber-300">
-                            La subida de logos requiere el plan Pro o superior.
+                            La subida de logos no está disponible en tu configuración actual.
                           </p>
                         </div>
                       </div>
                     )}
-                    {/* Info for Basic plan users with existing logo */}
+                    {/* Info for users with existing logo but no upload access */}
                     {!hasAccess('logoUpload') && isEditingCompany && companyData.logoUrl && (
                       <div className="flex-1">
                         <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
                           <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                           <p className="text-sm text-blue-700 dark:text-blue-300">
-                            Tu logo actual se mantiene. Para cambiar o subir un nuevo logo, actualiza al plan Pro.
+                            Tu logo actual se mantiene. Contacta con soporte para modificarlo.
                           </p>
                         </div>
                       </div>

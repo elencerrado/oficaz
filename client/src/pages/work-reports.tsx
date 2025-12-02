@@ -402,13 +402,11 @@ export default function WorkReportsPage() {
     );
   }
 
-  const isPro = subscription?.plan === 'pro' || subscription?.plan === 'master';
-  if (!isPro) {
+  if (!hasAccess('work_reports')) {
     return (
       <FeatureRestrictedPage 
         featureName="Partes de Trabajo" 
-        description="Registra y gestiona los partes de trabajo de tus empleados con esta funcionalidad exclusiva del plan Pro." 
-        requiredPlan="Pro" 
+        description="Registra y gestiona los partes de trabajo de tus empleados. Activa este complemento desde la Tienda." 
       />
     );
   }

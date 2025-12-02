@@ -1666,22 +1666,32 @@ export class DrizzleStorage implements IStorage {
   }
 
   // Subscription Plans operations
+  // NEW MODEL: Single "oficaz" plan - features determined by addons table
   async getAllSubscriptionPlans(): Promise<any[]> {
-    const plans = await db.select().from(schema.subscriptionPlans).orderBy(schema.subscriptionPlans.monthlyPrice);
+    // Get all addons to build features object
+    const addons = await db.select({ 
+      key: schema.addons.key, 
+      isFreeFeature: schema.addons.isFreeFeature 
+    })
+      .from(schema.addons)
+      .where(eq(schema.addons.isActive, true));
     
-    // Add features to each plan using centralized helper
-    const plansWithFeatures = await Promise.all(plans.map(async (plan) => {
-      const planName = plan.name.toLowerCase();
-      const features = await this.buildPlanFeatures(planName);
+    // Build base features: free addons = true, paid addons = false
+    const baseFeatures: any = {};
+    for (const addon of addons) {
+      baseFeatures[addon.key] = addon.isFreeFeature;
+    }
 
-      return {
-        ...plan,
-        monthlyPrice: parseFloat(plan.monthlyPrice) || 0, // Convert string to number
-        features
-      };
-    }));
-    
-    return plansWithFeatures;
+    // Return single unified plan
+    return [{
+      id: 1,
+      name: 'oficaz',
+      displayName: 'Oficaz',
+      monthlyPrice: 39,
+      maxUsers: 12, // 1 admin + 1 manager + 10 employees
+      features: baseFeatures,
+      isActive: true
+    }];
   }
 
   async getSubscriptionPlan(id: number): Promise<any | undefined> {
