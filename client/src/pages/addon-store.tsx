@@ -304,12 +304,6 @@ export default function AddonStore() {
                     className="relative overflow-hidden border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/20 h-[280px] flex flex-col"
                     data-testid={`addon-card-${addon.key}`}
                   >
-                    <div className="absolute top-3 right-3">
-                      <Badge className="bg-green-500 text-white">
-                        <Check className="h-3 w-3 mr-1" />
-                        Incluido
-                      </Badge>
-                    </div>
                     <CardHeader className="pb-2">
                       <div className="flex items-center gap-3 mb-2">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${getAddonColor(addon.key)}`}>
@@ -556,33 +550,6 @@ export default function AddonStore() {
                       }`}
                       data-testid={`addon-card-${addon.key}`}
                     >
-                      {isPurchased && !isPendingCancel && (
-                        <div className="absolute top-3 right-3">
-                          <Badge className="bg-blue-500 text-white">
-                            <Check className="h-3 w-3 mr-1" />
-                            Activo
-                          </Badge>
-                        </div>
-                      )}
-                      
-                      {isPendingCancel && (
-                        <div className="absolute top-3 right-3">
-                          <Badge className="bg-amber-500 text-white">
-                            <Clock className="h-3 w-3 mr-1" />
-                            Se cancela pronto
-                          </Badge>
-                        </div>
-                      )}
-                      
-                      {isInCooldown && (
-                        <div className="absolute top-3 right-3">
-                          <Badge variant="secondary" className="bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                            <RefreshCw className="h-3 w-3 mr-1" />
-                            No disponible
-                          </Badge>
-                        </div>
-                      )}
-
                       <CardHeader className="pb-2">
                         <div className="flex items-center gap-3 mb-2">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${getAddonColor(addon.key)}`}>
