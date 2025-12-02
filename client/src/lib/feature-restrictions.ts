@@ -1,6 +1,25 @@
-// NEW MODEL: Feature access based on add-ons (not plans)
-// Free features: time_tracking, vacation, schedules - always available
-// Paid add-ons: messages, reminders, documents, ai_assistant, work_reports - require purchase
+// ═══════════════════════════════════════════════════════════════════════════
+// MODELO DE ACCESO A FUNCIONALIDADES
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// ⚠️ PÁGINAS BASE (siempre disponibles para TODAS las cuentas, NO son add-ons):
+//    - Panel de Control (dashboard/inicio)
+//    - Configuración (settings)
+//    - Empleados (employees) 
+//    - Tienda de Complementos (addon-store)
+//
+// ADD-ONS GRATUITOS (incluidos en todas las suscripciones):
+//    - time_tracking (Fichajes)
+//    - vacation (Vacaciones)
+//    - schedules (Cuadrante de horarios)
+//
+// ADD-ONS DE PAGO (requieren compra):
+//    - messages (9€) - Mensajería Interna
+//    - reminders (6€) - Recordatorios
+//    - documents (15€) - Gestión Documental
+//    - work_reports (12€) - Partes de Trabajo
+//    - ai_assistant (25€) - Asistente IA
+// ═══════════════════════════════════════════════════════════════════════════
 
 // Canonical addon keys matching backend database
 export const CANONICAL_ADDON_KEYS = [

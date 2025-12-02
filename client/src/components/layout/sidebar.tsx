@@ -31,12 +31,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const companyAlias = company?.companyAlias || 'test';
   
   const navigation = [
+    // ⚠️ PÁGINAS BASE - Siempre disponibles para todas las cuentas (NO son add-ons)
     { 
       name: 'Panel Principal', 
       href: `/${companyAlias}/inicio`, 
-      icon: LayoutDashboard,
-      feature: 'timeTracking' as const
+      icon: LayoutDashboard
+      // Sin feature: página base siempre disponible
     },
+    // FUNCIONALIDADES GRATUITAS (add-ons gratuitos incluidos en todas las cuentas)
     ...(user?.role === 'admin' || user?.role === 'manager' ? [
       { 
         name: 'Fichajes', 
@@ -66,6 +68,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         feature: 'schedules' as const
       }
     ] : []),
+    // FUNCIONALIDADES DE PAGO (add-ons que requieren compra)
     { 
       name: 'Documentos', 
       href: `/${companyAlias}/documentos`, 
@@ -91,27 +94,31 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       { 
         name: 'Partes de Trabajo', 
         href: `/${companyAlias}/partes-trabajo`, 
-        icon: ClipboardList
+        icon: ClipboardList,
+        feature: 'work_reports' as const
       }
     ] : []),
+    // ⚠️ PÁGINAS BASE - Siempre disponibles para todas las cuentas (NO son add-ons)
     ...(user?.role === 'admin' || user?.role === 'manager' ? [
       { 
         name: 'Empleados', 
         href: `/${companyAlias}/empleados`, 
-        icon: Users,
-        feature: 'timeTracking' as const
+        icon: Users
+        // Sin feature: página base siempre disponible
       }
     ] : []),
     { 
       name: 'Configuración', 
       href: `/${companyAlias}/configuracion`, 
       icon: Settings
+      // Sin feature: página base siempre disponible
     },
     ...(user?.role === 'admin' ? [
       { 
         name: 'Tienda', 
         href: `/${companyAlias}/tienda`, 
         icon: Store
+        // Sin feature: página base siempre disponible
       }
     ] : []),
   ];

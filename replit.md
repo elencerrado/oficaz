@@ -52,7 +52,11 @@ Preferred communication style: Simple, everyday language.
 - **Session Management**: Express sessions with PostgreSQL store.
 - **Security**: Helmet for CSP, CORS, rate limiting, HSTS, X-XSS-Protection, Referrer-Policy; SQL injection protection. SuperAdmin access requires email verification.
 - **Core Modules**: Authentication, Time Tracking (with audit trail), Vacation Management, Document Management, Messaging, Administrative Features, Subscription Management, Reminders, Email Marketing (SuperAdmin), PWA System, and AI Assistant.
-- **Subscription Model**: Single "Oficaz" plan with modular add-ons and role-based user pricing. Features are access-controlled based on purchased add-ons.
+- **Subscription Model**: Single "Oficaz" plan (39€/month) with modular add-ons and role-based user pricing.
+  - **PÁGINAS BASE** (siempre disponibles, NO son add-ons): Panel de Control, Configuración, Empleados, Tienda
+  - **Add-ons Gratuitos** (incluidos automáticamente): Fichajes, Vacaciones, Cuadrante
+  - **Add-ons de Pago**: Mensajes (9€), Recordatorios (6€), Documentos (15€), Partes de Trabajo (12€), Asistente IA (25€)
+  - **Usuarios adicionales**: Empleados +2€, Managers +6€, Admins +12€
 - **AI Assistant System**: GPT-5 Nano assistant for admin/manager roles, providing administrative task automation with conversational context. Includes comprehensive work schedule management (create, delete, modify, copy, swap, bulk operations), smart reminder creation with natural language interpretation, employee data management, and time tracking report generation. Employs a "Consultar→Decidir→Actuar" methodology for error prevention and consistent timezone handling.
 - **Object Storage**: Replit Object Storage for persistent file storage.
 - **Account Management**: 30-day grace period for account deletion, immediate blocking of cancelled accounts.
