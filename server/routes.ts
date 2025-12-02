@@ -2508,7 +2508,7 @@ Responde directamente a este email para contactar con la persona.
         address: data.address || '',
         province: data.province,
         // 🔒 DEFAULT VALUES - Benefits applied only AFTER successful redemption
-        trialDurationDays: 14, // Default trial duration
+        trialDurationDays: 7, // Default trial duration (7 days with full access)
         usedPromotionalCode: null, // No code until successfully redeemed
         // 📊 Email marketing conversion tracking
         emailCampaignId: campaignId ? parseInt(campaignId) : null,
@@ -3353,7 +3353,7 @@ Responde directamente a este email para contactar con la persona.
 
       // 🎁 PROMOTIONAL CODE REDEMPTION LOGIC
       let promotionalCodeResult = null;
-      let appliedTrialDays = 14; // Default trial duration
+      let appliedTrialDays = 7; // Default trial duration (7 days with full access)
       
       if (data.promotionalCode && data.promotionalCode.trim()) {
         console.log(`🎁 Processing promotional code: ${data.promotionalCode}`);
@@ -10042,8 +10042,8 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
       const now = new Date();
       const registrationDate = new Date(data.company_created_at as string);
       const trialEndDate = new Date(registrationDate);
-      // Use custom trial duration from company settings (default 14 days)
-      const trialDuration = data.trial_duration_days || 14;
+      // Use custom trial duration from company settings (default 7 days)
+      const trialDuration = data.trial_duration_days || 7;
       trialEndDate.setDate(trialEndDate.getDate() + Number(trialDuration));
       
       // Fix timezone issues by comparing dates at end of day

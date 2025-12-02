@@ -1359,7 +1359,7 @@ export class DrizzleStorage implements IStorage {
 
     return result.map(row => {
       // Calculate trial info
-      const trialDuration = row.trialDurationDays || 14;
+      const trialDuration = row.trialDurationDays || 7;
       const trialStartDate = new Date(row.createdAt || new Date());
       const trialEndDate = new Date(trialStartDate);
       trialEndDate.setDate(trialEndDate.getDate() + trialDuration);
@@ -1589,7 +1589,7 @@ export class DrizzleStorage implements IStorage {
     // Calculate trial dates from companies.created_at (single source of truth)
     const registrationDate = new Date(company.createdAt);
     const trialEndDate = new Date(registrationDate);
-    const trialDuration = company.trialDurationDays || 14;
+    const trialDuration = company.trialDurationDays || 7;
     trialEndDate.setDate(trialEndDate.getDate() + trialDuration);
 
     // ═══════════════════════════════════════════════════════════════════════════
