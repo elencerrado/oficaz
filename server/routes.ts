@@ -14923,14 +14923,102 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         console.log(`✅ STRIPE WEBHOOK: Marked subscription as cancelled`);
       }
 
-      // Handle payment failed
+      // Handle payment failed - Deactivate add-ons on payment failure
       if (event.type === 'invoice.payment_failed') {
         const invoice = event.data.object as Stripe.Invoice;
         
         console.log(`❌ STRIPE WEBHOOK: Payment failed for invoice ${invoice.id}`);
         console.log(`   - Customer: ${invoice.customer}`);
         
-        // You could add logic here to notify the customer or update status
+        // Find subscription by Stripe customer ID and deactivate add-ons
+        if (invoice.customer) {
+          const subscription = await db.query.subscriptions.findFirst({
+            where: eq(subscriptions.stripeCustomerId, invoice.customer as string),
+          });
+
+          if (subscription) {
+            // Deactivate all add-ons for this company on payment failure
+            const companyAddons = await storage.getCompanyAddons(subscription.companyId);
+            for (const companyAddon of companyAddons) {
+              if (companyAddon.status === 'active' || companyAddon.status === 'pending_cancel') {
+                await storage.deactivateAddonForPaymentFailure(subscription.companyId, companyAddon.addonId);
+                console.log(`🚫 STRIPE WEBHOOK: Deactivated addon ${companyAddon.addon.key} due to payment failure`);
+              }
+            }
+          }
+        }
+      }
+
+      // Handle subscription updated - Sync add-on states and finalize cancellations
+      if (event.type === 'customer.subscription.updated') {
+        const stripeSubscription = event.data.object as Stripe.Subscription;
+        
+        console.log(`🔄 STRIPE WEBHOOK: Subscription updated ${stripeSubscription.id}`);
+
+        // Find our subscription record
+        const subscription = await db.query.subscriptions.findFirst({
+          where: eq(subscriptions.stripeSubscriptionId, stripeSubscription.id),
+        });
+
+        if (subscription) {
+          // Check for add-ons that need to be finalized (period ended)
+          const companyAddons = await storage.getCompanyAddons(subscription.companyId);
+          const now = new Date();
+          
+          for (const companyAddon of companyAddons) {
+            // If pending_cancel and past the cancellation effective date, finalize it
+            if (companyAddon.status === 'pending_cancel' && 
+                companyAddon.cancellationEffectiveDate && 
+                now >= companyAddon.cancellationEffectiveDate) {
+              
+              // Delete the subscription item from Stripe if it still exists with quantity 0
+              if (companyAddon.stripeSubscriptionItemId) {
+                try {
+                  await stripe.subscriptionItems.del(companyAddon.stripeSubscriptionItemId);
+                  console.log(`🗑️ STRIPE WEBHOOK: Deleted subscription item ${companyAddon.stripeSubscriptionItemId}`);
+                } catch (deleteError: any) {
+                  // Item might already be deleted, that's okay
+                  console.warn(`Could not delete subscription item: ${deleteError.message}`);
+                }
+              }
+              
+              await storage.finalizeAddonCancellation(subscription.companyId, companyAddon.addonId);
+              console.log(`✅ STRIPE WEBHOOK: Finalized cancellation of addon ${companyAddon.addon.key}`);
+            }
+          }
+
+          // Sync subscription items from Stripe to ensure consistency
+          const stripeItems = stripeSubscription.items?.data || [];
+          for (const item of stripeItems) {
+            const addonKey = item.price?.metadata?.addon_key;
+            if (addonKey) {
+              const addon = await storage.getAddonByKey(addonKey);
+              if (addon) {
+                const existingCompanyAddon = await storage.getCompanyAddon(subscription.companyId, addon.id);
+                
+                // If Stripe has an active item but we don't have it, or it's cancelled, reactivate
+                if (item.quantity && item.quantity > 0) {
+                  if (!existingCompanyAddon) {
+                    await storage.createCompanyAddon({
+                      companyId: subscription.companyId,
+                      addonId: addon.id,
+                      status: 'active',
+                      stripeSubscriptionItemId: item.id,
+                      purchasedAt: new Date(),
+                      activatedAt: new Date(),
+                    });
+                    console.log(`✅ STRIPE WEBHOOK: Synced new addon ${addonKey} from Stripe`);
+                  } else if (existingCompanyAddon.status === 'inactive' || existingCompanyAddon.status === 'cancelled') {
+                    await storage.reactivateAddon(existingCompanyAddon.id, item.id, 30);
+                    console.log(`✅ STRIPE WEBHOOK: Reactivated addon ${addonKey} from Stripe sync`);
+                  }
+                }
+              }
+            }
+          }
+
+          console.log(`✅ STRIPE WEBHOOK: Subscription ${stripeSubscription.id} synced for company ${subscription.companyId}`);
+        }
       }
 
       res.json({ received: true });
