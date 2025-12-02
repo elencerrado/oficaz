@@ -304,9 +304,15 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     try {
       setValidatingStep3(true);
       
+      // Check if admin email is same as company email (allowed for small businesses)
+      const companyEmail = formData.companyEmail?.toLowerCase() || '';
+      const adminEmail = data.adminEmail.toLowerCase();
+      const isSameAsCompanyEmail = companyEmail === adminEmail;
+      
       // Validate email, DNI and phone in parallel
+      // Skip email validation if it's the same as company email (already verified)
       const [emailAvailable, dniAvailable, phoneAvailable] = await Promise.all([
-        validateUserField('email', data.adminEmail),
+        isSameAsCompanyEmail ? Promise.resolve(true) : validateUserField('email', data.adminEmail),
         validateUserField('dni', data.adminDni),
         data.adminPhone ? validateUserField('phone', data.adminPhone) : Promise.resolve(true),
       ]);
@@ -895,7 +901,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
                   <div className="space-y-2">
                     <Label htmlFor="companyEmail" className="text-sm font-medium text-gray-700">
-                      Email de la empresa
+                      Email de facturación
                     </Label>
                     <Input
                       id="companyEmail"
@@ -904,6 +910,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       className="h-12 rounded-xl bg-white border-gray-200"
                       {...step3Form.register('companyEmail')}
                     />
+                    <p className="text-xs text-gray-500">
+                      Recibirás las facturas en este email
+                    </p>
                     {step3Form.formState.errors.companyEmail && (
                       <p className="text-xs text-red-500">{step3Form.formState.errors.companyEmail.message}</p>
                     )}
@@ -1034,6 +1043,15 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     />
                     {step4Form.formState.errors.adminEmail && (
                       <p className="text-xs text-red-500">{step4Form.formState.errors.adminEmail.message}</p>
+                    )}
+                    {formData.companyEmail && step4Form.watch('adminEmail') !== formData.companyEmail && (
+                      <button
+                        type="button"
+                        onClick={() => step4Form.setValue('adminEmail', formData.companyEmail || '')}
+                        className="text-xs text-oficaz-primary hover:underline"
+                      >
+                        Usar el mismo email de facturación ({formData.companyEmail})
+                      </button>
                     )}
                   </div>
 
