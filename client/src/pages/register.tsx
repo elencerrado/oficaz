@@ -477,7 +477,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   </p>
                 </div>
 
-                {/* Included features */}
+                {/* Included features - display only, not selectable */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
@@ -487,48 +487,30 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   <div className="grid grid-cols-3 gap-3">
                     {allFeatures.filter(f => f.included).map((feature) => {
                       const Icon = feature.icon;
-                      const selectedFeatures = step1Form.watch('interestedFeatures') || [];
-                      const isSelected = selectedFeatures.includes(feature.id);
                       return (
-                        <label
+                        <div
                           key={feature.id}
-                          htmlFor={`feature-${feature.id}`}
                           data-testid={`feature-${feature.id}`}
-                          className={`
-                            relative flex flex-col items-center p-4 rounded-2xl cursor-pointer transition-all duration-200
-                            ${isSelected 
-                              ? 'bg-green-50 border-2 border-green-400 shadow-sm' 
-                              : 'bg-white border-2 border-gray-100 hover:border-gray-200 hover:shadow-sm'
-                            }
-                          `}
+                          className="relative flex flex-col items-center p-4 rounded-2xl bg-green-50 border-2 border-green-200"
                         >
-                          <input
-                            type="checkbox"
-                            id={`feature-${feature.id}`}
-                            value={feature.id}
-                            {...step1Form.register('interestedFeatures')}
-                            className="sr-only"
-                          />
-                          <Icon className={`w-6 h-6 mb-2 ${isSelected ? 'text-green-600' : 'text-gray-400'}`} />
+                          <Icon className="w-6 h-6 mb-2 text-green-600" />
                           <span className="text-sm font-medium text-gray-900">{feature.name}</span>
-                          {isSelected && (
-                            <div className="absolute top-2 right-2">
-                              <Check className="w-4 h-4 text-green-600" />
-                            </div>
-                          )}
-                        </label>
+                          <div className="absolute top-2 right-2">
+                            <Check className="w-4 h-4 text-green-600" />
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* Paid add-ons */}
+                {/* Additional add-ons - selectable */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                      Complementos de pago
+                      Complementos adicionales
                     </span>
-                    <span className="text-xs text-gray-400">Pruébalos gratis</span>
+                    <span className="text-xs text-gray-400">Pruébalos gratis durante el trial</span>
                   </div>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     {allFeatures.filter(f => !f.included).map((feature) => {
@@ -557,7 +539,6 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                           />
                           <Icon className={`w-6 h-6 mb-2 ${isSelected ? 'text-blue-600' : 'text-gray-400'}`} />
                           <span className="text-sm font-medium text-gray-900 text-center">{feature.name}</span>
-                          <span className="text-xs text-blue-600 mt-1">+{feature.price}€/mes</span>
                           {isSelected && (
                             <div className="absolute top-2 right-2">
                               <Check className="w-4 h-4 text-blue-600" />
