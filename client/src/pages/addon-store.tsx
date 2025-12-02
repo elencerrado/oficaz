@@ -398,9 +398,6 @@ export default function AddonStore() {
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
-                  <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2 h-5">
-                    {additionalSeats.employees > 0 ? `+${(additionalSeats.employees * seatPrices.employees).toFixed(2)}€/mes` : ''}
-                  </p>
                 </CardContent>
               </Card>
 
@@ -450,9 +447,6 @@ export default function AddonStore() {
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
-                  <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2 h-5">
-                    {additionalSeats.managers > 0 ? `+${(additionalSeats.managers * seatPrices.managers).toFixed(2)}€/mes` : ''}
-                  </p>
                 </CardContent>
               </Card>
 
@@ -502,9 +496,6 @@ export default function AddonStore() {
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
-                  <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2 h-5">
-                    {additionalSeats.admins > 0 ? `+${(additionalSeats.admins * seatPrices.admins).toFixed(2)}€/mes` : ''}
-                  </p>
                 </CardContent>
               </Card>
             </div>

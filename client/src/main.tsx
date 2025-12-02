@@ -5,18 +5,29 @@ import "./index.css";
 // CRITICAL: Global error handler to suppress Vite HMR WebSocket errors
 // This prevents any error popups from showing to users
 window.addEventListener('unhandledrejection', (event) => {
-  // Suppress Vite HMR WebSocket connection errors (localhost:undefined)
-  if (event.reason?.message?.includes('Failed to construct \'WebSocket\'') ||
-      event.reason?.message?.includes('localhost:undefined')) {
+  const message = event.reason?.message ? String(event.reason.message) : '';
+  const reasonStr = event.reason ? String(event.reason) : '';
+  
+  // Suppress Vite HMR WebSocket connection errors (localhost:undefined, invalid URLs)
+  if ((message.includes('Failed to construct \'WebSocket\'') || message.includes('WebSocket')) &&
+      (message.includes('localhost:undefined') || message.includes('wss://localhost') || message.includes('is invalid'))) {
     console.log('🔇 Suppressed Vite HMR WebSocket error (harmless in production)');
     event.preventDefault(); // Prevent error from bubbling
     return;
   }
   
+  // Alternative check if message check didn't work
+  if (reasonStr.includes('Failed to construct') && reasonStr.includes('WebSocket') && 
+      (reasonStr.includes('localhost') || reasonStr.includes('wss://'))) {
+    console.log('🔇 Suppressed Vite HMR WebSocket error (harmless in production)');
+    event.preventDefault();
+    return;
+  }
+  
   // Suppress network errors during page navigation/reload
-  if (event.reason?.message?.includes('Failed to fetch') ||
-      event.reason?.message?.includes('NetworkError') ||
-      event.reason?.message?.includes('Load failed')) {
+  if (message.includes('Failed to fetch') ||
+      message.includes('NetworkError') ||
+      message.includes('Load failed')) {
     console.log('🔇 Suppressed network error during navigation');
     event.preventDefault();
     return;
@@ -28,10 +39,10 @@ const originalError = console.error;
 console.error = (...args) => {
   // Filter out Vite HMR WebSocket errors
   const message = args[0]?.toString() || '';
-  if (message.includes('WebSocket') && message.includes('localhost:undefined')) {
+  if (message.includes('WebSocket') && (message.includes('localhost:undefined') || message.includes('wss://localhost') || message.includes('is invalid'))) {
     return; // Silently ignore
   }
-  if (message.includes('Failed to construct \'WebSocket\'')) {
+  if (message.includes('Failed to construct') && message.includes('WebSocket')) {
     return; // Silently ignore
   }
   originalError.apply(console, args);
