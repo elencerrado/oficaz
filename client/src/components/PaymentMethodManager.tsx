@@ -49,12 +49,6 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
     staleTime: 30000,
   });
 
-  // Get all subscription plans to find the correct price
-  const { data: subscriptionPlans } = useQuery({
-    queryKey: ['/api/subscription-plans'],
-    staleTime: 60000,
-  });
-
   // Get cancellation status to show warnings
   const { data: cancellationStatus } = useQuery({
     queryKey: ['/api/account/cancellation-status'],
@@ -215,7 +209,6 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
       await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       await queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
       await queryClient.invalidateQueries({ queryKey: ['/api/account/cancellation-status'] });
-      await queryClient.invalidateQueries({ queryKey: ['/api/subscription-plans'] });
       
       // Force complete data refetch
       await queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });

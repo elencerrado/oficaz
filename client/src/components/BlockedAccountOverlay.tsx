@@ -29,7 +29,6 @@ export default function BlockedAccountOverlay({ trialStatus }: BlockedAccountOve
     await queryClient.invalidateQueries({ queryKey: ['/api/account/payment-methods'] });
     await queryClient.invalidateQueries({ queryKey: ['/api/account/cancellation-status'] });
     await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
-    await queryClient.invalidateQueries({ queryKey: ['/api/subscription-plans'] });
     await queryClient.invalidateQueries({ queryKey: ['/api/companies/custom-features'] });
     await queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
     await queryClient.invalidateQueries({ queryKey: ['/api/documents'] });

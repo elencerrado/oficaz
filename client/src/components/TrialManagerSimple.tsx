@@ -18,14 +18,6 @@ interface TrialStatus {
   isBlocked: boolean;
 }
 
-interface PaymentMethod {
-  id: number;
-  brand: string;
-  last4: string;
-  expMonth: number;
-  expYear: number;
-  isDefault: boolean;
-}
 
 export function TrialManagerSimple() {
   const queryClient = useQueryClient();
@@ -38,19 +30,13 @@ export function TrialManagerSimple() {
     refetchInterval: 60 * 1000,
   });
 
-  // Fetch subscription plans for price display
-  const { data: subscriptionPlans } = useQuery({
-    queryKey: ['/api/subscription-plans'],
-    staleTime: 300 * 1000,
-  });
-
   // Fetch payment methods
-  const { data: paymentMethods } = useQuery<PaymentMethod[]>({
+  const { data: paymentMethods } = useQuery<any[]>({
     queryKey: ['/api/account/payment-methods'],
     staleTime: 30 * 1000,
   });
 
-  const getPlanPrice = (planName: string): string => {
+  const getPlanPrice = (): string => {
     // Use custom monthly price if available (regardless of useCustomSettings)
     if (subscription?.customMonthlyPrice) {
       const customPrice = Number(subscription.customMonthlyPrice);
@@ -58,10 +44,8 @@ export function TrialManagerSimple() {
         return customPrice.toFixed(2);
       }
     }
-    
-    if (!subscriptionPlans) return '0.00';
-    const plan = subscriptionPlans.find((p: any) => p.name.toLowerCase() === planName.toLowerCase());
-    return plan ? Number(plan.monthlyPrice).toFixed(2) : '0.00';
+    // Default Oficaz plan price
+    return '39.00';
   };
 
   if (loadingTrial) {
@@ -118,7 +102,7 @@ export function TrialManagerSimple() {
           <div>
             <div className="flex items-center space-x-2">
               <span className="text-sm font-medium text-foreground">
-                Período de Prueba {trialStatus.plan.charAt(0).toUpperCase() + trialStatus.plan.slice(1)}
+                Período de Prueba Oficaz
               </span>
               <Badge variant="outline" className={`text-xs border-current ${
                 trialStatus.daysRemaining <= 3
@@ -130,11 +114,11 @@ export function TrialManagerSimple() {
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {trialStatus.hasPaymentMethod ? (
-                `Período de prueba activo. Se cobrará el ${new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • €${getPlanPrice(trialStatus.plan)}/mes`
+                `Período de prueba activo. Se cobrará el ${new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • €${getPlanPrice()}/mes`
               ) : trialStatus.daysRemaining <= 3 ? (
                 "Período de prueba termina pronto. Añade un método de pago para continuar"
               ) : (
-                `Período de prueba hasta el ${new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • €${getPlanPrice(trialStatus.plan)}/mes después`
+                `Período de prueba hasta el ${new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • €${getPlanPrice()}/mes después`
               )}
             </p>
           </div>
