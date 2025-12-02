@@ -1180,99 +1180,118 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
             {/* Step 5: Confirmation */}
             {currentStep === 5 && (
-              <form onSubmit={step5Form.handleSubmit(handleStep5Submit)} className="space-y-6">
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle className="w-8 h-8 text-green-600" />
-                  </div>
+              <form onSubmit={step5Form.handleSubmit(handleStep5Submit)} className="space-y-5">
+                <div className="text-center lg:text-left mb-4">
                   <h2 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-2">
-                    ¡Todo listo!
+                    Tu plan Oficaz
                   </h2>
                   <p className="text-gray-500 text-sm">
-                    Revisa tu configuración y comienza tu prueba gratuita
+                    Esto es lo que tendrás disponible
                   </p>
                 </div>
 
-                {/* Summary cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {/* Plan summary */}
-                  <div className="bg-gradient-to-br from-oficaz-primary/10 to-blue-50 border border-oficaz-primary/20 rounded-2xl p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-medium text-gray-900">Plan Oficaz</span>
-                      <Badge className="bg-oficaz-primary text-white">
-                        €{39 + ((formData.additionalAdmins || 0) * 6) + ((formData.additionalManagers || 0) * 4) + ((formData.additionalEmployees || 0) * 2)}/mes
-                      </Badge>
-                    </div>
-                    <div className="flex gap-3 text-center">
-                      <div className="flex-1 bg-white/70 rounded-xl py-2">
-                        <div className="text-lg font-semibold text-oficaz-primary">{1 + (formData.additionalAdmins || 0)}</div>
-                        <div className="text-xs text-gray-500">Admin{(1 + (formData.additionalAdmins || 0)) > 1 ? 's' : ''}</div>
-                      </div>
-                      <div className="flex-1 bg-white/70 rounded-xl py-2">
-                        <div className="text-lg font-semibold text-oficaz-primary">{1 + (formData.additionalManagers || 0)}</div>
-                        <div className="text-xs text-gray-500">Manager{(1 + (formData.additionalManagers || 0)) > 1 ? 's' : ''}</div>
-                      </div>
-                      <div className="flex-1 bg-white/70 rounded-xl py-2">
-                        <div className="text-lg font-semibold text-oficaz-primary">{10 + (formData.additionalEmployees || 0)}</div>
-                        <div className="text-xs text-gray-500">Empleados</div>
-                      </div>
-                    </div>
+                {/* Features included */}
+                <div className="bg-white border border-gray-200 rounded-2xl p-4">
+                  <span className="text-sm font-medium text-gray-900 block mb-3">Funcionalidades incluidas</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Free features always included */}
+                    {addons.filter(a => a.isFreeFeature).map((addon) => {
+                      const Icon = iconMap[addon.icon as keyof typeof iconMap] || Clock;
+                      return (
+                        <div key={addon.key} className="flex items-center gap-2 text-sm text-gray-700">
+                          <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                            <Icon className="w-3.5 h-3.5 text-green-600" />
+                          </div>
+                          <span>{addon.name}</span>
+                        </div>
+                      );
+                    })}
+                    {/* Paid features selected by user */}
+                    {formData.interestedFeatures && formData.interestedFeatures.map((featureKey: string) => {
+                      const addon = addons.find(a => a.key === featureKey);
+                      if (!addon || addon.isFreeFeature) return null;
+                      const Icon = iconMap[addon.icon as keyof typeof iconMap] || Clock;
+                      return (
+                        <div key={featureKey} className="flex items-center gap-2 text-sm text-gray-700">
+                          <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                            <Icon className="w-3.5 h-3.5 text-blue-600" />
+                          </div>
+                          <span>{addon.name}</span>
+                          <span className="text-xs text-oficaz-primary">+€{addon.monthlyPrice}</span>
+                        </div>
+                      );
+                    })}
                   </div>
+                </div>
 
-                  {/* Company summary */}
-                  <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Building className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-900">{formData.companyName || '-'}</span>
+                {/* Users summary */}
+                <div className="bg-gradient-to-br from-oficaz-primary/5 to-blue-50 border border-oficaz-primary/20 rounded-2xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-gray-900">Tu equipo</span>
+                    <span className="text-xs text-gray-500">
+                      {(1 + (formData.additionalAdmins || 0)) + (1 + (formData.additionalManagers || 0)) + (10 + (formData.additionalEmployees || 0))} usuarios en total
+                    </span>
+                  </div>
+                  <div className="flex gap-3 text-center">
+                    <div className="flex-1 bg-white/80 rounded-xl py-2">
+                      <div className="text-lg font-bold text-oficaz-primary">{10 + (formData.additionalEmployees || 0)}</div>
+                      <div className="text-xs text-gray-600">Empleados</div>
                     </div>
-                    <div className="space-y-1 text-sm text-gray-600">
-                      <div className="flex justify-between">
-                        <span>CIF:</span>
-                        <span className="font-medium">{formData.cif || '-'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Admin:</span>
-                        <span className="font-medium">{formData.adminFullName || '-'}</span>
-                      </div>
+                    <div className="flex-1 bg-white/80 rounded-xl py-2">
+                      <div className="text-lg font-bold text-oficaz-primary">{1 + (formData.additionalManagers || 0)}</div>
+                      <div className="text-xs text-gray-600">Managers</div>
+                    </div>
+                    <div className="flex-1 bg-white/80 rounded-xl py-2">
+                      <div className="text-lg font-bold text-oficaz-primary">{1 + (formData.additionalAdmins || 0)}</div>
+                      <div className="text-xs text-gray-600">Admins</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Selected features */}
-                {formData.interestedFeatures && formData.interestedFeatures.length > 0 && (
-                  <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                    <span className="text-sm font-medium text-gray-700 block mb-3">Complementos adicionales seleccionados</span>
-                    <div className="flex flex-wrap gap-2">
-                      {formData.interestedFeatures.map((featureKey: string) => {
-                        const addon = addons.find(a => a.key === featureKey);
-                        if (!addon) return null;
-                        return (
-                          <Badge 
-                            key={featureKey} 
-                            className="bg-blue-100 text-blue-700 hover:bg-blue-100"
-                          >
-                            {addon.name}
-                          </Badge>
-                        );
-                      })}
+                {/* Price summary */}
+                <div className="bg-gray-900 text-white rounded-2xl p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-lg font-semibold">Total mensual</span>
+                    <div className="text-right">
+                      <span className="text-3xl font-bold">
+                        €{39 + 
+                          ((formData.additionalAdmins || 0) * 6) + 
+                          ((formData.additionalManagers || 0) * 4) + 
+                          ((formData.additionalEmployees || 0) * 2) +
+                          (formData.interestedFeatures?.reduce((sum: number, key: string) => {
+                            const addon = addons.find(a => a.key === key);
+                            return sum + (addon ? parseFloat(addon.monthlyPrice) : 0);
+                          }, 0) || 0)
+                        }
+                      </span>
+                      <span className="text-gray-400 text-sm">/mes</span>
                     </div>
                   </div>
-                )}
+                  <p className="text-sm text-gray-300 leading-relaxed">
+                    Menudo chollazo por todo el tiempo que te va a ahorrar Oficaz. 
+                    Seguro que tu tiempo vale mucho más que esto.
+                  </p>
+                </div>
 
-                {/* Trial notice */}
-                <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-start gap-3">
-                  <Star className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-medium text-green-900 block">
-                      {promoCodeValidation.status === 'valid' && promoCodeValidation.trialDays 
-                        ? `${promoCodeValidation.trialDays} días de prueba gratuitos` 
-                        : '7 días de prueba gratuitos'
-                      }
-                    </span>
-                    <span className="text-sm text-green-700">
-                      Acceso completo a todas las funciones. Sin compromiso.
-                    </span>
+                {/* Trial notice - friendly message */}
+                <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <Star className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <span className="font-semibold text-green-900 block">
+                        {promoCodeValidation.status === 'valid' && promoCodeValidation.trialDays 
+                          ? `${promoCodeValidation.trialDays} días gratis` 
+                          : '7 días gratis'
+                        }
+                      </span>
+                      <span className="text-xs text-green-700">Sin compromiso, cancela cuando quieras</span>
+                    </div>
                   </div>
+                  <p className="text-sm text-green-800 mt-2">
+                    Pero bueno, no te preocupes ahora. Disfruta de tu prueba gratuita y descubre todo lo que Oficaz puede hacer por ti.
+                  </p>
                 </div>
 
                 {/* Promo code */}
