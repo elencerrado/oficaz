@@ -14,6 +14,8 @@ export interface SubscriptionFeatures {
   employee_time_edit_permission: boolean;
   employee_time_edit: boolean;
   ai_assistant: boolean;
+  reports: boolean;
+  work_reports: boolean;
 }
 
 export interface Subscription {
@@ -62,7 +64,9 @@ export const checkFeatureAccess = (subscription: Subscription | null, feature: k
     api: 'api',
     employee_time_edit_permission: 'employee_time_edit_permission',
     employee_time_edit: 'employee_time_edit',
-    ai_assistant: 'ai_assistant'
+    ai_assistant: 'ai_assistant',
+    reports: 'reports',
+    work_reports: 'work_reports'
   };
   
   // Get the database feature name
@@ -75,7 +79,7 @@ export const checkFeatureAccess = (subscription: Subscription | null, feature: k
 };
 
 export const getRequiredPlanForFeature = (feature: keyof SubscriptionFeatures): string => {
-  const featurePlanMap = {
+  const featurePlanMap: Record<keyof SubscriptionFeatures, string> = {
     messages: 'Basic',
     documents: 'Pro',
     vacation: 'Basic',
@@ -89,7 +93,9 @@ export const getRequiredPlanForFeature = (feature: keyof SubscriptionFeatures): 
     reminders: 'Pro',
     employee_time_edit_permission: 'Master',
     employee_time_edit: 'Master',
-    ai_assistant: 'Pro'
+    ai_assistant: 'Pro',
+    reports: 'Pro',
+    work_reports: 'Pro'
   };
   
   return featurePlanMap[feature] || 'Pro';
@@ -110,7 +116,9 @@ export const getFeatureRestrictionMessage = (feature: keyof SubscriptionFeatures
     reminders: 'Recordatorios',
     employee_time_edit_permission: 'Permisos edición tiempo empleados',
     employee_time_edit: 'Empleados pueden editar sus tiempos',
-    ai_assistant: 'Asistente de IA'
+    ai_assistant: 'Asistente de IA',
+    reports: 'Partes de Trabajo',
+    work_reports: 'Partes de Trabajo'
   };
 
   return `La funcionalidad de ${featureNames[feature]} no está disponible en tu plan actual. Contacta con el administrador para actualizar tu suscripción.`;

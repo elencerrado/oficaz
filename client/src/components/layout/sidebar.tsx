@@ -85,14 +85,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       icon: Bell,
       feature: 'reminders' as const
     },
-    ...((subscription?.plan === 'pro' || subscription?.plan === 'master') && 
+    ...((hasAccess('reports') || hasAccess('work_reports')) && 
        (user?.role === 'admin' || user?.role === 'manager' || 
         user?.workReportMode === 'manual' || user?.workReportMode === 'both') ? [
       { 
         name: 'Partes de Trabajo', 
         href: `/${companyAlias}/partes-trabajo`, 
-        icon: ClipboardList,
-        feature: 'timeTracking' as const
+        icon: ClipboardList
       }
     ] : []),
     ...(user?.role === 'admin' || user?.role === 'manager' ? [

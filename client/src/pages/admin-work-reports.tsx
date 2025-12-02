@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { usePageTitle } from '@/hooks/use-page-title';
 import { usePageHeader } from '@/components/layout/page-header';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
@@ -102,6 +103,7 @@ interface EditFormData {
 export default function AdminWorkReportsPage() {
   usePageTitle('Partes de Trabajo - Admin');
   const { user, isAuthenticated, isLoading: authLoading, subscription } = useAuth();
+  const { hasAccess } = useFeatureCheck();
   const { setHeader, resetHeader } = usePageHeader();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -604,12 +606,12 @@ export default function AdminWorkReportsPage() {
     );
   }
 
-  const isPro = subscription?.plan === 'pro' || subscription?.plan === 'master';
-  if (!isPro) {
+  const hasWorkReportsAccess = hasAccess('reports') || hasAccess('work_reports');
+  if (!hasWorkReportsAccess) {
     return (
       <FeatureRestrictedPage 
         featureName="Partes de Trabajo" 
-        description="Visualiza y exporta los partes de trabajo de todos tus empleados con esta funcionalidad exclusiva del plan Pro." 
+        description="Visualiza y exporta los partes de trabajo de todos tus empleados con esta funcionalidad exclusiva del plan Pro o disponible como complemento." 
         requiredPlan="Pro" 
       />
     );
