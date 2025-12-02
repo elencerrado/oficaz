@@ -246,7 +246,10 @@ export default function AddonStore() {
     };
   });
 
-  const freeAddons = addonsWithStatus.filter(a => a.isFreeFeature);
+  const freeAddonOrder = ['time_tracking', 'vacation', 'schedules'];
+  const freeAddons = addonsWithStatus
+    .filter(a => a.isFreeFeature)
+    .sort((a, b) => freeAddonOrder.indexOf(a.key) - freeAddonOrder.indexOf(b.key));
   const paidAddons = addonsWithStatus.filter(a => !a.isFreeFeature);
 
   const handlePurchase = (addon: AddonWithStatus) => {
