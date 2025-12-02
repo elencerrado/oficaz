@@ -131,28 +131,59 @@ export const subscriptionPlans = pgTable("subscription_plans", {
 });
 
 // Company subscriptions - dates are calculated from companies.created_at
+// NEW MODEL: Single plan "Oficaz" with base price + add-ons + extra users
 export const subscriptions = pgTable("subscriptions", {
   id: serial("id").primaryKey(),
   companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }).unique().notNull(),
-  plan: varchar("plan", { length: 50 }).notNull(), // free, basic, pro, master
-  currentEffectivePlan: varchar("current_effective_plan", { length: 50 }), // Plan actual con características activas hasta próximo ciclo
-  nextPlan: varchar("next_plan", { length: 50 }), // Plan que se activará en el próximo ciclo de facturación
-  planChangeDate: timestamp("plan_change_date"), // Fecha cuando se efectuará el cambio de plan
+  
+  // LEGACY: Plan fields (to be deprecated - keeping for backward compatibility during migration)
+  plan: varchar("plan", { length: 50 }).notNull().default("oficaz"), // Now always "oficaz"
+  currentEffectivePlan: varchar("current_effective_plan", { length: 50 }), // DEPRECATED
+  nextPlan: varchar("next_plan", { length: 50 }), // DEPRECATED
+  planChangeDate: timestamp("plan_change_date"), // DEPRECATED
+  
+  // NEW MODEL: Base subscription pricing
+  baseMonthlyPrice: decimal("base_monthly_price", { precision: 10, scale: 2 }).default("39.00").notNull(), // Base plan price (39€)
+  
+  // NEW MODEL: Included users in base plan
+  includedAdmins: integer("included_admins").default(1).notNull(), // Admins included in base (1)
+  includedManagers: integer("included_managers").default(1).notNull(), // Managers included in base (1)
+  includedEmployees: integer("included_employees").default(10).notNull(), // Employees included in base (10)
+  
+  // NEW MODEL: Extra users purchased (beyond included)
+  extraAdmins: integer("extra_admins").default(0).notNull(), // Extra admins purchased
+  extraManagers: integer("extra_managers").default(0).notNull(), // Extra managers purchased
+  extraEmployees: integer("extra_employees").default(0).notNull(), // Extra employees purchased
+  
+  // NEW MODEL: Stripe subscription item IDs for extra users
+  stripeAdminSeatsItemId: text("stripe_admin_seats_item_id"), // Stripe item for admin seats
+  stripeManagerSeatsItemId: text("stripe_manager_seats_item_id"), // Stripe item for manager seats
+  stripeEmployeeSeatsItemId: text("stripe_employee_seats_item_id"), // Stripe item for employee seats
+  
+  // Subscription status and dates
   status: varchar("status", { length: 50 }).default("trial").notNull(), // trial, active, inactive, suspended, blocked
   startDate: timestamp("start_date").defaultNow().notNull(), // Company start date
   endDate: timestamp("end_date"),
   isTrialActive: boolean("is_trial_active").default(true).notNull(),
   trialStartDate: timestamp("trial_start_date").defaultNow(), // Trial start date
   trialEndDate: timestamp("trial_end_date"), // Trial end date
+  
+  // Stripe integration
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
+  stripeBasePlanItemId: text("stripe_base_plan_item_id"), // Stripe item for base plan (39€)
   firstPaymentDate: timestamp("first_payment_date"),
   nextPaymentDate: timestamp("next_payment_date"),
-  maxUsers: integer("max_users").default(5).notNull(),
+  
+  // LEGACY: maxUsers (to be replaced by included + extra users)
+  maxUsers: integer("max_users").default(12).notNull(), // DEPRECATED: Use includedX + extraX instead
   useCustomSettings: boolean("use_custom_settings").default(false).notNull(),
   customMonthlyPrice: decimal("custom_monthly_price", { precision: 10, scale: 2 }),
+  
+  // AI usage tracking
   aiTokensUsed: integer("ai_tokens_used").default(0), // AI tokens used this month
   aiTokensResetDate: timestamp("ai_tokens_reset_date"), // Date when tokens reset (start of billing cycle)
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -1161,19 +1192,50 @@ export const insertWorkReportSchema = createInsertSchema(workReports).omit({
 export type WorkReport = typeof workReports.$inferSelect;
 export type InsertWorkReport = z.infer<typeof insertWorkReportSchema>;
 
+// Seat Pricing - Prices for additional users by role type
+// NEW MODEL: Single source of truth for user seat pricing
+export const seatPricing = pgTable("seat_pricing", {
+  id: serial("id").primaryKey(),
+  roleType: varchar("role_type", { length: 20 }).notNull().unique(), // admin, manager, employee
+  displayName: varchar("display_name", { length: 50 }).notNull(), // "Administrador", "Manager", "Empleado"
+  monthlyPrice: decimal("monthly_price", { precision: 10, scale: 2 }).notNull(), // Price per extra seat
+  stripeProductId: text("stripe_product_id"), // Stripe product ID
+  stripePriceId: text("stripe_price_id"), // Stripe recurring price ID
+  description: text("description"), // Description for UI
+  isActive: boolean("is_active").default(true).notNull(),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSeatPricingSchema = createInsertSchema(seatPricing).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type SeatPricing = typeof seatPricing.$inferSelect;
+export type InsertSeatPricing = z.infer<typeof insertSeatPricingSchema>;
+
 // Add-ons Store - Available add-on modules for purchase
+// NEW MODEL: Some addons are free (included in base), others are paid
 export const addons = pgTable("addons", {
   id: serial("id").primaryKey(),
-  key: varchar("key", { length: 50 }).notNull().unique(), // ai_assistant, work_reports, etc.
+  key: varchar("key", { length: 50 }).notNull().unique(), // ai_assistant, work_reports, messages, etc.
   name: varchar("name", { length: 100 }).notNull(), // "Asistente IA", "Partes de Trabajo"
   description: text("description"), // Detailed description
   shortDescription: varchar("short_description", { length: 200 }), // Brief tagline
-  monthlyPrice: decimal("monthly_price", { precision: 10, scale: 2 }).notNull(), // Price in EUR/month
+  monthlyPrice: decimal("monthly_price", { precision: 10, scale: 2 }).notNull().default("0.00"), // Price in EUR/month (0 for free)
   icon: varchar("icon", { length: 50 }), // Lucide icon name (e.g., "brain", "clipboard-list")
   category: varchar("category", { length: 50 }).default("general"), // productivity, communication, etc.
   featureKey: varchar("feature_key", { length: 50 }), // Maps to features.key if applicable
   stripeProductId: text("stripe_product_id"), // Stripe product ID for billing
   stripePriceId: text("stripe_price_id"), // Stripe recurring price ID
+  
+  // NEW MODEL: Free vs Paid distinction
+  isFreeFeature: boolean("is_free_feature").default(false).notNull(), // true = included in base plan, false = paid addon
+  requiresSubscription: boolean("requires_subscription").default(true).notNull(), // Must have active subscription to use
+  
   isActive: boolean("is_active").default(true).notNull(),
   sortOrder: integer("sort_order").default(0), // Display order in store
   createdAt: timestamp("created_at").defaultNow().notNull(),
