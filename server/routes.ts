@@ -12569,17 +12569,64 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         console.log('✅ Deleted reminders');
       }
 
-      // 7. Delete subscription
+      // 7. Delete work session audit logs (CRITICAL: Must be deleted before work sessions)
+      await db.delete(schema.workSessionAuditLog)
+        .where(eq(schema.workSessionAuditLog.companyId, companyId));
+      console.log('✅ Deleted work session audit logs');
+
+      // 8. Delete work session modification requests
+      await db.delete(schema.workSessionModificationRequests)
+        .where(eq(schema.workSessionModificationRequests.companyId, companyId));
+      console.log('✅ Deleted work session modification requests');
+
+      // 9. Delete work alarms (must be deleted before users)
+      if (userIdsForAdmin.length > 0) {
+        await db.delete(schema.workAlarms)
+          .where(inArray(schema.workAlarms.userId, userIdsForAdmin));
+        console.log('✅ Deleted work alarms');
+      }
+
+      // 10. Delete company addons
+      await db.delete(schema.companyAddons)
+        .where(eq(schema.companyAddons.companyId, companyId));
+      console.log('✅ Deleted company addons');
+
+      // 11. Delete work reports
+      await db.delete(schema.workReports)
+        .where(eq(schema.workReports.companyId, companyId));
+      console.log('✅ Deleted work reports');
+
+      // 12. Delete custom holidays
+      await db.delete(schema.customHolidays)
+        .where(eq(schema.customHolidays.companyId, companyId));
+      console.log('✅ Deleted custom holidays');
+
+      // 13. Delete payment methods (NO cascade, must delete explicitly)
+      await db.delete(schema.paymentMethods)
+        .where(eq(schema.paymentMethods.companyId, companyId));
+      console.log('✅ Deleted payment methods');
+
+      // 14. Delete invoices (NO cascade, must delete explicitly)
+      await db.delete(schema.invoices)
+        .where(eq(schema.invoices.companyId, companyId));
+      console.log('✅ Deleted invoices');
+
+      // 15. Delete usage stats (NO cascade, must delete explicitly)
+      await db.delete(schema.usageStats)
+        .where(eq(schema.usageStats.companyId, companyId));
+      console.log('✅ Deleted usage stats');
+
+      // 16. Delete subscription
       await db.delete(subscriptions)
         .where(eq(subscriptions.companyId, companyId));
       console.log('✅ Deleted subscription');
 
-      // 8. Delete password reset tokens (CRITICAL: Must be deleted before company)
+      // 17. Delete password reset tokens (CRITICAL: Must be deleted before company)
       await db.delete(passwordResetTokens)
         .where(eq(passwordResetTokens.companyId, companyId));
       console.log('✅ Deleted password reset tokens');
 
-      // 9. Delete employee activation tokens (CRITICAL: Must be deleted before users)
+      // 18. Delete employee activation tokens (CRITICAL: Must be deleted before users)
       if (userIdsForAdmin.length > 0) {
         await db.delete(employeeActivationTokens)
           .where(or(
@@ -12589,38 +12636,38 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         console.log('✅ Deleted employee activation tokens');
       }
 
-      // 10. Delete all work shifts (CRITICAL: Must be deleted before users due to created_by FK)
+      // 19. Delete all work shifts (CRITICAL: Must be deleted before users due to created_by FK)
       await db.delete(schema.workShifts)
         .where(eq(schema.workShifts.companyId, companyId));
       console.log('✅ Deleted work shifts');
 
-      // 10.5. Delete all notifications (CRITICAL: Must be deleted before users due to user_id FK)
+      // 20. Delete all notifications (CRITICAL: Must be deleted before users due to user_id FK)
       if (userIdsForAdmin.length > 0) {
         await db.delete(schema.systemNotifications)
           .where(inArray(schema.systemNotifications.userId, userIdsForAdmin));
         console.log('✅ Deleted notifications');
       }
 
-      // 10.6. Delete all push subscriptions (CRITICAL: Must be deleted before users due to user_id FK)
+      // 21. Delete all push subscriptions (CRITICAL: Must be deleted before users due to user_id FK)
       if (userIdsForAdmin.length > 0) {
         await db.delete(schema.pushSubscriptions)
           .where(inArray(schema.pushSubscriptions.userId, userIdsForAdmin));
         console.log('✅ Deleted push subscriptions');
       }
 
-      // 11. Delete all users
+      // 22. Delete all users
       if (userIdsForAdmin.length > 0) {
         await db.delete(users)
           .where(eq(users.companyId, companyId));
         console.log('✅ Deleted users');
       }
 
-      // 12. Delete landing visits (CRITICAL: Must be deleted before company)
+      // 23. Delete landing visits (CRITICAL: Must be deleted before company)
       await db.delete(schema.landingVisits)
         .where(eq(schema.landingVisits.companyId, companyId));
       console.log('✅ Deleted landing visits');
 
-      // 13. Finally, delete the company
+      // 24. Finally, delete the company
       await db.delete(companies)
         .where(eq(companies.id, companyId));
       console.log('✅ Deleted company');
