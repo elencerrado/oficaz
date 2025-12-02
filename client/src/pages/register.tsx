@@ -11,7 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Building, User, Eye, EyeOff, Users, CheckCircle, XCircle, ArrowRight, ArrowLeft, Shield, Star, Crown, Check, Clock, Palmtree, CalendarDays, MessageSquare, Bell, FileText, ClipboardList, Sparkles, Brain, Calendar, Mail, CalendarClock } from 'lucide-react';
+import { Building, User, Eye, EyeOff, Users, CheckCircle, XCircle, ArrowRight, ArrowLeft, Shield, Star, Crown, Check, Clock, Palmtree, CalendarDays, MessageSquare, Bell, FileText, ClipboardList, Sparkles, Brain, Calendar, Mail, CalendarClock, HelpCircle, Plus, Minus } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
@@ -73,7 +74,9 @@ const step1Schema = z.object({
 });
 
 const step2Schema = z.object({
-  teamSize: z.string().min(1, 'Selecciona el tamaño de tu equipo'),
+  additionalAdmins: z.number().min(0).default(0),
+  additionalManagers: z.number().min(0).default(0),
+  additionalEmployees: z.number().min(0).default(0),
 });
 
 const step3Schema = z.object({
@@ -199,7 +202,11 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
   const step2Form = useForm<Step2Data>({
     resolver: zodResolver(step2Schema),
-    defaultValues: { teamSize: formData.teamSize || '' },
+    defaultValues: { 
+      additionalAdmins: formData.additionalAdmins || 0,
+      additionalManagers: formData.additionalManagers || 0,
+      additionalEmployees: formData.additionalEmployees || 0,
+    },
   });
 
   const step3Form = useForm<Step3Data>({
@@ -597,112 +604,242 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
             {/* Step 2: Team Size */}
             {currentStep === 2 && (
-              <form onSubmit={step2Form.handleSubmit(handleStep2Submit)} className="space-y-6">
-                <div className="text-center lg:text-left mb-6">
-                  <h2 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-2">
-                    ¿Cuántos empleados tienes?
-                  </h2>
-                  <p className="text-gray-500 text-sm">
-                    El plan base incluye 1 admin, 1 manager y hasta 10 empleados
-                  </p>
-                </div>
+              <TooltipProvider>
+                <form onSubmit={step2Form.handleSubmit(handleStep2Submit)} className="space-y-6">
+                  <div className="text-center lg:text-left mb-6">
+                    <h2 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-2">
+                      Configura tu equipo
+                    </h2>
+                    <p className="text-gray-500 text-sm">
+                      El plan base incluye usuarios. Añade más si los necesitas.
+                    </p>
+                  </div>
 
-                {/* Plan info card */}
-                <div className="bg-gradient-to-r from-oficaz-primary/5 to-blue-50 border border-oficaz-primary/20 rounded-2xl p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <span className="text-lg font-semibold text-gray-900">Plan Oficaz</span>
-                      <div className="flex items-baseline gap-1 mt-1">
+                  {/* Plan base card */}
+                  <div className="bg-gradient-to-r from-oficaz-primary/5 to-blue-50 border border-oficaz-primary/20 rounded-2xl p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <span className="text-lg font-semibold text-gray-900">Plan Oficaz</span>
+                        <span className="text-xs text-gray-500 ml-2">Incluye:</span>
+                      </div>
+                      <div className="flex items-baseline gap-1">
                         <span className="text-2xl font-bold text-oficaz-primary">€39</span>
-                        <span className="text-gray-500">/mes</span>
+                        <span className="text-gray-500 text-sm">/mes</span>
                       </div>
                     </div>
-                    <Crown className="w-8 h-8 text-oficaz-primary" />
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      <div className="bg-white/80 rounded-xl p-3">
+                        <div className="text-xl font-bold text-oficaz-primary">1</div>
+                        <div className="text-xs text-gray-600 font-medium">Admin</div>
+                      </div>
+                      <div className="bg-white/80 rounded-xl p-3">
+                        <div className="text-xl font-bold text-oficaz-primary">1</div>
+                        <div className="text-xs text-gray-600 font-medium">Manager</div>
+                      </div>
+                      <div className="bg-white/80 rounded-xl p-3">
+                        <div className="text-xl font-bold text-oficaz-primary">10</div>
+                        <div className="text-xs text-gray-600 font-medium">Empleados</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div className="bg-white/80 rounded-xl p-3">
-                      <div className="text-lg font-semibold text-gray-900">1</div>
-                      <div className="text-xs text-gray-500">Admin</div>
-                    </div>
-                    <div className="bg-white/80 rounded-xl p-3">
-                      <div className="text-lg font-semibold text-gray-900">1</div>
-                      <div className="text-xs text-gray-500">Manager</div>
-                    </div>
-                    <div className="bg-white/80 rounded-xl p-3">
-                      <div className="text-lg font-semibold text-gray-900">10</div>
-                      <div className="text-xs text-gray-500">Empleados</div>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Team size options */}
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium text-gray-700">Tamaño aproximado del equipo</Label>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                    {[
-                      { value: '1-5', label: '1-5' },
-                      { value: '6-10', label: '6-10' },
-                      { value: '11-25', label: '11-25' },
-                      { value: '26-50', label: '26-50' },
-                      { value: '51-100', label: '51-100' },
-                      { value: '100+', label: '100+' },
-                    ].map((option) => {
-                      const isSelected = step2Form.watch('teamSize') === option.value;
-                      return (
-                        <label
-                          key={option.value}
-                          className={`
-                            flex items-center justify-center p-4 rounded-xl cursor-pointer transition-all duration-200 font-medium
-                            ${isSelected 
-                              ? 'bg-oficaz-primary text-white shadow-md' 
-                              : 'bg-white border-2 border-gray-100 text-gray-700 hover:border-gray-200'
-                            }
-                          `}
-                        >
-                          <input
-                            type="radio"
-                            value={option.value}
-                            {...step2Form.register('teamSize')}
-                            className="sr-only"
-                          />
-                          {option.label}
-                        </label>
-                      );
-                    })}
+                  {/* Additional users section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-700">¿Necesitas más usuarios?</span>
+                      <span className="text-xs text-gray-400">Opcional</span>
+                    </div>
+
+                    {/* Counters grid */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      {/* Additional Admins */}
+                      <div className="bg-white border-2 border-gray-100 rounded-2xl p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-900">Admins</span>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button type="button" className="text-gray-400 hover:text-gray-600">
+                                  <HelpCircle className="w-4 h-4" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-sm">Control total de la empresa, gestión de facturación y configuración del sistema.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <span className="text-xs text-oficaz-primary font-medium">+€6/mes</span>
+                        </div>
+                        <div className="flex items-center justify-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const current = step2Form.getValues('additionalAdmins');
+                              if (current > 0) step2Form.setValue('additionalAdmins', current - 1);
+                            }}
+                            className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                            data-testid="button-minus-admins"
+                          >
+                            <Minus className="w-4 h-4 text-gray-600" />
+                          </button>
+                          <span className="w-12 text-center text-xl font-semibold text-gray-900">
+                            {step2Form.watch('additionalAdmins')}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const current = step2Form.getValues('additionalAdmins');
+                              step2Form.setValue('additionalAdmins', current + 1);
+                            }}
+                            className="w-10 h-10 rounded-xl bg-oficaz-primary hover:bg-oficaz-primary/90 flex items-center justify-center transition-colors"
+                            data-testid="button-plus-admins"
+                          >
+                            <Plus className="w-4 h-4 text-white" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Additional Managers */}
+                      <div className="bg-white border-2 border-gray-100 rounded-2xl p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-900">Managers</span>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button type="button" className="text-gray-400 hover:text-gray-600">
+                                  <HelpCircle className="w-4 h-4" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-sm">Gestiona equipos, aprueba vacaciones, revisa fichajes y accede a informes.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <span className="text-xs text-oficaz-primary font-medium">+€4/mes</span>
+                        </div>
+                        <div className="flex items-center justify-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const current = step2Form.getValues('additionalManagers');
+                              if (current > 0) step2Form.setValue('additionalManagers', current - 1);
+                            }}
+                            className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                            data-testid="button-minus-managers"
+                          >
+                            <Minus className="w-4 h-4 text-gray-600" />
+                          </button>
+                          <span className="w-12 text-center text-xl font-semibold text-gray-900">
+                            {step2Form.watch('additionalManagers')}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const current = step2Form.getValues('additionalManagers');
+                              step2Form.setValue('additionalManagers', current + 1);
+                            }}
+                            className="w-10 h-10 rounded-xl bg-oficaz-primary hover:bg-oficaz-primary/90 flex items-center justify-center transition-colors"
+                            data-testid="button-plus-managers"
+                          >
+                            <Plus className="w-4 h-4 text-white" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Additional Employees */}
+                      <div className="bg-white border-2 border-gray-100 rounded-2xl p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-900">Empleados</span>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button type="button" className="text-gray-400 hover:text-gray-600">
+                                  <HelpCircle className="w-4 h-4" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-sm">Ficha entrada/salida, solicita vacaciones y accede a sus nóminas y documentos.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <span className="text-xs text-oficaz-primary font-medium">+€2/mes</span>
+                        </div>
+                        <div className="flex items-center justify-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const current = step2Form.getValues('additionalEmployees');
+                              if (current > 0) step2Form.setValue('additionalEmployees', current - 1);
+                            }}
+                            className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                            data-testid="button-minus-employees"
+                          >
+                            <Minus className="w-4 h-4 text-gray-600" />
+                          </button>
+                          <span className="w-12 text-center text-xl font-semibold text-gray-900">
+                            {step2Form.watch('additionalEmployees')}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const current = step2Form.getValues('additionalEmployees');
+                              step2Form.setValue('additionalEmployees', current + 1);
+                            }}
+                            className="w-10 h-10 rounded-xl bg-oficaz-primary hover:bg-oficaz-primary/90 flex items-center justify-center transition-colors"
+                            data-testid="button-plus-employees"
+                          >
+                            <Plus className="w-4 h-4 text-white" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  {step2Form.formState.errors.teamSize && (
-                    <p className="text-sm text-red-500">{step2Form.formState.errors.teamSize.message}</p>
+
+                  {/* Total summary */}
+                  {(step2Form.watch('additionalAdmins') > 0 || step2Form.watch('additionalManagers') > 0 || step2Form.watch('additionalEmployees') > 0) && (
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-sm font-medium text-gray-700">Total usuarios adicionales:</span>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {step2Form.watch('additionalAdmins') > 0 && `+${step2Form.watch('additionalAdmins')} admin${step2Form.watch('additionalAdmins') > 1 ? 's' : ''}`}
+                            {step2Form.watch('additionalAdmins') > 0 && (step2Form.watch('additionalManagers') > 0 || step2Form.watch('additionalEmployees') > 0) && ', '}
+                            {step2Form.watch('additionalManagers') > 0 && `+${step2Form.watch('additionalManagers')} manager${step2Form.watch('additionalManagers') > 1 ? 's' : ''}`}
+                            {step2Form.watch('additionalManagers') > 0 && step2Form.watch('additionalEmployees') > 0 && ', '}
+                            {step2Form.watch('additionalEmployees') > 0 && `+${step2Form.watch('additionalEmployees')} empleado${step2Form.watch('additionalEmployees') > 1 ? 's' : ''}`}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-lg font-bold text-oficaz-primary">
+                            +€{(step2Form.watch('additionalAdmins') * 6) + (step2Form.watch('additionalManagers') * 4) + (step2Form.watch('additionalEmployees') * 2)}
+                          </span>
+                          <span className="text-gray-500 text-sm">/mes</span>
+                        </div>
+                      </div>
+                    </div>
                   )}
-                </div>
 
-                {/* Additional seats info */}
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">¿Necesitas más usuarios?</span> Puedes añadirlos después: 
-                    empleados +2€, managers +4€, admins +6€ por usuario/mes.
-                  </p>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => goToStep(1)}
-                    className="flex-1 h-12 rounded-xl"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Atrás
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    data-testid="button-step2-continue"
-                    className="flex-1 h-12 rounded-xl"
-                  >
-                    Continuar
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
-              </form>
+                  <div className="flex gap-3 pt-4">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => goToStep(1)}
+                      className="flex-1 h-12 rounded-xl"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Atrás
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      data-testid="button-step2-continue"
+                      className="flex-1 h-12 rounded-xl"
+                    >
+                      Continuar
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                </form>
+              </TooltipProvider>
             )}
 
             {/* Step 3: Company */}
@@ -1075,19 +1212,21 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   <div className="bg-gradient-to-br from-oficaz-primary/10 to-blue-50 border border-oficaz-primary/20 rounded-2xl p-4">
                     <div className="flex items-center justify-between mb-3">
                       <span className="font-medium text-gray-900">Plan Oficaz</span>
-                      <Badge className="bg-oficaz-primary text-white">€39/mes</Badge>
+                      <Badge className="bg-oficaz-primary text-white">
+                        €{39 + ((formData.additionalAdmins || 0) * 6) + ((formData.additionalManagers || 0) * 4) + ((formData.additionalEmployees || 0) * 2)}/mes
+                      </Badge>
                     </div>
                     <div className="flex gap-3 text-center">
                       <div className="flex-1 bg-white/70 rounded-xl py-2">
-                        <div className="text-lg font-semibold text-oficaz-primary">1</div>
-                        <div className="text-xs text-gray-500">Admin</div>
+                        <div className="text-lg font-semibold text-oficaz-primary">{1 + (formData.additionalAdmins || 0)}</div>
+                        <div className="text-xs text-gray-500">Admin{(1 + (formData.additionalAdmins || 0)) > 1 ? 's' : ''}</div>
                       </div>
                       <div className="flex-1 bg-white/70 rounded-xl py-2">
-                        <div className="text-lg font-semibold text-oficaz-primary">1</div>
-                        <div className="text-xs text-gray-500">Manager</div>
+                        <div className="text-lg font-semibold text-oficaz-primary">{1 + (formData.additionalManagers || 0)}</div>
+                        <div className="text-xs text-gray-500">Manager{(1 + (formData.additionalManagers || 0)) > 1 ? 's' : ''}</div>
                       </div>
                       <div className="flex-1 bg-white/70 rounded-xl py-2">
-                        <div className="text-lg font-semibold text-oficaz-primary">10</div>
+                        <div className="text-lg font-semibold text-oficaz-primary">{10 + (formData.additionalEmployees || 0)}</div>
                         <div className="text-xs text-gray-500">Empleados</div>
                       </div>
                     </div>
