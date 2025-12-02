@@ -45,13 +45,28 @@ const validateUserField = async (field: string, value: string) => {
   }
 };
 
-// Step schemas for validation
+// All available features with pricing and inclusion status
+const allFeatures = [
+  { id: 'timeTracking', name: 'Fichajes', icon: Calendar, description: 'Control de horarios y asistencia de empleados', included: true, price: 0 },
+  { id: 'schedules', name: 'Cuadrante', icon: Calendar, description: 'Planificación de turnos y horarios de trabajo', included: true, price: 0 },
+  { id: 'vacation', name: 'Vacaciones', icon: Calendar, description: 'Gestión de solicitudes y aprobación de vacaciones', included: true, price: 0 },
+  { id: 'messages', name: 'Mensajería Interna', icon: MessageSquare, description: 'Comunicación directa entre empleados y gestores', included: false, price: 5 },
+  { id: 'reminders', name: 'Recordatorios', icon: Calendar, description: 'Alertas y notificaciones automáticas', included: false, price: 5 },
+  { id: 'documents', name: 'Gestión Documental', icon: FileText, description: 'Almacenamiento y gestión de documentos', included: false, price: 10 },
+  { id: 'workReports', name: 'Partes de Trabajo', icon: FileText, description: 'Registro detallado de actividades laborales', included: false, price: 8 },
+  { id: 'aiAssistant', name: 'OficazIA', icon: Star, description: 'Asistente inteligente para gestión administrativa', included: false, price: 15 },
+];
+
+// Step schemas for validation (5 steps)
 const step1Schema = z.object({
-  teamSize: z.string().min(1, 'Selecciona el tamaño de tu equipo'),
-  interestedFeatures: z.array(z.string()).min(1, 'Selecciona al menos una funcionalidad'),
+  interestedFeatures: z.array(z.string()).optional(),
 });
 
 const step2Schema = z.object({
+  teamSize: z.string().min(1, 'Selecciona el tamaño aproximado de tu equipo'),
+});
+
+const step3Schema = z.object({
   companyName: z.string().min(2, 'El nombre de la empresa debe tener al menos 2 caracteres'),
   cif: z.string().min(9, 'El CIF debe tener al menos 9 caracteres'),
   companyEmail: z.string().email('Email no válido'),
@@ -61,7 +76,7 @@ const step2Schema = z.object({
   province: z.string().min(1, 'Selecciona una provincia'),
 });
 
-const step3Schema = z.object({
+const step4Schema = z.object({
   adminFullName: z.string().min(2, 'El nombre completo debe tener al menos 2 caracteres'),
   adminEmail: z.string().email('Email no válido'),
   adminDni: z.string().min(8, 'El DNI/NIE es requerido'),
@@ -90,21 +105,22 @@ const step3Schema = z.object({
   path: ['contactName'],
 });
 
-const step4Schema = z.object({
-  selectedPlan: z.string().min(1, 'Selecciona un plan de suscripción'),
-  promotionalCode: z.string().optional(), // Código promocional opcional
+const step5Schema = z.object({
+  selectedPlan: z.string().default('oficaz'),
+  promotionalCode: z.string().optional(),
   acceptTerms: z.boolean().refine(val => val === true, {
     message: 'Debes aceptar los términos y condiciones para continuar',
   }),
-  acceptMarketing: z.boolean().optional(), // Consentimiento para recibir correos comerciales
+  acceptMarketing: z.boolean().optional(),
 });
 
 type Step1Data = z.infer<typeof step1Schema>;
 type Step2Data = z.infer<typeof step2Schema>;
 type Step3Data = z.infer<typeof step3Schema>;
 type Step4Data = z.infer<typeof step4Schema>;
+type Step5Data = z.infer<typeof step5Schema>;
 
-type FormData = Step1Data & Step2Data & Step3Data & Step4Data;
+type FormData = Step1Data & Step2Data & Step3Data & Step4Data & Step5Data;
 
 interface RegisterProps {
   byInvitation?: boolean;
@@ -167,18 +183,25 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     </div>;
   }
 
-  // Step 1 form
+  // Step 1 form - Features selection
   const step1Form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
     defaultValues: {
-      teamSize: '',
       interestedFeatures: [],
     },
   });
 
-  // Step 2 form
+  // Step 2 form - Team size
   const step2Form = useForm<Step2Data>({
     resolver: zodResolver(step2Schema),
+    defaultValues: {
+      teamSize: '',
+    },
+  });
+
+  // Step 3 form - Company data
+  const step3Form = useForm<Step3Data>({
+    resolver: zodResolver(step3Schema),
     defaultValues: {
       companyName: '',
       cif: '',
@@ -188,12 +211,12 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     },
   });
 
-  // Step 3 form
-  const step3Form = useForm<Step3Data>({
-    resolver: zodResolver(step3Schema),
+  // Step 4 form - Admin data
+  const step4Form = useForm<Step4Data>({
+    resolver: zodResolver(step4Schema),
     defaultValues: {
       adminFullName: '',
-      adminEmail: emailFromUrl || '', // Pre-fill with email from URL
+      adminEmail: emailFromUrl || '',
       adminDni: '',
       adminPhone: '',
       password: '',
@@ -205,25 +228,18 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     },
   });
 
-  // Step 4 form
-  const step4Form = useForm<Step4Data>({
-    resolver: zodResolver(step4Schema),
+  // Step 5 form - Summary and confirmation
+  const step5Form = useForm<Step5Data>({
+    resolver: zodResolver(step5Schema),
     defaultValues: {
-      selectedPlan: '',
+      selectedPlan: 'oficaz',
       promotionalCode: '',
       acceptTerms: false,
       acceptMarketing: false,
     },
   });
 
-  const progressPercentage = (currentStep / 4) * 100;
-
-  const features = [
-    { id: 'timeTracking', name: 'Fichajes', icon: Calendar, description: 'Control de horarios y asistencia' },
-    { id: 'vacation', name: 'Vacaciones', icon: Calendar, description: 'Gestión de solicitudes de vacaciones' },
-    { id: 'documents', name: 'Documentos', icon: FileText, description: 'Gestión documental' },
-    { id: 'messages', name: 'Mensajes', icon: MessageSquare, description: 'Comunicación interna' },
-  ];
+  const progressPercentage = (currentStep / 5) * 100;
 
   const teamSizes = [
     { value: '1-5', label: '1-5 personas', description: 'Pequeño equipo' },
@@ -263,16 +279,23 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     }
   };
 
+  // Step 1: Features selection - just save and continue
   const handleStep1Submit = (data: Step1Data) => {
     setFormData(prev => ({ ...prev, ...data }));
     setCurrentStep(2);
   };
 
-  const handleStep2Submit = async (data: Step2Data) => {
+  // Step 2: Team size - just save and continue
+  const handleStep2Submit = (data: Step2Data) => {
+    setFormData(prev => ({ ...prev, ...data }));
+    setCurrentStep(3);
+  };
+
+  // Step 3: Company data - validate uniqueness and continue
+  const handleStep3Submit = async (data: Step3Data) => {
     try {
       setValidatingStep2(true);
       
-      // Validate all company fields for uniqueness
       const validations = await Promise.all([
         validateCompanyField('name', data.companyName),
         validateCompanyField('cif', data.cif),
@@ -283,25 +306,24 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       const [nameAvailable, cifAvailable, emailAvailable, aliasAvailable] = validations;
 
       if (!nameAvailable) {
-        step2Form.setError('companyName', { message: 'Ya existe una empresa con este nombre' });
+        step3Form.setError('companyName', { message: 'Ya existe una empresa con este nombre' });
         return;
       }
       if (!cifAvailable) {
-        step2Form.setError('cif', { message: 'Este CIF ya está registrado' });
+        step3Form.setError('cif', { message: 'Este CIF ya está registrado' });
         return;
       }
       if (!emailAvailable) {
-        step2Form.setError('companyEmail', { message: 'Este email ya está en uso' });
+        step3Form.setError('companyEmail', { message: 'Este email ya está en uso' });
         return;
       }
       if (!aliasAvailable) {
-        step2Form.setError('companyAlias', { message: 'Este alias ya está en uso' });
+        step3Form.setError('companyAlias', { message: 'Este alias ya está en uso' });
         return;
       }
 
-      // All validations passed, continue to next step
       setFormData(prev => ({ ...prev, ...data }));
-      setCurrentStep(3);
+      setCurrentStep(4);
     } catch (error) {
       console.error("Validation error:", "Error al verificar los datos. Inténtalo de nuevo.");
     } finally {
@@ -309,24 +331,20 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     }
   };
 
-  const handleStep3Submit = async (data: Step3Data) => {
+  // Step 4: Admin data - validate uniqueness and continue
+  const handleStep4Submit = async (data: Step4Data) => {
     try {
       setValidatingStep3(true);
       
-      console.log('Step 3 data:', data);
-      console.log('Step 3 form errors:', step3Form.formState.errors);
-      
-      // Validate admin user fields for uniqueness
       const emailAvailable = await validateUserField('email', data.adminEmail);
 
       if (!emailAvailable) {
-        step3Form.setError('adminEmail', { message: 'Este email ya está registrado' });
+        step4Form.setError('adminEmail', { message: 'Este email ya está registrado' });
         return;
       }
 
-      // All validations passed, continue to plan selection
       setFormData(prev => ({ ...prev, ...data }));
-      setCurrentStep(4);
+      setCurrentStep(5);
     } catch (error: any) {
       console.error('Validation error:', error.message || 'Error al verificar los datos');
     } finally {
@@ -334,7 +352,8 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     }
   };
 
-  const handleStep4Submit = async (data: Step4Data) => {
+  // Step 5: Summary and confirmation - final submit
+  const handleStep5Submit = async (data: Step5Data) => {
     try {
       setIsLoading(true);
       setShowDemoLoading(true);
