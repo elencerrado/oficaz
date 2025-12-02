@@ -593,10 +593,21 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   <Button 
                     type="submit" 
                     data-testid="button-step1-continue"
-                    className="w-full h-12 rounded-xl text-base font-medium"
+                    className={`w-full h-12 rounded-xl text-base font-medium ${
+                      (step1Form.watch('interestedFeatures') || []).length === 0 
+                        ? 'bg-gray-200 hover:bg-gray-300 text-gray-700' 
+                        : ''
+                    }`}
+                    variant={(step1Form.watch('interestedFeatures') || []).length === 0 ? 'outline' : 'default'}
                   >
-                    Continuar
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                    {(step1Form.watch('interestedFeatures') || []).length > 0 ? (
+                      <>
+                        Continuar
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </>
+                    ) : (
+                      'Decidir luego'
+                    )}
                   </Button>
                 </div>
               </form>
@@ -832,10 +843,21 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     <Button 
                       type="submit" 
                       data-testid="button-step2-continue"
-                      className="flex-1 h-12 rounded-xl"
+                      className={`flex-1 h-12 rounded-xl ${
+                        (step2Form.watch('additionalAdmins') === 0 && step2Form.watch('additionalManagers') === 0 && step2Form.watch('additionalEmployees') === 0)
+                          ? 'bg-gray-200 hover:bg-gray-300 text-gray-700' 
+                          : ''
+                      }`}
+                      variant={(step2Form.watch('additionalAdmins') === 0 && step2Form.watch('additionalManagers') === 0 && step2Form.watch('additionalEmployees') === 0) ? 'outline' : 'default'}
                     >
-                      Continuar
-                      <ArrowRight className="w-4 h-4 ml-2" />
+                      {(step2Form.watch('additionalAdmins') > 0 || step2Form.watch('additionalManagers') > 0 || step2Form.watch('additionalEmployees') > 0) ? (
+                        <>
+                          Continuar
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </>
+                      ) : (
+                        'Seguir con el plan base'
+                      )}
                     </Button>
                   </div>
                 </form>
