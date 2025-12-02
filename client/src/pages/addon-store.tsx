@@ -93,7 +93,7 @@ const getAddonColor = (key: string) => {
 
 export default function AddonStore() {
   usePageTitle('Tienda - Oficaz');
-  const { user, subscription } = useAuth();
+  const { user, subscription, refreshUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -135,10 +135,11 @@ export default function AddonStore() {
     mutationFn: async (addonId: number) => {
       return await apiRequest('POST', `/api/addons/${addonId}/purchase`);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['/api/addons'] });
       queryClient.invalidateQueries({ queryKey: ['/api/company/addons'] });
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      await refreshUser();
       toast({
         title: 'Complemento añadido',
         description: 'El complemento se ha añadido correctamente a tu suscripción.',
@@ -159,10 +160,11 @@ export default function AddonStore() {
     mutationFn: async (addonId: number) => {
       return await apiRequest('POST', `/api/addons/${addonId}/cancel`);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['/api/addons'] });
       queryClient.invalidateQueries({ queryKey: ['/api/company/addons'] });
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      await refreshUser();
       toast({
         title: 'Complemento cancelado',
         description: 'El complemento se cancelará al final del período de facturación.',
