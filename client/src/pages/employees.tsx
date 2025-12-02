@@ -82,7 +82,7 @@ export default function Employees() {
     vacationDaysAdjustment: 0,
   });
 
-  const { user } = useAuth();
+  const { user, subscription } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -210,6 +210,21 @@ export default function Employees() {
   const adminCount = filteredEmployees.filter((emp: any) => emp.role === 'admin').length;
   const managerCount = filteredEmployees.filter((emp: any) => emp.role === 'manager').length;
   const employeeCount = filteredEmployees.filter((emp: any) => emp.role === 'employee').length;
+
+  // Calculate available slots for each role based on subscription
+  const maxEmployees = (subscription?.includedEmployees || 10) + (subscription?.extraEmployees || 0);
+  const maxManagers = (subscription?.includedManagers || 1) + (subscription?.extraManagers || 0);
+  const maxAdmins = (subscription?.includedAdmins || 1) + (subscription?.extraAdmins || 0);
+
+  // All employees count (from the full list, not filtered)
+  const allEmployees = Array.isArray(employees) ? employees : [];
+  const totalAdmins = allEmployees.filter((emp: any) => emp.role === 'admin').length;
+  const totalManagers = allEmployees.filter((emp: any) => emp.role === 'manager').length;
+  const totalEmployeesOnly = allEmployees.filter((emp: any) => emp.role === 'employee').length;
+
+  const availableAdminSlots = Math.max(0, maxAdmins - totalAdmins);
+  const availableManagerSlots = Math.max(0, maxManagers - totalManagers);
+  const availableEmployeeSlots = Math.max(0, maxEmployees - totalEmployeesOnly);
 
   // Active sessions today
   const today = new Date().toDateString();
@@ -752,15 +767,43 @@ export default function Employees() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="employee">Empleado</SelectItem>
+                  <SelectItem value="employee" disabled={availableEmployeeSlots === 0}>
+                    <div className="flex items-center justify-between w-full gap-2">
+                      <span>Empleado</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded ${availableEmployeeSlots > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {availableEmployeeSlots} libre{availableEmployeeSlots !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </SelectItem>
                   {user?.role === 'admin' && (
                     <>
-                      <SelectItem value="manager">Gerente</SelectItem>
-                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="manager" disabled={availableManagerSlots === 0}>
+                        <div className="flex items-center justify-between w-full gap-2">
+                          <span>Gerente</span>
+                          <span className={`text-xs px-1.5 py-0.5 rounded ${availableManagerSlots > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {availableManagerSlots} libre{availableManagerSlots !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="admin" disabled={availableAdminSlots === 0}>
+                        <div className="flex items-center justify-between w-full gap-2">
+                          <span>Administrador</span>
+                          <span className={`text-xs px-1.5 py-0.5 rounded ${availableAdminSlots > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {availableAdminSlots} libre{availableAdminSlots !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      </SelectItem>
                     </>
                   )}
                   {user?.role === 'manager' && (
-                    <SelectItem value="manager">Gerente</SelectItem>
+                    <SelectItem value="manager" disabled={availableManagerSlots === 0}>
+                      <div className="flex items-center justify-between w-full gap-2">
+                        <span>Gerente</span>
+                        <span className={`text-xs px-1.5 py-0.5 rounded ${availableManagerSlots > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          {availableManagerSlots} libre{availableManagerSlots !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </SelectItem>
                   )}
                 </SelectContent>
               </Select>
