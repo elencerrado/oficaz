@@ -310,34 +310,34 @@ export default function AddonStore() {
                         Incluido
                       </Badge>
                     </div>
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start gap-3">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center gap-3 mb-2">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${getAddonColor(addon.key)}`}>
                           {getAddonIcon(addon.key)}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-base text-gray-900 dark:text-gray-100">{addon.name}</CardTitle>
-                          <CardDescription className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                            {addon.shortDescription || addon.description}
-                          </CardDescription>
-                        </div>
+                        <CardTitle className="text-base text-gray-900 dark:text-gray-100">{addon.name}</CardTitle>
                       </div>
+                      <CardDescription className="text-sm text-gray-500 dark:text-gray-400 h-10 line-clamp-2">
+                        {addon.shortDescription || addon.description}
+                      </CardDescription>
                     </CardHeader>
                     <CardContent className="flex-grow flex flex-col justify-end pt-0">
-                      <div className="mb-3">
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-xl font-bold text-green-600 dark:text-green-400">Gratis</span>
+                      <div className="mt-auto">
+                        <div className="mb-3">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-xl font-bold text-green-600 dark:text-green-400">Gratis</span>
+                          </div>
                         </div>
+                        <Button 
+                          variant="outline" 
+                          className="w-full text-green-600 border-green-300 hover:bg-green-50 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/30" 
+                          disabled
+                          data-testid={`addon-included-${addon.key}`}
+                        >
+                          <Check className="h-4 w-4 mr-2" />
+                          Incluido en tu plan
+                        </Button>
                       </div>
-                      <Button 
-                        variant="outline" 
-                        className="w-full text-green-600 border-green-300 hover:bg-green-50 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/30" 
-                        disabled
-                        data-testid={`addon-included-${addon.key}`}
-                      >
-                        <Check className="h-4 w-4 mr-2" />
-                        Incluido en tu plan
-                      </Button>
                     </CardContent>
                   </Card>
                 ))}
@@ -354,18 +354,16 @@ export default function AddonStore() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {/* Employees Card */}
               <Card className="relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 h-[280px] flex flex-col" data-testid="seats-employees-card">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start gap-3">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                       <Users className="h-5 w-5" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-base text-gray-900 dark:text-gray-100">Empleados</CardTitle>
-                      <CardDescription className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                        Añade empleados adicionales a tu equipo
-                      </CardDescription>
-                    </div>
+                    <CardTitle className="text-base text-gray-900 dark:text-gray-100">Empleados</CardTitle>
                   </div>
+                  <CardDescription className="text-sm text-gray-500 dark:text-gray-400 h-10 line-clamp-2">
+                    Añade empleados adicionales a tu equipo
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow flex flex-col justify-end pt-0">
                   <div className="mb-3">
@@ -408,18 +406,16 @@ export default function AddonStore() {
 
               {/* Managers Card */}
               <Card className="relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 h-[280px] flex flex-col" data-testid="seats-managers-card">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start gap-3">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
                       <Briefcase className="h-5 w-5" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-base text-gray-900 dark:text-gray-100">Managers</CardTitle>
-                      <CardDescription className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                        Añade managers para supervisar equipos
-                      </CardDescription>
-                    </div>
+                    <CardTitle className="text-base text-gray-900 dark:text-gray-100">Managers</CardTitle>
                   </div>
+                  <CardDescription className="text-sm text-gray-500 dark:text-gray-400 h-10 line-clamp-2">
+                    Añade managers para supervisar equipos
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow flex flex-col justify-end pt-0">
                   <div className="mb-3">
@@ -462,18 +458,16 @@ export default function AddonStore() {
 
               {/* Admins Card */}
               <Card className="relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 h-[280px] flex flex-col" data-testid="seats-admins-card">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start gap-3">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                       <Shield className="h-5 w-5" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-base text-gray-900 dark:text-gray-100">Administradores</CardTitle>
-                      <CardDescription className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                        Añade administradores con control total
-                      </CardDescription>
-                    </div>
+                    <CardTitle className="text-base text-gray-900 dark:text-gray-100">Administradores</CardTitle>
                   </div>
+                  <CardDescription className="text-sm text-gray-500 dark:text-gray-400 h-10 line-clamp-2">
+                    Añade administradores con control total
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow flex flex-col justify-end pt-0">
                   <div className="mb-3">
