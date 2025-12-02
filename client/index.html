@@ -122,24 +122,48 @@
         width: 100%;
       }
       
-      /* Critical loading spinner styles */
-      .loading-spinner {
+      /* Oficaz Standard Loader - Thick circle with orbiting dot */
+      .oficaz-loader {
         position: fixed;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 32px;
-        height: 32px;
-        border: 3px solid #e5e7eb;
-        border-top: 3px solid #007AFF;
+        width: 36px;
+        height: 36px;
+      }
+      
+      .oficaz-loader-circle {
+        position: absolute;
+        inset: 0;
+        border: 6px solid #007AFF;
         border-radius: 50%;
+      }
+      
+      .oficaz-loader-orbit {
+        position: absolute;
+        inset: 0;
         animation: spin 1s linear infinite;
       }
       
-      @keyframes spin {
-        0% { transform: translate(-50%, -50%) rotate(0deg); }
-        100% { transform: translate(-50%, -50%) rotate(360deg); }
+      .oficaz-loader-dot {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        background: #007AFF;
+        border-radius: 50%;
+        top: 6px;
+        left: 50%;
+        transform: translateX(-50%) translateY(6px);
       }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* Dark mode loader */
+      html.dark .oficaz-loader-circle { border-color: white; }
+      html.dark .oficaz-loader-dot { background: white; }
       
       /* Prevent render blocking font flash */
       @font-display: swap;

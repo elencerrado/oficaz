@@ -1,5 +1,6 @@
 import { Component, ReactNode } from 'react';
 import * as Sentry from '@sentry/react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface Props {
   children: ReactNode;
@@ -92,12 +93,11 @@ export class ErrorBoundary extends Component<Props, State> {
     // NEVER show error screen - just reload automatically
     // If error persists after max attempts, show blank page (better than error screen)
     if (this.state.hasError) {
-      // Show loading state while auto-reloading
       if (this.state.reloadAttempts < MAX_AUTO_RELOAD_ATTEMPTS) {
         return (
           <div className="min-h-screen w-full flex items-center justify-center bg-background">
             <div className="flex flex-col items-center gap-4">
-              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <LoadingSpinner size="lg" />
               <p className="text-muted-foreground text-sm">Cargando...</p>
             </div>
           </div>
