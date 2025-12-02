@@ -486,9 +486,9 @@ export default function EmployeesSimple() {
     <div className="min-h-screen bg-background" style={{ overflowX: 'clip' }}>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">
+      <div className="grid grid-cols-3 gap-2 md:gap-6 mb-3">
         <StatsCard
-          title="Usuarios"
+          title="Total Empleados"
           subtitle={`de ${subscriptionInfo?.userLimits?.totalUsers || subscription?.maxUsers || 12}`}
           value={totalUsers}
           color="blue"
@@ -500,13 +500,6 @@ export default function EmployeesSimple() {
           value={employeeList?.filter(emp => emp.role === 'manager').length || 0}
           color="green"
           icon={UserCheck}
-        />
-        <StatsCard
-          title="Empleados"
-          subtitle={`de ${subscriptionInfo?.userLimits?.employees?.total || 10}`}
-          value={employeeList?.filter(emp => emp.role === 'employee').length || 0}
-          color="orange"
-          icon={User}
         />
         <StatsCard
           title="Admins"
