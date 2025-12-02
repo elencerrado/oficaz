@@ -483,153 +483,188 @@ export default function AddonStore() {
               <UserPlus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Usuarios adicionales</h2>
             </div>
-            <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" data-testid="seats-card">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg text-gray-900 dark:text-gray-100">Añadir más usuarios</CardTitle>
-                <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
-                  Tu plan base incluye 1 admin, 1 manager y 10 empleados. Añade usuarios adicionales según tus necesidades.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Employees */}
-                  <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                        <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">Empleados</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">+{seatPrices.employees}€/mes cada uno</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateSeatCount('employees', -1)}
-                        disabled={additionalSeats.employees === 0}
-                        data-testid="seats-employees-minus"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="w-8 text-center font-semibold text-gray-900 dark:text-gray-100" data-testid="seats-employees-count">
-                        {additionalSeats.employees}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {/* Employees Card */}
+              <Card className="relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" data-testid="seats-employees-card">
+                <CardHeader className="pb-3">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                    <Users className="h-6 w-6" />
+                  </div>
+                  <CardTitle className="text-lg text-gray-900 dark:text-gray-100">Empleados</CardTitle>
+                  <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
+                    Añade empleados adicionales a tu equipo
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-4">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                        {seatPrices.employees.toFixed(2)}€
                       </span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateSeatCount('employees', 1)}
-                        data-testid="seats-employees-plus"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
+                      <span className="text-gray-500 dark:text-gray-400 text-sm">/mes cada uno</span>
                     </div>
                   </div>
-
-                  {/* Managers */}
-                  <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                        <Briefcase className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">Managers</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">+{seatPrices.managers}€/mes cada uno</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateSeatCount('managers', -1)}
-                        disabled={additionalSeats.managers === 0}
-                        data-testid="seats-managers-minus"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="w-8 text-center font-semibold text-gray-900 dark:text-gray-100" data-testid="seats-managers-count">
-                        {additionalSeats.managers}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateSeatCount('managers', 1)}
-                        data-testid="seats-managers-plus"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
+                  <div className="flex items-center justify-center gap-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10"
+                      onClick={() => updateSeatCount('employees', -1)}
+                      disabled={additionalSeats.employees === 0}
+                      data-testid="seats-employees-minus"
+                    >
+                      <Minus className="h-5 w-5" />
+                    </Button>
+                    <span className="w-12 text-center text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-employees-count">
+                      {additionalSeats.employees}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10"
+                      onClick={() => updateSeatCount('employees', 1)}
+                      data-testid="seats-employees-plus"
+                    >
+                      <Plus className="h-5 w-5" />
+                    </Button>
                   </div>
-
-                  {/* Admins */}
-                  <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                        <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">Administradores</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">+{seatPrices.admins}€/mes cada uno</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateSeatCount('admins', -1)}
-                        disabled={additionalSeats.admins === 0}
-                        data-testid="seats-admins-minus"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="w-8 text-center font-semibold text-gray-900 dark:text-gray-100" data-testid="seats-admins-count">
-                        {additionalSeats.admins}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateSeatCount('admins', 1)}
-                        data-testid="seats-admins-plus"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Total and Confirm */}
-                  {totalSeatsPrice > 0 && (
-                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">Total adicional mensual</p>
-                          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                            +{totalSeatsPrice.toFixed(2)}€<span className="text-sm font-normal text-gray-500 dark:text-gray-400">/mes</span>
-                          </p>
-                        </div>
-                        <Button 
-                          onClick={() => setShowSeatsDialog(true)}
-                          className="px-6"
-                          data-testid="seats-confirm-button"
-                        >
-                          <UserPlus className="h-4 w-4 mr-2" />
-                          Añadir usuarios
-                        </Button>
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        El importe se añadirá de forma proporcional a tu próxima factura.
-                      </p>
-                    </div>
+                  {additionalSeats.employees > 0 && (
+                    <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-3">
+                      +{(additionalSeats.employees * seatPrices.employees).toFixed(2)}€/mes
+                    </p>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* Managers Card */}
+              <Card className="relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" data-testid="seats-managers-card">
+                <CardHeader className="pb-3">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                    <Briefcase className="h-6 w-6" />
+                  </div>
+                  <CardTitle className="text-lg text-gray-900 dark:text-gray-100">Managers</CardTitle>
+                  <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
+                    Añade managers para supervisar equipos
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-4">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                        {seatPrices.managers.toFixed(2)}€
+                      </span>
+                      <span className="text-gray-500 dark:text-gray-400 text-sm">/mes cada uno</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center gap-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10"
+                      onClick={() => updateSeatCount('managers', -1)}
+                      disabled={additionalSeats.managers === 0}
+                      data-testid="seats-managers-minus"
+                    >
+                      <Minus className="h-5 w-5" />
+                    </Button>
+                    <span className="w-12 text-center text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-managers-count">
+                      {additionalSeats.managers}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10"
+                      onClick={() => updateSeatCount('managers', 1)}
+                      data-testid="seats-managers-plus"
+                    >
+                      <Plus className="h-5 w-5" />
+                    </Button>
+                  </div>
+                  {additionalSeats.managers > 0 && (
+                    <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-3">
+                      +{(additionalSeats.managers * seatPrices.managers).toFixed(2)}€/mes
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Admins Card */}
+              <Card className="relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" data-testid="seats-admins-card">
+                <CardHeader className="pb-3">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                    <Shield className="h-6 w-6" />
+                  </div>
+                  <CardTitle className="text-lg text-gray-900 dark:text-gray-100">Administradores</CardTitle>
+                  <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
+                    Añade administradores con control total
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-4">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                        {seatPrices.admins.toFixed(2)}€
+                      </span>
+                      <span className="text-gray-500 dark:text-gray-400 text-sm">/mes cada uno</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center gap-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10"
+                      onClick={() => updateSeatCount('admins', -1)}
+                      disabled={additionalSeats.admins === 0}
+                      data-testid="seats-admins-minus"
+                    >
+                      <Minus className="h-5 w-5" />
+                    </Button>
+                    <span className="w-12 text-center text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-admins-count">
+                      {additionalSeats.admins}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10"
+                      onClick={() => updateSeatCount('admins', 1)}
+                      data-testid="seats-admins-plus"
+                    >
+                      <Plus className="h-5 w-5" />
+                    </Button>
+                  </div>
+                  {additionalSeats.admins > 0 && (
+                    <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-3">
+                      +{(additionalSeats.admins * seatPrices.admins).toFixed(2)}€/mes
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Total and Confirm Button */}
+            {totalSeatsPrice > 0 && (
+              <div className="mt-6 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Total adicional mensual</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      +{totalSeatsPrice.toFixed(2)}€<span className="text-sm font-normal text-gray-500 dark:text-gray-400">/mes</span>
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => setShowSeatsDialog(true)}
+                    className="px-6"
+                    data-testid="seats-confirm-button"
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Añadir usuarios
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  El importe se añadirá de forma proporcional a tu próxima factura.
+                </p>
+              </div>
+            )}
           </div>
 
           {addonsWithStatus.length === 0 && (
