@@ -10166,6 +10166,17 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
     }
   });
 
+  // Endpoint público para obtener addons disponibles (para wizard de registro)
+  app.get('/api/public/addons', async (req, res) => {
+    try {
+      const addons = await storage.getActiveAddons();
+      res.json(addons);
+    } catch (error) {
+      console.error('Error fetching public addons:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   // Endpoint para obtener planes de suscripción (con autenticación)
   app.get('/api/subscription-plans', authenticateToken, async (req: AuthRequest, res) => {
     try {

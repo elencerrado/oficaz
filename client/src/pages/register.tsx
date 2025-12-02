@@ -11,26 +11,42 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Building, User, Eye, EyeOff, Users, CheckCircle, XCircle, ArrowRight, ArrowLeft, Shield, Star, Crown, Check, Clock, Palmtree, CalendarDays, MessageSquare, Bell, FileText, ClipboardList, Sparkles } from 'lucide-react';
+import { Building, User, Eye, EyeOff, Users, CheckCircle, XCircle, ArrowRight, ArrowLeft, Shield, Star, Crown, Check, Clock, Palmtree, CalendarDays, MessageSquare, Bell, FileText, ClipboardList, Sparkles, Brain, Calendar } from 'lucide-react';
 
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
 import { useAuth } from '@/hooks/use-auth';
 import { DemoLoadingOverlay } from '@/components/demo-loading-overlay';
-import { ADDON_DEFINITIONS, FREE_ADDONS, PAID_ADDONS } from '@shared/addon-definitions';
+
+interface Addon {
+  id: number;
+  key: string;
+  name: string;
+  description: string | null;
+  shortDescription: string | null;
+  monthlyPrice: string;
+  icon: string | null;
+  isFreeFeature: boolean;
+}
 
 const iconMap: Record<string, any> = {
-  Clock,
-  Palmtree,
-  CalendarDays,
-  MessageSquare,
-  Bell,
-  FileText,
-  ClipboardList,
-  Sparkles,
+  clock: Clock,
+  palmtree: Palmtree,
+  'calendar-days': CalendarDays,
+  calendar: Calendar,
+  'message-square': MessageSquare,
+  bell: Bell,
+  'file-text': FileText,
+  'clipboard-list': ClipboardList,
+  sparkles: Sparkles,
+  brain: Brain,
+  star: Star,
 };
 
-const getIcon = (iconName: string) => iconMap[iconName] || Star;
+const getIcon = (iconName: string | null) => {
+  if (!iconName) return Star;
+  return iconMap[iconName.toLowerCase()] || iconMap[iconName] || Star;
+};
 
 const validateCompanyField = async (field: string, value: string) => {
   try {
@@ -164,6 +180,15 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       document.documentElement.classList.remove('dark-notch');
     };
   }, []);
+
+  // Load addons from API (public endpoint, no auth required)
+  const { data: addons = [] } = useQuery<Addon[]>({
+    queryKey: ['/api/public/addons'],
+  });
+
+  // Split into free and paid addons
+  const freeAddons = addons.filter(a => a.isFreeFeature);
+  const paidAddons = addons.filter(a => !a.isFreeFeature);
 
   const step1Form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
@@ -488,7 +513,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
-                    {FREE_ADDONS.map((addon) => {
+                    {freeAddons.map((addon) => {
                       const Icon = getIcon(addon.icon);
                       return (
                         <div
@@ -517,7 +542,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     <span className="text-xs text-gray-400">Pruébalos gratis durante el trial</span>
                   </div>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                    {PAID_ADDONS.map((addon) => {
+                    {paidAddons.map((addon) => {
                       const Icon = getIcon(addon.icon);
                       const selectedFeatures = step1Form.watch('interestedFeatures') || [];
                       const isSelected = selectedFeatures.includes(addon.key);
@@ -1091,7 +1116,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     <span className="text-sm font-medium text-gray-700 block mb-3">Complementos adicionales seleccionados</span>
                     <div className="flex flex-wrap gap-2">
                       {formData.interestedFeatures.map((featureKey: string) => {
-                        const addon = ADDON_DEFINITIONS.find(a => a.key === featureKey);
+                        const addon = addons.find(a => a.key === featureKey);
                         if (!addon) return null;
                         return (
                           <Badge 
