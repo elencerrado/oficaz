@@ -2,7 +2,7 @@ import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useDemoBanner } from '@/hooks/use-demo-banner';
-import { LayoutDashboard, Clock, Calendar, CalendarClock, FileText, Mail, Bell, Users, Settings, LogOut, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, Clock, Calendar, CalendarClock, FileText, Mail, Bell, Users, Settings, LogOut, ClipboardList, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 
@@ -107,8 +107,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       name: 'Configuración', 
       href: `/${companyAlias}/configuracion`, 
       icon: Settings
-      // Configuración siempre disponible - no requiere verificación de features
     },
+    ...(user?.role === 'admin' ? [
+      { 
+        name: 'Tienda', 
+        href: `/${companyAlias}/tienda`, 
+        icon: Store
+      }
+    ] : []),
   ];
 
   const handleLinkClick = () => {

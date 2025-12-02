@@ -55,6 +55,7 @@ import EmployeeSchedule from "@/pages/employee-schedule";
 import NotificationDevices from "@/pages/notification-devices";
 import WorkReports from "@/pages/work-reports";
 import AdminWorkReports from "@/pages/admin-work-reports";
+import AddonStore from "@/pages/addon-store";
 
 // Super admin pages - lazy loaded (rarely accessed)
 const SuperAdminSecurity = lazy(() => import("@/pages/super-admin-security"));
@@ -527,6 +528,14 @@ function Router() {
         <ProtectedRoute>
           <AppLayout>
             <Settings />
+          </AppLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/:companyAlias/tienda">
+        <ProtectedRoute>
+          <AppLayout>
+            <AddonStore />
           </AppLayout>
         </ProtectedRoute>
       </Route>
