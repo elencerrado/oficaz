@@ -682,9 +682,98 @@ export default function Register({ byInvitation = false, invitationEmail, invita
             </form>
           )}
 
-          {/* Step 2: Company information */}
+          {/* Step 2: Team size */}
           {currentStep === 2 && (
             <form onSubmit={step2Form.handleSubmit(handleStep2Submit)} className="space-y-6">
+              <div className="text-center mb-4">
+                <Users className="h-6 w-6 md:h-8 md:w-8 text-oficaz-primary mx-auto mb-2" />
+                <h3 className="text-sm md:text-base font-semibold mb-1">¿Cuántas personas usarán Oficaz?</h3>
+                <p className="text-xs text-gray-600">Tu plan incluye 1 admin, 1 manager y 10 empleados</p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {teamSizes.map((size) => {
+                    const isSelected = step2Form.watch('teamSize') === size.value;
+                    return (
+                      <div key={size.value} className="relative">
+                        <input
+                          type="radio"
+                          id={`teamSize-${size.value}`}
+                          value={size.value}
+                          {...step2Form.register('teamSize')}
+                          className="sr-only"
+                        />
+                        <label
+                          htmlFor={`teamSize-${size.value}`}
+                          data-testid={`teamsize-${size.value}`}
+                          className={`block p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-all ${
+                            isSelected
+                              ? 'bg-oficaz-primary/5 border-oficaz-primary ring-2 ring-oficaz-primary/20'
+                              : 'bg-white border-gray-200'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-sm font-medium">{size.label}</div>
+                              <div className="text-xs text-gray-500">{size.description}</div>
+                            </div>
+                            <div className={`w-4 h-4 border-2 rounded-full flex items-center justify-center ${
+                              isSelected ? 'border-oficaz-primary bg-oficaz-primary' : 'border-gray-300'
+                            }`}>
+                              {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
+                {step2Form.formState.errors.teamSize && (
+                  <p className="text-sm text-red-600">{step2Form.formState.errors.teamSize.message}</p>
+                )}
+              </div>
+
+              {/* Included users info */}
+              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                <div className="text-xs font-medium text-gray-700">Tu plan Oficaz incluye:</div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-oficaz-primary">1</div>
+                    <div className="text-xs text-gray-600">Administrador</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-oficaz-primary">1</div>
+                    <div className="text-xs text-gray-600">Manager</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-oficaz-primary">10</div>
+                    <div className="text-xs text-gray-600">Empleados</div>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 text-center">Puedes añadir más usuarios en cualquier momento desde tu panel</p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
+                <Button 
+                  type="submit" 
+                  data-testid="button-step2-continue"
+                  className="w-full sm:flex-1 rounded-xl px-8 order-1 sm:order-2"
+                >
+                  Continuar
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+                <Button type="button" variant="outline" onClick={() => goToStep(1)} className="w-full sm:flex-1 rounded-xl px-8 order-2 sm:order-1">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Atrás
+                </Button>
+              </div>
+            </form>
+          )}
+
+          {/* Step 3: Company information */}
+          {currentStep === 3 && (
+            <form onSubmit={step3Form.handleSubmit(handleStep3Submit)} className="space-y-6">
               <div className="text-center mb-4 md:mb-6">
                 <Building className="h-8 w-8 md:h-12 md:w-12 text-oficaz-primary mx-auto mb-2 md:mb-3" />
                 <h3 className="text-base md:text-lg font-semibold mb-1">Datos de tu empresa</h3>
@@ -697,11 +786,11 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   <Input
                     id="companyName"
                     className="rounded-xl"
-                    {...step2Form.register('companyName')}
+                    {...step3Form.register('companyName')}
                     placeholder="Mi Empresa S.L."
                   />
-                  {step2Form.formState.errors.companyName && (
-                    <p className="text-sm text-red-600">{step2Form.formState.errors.companyName.message}</p>
+                  {step3Form.formState.errors.companyName && (
+                    <p className="text-sm text-red-600">{step3Form.formState.errors.companyName.message}</p>
                   )}
                 </div>
 
@@ -710,11 +799,11 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   <Input
                     id="cif"
                     className="rounded-xl"
-                    {...step2Form.register('cif')}
+                    {...step3Form.register('cif')}
                     placeholder="B12345678"
                   />
-                  {step2Form.formState.errors.cif && (
-                    <p className="text-sm text-red-600">{step2Form.formState.errors.cif.message}</p>
+                  {step3Form.formState.errors.cif && (
+                    <p className="text-sm text-red-600">{step3Form.formState.errors.cif.message}</p>
                   )}
                 </div>
 
@@ -724,11 +813,11 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     id="companyEmail"
                     type="email"
                     className="rounded-xl"
-                    {...step2Form.register('companyEmail')}
+                    {...step3Form.register('companyEmail')}
                     placeholder="info@miempresa.com"
                   />
-                  {step2Form.formState.errors.companyEmail && (
-                    <p className="text-sm text-red-600">{step2Form.formState.errors.companyEmail.message}</p>
+                  {step3Form.formState.errors.companyEmail && (
+                    <p className="text-sm text-red-600">{step3Form.formState.errors.companyEmail.message}</p>
                   )}
                   <p className="text-xs text-gray-500">
                     Este email se usará para comunicaciones corporativas y facturación
@@ -740,21 +829,21 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   <Input
                     id="companyAlias"
                     className="rounded-xl"
-                    {...step2Form.register('companyAlias')}
+                    {...step3Form.register('companyAlias')}
                     placeholder="miempresa"
                   />
-                  <p className="text-xs text-gray-500">Tu URL será: oficaz.com/{step2Form.getValues('companyAlias') || 'miempresa'}</p>
-                  {step2Form.formState.errors.companyAlias && (
-                    <p className="text-sm text-red-600">{step2Form.formState.errors.companyAlias.message}</p>
+                  <p className="text-xs text-gray-500">Tu URL será: oficaz.com/{step3Form.getValues('companyAlias') || 'miempresa'}</p>
+                  {step3Form.formState.errors.companyAlias && (
+                    <p className="text-sm text-red-600">{step3Form.formState.errors.companyAlias.message}</p>
                   )}
                 </div>
 
                 <div className="md:col-span-2">
                   <Label htmlFor="province">Provincia *</Label>
                   <Select 
-                    value={step2Form.watch('province') || ''}
+                    value={step3Form.watch('province') || ''}
                     onValueChange={(value) => {
-                      step2Form.setValue('province', value);
+                      step3Form.setValue('province', value);
                     }}
                   >
                     <SelectTrigger className="rounded-xl mt-2">
@@ -815,8 +904,8 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       <SelectItem value="zaragoza">Zaragoza</SelectItem>
                     </SelectContent>
                   </Select>
-                  {step2Form.formState.errors.province && (
-                    <p className="text-sm text-red-600">{step2Form.formState.errors.province.message}</p>
+                  {step3Form.formState.errors.province && (
+                    <p className="text-sm text-red-600">{step3Form.formState.errors.province.message}</p>
                   )}
                 </div>
               </div>
@@ -824,13 +913,14 @@ export default function Register({ byInvitation = false, invitationEmail, invita
               <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
                 <Button 
                   type="submit" 
+                  data-testid="button-step3-continue"
                   className="w-full sm:flex-1 rounded-xl px-8 order-1 sm:order-2"
                   disabled={validatingStep2}
                 >
                   {validatingStep2 ? 'Verificando datos...' : 'Continuar'}
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
-                <Button type="button" variant="outline" onClick={() => goToStep(1)} className="w-full sm:flex-1 rounded-xl px-8 order-2 sm:order-1">
+                <Button type="button" variant="outline" onClick={() => goToStep(2)} className="w-full sm:flex-1 rounded-xl px-8 order-2 sm:order-1">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Atrás
                 </Button>
@@ -838,9 +928,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
             </form>
           )}
 
-          {/* Step 3: Admin account */}
-          {currentStep === 3 && (
-            <form onSubmit={step3Form.handleSubmit(handleStep3Submit)} className="space-y-6">
+          {/* Step 4: Admin account */}
+          {currentStep === 4 && (
+            <form onSubmit={step4Form.handleSubmit(handleStep4Submit)} className="space-y-6">
               <div className="text-center mb-4 md:mb-6">
                 <Shield className="h-8 w-8 md:h-12 md:w-12 text-oficaz-primary mx-auto mb-2 md:mb-3" />
                 <h3 className="text-base md:text-lg font-semibold mb-1">Cuenta de administrador</h3>
@@ -854,11 +944,11 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   <Input
                     id="adminFullName"
                     className="rounded-xl"
-                    {...step3Form.register('adminFullName')}
+                    {...step4Form.register('adminFullName')}
                     placeholder="Juan Pérez García"
                   />
-                  {step3Form.formState.errors.adminFullName && (
-                    <p className="text-sm text-red-600">{step3Form.formState.errors.adminFullName.message}</p>
+                  {step4Form.formState.errors.adminFullName && (
+                    <p className="text-sm text-red-600">{step4Form.formState.errors.adminFullName.message}</p>
                   )}
                 </div>
 
@@ -868,12 +958,12 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     id="adminEmail"
                     type="email"
                     className="rounded-xl"
-                    {...step3Form.register('adminEmail')}
+                    {...step4Form.register('adminEmail')}
                     placeholder="admin@miempresa.com"
                   />
                   <p className="text-xs text-gray-500">Este será tu email para iniciar sesión</p>
-                  {step3Form.formState.errors.adminEmail && (
-                    <p className="text-sm text-red-600">{step3Form.formState.errors.adminEmail.message}</p>
+                  {step4Form.formState.errors.adminEmail && (
+                    <p className="text-sm text-red-600">{step4Form.formState.errors.adminEmail.message}</p>
                   )}
                 </div>
 
@@ -882,12 +972,12 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   <Input
                     id="adminDni"
                     className="rounded-xl"
-                    {...step3Form.register('adminDni')}
+                    {...step4Form.register('adminDni')}
                     placeholder="12345678Z"
                   />
                   <p className="text-xs text-gray-500">DNI español o NIE para extranjeros</p>
-                  {step3Form.formState.errors.adminDni && (
-                    <p className="text-sm text-red-600">{step3Form.formState.errors.adminDni.message}</p>
+                  {step4Form.formState.errors.adminDni && (
+                    <p className="text-sm text-red-600">{step4Form.formState.errors.adminDni.message}</p>
                   )}
                 </div>
 
@@ -896,12 +986,12 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   <Input
                     id="adminPhone"
                     className="rounded-xl"
-                    {...step3Form.register('adminPhone')}
+                    {...step4Form.register('adminPhone')}
                     placeholder="+34 600 000 000"
                   />
                   <p className="text-xs text-gray-500">Teléfono de contacto de la empresa</p>
-                  {step3Form.formState.errors.adminPhone && (
-                    <p className="text-sm text-red-600">{step3Form.formState.errors.adminPhone.message}</p>
+                  {step4Form.formState.errors.adminPhone && (
+                    <p className="text-sm text-red-600">{step4Form.formState.errors.adminPhone.message}</p>
                   )}
                 </div>
               </div>
@@ -927,7 +1017,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       id="password"
                       className="rounded-xl"
                       type={showPassword ? 'text' : 'password'}
-                      {...step3Form.register('password')}
+                      {...step4Form.register('password')}
                       placeholder="Crea una contraseña segura"
                     />
                     <Button
@@ -940,8 +1030,8 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
-                  {step3Form.formState.errors.password && (
-                    <p className="text-sm text-red-600">{step3Form.formState.errors.password.message}</p>
+                  {step4Form.formState.errors.password && (
+                    <p className="text-sm text-red-600">{step4Form.formState.errors.password.message}</p>
                   )}
                 </div>
 
@@ -952,7 +1042,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       id="confirmPassword"
                       className="rounded-xl"
                       type={showConfirmPassword ? 'text' : 'password'}
-                      {...step3Form.register('confirmPassword')}
+                      {...step4Form.register('confirmPassword')}
                       placeholder="Repite la contraseña"
                     />
                     <Button
@@ -965,8 +1055,8 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
-                  {step3Form.formState.errors.confirmPassword && (
-                    <p className="text-sm text-red-600">{step3Form.formState.errors.confirmPassword.message}</p>
+                  {step4Form.formState.errors.confirmPassword && (
+                    <p className="text-sm text-red-600">{step4Form.formState.errors.confirmPassword.message}</p>
                   )}
                 </div>
               </div>
@@ -978,22 +1068,22 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="sameAsAdmin"
-                    checked={step3Form.getValues('sameAsAdmin')}
-                    onCheckedChange={(checked) => step3Form.setValue('sameAsAdmin', checked as boolean)}
+                    checked={step4Form.getValues('sameAsAdmin')}
+                    onCheckedChange={(checked) => step4Form.setValue('sameAsAdmin', checked as boolean)}
                   />
                   <Label htmlFor="sameAsAdmin" className="text-sm">
                     Yo seré la persona de contacto de la empresa
                   </Label>
                 </div>
 
-                {!step3Form.getValues('sameAsAdmin') && (
+                {!step4Form.getValues('sameAsAdmin') && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-xl">
                     <div className="space-y-2">
                       <Label htmlFor="contactName">Nombre de contacto</Label>
                       <Input
                         id="contactName"
                         className="rounded-xl"
-                        {...step3Form.register('contactName')}
+                        {...step4Form.register('contactName')}
                         placeholder="María García"
                       />
                     </div>
@@ -1002,7 +1092,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       <Input
                         id="contactPhone"
                         className="rounded-xl"
-                        {...step3Form.register('contactPhone')}
+                        {...step4Form.register('contactPhone')}
                         placeholder="+34 600 000 000"
                       />
                     </div>
@@ -1012,20 +1102,20 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                         id="contactEmail"
                         type="email"
                         className="rounded-xl"
-                        {...step3Form.register('contactEmail')}
+                        {...step4Form.register('contactEmail')}
                         placeholder="maria@miempresa.com"
                       />
                     </div>
                   </div>
                 )}
                 
-                {!step3Form.watch('sameAsAdmin') && step3Form.formState.errors.contactName && (
-                  <p className="text-sm text-red-600">{step3Form.formState.errors.contactName.message}</p>
+                {!step4Form.watch('sameAsAdmin') && step4Form.formState.errors.contactName && (
+                  <p className="text-sm text-red-600">{step4Form.formState.errors.contactName.message}</p>
                 )}
               </div>
 
               <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
-                <Button type="submit" className="w-full sm:flex-1 rounded-xl px-8 order-1 sm:order-2" disabled={validatingStep3}>
+                <Button type="submit" data-testid="button-step4-continue" className="w-full sm:flex-1 rounded-xl px-8 order-1 sm:order-2" disabled={validatingStep3}>
                   {validatingStep3 ? 'Verificando datos...' : 'Continuar'}
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
@@ -1035,7 +1125,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   onClick={() => {
                     setValidatingStep3(false);
                     setIsLoading(false);
-                    goToStep(2);
+                    goToStep(3);
                   }} 
                   className="w-full sm:flex-1 rounded-xl px-8 order-2 sm:order-1"
                   disabled={isLoading || validatingStep3}
@@ -1047,110 +1137,103 @@ export default function Register({ byInvitation = false, invitationEmail, invita
             </form>
           )}
 
-          {/* Step 4: Plan Selection */}
-          {currentStep === 4 && (
-            <form onSubmit={step4Form.handleSubmit(handleStep4Submit)} className="space-y-6">
+          {/* Step 5: Confirmation and Summary */}
+          {currentStep === 5 && (
+            <form onSubmit={step5Form.handleSubmit(handleStep5Submit)} className="space-y-6">
               <div className="text-center mb-6">
-                <Crown className="h-12 w-12 text-oficaz-primary mx-auto mb-3" />
-                <h3 className="text-lg font-semibold mb-1">Selecciona un plan</h3>
-                <div className="text-sm text-gray-600">
-                  Basado en tu equipo y necesidades, te recomendamos{' '}
-                  <Badge variant="secondary" className="mx-1 capitalize">{recommendedPlan}</Badge>
+                <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
+                <h3 className="text-lg font-semibold mb-1">¡Ya casi estás!</h3>
+                <p className="text-sm text-gray-600">Revisa tu configuración y comienza tu prueba gratuita</p>
+              </div>
+
+              {/* Summary cards */}
+              <div className="space-y-4">
+                {/* Plan summary */}
+                <div className="bg-oficaz-primary/5 border border-oficaz-primary/20 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-gray-900">Plan Oficaz</h4>
+                    <Badge className="bg-oficaz-primary text-white">€39/mes</Badge>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div>
+                      <div className="text-lg font-semibold text-oficaz-primary">1</div>
+                      <div className="text-xs text-gray-600">Admin</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold text-oficaz-primary">1</div>
+                      <div className="text-xs text-gray-600">Manager</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold text-oficaz-primary">10</div>
+                      <div className="text-xs text-gray-600">Empleados</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Selected features summary */}
+                {formData.interestedFeatures && formData.interestedFeatures.length > 0 && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                    <h4 className="font-medium text-gray-900 mb-3">Funciones seleccionadas</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.interestedFeatures.map((featureId: string) => {
+                        const feature = allFeatures.find(f => f.id === featureId);
+                        if (!feature) return null;
+                        return (
+                          <Badge 
+                            key={featureId} 
+                            className={feature.included 
+                              ? "bg-green-100 text-green-700 hover:bg-green-100" 
+                              : "bg-blue-100 text-blue-700 hover:bg-blue-100"
+                            }
+                          >
+                            {feature.name}
+                            {!feature.included && ` (+€${feature.price})`}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Company and admin summary */}
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                  <h4 className="font-medium text-gray-900 mb-3">Tu empresa</h4>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-gray-500">Empresa:</span>
+                      <span className="ml-2 font-medium">{formData.companyName || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Admin:</span>
+                      <span className="ml-2 font-medium">{formData.adminFullName || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">CIF:</span>
+                      <span className="ml-2 font-medium">{formData.cif || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Email:</span>
+                      <span className="ml-2 font-medium">{formData.adminEmail || '-'}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {subscriptionPlans.map((plan: any) => {
-                  const isRecommended = plan.name === recommendedPlan;
-                  return (
-                    <div
-                      key={plan.id}
-                      className={`relative border rounded-xl p-4 cursor-pointer transition-all ${
-                        step4Form.getValues('selectedPlan') === plan.name
-                          ? 'border-green-500 bg-green-50 shadow-md'
-                          : isRecommended 
-                            ? 'border-orange-300 bg-orange-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      onClick={() => step4Form.setValue('selectedPlan', plan.name)}
-                    >
-                      {isRecommended && (
-                        <div className={`absolute -top-3 ${
-                          step4Form.watch('selectedPlan') === plan.name 
-                            ? 'left-4' 
-                            : 'left-1/2 transform -translate-x-1/2'
-                        }`}>
-                          <Badge className="bg-orange-500 text-white shadow-md">
-                            <Star className="h-3 w-3 mr-1 fill-current" />
-                            Recomendado
-                          </Badge>
-                        </div>
-                      )}
-                      
-                      {step4Form.watch('selectedPlan') === plan.name && (
-                        <div className="absolute -top-3 right-4">
-                          <Badge className="bg-green-500 text-white shadow-md">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Seleccionado
-                          </Badge>
-                        </div>
-                      )}
-                      
-                      <div className="text-center">
-                        <h4 className="font-semibold text-lg capitalize">{plan.displayName}</h4>
-                        <div className={`text-2xl font-bold mt-2 ${
-                          step4Form.getValues('selectedPlan') === plan.name 
-                            ? 'text-green-600' 
-                            : 'text-oficaz-primary'
-                        }`}>
-                          €{plan.monthlyPrice}
-                          <span className="text-sm font-normal text-gray-500">/mes</span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Hasta {plan.maxUsers} usuarios
-                        </p>
-                      </div>
-                      
-                      <div className="mt-4 space-y-2">
-                        <div className="flex items-center text-xs">
-                          <CheckCircle className="h-3 w-3 text-green-500 mr-2 flex-shrink-0" />
-                          <span>Fichajes y control horario</span>
-                        </div>
-                        {plan.features?.vacation && (
-                          <div className="flex items-center text-xs">
-                            <CheckCircle className="h-3 w-3 text-green-500 mr-2 flex-shrink-0" />
-                            <span>Gestión de vacaciones</span>
-                          </div>
-                        )}
-                        {plan.features?.documents && (
-                          <div className="flex items-center text-xs">
-                            <CheckCircle className="h-3 w-3 text-green-500 mr-2 flex-shrink-0" />
-                            <span>Gestión de documentos</span>
-                          </div>
-                        )}
-                        {plan.features?.messages && (
-                          <div className="flex items-center text-xs">
-                            <CheckCircle className="h-3 w-3 text-green-500 mr-2 flex-shrink-0" />
-                            <span>Mensajería interna</span>
-                          </div>
-                        )}
-                        {plan.features?.reminders && (
-                          <div className="flex items-center text-xs">
-                            <CheckCircle className="h-3 w-3 text-green-500 mr-2 flex-shrink-0" />
-                            <span>Recordatorios</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {step4Form.formState.errors.selectedPlan && (
-                <p className="text-sm text-red-600 text-center">
-                  {step4Form.formState.errors.selectedPlan.message}
+              {/* Free trial notice - 7 days */}
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                <div className="flex items-center mb-2">
+                  <Star className="h-5 w-5 text-green-500 mr-2" />
+                  <h4 className="font-medium text-green-900">
+                    {promoCodeValidation.status === 'valid' && promoCodeValidation.trialDays 
+                      ? `${promoCodeValidation.trialDays} días de prueba gratuitos` 
+                      : '7 días de prueba gratuitos'
+                    }
+                  </h4>
+                </div>
+                <p className="text-sm text-green-700">
+                  Durante tu período de prueba tendrás acceso completo a todas las funciones, incluyendo los complementos de pago. No se te cobrará nada hasta que finalice tu trial.
                 </p>
-              )}
+              </div>
 
               {/* Promotional Code Input */}
               <div className="space-y-3">
@@ -1163,7 +1246,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     type="text"
                     placeholder="Ingresa tu código promocional"
                     className="pr-12"
-                    {...step4Form.register('promotionalCode')}
+                    {...step5Form.register('promotionalCode')}
                     onBlur={(e) => validatePromotionalCode(e.target.value)}
                     data-testid="input-promotional-code"
                   />
@@ -1180,7 +1263,6 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   </div>
                 </div>
                 
-                {/* Validation message */}
                 {promoCodeValidation.message && (
                   <p className={`text-xs flex items-center gap-1 ${
                     promoCodeValidation.status === 'valid' ? 'text-green-600' : 'text-red-600'
@@ -1195,41 +1277,12 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 )}
               </div>
 
-              {/* Free trial notice */}
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
-                <div className="flex items-center mb-2">
-                  <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                  <h4 className="font-medium text-green-900">
-                    {promoCodeValidation.status === 'valid' && promoCodeValidation.trialDays 
-                      ? `${promoCodeValidation.trialDays} días de prueba gratuitos` 
-                      : '14 días de prueba gratuitos'
-                    }
-                  </h4>
-                </div>
-                <p className="text-sm text-green-700">
-                  {promoCodeValidation.status === 'valid' && promoCodeValidation.trialDays 
-                    ? `Podrás usar Oficaz completamente gratis durante ${promoCodeValidation.trialDays} días. No se cobrará nada hasta que termine tu período de prueba extendido.`
-                    : 'Podrás usar Oficaz completamente gratis durante 14 días. No se cobrará nada hasta que termine tu período de prueba.'
-                  }
-                </p>
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <h4 className="font-medium text-blue-900 mb-2">¿Por qué esta recomendación?</h4>
-                <p className="text-sm text-blue-700">
-                  Basándose en que tu equipo tiene {formData.teamSize?.replace('-', ' a ')} empleados
-                  {formData.interestedFeatures && formData.interestedFeatures.length > 0 && 
-                    ` y estás interesado en ${formData.interestedFeatures.length} funcionalidades`
-                  }, el plan {recommendedPlan} ofrece la mejor relación calidad-precio para tus necesidades.
-                </p>
-              </div>
-
               {/* Terms and Conditions checkbox */}
               <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-xl">
                 <Checkbox
                   id="acceptTerms"
-                  checked={step4Form.watch('acceptTerms') || false}
-                  onCheckedChange={(checked) => step4Form.setValue('acceptTerms', checked as boolean)}
+                  checked={step5Form.watch('acceptTerms') || false}
+                  onCheckedChange={(checked) => step5Form.setValue('acceptTerms', checked as boolean)}
                   className="mt-0.5"
                 />
                 <div className="flex-1">
@@ -1251,9 +1304,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 </div>
               </div>
 
-              {step4Form.formState.errors.acceptTerms && (
+              {step5Form.formState.errors.acceptTerms && (
                 <p className="text-sm text-red-600 text-center">
-                  {step4Form.formState.errors.acceptTerms.message}
+                  {step5Form.formState.errors.acceptTerms.message}
                 </p>
               )}
 
@@ -1261,8 +1314,8 @@ export default function Register({ byInvitation = false, invitationEmail, invita
               <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-xl">
                 <Checkbox
                   id="acceptMarketing"
-                  checked={step4Form.watch('acceptMarketing') || false}
-                  onCheckedChange={(checked) => step4Form.setValue('acceptMarketing', checked as boolean)}
+                  checked={step5Form.watch('acceptMarketing') || false}
+                  onCheckedChange={(checked) => step5Form.setValue('acceptMarketing', checked as boolean)}
                   className="mt-0.5"
                   data-testid="checkbox-accept-marketing"
                 />
@@ -1274,14 +1327,19 @@ export default function Register({ byInvitation = false, invitationEmail, invita
               </div>
 
               <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
-                <Button type="submit" className="w-full sm:flex-1 rounded-xl px-8 order-1 sm:order-2" disabled={isLoading}>
-                  {isLoading ? 'Creando empresa...' : 'Crear empresa'}
-                  <CheckCircle className="h-4 w-4 ml-2" />
+                <Button 
+                  type="submit" 
+                  data-testid="button-start-trial"
+                  className="w-full sm:flex-1 rounded-xl px-8 order-1 sm:order-2 bg-green-600 hover:bg-green-700" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Creando empresa...' : 'Comenzar prueba gratuita'}
+                  <Star className="h-4 w-4 ml-2" />
                 </Button>
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={() => goToStep(3)} 
+                  onClick={() => goToStep(4)} 
                   className="w-full sm:flex-1 rounded-xl px-8 order-2 sm:order-1"
                   disabled={isLoading}
                 >
