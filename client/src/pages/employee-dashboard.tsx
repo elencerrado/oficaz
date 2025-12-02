@@ -1069,12 +1069,21 @@ export default function EmployeeDashboard() {
     return customMenuOrder.map(idx => ({ ...menuItems[idx], originalIndex: idx }));
   }, [menuItems, customMenuOrder]);
 
-  // Dividir items en páginas de 6 (grid 3x2)
+  // Dividir items en páginas de 6 (grid 3x2) - siempre mantener 6 slots por página
   const itemsPerPage = 6;
   const menuPages = useMemo(() => {
-    const pages: (typeof orderedMenuItems)[] = [];
+    const pages: (typeof orderedMenuItems | null)[][] = [];
     for (let i = 0; i < orderedMenuItems.length; i += itemsPerPage) {
-      pages.push(orderedMenuItems.slice(i, i + itemsPerPage));
+      const pageItems = orderedMenuItems.slice(i, i + itemsPerPage);
+      // Rellenar con null hasta tener 6 items para mantener el grid 3x2
+      while (pageItems.length < itemsPerPage) {
+        pageItems.push(null as any);
+      }
+      pages.push(pageItems);
+    }
+    // Si no hay items, crear una página vacía con 6 slots
+    if (pages.length === 0) {
+      pages.push(Array(itemsPerPage).fill(null));
     }
     return pages;
   }, [orderedMenuItems]);
@@ -1472,7 +1481,14 @@ export default function EmployeeDashboard() {
                   <div className="grid grid-cols-3 gap-3 justify-items-center">
                     {pageItems.map((item, index) => {
                       const globalIndex = pageIndex * itemsPerPage + index;
-                      const isFeatureDisabled = item.feature && !hasAccess(item.feature);
+                      
+                      if (!item) {
+                        return (
+                          <div key={index} className="flex flex-col items-center w-20 h-[108px] sm:w-[72px]">
+                          </div>
+                        );
+                      }
+                      
                       const isLongPressed = longPressItem === globalIndex;
                       
                       return (
@@ -1480,7 +1496,6 @@ export default function EmployeeDashboard() {
                           <button
                             onClick={() => {
                               if (showSwapMenu) return;
-                              if (isFeatureDisabled) return;
                               
                               if (item.title === 'Vacaciones') {
                                 localStorage.setItem('lastVacationCheck', new Date().toISOString());
@@ -1497,27 +1512,20 @@ export default function EmployeeDashboard() {
                               
                               handleNavigation(item.route);
                             }}
-                            onTouchStart={() => !isFeatureDisabled && handleLongPressStart(globalIndex)}
+                            onTouchStart={() => handleLongPressStart(globalIndex)}
                             onTouchEnd={handleLongPressEnd}
                             onTouchCancel={handleLongPressEnd}
-                            onMouseDown={() => !isFeatureDisabled && handleLongPressStart(globalIndex)}
+                            onMouseDown={() => handleLongPressStart(globalIndex)}
                             onMouseUp={handleLongPressEnd}
                             onMouseLeave={handleLongPressEnd}
                             className={`relative w-20 h-20 sm:w-[72px] sm:h-[72px] transition-all duration-200 rounded-2xl flex items-center justify-center mb-2 backdrop-blur-xl border ${
                               isLongPressed
                                 ? 'bg-[#0056CC] border-[#0056CC] scale-110 shadow-xl'
-                                : isFeatureDisabled 
-                                  ? 'bg-gray-200 dark:bg-gray-500/20 border-gray-300 dark:border-gray-400/30 cursor-not-allowed opacity-40' 
-                                  : 'bg-[#007AFF] hover:bg-[#0056CC] border-[#007AFF] hover:border-[#0056CC]'
+                                : 'bg-[#007AFF] hover:bg-[#0056CC] border-[#007AFF] hover:border-[#0056CC]'
                             }`}
-                            disabled={isFeatureDisabled}
                           >
-                            <item.icon className={`h-10 w-10 sm:h-9 sm:w-9 transition-all duration-200 ${
-                              isFeatureDisabled 
-                                ? 'text-gray-300 dark:text-gray-400/50' 
-                                : 'text-white drop-shadow-lg'
-                            }`} />
-                            {item.notification && !isFeatureDisabled && (
+                            <item.icon className="h-10 w-10 sm:h-9 sm:w-9 transition-all duration-200 text-white drop-shadow-lg" />
+                            {item.notification && (
                               <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full border-2 border-white dark:border-gray-900 shadow-lg animate-bounce ${
                                 (item as any).notificationType === 'red' ? 'bg-gradient-to-r from-red-500 to-pink-500' : 
                                 (item as any).notificationType === 'green' ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-red-500 to-pink-500'
@@ -1525,15 +1533,11 @@ export default function EmployeeDashboard() {
                                 <div className="w-full h-full rounded-full animate-ping opacity-75 bg-white/30"></div>
                               </div>
                             )}
-                            {!isFeatureDisabled && !isLongPressed && (
+                            {!isLongPressed && (
                               <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform -skew-x-12"></div>
                             )}
                           </button>
-                          <span className={`text-xs font-medium text-center leading-tight transition-all duration-300 ${
-                            isFeatureDisabled 
-                              ? 'text-gray-400 dark:text-white/30' 
-                              : 'text-gray-700 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white group-hover:scale-105'
-                          }`}>
+                          <span className="text-xs font-medium text-center leading-tight transition-all duration-300 text-gray-700 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white group-hover:scale-105">
                             {item.title}
                           </span>
                         </div>
