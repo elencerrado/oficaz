@@ -266,13 +266,6 @@ const AccountManagement = () => {
   const [confirmationText, setConfirmationText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   
-  // Plan change modal states
-  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState('basic');
-  const [isChangingPlan, setIsChangingPlan] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [planPreview, setPlanPreview] = useState<any>(null);
-  
   // Contact form modal states
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<FileList | null>(null);
@@ -469,81 +462,6 @@ const AccountManagement = () => {
     },
   });
 
-  // Preview plan change mutation
-  const previewPlanMutation = useMutation({
-    mutationFn: async (plan: string) => {
-      const response = await fetch('/api/subscription/preview-plan-change', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({ plan }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al obtener preview del plan');
-      }
-
-      return response.json();
-    },
-    onSuccess: (data) => {
-      setPlanPreview(data);
-      setShowConfirmation(true);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error al obtener información del plan",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Plan change mutation
-  const changePlanMutation = useMutation({
-    mutationFn: async (newPlan: string) => {
-      const response = await fetch('/api/subscription/change-plan', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({ plan: newPlan }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al cambiar el plan');
-      }
-      
-      return response.json();
-    },
-    onSuccess: async (data) => {
-      toast({
-        title: "Plan actualizado",
-        description: `Has cambiado al plan ${selectedPlan === 'basic' ? 'Basic' : 'Pro'} exitosamente`,
-      });
-      setIsPlanModalOpen(false);
-      setIsChangingPlan(false);
-      setShowConfirmation(false);
-      setPlanPreview(null);
-      
-      // Refresh data
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error al cambiar plan",
-        description: error.message,
-        variant: "destructive",
-      });
-      setIsChangingPlan(false);
-    },
-  });
-
   // Handler functions
   const handleDeleteAccount = () => {
     if (confirmationText !== 'ELIMINAR PERMANENTEMENTE') {
@@ -562,22 +480,6 @@ const AccountManagement = () => {
   const handleCancelDeletion = () => {
     cancelDeletionMutation.mutate();
   };
-
-  const handleChangePlan = () => {
-    previewPlanMutation.mutate(selectedPlan);
-  };
-
-  const confirmPlanChange = () => {
-    setIsChangingPlan(true);
-    changePlanMutation.mutate(selectedPlan);
-  };
-
-  // Initialize selected plan when subscription data loads
-  useEffect(() => {
-    if (subscription?.plan) {
-      setSelectedPlan(subscription.plan);
-    }
-  }, [subscription?.plan]);
 
   const { data: accountInfo } = useQuery<any>({
     queryKey: ['/api/account/info'],
@@ -1135,10 +1037,10 @@ const AccountManagement = () => {
             <Button 
               variant="outline" 
               className="justify-start"
-              onClick={() => setIsPlanModalOpen(true)}
+              onClick={() => window.location.href = '/addon-store'}
             >
               <Crown className="mr-2 h-4 w-4" />
-              Cambiar plan de suscripción
+              Gestionar complementos
             </Button>
           </div>
           
@@ -1209,234 +1111,6 @@ const AccountManagement = () => {
             </DialogDescription>
           </DialogHeader>
           <PaymentMethodManager paymentMethods={paymentMethods || []} />
-        </DialogContent>
-      </Dialog>
-      {/* Modal de cambio de plan */}
-      <Dialog open={isPlanModalOpen} onOpenChange={setIsPlanModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
-              <img 
-                src={flameIcon} 
-                alt="Plan icon" 
-                className="h-10 w-10 object-contain animate-in zoom-in-95 duration-500 ease-out"
-                style={{ filter: 'hue-rotate(40deg)' }}
-              />
-              <span>Cambiar plan de suscripción</span>
-            </DialogTitle>
-            <DialogDescription>
-              Selecciona el plan que mejor se adapte a las necesidades de tu empresa.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="grid gap-4 py-4">
-              {subscriptionPlans && subscriptionPlans.filter((plan: any) => plan.name !== 'master').map((plan: any) => (
-                <div 
-                  key={plan.name}
-                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                    selectedPlan === plan.name 
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-950' 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                  onClick={() => setSelectedPlan(plan.name)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-4 h-4 rounded-full border-2 ${
-                        selectedPlan === plan.name 
-                          ? 'border-blue-500 bg-blue-500' 
-                          : 'border-gray-300'
-                      }`}>
-                        {selectedPlan === plan.name && (
-                          <div className="w-full h-full rounded-full bg-blue-500 scale-50"></div>
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-lg">
-                          Plan {plan.displayName}
-                          {subscription?.plan === plan.name && (
-                            <Badge variant="secondary" className="ml-2">Actual</Badge>
-                          )}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {plan.name === 'basic' 
-                            ? 'Ideal para equipos pequeños y medianos' 
-                            : 'Perfecto para empresas grandes con necesidades avanzadas'
-                          }
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold">€{plan.pricePerUser}</div>
-                      <div className="text-sm text-gray-500">por mes</div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-3 text-sm text-gray-600">
-                    <div className="flex items-center space-x-1 mb-1">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>Hasta {plan.maxUsers} usuarios</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>
-                        {plan.name === 'basic' 
-                          ? 'Funcionalidades esenciales incluidas' 
-                          : 'Todas las funcionalidades avanzadas incluidas'
-                        }
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {selectedPlan !== subscription?.plan && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start space-x-2">
-                  <Info className="h-5 w-5 text-blue-500 mt-0.5" />
-                  <div className="text-sm text-blue-700">
-                    <p className="font-semibold mb-1">Cambio de plan</p>
-                    <div className="space-y-2">
-                      <p>
-                        {selectedPlan === 'pro' && subscription?.plan === 'basic' 
-                          ? 'Al cambiar al Plan Pro tendrás acceso inmediato a todas las funcionalidades avanzadas.'
-                          : 'Al cambiar al Plan Basic, algunas funcionalidades avanzadas se desactivarán.'
-                        }
-                      </p>
-                      <div className="bg-white/70 rounded-md p-3 border border-blue-200">
-                        <p className="font-medium text-blue-800 mb-1">Facturación inteligente:</p>
-                        <ul className="text-xs text-blue-600 space-y-1">
-                          <li>• <strong>Upgrade (Basic→Pro):</strong> Se cobrará la diferencia prorrateada por los días restantes del mes</li>
-                          <li>• <strong>Downgrade (Pro→Basic):</strong> Se aplicará un crédito en tu próxima factura</li>
-                          <li>• <strong>Cambios menores:</strong> El nuevo precio se aplicará en el próximo ciclo</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="flex space-x-2 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsPlanModalOpen(false);
-                  setSelectedPlan(subscription?.plan || 'basic');
-                }}
-                disabled={isChangingPlan}
-                className="flex-1"
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleChangePlan}
-                disabled={selectedPlan === subscription?.plan || isChangingPlan}
-                className="flex-1"
-              >
-                {isChangingPlan ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-                    Cambiando...
-                  </>
-                ) : (
-                  <>
-                    <Crown className="h-4 w-4 mr-2" />
-                    Cambiar a {selectedPlan === 'basic' ? 'Basic' : 'Pro'}
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-      {/* Modal de confirmación de cambio de plan con preview */}
-      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
-              <AlertCircle className="h-5 w-5 text-orange-500" />
-              <span>Confirmar cambio de plan</span>
-            </DialogTitle>
-            <DialogDescription>
-              Revisa los detalles del cambio antes de confirmar.
-            </DialogDescription>
-          </DialogHeader>
-          
-          {planPreview && (
-            <div className="space-y-4">
-              <div className="bg-muted rounded-lg p-4">
-                <div className="flex justify-between items-center mb-3">
-                  <div>
-                    <span className="text-sm text-gray-500">Plan actual:</span>
-                    <p className="font-semibold text-gray-900">{planPreview.currentPlan?.displayName}</p>
-                    <p className="text-sm text-gray-600">€{planPreview.currentPlan?.pricePerUser}/mes</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm text-gray-500">Nuevo plan:</span>
-                    <p className="font-semibold text-gray-900">{planPreview.newPlan?.displayName}</p>
-                    <p className="text-sm text-gray-600">€{planPreview.newPlan?.pricePerUser}/mes</p>
-                  </div>
-                </div>
-                
-                <div className="border-t border-gray-200 pt-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Cargo inmediato:</span>
-                    <span className="font-semibold text-gray-900">
-                      {planPreview.immediateCharge > 0 ? `€${planPreview.immediateCharge.toFixed(2)}` : 'Sin cargo'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">{planPreview.immediateChargeDescription}</p>
-                </div>
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start space-x-2">
-                  <Info className="h-4 w-4 text-blue-500 mt-0.5" />
-                  <div className="text-sm text-blue-700">
-                    <p className="font-medium mb-1">
-                      {planPreview.changeType === 'upgrade' ? 'Upgrade' : 
-                       planPreview.changeType === 'downgrade' ? 'Downgrade' : 'Cambio lateral'}
-                    </p>
-                    <p className="text-xs">{planPreview.billingDescription}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex space-x-2 pt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowConfirmation(false);
-                    setPlanPreview(null);
-                  }}
-                  disabled={isChangingPlan}
-                  className="flex-1"
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={confirmPlanChange}
-                  disabled={isChangingPlan}
-                  className="flex-1"
-                >
-                  {isChangingPlan ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-                      Procesando...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Confirmar cambio
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          )}
         </DialogContent>
       </Dialog>
       {/* Modal de eliminación permanente - Adaptado para modo oscuro */}
@@ -2004,13 +1678,6 @@ export default function Settings() {
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Plan change modal states - missing variables
-  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState(subscription?.plan || 'basic');
-  const [isChangingPlan, setIsChangingPlan] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [planPreview, setPlanPreview] = useState<any>(null);
-
   // User profile data
   const [profileData, setProfileData] = useState({
     personalPhone: user?.personalPhone || '',
@@ -2457,98 +2124,6 @@ export default function Settings() {
       });
     }
   });
-
-  // Preview plan change mutation
-  const previewPlanMutation = useMutation({
-    mutationFn: async (plan: string) => {
-      const response = await fetch('/api/subscription/preview-plan-change', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({ plan }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al obtener preview del plan');
-      }
-
-      return response.json();
-    },
-    onSuccess: (data) => {
-      setPlanPreview(data);
-      setShowConfirmation(true);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error al obtener información del plan",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Plan change mutation
-  const changePlanMutation = useMutation({
-    mutationFn: async (newPlan: string) => {
-      const response = await fetch('/api/subscription/change-plan', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({ plan: newPlan }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al cambiar el plan');
-      }
-      
-      return response.json();
-    },
-    onSuccess: async (data) => {
-      toast({
-        title: "Plan actualizado",
-        description: `Has cambiado al plan ${selectedPlan === 'basic' ? 'Basic' : 'Pro'} exitosamente`,
-      });
-      setIsPlanModalOpen(false);
-      setIsChangingPlan(false);
-      setShowConfirmation(false);
-      setPlanPreview(null);
-      
-      // Refresh data
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
-      await refreshUser();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error al cambiar plan",
-        description: error.message,
-        variant: "destructive",
-      });
-      setIsChangingPlan(false);
-    },
-  });
-
-  const handleChangePlan = () => {
-    previewPlanMutation.mutate(selectedPlan);
-  };
-
-  const confirmPlanChange = () => {
-    setIsChangingPlan(true);
-    changePlanMutation.mutate(selectedPlan);
-  };
-
-  // Initialize selected plan when subscription data loads
-  useEffect(() => {
-    if (subscription?.plan) {
-      setSelectedPlan(subscription.plan);
-    }
-  }, [subscription?.plan]);
 
   const handleDeleteLogo = async () => {
     setIsUploading(true);

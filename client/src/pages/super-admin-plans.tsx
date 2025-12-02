@@ -18,6 +18,7 @@ interface SubscriptionPlan {
   name: string;
   displayName: string;
   pricePerUser: string;
+  monthlyPrice: string;
   maxUsers: number | null;
   features: {
     messages?: boolean;
