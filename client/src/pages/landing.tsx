@@ -89,22 +89,6 @@ export default function Landing() {
     refetchInterval: false, // Disable automatic refetching
   });
 
-  // Get dynamic pricing from database - defer after initial render
-  const { data: subscriptionPlans } = useQuery({
-    queryKey: ['/api/public/subscription-plans'],
-    queryFn: async () => {
-      const response = await fetch('/api/public/subscription-plans');
-      return response.json();
-    },
-    enabled: shouldLoadData, // Only execute after initial render
-    staleTime: 1000 * 60 * 60, // 60 minutes - much longer cache
-    gcTime: 1000 * 60 * 60 * 4, // 4 hours garbage collection time
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-    refetchInterval: false, // Disable automatic refetching
-  });
-
   useEffect(() => {
     let ticking = false;
     
@@ -162,182 +146,6 @@ export default function Landing() {
   ];
 
   const features = [...mainFeatures, ...additionalFeatures];
-
-  // Combine static plan data with dynamic pricing and user limits
-  const getPlansWithDynamicPricing = () => {
-    // Merge static data with dynamic pricing and user limits
-    if (!subscriptionPlans || !Array.isArray(subscriptionPlans)) {
-      return [
-        {
-          name: "Basic",
-          description: "Perfecto para pequeñas empresas",
-          features: [
-            "Hasta ... empleados",
-            "Control horario básico",
-            "Gestión de vacaciones",
-            "Cuadrante",
-            "Mensajería interna",
-            "Soporte por email"
-          ],
-          popular: false,
-          price: "..."
-        },
-        {
-          name: "Pro",
-          description: "Ideal para empresas en crecimiento",
-          features: [
-            "Hasta ... empleados",
-            "Todas las funciones Basic",
-            "Gestión de documentos",
-            "Reportes avanzados",
-            "Logos personalizados",
-            "Soporte prioritario"
-          ],
-          popular: true,
-          price: "..."
-        },
-        {
-          name: "Master",
-          description: "Para grandes organizaciones",
-          features: [
-            "Empleados ilimitados",
-            "Todas las funciones Pro",
-            "Integraciones avanzadas",
-            "Personalización completa",
-            "Soporte 24/7",
-            "Gerente de cuenta dedicado"
-          ],
-          popular: false,
-          price: "..."
-        }
-      ];
-    }
-    
-    const getFeatureDisplayName = (featureKey: string) => {
-      const featureNames: { [key: string]: string } = {
-        // Core features - these keys come from the database
-        time: "Control horario",
-        timeTracking: "Control horario", 
-        vacation: "Gestión de vacaciones",
-        messages: "Mensajería interna",
-        documents: "Gestión de documentos",
-        notifications: "Notificaciones",
-        reminders: "Recordatorios personalizados",
-        schedules: "Cuadrante",
-        logoUpload: "Logos personalizados",
-        reports: "Reportes avanzados",
-        analytics: "Análisis de datos",
-        customization: "Personalización avanzada",
-        timeEditingPermissions: "Edición de horarios",
-        employee_time_edit: "Edición de fichajes",
-        employee_time_edit_permission: "Permisos de edición",
-        ai_assistant: "Asistente de IA",
-        api: "API personalizada"
-      };
-      return featureNames[featureKey] || featureKey;
-    };
-
-    const getAdditionalFeatures = (planKey: string) => {
-      const additionalFeatures: { [key: string]: string[] } = {
-        basic: ["Soporte por email"],
-        pro: ["Soporte prioritario"],
-        master: ["Soporte 24/7", "Funcionalidades personalizadas"]
-      };
-      return additionalFeatures[planKey] || [];
-    };
-
-    const staticPlansDescriptions: { [key: string]: string } = {
-      basic: "Perfecto para pequeñas empresas",
-      pro: "Ideal para empresas en crecimiento",
-      master: "Para grandes organizaciones"
-    };
-
-    const popularPlans: { [key: string]: boolean } = {
-      basic: false,
-      pro: true,
-      master: false
-    };
-    
-    // Get all plans sorted by price to determine hierarchy
-    const sortedPlans = [...subscriptionPlans].sort((a: any, b: any) => 
-      Number(a.monthlyPrice) - Number(b.monthlyPrice)
-    );
-    
-    return sortedPlans.map((dbPlan: any, index: number) => {
-      const planKey = dbPlan.name.toLowerCase();
-      const userLimit = dbPlan.maxUsers 
-        ? `Hasta ${dbPlan.maxUsers} empleados`
-        : "Empleados ilimitados";
-      
-      // Generate features from database configuration
-      const dynamicFeatures = [];
-      
-      // Add user limit first
-      dynamicFeatures.push(userLimit);
-      
-      // Define the order of features - modify this array to change the order
-      const featureOrder = [
-        'time',
-        'vacation',
-        'schedules',
-        'messages',
-        'documents',
-        'notifications',
-        'reminders',
-        'logoUpload',
-        'reports',
-        'ai_assistant',
-        'employee_time_edit',
-        'employee_time_edit_permission'
-      ];
-      
-      // For Pro and Master, add "Includes previous plan +" first
-      if (planKey === 'pro') {
-        dynamicFeatures.push('✓ Lo incluido en Basic +');
-      } else if (planKey === 'master') {
-        dynamicFeatures.push('✓ Lo incluido en Pro +');
-      }
-      
-      // Get features from previous plan to compare
-      const previousPlan = index > 0 ? sortedPlans[index - 1] : null;
-      const previousFeatures = previousPlan?.features || {};
-      
-      // Add features based on what's enabled in the database
-      if (dbPlan.features) {
-        // First add NEW features in the defined order (not in previous plan)
-        featureOrder.forEach(featureKey => {
-          const isNewFeature = planKey === 'basic' || !previousFeatures[featureKey];
-          if (dbPlan.features[featureKey] && isNewFeature) {
-            const displayName = getFeatureDisplayName(featureKey);
-            dynamicFeatures.push(displayName);
-          }
-        });
-        
-        // Then add any remaining NEW features not in the order
-        Object.entries(dbPlan.features).forEach(([featureKey, isEnabled]) => {
-          const isNewFeature = planKey === 'basic' || !previousFeatures[featureKey];
-          if (isEnabled && !featureOrder.includes(featureKey) && isNewFeature) {
-            const displayName = getFeatureDisplayName(featureKey);
-            dynamicFeatures.push(displayName);
-          }
-        });
-      }
-      
-      // Add plan-specific additional features
-      const additionalFeatures = getAdditionalFeatures(planKey);
-      dynamicFeatures.push(...additionalFeatures);
-      
-      return {
-        name: dbPlan.displayName || dbPlan.name,
-        description: staticPlansDescriptions[planKey] || dbPlan.name,
-        features: dynamicFeatures,
-        popular: popularPlans[planKey] || false,
-        price: Number(dbPlan.monthlyPrice).toFixed(2)
-      };
-    });
-  };
-
-  const plans = getPlansWithDynamicPricing();
 
   const testimonials = [
     {
@@ -1203,7 +1011,7 @@ export default function Landing() {
           )}
         </div>
       </section>
-      {/* Pricing Section */}
+      {/* Pricing Section - Nuevo Modelo Oficaz */}
       <section id="precios" className="py-24 md:py-32 bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 relative overflow-hidden">
         {/* Modern Background Elements */}
         <div className="absolute inset-0">
@@ -1222,86 +1030,118 @@ export default function Landing() {
           <div className="text-center mb-20">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-8">
               <div className="w-2 h-2 bg-[#007AFF] rounded-full animate-pulse"></div>
-              <span className="text-white font-semibold">Planes Oficaz</span>
+              <span className="text-white font-semibold">Plan Oficaz</span>
             </div>
             <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 tracking-tight">
-              Precios que
-              <span className="bg-gradient-to-r from-[#007AFF] via-cyan-400 to-blue-300 bg-clip-text text-transparent"> convencen</span>
+              Un plan,
+              <span className="bg-gradient-to-r from-[#007AFF] via-cyan-400 to-blue-300 bg-clip-text text-transparent"> sin límites</span>
             </h2>
             <p className="text-xl md:text-2xl text-white/80 max-w-4xl mx-auto leading-relaxed">
-              Transparentes, justos y <span className="text-white font-semibold">sin sorpresas</span>
+              Paga solo por lo que necesitas. <span className="text-white font-semibold">Añade funcionalidades según crezcas.</span>
             </p>
           </div>
           
-          {/* Pricing Cards */}
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {plans.map((plan, index) => (
-              <div key={index} className={`relative group ${plan.popular ? 'scale-105' : ''}`}>
-                {plan.popular && (
-                  <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20">
-                    <div className="bg-gradient-to-r from-[#007AFF] to-cyan-500 text-white px-6 py-2 rounded-full font-bold text-sm shadow-2xl">
-                      ⭐ Más Elegido
-                    </div>
-                  </div>
-                )}
-                
-                <div className={`relative backdrop-blur-xl rounded-3xl p-8 border transition-all duration-700 group-hover:scale-105 group-hover:-translate-y-2 h-full flex flex-col ${
-                  plan.popular 
-                    ? 'bg-white/20 border-[#007AFF]/50 shadow-2xl shadow-[#007AFF]/25' 
-                    : 'bg-white/10 border-white/20 hover:bg-white/15 shadow-xl'
-                }`}>
-                  
-                  {/* Plan Header */}
-                  <div className="text-center mb-8">
-                    <h3 className="text-3xl font-bold text-white mb-3">{plan.name}</h3>
-                    <p className="text-white/70 mb-6">{plan.description}</p>
-                    <div className="mb-6 flex flex-col items-center">
-                      <span className="text-4xl md:text-5xl font-black text-white">
-                        {plan.name === 'Master' ? 'desde ' : ''}€{plan.price}
-                      </span>
-                      <span className="text-white/70 text-lg">/mes</span>
-                    </div>
-                  </div>
-                  
-                  {/* Features */}
-                  <ul className="space-y-4 mb-8 flex-grow">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center">
-                        <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
-                          <CheckCircle className="w-4 h-4 text-green-400" />
-                        </div>
-                        <span className="text-white/90 font-medium">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  
-                  {/* CTA Button */}
-                  <div className="mt-auto">
-                    {(registrationSettings?.publicRegistrationEnabled && plan.name !== 'Master') ? (
-                      <Link href="/request-code">
-                        <button className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 ${
-                          plan.popular
-                            ? 'bg-gradient-to-r from-[#007AFF] to-cyan-500 hover:from-[#0056CC] hover:to-cyan-600 text-white shadow-2xl shadow-[#007AFF]/30 hover:scale-105'
-                            : 'bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/50 backdrop-blur-sm'
-                        }`}>
-                          Empezar Gratis
-                        </button>
-                      </Link>
-                    ) : (
-                      <button 
-                        onClick={() => setIsContactFormOpen(true)}
-                        className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 ${
-                          plan.popular || plan.name === 'Master'
-                            ? 'bg-gradient-to-r from-[#007AFF] to-cyan-500 hover:from-[#0056CC] hover:to-cyan-600 text-white shadow-2xl shadow-[#007AFF]/30 hover:scale-105'
-                            : 'bg-gradient-to-r from-[#007AFF] to-cyan-500 hover:from-[#0056CC] hover:to-cyan-600 text-white shadow-2xl shadow-[#007AFF]/30 hover:scale-105'
-                        }`}>
-                        {plan.name === 'Master' ? 'Contactar' : 'Contacta'}
-                      </button>
-                    )}
-                  </div>
+          {/* Main Pricing Card + Add-ons Grid */}
+          <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+            {/* Plan Principal */}
+            <div className="relative group">
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20">
+                <div className="bg-gradient-to-r from-[#007AFF] to-cyan-500 text-white px-6 py-2 rounded-full font-bold text-sm shadow-2xl">
+                  ⭐ Todo Incluido
                 </div>
               </div>
-            ))}
+              
+              <div className="relative backdrop-blur-xl rounded-3xl p-8 border transition-all duration-700 group-hover:scale-105 group-hover:-translate-y-2 h-full flex flex-col bg-white/20 border-[#007AFF]/50 shadow-2xl shadow-[#007AFF]/25">
+                <div className="text-center mb-8">
+                  <h3 className="text-3xl font-bold text-white mb-3">Plan Oficaz</h3>
+                  <p className="text-white/70 mb-6">Todo lo que necesitas para gestionar tu empresa</p>
+                  <div className="mb-6 flex flex-col items-center">
+                    <span className="text-5xl md:text-6xl font-black text-white">€39</span>
+                    <span className="text-white/70 text-lg">/mes</span>
+                  </div>
+                </div>
+                
+                <ul className="space-y-4 mb-8 flex-grow">
+                  {['Panel de control completo', 'Gestión de empleados', 'Control de fichajes', 'Gestión de vacaciones', 'Cuadrante de trabajo', 'Tienda de add-ons', '1 Admin + 1 Manager + 10 Empleados'].map((feature, index) => (
+                    <li key={index} className="flex items-center">
+                      <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                        <CheckCircle className="w-4 h-4 text-green-400" />
+                      </div>
+                      <span className="text-white/90 font-medium">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                
+                <div className="mt-auto">
+                  {registrationSettings?.publicRegistrationEnabled ? (
+                    <Link href="/request-code">
+                      <button className="w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 bg-gradient-to-r from-[#007AFF] to-cyan-500 hover:from-[#0056CC] hover:to-cyan-600 text-white shadow-2xl shadow-[#007AFF]/30 hover:scale-105">
+                        Empezar Prueba Gratis
+                      </button>
+                    </Link>
+                  ) : (
+                    <button 
+                      onClick={() => setIsContactFormOpen(true)}
+                      className="w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 bg-gradient-to-r from-[#007AFF] to-cyan-500 hover:from-[#0056CC] hover:to-cyan-600 text-white shadow-2xl shadow-[#007AFF]/30 hover:scale-105">
+                      Contacta
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Add-ons y Usuarios */}
+            <div className="space-y-6">
+              {/* Add-ons Card */}
+              <div className="backdrop-blur-xl rounded-3xl p-6 border bg-white/10 border-white/20">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 bg-[#007AFF]/20 rounded-lg flex items-center justify-center">
+                    <Zap className="w-4 h-4 text-[#007AFF]" />
+                  </div>
+                  <h4 className="text-xl font-bold text-white">Add-ons Disponibles</h4>
+                </div>
+                <div className="space-y-3">
+                  {[
+                    { name: 'Mensajería', price: 9, desc: 'Comunicación interna' },
+                    { name: 'Recordatorios', price: 6, desc: 'Alertas programadas' },
+                    { name: 'Documentos', price: 15, desc: 'Gestión de archivos' },
+                    { name: 'Partes de Trabajo', price: 12, desc: 'Reportes de trabajo' },
+                    { name: 'Asistente IA', price: 25, desc: 'Automatización inteligente' },
+                  ].map((addon, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
+                      <div>
+                        <p className="font-medium text-white">{addon.name}</p>
+                        <p className="text-xs text-white/50">{addon.desc}</p>
+                      </div>
+                      <span className="text-sm font-semibold text-[#007AFF]">+€{addon.price}/mes</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Usuarios Adicionales Card */}
+              <div className="backdrop-blur-xl rounded-3xl p-6 border bg-white/10 border-white/20">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                    <Users className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <h4 className="text-xl font-bold text-white">Usuarios Adicionales</h4>
+                </div>
+                <div className="space-y-2">
+                  {[
+                    { role: 'Empleado', price: 2 },
+                    { role: 'Manager', price: 6 },
+                    { role: 'Admin', price: 12 },
+                  ].map((user, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
+                      <p className="font-medium text-white">{user.role}</p>
+                      <span className="text-sm font-semibold text-purple-400">+€{user.price}/mes</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-white/40 mt-3">*Más allá de los usuarios incluidos en el plan base</p>
+              </div>
+            </div>
           </div>
           
           {/* Bottom Section */}
