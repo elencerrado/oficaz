@@ -879,11 +879,12 @@ export default function AddonStore() {
             </p>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-2">
             <Button 
               variant="outline" 
               onClick={() => setShowPurchaseDialog(false)}
               data-testid="purchase-cancel"
+              className="w-full sm:w-auto"
             >
               Cancelar
             </Button>
@@ -891,6 +892,7 @@ export default function AddonStore() {
               onClick={confirmPurchase}
               disabled={purchaseMutation.isPending}
               data-testid="purchase-confirm"
+              className="w-full sm:w-auto"
             >
               {purchaseMutation.isPending ? (
                 <>
@@ -931,11 +933,12 @@ export default function AddonStore() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-2">
             <Button 
               variant="outline" 
               onClick={() => setShowCancelDialog(false)}
               data-testid="cancel-dialog-close"
+              className="w-full sm:w-auto"
             >
               Mantener activo
             </Button>
@@ -944,6 +947,7 @@ export default function AddonStore() {
               onClick={confirmCancel}
               disabled={cancelMutation.isPending}
               data-testid="cancel-confirm"
+              className="w-full sm:w-auto"
             >
               {cancelMutation.isPending ? (
                 <>
@@ -1019,11 +1023,12 @@ export default function AddonStore() {
             </p>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-2">
             <Button 
               variant="outline" 
               onClick={() => setShowSeatsDialog(false)}
               data-testid="seats-cancel"
+              className="w-full sm:w-auto"
             >
               Cancelar
             </Button>
@@ -1031,6 +1036,7 @@ export default function AddonStore() {
               onClick={confirmSeats}
               disabled={seatsMutation.isPending}
               data-testid="seats-confirm"
+              className="w-full sm:w-auto"
             >
               {seatsMutation.isPending ? (
                 <>
