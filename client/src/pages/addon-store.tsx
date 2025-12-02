@@ -304,7 +304,7 @@ export default function AddonStore() {
                 {freeAddons.map((addon) => (
                   <Card 
                     key={addon.id} 
-                    className="relative overflow-hidden border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/20 h-[300px] flex flex-col"
+                    className="relative overflow-hidden border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/20 h-auto min-h-[320px] flex flex-col"
                     data-testid={`addon-card-${addon.key}`}
                   >
                     <CardHeader className="pb-2">
@@ -314,8 +314,8 @@ export default function AddonStore() {
                         </div>
                         <CardTitle className="text-base text-gray-900 dark:text-gray-100">{addon.name}</CardTitle>
                       </div>
-                      <CardDescription className="text-sm text-gray-500 dark:text-gray-400 h-16 line-clamp-3">
-                        {addon.shortDescription || addon.description}
+                      <CardDescription className="text-sm text-gray-500 dark:text-gray-400 line-clamp-5">
+                        {addon.description}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="flex-grow flex flex-col justify-end pt-0">
@@ -547,7 +547,7 @@ export default function AddonStore() {
                   return (
                     <Card 
                       key={addon.id} 
-                      className={`relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 h-[300px] flex flex-col ${
+                      className={`relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 h-auto min-h-[320px] flex flex-col ${
                         isPendingCancel ? 'border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-900/20' :
                         isInCooldown ? 'border-gray-200 bg-gray-50/50 dark:border-gray-700 dark:bg-gray-800/50' : ''
                       }`}
@@ -560,8 +560,8 @@ export default function AddonStore() {
                           </div>
                           <CardTitle className="text-base text-gray-900 dark:text-gray-100">{addon.name}</CardTitle>
                         </div>
-                        <CardDescription className="text-sm text-gray-500 dark:text-gray-400 h-16 line-clamp-3">
-                          {addon.shortDescription || addon.description}
+                        <CardDescription className="text-sm text-gray-500 dark:text-gray-400 line-clamp-5">
+                          {addon.description}
                         </CardDescription>
                       </CardHeader>
                       
