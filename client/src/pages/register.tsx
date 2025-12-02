@@ -615,8 +615,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
             {/* Step 2: Team Size */}
             {currentStep === 2 && (
-              <TooltipProvider>
-                <form onSubmit={step2Form.handleSubmit(handleStep2Submit)} className="space-y-6">
+              <form onSubmit={step2Form.handleSubmit(handleStep2Submit)} className="space-y-6">
                   <div className="text-center lg:text-left mb-6">
                     <h2 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-2">
                       Configura tu equipo
@@ -661,49 +660,38 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       <span className="text-xs text-gray-400">Opcional</span>
                     </div>
 
-                    {/* Counters grid */}
+                    {/* Counters grid - Order: Empleados, Managers, Admins */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                      {/* Additional Admins */}
+                      {/* Additional Employees */}
                       <div className="bg-white border-2 border-gray-100 rounded-2xl p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-900">Admins</span>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button type="button" className="text-gray-400 hover:text-gray-600">
-                                  <HelpCircle className="w-4 h-4" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs">
-                                <p className="text-sm">Control total de la empresa, gestión de facturación y configuración del sistema.</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
-                          <span className="text-xs text-oficaz-primary font-medium">+€6/mes</span>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-gray-900">Empleados</span>
+                          <span className="text-xs text-oficaz-primary font-medium">+€2/mes</span>
                         </div>
+                        <p className="text-xs text-gray-500 mb-3">Ficha, vacaciones, nóminas</p>
                         <div className="flex items-center justify-center gap-3">
                           <button
                             type="button"
                             onClick={() => {
-                              const current = step2Form.getValues('additionalAdmins');
-                              if (current > 0) step2Form.setValue('additionalAdmins', current - 1);
+                              const current = step2Form.getValues('additionalEmployees');
+                              if (current > 0) step2Form.setValue('additionalEmployees', current - 1);
                             }}
                             className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
-                            data-testid="button-minus-admins"
+                            data-testid="button-minus-employees"
                           >
                             <Minus className="w-4 h-4 text-gray-600" />
                           </button>
                           <span className="w-12 text-center text-xl font-semibold text-gray-900">
-                            {step2Form.watch('additionalAdmins')}
+                            {step2Form.watch('additionalEmployees')}
                           </span>
                           <button
                             type="button"
                             onClick={() => {
-                              const current = step2Form.getValues('additionalAdmins');
-                              step2Form.setValue('additionalAdmins', current + 1);
+                              const current = step2Form.getValues('additionalEmployees');
+                              step2Form.setValue('additionalEmployees', current + 1);
                             }}
                             className="w-10 h-10 rounded-xl bg-oficaz-primary hover:bg-oficaz-primary/90 flex items-center justify-center transition-colors"
-                            data-testid="button-plus-admins"
+                            data-testid="button-plus-employees"
                           >
                             <Plus className="w-4 h-4 text-white" />
                           </button>
@@ -712,22 +700,11 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
                       {/* Additional Managers */}
                       <div className="bg-white border-2 border-gray-100 rounded-2xl p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-900">Managers</span>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button type="button" className="text-gray-400 hover:text-gray-600">
-                                  <HelpCircle className="w-4 h-4" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs">
-                                <p className="text-sm">Gestiona equipos, aprueba vacaciones, revisa fichajes y accede a informes.</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-gray-900">Managers</span>
                           <span className="text-xs text-oficaz-primary font-medium">+€4/mes</span>
                         </div>
+                        <p className="text-xs text-gray-500 mb-3">Gestiona equipos e informes</p>
                         <div className="flex items-center justify-center gap-3">
                           <button
                             type="button"
@@ -757,47 +734,36 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                         </div>
                       </div>
 
-                      {/* Additional Employees */}
+                      {/* Additional Admins */}
                       <div className="bg-white border-2 border-gray-100 rounded-2xl p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-900">Empleados</span>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button type="button" className="text-gray-400 hover:text-gray-600">
-                                  <HelpCircle className="w-4 h-4" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs">
-                                <p className="text-sm">Ficha entrada/salida, solicita vacaciones y accede a sus nóminas y documentos.</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
-                          <span className="text-xs text-oficaz-primary font-medium">+€2/mes</span>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-gray-900">Admins</span>
+                          <span className="text-xs text-oficaz-primary font-medium">+€6/mes</span>
                         </div>
+                        <p className="text-xs text-gray-500 mb-3">Control total, facturación</p>
                         <div className="flex items-center justify-center gap-3">
                           <button
                             type="button"
                             onClick={() => {
-                              const current = step2Form.getValues('additionalEmployees');
-                              if (current > 0) step2Form.setValue('additionalEmployees', current - 1);
+                              const current = step2Form.getValues('additionalAdmins');
+                              if (current > 0) step2Form.setValue('additionalAdmins', current - 1);
                             }}
                             className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
-                            data-testid="button-minus-employees"
+                            data-testid="button-minus-admins"
                           >
                             <Minus className="w-4 h-4 text-gray-600" />
                           </button>
                           <span className="w-12 text-center text-xl font-semibold text-gray-900">
-                            {step2Form.watch('additionalEmployees')}
+                            {step2Form.watch('additionalAdmins')}
                           </span>
                           <button
                             type="button"
                             onClick={() => {
-                              const current = step2Form.getValues('additionalEmployees');
-                              step2Form.setValue('additionalEmployees', current + 1);
+                              const current = step2Form.getValues('additionalAdmins');
+                              step2Form.setValue('additionalAdmins', current + 1);
                             }}
                             className="w-10 h-10 rounded-xl bg-oficaz-primary hover:bg-oficaz-primary/90 flex items-center justify-center transition-colors"
-                            data-testid="button-plus-employees"
+                            data-testid="button-plus-admins"
                           >
                             <Plus className="w-4 h-4 text-white" />
                           </button>
@@ -860,8 +826,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       )}
                     </Button>
                   </div>
-                </form>
-              </TooltipProvider>
+              </form>
             )}
 
             {/* Step 3: Company */}
