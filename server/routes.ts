@@ -14519,6 +14519,211 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
     }
   });
 
+  // ============================================
+  // ADD-ONS STORE - Admin-only feature purchases
+  // ============================================
+
+  // Get all available add-ons for the store
+  app.get('/api/addons', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const addons = await storage.getActiveAddons();
+      res.json(addons);
+    } catch (error: any) {
+      console.error('Error fetching addons:', error);
+      res.status(500).json({ error: 'Error al obtener los complementos' });
+    }
+  });
+
+  // Get company's purchased add-ons
+  app.get('/api/company/addons', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const user = req.user!;
+      const companyAddons = await storage.getCompanyAddons(user.companyId);
+      res.json(companyAddons);
+    } catch (error: any) {
+      console.error('Error fetching company addons:', error);
+      res.status(500).json({ error: 'Error al obtener los complementos de la empresa' });
+    }
+  });
+
+  // Check if company has a specific add-on active
+  app.get('/api/company/addons/:key/status', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const user = req.user!;
+      const { key } = req.params;
+      const hasAddon = await storage.hasActiveAddon(user.companyId, key);
+      res.json({ active: hasAddon });
+    } catch (error: any) {
+      console.error('Error checking addon status:', error);
+      res.status(500).json({ error: 'Error al verificar el estado del complemento' });
+    }
+  });
+
+  // Purchase an add-on (Admin only)
+  app.post('/api/addons/:id/purchase', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const user = req.user!;
+      const addonId = parseInt(req.params.id);
+
+      // Get the add-on
+      const addon = await storage.getAddon(addonId);
+      if (!addon) {
+        return res.status(404).json({ error: 'Complemento no encontrado' });
+      }
+
+      // Check if already purchased
+      const existingAddon = await storage.getCompanyAddon(user.companyId, addonId);
+      if (existingAddon && existingAddon.status === 'active') {
+        return res.status(400).json({ error: 'Ya tienes este complemento activo' });
+      }
+
+      // Get company subscription for Stripe integration
+      const subscription = await db.query.subscriptions.findFirst({
+        where: eq(subscriptions.companyId, user.companyId),
+      });
+
+      if (!subscription) {
+        return res.status(400).json({ error: 'No se encontró suscripción activa' });
+      }
+
+      let stripeSubscriptionItemId: string | null = null;
+
+      // If company has active Stripe subscription, add item to it
+      if (subscription.stripeSubscriptionId && subscription.status === 'active') {
+        try {
+          // Get or create Stripe price for this addon
+          let stripePriceId = addon.stripePriceId;
+
+          if (!stripePriceId) {
+            // Create Stripe product and price for this addon
+            const stripeProduct = await stripe.products.create({
+              name: `Oficaz Add-on: ${addon.name}`,
+              description: addon.description || undefined,
+            });
+
+            const stripePrice = await stripe.prices.create({
+              product: stripeProduct.id,
+              unit_amount: Math.round(Number(addon.monthlyPrice) * 100), // Convert to cents
+              currency: 'eur',
+              recurring: { interval: 'month' },
+            });
+
+            stripePriceId = stripePrice.id;
+
+            // Update addon with Stripe IDs
+            await storage.updateAddon(addon.id, {
+              stripeProductId: stripeProduct.id,
+              stripePriceId: stripePrice.id,
+            });
+          }
+
+          // Add subscription item to existing subscription
+          const subscriptionItem = await stripe.subscriptionItems.create({
+            subscription: subscription.stripeSubscriptionId,
+            price: stripePriceId,
+            quantity: 1,
+          });
+
+          stripeSubscriptionItemId = subscriptionItem.id;
+          console.log(`✅ Added addon ${addon.key} to Stripe subscription: ${stripeSubscriptionItemId}`);
+        } catch (stripeError: any) {
+          console.error('Error adding addon to Stripe subscription:', stripeError);
+          // Continue without Stripe if it fails (for trial users or testing)
+        }
+      }
+
+      // Create or update company addon record
+      if (existingAddon) {
+        // Reactivate existing record
+        await storage.updateCompanyAddon(existingAddon.id, {
+          status: 'active',
+          stripeSubscriptionItemId,
+          purchasedAt: new Date(),
+          cancelledAt: null,
+          cancellationEffectiveDate: null,
+        });
+      } else {
+        // Create new record
+        await storage.createCompanyAddon({
+          companyId: user.companyId,
+          addonId: addon.id,
+          status: 'active',
+          stripeSubscriptionItemId,
+          purchasedAt: new Date(),
+        });
+      }
+
+      console.log(`🛒 Company ${user.companyId} purchased addon: ${addon.key}`);
+
+      res.json({
+        success: true,
+        message: `Complemento "${addon.name}" activado correctamente`,
+        addon: addon,
+      });
+    } catch (error: any) {
+      console.error('Error purchasing addon:', error);
+      res.status(500).json({ error: 'Error al comprar el complemento' });
+    }
+  });
+
+  // Cancel an add-on (Admin only)
+  app.post('/api/addons/:id/cancel', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const user = req.user!;
+      const addonId = parseInt(req.params.id);
+
+      // Get the company addon
+      const companyAddon = await storage.getCompanyAddon(user.companyId, addonId);
+      if (!companyAddon || companyAddon.status !== 'active') {
+        return res.status(404).json({ error: 'Complemento no encontrado o ya cancelado' });
+      }
+
+      // Get subscription to determine effective date
+      const subscription = await db.query.subscriptions.findFirst({
+        where: eq(subscriptions.companyId, user.companyId),
+      });
+
+      // Calculate effective date (end of current billing period)
+      let effectiveDate = new Date();
+      if (subscription?.nextPaymentDate) {
+        effectiveDate = new Date(subscription.nextPaymentDate);
+      } else {
+        // Default to end of current month
+        effectiveDate.setMonth(effectiveDate.getMonth() + 1);
+        effectiveDate.setDate(1);
+        effectiveDate.setHours(0, 0, 0, 0);
+      }
+
+      // Cancel in Stripe if applicable
+      if (companyAddon.stripeSubscriptionItemId) {
+        try {
+          await stripe.subscriptionItems.del(companyAddon.stripeSubscriptionItemId, {
+            proration_behavior: 'create_prorations',
+          });
+          console.log(`✅ Removed addon from Stripe subscription: ${companyAddon.stripeSubscriptionItemId}`);
+        } catch (stripeError: any) {
+          console.error('Error removing addon from Stripe:', stripeError);
+          // Continue with cancellation even if Stripe fails
+        }
+      }
+
+      // Update database
+      await storage.cancelCompanyAddon(user.companyId, addonId, effectiveDate);
+
+      const addon = await storage.getAddon(addonId);
+      console.log(`🚫 Company ${user.companyId} cancelled addon: ${addon?.key || addonId}`);
+
+      res.json({
+        success: true,
+        message: `Complemento cancelado. Seguirá activo hasta ${effectiveDate.toLocaleDateString('es-ES')}`,
+        effectiveDate: effectiveDate,
+      });
+    } catch (error: any) {
+      console.error('Error cancelling addon:', error);
+      res.status(500).json({ error: 'Error al cancelar el complemento' });
+    }
+  });
+
   // Stripe Webhook - Handle payment events (raw body required for signature verification)
   app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'];
