@@ -14333,7 +14333,9 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
       }
 
       // Check if in trial period (free to add/remove addons)
-      const isInTrial = subscription.isTrialActive && subscription.status === 'trial';
+      // Note: isTrialActive is legacy - use status or trialEndDate comparison
+      const isInTrial = subscription.status === 'trial' || 
+        (subscription.trialEndDate && new Date(subscription.trialEndDate) > new Date());
 
       // Check if already purchased and active
       const existingAddon = await storage.getCompanyAddon(user.companyId, addonId);
@@ -14519,7 +14521,9 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
       const addon = await storage.getAddon(addonId);
       
       // Check if in trial period (free to add/remove addons without restrictions)
-      const isInTrial = subscription?.isTrialActive && subscription?.status === 'trial';
+      // Note: isTrialActive is legacy - use status or trialEndDate comparison
+      const isInTrial = subscription?.status === 'trial' || 
+        (subscription?.trialEndDate && new Date(subscription.trialEndDate) > new Date());
 
       if (isInTrial) {
         // TRIAL MODE: Immediate cancellation, no cooldown, no pending state
