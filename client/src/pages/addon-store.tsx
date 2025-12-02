@@ -371,24 +371,24 @@ export default function AddonStore() {
                       <span className="text-gray-500 dark:text-gray-400 text-sm">/mes cada uno</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-center gap-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <div className="flex items-center justify-center gap-4">
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-9 w-9"
+                      className="h-8 w-8"
                       onClick={() => updateSeatCount('employees', -1)}
                       disabled={additionalSeats.employees === 0}
                       data-testid="seats-employees-minus"
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <span className="w-10 text-center text-xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-employees-count">
+                    <span className="w-8 text-center text-xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-employees-count">
                       {additionalSeats.employees}
                     </span>
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-9 w-9"
+                      className="h-8 w-8"
                       onClick={() => updateSeatCount('employees', 1)}
                       data-testid="seats-employees-plus"
                     >
@@ -420,24 +420,24 @@ export default function AddonStore() {
                       <span className="text-gray-500 dark:text-gray-400 text-sm">/mes cada uno</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-center gap-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <div className="flex items-center justify-center gap-4">
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-9 w-9"
+                      className="h-8 w-8"
                       onClick={() => updateSeatCount('managers', -1)}
                       disabled={additionalSeats.managers === 0}
                       data-testid="seats-managers-minus"
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <span className="w-10 text-center text-xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-managers-count">
+                    <span className="w-8 text-center text-xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-managers-count">
                       {additionalSeats.managers}
                     </span>
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-9 w-9"
+                      className="h-8 w-8"
                       onClick={() => updateSeatCount('managers', 1)}
                       data-testid="seats-managers-plus"
                     >
@@ -469,24 +469,24 @@ export default function AddonStore() {
                       <span className="text-gray-500 dark:text-gray-400 text-sm">/mes cada uno</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-center gap-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <div className="flex items-center justify-center gap-4">
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-9 w-9"
+                      className="h-8 w-8"
                       onClick={() => updateSeatCount('admins', -1)}
                       disabled={additionalSeats.admins === 0}
                       data-testid="seats-admins-minus"
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <span className="w-10 text-center text-xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-admins-count">
+                    <span className="w-8 text-center text-xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-admins-count">
                       {additionalSeats.admins}
                     </span>
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-9 w-9"
+                      className="h-8 w-8"
                       onClick={() => updateSeatCount('admins', 1)}
                       data-testid="seats-admins-plus"
                     >
