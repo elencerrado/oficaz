@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AlertCircle, CreditCard, Clock, Plus } from 'lucide-react';
+import { AlertCircle, CreditCard, Clock, Plus, TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentMethodManager } from '@/components/PaymentMethodManager';
 import { useAuth } from '@/hooks/use-auth';
+import type { Addon, CompanyAddon } from '@shared/schema';
 
 interface TrialStatus {
   isTrialActive: boolean;
@@ -36,7 +37,7 @@ export function TrialManager() {
   // Fetch trial status
   const { data: trialStatus, isLoading: loadingTrial } = useQuery<TrialStatus>({
     queryKey: ['/api/account/trial-status'],
-    refetchInterval: 30000, // Check every 30 seconds
+    refetchInterval: 30000,
   });
 
   // Obtener métodos de pago para el modal
@@ -44,6 +45,43 @@ export function TrialManager() {
     queryKey: ['/api/account/payment-methods'],
     staleTime: 60000,
   });
+
+  // Obtener addons activos para calcular precio proyectado
+  const { data: companyAddons = [] } = useQuery<(CompanyAddon & { addon: Addon })[]>({
+    queryKey: ['/api/company/addons'],
+    staleTime: 30000,
+  });
+
+  // Precios de los addons de pago
+  const addonPrices: Record<string, number> = {
+    messages: 5,
+    reminders: 5,
+    documents: 10,
+    work_reports: 8,
+    ai_assistant: 15
+  };
+
+  // Calcular precio proyectado total
+  const projectedPrice = useMemo(() => {
+    const basePrice = subscription?.customMonthlyPrice 
+      ? Number(subscription.customMonthlyPrice) 
+      : (subscription?.baseMonthlyPrice ? Number(subscription.baseMonthlyPrice) : 39);
+    
+    // Sumar precio de addons de pago activos
+    let addonsTotal = 0;
+    companyAddons.forEach(ca => {
+      if (ca.status === 'active' && ca.addon?.key && addonPrices[ca.addon.key]) {
+        addonsTotal += addonPrices[ca.addon.key];
+      }
+    });
+    
+    // Sumar asientos extra
+    const extraEmployeesPrice = (subscription?.extraEmployees || 0) * 2;
+    const extraManagersPrice = (subscription?.extraManagers || 0) * 4;
+    const extraAdminsPrice = (subscription?.extraAdmins || 0) * 6;
+    
+    return basePrice + addonsTotal + extraEmployeesPrice + extraManagersPrice + extraAdminsPrice;
+  }, [companyAddons, subscription]);
 
   // Función para obtener el precio del plan Oficaz
   const getPlanPrice = (_planName: string) => {
@@ -214,8 +252,14 @@ export function TrialManager() {
                 </>
               ) : (
                 <>
-                  <span className="hidden sm:inline">Hasta el {new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • €{getPlanPrice(trialStatus.plan)}/mes después</span>
-                  <span className="sm:hidden">€{getPlanPrice(trialStatus.plan)}/mes después</span>
+                  <span className="hidden sm:inline">
+                    Hasta el {new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • 
+                    <span className="font-medium text-foreground ml-1">€{projectedPrice.toFixed(2)}/mes</span>
+                    {projectedPrice > 39 && (
+                      <span className="ml-1 text-emerald-600 dark:text-emerald-400">(base €39 + complementos)</span>
+                    )}
+                  </span>
+                  <span className="sm:hidden font-medium text-foreground">€{projectedPrice.toFixed(2)}/mes</span>
                 </>
               )}
             </p>
