@@ -14693,6 +14693,74 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
     }
   });
 
+  // Purchase additional user seats
+  app.post('/api/subscription/seats', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const user = req.user!;
+      const { employees, managers, admins } = req.body;
+
+      // Validate input
+      if (typeof employees !== 'number' || typeof managers !== 'number' || typeof admins !== 'number') {
+        return res.status(400).json({ error: 'Datos inválidos' });
+      }
+
+      if (employees < 0 || managers < 0 || admins < 0) {
+        return res.status(400).json({ error: 'Los valores no pueden ser negativos' });
+      }
+
+      const totalSeats = employees + managers + admins;
+      if (totalSeats === 0) {
+        return res.status(400).json({ error: 'Debe añadir al menos un usuario' });
+      }
+
+      // Get current user limits
+      const currentLimits = await storage.getCompanyUserLimits(user.companyId);
+
+      // Calculate new extra limits (add to existing extra)
+      const newLimits = {
+        extraEmployees: currentLimits.employees.extra + employees,
+        extraManagers: currentLimits.managers.extra + managers,
+        extraAdmins: currentLimits.admins.extra + admins,
+      };
+
+      // Get seat pricing
+      const seatPricing = {
+        employees: 2,
+        managers: 6,
+        admins: 12,
+      };
+
+      // Calculate total additional monthly cost
+      const additionalCost = 
+        employees * seatPricing.employees +
+        managers * seatPricing.managers +
+        admins * seatPricing.admins;
+
+      // Update user limits in database
+      await storage.updateCompanyUserLimits(user.companyId, newLimits);
+
+      // TODO: Integration with Stripe to update subscription pricing
+      // For now, we just update the limits and the billing will be handled manually
+      // In production, this would call Stripe to update subscription items
+
+      console.log(`👥 Company ${user.companyId} purchased additional seats: +${employees} employees, +${managers} managers, +${admins} admins (€${additionalCost}/mes)`);
+
+      res.json({
+        success: true,
+        message: `Se han añadido ${totalSeats} usuario(s) a tu suscripción.`,
+        newLimits: {
+          employees: currentLimits.employees.included + newLimits.extraEmployees,
+          managers: currentLimits.managers.included + newLimits.extraManagers,
+          admins: currentLimits.admins.included + newLimits.extraAdmins,
+        },
+        additionalMonthlyCost: additionalCost,
+      });
+    } catch (error: any) {
+      console.error('Error purchasing seats:', error);
+      res.status(500).json({ error: 'Error al añadir usuarios' });
+    }
+  });
+
   // Check feature access (new model: free features + purchased addons)
   app.get('/api/features/:key/access', authenticateToken, async (req: AuthRequest, res) => {
     try {

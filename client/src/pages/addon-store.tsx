@@ -21,7 +21,13 @@ import {
   FolderOpen,
   CalendarDays,
   LayoutGrid,
-  Gift
+  Gift,
+  Users,
+  Plus,
+  Minus,
+  UserPlus,
+  Shield,
+  Briefcase
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -96,6 +102,24 @@ export default function AddonStore() {
   const [selectedAddon, setSelectedAddon] = useState<AddonWithStatus | null>(null);
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showSeatsDialog, setShowSeatsDialog] = useState(false);
+  
+  const [additionalSeats, setAdditionalSeats] = useState({
+    employees: 0,
+    managers: 0,
+    admins: 0
+  });
+
+  const seatPrices = {
+    employees: 2,
+    managers: 6,
+    admins: 12
+  };
+
+  const totalSeatsPrice = 
+    additionalSeats.employees * seatPrices.employees +
+    additionalSeats.managers * seatPrices.managers +
+    additionalSeats.admins * seatPrices.admins;
 
   const { data: addons, isLoading: addonsLoading } = useQuery<Addon[]>({
     queryKey: ['/api/addons'],
@@ -154,6 +178,41 @@ export default function AddonStore() {
       });
     }
   });
+
+  const seatsMutation = useMutation({
+    mutationFn: async (seats: { employees: number; managers: number; admins: number }) => {
+      return await apiRequest('POST', '/api/subscription/seats', seats);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      toast({
+        title: 'Usuarios actualizados',
+        description: 'Los usuarios adicionales se han añadido a tu suscripción.',
+      });
+      setShowSeatsDialog(false);
+      setAdditionalSeats({ employees: 0, managers: 0, admins: 0 });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo actualizar los usuarios',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  const updateSeatCount = (role: 'employees' | 'managers' | 'admins', delta: number) => {
+    setAdditionalSeats(prev => ({
+      ...prev,
+      [role]: Math.max(0, prev[role] + delta)
+    }));
+  };
+
+  const confirmSeats = () => {
+    if (totalSeatsPrice > 0) {
+      seatsMutation.mutate(additionalSeats);
+    }
+  };
 
   if (!isAdmin) {
     return (
@@ -418,6 +477,161 @@ export default function AddonStore() {
             </div>
           )}
 
+          {/* Additional User Seats Section */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <UserPlus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Usuarios adicionales</h2>
+            </div>
+            <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" data-testid="seats-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg text-gray-900 dark:text-gray-100">Añadir más usuarios</CardTitle>
+                <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
+                  Tu plan base incluye 1 admin, 1 manager y 10 empleados. Añade usuarios adicionales según tus necesidades.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Employees */}
+                  <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                        <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">Empleados</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">+{seatPrices.employees}€/mes cada uno</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => updateSeatCount('employees', -1)}
+                        disabled={additionalSeats.employees === 0}
+                        data-testid="seats-employees-minus"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="w-8 text-center font-semibold text-gray-900 dark:text-gray-100" data-testid="seats-employees-count">
+                        {additionalSeats.employees}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => updateSeatCount('employees', 1)}
+                        data-testid="seats-employees-plus"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Managers */}
+                  <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                        <Briefcase className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">Managers</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">+{seatPrices.managers}€/mes cada uno</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => updateSeatCount('managers', -1)}
+                        disabled={additionalSeats.managers === 0}
+                        data-testid="seats-managers-minus"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="w-8 text-center font-semibold text-gray-900 dark:text-gray-100" data-testid="seats-managers-count">
+                        {additionalSeats.managers}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => updateSeatCount('managers', 1)}
+                        data-testid="seats-managers-plus"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Admins */}
+                  <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                        <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">Administradores</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">+{seatPrices.admins}€/mes cada uno</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => updateSeatCount('admins', -1)}
+                        disabled={additionalSeats.admins === 0}
+                        data-testid="seats-admins-minus"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="w-8 text-center font-semibold text-gray-900 dark:text-gray-100" data-testid="seats-admins-count">
+                        {additionalSeats.admins}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => updateSeatCount('admins', 1)}
+                        data-testid="seats-admins-plus"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Total and Confirm */}
+                  {totalSeatsPrice > 0 && (
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Total adicional mensual</p>
+                          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                            +{totalSeatsPrice.toFixed(2)}€<span className="text-sm font-normal text-gray-500 dark:text-gray-400">/mes</span>
+                          </p>
+                        </div>
+                        <Button 
+                          onClick={() => setShowSeatsDialog(true)}
+                          className="px-6"
+                          data-testid="seats-confirm-button"
+                        >
+                          <UserPlus className="h-4 w-4 mr-2" />
+                          Añadir usuarios
+                        </Button>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        El importe se añadirá de forma proporcional a tu próxima factura.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {addonsWithStatus.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Store className="h-12 w-12 text-gray-400 mb-4" />
@@ -537,6 +751,93 @@ export default function AddonStore() {
                 <>
                   <XCircle className="h-4 w-4 mr-2" />
                   Cancelar complemento
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showSeatsDialog} onOpenChange={setShowSeatsDialog}>
+        <DialogContent data-testid="seats-dialog">
+          <DialogHeader>
+            <DialogTitle>Confirmar usuarios adicionales</DialogTitle>
+            <DialogDescription>
+              Vas a añadir los siguientes usuarios a tu suscripción.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-3">
+              {additionalSeats.employees > 0 && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-gray-700 dark:text-gray-300">{additionalSeats.employees} empleado(s)</span>
+                  </div>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    +{(additionalSeats.employees * seatPrices.employees).toFixed(2)}€/mes
+                  </span>
+                </div>
+              )}
+              {additionalSeats.managers > 0 && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    <span className="text-gray-700 dark:text-gray-300">{additionalSeats.managers} manager(s)</span>
+                  </div>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    +{(additionalSeats.managers * seatPrices.managers).toFixed(2)}€/mes
+                  </span>
+                </div>
+              )}
+              {additionalSeats.admins > 0 && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <span className="text-gray-700 dark:text-gray-300">{additionalSeats.admins} administrador(es)</span>
+                  </div>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    +{(additionalSeats.admins * seatPrices.admins).toFixed(2)}€/mes
+                  </span>
+                </div>
+              )}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">Total mensual adicional:</span>
+                  <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    +{totalSeatsPrice.toFixed(2)}€/mes
+                  </span>
+                </div>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
+              El importe se añadirá a tu próxima factura de forma proporcional.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowSeatsDialog(false)}
+              data-testid="seats-cancel"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={confirmSeats}
+              disabled={seatsMutation.isPending}
+              data-testid="seats-confirm"
+            >
+              {seatsMutation.isPending ? (
+                <>
+                  <LoadingSpinner className="h-4 w-4 mr-2" />
+                  Procesando...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Confirmar
                 </>
               )}
             </Button>

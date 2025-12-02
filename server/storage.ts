@@ -4215,6 +4215,23 @@ export class DrizzleStorage implements IStorage {
       .set(updateData)
       .where(eq(schema.subscriptions.companyId, companyId));
   }
+
+  /**
+   * Update all extra user limits for a company at once.
+   */
+  async updateCompanyUserLimits(
+    companyId: number, 
+    limits: { extraEmployees: number; extraManagers: number; extraAdmins: number }
+  ): Promise<void> {
+    await db.update(schema.subscriptions)
+      .set({
+        extraEmployees: limits.extraEmployees,
+        extraManagers: limits.extraManagers,
+        extraAdmins: limits.extraAdmins,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.subscriptions.companyId, companyId));
+  }
 }
 
 export const storage = new DrizzleStorage();
