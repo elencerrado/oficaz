@@ -62,7 +62,9 @@ export default function RequestCode() {
 
   // Función para verificar disponibilidad del email
   const checkEmailAvailability = useCallback(async (email: string) => {
-    if (!email || !email.includes('@')) {
+    // Validate email format properly (not just checking for @)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
       setEmailStatus('idle');
       setEmailMessage('');
       return;
@@ -354,7 +356,7 @@ export default function RequestCode() {
                   ? 'bg-orange-600 hover:bg-orange-700' 
                   : 'bg-blue-600 hover:bg-blue-700'
               }`}
-              disabled={isLoading || emailStatus === 'unavailable' || emailStatus === 'checking'}
+              disabled={isLoading || emailStatus === 'idle' || emailStatus === 'unavailable' || emailStatus === 'checking'}
             >
               {isLoading ? (
                 <div className="flex items-center gap-2">
