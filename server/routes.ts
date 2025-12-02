@@ -2539,10 +2539,12 @@ Responde directamente a este email para contactar con la persona.
       // Use selectedPlan from the wizard, default to 'oficaz' for the unified subscription model
       const selectedPlan = data.selectedPlan || 'oficaz';
       
-      // Extract additional users from wizard (Step 2)
-      const extraAdmins = req.body.additionalAdmins || 0;
-      const extraManagers = req.body.additionalManagers || 0;
-      const extraEmployees = req.body.additionalEmployees || 0;
+      // Extract additional users from wizard (Step 2) - parse as integers to handle string inputs
+      const extraAdmins = parseInt(String(data.additionalAdmins || 0), 10) || 0;
+      const extraManagers = parseInt(String(data.additionalManagers || 0), 10) || 0;
+      const extraEmployees = parseInt(String(data.additionalEmployees || 0), 10) || 0;
+      
+      console.log(`👥 Additional users from wizard: ${extraAdmins} admins, ${extraManagers} managers, ${extraEmployees} employees`);
       
       // Calculate maxUsers: base plan (1 admin + 1 manager + 10 employees = 12) + extras
       const baseUsers = 12;
@@ -2559,16 +2561,18 @@ Responde directamente a este email para contactar con la persona.
         extraEmployees: extraEmployees,
       });
       
-      // Activate selected add-ons (interestedFeatures from Step 1)
-      const selectedAddons = req.body.interestedFeatures || [];
-      if (selectedAddons.length > 0) {
+      console.log(`✅ Subscription created: plan=${selectedPlan}, maxUsers=${totalMaxUsers}`);
+      
+      // Activate selected add-ons (interestedFeatures from Step 1) - after subscription is created
+      const selectedAddons: string[] = Array.isArray(data.interestedFeatures) ? data.interestedFeatures : [];
+      if (selectedAddons.length > 0 && subscription) {
         console.log(`🔌 Activating ${selectedAddons.length} add-ons for company ${company.id}:`, selectedAddons);
         for (const addonKey of selectedAddons) {
           try {
             // Find the addon by key
             const [addon] = await db.select().from(schema.addons).where(eq(schema.addons.key, addonKey));
             if (addon) {
-              // Create company_addon record to activate it
+              // Create company_addon record to activate it - onConflictDoNothing handles duplicates
               await db.insert(schema.companyAddons).values({
                 companyId: company.id,
                 addonId: addon.id,
@@ -2576,6 +2580,8 @@ Responde directamente a este email para contactar con la persona.
                 activatedAt: new Date(),
               }).onConflictDoNothing();
               console.log(`  ✅ Activated addon: ${addon.name} (${addonKey})`);
+            } else {
+              console.warn(`  ⚠️ Addon not found: ${addonKey}`);
             }
           } catch (addonError) {
             console.warn(`  ⚠️ Could not activate addon ${addonKey}:`, addonError);
