@@ -514,116 +514,82 @@ export default function Register({ byInvitation = false, invitationEmail, invita
             
             <CardTitle className="text-lg md:text-xl font-semibold text-gray-900">Configurar tu empresa</CardTitle>
             <CardDescription className="text-xs md:text-sm text-gray-600 mt-1">
-              Proceso rápido en 4 pasos - Solo toma un minuto
+              Proceso rápido en 5 pasos - Solo toma un minuto
             </CardDescription>
           </div>
           
           {/* Progress bar */}
           <div className="w-full">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-xs md:text-sm font-medium text-gray-500">Paso {currentStep} de 4</span>
+              <span className="text-xs md:text-sm font-medium text-gray-500">Paso {currentStep} de 5</span>
               <span className="text-xs md:text-sm font-medium text-gray-500">{Math.round(progressPercentage)}%</span>
             </div>
             <Progress value={progressPercentage} className="h-1.5 md:h-2" />
           </div>
 
-          {/* Step indicators */}
-          <div className="flex justify-center items-center space-x-3 md:space-x-6">
-            <div className={`flex items-center space-x-1 md:space-x-2 ${currentStep >= 1 ? 'text-oficaz-primary' : 'text-gray-400'}`}>
+          {/* Step indicators - 5 steps */}
+          <div className="flex justify-center items-center space-x-2 md:space-x-4">
+            <div className={`flex items-center space-x-1 ${currentStep >= 1 ? 'text-oficaz-primary' : 'text-gray-400'}`}>
               <div className={`w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center border-2 text-xs ${
                 currentStep >= 1 ? 'bg-oficaz-primary border-oficaz-primary text-white' : 'border-gray-300'
               }`}>
                 {currentStep > 1 ? <CheckCircle className="h-2.5 w-2.5 md:h-3 md:w-3" /> : '1'}
               </div>
-              <span className="text-xs font-medium hidden sm:block">Preferencias</span>
+              <span className="text-xs font-medium hidden md:block">Funciones</span>
             </div>
-            <div className={`flex items-center space-x-1 md:space-x-2 ${currentStep >= 2 ? 'text-oficaz-primary' : 'text-gray-400'}`}>
+            <div className={`flex items-center space-x-1 ${currentStep >= 2 ? 'text-oficaz-primary' : 'text-gray-400'}`}>
               <div className={`w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center border-2 text-xs ${
                 currentStep >= 2 ? 'bg-oficaz-primary border-oficaz-primary text-white' : 'border-gray-300'
               }`}>
                 {currentStep > 2 ? <CheckCircle className="h-2.5 w-2.5 md:h-3 md:w-3" /> : '2'}
               </div>
-              <span className="text-xs font-medium hidden sm:block">Empresa</span>
+              <span className="text-xs font-medium hidden md:block">Equipo</span>
             </div>
-            <div className={`flex items-center space-x-1 md:space-x-2 ${currentStep >= 3 ? 'text-oficaz-primary' : 'text-gray-400'}`}>
+            <div className={`flex items-center space-x-1 ${currentStep >= 3 ? 'text-oficaz-primary' : 'text-gray-400'}`}>
               <div className={`w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center border-2 text-xs ${
                 currentStep >= 3 ? 'bg-oficaz-primary border-oficaz-primary text-white' : 'border-gray-300'
               }`}>
                 {currentStep > 3 ? <CheckCircle className="h-2.5 w-2.5 md:h-3 md:w-3" /> : '3'}
               </div>
-              <span className="text-xs font-medium hidden sm:block">Administrador</span>
+              <span className="text-xs font-medium hidden md:block">Empresa</span>
             </div>
-            <div className={`flex items-center space-x-1 md:space-x-2 ${currentStep >= 4 ? 'text-oficaz-primary' : 'text-gray-400'}`}>
+            <div className={`flex items-center space-x-1 ${currentStep >= 4 ? 'text-oficaz-primary' : 'text-gray-400'}`}>
               <div className={`w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center border-2 text-xs ${
                 currentStep >= 4 ? 'bg-oficaz-primary border-oficaz-primary text-white' : 'border-gray-300'
               }`}>
-                4
+                {currentStep > 4 ? <CheckCircle className="h-2.5 w-2.5 md:h-3 md:w-3" /> : '4'}
               </div>
-              <span className="text-xs font-medium hidden sm:block">Plan</span>
+              <span className="text-xs font-medium hidden md:block">Admin</span>
+            </div>
+            <div className={`flex items-center space-x-1 ${currentStep >= 5 ? 'text-oficaz-primary' : 'text-gray-400'}`}>
+              <div className={`w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center border-2 text-xs ${
+                currentStep >= 5 ? 'bg-oficaz-primary border-oficaz-primary text-white' : 'border-gray-300'
+              }`}>
+                5
+              </div>
+              <span className="text-xs font-medium hidden md:block">Confirmar</span>
             </div>
           </div>
         </CardHeader>
 
         <CardContent>
-          {/* Step 1: Team preferences */}
+          {/* Step 1: Features selection */}
           {currentStep === 1 && (
             <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="space-y-6">
               <div className="text-center mb-4">
-                <Users className="h-6 w-6 md:h-8 md:w-8 text-oficaz-primary mx-auto mb-2" />
-                <h3 className="text-sm md:text-base font-semibold mb-1">Queremos saber como es tu equipo</h3>
-                <p className="text-xs text-gray-600">Esto nos ayudará a personalizar la experiencia</p>
+                <Star className="h-6 w-6 md:h-8 md:w-8 text-oficaz-primary mx-auto mb-2" />
+                <h3 className="text-sm md:text-base font-semibold mb-1">¿Qué funcionalidades te interesan?</h3>
+                <p className="text-xs text-gray-600">Selecciona las que quieras probar. Durante el trial tendrás acceso a todas.</p>
               </div>
 
-              {/* Team size selection */}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">¿Cuántas personas van a usar la aplicación?</Label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {teamSizes.map((size) => {
-                    const isSelected = step1Form.watch('teamSize') === size.value;
-                    return (
-                      <div key={size.value} className="relative">
-                        <input
-                          type="radio"
-                          id={`teamSize-${size.value}`}
-                          value={size.value}
-                          {...step1Form.register('teamSize')}
-                          className="sr-only"
-                        />
-                        <label
-                          htmlFor={`teamSize-${size.value}`}
-                          className={`block p-2 border rounded-lg cursor-pointer hover:bg-gray-50 transition-all ${
-                            isSelected
-                              ? 'bg-oficaz-primary/5 border-oficaz-primary ring-2 ring-oficaz-primary/20'
-                              : 'bg-white border-gray-200'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="text-xs font-medium">{size.label}</div>
-                              <div className="text-xs text-gray-500">{size.description}</div>
-                            </div>
-                            <div className={`w-3 h-3 border rounded-full ${
-                              isSelected
-                                ? 'bg-oficaz-primary border-oficaz-primary'
-                                : 'border-gray-300'
-                            }`}></div>
-                          </div>
-                        </label>
-                      </div>
-                    );
-                  })}
+              {/* Included features section */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Incluido</Badge>
+                  <span className="text-xs text-gray-600">Estas funciones están incluidas en tu suscripción</span>
                 </div>
-                {step1Form.formState.errors.teamSize && (
-                  <p className="text-sm text-red-600">{step1Form.formState.errors.teamSize.message}</p>
-                )}
-              </div>
-
-              {/* Features selection */}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">¿Qué funcionalidades te interesan más?</Label>
-                <p className="text-xs text-gray-500">Selecciona todas las que quieras, sin miedo</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {features.map((feature) => {
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  {allFeatures.filter(f => f.included).map((feature) => {
                     const Icon = feature.icon;
                     const selectedFeatures = step1Form.watch('interestedFeatures') || [];
                     const isSelected = selectedFeatures.includes(feature.id);
@@ -638,36 +604,77 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                         />
                         <label
                           htmlFor={`feature-${feature.id}`}
-                          className={`block p-2 border rounded-lg cursor-pointer hover:bg-gray-50 transition-all ${
+                          data-testid={`feature-${feature.id}`}
+                          className={`block p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-all ${
                             isSelected
-                              ? 'bg-oficaz-primary/5 border-oficaz-primary ring-2 ring-oficaz-primary/20'
+                              ? 'bg-green-50 border-green-400 ring-2 ring-green-200'
                               : 'bg-white border-gray-200'
                           }`}
                         >
-                          <div className="flex items-center space-x-2">
-                            <Icon className="h-3 w-3 text-oficaz-primary flex-shrink-0" />
+                          <div className="flex items-start gap-2">
+                            <Icon className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                             <div className="flex-1 min-w-0">
-                              <div className="text-xs font-medium truncate">{feature.name}</div>
-                              <div className="text-xs text-gray-500 truncate">{feature.description}</div>
+                              <div className="text-xs font-medium">{feature.name}</div>
+                              <div className="text-xs text-gray-500 line-clamp-2">{feature.description}</div>
                             </div>
-                            <div className={`w-3 h-3 border rounded-full ${
-                              isSelected
-                                ? 'bg-oficaz-primary border-oficaz-primary'
-                                : 'border-gray-300'
-                            }`}></div>
+                            <CheckCircle className={`h-4 w-4 flex-shrink-0 ${isSelected ? 'text-green-600' : 'text-gray-300'}`} />
                           </div>
                         </label>
                       </div>
                     );
                   })}
                 </div>
-                {step1Form.formState.errors.interestedFeatures && (
-                  <p className="text-sm text-red-600">{step1Form.formState.errors.interestedFeatures.message}</p>
-                )}
+              </div>
+
+              {/* Paid add-ons section */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">Complementos</Badge>
+                  <span className="text-xs text-gray-600">Funciones adicionales de pago (pruébalas gratis durante el trial)</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {allFeatures.filter(f => !f.included).map((feature) => {
+                    const Icon = feature.icon;
+                    const selectedFeatures = step1Form.watch('interestedFeatures') || [];
+                    const isSelected = selectedFeatures.includes(feature.id);
+                    return (
+                      <div key={feature.id} className="relative">
+                        <input
+                          type="checkbox"
+                          id={`feature-${feature.id}`}
+                          value={feature.id}
+                          {...step1Form.register('interestedFeatures')}
+                          className="sr-only"
+                        />
+                        <label
+                          htmlFor={`feature-${feature.id}`}
+                          data-testid={`feature-${feature.id}`}
+                          className={`block p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-all ${
+                            isSelected
+                              ? 'bg-blue-50 border-blue-400 ring-2 ring-blue-200'
+                              : 'bg-white border-gray-200'
+                          }`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <Icon className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium">{feature.name}</span>
+                                <span className="text-xs text-blue-600 font-medium">+{feature.price}€/mes</span>
+                              </div>
+                              <div className="text-xs text-gray-500 line-clamp-2">{feature.description}</div>
+                            </div>
+                            <CheckCircle className={`h-4 w-4 flex-shrink-0 ${isSelected ? 'text-blue-600' : 'text-gray-300'}`} />
+                          </div>
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="flex justify-center pt-4">
-                <Button type="submit" className="w-full rounded-xl px-8">
+                <Button type="submit" data-testid="button-step1-continue" className="w-full rounded-xl px-8">
                   Continuar
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
