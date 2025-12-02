@@ -1190,15 +1190,20 @@ export type Addon = typeof addons.$inferSelect;
 export type InsertAddon = z.infer<typeof insertAddonSchema>;
 
 // Company Add-ons - Tracks which add-ons each company has purchased
+// Status: active (paid and usable), pending_cancel (active until period end), cancelled (inactive, in cooldown), inactive (payment failed)
 export const companyAddons = pgTable("company_addons", {
   id: serial("id").primaryKey(),
   companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
   addonId: integer("addon_id").notNull().references(() => addons.id, { onDelete: 'cascade' }),
-  status: varchar("status", { length: 20 }).default("active").notNull(), // active, cancelled, pending
+  status: varchar("status", { length: 20 }).default("active").notNull(), // active, pending_cancel, cancelled, inactive
   stripeSubscriptionItemId: text("stripe_subscription_item_id"), // Stripe subscription item ID
   purchasedAt: timestamp("purchased_at").defaultNow().notNull(),
+  activatedAt: timestamp("activated_at"), // When this addon was activated in current billing cycle
   cancelledAt: timestamp("cancelled_at"),
   cancellationEffectiveDate: timestamp("cancellation_effective_date"), // When cancellation takes effect (end of billing period)
+  cooldownEndsAt: timestamp("cooldown_ends_at"), // Cannot re-purchase until this date (next billing cycle)
+  lastStripeInvoiceId: text("last_stripe_invoice_id"), // Last invoice that included this addon
+  proratedDays: integer("prorated_days"), // Days charged in current period (for invoice description)
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => ({
