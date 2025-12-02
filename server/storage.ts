@@ -1642,8 +1642,8 @@ export class DrizzleStorage implements IStorage {
       };
     }
 
-    // NEW MODEL: Apply free add-ons (time_tracking, vacation, schedules) - always available
-    // Only set if key doesn't exist to avoid overriding company custom settings
+    // NEW MODEL: Apply free add-ons (time_tracking, vacation, schedules) - ALWAYS available
+    // Free add-ons must ALWAYS be true, overriding any legacy plan-based settings
     const freeAddons = await db.select({ key: schema.addons.key })
       .from(schema.addons)
       .where(and(
@@ -1652,9 +1652,8 @@ export class DrizzleStorage implements IStorage {
       ));
     
     for (const freeAddon of freeAddons) {
-      if (finalFeatures[freeAddon.key] === undefined) {
-        finalFeatures[freeAddon.key] = true;
-      }
+      // Force true for free addons - these are always available regardless of plan
+      finalFeatures[freeAddon.key] = true;
     }
 
     // Apply purchased add-ons as additional features
