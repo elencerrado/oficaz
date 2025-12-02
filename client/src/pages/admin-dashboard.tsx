@@ -63,8 +63,13 @@ export default function AdminDashboard() {
   const [currentLocation, setLocation] = useLocation() || ['', () => {}];
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const hasCheckedWelcomeModal = useRef(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(() => {
+    const shouldShow = localStorage.getItem('showWelcomeModal') === 'true';
+    if (shouldShow) {
+      localStorage.removeItem('showWelcomeModal');
+    }
+    return shouldShow;
+  });
   const temporaryMessageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // ⚠️ PROTECTED - DO NOT MODIFY - Message system states identical to employee system
@@ -190,17 +195,6 @@ export default function AdminDashboard() {
 
   // ⚠️ Performance: currentTime state removed - calculate directly when needed to avoid unnecessary re-renders
 
-  // Check for welcome modal display (only once per session)
-  useEffect(() => {
-    if (hasCheckedWelcomeModal.current) return;
-    
-    const shouldShowWelcome = localStorage.getItem('showWelcomeModal');
-    if (shouldShowWelcome === 'true') {
-      setShowWelcomeModal(true);
-      localStorage.removeItem('showWelcomeModal');
-      hasCheckedWelcomeModal.current = true;
-    }
-  }, []);
 
   // Fetch cancellation status for subscription termination warning
   const { data: cancellationStatus } = useQuery({
