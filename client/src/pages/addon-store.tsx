@@ -13,7 +13,9 @@ import {
   AlertCircle,
   Crown,
   ShoppingCart,
-  XCircle
+  XCircle,
+  Clock,
+  RefreshCw
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -23,6 +25,10 @@ import type { Addon, CompanyAddon } from '@shared/schema';
 
 interface AddonWithStatus extends Addon {
   isPurchased?: boolean;
+  isPendingCancel?: boolean;
+  isInCooldown?: boolean;
+  cooldownEndsAt?: Date | string | null;
+  cancellationEffectiveDate?: Date | string | null;
   companyAddon?: CompanyAddon;
 }
 
@@ -132,17 +138,22 @@ export default function AddonStore() {
 
   const isLoading = addonsLoading || companyAddonsLoading;
 
-  const purchasedAddonIds = new Set(
-    companyAddons
-      ?.filter(ca => ca.status === 'active')
-      .map(ca => ca.addonId) || []
-  );
-
-  const addonsWithStatus: AddonWithStatus[] = (addons || []).map(addon => ({
-    ...addon,
-    isPurchased: purchasedAddonIds.has(addon.id),
-    companyAddon: companyAddons?.find(ca => ca.addonId === addon.id)
-  }));
+  const addonsWithStatus: AddonWithStatus[] = (addons || []).map(addon => {
+    const companyAddon = companyAddons?.find(ca => ca.addonId === addon.id);
+    const isActive = companyAddon?.status === 'active' || companyAddon?.status === 'pending_cancel';
+    const isPendingCancel = companyAddon?.status === 'pending_cancel';
+    const isInCooldown = !!(companyAddon?.cooldownEndsAt && new Date(companyAddon.cooldownEndsAt) > new Date());
+    
+    return {
+      ...addon,
+      isPurchased: isActive,
+      isPendingCancel,
+      isInCooldown,
+      cooldownEndsAt: companyAddon?.cooldownEndsAt,
+      cancellationEffectiveDate: companyAddon?.cancellationEffectiveDate,
+      companyAddon
+    };
+  });
 
   const handlePurchase = (addon: AddonWithStatus) => {
     setSelectedAddon(addon);
@@ -186,12 +197,25 @@ export default function AddonStore() {
           {addonsWithStatus.map((addon) => {
             const isIncludedInPlan = featureIncludedInPlan(addon.key);
             const isPurchased = addon.isPurchased && !isIncludedInPlan;
+            const isPendingCancel = addon.isPendingCancel && !isIncludedInPlan;
+            const isInCooldown = addon.isInCooldown && !isIncludedInPlan && !isPurchased;
+            
+            const formatDate = (date: Date | string | null | undefined) => {
+              if (!date) return '';
+              return new Date(date).toLocaleDateString('es-ES', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              });
+            };
             
             return (
               <Card 
                 key={addon.id} 
                 className={`relative overflow-hidden transition-all hover:shadow-lg ${
-                  isIncludedInPlan ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/20' : ''
+                  isIncludedInPlan ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/20' : 
+                  isPendingCancel ? 'border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-900/20' :
+                  isInCooldown ? 'border-gray-200 bg-gray-50/50 dark:border-gray-700 dark:bg-gray-800/50' : ''
                 }`}
                 data-testid={`addon-card-${addon.key}`}
               >
@@ -204,11 +228,29 @@ export default function AddonStore() {
                   </div>
                 )}
                 
-                {isPurchased && (
+                {isPurchased && !isPendingCancel && (
                   <div className="absolute top-3 right-3">
                     <Badge className="bg-blue-500 text-white">
                       <Check className="h-3 w-3 mr-1" />
                       Activo
+                    </Badge>
+                  </div>
+                )}
+                
+                {isPendingCancel && (
+                  <div className="absolute top-3 right-3">
+                    <Badge className="bg-amber-500 text-white">
+                      <Clock className="h-3 w-3 mr-1" />
+                      Se cancela pronto
+                    </Badge>
+                  </div>
+                )}
+                
+                {isInCooldown && (
+                  <div className="absolute top-3 right-3">
+                    <Badge variant="secondary" className="bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                      No disponible
                     </Badge>
                   </div>
                 )}
@@ -233,6 +275,22 @@ export default function AddonStore() {
                     </div>
                   </div>
 
+                  {isPendingCancel && addon.cancellationEffectiveDate && (
+                    <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800">
+                      <p className="text-sm text-amber-700 dark:text-amber-300">
+                        Activo hasta el {formatDate(addon.cancellationEffectiveDate)}
+                      </p>
+                    </div>
+                  )}
+
+                  {isInCooldown && addon.cooldownEndsAt && (
+                    <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Disponible a partir del {formatDate(addon.cooldownEndsAt)}
+                      </p>
+                    </div>
+                  )}
+
                   {isIncludedInPlan ? (
                     <Button 
                       variant="outline" 
@@ -243,6 +301,16 @@ export default function AddonStore() {
                       <Check className="h-4 w-4 mr-2" />
                       Incluido en tu plan
                     </Button>
+                  ) : isPendingCancel ? (
+                    <Button 
+                      variant="outline" 
+                      className="w-full text-gray-500"
+                      disabled
+                      data-testid={`addon-pending-cancel-${addon.key}`}
+                    >
+                      <Clock className="h-4 w-4 mr-2" />
+                      Cancelación programada
+                    </Button>
                   ) : isPurchased ? (
                     <Button 
                       variant="outline" 
@@ -252,6 +320,16 @@ export default function AddonStore() {
                     >
                       <XCircle className="h-4 w-4 mr-2" />
                       Cancelar complemento
+                    </Button>
+                  ) : isInCooldown ? (
+                    <Button 
+                      variant="outline"
+                      className="w-full"
+                      disabled
+                      data-testid={`addon-cooldown-${addon.key}`}
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      No disponible aún
                     </Button>
                   ) : (
                     <Button 

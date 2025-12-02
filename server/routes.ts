@@ -3271,6 +3271,35 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // ============================================
+  // COMPANY ADD-ONS ROUTES (must be before /api/company/:alias to avoid route collision)
+  // ============================================
+  
+  // Get company's purchased add-ons
+  app.get('/api/company/addons', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const user = req.user!;
+      const companyAddons = await storage.getCompanyAddons(user.companyId);
+      res.json(companyAddons);
+    } catch (error: any) {
+      console.error('Error fetching company addons:', error);
+      res.status(500).json({ error: 'Error al obtener los complementos de la empresa' });
+    }
+  });
+
+  // Check if company has a specific add-on active
+  app.get('/api/company/addons/:key/status', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const user = req.user!;
+      const { key } = req.params;
+      const hasAddon = await storage.hasActiveAddon(user.companyId, key);
+      res.json({ active: hasAddon });
+    } catch (error: any) {
+      console.error('Error checking addon status:', error);
+      res.status(500).json({ error: 'Error al verificar el estado del complemento' });
+    }
+  });
+
   // Get company by alias route
   app.get('/api/company/:alias', async (req, res) => {
     try {
@@ -14531,31 +14560,6 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
     } catch (error: any) {
       console.error('Error fetching addons:', error);
       res.status(500).json({ error: 'Error al obtener los complementos' });
-    }
-  });
-
-  // Get company's purchased add-ons
-  app.get('/api/company/addons', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
-    try {
-      const user = req.user!;
-      const companyAddons = await storage.getCompanyAddons(user.companyId);
-      res.json(companyAddons);
-    } catch (error: any) {
-      console.error('Error fetching company addons:', error);
-      res.status(500).json({ error: 'Error al obtener los complementos de la empresa' });
-    }
-  });
-
-  // Check if company has a specific add-on active
-  app.get('/api/company/addons/:key/status', authenticateToken, async (req: AuthRequest, res) => {
-    try {
-      const user = req.user!;
-      const { key } = req.params;
-      const hasAddon = await storage.hasActiveAddon(user.companyId, key);
-      res.json({ active: hasAddon });
-    } catch (error: any) {
-      console.error('Error checking addon status:', error);
-      res.status(500).json({ error: 'Error al verificar el estado del complemento' });
     }
   });
 
