@@ -139,6 +139,7 @@ export default function AddonStore() {
       queryClient.invalidateQueries({ queryKey: ['/api/addons'] });
       queryClient.invalidateQueries({ queryKey: ['/api/company/addons'] });
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
       await refreshUser();
       toast({
         title: 'Complemento añadido',
@@ -164,6 +165,7 @@ export default function AddonStore() {
       queryClient.invalidateQueries({ queryKey: ['/api/addons'] });
       queryClient.invalidateQueries({ queryKey: ['/api/company/addons'] });
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
       await refreshUser();
       toast({
         title: 'Complemento cancelado',
@@ -185,8 +187,11 @@ export default function AddonStore() {
     mutationFn: async (seats: { employees: number; managers: number; admins: number }) => {
       return await apiRequest('POST', '/api/subscription/seats', seats);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/company/addons'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
+      await refreshUser();
       toast({
         title: 'Usuarios actualizados',
         description: 'Los usuarios adicionales se han añadido a tu suscripción.',
