@@ -2048,7 +2048,7 @@ Responde directamente a este email para contactar con la persona.
       // Check if email is already registered as a COMPANY email
       const [existingCompany] = await db.select({ id: companies.id })
         .from(companies)
-        .where(eq(companies.companyEmail, email.toLowerCase()))
+        .where(eq(companies.email, email.toLowerCase()))
         .limit(1);
       
       if (existingCompany) {
@@ -2111,7 +2111,7 @@ Responde directamente a este email para contactar con la persona.
       // Check if email is already registered as a COMPANY email
       const [existingCompany] = await db.select({ id: companies.id, name: companies.name })
         .from(companies)
-        .where(eq(companies.companyEmail, email.toLowerCase()))
+        .where(eq(companies.email, email.toLowerCase()))
         .limit(1);
       
       if (existingCompany) {
