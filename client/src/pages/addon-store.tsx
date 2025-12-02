@@ -304,7 +304,7 @@ export default function AddonStore() {
                 {freeAddons.map((addon) => (
                   <Card 
                     key={addon.id} 
-                    className="relative overflow-hidden border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/20 h-auto min-h-[320px] flex flex-col"
+                    className="relative overflow-hidden border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/20 min-h-[280px] flex flex-col"
                     data-testid={`addon-card-${addon.key}`}
                   >
                     <CardHeader className="pb-2">
@@ -350,7 +350,7 @@ export default function AddonStore() {
             </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {/* Employees Card */}
-              <Card className="relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 flex flex-col" data-testid="seats-employees-card">
+              <Card className="relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 min-h-[280px] flex flex-col" data-testid="seats-employees-card">
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
@@ -399,7 +399,7 @@ export default function AddonStore() {
               </Card>
 
               {/* Managers Card */}
-              <Card className="relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 flex flex-col" data-testid="seats-managers-card">
+              <Card className="relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 min-h-[280px] flex flex-col" data-testid="seats-managers-card">
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
@@ -448,7 +448,7 @@ export default function AddonStore() {
               </Card>
 
               {/* Admins Card */}
-              <Card className="relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 flex flex-col" data-testid="seats-admins-card">
+              <Card className="relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 min-h-[280px] flex flex-col" data-testid="seats-admins-card">
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
@@ -547,7 +547,7 @@ export default function AddonStore() {
                   return (
                     <Card 
                       key={addon.id} 
-                      className={`relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 h-auto min-h-[320px] flex flex-col ${
+                      className={`relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 min-h-[280px] flex flex-col ${
                         isPendingCancel ? 'border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-900/20' :
                         isInCooldown ? 'border-gray-200 bg-gray-50/50 dark:border-gray-700 dark:bg-gray-800/50' : ''
                       }`}
