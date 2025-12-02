@@ -208,6 +208,42 @@ export default function AddonStore() {
     }
   });
 
+  const reduceSeatssMutation = useMutation({
+    mutationFn: async (seats: { employees: number; managers: number; admins: number }) => {
+      return await apiRequest('POST', '/api/subscription/seats/reduce', seats);
+    },
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/company/addons'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
+      await refreshUser();
+      toast({
+        title: 'Usuarios reducidos',
+        description: 'Los usuarios se han eliminado de tu suscripción.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo reducir los usuarios',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  const currentExtraSeats = {
+    employees: subscription?.extraEmployees || 0,
+    managers: subscription?.extraManagers || 0,
+    admins: subscription?.extraAdmins || 0
+  };
+
+  const hasExtraSeats = currentExtraSeats.employees > 0 || currentExtraSeats.managers > 0 || currentExtraSeats.admins > 0;
+
+  const currentExtraPrice = 
+    currentExtraSeats.employees * seatPrices.employees +
+    currentExtraSeats.managers * seatPrices.managers +
+    currentExtraSeats.admins * seatPrices.admins;
+
   const updateSeatCount = (role: 'employees' | 'managers' | 'admins', delta: number) => {
     setAdditionalSeats(prev => ({
       ...prev,
@@ -404,11 +440,108 @@ export default function AddonStore() {
             </div>
           )}
 
+          {/* Current Extra Seats Section - Show only if has extra seats */}
+          {hasExtraSeats && (
+            <div className="mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <Users className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tus usuarios adicionales actuales</h2>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                <div className="grid gap-4 md:grid-cols-3">
+                  {currentExtraSeats.employees > 0 && (
+                    <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {currentExtraSeats.employees} empleado(s) extra
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          +{(currentExtraSeats.employees * seatPrices.employees).toFixed(2)}€/mes
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
+                          onClick={() => reduceSeatssMutation.mutate({ employees: 1, managers: 0, admins: 0 })}
+                          disabled={reduceSeatssMutation.isPending}
+                          data-testid="reduce-employee-seat"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {currentExtraSeats.managers > 0 && (
+                    <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Briefcase className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {currentExtraSeats.managers} manager(s) extra
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          +{(currentExtraSeats.managers * seatPrices.managers).toFixed(2)}€/mes
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
+                          onClick={() => reduceSeatssMutation.mutate({ employees: 0, managers: 1, admins: 0 })}
+                          disabled={reduceSeatssMutation.isPending}
+                          data-testid="reduce-manager-seat"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {currentExtraSeats.admins > 0 && (
+                    <div className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {currentExtraSeats.admins} admin(s) extra
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          +{(currentExtraSeats.admins * seatPrices.admins).toFixed(2)}€/mes
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
+                          onClick={() => reduceSeatssMutation.mutate({ employees: 0, managers: 0, admins: 1 })}
+                          disabled={reduceSeatssMutation.isPending}
+                          data-testid="reduce-admin-seat"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    Coste adicional mensual actual:
+                  </span>
+                  <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                    +{currentExtraPrice.toFixed(2)}€/mes
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Additional User Seats Section - FIRST */}
           <div>
             <div className="flex items-center gap-2 mb-4">
               <UserPlus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Usuarios adicionales</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Añadir usuarios adicionales</h2>
             </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {/* Employees Card */}

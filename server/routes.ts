@@ -14883,6 +14883,75 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
     }
   });
 
+  // Reduce user seats (remove extra users)
+  app.post('/api/subscription/seats/reduce', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const user = req.user!;
+      const { employees, managers, admins } = req.body;
+
+      // Validate input
+      if (typeof employees !== 'number' || typeof managers !== 'number' || typeof admins !== 'number') {
+        return res.status(400).json({ error: 'Datos inválidos' });
+      }
+
+      if (employees < 0 || managers < 0 || admins < 0) {
+        return res.status(400).json({ error: 'Los valores no pueden ser negativos' });
+      }
+
+      // Get current limits
+      const currentLimits = await storage.getCompanyUserLimits(user.companyId);
+      
+      // Validate we're not removing more than we have
+      if (employees > currentLimits.employees.extra) {
+        return res.status(400).json({ error: `Solo tienes ${currentLimits.employees.extra} empleados extra para quitar` });
+      }
+      if (managers > currentLimits.managers.extra) {
+        return res.status(400).json({ error: `Solo tienes ${currentLimits.managers.extra} managers extra para quitar` });
+      }
+      if (admins > currentLimits.admins.extra) {
+        return res.status(400).json({ error: `Solo tienes ${currentLimits.admins.extra} administradores extra para quitar` });
+      }
+
+      // Calculate new extra limits
+      const newLimits = {
+        extraEmployees: currentLimits.employees.extra - employees,
+        extraManagers: currentLimits.managers.extra - managers,
+        extraAdmins: currentLimits.admins.extra - admins,
+      };
+
+      // Get subscription for Stripe handling
+      const subscription = await db.query.subscriptions.findFirst({
+        where: eq(subscriptions.companyId, user.companyId),
+      });
+
+      // For trial, just update limits
+      // For active subscription, we don't reduce Stripe charges mid-cycle (standard practice)
+      // The reduction will take effect at the next billing cycle
+
+      // Update user limits in database
+      await storage.updateCompanyUserLimits(user.companyId, newLimits);
+
+      const totalRemoved = employees + managers + admins;
+      console.log(`👥 Company ${user.companyId} reduced seats: -${employees} employees, -${managers} managers, -${admins} admins`);
+
+      res.json({
+        success: true,
+        message: `Se han eliminado ${totalRemoved} usuario(s) de tu suscripción.`,
+        newLimits: {
+          extraEmployees: newLimits.extraEmployees,
+          extraManagers: newLimits.extraManagers,
+          extraAdmins: newLimits.extraAdmins,
+        },
+        note: subscription?.status === 'active' ? 
+          'Los cambios se reflejarán en tu próxima factura.' : 
+          'Los cambios se han aplicado inmediatamente.',
+      });
+    } catch (error: any) {
+      console.error('Error reducing seats:', error);
+      res.status(500).json({ error: 'Error al reducir usuarios' });
+    }
+  });
+
   // Check feature access (new model: free features + purchased addons)
   app.get('/api/features/:key/access', authenticateToken, async (req: AuthRequest, res) => {
     try {
