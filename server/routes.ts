@@ -14559,11 +14559,12 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
     }
   });
 
-  // Purchase an add-on (Admin only)
+  // Purchase an add-on (Admin only) - With Stripe proration and cooldown enforcement
   app.post('/api/addons/:id/purchase', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
     try {
       const user = req.user!;
       const addonId = parseInt(req.params.id);
+      const idempotencyKey = `addon-purchase-${user.companyId}-${addonId}-${Date.now()}`;
 
       // Get the add-on
       const addon = await storage.getAddon(addonId);
@@ -14571,10 +14572,22 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         return res.status(404).json({ error: 'Complemento no encontrado' });
       }
 
-      // Check if already purchased
+      // Check if already purchased and active
       const existingAddon = await storage.getCompanyAddon(user.companyId, addonId);
-      if (existingAddon && existingAddon.status === 'active') {
-        return res.status(400).json({ error: 'Ya tienes este complemento activo' });
+      if (existingAddon) {
+        // Check if active or pending_cancel (still has access)
+        if (existingAddon.status === 'active' || existingAddon.status === 'pending_cancel') {
+          return res.status(400).json({ error: 'Ya tienes este complemento activo' });
+        }
+        
+        // Check cooldown period - cannot re-purchase until next billing cycle
+        if (existingAddon.cooldownEndsAt && new Date() < existingAddon.cooldownEndsAt) {
+          const cooldownEndFormatted = existingAddon.cooldownEndsAt.toLocaleDateString('es-ES');
+          return res.status(400).json({ 
+            error: `No puedes volver a contratar este complemento hasta el ${cooldownEndFormatted}. Podrás contratarlo de nuevo en el próximo ciclo de facturación.`,
+            cooldownEndsAt: existingAddon.cooldownEndsAt
+          });
+        }
       }
 
       // Get company subscription for Stripe integration
@@ -14587,8 +14600,10 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
       }
 
       let stripeSubscriptionItemId: string | null = null;
+      let proratedDays: number = 30; // Default to full month
+      let proratedAmount: number = Number(addon.monthlyPrice);
 
-      // If company has active Stripe subscription, add item to it
+      // If company has active Stripe subscription, add item with proration
       if (subscription.stripeSubscriptionId && subscription.status === 'active') {
         try {
           // Get or create Stripe price for this addon
@@ -14597,16 +14612,24 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
           if (!stripePriceId) {
             // Create Stripe product and price for this addon
             const stripeProduct = await stripe.products.create({
-              name: `Oficaz Add-on: ${addon.name}`,
-              description: addon.description || undefined,
-            });
+              name: `Oficaz: ${addon.name}`,
+              description: addon.description || addon.shortDescription || undefined,
+              metadata: {
+                addon_key: addon.key,
+                feature_key: addon.featureKey || addon.key,
+              }
+            }, { idempotencyKey: `product-${addon.key}` });
 
             const stripePrice = await stripe.prices.create({
               product: stripeProduct.id,
-              unit_amount: Math.round(Number(addon.monthlyPrice) * 100), // Convert to cents
+              unit_amount: Math.round(Number(addon.monthlyPrice) * 100),
               currency: 'eur',
               recurring: { interval: 'month' },
-            });
+              nickname: addon.name,
+              metadata: {
+                addon_key: addon.key,
+              }
+            }, { idempotencyKey: `price-${addon.key}` });
 
             stripePriceId = stripePrice.id;
 
@@ -14617,31 +14640,70 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
             });
           }
 
-          // Add subscription item to existing subscription
+          // Get current subscription to calculate proration
+          const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripeSubscriptionId) as any;
+          const currentPeriodEnd = stripeSubscription.current_period_end as number;
+          const currentPeriodStart = stripeSubscription.current_period_start as number;
+          const now = Math.floor(Date.now() / 1000);
+          
+          // Calculate prorated days
+          const totalDaysInPeriod = Math.ceil((currentPeriodEnd - currentPeriodStart) / 86400);
+          const remainingDays = Math.ceil((currentPeriodEnd - now) / 86400);
+          proratedDays = Math.max(1, Math.min(remainingDays, totalDaysInPeriod));
+          proratedAmount = (Number(addon.monthlyPrice) / totalDaysInPeriod) * proratedDays;
+
+          // Add subscription item with proration (creates invoice items automatically)
           const subscriptionItem = await stripe.subscriptionItems.create({
             subscription: subscription.stripeSubscriptionId,
             price: stripePriceId,
             quantity: 1,
-          });
+            proration_behavior: 'create_prorations',
+            metadata: {
+              addon_id: addon.id.toString(),
+              addon_key: addon.key,
+              company_id: user.companyId.toString(),
+            }
+          }, { idempotencyKey });
 
           stripeSubscriptionItemId = subscriptionItem.id;
-          console.log(`✅ Added addon ${addon.key} to Stripe subscription: ${stripeSubscriptionItemId}`);
+
+          // Get upcoming invoice to find the proration line item and update its description
+          try {
+            const upcomingInvoice = await (stripe.invoices as any).upcoming({
+              subscription: subscription.stripeSubscriptionId,
+            });
+            
+            // Find proration line items for this addon and update descriptions
+            for (const lineItem of upcomingInvoice.lines.data) {
+              if (lineItem.proration && lineItem.subscription_item === stripeSubscriptionItemId) {
+                // Update the invoice item description with clear Spanish text
+                await stripe.invoiceItems.update(lineItem.id as string, {
+                  description: `${addon.name} – ${proratedDays} días (prorrateo)`,
+                });
+              }
+            }
+          } catch (invoiceError: any) {
+            console.warn('Could not update invoice item description:', invoiceError.message);
+          }
+
+          console.log(`✅ Added addon ${addon.key} to Stripe subscription with proration: ${proratedDays} días, €${proratedAmount.toFixed(2)}`);
         } catch (stripeError: any) {
           console.error('Error adding addon to Stripe subscription:', stripeError);
-          // Continue without Stripe if it fails (for trial users or testing)
+          // For paid subscriptions, we must fail if Stripe fails - no free usage
+          if (subscription.status === 'active' && subscription.stripeSubscriptionId) {
+            return res.status(500).json({ 
+              error: 'Error al procesar el pago. Por favor, inténtalo de nuevo o contacta con soporte.',
+              details: stripeError.message
+            });
+          }
         }
       }
 
       // Create or update company addon record
+      const now = new Date();
       if (existingAddon) {
         // Reactivate existing record
-        await storage.updateCompanyAddon(existingAddon.id, {
-          status: 'active',
-          stripeSubscriptionItemId,
-          purchasedAt: new Date(),
-          cancelledAt: null,
-          cancellationEffectiveDate: null,
-        });
+        await storage.reactivateAddon(existingAddon.id, stripeSubscriptionItemId || '', proratedDays);
       } else {
         // Create new record
         await storage.createCompanyAddon({
@@ -14649,16 +14711,25 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
           addonId: addon.id,
           status: 'active',
           stripeSubscriptionItemId,
-          purchasedAt: new Date(),
+          purchasedAt: now,
+          activatedAt: now,
+          proratedDays,
         });
       }
 
-      console.log(`🛒 Company ${user.companyId} purchased addon: ${addon.key}`);
+      console.log(`🛒 Company ${user.companyId} purchased addon: ${addon.key} (${proratedDays} días prorrateados)`);
 
       res.json({
         success: true,
         message: `Complemento "${addon.name}" activado correctamente`,
         addon: addon,
+        billing: {
+          proratedDays,
+          proratedAmount: proratedAmount.toFixed(2),
+          message: subscription.stripeSubscriptionId 
+            ? `Se te cobrará €${proratedAmount.toFixed(2)} por ${proratedDays} días de uso en este ciclo`
+            : 'Este complemento se activará con tu próxima factura'
+        }
       });
     } catch (error: any) {
       console.error('Error purchasing addon:', error);
@@ -14666,7 +14737,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
     }
   });
 
-  // Cancel an add-on (Admin only)
+  // Cancel an add-on (Admin only) - Marks as pending_cancel, access until period end, cooldown enforced
   app.post('/api/addons/:id/cancel', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
     try {
       const user = req.user!;
@@ -14674,18 +14745,43 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
 
       // Get the company addon
       const companyAddon = await storage.getCompanyAddon(user.companyId, addonId);
-      if (!companyAddon || companyAddon.status !== 'active') {
-        return res.status(404).json({ error: 'Complemento no encontrado o ya cancelado' });
+      if (!companyAddon) {
+        return res.status(404).json({ error: 'Complemento no encontrado' });
+      }
+      
+      if (companyAddon.status === 'pending_cancel') {
+        return res.status(400).json({ error: 'Este complemento ya está programado para cancelarse' });
+      }
+      
+      if (companyAddon.status !== 'active') {
+        return res.status(400).json({ error: 'Este complemento no está activo' });
       }
 
-      // Get subscription to determine effective date
+      // Get subscription to determine effective date (end of billing period)
       const subscription = await db.query.subscriptions.findFirst({
         where: eq(subscriptions.companyId, user.companyId),
       });
 
-      // Calculate effective date (end of current billing period)
+      // Calculate effective date (end of current billing period = cooldown end)
       let effectiveDate = new Date();
-      if (subscription?.nextPaymentDate) {
+      
+      if (subscription?.stripeSubscriptionId) {
+        try {
+          // Get the actual billing period end from Stripe
+          const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripeSubscriptionId) as any;
+          effectiveDate = new Date((stripeSubscription.current_period_end as number) * 1000);
+        } catch (stripeError: any) {
+          console.warn('Could not get Stripe subscription period:', stripeError.message);
+          // Fallback to nextPaymentDate or end of month
+          if (subscription?.nextPaymentDate) {
+            effectiveDate = new Date(subscription.nextPaymentDate);
+          } else {
+            effectiveDate.setMonth(effectiveDate.getMonth() + 1);
+            effectiveDate.setDate(1);
+            effectiveDate.setHours(0, 0, 0, 0);
+          }
+        }
+      } else if (subscription?.nextPaymentDate) {
         effectiveDate = new Date(subscription.nextPaymentDate);
       } else {
         // Default to end of current month
@@ -14694,29 +14790,50 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         effectiveDate.setHours(0, 0, 0, 0);
       }
 
-      // Cancel in Stripe if applicable
-      if (companyAddon.stripeSubscriptionItemId) {
+      // Schedule removal in Stripe at period end (no immediate proration/refund)
+      if (companyAddon.stripeSubscriptionItemId && subscription?.stripeSubscriptionId) {
         try {
-          await stripe.subscriptionItems.del(companyAddon.stripeSubscriptionItemId, {
-            proration_behavior: 'create_prorations',
+          // Don't delete immediately - schedule for removal at period end
+          // We update the subscription to mark the item for deletion at period end
+          await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+            cancel_at_period_end: false, // Keep main subscription active
+            proration_behavior: 'none', // No refunds
           });
-          console.log(`✅ Removed addon from Stripe subscription: ${companyAddon.stripeSubscriptionItemId}`);
+          
+          // Mark item for removal at next billing cycle by setting quantity to 0
+          // This way Stripe won't charge for it next month
+          await stripe.subscriptionItems.update(companyAddon.stripeSubscriptionItemId, {
+            quantity: 0,
+            proration_behavior: 'none', // No refund for unused time
+          });
+          
+          console.log(`📅 Scheduled addon removal from Stripe at period end: ${companyAddon.stripeSubscriptionItemId}`);
         } catch (stripeError: any) {
-          console.error('Error removing addon from Stripe:', stripeError);
-          // Continue with cancellation even if Stripe fails
+          console.error('Error scheduling addon removal in Stripe:', stripeError);
+          // Continue with local cancellation even if Stripe update fails
+          // The webhook will sync state later
         }
       }
 
-      // Update database
-      await storage.cancelCompanyAddon(user.companyId, addonId, effectiveDate);
+      // Update database - mark as pending_cancel, set cooldown
+      await storage.markAddonPendingCancel(user.companyId, addonId, effectiveDate);
 
       const addon = await storage.getAddon(addonId);
-      console.log(`🚫 Company ${user.companyId} cancelled addon: ${addon?.key || addonId}`);
+      const formattedDate = effectiveDate.toLocaleDateString('es-ES', { 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric' 
+      });
+      
+      console.log(`🚫 Company ${user.companyId} cancelled addon: ${addon?.key || addonId} (effective: ${formattedDate})`);
 
       res.json({
         success: true,
-        message: `Complemento cancelado. Seguirá activo hasta ${effectiveDate.toLocaleDateString('es-ES')}`,
+        message: `Complemento cancelado. Seguirá activo hasta el ${formattedDate}. No podrás volver a contratarlo hasta esa fecha.`,
         effectiveDate: effectiveDate,
+        addonName: addon?.name,
+        accessUntil: formattedDate,
+        canRepurchaseAfter: formattedDate,
       });
     } catch (error: any) {
       console.error('Error cancelling addon:', error);
