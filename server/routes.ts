@@ -14323,6 +14323,18 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         return res.status(404).json({ error: 'Complemento no encontrado' });
       }
 
+      // Get company subscription for Stripe integration
+      const subscription = await db.query.subscriptions.findFirst({
+        where: eq(subscriptions.companyId, user.companyId),
+      });
+
+      if (!subscription) {
+        return res.status(400).json({ error: 'No se encontró suscripción activa' });
+      }
+
+      // Check if in trial period (free to add/remove addons)
+      const isInTrial = subscription.isTrialActive && subscription.status === 'trial';
+
       // Check if already purchased and active
       const existingAddon = await storage.getCompanyAddon(user.companyId, addonId);
       if (existingAddon) {
@@ -14331,23 +14343,14 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
           return res.status(400).json({ error: 'Ya tienes este complemento activo' });
         }
         
-        // Check cooldown period - cannot re-purchase until next billing cycle
-        if (existingAddon.cooldownEndsAt && new Date() < existingAddon.cooldownEndsAt) {
+        // Check cooldown period - ONLY enforced after trial ends (when paying)
+        if (!isInTrial && existingAddon.cooldownEndsAt && new Date() < existingAddon.cooldownEndsAt) {
           const cooldownEndFormatted = existingAddon.cooldownEndsAt.toLocaleDateString('es-ES');
           return res.status(400).json({ 
             error: `No puedes volver a contratar este complemento hasta el ${cooldownEndFormatted}. Podrás contratarlo de nuevo en el próximo ciclo de facturación.`,
             cooldownEndsAt: existingAddon.cooldownEndsAt
           });
         }
-      }
-
-      // Get company subscription for Stripe integration
-      const subscription = await db.query.subscriptions.findFirst({
-        where: eq(subscriptions.companyId, user.companyId),
-      });
-
-      if (!subscription) {
-        return res.status(400).json({ error: 'No se encontró suscripción activa' });
       }
 
       let stripeSubscriptionItemId: string | null = null;
@@ -14488,7 +14491,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
     }
   });
 
-  // Cancel an add-on (Admin only) - Marks as pending_cancel, access until period end, cooldown enforced
+  // Cancel an add-on (Admin only) - During trial: immediate cancel, no cooldown. Paying: pending_cancel with cooldown
   app.post('/api/addons/:id/cancel', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
     try {
       const user = req.user!;
@@ -14508,12 +14511,33 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         return res.status(400).json({ error: 'Este complemento no está activo' });
       }
 
-      // Get subscription to determine effective date (end of billing period)
+      // Get subscription to determine if in trial
       const subscription = await db.query.subscriptions.findFirst({
         where: eq(subscriptions.companyId, user.companyId),
       });
 
-      // Calculate effective date (end of current billing period = cooldown end)
+      const addon = await storage.getAddon(addonId);
+      
+      // Check if in trial period (free to add/remove addons without restrictions)
+      const isInTrial = subscription?.isTrialActive && subscription?.status === 'trial';
+
+      if (isInTrial) {
+        // TRIAL MODE: Immediate cancellation, no cooldown, no pending state
+        // Simply delete/deactivate the company addon record
+        await storage.cancelAddonImmediately(user.companyId, addonId);
+        
+        console.log(`🆓 [TRIAL] Company ${user.companyId} cancelled addon: ${addon?.key || addonId} (immediate, no cooldown)`);
+
+        res.json({
+          success: true,
+          message: `Complemento "${addon?.name}" desactivado. Durante el periodo de prueba puedes volver a activarlo cuando quieras.`,
+          addonName: addon?.name,
+          isTrialCancellation: true,
+        });
+        return;
+      }
+
+      // PAYING MODE: Mark as pending_cancel, access until period end, cooldown enforced
       let effectiveDate = new Date();
       
       if (subscription?.stripeSubscriptionId) {
@@ -14545,14 +14569,12 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
       if (companyAddon.stripeSubscriptionItemId && subscription?.stripeSubscriptionId) {
         try {
           // Don't delete immediately - schedule for removal at period end
-          // We update the subscription to mark the item for deletion at period end
           await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
             cancel_at_period_end: false, // Keep main subscription active
             proration_behavior: 'none', // No refunds
           });
           
           // Mark item for removal at next billing cycle by setting quantity to 0
-          // This way Stripe won't charge for it next month
           await stripe.subscriptionItems.update(companyAddon.stripeSubscriptionItemId, {
             quantity: 0,
             proration_behavior: 'none', // No refund for unused time
@@ -14561,15 +14583,12 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
           console.log(`📅 Scheduled addon removal from Stripe at period end: ${companyAddon.stripeSubscriptionItemId}`);
         } catch (stripeError: any) {
           console.error('Error scheduling addon removal in Stripe:', stripeError);
-          // Continue with local cancellation even if Stripe update fails
-          // The webhook will sync state later
         }
       }
 
       // Update database - mark as pending_cancel, set cooldown
       await storage.markAddonPendingCancel(user.companyId, addonId, effectiveDate);
 
-      const addon = await storage.getAddon(addonId);
       const formattedDate = effectiveDate.toLocaleDateString('es-ES', { 
         day: 'numeric', 
         month: 'long', 

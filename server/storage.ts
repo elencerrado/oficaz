@@ -3885,6 +3885,25 @@ export class DrizzleStorage implements IStorage {
     return updated;
   }
 
+  // Immediately cancel addon (for trial period - no cooldown, immediate deactivation)
+  async cancelAddonImmediately(companyId: number, addonId: number): Promise<schema.CompanyAddon | undefined> {
+    const [updated] = await db.update(schema.companyAddons)
+      .set({
+        status: 'cancelled',
+        cancelledAt: new Date(),
+        cancellationEffectiveDate: new Date(),
+        cooldownEndsAt: null, // NO COOLDOWN during trial
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(schema.companyAddons.companyId, companyId),
+        eq(schema.companyAddons.addonId, addonId),
+        eq(schema.companyAddons.status, 'active')
+      ))
+      .returning();
+    return updated;
+  }
+
   // Fully cancel addon after billing period ends (called by webhook or scheduler)
   async finalizeAddonCancellation(companyId: number, addonId: number): Promise<schema.CompanyAddon | undefined> {
     const [updated] = await db.update(schema.companyAddons)
