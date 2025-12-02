@@ -156,10 +156,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                  style={{ 
                    gap: 'clamp(0.3rem, 1.2vh, 0.8rem)'
                  }}>
-              {navigation.map((item) => {
+              {navigation
+                .filter((item) => !item.feature || hasAccess(item.feature))
+                .map((item) => {
                 const isActive = location === item.href;
                 const Icon = item.icon;
-                const isFeatureRestricted = item.feature && !hasAccess(item.feature);
                 
                 return (
                   <div key={item.name}>
@@ -169,9 +170,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                           w-full flex items-center space-x-3 rounded-lg transition-colors text-left
                           ${isActive 
                             ? 'bg-primary/10 text-primary' 
-                            : isFeatureRestricted
-                              ? 'text-muted-foreground hover:bg-muted/50 opacity-60'
-                              : 'text-sidebar-foreground hover:bg-muted'
+                            : 'text-sidebar-foreground hover:bg-muted'
                           }
                         `}
                         style={{
@@ -180,8 +179,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         }}
                         onClick={handleLinkClick}
                       >
-                        <Icon size={20} className={isFeatureRestricted ? 'opacity-50' : ''} />
-                        <span className={isFeatureRestricted ? 'opacity-75' : ''}>{item.name}</span>
+                        <Icon size={20} />
+                        <span>{item.name}</span>
                         {typeof item.badge === 'number' && item.badge > 0 && (
                           <span className="bg-destructive text-destructive-foreground text-xs px-2 py-1 rounded-full ml-auto">
                             {item.badge}

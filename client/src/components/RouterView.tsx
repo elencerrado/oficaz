@@ -1,6 +1,7 @@
 import { Switch, Route, Redirect, useLocation } from "wouter";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useFeatureCheck } from "@/hooks/use-feature-check";
 import { PageLoading } from "@/components/ui/page-loading";
 import { useState } from "react";
 import * as React from "react";
@@ -14,6 +15,7 @@ import { MobileHeader } from "@/components/layout/mobile-header";
 import { ReminderBanner } from "@/components/ui/reminder-banner";
 import { TestBanner } from "@/components/test-banner";
 import { updateThemeColor, THEME_COLORS } from "@/lib/theme-provider";
+import type { FeatureKey } from "@/lib/feature-restrictions";
 
 import { lazy, Suspense } from "react";
 
@@ -114,6 +116,28 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <PageLoading />; // Show loading while cleanup happens
   }
 
+  return <>{children}</>;
+}
+
+function FeatureProtectedRoute({ 
+  children, 
+  feature 
+}: { 
+  children: React.ReactNode; 
+  feature: FeatureKey;
+}) {
+  const { company } = useAuth();
+  const { hasAccess, isLoading } = useFeatureCheck();
+  
+  if (isLoading) {
+    return <PageLoading />;
+  }
+  
+  if (!hasAccess(feature)) {
+    const companyAlias = company?.companyAlias || 'test';
+    return <Redirect to={`/${companyAlias}/tienda`} />;
+  }
+  
   return <>{children}</>;
 }
 
@@ -582,45 +606,53 @@ function Router() {
 
       <Route path="/:companyAlias/documentos">
         <ProtectedRoute>
-          <AppLayout>
-            {user?.role === 'employee' ? (
-              <Documents />
-            ) : (
-              <AdminDocuments />
-            )}
-          </AppLayout>
+          <FeatureProtectedRoute feature="documents">
+            <AppLayout>
+              {user?.role === 'employee' ? (
+                <Documents />
+              ) : (
+                <AdminDocuments />
+              )}
+            </AppLayout>
+          </FeatureProtectedRoute>
         </ProtectedRoute>
       </Route>
 
       <Route path="/:companyAlias/mensajes">
         <ProtectedRoute>
-          <AppLayout>
-            <Messages />
-          </AppLayout>
+          <FeatureProtectedRoute feature="messages">
+            <AppLayout>
+              <Messages />
+            </AppLayout>
+          </FeatureProtectedRoute>
         </ProtectedRoute>
       </Route>
 
       <Route path="/:companyAlias/recordatorios">
         <ProtectedRoute>
-          <AppLayout>
-            {user?.role === 'employee' ? (
-              <EmployeeReminders />
-            ) : (
-              <Reminders />
-            )}
-          </AppLayout>
+          <FeatureProtectedRoute feature="reminders">
+            <AppLayout>
+              {user?.role === 'employee' ? (
+                <EmployeeReminders />
+              ) : (
+                <Reminders />
+              )}
+            </AppLayout>
+          </FeatureProtectedRoute>
         </ProtectedRoute>
       </Route>
 
       <Route path="/:companyAlias/partes-trabajo">
         <ProtectedRoute>
-          <AppLayout>
-            {user?.role === 'employee' ? (
-              <WorkReports />
-            ) : (
-              <AdminWorkReports />
-            )}
-          </AppLayout>
+          <FeatureProtectedRoute feature="work_reports">
+            <AppLayout>
+              {user?.role === 'employee' ? (
+                <WorkReports />
+              ) : (
+                <AdminWorkReports />
+              )}
+            </AppLayout>
+          </FeatureProtectedRoute>
         </ProtectedRoute>
       </Route>
 
