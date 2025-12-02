@@ -1642,6 +1642,21 @@ export class DrizzleStorage implements IStorage {
       };
     }
 
+    // NEW MODEL: Apply free add-ons (time_tracking, vacation, schedules) - always available
+    // Only set if key doesn't exist to avoid overriding company custom settings
+    const freeAddons = await db.select({ key: schema.addons.key })
+      .from(schema.addons)
+      .where(and(
+        eq(schema.addons.isFreeFeature, true),
+        eq(schema.addons.isActive, true)
+      ));
+    
+    for (const freeAddon of freeAddons) {
+      if (finalFeatures[freeAddon.key] === undefined) {
+        finalFeatures[freeAddon.key] = true;
+      }
+    }
+
     // Apply purchased add-ons as additional features
     // Include both 'active' and 'pending_cancel' - user keeps access until billing period ends
     const companyAddons = await this.getCompanyAddons(companyId);

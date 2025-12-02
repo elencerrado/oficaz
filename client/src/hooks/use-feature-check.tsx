@@ -1,19 +1,19 @@
 import { useAuth } from '@/hooks/use-auth';
-import { checkFeatureAccess, getRequiredPlanForFeature, type SubscriptionFeatures } from '@/lib/feature-restrictions';
+import { checkFeatureAccess, getRequiredPlanForFeature, type FeatureKey } from '@/lib/feature-restrictions';
 
 export function useFeatureCheck() {
   const { subscription } = useAuth();
 
-  const hasAccess = (feature: keyof SubscriptionFeatures): boolean => {
+  const hasAccess = (feature: FeatureKey): boolean => {
     const access = checkFeatureAccess(subscription, feature);
     return access;
   };
 
-  const getRequiredPlan = (feature: keyof SubscriptionFeatures): string => {
+  const getRequiredPlan = (feature: FeatureKey): string => {
     return getRequiredPlanForFeature(feature);
   };
 
-  const isFeatureRestricted = (feature: keyof SubscriptionFeatures): boolean => {
+  const isFeatureRestricted = (feature: FeatureKey): boolean => {
     return !hasAccess(feature);
   };
 

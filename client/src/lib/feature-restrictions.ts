@@ -2,27 +2,8 @@
 // Free features: time_tracking, vacation, schedules - always available
 // Paid add-ons: messages, reminders, documents, ai_assistant, work_reports - require purchase
 
-export interface SubscriptionFeatures {
-  time_tracking: boolean;
-  vacation: boolean;
-  schedules: boolean;
-  messages: boolean;
-  reminders: boolean;
-  documents: boolean;
-  ai_assistant: boolean;
-  work_reports: boolean;
-}
-
-export interface Subscription {
-  id: number;
-  plan: string;
-  status: string;
-  features: SubscriptionFeatures;
-  maxUsers: number;
-}
-
 // Canonical addon keys matching backend database
-const ADDON_KEYS = [
+export const CANONICAL_ADDON_KEYS = [
   'time_tracking',
   'vacation', 
   'schedules',
@@ -33,10 +14,56 @@ const ADDON_KEYS = [
   'work_reports'
 ] as const;
 
-type AddonKey = typeof ADDON_KEYS[number];
+export type CanonicalAddonKey = typeof CANONICAL_ADDON_KEYS[number];
+
+// Legacy feature keys used in existing code that need to be mapped
+export type LegacyFeatureKey = 
+  | 'timeTracking'           // → time_tracking
+  | 'reports'                // → work_reports
+  | 'analytics'              // → work_reports
+  | 'logoUpload'             // company setting (always true if logo exists)
+  | 'employee_time_edit'     // company setting
+  | 'employee_time_edit_permission'; // company setting
+
+// All feature keys (canonical + legacy)
+export type FeatureKey = CanonicalAddonKey | LegacyFeatureKey;
+
+// Backend subscription features - only canonical keys
+export interface SubscriptionFeatures {
+  time_tracking: boolean;
+  vacation: boolean;
+  schedules: boolean;
+  messages: boolean;
+  reminders: boolean;
+  documents: boolean;
+  ai_assistant: boolean;
+  work_reports: boolean;
+  // Company settings (not addon-based)
+  logoUpload?: boolean;
+  employee_time_edit?: boolean;
+  employee_time_edit_permission?: boolean;
+}
+
+export interface Subscription {
+  id: number;
+  plan: string;
+  status: string;
+  features: SubscriptionFeatures;
+  maxUsers: number;
+}
+
+// Map legacy feature names to canonical addon keys
+const LEGACY_TO_CANONICAL: Record<LegacyFeatureKey, CanonicalAddonKey | 'logoUpload' | 'employee_time_edit' | 'employee_time_edit_permission'> = {
+  timeTracking: 'time_tracking',
+  reports: 'work_reports',
+  analytics: 'work_reports',
+  logoUpload: 'logoUpload',
+  employee_time_edit: 'employee_time_edit',
+  employee_time_edit_permission: 'employee_time_edit_permission',
+};
 
 // Feature display names for UI
-const FEATURE_NAMES: Record<AddonKey, string> = {
+const FEATURE_NAMES: Record<FeatureKey, string> = {
   time_tracking: 'Fichajes',
   vacation: 'Vacaciones',
   schedules: 'Cuadrante de horarios',
@@ -45,16 +72,23 @@ const FEATURE_NAMES: Record<AddonKey, string> = {
   documents: 'Gestión Documental',
   ai_assistant: 'Asistente IA',
   work_reports: 'Partes de Trabajo',
+  timeTracking: 'Fichajes',
+  reports: 'Partes de Trabajo',
+  analytics: 'Partes de Trabajo',
+  logoUpload: 'Logo personalizado',
+  employee_time_edit: 'Edición de tiempos',
+  employee_time_edit_permission: 'Permisos de edición de tiempos',
 };
 
-// Legacy feature name aliases that map to canonical addon keys
-const LEGACY_FEATURE_MAP: Record<string, AddonKey> = {
-  timeTracking: 'time_tracking',
-  analytics: 'work_reports',
-  reports: 'work_reports',
-};
+// Normalize feature key to canonical form
+function normalizeFeatureKey(feature: FeatureKey): string {
+  if (feature in LEGACY_TO_CANONICAL) {
+    return LEGACY_TO_CANONICAL[feature as LegacyFeatureKey];
+  }
+  return feature;
+}
 
-export const checkFeatureAccess = (subscription: Subscription | null, feature: keyof SubscriptionFeatures | string): boolean => {
+export const checkFeatureAccess = (subscription: Subscription | null, feature: FeatureKey): boolean => {
   if (!subscription) {
     return false;
   }
@@ -64,26 +98,29 @@ export const checkFeatureAccess = (subscription: Subscription | null, feature: k
     return false;
   }
   
-  // Resolve legacy feature names to canonical addon keys
-  const canonicalKey = LEGACY_FEATURE_MAP[feature] || feature;
+  // Normalize to canonical key
+  const canonicalKey = normalizeFeatureKey(feature);
   
-  // Check if the feature is available in subscription.features
-  const features = subscription.features as unknown as Record<string, boolean>;
-  return features[canonicalKey] || false;
+  // Company settings that are not addon-based - always check directly
+  if (canonicalKey === 'logoUpload' || canonicalKey === 'employee_time_edit' || canonicalKey === 'employee_time_edit_permission') {
+    return subscription.features[canonicalKey as keyof SubscriptionFeatures] ?? true;
+  }
+  
+  // Check addon access via subscription.features
+  return subscription.features[canonicalKey as keyof SubscriptionFeatures] ?? false;
 };
 
 // Get the display name for a feature
-export const getFeatureName = (feature: keyof SubscriptionFeatures | string): string => {
-  const canonicalKey = LEGACY_FEATURE_MAP[feature] || feature;
-  return FEATURE_NAMES[canonicalKey as AddonKey] || feature;
+export const getFeatureName = (feature: FeatureKey): string => {
+  return FEATURE_NAMES[feature] || feature;
 };
 
 // DEPRECATED: Returns generic message since we no longer use plan names
-export const getRequiredPlanForFeature = (_feature: keyof SubscriptionFeatures | string): string => {
+export const getRequiredPlanForFeature = (_feature: FeatureKey): string => {
   return 'Complemento requerido';
 };
 
-export const getFeatureRestrictionMessage = (feature: keyof SubscriptionFeatures | string): string => {
+export const getFeatureRestrictionMessage = (feature: FeatureKey): string => {
   const featureName = getFeatureName(feature);
   return `La funcionalidad de ${featureName} no está disponible. Puedes añadirla desde la Tienda de Complementos.`;
 };
