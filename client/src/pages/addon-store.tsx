@@ -288,8 +288,63 @@ export default function AddonStore() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <LoadingSpinner />
+        <div className="space-y-8">
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="h-5 w-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              <div className="h-6 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="min-h-[280px] flex flex-col bg-white/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 animate-pulse">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-gray-700" />
+                      <div className="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded" />
+                      <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-grow flex flex-col justify-end pt-0">
+                    <div className="mt-auto">
+                      <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded mb-3" />
+                      <div className="h-9 w-full bg-gray-200 dark:bg-gray-700 rounded" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="h-5 w-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="min-h-[280px] flex flex-col bg-white/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 animate-pulse">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-gray-700" />
+                      <div className="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded" />
+                      <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-grow flex flex-col justify-end pt-0">
+                    <div className="mt-auto">
+                      <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded mb-3" />
+                      <div className="h-9 w-full bg-gray-200 dark:bg-gray-700 rounded" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         </div>
       ) : (
         <div className="space-y-8">
