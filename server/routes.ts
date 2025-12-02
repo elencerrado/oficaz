@@ -12540,6 +12540,20 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         .where(eq(schema.workShifts.companyId, companyId));
       console.log('✅ Deleted work shifts');
 
+      // 10.5. Delete all notifications (CRITICAL: Must be deleted before users due to user_id FK)
+      if (userIdsForAdmin.length > 0) {
+        await db.delete(schema.systemNotifications)
+          .where(inArray(schema.systemNotifications.userId, userIdsForAdmin));
+        console.log('✅ Deleted notifications');
+      }
+
+      // 10.6. Delete all push subscriptions (CRITICAL: Must be deleted before users due to user_id FK)
+      if (userIdsForAdmin.length > 0) {
+        await db.delete(schema.pushSubscriptions)
+          .where(inArray(schema.pushSubscriptions.userId, userIdsForAdmin));
+        console.log('✅ Deleted push subscriptions');
+      }
+
       // 11. Delete all users
       if (userIdsForAdmin.length > 0) {
         await db.delete(users)
