@@ -35,8 +35,9 @@ export const companies = pgTable("companies", {
   billingCountry: text("billing_country").default("ES"),
   
   // Plan y features personalizadas por empresa
-  plan: varchar("plan", { length: 50 }).notNull().default("basic"), // basic, pro, master
-  customFeatures: jsonb("custom_features").default('{}'), // {messages: true, documents: false, etc}
+  // DEPRECATED: plan field - ahora siempre es "oficaz", features se manejan via add-ons
+  plan: varchar("plan", { length: 50 }).notNull().default("oficaz"), // Siempre "oficaz" en nuevo modelo
+  customFeatures: jsonb("custom_features").default('{}'), // {logoUpload: true, employee_time_edit: false, etc} - settings específicos de empresa
   
   // Datos de prueba
   hasDemoData: boolean("has_demo_data").default(false).notNull(),
@@ -94,15 +95,19 @@ export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 export type AuditLog = typeof auditLogs.$inferSelect;
 
-// Features table - cada funcionalidad es una fila independiente
+// ═══════════════════════════════════════════════════════════════════════════
+// ⚠️ DEPRECATED: Features table - LEGACY del modelo de planes basic/pro/master
+// El nuevo modelo usa la tabla 'addons' y 'companyAddons' para gestionar funcionalidades
+// Mantener solo para backward compatibility - NO usar en código nuevo
+// ═══════════════════════════════════════════════════════════════════════════
 export const features = pgTable("features", {
   id: serial("id").primaryKey(),
-  key: varchar("key", { length: 50 }).notNull().unique(), // messages, documents, vacation, etc
-  name: varchar("name", { length: 100 }).notNull(), // "Mensajería interna", "Gestión de documentos", etc
-  description: text("description"), // Descripción detallada de la funcionalidad
-  category: varchar("category", { length: 50 }).notNull(), // "communication", "management", "admin", etc
+  key: varchar("key", { length: 50 }).notNull().unique(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 50 }).notNull(),
   
-  // Habilitación por plan - columnas directas para cada plan
+  // DEPRECATED: Estas columnas ya no se usan - features ahora via addons
   basicEnabled: boolean("basic_enabled").notNull().default(false),
   proEnabled: boolean("pro_enabled").notNull().default(false),
   masterEnabled: boolean("master_enabled").notNull().default(false),
@@ -112,19 +117,19 @@ export const features = pgTable("features", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Tabla planFeatures eliminada - ahora usamos columnas directas en features (basicEnabled, proEnabled, masterEnabled)
-
-// Tabla company_features eliminada - ahora usamos companies.customFeatures
-
-// Subscription plans configuration - sin columna features (movida a planFeatures)
+// ═══════════════════════════════════════════════════════════════════════════
+// ⚠️ DEPRECATED: subscriptionPlans - LEGACY del modelo basic/pro/master
+// El nuevo modelo usa un único plan "Oficaz" (39€/mes) + add-ons modulares
+// Mantener solo para backward compatibility - NO usar en código nuevo
+// ═══════════════════════════════════════════════════════════════════════════
 export const subscriptionPlans = pgTable("subscription_plans", {
   id: serial("id").primaryKey(),
-  name: varchar("name", { length: 50 }).notNull(), // Basic, Pro, Master
+  name: varchar("name", { length: 50 }).notNull(), // DEPRECATED: Ahora siempre "oficaz"
   displayName: varchar("display_name", { length: 100 }).notNull(),
-  monthlyPrice: decimal("monthly_price", { precision: 10, scale: 2 }).notNull(), // Precio fijo mensual (ej: 29.99 euros/mes)
-  maxUsers: integer("max_users"), // null = unlimited
-  storageLimitGB: integer("storage_limit_gb").default(25), // Storage limit in GB: Basic=1, Pro=5, Master=25
-  aiTokensLimitMonthly: integer("ai_tokens_limit_monthly").default(0), // AI tokens limit per month: Master=5000000 (5M)
+  monthlyPrice: decimal("monthly_price", { precision: 10, scale: 2 }).notNull(),
+  maxUsers: integer("max_users"),
+  storageLimitGB: integer("storage_limit_gb").default(25),
+  aiTokensLimitMonthly: integer("ai_tokens_limit_monthly").default(0),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
