@@ -2651,8 +2651,11 @@ Responde directamente a este email para contactar con la persona.
         }
       }
 
-      // Generate demo data for new company
-      await generateDemoData(company.id);
+      // Generate demo data for new company IN BACKGROUND (don't block registration)
+      // This allows the user to see the welcome modal immediately
+      generateDemoData(company.id).catch(error => {
+        console.error('❌ Background demo data generation failed:', error);
+      });
 
       const token = generateToken({
         id: user.id,
@@ -3538,15 +3541,11 @@ Responde directamente a este email para contactar con la persona.
         companyId: user.companyId,
       });
 
-      // Generate demo data automatically for new companies
-      console.log('🎭 Auto-generating demo data for new company:', company.id);
-      try {
-        await generateDemoData(company.id);
-        console.log('✅ Demo data generated successfully for new company');
-      } catch (demoError) {
-        console.error('⚠️ Warning: Could not generate demo data for new company:', demoError);
-        // Continue with registration even if demo data fails
-      }
+      // Generate demo data automatically for new companies IN BACKGROUND (don't block registration)
+      console.log('🎭 Auto-generating demo data for new company in background:', company.id);
+      generateDemoData(company.id)
+        .then(() => console.log('✅ Demo data generated successfully for new company'))
+        .catch(demoError => console.error('⚠️ Warning: Could not generate demo data for new company:', demoError));
 
       // Send notification email to soy@oficaz.es about new company registration
       try {
