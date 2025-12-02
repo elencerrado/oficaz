@@ -1643,9 +1643,10 @@ export class DrizzleStorage implements IStorage {
     }
 
     // Apply purchased add-ons as additional features
+    // Include both 'active' and 'pending_cancel' - user keeps access until billing period ends
     const companyAddons = await this.getCompanyAddons(companyId);
     for (const companyAddon of companyAddons) {
-      if (companyAddon.status === 'active' && companyAddon.addon) {
+      if ((companyAddon.status === 'active' || companyAddon.status === 'pending_cancel') && companyAddon.addon) {
         finalFeatures[companyAddon.addon.key] = true;
       }
     }
@@ -3818,8 +3819,12 @@ export class DrizzleStorage implements IStorage {
       status: schema.companyAddons.status,
       stripeSubscriptionItemId: schema.companyAddons.stripeSubscriptionItemId,
       purchasedAt: schema.companyAddons.purchasedAt,
+      activatedAt: schema.companyAddons.activatedAt,
       cancelledAt: schema.companyAddons.cancelledAt,
       cancellationEffectiveDate: schema.companyAddons.cancellationEffectiveDate,
+      cooldownEndsAt: schema.companyAddons.cooldownEndsAt,
+      lastStripeInvoiceId: schema.companyAddons.lastStripeInvoiceId,
+      proratedDays: schema.companyAddons.proratedDays,
       createdAt: schema.companyAddons.createdAt,
       updatedAt: schema.companyAddons.updatedAt,
       addon: schema.addons,
@@ -3849,8 +3854,12 @@ export class DrizzleStorage implements IStorage {
       status: schema.companyAddons.status,
       stripeSubscriptionItemId: schema.companyAddons.stripeSubscriptionItemId,
       purchasedAt: schema.companyAddons.purchasedAt,
+      activatedAt: schema.companyAddons.activatedAt,
       cancelledAt: schema.companyAddons.cancelledAt,
       cancellationEffectiveDate: schema.companyAddons.cancellationEffectiveDate,
+      cooldownEndsAt: schema.companyAddons.cooldownEndsAt,
+      lastStripeInvoiceId: schema.companyAddons.lastStripeInvoiceId,
+      proratedDays: schema.companyAddons.proratedDays,
       createdAt: schema.companyAddons.createdAt,
       updatedAt: schema.companyAddons.updatedAt,
       addon: schema.addons,
@@ -3878,12 +3887,14 @@ export class DrizzleStorage implements IStorage {
     return updated;
   }
 
-  async cancelCompanyAddon(companyId: number, addonId: number, effectiveDate: Date): Promise<schema.CompanyAddon | undefined> {
+  // Mark addon as pending cancellation - user keeps access until end of billing period
+  async markAddonPendingCancel(companyId: number, addonId: number, effectiveDate: Date): Promise<schema.CompanyAddon | undefined> {
     const [updated] = await db.update(schema.companyAddons)
       .set({
-        status: 'cancelled',
+        status: 'pending_cancel',
         cancelledAt: new Date(),
         cancellationEffectiveDate: effectiveDate,
+        cooldownEndsAt: effectiveDate, // Cannot re-add until this date
         updatedAt: new Date(),
       })
       .where(and(
@@ -3895,6 +3906,60 @@ export class DrizzleStorage implements IStorage {
     return updated;
   }
 
+  // Fully cancel addon after billing period ends (called by webhook or scheduler)
+  async finalizeAddonCancellation(companyId: number, addonId: number): Promise<schema.CompanyAddon | undefined> {
+    const [updated] = await db.update(schema.companyAddons)
+      .set({
+        status: 'cancelled',
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(schema.companyAddons.companyId, companyId),
+        eq(schema.companyAddons.addonId, addonId),
+        eq(schema.companyAddons.status, 'pending_cancel')
+      ))
+      .returning();
+    return updated;
+  }
+
+  // Check if addon is in cooldown period (cannot be re-purchased)
+  async isAddonInCooldown(companyId: number, addonId: number): Promise<boolean> {
+    const result = await db.select({ cooldownEndsAt: schema.companyAddons.cooldownEndsAt })
+      .from(schema.companyAddons)
+      .where(and(
+        eq(schema.companyAddons.companyId, companyId),
+        eq(schema.companyAddons.addonId, addonId)
+      ));
+    
+    if (!result[0]?.cooldownEndsAt) return false;
+    return new Date() < result[0].cooldownEndsAt;
+  }
+
+  // Reactivate addon after cooldown (new purchase)
+  async reactivateAddon(id: number, stripeSubscriptionItemId: string, proratedDays: number): Promise<schema.CompanyAddon | undefined> {
+    const [updated] = await db.update(schema.companyAddons)
+      .set({
+        status: 'active',
+        stripeSubscriptionItemId,
+        activatedAt: new Date(),
+        purchasedAt: new Date(),
+        cancelledAt: null,
+        cancellationEffectiveDate: null,
+        cooldownEndsAt: null,
+        proratedDays,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.companyAddons.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Legacy method for backwards compatibility
+  async cancelCompanyAddon(companyId: number, addonId: number, effectiveDate: Date): Promise<schema.CompanyAddon | undefined> {
+    return this.markAddonPendingCancel(companyId, addonId, effectiveDate);
+  }
+
+  // Check if user has access to addon (active OR pending_cancel - still has access until period end)
   async hasActiveAddon(companyId: number, addonKey: string): Promise<boolean> {
     const result = await db.select({ count: sql<number>`count(*)::int` })
       .from(schema.companyAddons)
@@ -3902,10 +3967,28 @@ export class DrizzleStorage implements IStorage {
       .where(and(
         eq(schema.companyAddons.companyId, companyId),
         eq(schema.addons.key, addonKey),
-        eq(schema.companyAddons.status, 'active')
+        or(
+          eq(schema.companyAddons.status, 'active'),
+          eq(schema.companyAddons.status, 'pending_cancel')
+        )
       ));
     
     return (result[0]?.count ?? 0) > 0;
+  }
+
+  // Deactivate addon due to payment failure
+  async deactivateAddonForPaymentFailure(companyId: number, addonId: number): Promise<schema.CompanyAddon | undefined> {
+    const [updated] = await db.update(schema.companyAddons)
+      .set({
+        status: 'inactive',
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(schema.companyAddons.companyId, companyId),
+        eq(schema.companyAddons.addonId, addonId)
+      ))
+      .returning();
+    return updated;
   }
 }
 
