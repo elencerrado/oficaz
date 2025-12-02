@@ -11,12 +11,26 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Building, User, Eye, EyeOff, Users, CheckCircle, XCircle, ArrowRight, ArrowLeft, Calendar, FileText, MessageSquare, Shield, Star, Crown, Sparkles, Check } from 'lucide-react';
+import { Building, User, Eye, EyeOff, Users, CheckCircle, XCircle, ArrowRight, ArrowLeft, Shield, Star, Crown, Check, Clock, Palmtree, CalendarDays, MessageSquare, Bell, FileText, ClipboardList, Sparkles } from 'lucide-react';
 
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
 import { useAuth } from '@/hooks/use-auth';
 import { DemoLoadingOverlay } from '@/components/demo-loading-overlay';
+import { ADDON_DEFINITIONS, FREE_ADDONS, PAID_ADDONS } from '@shared/addon-definitions';
+
+const iconMap: Record<string, any> = {
+  Clock,
+  Palmtree,
+  CalendarDays,
+  MessageSquare,
+  Bell,
+  FileText,
+  ClipboardList,
+  Sparkles,
+};
+
+const getIcon = (iconName: string) => iconMap[iconName] || Star;
 
 const validateCompanyField = async (field: string, value: string) => {
   try {
@@ -35,17 +49,6 @@ const validateUserField = async (field: string, value: string) => {
     return true;
   }
 };
-
-const allFeatures = [
-  { id: 'timeTracking', name: 'Fichajes', icon: Calendar, description: 'Control de horarios', included: true, price: 0 },
-  { id: 'schedules', name: 'Cuadrante', icon: Calendar, description: 'Planificación de turnos', included: true, price: 0 },
-  { id: 'vacation', name: 'Vacaciones', icon: Calendar, description: 'Gestión de vacaciones', included: true, price: 0 },
-  { id: 'messages', name: 'Mensajería', icon: MessageSquare, description: 'Comunicación interna', included: false, price: 5 },
-  { id: 'reminders', name: 'Recordatorios', icon: Calendar, description: 'Alertas automáticas', included: false, price: 5 },
-  { id: 'documents', name: 'Documentos', icon: FileText, description: 'Gestión documental', included: false, price: 10 },
-  { id: 'workReports', name: 'Partes', icon: FileText, description: 'Registro de actividades', included: false, price: 8 },
-  { id: 'aiAssistant', name: 'OficazIA', icon: Sparkles, description: 'Asistente inteligente', included: false, price: 15 },
-];
 
 const step1Schema = z.object({
   interestedFeatures: z.array(z.string()).optional(),
@@ -485,16 +488,17 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
-                    {allFeatures.filter(f => f.included).map((feature) => {
-                      const Icon = feature.icon;
+                    {FREE_ADDONS.map((addon) => {
+                      const Icon = getIcon(addon.icon);
                       return (
                         <div
-                          key={feature.id}
-                          data-testid={`feature-${feature.id}`}
+                          key={addon.key}
+                          data-testid={`feature-${addon.key}`}
                           className="relative flex flex-col items-center p-4 rounded-2xl bg-green-50 border-2 border-green-200"
                         >
                           <Icon className="w-6 h-6 mb-2 text-green-600" />
-                          <span className="text-sm font-medium text-gray-900">{feature.name}</span>
+                          <span className="text-sm font-medium text-gray-900 text-center">{addon.name}</span>
+                          <span className="text-xs text-gray-500 text-center mt-1 line-clamp-2">{addon.shortDescription}</span>
                           <div className="absolute top-2 right-2">
                             <Check className="w-4 h-4 text-green-600" />
                           </div>
@@ -513,15 +517,15 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     <span className="text-xs text-gray-400">Pruébalos gratis durante el trial</span>
                   </div>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                    {allFeatures.filter(f => !f.included).map((feature) => {
-                      const Icon = feature.icon;
+                    {PAID_ADDONS.map((addon) => {
+                      const Icon = getIcon(addon.icon);
                       const selectedFeatures = step1Form.watch('interestedFeatures') || [];
-                      const isSelected = selectedFeatures.includes(feature.id);
+                      const isSelected = selectedFeatures.includes(addon.key);
                       return (
                         <label
-                          key={feature.id}
-                          htmlFor={`feature-${feature.id}`}
-                          data-testid={`feature-${feature.id}`}
+                          key={addon.key}
+                          htmlFor={`feature-${addon.key}`}
+                          data-testid={`feature-${addon.key}`}
                           className={`
                             relative flex flex-col items-center p-4 rounded-2xl cursor-pointer transition-all duration-200
                             ${isSelected 
@@ -532,13 +536,14 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                         >
                           <input
                             type="checkbox"
-                            id={`feature-${feature.id}`}
-                            value={feature.id}
+                            id={`feature-${addon.key}`}
+                            value={addon.key}
                             {...step1Form.register('interestedFeatures')}
                             className="sr-only"
                           />
                           <Icon className={`w-6 h-6 mb-2 ${isSelected ? 'text-blue-600' : 'text-gray-400'}`} />
-                          <span className="text-sm font-medium text-gray-900 text-center">{feature.name}</span>
+                          <span className="text-sm font-medium text-gray-900 text-center">{addon.name}</span>
+                          <span className="text-xs text-gray-500 text-center mt-1 line-clamp-2">{addon.shortDescription}</span>
                           {isSelected && (
                             <div className="absolute top-2 right-2">
                               <Check className="w-4 h-4 text-blue-600" />
@@ -1083,21 +1088,17 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 {/* Selected features */}
                 {formData.interestedFeatures && formData.interestedFeatures.length > 0 && (
                   <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                    <span className="text-sm font-medium text-gray-700 block mb-3">Funciones seleccionadas</span>
+                    <span className="text-sm font-medium text-gray-700 block mb-3">Complementos adicionales seleccionados</span>
                     <div className="flex flex-wrap gap-2">
-                      {formData.interestedFeatures.map((featureId: string) => {
-                        const feature = allFeatures.find(f => f.id === featureId);
-                        if (!feature) return null;
+                      {formData.interestedFeatures.map((featureKey: string) => {
+                        const addon = ADDON_DEFINITIONS.find(a => a.key === featureKey);
+                        if (!addon) return null;
                         return (
                           <Badge 
-                            key={featureId} 
-                            className={feature.included 
-                              ? "bg-green-100 text-green-700 hover:bg-green-100" 
-                              : "bg-blue-100 text-blue-700 hover:bg-blue-100"
-                            }
+                            key={featureKey} 
+                            className="bg-blue-100 text-blue-700 hover:bg-blue-100"
                           >
-                            {feature.name}
-                            {!feature.included && ` (+€${feature.price})`}
+                            {addon.name}
                           </Badge>
                         );
                       })}
