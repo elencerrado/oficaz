@@ -548,19 +548,21 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       Incluido en tu plan
                     </span>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {freeAddons.map((addon) => {
                       const Icon = getIcon(addon.icon);
                       return (
                         <div
                           key={addon.key}
                           data-testid={`feature-${addon.key}`}
-                          className="relative flex flex-col items-center p-4 rounded-2xl bg-green-50 border-2 border-green-200"
+                          className="relative flex flex-row sm:flex-col items-center p-3 sm:p-4 rounded-2xl bg-green-50 border-2 border-green-200"
                         >
-                          <Icon className="w-6 h-6 mb-2 text-green-600" />
-                          <span className="text-sm font-medium text-gray-900 text-center">{addon.name}</span>
-                          <span className="text-xs text-gray-500 text-center mt-1">{addon.shortDescription}</span>
-                          <div className="absolute top-2 right-2">
+                          <Icon className="w-6 h-6 mr-3 sm:mr-0 sm:mb-2 text-green-600 flex-shrink-0" />
+                          <div className="flex-1 sm:text-center">
+                            <span className="text-sm font-medium text-gray-900 block">{addon.name}</span>
+                            <span className="text-xs text-gray-500 block mt-0.5">{addon.shortDescription}</span>
+                          </div>
+                          <div className="sm:absolute sm:top-2 sm:right-2">
                             <Check className="w-4 h-4 text-green-600" />
                           </div>
                         </div>
@@ -571,13 +573,13 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
                 {/* Additional add-ons - selectable */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                    <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full w-fit">
                       Complementos adicionales
                     </span>
                     <span className="text-xs text-gray-400">Pruébalos gratis durante el trial</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {paidAddons.map((addon) => {
                       const Icon = getIcon(addon.icon);
                       const selectedFeatures = step1Form.watch('interestedFeatures') || [];
@@ -588,7 +590,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                           htmlFor={`feature-${addon.key}`}
                           data-testid={`feature-${addon.key}`}
                           className={`
-                            relative flex flex-col items-center p-4 rounded-2xl cursor-pointer transition-all duration-200
+                            relative flex flex-row sm:flex-col items-center p-3 sm:p-4 rounded-2xl cursor-pointer transition-all duration-200
                             ${isSelected 
                               ? 'bg-blue-50 border-2 border-blue-400 shadow-sm' 
                               : 'bg-white border-2 border-gray-100 hover:border-gray-200 hover:shadow-sm'
@@ -602,11 +604,13 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                             {...step1Form.register('interestedFeatures')}
                             className="sr-only"
                           />
-                          <Icon className={`w-6 h-6 mb-2 ${isSelected ? 'text-blue-600' : 'text-gray-400'}`} />
-                          <span className="text-sm font-medium text-gray-900 text-center">{addon.name}</span>
-                          <span className="text-xs text-gray-500 text-center mt-1">{addon.shortDescription}</span>
+                          <Icon className={`w-6 h-6 mr-3 sm:mr-0 sm:mb-2 flex-shrink-0 ${isSelected ? 'text-blue-600' : 'text-gray-400'}`} />
+                          <div className="flex-1 sm:text-center">
+                            <span className="text-sm font-medium text-gray-900 block">{addon.name}</span>
+                            <span className="text-xs text-gray-500 block mt-0.5">{addon.shortDescription}</span>
+                          </div>
                           {isSelected && (
-                            <div className="absolute top-2 right-2">
+                            <div className="sm:absolute sm:top-2 sm:right-2">
                               <Check className="w-4 h-4 text-blue-600" />
                             </div>
                           )}
@@ -1124,7 +1128,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 {/* Password requirements */}
                 <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-xs text-gray-500 mb-2">La contraseña debe tener:</p>
-                  <div className="grid grid-cols-2 gap-1 text-xs text-gray-500">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-gray-500">
                     <span>• Mínimo 8 caracteres</span>
                     <span>• Una mayúscula</span>
                     <span>• Una minúscula</span>
@@ -1232,7 +1236,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 {/* Features included */}
                 <div className="bg-white border border-gray-200 rounded-2xl p-4">
                   <span className="text-sm font-medium text-gray-900 block mb-3">Funcionalidades incluidas</span>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {/* Free features always included */}
                     {addons.filter(a => a.isFreeFeature).map((addon) => {
                       const Icon = iconMap[addon.icon as keyof typeof iconMap] || Clock;
