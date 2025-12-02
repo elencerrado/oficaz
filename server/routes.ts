@@ -1723,10 +1723,44 @@ Responde directamente a este email para contactar con la persona.
       }
 
       let existingRecord = null;
+      let errorMessage = '';
       
       switch (field) {
         case 'email':
           existingRecord = await storage.getUserByEmail(value);
+          errorMessage = 'Este email ya está registrado en el sistema';
+          break;
+
+        case 'dni':
+          // Check if DNI already exists in the database
+          const [userWithDni] = await db.select({ id: users.id })
+            .from(users)
+            .where(eq(users.dni, value.toUpperCase()))
+            .limit(1);
+          existingRecord = userWithDni || null;
+          
+          // Also check lowercase version
+          if (!existingRecord) {
+            const [userWithDniLower] = await db.select({ id: users.id })
+              .from(users)
+              .where(eq(users.dni, value.toLowerCase()))
+              .limit(1);
+            existingRecord = userWithDniLower || null;
+          }
+          errorMessage = 'Este DNI/NIE ya está registrado en el sistema';
+          break;
+
+        case 'phone':
+          // Check if phone already exists
+          const [userWithPhone] = await db.select({ id: users.id })
+            .from(users)
+            .where(or(
+              eq(users.companyPhone, value),
+              eq(users.personalPhone, value)
+            ))
+            .limit(1);
+          existingRecord = userWithPhone || null;
+          errorMessage = 'Este teléfono ya está registrado en el sistema';
           break;
 
         default:
@@ -1734,7 +1768,10 @@ Responde directamente a este email para contactar con la persona.
       }
 
       const isAvailable = !existingRecord;
-      res.json({ available: isAvailable });
+      res.json({ 
+        available: isAvailable,
+        message: isAvailable ? '' : errorMessage
+      });
     } catch (error) {
       console.error('Error validating user data:', error);
       res.status(500).json({ message: 'Error validating user data' });

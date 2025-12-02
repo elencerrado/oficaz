@@ -304,10 +304,31 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     try {
       setValidatingStep3(true);
       
-      const emailAvailable = await validateUserField('email', data.adminEmail);
+      // Validate email, DNI and phone in parallel
+      const [emailAvailable, dniAvailable, phoneAvailable] = await Promise.all([
+        validateUserField('email', data.adminEmail),
+        validateUserField('dni', data.adminDni),
+        data.adminPhone ? validateUserField('phone', data.adminPhone) : Promise.resolve(true),
+      ]);
+
+      let hasErrors = false;
 
       if (!emailAvailable) {
         step4Form.setError('adminEmail', { message: 'Email ya registrado' });
+        hasErrors = true;
+      }
+
+      if (!dniAvailable) {
+        step4Form.setError('adminDni', { message: 'DNI/NIE ya registrado' });
+        hasErrors = true;
+      }
+
+      if (!phoneAvailable) {
+        step4Form.setError('adminPhone', { message: 'Teléfono ya registrado' });
+        hasErrors = true;
+      }
+
+      if (hasErrors) {
         return;
       }
 
