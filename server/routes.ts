@@ -2045,7 +2045,20 @@ Responde directamente a este email para contactar con la persona.
         return res.status(400).json({ available: false, error: 'Email válido requerido' });
       }
 
-      // Check if email is already registered
+      // Check if email is already registered as a COMPANY email
+      const [existingCompany] = await db.select({ id: companies.id })
+        .from(companies)
+        .where(eq(companies.companyEmail, email.toLowerCase()))
+        .limit(1);
+      
+      if (existingCompany) {
+        return res.json({ 
+          available: false, 
+          error: 'Este email ya está registrado como email de empresa' 
+        });
+      }
+
+      // Check if email is already registered as a USER email
       const existingUser = await storage.getUserByEmail(email);
       
       if (existingUser) {
@@ -2095,7 +2108,19 @@ Responde directamente a este email para contactar con la persona.
         return res.status(403).json({ error: 'El registro público está deshabilitado. Solo se puede acceder mediante invitación.' });
       }
 
-      // Check if email is already registered
+      // Check if email is already registered as a COMPANY email
+      const [existingCompany] = await db.select({ id: companies.id, name: companies.name })
+        .from(companies)
+        .where(eq(companies.companyEmail, email.toLowerCase()))
+        .limit(1);
+      
+      if (existingCompany) {
+        return res.status(400).json({ 
+          error: 'Este email ya está registrado como email de empresa' 
+        });
+      }
+
+      // Check if email is already registered as a USER email
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
         // Check if the company is scheduled for deletion (grace period)
