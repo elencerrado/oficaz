@@ -275,27 +275,35 @@ export default function EmployeesSimple() {
     staleTime: 0, // Always fetch fresh data for user limits
   });
 
+  // Query to get detailed user limits (includes extra seats purchased)
+  const { data: subscriptionInfo } = useQuery<{
+    userLimits: {
+      admins: { included: number; extra: number; total: number };
+      managers: { included: number; extra: number; total: number };
+      employees: { included: number; extra: number; total: number };
+      totalUsers: number;
+    };
+  }>({
+    queryKey: ['/api/subscription/info'],
+    enabled: !!user && user.role === 'admin',
+    staleTime: 0,
+  });
+
   // Function to calculate role limits and availability
   const getRoleLimits = () => {
-    const planName = subscription?.plan || 'basic';
+    // Use real limits from subscription info (includes extra seats purchased)
+    const userLimits = subscriptionInfo?.userLimits;
     
-    // Define role limits by plan (same as server logic)
-    const roleLimits: Record<string, Record<string, number>> = {
-      'basic': {
-        admin: 1,
-        manager: 1,
-        employee: (subscription?.maxUsers || 5) - 2
-      },
-      'pro': {
-        admin: 1,
-        manager: 3,
-        employee: (subscription?.maxUsers || 30) - 4
-      },
-      'master': {
-        admin: 999, // Unlimited
-        manager: 999, // Unlimited
-        employee: 999 // Unlimited
-      }
+    // If we have real limits, use them; otherwise fall back to plan-based calculation
+    const limits = userLimits ? {
+      admin: userLimits.admins.total,
+      manager: userLimits.managers.total,
+      employee: userLimits.employees.total
+    } : {
+      // Fallback to old plan-based logic
+      admin: 1,
+      manager: 1,
+      employee: (subscription?.maxUsers || 12) - 2
     };
 
     // Count current users by role (including ALL users, not just filtered)
@@ -305,8 +313,6 @@ export default function EmployeesSimple() {
       manager: allEmployees.filter(emp => emp.role === 'manager').length,
       employee: allEmployees.filter(emp => emp.role === 'employee').length
     };
-
-    const limits = roleLimits[planName] || roleLimits['basic'];
     
     return {
       limits,
@@ -483,28 +489,28 @@ export default function EmployeesSimple() {
       <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">
         <StatsCard
           title="Usuarios"
-          subtitle={`de ${subscription?.maxUsers || 30}`}
+          subtitle={`de ${subscriptionInfo?.userLimits?.totalUsers || subscription?.maxUsers || 12}`}
           value={totalUsers}
           color="blue"
           icon={Users}
         />
         <StatsCard
           title="Managers"
-          subtitle="de 3"
+          subtitle={`de ${subscriptionInfo?.userLimits?.managers?.total || 1}`}
           value={employeeList?.filter(emp => emp.role === 'manager').length || 0}
           color="green"
           icon={UserCheck}
         />
         <StatsCard
           title="Empleados"
-          subtitle={`de ${(subscription?.maxUsers || 30) - 4}`}
+          subtitle={`de ${subscriptionInfo?.userLimits?.employees?.total || 10}`}
           value={employeeList?.filter(emp => emp.role === 'employee').length || 0}
           color="orange"
           icon={User}
         />
         <StatsCard
           title="Admins"
-          subtitle="de 1"
+          subtitle={`de ${subscriptionInfo?.userLimits?.admins?.total || 1}`}
           value={employeeList?.filter(emp => emp.role === 'admin').length || 0}
           color="purple"
           icon={Shield}
