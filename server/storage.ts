@@ -303,6 +303,23 @@ export interface IStorage {
   getCompanyWorkReportLocations(companyId: number): Promise<string[]>;
   getCompanyWorkReportClients(companyId: number): Promise<string[]>;
   getCompanyWorkReportRefCodes(companyId: number): Promise<string[]>;
+
+  // Add-ons Store
+  getAllAddons(): Promise<schema.Addon[]>;
+  getActiveAddons(): Promise<schema.Addon[]>;
+  getAddon(id: number): Promise<schema.Addon | undefined>;
+  getAddonByKey(key: string): Promise<schema.Addon | undefined>;
+  createAddon(addon: schema.InsertAddon): Promise<schema.Addon>;
+  updateAddon(id: number, updates: Partial<schema.InsertAddon>): Promise<schema.Addon | undefined>;
+  
+  // Company Add-ons (purchases)
+  getCompanyAddons(companyId: number): Promise<(schema.CompanyAddon & { addon: schema.Addon })[]>;
+  getCompanyAddon(companyId: number, addonId: number): Promise<schema.CompanyAddon | undefined>;
+  getCompanyAddonByKey(companyId: number, addonKey: string): Promise<(schema.CompanyAddon & { addon: schema.Addon }) | undefined>;
+  createCompanyAddon(companyAddon: schema.InsertCompanyAddon): Promise<schema.CompanyAddon>;
+  updateCompanyAddon(id: number, updates: Partial<schema.InsertCompanyAddon>): Promise<schema.CompanyAddon | undefined>;
+  cancelCompanyAddon(companyId: number, addonId: number, effectiveDate: Date): Promise<schema.CompanyAddon | undefined>;
+  hasActiveAddon(companyId: number, addonKey: string): Promise<boolean>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -3747,6 +3764,140 @@ export class DrizzleStorage implements IStorage {
     return results
       .map(r => r.refCode)
       .filter((code): code is string => !!code && code.trim() !== '');
+  }
+
+  // Add-ons Store Methods
+  async getAllAddons(): Promise<schema.Addon[]> {
+    return await db.select().from(schema.addons).orderBy(schema.addons.sortOrder);
+  }
+
+  async getActiveAddons(): Promise<schema.Addon[]> {
+    return await db.select()
+      .from(schema.addons)
+      .where(eq(schema.addons.isActive, true))
+      .orderBy(schema.addons.sortOrder);
+  }
+
+  async getAddon(id: number): Promise<schema.Addon | undefined> {
+    const [addon] = await db.select().from(schema.addons).where(eq(schema.addons.id, id));
+    return addon;
+  }
+
+  async getAddonByKey(key: string): Promise<schema.Addon | undefined> {
+    const [addon] = await db.select().from(schema.addons).where(eq(schema.addons.key, key));
+    return addon;
+  }
+
+  async createAddon(addon: schema.InsertAddon): Promise<schema.Addon> {
+    const [result] = await db.insert(schema.addons).values(addon).returning();
+    return result;
+  }
+
+  async updateAddon(id: number, updates: Partial<schema.InsertAddon>): Promise<schema.Addon | undefined> {
+    const [updated] = await db.update(schema.addons)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.addons.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Company Add-ons Methods
+  async getCompanyAddons(companyId: number): Promise<(schema.CompanyAddon & { addon: schema.Addon })[]> {
+    const results = await db.select({
+      id: schema.companyAddons.id,
+      companyId: schema.companyAddons.companyId,
+      addonId: schema.companyAddons.addonId,
+      status: schema.companyAddons.status,
+      stripeSubscriptionItemId: schema.companyAddons.stripeSubscriptionItemId,
+      purchasedAt: schema.companyAddons.purchasedAt,
+      cancelledAt: schema.companyAddons.cancelledAt,
+      cancellationEffectiveDate: schema.companyAddons.cancellationEffectiveDate,
+      createdAt: schema.companyAddons.createdAt,
+      updatedAt: schema.companyAddons.updatedAt,
+      addon: schema.addons,
+    })
+      .from(schema.companyAddons)
+      .innerJoin(schema.addons, eq(schema.companyAddons.addonId, schema.addons.id))
+      .where(eq(schema.companyAddons.companyId, companyId));
+    
+    return results;
+  }
+
+  async getCompanyAddon(companyId: number, addonId: number): Promise<schema.CompanyAddon | undefined> {
+    const [result] = await db.select()
+      .from(schema.companyAddons)
+      .where(and(
+        eq(schema.companyAddons.companyId, companyId),
+        eq(schema.companyAddons.addonId, addonId)
+      ));
+    return result;
+  }
+
+  async getCompanyAddonByKey(companyId: number, addonKey: string): Promise<(schema.CompanyAddon & { addon: schema.Addon }) | undefined> {
+    const results = await db.select({
+      id: schema.companyAddons.id,
+      companyId: schema.companyAddons.companyId,
+      addonId: schema.companyAddons.addonId,
+      status: schema.companyAddons.status,
+      stripeSubscriptionItemId: schema.companyAddons.stripeSubscriptionItemId,
+      purchasedAt: schema.companyAddons.purchasedAt,
+      cancelledAt: schema.companyAddons.cancelledAt,
+      cancellationEffectiveDate: schema.companyAddons.cancellationEffectiveDate,
+      createdAt: schema.companyAddons.createdAt,
+      updatedAt: schema.companyAddons.updatedAt,
+      addon: schema.addons,
+    })
+      .from(schema.companyAddons)
+      .innerJoin(schema.addons, eq(schema.companyAddons.addonId, schema.addons.id))
+      .where(and(
+        eq(schema.companyAddons.companyId, companyId),
+        eq(schema.addons.key, addonKey)
+      ));
+    
+    return results[0];
+  }
+
+  async createCompanyAddon(companyAddon: schema.InsertCompanyAddon): Promise<schema.CompanyAddon> {
+    const [result] = await db.insert(schema.companyAddons).values(companyAddon).returning();
+    return result;
+  }
+
+  async updateCompanyAddon(id: number, updates: Partial<schema.InsertCompanyAddon>): Promise<schema.CompanyAddon | undefined> {
+    const [updated] = await db.update(schema.companyAddons)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.companyAddons.id, id))
+      .returning();
+    return updated;
+  }
+
+  async cancelCompanyAddon(companyId: number, addonId: number, effectiveDate: Date): Promise<schema.CompanyAddon | undefined> {
+    const [updated] = await db.update(schema.companyAddons)
+      .set({
+        status: 'cancelled',
+        cancelledAt: new Date(),
+        cancellationEffectiveDate: effectiveDate,
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(schema.companyAddons.companyId, companyId),
+        eq(schema.companyAddons.addonId, addonId),
+        eq(schema.companyAddons.status, 'active')
+      ))
+      .returning();
+    return updated;
+  }
+
+  async hasActiveAddon(companyId: number, addonKey: string): Promise<boolean> {
+    const result = await db.select({ count: sql<number>`count(*)::int` })
+      .from(schema.companyAddons)
+      .innerJoin(schema.addons, eq(schema.companyAddons.addonId, schema.addons.id))
+      .where(and(
+        eq(schema.companyAddons.companyId, companyId),
+        eq(schema.addons.key, addonKey),
+        eq(schema.companyAddons.status, 'active')
+      ));
+    
+    return (result[0]?.count ?? 0) > 0;
   }
 }
 

@@ -1160,3 +1160,57 @@ export const insertWorkReportSchema = createInsertSchema(workReports).omit({
 
 export type WorkReport = typeof workReports.$inferSelect;
 export type InsertWorkReport = z.infer<typeof insertWorkReportSchema>;
+
+// Add-ons Store - Available add-on modules for purchase
+export const addons = pgTable("addons", {
+  id: serial("id").primaryKey(),
+  key: varchar("key", { length: 50 }).notNull().unique(), // ai_assistant, work_reports, etc.
+  name: varchar("name", { length: 100 }).notNull(), // "Asistente IA", "Partes de Trabajo"
+  description: text("description"), // Detailed description
+  shortDescription: varchar("short_description", { length: 200 }), // Brief tagline
+  monthlyPrice: decimal("monthly_price", { precision: 10, scale: 2 }).notNull(), // Price in EUR/month
+  icon: varchar("icon", { length: 50 }), // Lucide icon name (e.g., "brain", "clipboard-list")
+  category: varchar("category", { length: 50 }).default("general"), // productivity, communication, etc.
+  featureKey: varchar("feature_key", { length: 50 }), // Maps to features.key if applicable
+  stripeProductId: text("stripe_product_id"), // Stripe product ID for billing
+  stripePriceId: text("stripe_price_id"), // Stripe recurring price ID
+  isActive: boolean("is_active").default(true).notNull(),
+  sortOrder: integer("sort_order").default(0), // Display order in store
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertAddonSchema = createInsertSchema(addons).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type Addon = typeof addons.$inferSelect;
+export type InsertAddon = z.infer<typeof insertAddonSchema>;
+
+// Company Add-ons - Tracks which add-ons each company has purchased
+export const companyAddons = pgTable("company_addons", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  addonId: integer("addon_id").notNull().references(() => addons.id, { onDelete: 'cascade' }),
+  status: varchar("status", { length: 20 }).default("active").notNull(), // active, cancelled, pending
+  stripeSubscriptionItemId: text("stripe_subscription_item_id"), // Stripe subscription item ID
+  purchasedAt: timestamp("purchased_at").defaultNow().notNull(),
+  cancelledAt: timestamp("cancelled_at"),
+  cancellationEffectiveDate: timestamp("cancellation_effective_date"), // When cancellation takes effect (end of billing period)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyAddonIdx: index("company_addons_company_addon_idx").on(table.companyId, table.addonId),
+  companyIdx: index("company_addons_company_idx").on(table.companyId),
+}));
+
+export const insertCompanyAddonSchema = createInsertSchema(companyAddons).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CompanyAddon = typeof companyAddons.$inferSelect;
+export type InsertCompanyAddon = z.infer<typeof insertCompanyAddonSchema>;
