@@ -592,30 +592,19 @@ export default function AddonStore() {
                         </div>
                       )}
 
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start gap-3">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center gap-3 mb-2">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${getAddonColor(addon.key)}`}>
                             {getAddonIcon(addon.key)}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <CardTitle className="text-base text-gray-900 dark:text-gray-100">{addon.name}</CardTitle>
-                            <CardDescription className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                              {addon.shortDescription || addon.description}
-                            </CardDescription>
-                          </div>
+                          <CardTitle className="text-base text-gray-900 dark:text-gray-100">{addon.name}</CardTitle>
                         </div>
+                        <CardDescription className="text-sm text-gray-500 dark:text-gray-400 h-10 line-clamp-2">
+                          {addon.shortDescription || addon.description}
+                        </CardDescription>
                       </CardHeader>
                       
                       <CardContent className="flex-grow flex flex-col justify-end pt-0">
-                        <div className="mb-3">
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                              {Number(addon.monthlyPrice).toFixed(2)}€
-                            </span>
-                            <span className="text-gray-500 dark:text-gray-400 text-sm">/mes</span>
-                          </div>
-                        </div>
-
                         {isPendingCancel && addon.cancellationEffectiveDate && (
                           <div className="mb-3 p-2 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800">
                             <p className="text-xs text-amber-700 dark:text-amber-300">
@@ -631,6 +620,15 @@ export default function AddonStore() {
                             </p>
                           </div>
                         )}
+
+                        <div className="mb-3">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                              {Number(addon.monthlyPrice).toFixed(2)}€
+                            </span>
+                            <span className="text-gray-500 dark:text-gray-400 text-sm">/mes</span>
+                          </div>
+                        </div>
 
                         <div className="mt-auto">
                           {isPendingCancel ? (
