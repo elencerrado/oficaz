@@ -394,9 +394,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   ];
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] flex">
-      {/* Left Rail - Desktop only */}
-      <div className="hidden lg:flex lg:w-80 xl:w-96 bg-gradient-to-br from-[#1a1a2e] via-[#232b3b] to-[#2d3748] flex-col justify-between p-8 relative overflow-hidden">
+    <div className="h-screen bg-[#f5f5f7] flex overflow-hidden">
+      {/* Left Rail - Desktop only - fixed height, no scroll */}
+      <div className="hidden lg:flex lg:w-80 xl:w-96 bg-gradient-to-br from-[#1a1a2e] via-[#232b3b] to-[#2d3748] flex-col justify-between p-8 relative overflow-hidden flex-shrink-0">
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-oficaz-primary/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl" />
@@ -465,10 +465,10 @@ export default function Register({ byInvitation = false, invitationEmail, invita
         </div>
       </div>
 
-      {/* Right Panel - Main content */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      {/* Right Panel - Main content with scroll */}
+      <div className="flex-1 flex flex-col h-screen overflow-y-auto">
         {/* Mobile header */}
-        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-4">
+        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-4 flex-shrink-0">
           <div className="flex items-center justify-between mb-4">
             <img src={oficazLogo} alt="Oficaz" className="h-6" />
             <span className="text-sm text-gray-500">Paso {currentStep}/5</span>
@@ -523,7 +523,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                         >
                           <Icon className="w-6 h-6 mb-2 text-green-600" />
                           <span className="text-sm font-medium text-gray-900 text-center">{addon.name}</span>
-                          <span className="text-xs text-gray-500 text-center mt-1 line-clamp-2">{addon.shortDescription}</span>
+                          <span className="text-xs text-gray-500 text-center mt-1">{addon.shortDescription}</span>
                           <div className="absolute top-2 right-2">
                             <Check className="w-4 h-4 text-green-600" />
                           </div>
@@ -541,7 +541,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     </span>
                     <span className="text-xs text-gray-400">Pruébalos gratis durante el trial</span>
                   </div>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     {paidAddons.map((addon) => {
                       const Icon = getIcon(addon.icon);
                       const selectedFeatures = step1Form.watch('interestedFeatures') || [];
@@ -568,7 +568,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                           />
                           <Icon className={`w-6 h-6 mb-2 ${isSelected ? 'text-blue-600' : 'text-gray-400'}`} />
                           <span className="text-sm font-medium text-gray-900 text-center">{addon.name}</span>
-                          <span className="text-xs text-gray-500 text-center mt-1 line-clamp-2">{addon.shortDescription}</span>
+                          <span className="text-xs text-gray-500 text-center mt-1">{addon.shortDescription}</span>
                           {isSelected && (
                             <div className="absolute top-2 right-2">
                               <Check className="w-4 h-4 text-blue-600" />
