@@ -999,21 +999,21 @@ export default function EmployeeDashboard() {
     setLocation(route);
   };
 
-  const menuItems = [
+  const allMenuItems = [
     { 
       icon: Clock, 
       title: 'Fichajes', 
       route: `/${companyAlias}/misfichajes`,
       notification: hasIncompleteSessions || sessionStatus.isIncomplete,
       notificationType: 'red',
-      feature: 'timeTracking'
+      feature: 'time_tracking' as const
     },
     { 
       icon: CalendarDays, 
       title: 'Cuadrante', 
       route: `/${companyAlias}/cuadrante`,
       notification: false,
-      feature: null
+      feature: 'schedules' as const
     },
     { 
       icon: Calendar, 
@@ -1021,7 +1021,7 @@ export default function EmployeeDashboard() {
       route: `/${companyAlias}/vacaciones`,
       notification: hasVacationUpdates,
       notificationType: hasVacationUpdates ? (localStorage.getItem('vacationNotificationType') || 'red') : 'red',
-      feature: 'vacation'
+      feature: 'vacation' as const
     },
     { 
       icon: FileText, 
@@ -1029,7 +1029,7 @@ export default function EmployeeDashboard() {
       route: `/${companyAlias}/documentos`,
       notification: hasDocumentRequests || hasNewDocuments,
       notificationType: hasDocumentRequests ? 'red' : 'green',
-      feature: 'documents'
+      feature: 'documents' as const
     },
     { 
       icon: Bell, 
@@ -1037,7 +1037,7 @@ export default function EmployeeDashboard() {
       route: `/${companyAlias}/recordatorios`,
       notification: hasOverdueReminders || hasActiveReminders,
       notificationType: hasOverdueReminders ? 'red' : (hasActiveReminders ? 'blue' : 'none'),
-      feature: 'reminders'
+      feature: 'reminders' as const
     },
     { 
       icon: MessageSquare, 
@@ -1045,20 +1045,21 @@ export default function EmployeeDashboard() {
       route: `/${companyAlias}/mensajes`,
       notification: hasNewMessages,
       notificationType: 'green',
-      feature: 'messages'
+      feature: 'messages' as const
     },
-    ...(hasAccess('work_reports') && 
-       (user?.workReportMode === 'manual' || user?.workReportMode === 'both' || user?.workReportMode === 'on_clockout') ? [
+    ...(user?.workReportMode === 'manual' || user?.workReportMode === 'both' || user?.workReportMode === 'on_clockout' ? [
       { 
         icon: ClipboardList, 
         title: 'Partes', 
         route: `/${companyAlias}/partes-trabajo`,
         notification: false,
         notificationType: 'none',
-        feature: 'work_reports'
+        feature: 'work_reports' as const
       }
     ] : []),
   ];
+
+  const menuItems = allMenuItems.filter(item => hasAccess(item.feature));
 
   // Aplicar orden personalizado a los items del menú
   const orderedMenuItems = useMemo(() => {
