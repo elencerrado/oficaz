@@ -612,16 +612,15 @@ export default function AddonStore() {
                           </div>
                         )}
 
-                        <div className="mb-3">
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                              {Number(addon.monthlyPrice).toFixed(2)}€
-                            </span>
-                            <span className="text-gray-500 dark:text-gray-400 text-sm">/mes</span>
-                          </div>
-                        </div>
-
                         <div className="mt-auto">
+                          <div className="mb-3">
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                                {Number(addon.monthlyPrice).toFixed(2)}€
+                              </span>
+                              <span className="text-gray-500 dark:text-gray-400 text-sm">/mes</span>
+                            </div>
+                          </div>
                           {isPendingCancel ? (
                             <Button 
                               variant="outline" 
