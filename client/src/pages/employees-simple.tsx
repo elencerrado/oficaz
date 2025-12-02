@@ -569,27 +569,19 @@ export default function EmployeesSimple() {
                 return; // Do NOT open modal
               }
               
-              // Define role limits by plan (same as backend)
-              const roleLimits: Record<string, Record<string, number>> = {
-                'basic': {
-                  admin: 1,
-                  manager: 1,
-                  employee: (maxUsers || 5) - 2
-                },
-                'pro': {
-                  admin: 1,
-                  manager: 3,
-                  employee: (maxUsers || 30) - 4
-                },
-                'master': {
-                  admin: 999,
-                  manager: 999,
-                  employee: 999
-                }
-              };
+              // Calculate role limits dynamically from subscription (includes extras)
+              const includedAdmins = freshSubscription?.includedAdmins || 1;
+              const includedManagers = freshSubscription?.includedManagers || 1;
+              const includedEmployees = freshSubscription?.includedEmployees || 10;
+              const extraAdmins = freshSubscription?.extraAdmins || 0;
+              const extraManagers = freshSubscription?.extraManagers || 0;
+              const extraEmployees = freshSubscription?.extraEmployees || 0;
               
-              // Store role limits for modal validation
-              const currentPlanLimits = roleLimits[planName] || roleLimits['basic'];
+              const currentPlanLimits = {
+                admin: includedAdmins + extraAdmins,
+                manager: includedManagers + extraManagers,
+                employee: includedEmployees + extraEmployees
+              };
               console.log('ROLE LIMITS FOR PLAN:', currentPlanLimits);
               
               // Store in component state for modal use
