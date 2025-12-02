@@ -14726,8 +14726,8 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
       // Get seat pricing
       const seatPricing = {
         employees: 2,
-        managers: 6,
-        admins: 12,
+        managers: 4,
+        admins: 6,
       };
 
       // Calculate total additional monthly cost

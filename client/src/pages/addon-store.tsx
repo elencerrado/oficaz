@@ -112,8 +112,8 @@ export default function AddonStore() {
 
   const seatPrices = {
     employees: 2,
-    managers: 6,
-    admins: 12
+    managers: 4,
+    admins: 6
   };
 
   const totalSeatsPrice = 
