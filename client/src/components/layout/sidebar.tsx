@@ -4,7 +4,7 @@ import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useDemoBanner } from '@/hooks/use-demo-banner';
 import { LayoutDashboard, Clock, Calendar, CalendarClock, FileText, Mail, Bell, Users, Settings, LogOut, ClipboardList, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { useQuery } from '@tanstack/react-query';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
@@ -20,25 +20,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { hasAccess } = useFeatureCheck();
   const { showBanner, bannerHeight } = useDemoBanner();
   
-  // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
   const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
 
   const { data: unreadCount } = useQuery({
     queryKey: ['/api/messages/unread-count'],
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
   });
 
   const companyAlias = company?.companyAlias || 'test';
   
   const navigation = [
-    // ⚠️ PÁGINAS BASE - Siempre disponibles para todas las cuentas (NO son add-ons)
     { 
       name: 'Panel Principal', 
       href: `/${companyAlias}/inicio`, 
       icon: LayoutDashboard
-      // Sin feature: página base siempre disponible
     },
-    // FUNCIONALIDADES GRATUITAS (add-ons gratuitos incluidos en todas las cuentas)
     ...(user?.role === 'admin' || user?.role === 'manager' ? [
       { 
         name: 'Fichajes', 
@@ -68,7 +64,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         feature: 'schedules' as const
       }
     ] : []),
-    // FUNCIONALIDADES DE PAGO (add-ons que requieren compra)
     { 
       name: 'Documentos', 
       href: `/${companyAlias}/documentos`, 
@@ -98,27 +93,26 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         feature: 'work_reports' as const
       }
     ] : []),
-    // ⚠️ PÁGINAS BASE - Siempre disponibles para todas las cuentas (NO son add-ons)
+  ];
+
+  const footerItems = [
     ...(user?.role === 'admin' || user?.role === 'manager' ? [
       { 
         name: 'Empleados', 
         href: `/${companyAlias}/empleados`, 
         icon: Users
-        // Sin feature: página base siempre disponible
       }
     ] : []),
     { 
       name: 'Configuración', 
       href: `/${companyAlias}/configuracion`, 
       icon: Settings
-      // Sin feature: página base siempre disponible
     },
     ...(user?.role === 'admin' ? [
       { 
         name: 'Tienda', 
         href: `/${companyAlias}/tienda`, 
         icon: Store
-        // Sin feature: página base siempre disponible
       }
     ] : []),
   ];
@@ -129,8 +123,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      
-      {/* Mobile overlay */}
       {isOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
@@ -138,7 +130,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         />
       )}
       
-      {/* Sidebar */}
       <nav 
         className={`
           fixed left-0 w-64 bg-sidebar shadow-lg z-30 transform transition-transform duration-300 flex flex-col border-r border-border
@@ -148,14 +139,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           top: showBanner ? `${bannerHeight}px` : '0px',
           height: showBanner ? `calc(100vh - ${bannerHeight}px)` : '100vh',
           backgroundColor: 'hsl(var(--sidebar-background))',
-          marginTop: 'env(safe-area-inset-top, 0px)', // Margin para separar del notch, no padding
-          paddingLeft: 'env(safe-area-inset-left, 0px)' // Para orientación horizontal
+          marginTop: 'env(safe-area-inset-top, 0px)',
+          paddingLeft: 'env(safe-area-inset-left, 0px)'
         }}
       >
-        {/* Spacer for header alignment */}
         <div className="h-16 bg-sidebar flex-shrink-0" style={{ backgroundColor: 'hsl(var(--sidebar-background))' }} />
         
-        {/* Scrollable Navigation */}
         <div 
           className="flex-1 overflow-y-auto flex flex-col bg-sidebar"
           style={{
@@ -207,7 +196,52 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
         </div>
         
-
+        <div 
+          className="flex-shrink-0 border-t border-border/50"
+          style={{ 
+            backgroundColor: 'hsl(var(--sidebar-background))',
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+          }}
+        >
+          <div className="px-4 py-4">
+            <div className="flex items-center justify-center gap-2">
+              <TooltipProvider delayDuration={100}>
+                {footerItems.map((item) => {
+                  const isActive = location === item.href;
+                  const Icon = item.icon;
+                  
+                  return (
+                    <Tooltip key={item.name}>
+                      <TooltipTrigger asChild>
+                        <Link href={item.href}>
+                          <button
+                            className={`
+                              relative p-3 rounded-xl transition-all duration-200 ease-out
+                              ${isActive 
+                                ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-105' 
+                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/80 hover:scale-105'
+                              }
+                            `}
+                            onClick={handleLinkClick}
+                            data-testid={`footer-${item.name.toLowerCase()}`}
+                          >
+                            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                            {isActive && (
+                              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary-foreground rounded-full" />
+                            )}
+                          </button>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="font-medium">
+                        {item.name}
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </TooltipProvider>
+            </div>
+          </div>
+        </div>
       </nav>
     </>
   );
