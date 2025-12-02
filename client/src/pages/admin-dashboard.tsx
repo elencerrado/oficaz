@@ -1543,7 +1543,7 @@ export default function AdminDashboard() {
         isOpen={showWelcomeModal}
         onClose={() => setShowWelcomeModal(false)}
         companyName={company?.name || 'tu empresa'}
-        trialDays={company?.trialDurationDays || 14}
+        trialDays={company?.trialDurationDays || 7}
       />
     </div>
   );

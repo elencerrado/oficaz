@@ -2536,15 +2536,52 @@ Responde directamente a este email para contactar con la persona.
       });
 
       // Create subscription - dates are calculated from companies.created_at
-      // Use selectedPlan from the wizard, default to 'basic' for backwards compatibility
-      const selectedPlan = data.selectedPlan || 'basic';
+      // Use selectedPlan from the wizard, default to 'oficaz' for the unified subscription model
+      const selectedPlan = data.selectedPlan || 'oficaz';
+      
+      // Extract additional users from wizard (Step 2)
+      const extraAdmins = req.body.additionalAdmins || 0;
+      const extraManagers = req.body.additionalManagers || 0;
+      const extraEmployees = req.body.additionalEmployees || 0;
+      
+      // Calculate maxUsers: base plan (1 admin + 1 manager + 10 employees = 12) + extras
+      const baseUsers = 12;
+      const totalMaxUsers = baseUsers + extraAdmins + extraManagers + extraEmployees;
+      
       const subscription = await storage.createSubscription({
         companyId: company.id,
         plan: selectedPlan,
         status: 'trial',
         isTrialActive: true,
-        maxUsers: 5, // Default for basic plan
+        maxUsers: totalMaxUsers,
+        extraAdmins: extraAdmins,
+        extraManagers: extraManagers,
+        extraEmployees: extraEmployees,
       });
+      
+      // Activate selected add-ons (interestedFeatures from Step 1)
+      const selectedAddons = req.body.interestedFeatures || [];
+      if (selectedAddons.length > 0) {
+        console.log(`🔌 Activating ${selectedAddons.length} add-ons for company ${company.id}:`, selectedAddons);
+        for (const addonKey of selectedAddons) {
+          try {
+            // Find the addon by key
+            const [addon] = await db.select().from(schema.addons).where(eq(schema.addons.key, addonKey));
+            if (addon) {
+              // Create company_addon record to activate it
+              await db.insert(schema.companyAddons).values({
+                companyId: company.id,
+                addonId: addon.id,
+                isActive: true,
+                activatedAt: new Date(),
+              }).onConflictDoNothing();
+              console.log(`  ✅ Activated addon: ${addon.name} (${addonKey})`);
+            }
+          } catch (addonError) {
+            console.warn(`  ⚠️ Could not activate addon ${addonKey}:`, addonError);
+          }
+        }
+      }
 
       // Generate demo data for new company
       await generateDemoData(company.id);

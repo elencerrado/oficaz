@@ -771,6 +771,11 @@ export const companyRegistrationSchema = z.object({
   teamSize: z.string().optional(),
   interestedFeatures: z.array(z.string()).optional(),
   
+  // Step 2 data (additional users beyond base plan)
+  additionalAdmins: z.number().min(0).optional().default(0),
+  additionalManagers: z.number().min(0).optional().default(0),
+  additionalEmployees: z.number().min(0).optional().default(0),
+  
   // Step 4 data (selected plan)
   selectedPlan: z.string().min(1, "Plan de suscripción requerido"),
   
