@@ -126,8 +126,8 @@ function FeatureProtectedRoute({
   children: React.ReactNode; 
   feature: FeatureKey;
 }) {
-  const { company } = useAuth();
-  const { hasAccess, isLoading } = useFeatureCheck();
+  const { company, isLoading } = useAuth();
+  const { hasAccess } = useFeatureCheck();
   
   if (isLoading) {
     return <PageLoading />;
