@@ -54,6 +54,7 @@ export default function EmployeesSimple() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState('activos'); // Default to active
+  const [roleFilter, setRoleFilter] = useState<'todos' | 'employee' | 'manager' | 'admin'>('todos'); // Filter by role
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -351,9 +352,9 @@ export default function EmployeesSimple() {
 
   const employeeList = employees as any[];
   const filteredEmployees = (employeeList || []).filter((employee: any) => {
-    // First check if it's not an admin
-    const notAdmin = employee.role !== 'admin';
-    if (!notAdmin) return false;
+    // Filter by role if selected
+    const matchesRole = roleFilter === 'todos' || employee.role === roleFilter;
+    if (!matchesRole) return false;
     
     const matchesSearch = employee.fullName?.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -493,6 +494,8 @@ export default function EmployeesSimple() {
           value={totalUsers}
           color="blue"
           icon={Users}
+          isActive={roleFilter === 'todos'}
+          onClick={() => setRoleFilter('todos')}
         />
         <StatsCard
           title="Empleados"
@@ -500,6 +503,8 @@ export default function EmployeesSimple() {
           value={employeeList?.filter(emp => emp.role === 'employee').length || 0}
           color="orange"
           icon={User}
+          isActive={roleFilter === 'employee'}
+          onClick={() => setRoleFilter('employee')}
         />
         <StatsCard
           title="Managers"
@@ -507,6 +512,8 @@ export default function EmployeesSimple() {
           value={employeeList?.filter(emp => emp.role === 'manager').length || 0}
           color="green"
           icon={UserCheck}
+          isActive={roleFilter === 'manager'}
+          onClick={() => setRoleFilter('manager')}
         />
         <StatsCard
           title="Admins"
@@ -514,6 +521,8 @@ export default function EmployeesSimple() {
           value={employeeList?.filter(emp => emp.role === 'admin').length || 0}
           color="purple"
           icon={Shield}
+          isActive={roleFilter === 'admin'}
+          onClick={() => setRoleFilter('admin')}
         />
       </div>
 
