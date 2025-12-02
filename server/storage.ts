@@ -1642,21 +1642,25 @@ export class DrizzleStorage implements IStorage {
       };
     }
 
-    // NEW MODEL: Apply free add-ons (time_tracking, vacation, schedules) - ALWAYS available
-    // Free add-ons must ALWAYS be true, overriding any legacy plan-based settings
-    const freeAddons = await db.select({ key: schema.addons.key })
+    // NEW MODEL: Get all add-ons to properly set feature access
+    const allAddons = await db.select({ key: schema.addons.key, isFreeFeature: schema.addons.isFreeFeature })
       .from(schema.addons)
-      .where(and(
-        eq(schema.addons.isFreeFeature, true),
-        eq(schema.addons.isActive, true)
-      ));
+      .where(eq(schema.addons.isActive, true));
     
-    for (const freeAddon of freeAddons) {
-      // Force true for free addons - these are always available regardless of plan
-      finalFeatures[freeAddon.key] = true;
+    // STEP 1: Reset PAID add-ons to false (ignore legacy plan settings for paid features)
+    // This ensures only purchased add-ons are active
+    const paidAddonKeys = allAddons.filter(a => !a.isFreeFeature).map(a => a.key);
+    for (const key of paidAddonKeys) {
+      finalFeatures[key] = false;
+    }
+    
+    // STEP 2: Apply free add-ons (time_tracking, vacation, schedules) - ALWAYS available
+    const freeAddonKeys = allAddons.filter(a => a.isFreeFeature).map(a => a.key);
+    for (const key of freeAddonKeys) {
+      finalFeatures[key] = true;
     }
 
-    // Apply purchased add-ons as additional features
+    // STEP 3: Apply purchased add-ons as additional features
     // Include both 'active' and 'pending_cancel' - user keeps access until billing period ends
     const companyAddons = await this.getCompanyAddons(companyId);
     for (const companyAddon of companyAddons) {
