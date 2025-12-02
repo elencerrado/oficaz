@@ -1574,15 +1574,7 @@ export class DrizzleStorage implements IStorage {
       return undefined;
     }
 
-    // Get the plan from subscription_plans table
-    const [plan] = await db.select().from(schema.subscriptionPlans).where(eq(schema.subscriptionPlans.name, subscription.plan));
-    
-    if (!plan) {
-      console.warn(`Plan ${subscription.plan} not found in subscription_plans table`);
-      return subscription;
-    }
-
-    // Get company created_at date, trial duration, and custom_features to override plan features
+    // Get company data for trial calculation and custom features
     const [company] = await db.select({
       createdAt: schema.companies.createdAt,
       trialDurationDays: schema.companies.trialDurationDays,
@@ -1597,71 +1589,31 @@ export class DrizzleStorage implements IStorage {
     // Calculate trial dates from companies.created_at (single source of truth)
     const registrationDate = new Date(company.createdAt);
     const trialEndDate = new Date(registrationDate);
-    // Use trial duration from company settings (includes promotional code extensions)
-    const trialDuration = company.trialDurationDays || 14; // Fallback to 14 if not set
+    const trialDuration = company.trialDurationDays || 14;
     trialEndDate.setDate(trialEndDate.getDate() + trialDuration);
 
-    // Determine effective plan for features
-    // If there's a planned downgrade, use currentEffectivePlan until the change date
-    // Otherwise use the regular plan
-    let effectivePlan = subscription.currentEffectivePlan || subscription.plan;
+    // ═══════════════════════════════════════════════════════════════════════════
+    // NEW ADD-ON BASED MODEL - No legacy plan dependencies
+    // Features are determined purely by: free add-ons + purchased add-ons + custom settings
+    // ═══════════════════════════════════════════════════════════════════════════
     
-    // Check if we should apply plan change (if plan_change_date has passed)
-    if (subscription.planChangeDate && subscription.nextPlan) {
-      const changeDate = new Date(subscription.planChangeDate);
-      const now = new Date();
-      if (now >= changeDate) {
-        // The change date has passed, apply the next plan
-        effectivePlan = subscription.nextPlan;
-      }
-    }
-    
-    // Get features from features table dynamically based on effective plan
-    const activeFeatures = await db.select().from(schema.features).where(eq(schema.features.isActive, true));
-    let finalFeatures: any = {};
-    
-    // Build features object dynamically using the key column (no hardcoded mapping needed)
-    for (const feature of activeFeatures) {
-      const planColumnName = `${effectivePlan}Enabled` as keyof typeof feature;
-      const isEnabled = feature[planColumnName] as boolean;
-      
-      // Use the feature.key directly (time, vacation, schedules, etc.)
-      // This eliminates the need for hardcoded switch statement
-      if (feature.key) {
-        finalFeatures[feature.key] = isEnabled;
-      }
-    }
-
-    // Apply company custom_features overrides if they exist
-    if (company?.customFeatures && typeof company.customFeatures === 'object') {
-      // Custom features should override plan features
-      // Format: { "employee_time_edit": true, "reports": false, etc }
-      finalFeatures = {
-        ...finalFeatures,
-        ...company.customFeatures
-      };
-    }
-
-    // NEW MODEL: Get all add-ons to properly set feature access
-    const allAddons = await db.select({ key: schema.addons.key, isFreeFeature: schema.addons.isFreeFeature })
+    // Get all active add-ons from the addons table
+    const allAddons = await db.select({ 
+      key: schema.addons.key, 
+      isFreeFeature: schema.addons.isFreeFeature 
+    })
       .from(schema.addons)
       .where(eq(schema.addons.isActive, true));
     
-    // STEP 1: Reset PAID add-ons to false (ignore legacy plan settings for paid features)
-    // This ensures only purchased add-ons are active
-    const paidAddonKeys = allAddons.filter(a => !a.isFreeFeature).map(a => a.key);
-    for (const key of paidAddonKeys) {
-      finalFeatures[key] = false;
-    }
+    // Initialize features object
+    let finalFeatures: any = {};
     
-    // STEP 2: Apply free add-ons (time_tracking, vacation, schedules) - ALWAYS available
-    const freeAddonKeys = allAddons.filter(a => a.isFreeFeature).map(a => a.key);
-    for (const key of freeAddonKeys) {
-      finalFeatures[key] = true;
+    // Set all add-ons: free ones = true, paid ones = false (until purchased)
+    for (const addon of allAddons) {
+      finalFeatures[addon.key] = addon.isFreeFeature;
     }
 
-    // STEP 3: Apply purchased add-ons as additional features
-    // Include both 'active' and 'pending_cancel' - user keeps access until billing period ends
+    // Apply purchased add-ons (active or pending_cancel = still has access)
     const companyAddons = await this.getCompanyAddons(companyId);
     for (const companyAddon of companyAddons) {
       if ((companyAddon.status === 'active' || companyAddon.status === 'pending_cancel') && companyAddon.addon) {
@@ -1669,37 +1621,36 @@ export class DrizzleStorage implements IStorage {
       }
     }
 
+    // Apply company-specific custom feature overrides (for special settings like employee_time_edit)
+    if (company?.customFeatures && typeof company.customFeatures === 'object') {
+      finalFeatures = {
+        ...finalFeatures,
+        ...company.customFeatures
+      };
+    }
+
+    // Calculate max users based on subscription seats (NEW MODEL)
+    // Base: 1 admin + 1 manager + 10 employees = 12 users
+    // Plus any extra seats purchased
+    const baseUsers = 12; // 1 admin + 1 manager + 10 employees included in base plan
+    const extraUsers = (subscription.extraAdmins || 0) + (subscription.extraManagers || 0) + (subscription.extraEmployees || 0);
+    const maxUsers = baseUsers + extraUsers;
+
     return {
       ...subscription,
-      maxUsers: plan.maxUsers,
+      plan: 'oficaz', // Always return 'oficaz' as the plan name (new unified model)
+      maxUsers,
       features: finalFeatures,
-      // Add calculated dates from companies.created_at
       startDate: registrationDate.toISOString(),
       trialStartDate: registrationDate.toISOString(),
       trialEndDate: trialEndDate.toISOString(),
     };
   }
 
-  // ⚠️ PROTECTED - DO NOT MODIFY - Central features builder helper
-  private async buildPlanFeatures(planName: string): Promise<any> {
-    const featuresData = await db
-      .select({
-        key: schema.features.key,
-        isEnabled: planName === 'basic' ? schema.features.basicEnabled :
-                  planName === 'pro' ? schema.features.proEnabled :
-                  planName === 'master' ? schema.features.masterEnabled :
-                  schema.features.basicEnabled,
-      })
-      .from(schema.features)
-      .where(eq(schema.features.isActive, true));
-
-    const features: any = {};
-    featuresData.forEach(feature => {
-      features[feature.key] = feature.isEnabled;
-    });
-
-    return features;
-  }
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DEPRECATED: buildPlanFeatures - Removed as part of legacy cleanup
+  // Features are now determined by addons table (isFreeFeature) + companyAddons
+  // ═══════════════════════════════════════════════════════════════════════════
 
   async updateCompanySubscription(companyId: number, updates: any): Promise<any | undefined> {
     const [subscription] = await db
