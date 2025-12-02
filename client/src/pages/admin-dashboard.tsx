@@ -1084,7 +1084,7 @@ export default function AdminDashboard() {
                     </button>
                   )}
 
-                  {unsignedPayrollsCount > 0 && (
+                  {hasAccess('documents') && unsignedPayrollsCount > 0 && (
                     <button
                       onClick={() => setLocation('/test/documentos?filter=unsigned')}
                       className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
@@ -1105,7 +1105,7 @@ export default function AdminDashboard() {
                     </button>
                   )}
 
-                  {documentRequests.length > 0 && (
+                  {hasAccess('documents') && documentRequests.length > 0 && (
                     <button
                       onClick={() => setLocation('/test/documentos')}
                       className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
@@ -1126,7 +1126,7 @@ export default function AdminDashboard() {
                     </button>
                   )}
 
-                  {unreadMessagesCount > 0 && (
+                  {hasAccess('messages') && unreadMessagesCount > 0 && (
                     <button
                       onClick={() => setLocation('/test/mensajes')}
                       className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
