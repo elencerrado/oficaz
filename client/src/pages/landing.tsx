@@ -214,38 +214,41 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
         <p className="text-gray-400 text-[7px] mb-1.5">Gestiona tu plantilla</p>
         <div className="grid grid-cols-3 gap-1 mb-1.5">
           <div className="bg-purple-500/20 border border-purple-500/30 rounded-lg p-1.5 text-center">
-            <p className="text-purple-400 font-bold text-xs">1</p>
-            <p className="text-purple-300/70 text-[5px]">Admin</p>
+            <p className="text-purple-400 font-bold text-sm">1</p>
+            <p className="text-purple-300/70 text-[6px]">Admin</p>
           </div>
           <div className="bg-[#007AFF]/20 border border-[#007AFF]/30 rounded-lg p-1.5 text-center">
-            <p className="text-[#007AFF] font-bold text-xs">1</p>
-            <p className="text-blue-300/70 text-[5px]">Manager</p>
+            <p className="text-[#007AFF] font-bold text-sm">1</p>
+            <p className="text-blue-300/70 text-[6px]">Manager</p>
           </div>
           <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-1.5 text-center">
-            <p className="text-green-400 font-bold text-xs">10</p>
-            <p className="text-green-300/70 text-[5px]">Empleados</p>
+            <p className="text-green-400 font-bold text-sm">10</p>
+            <p className="text-green-300/70 text-[6px]">Empleados</p>
           </div>
         </div>
         <button className="w-full bg-[#007AFF] rounded-lg p-1.5 mb-1.5 flex items-center justify-center gap-1">
           <Users className="w-2.5 h-2.5 text-white" />
           <span className="text-white text-[7px] font-semibold">Crear usuario</span>
         </button>
-        <div className="space-y-0.5">
+        <div className="space-y-1">
           {[
-            { name: 'María García', role: 'Admin', roleColor: 'text-purple-400' },
-            { name: 'Carlos López', role: 'Manager', roleColor: 'text-[#007AFF]' },
-            { name: 'Ana Martín', role: 'Empleado', roleColor: 'text-green-400' },
-            { name: 'Pedro Ruiz', role: 'Empleado', roleColor: 'text-green-400' },
+            { name: 'María García', role: 'Admin', avatar: avatarWoman01, roleColor: 'text-purple-400' },
+            { name: 'Carlos López', role: 'Manager', avatar: avatarMan01, roleColor: 'text-[#007AFF]' },
+            { name: 'Ana Martín', role: 'Empleado', avatar: avatarWoman02, roleColor: 'text-green-400' },
+            { name: 'Pedro Ruiz', role: 'Empleado', avatar: avatarMan02, roleColor: 'text-green-400' },
+            { name: 'Laura Sanz', role: 'Empleado', avatar: avatarWoman03, roleColor: 'text-green-400' },
           ].map((emp, i) => (
-            <div key={i} className="bg-[#1a2942] rounded p-1 flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded-full bg-gradient-to-br from-[#007AFF] to-blue-600 flex items-center justify-center text-white text-[5px] font-bold">
-                {emp.name.split(' ').map(n => n[0]).join('')}
-              </div>
+            <div key={i} className="bg-[#1a2942] rounded-lg p-1.5 flex items-center gap-2">
+              <img 
+                src={emp.avatar} 
+                alt={emp.name}
+                className="w-5 h-5 rounded-full object-cover"
+              />
               <div className="flex-1">
-                <p className="text-white text-[6px] font-medium">{emp.name}</p>
-                <p className={`text-[5px] ${emp.roleColor}`}>{emp.role}</p>
+                <p className="text-white text-[7px] font-medium">{emp.name}</p>
+                <p className={`text-[6px] ${emp.roleColor}`}>{emp.role}</p>
               </div>
-              <Settings className="w-2 h-2 text-gray-500" />
+              <Settings className="w-2.5 h-2.5 text-gray-500" />
             </div>
           ))}
         </div>
