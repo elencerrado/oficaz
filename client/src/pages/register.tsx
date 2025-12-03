@@ -439,26 +439,20 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
   return (
     <div className="h-screen bg-[#f5f5f7] flex overflow-hidden">
-      {/* Left Rail - Desktop only - fixed height, no scroll */}
-      <div className="hidden lg:flex lg:w-80 xl:w-96 bg-gradient-to-br from-[#1a1a2e] via-[#232b3b] to-[#2d3748] flex-col justify-between p-8 relative overflow-hidden flex-shrink-0">
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-oficaz-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl" />
+      {/* Left Rail - Desktop only - Apple style minimal */}
+      <div className="hidden lg:flex lg:w-80 xl:w-96 bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f0f23] flex-col p-8 relative overflow-hidden flex-shrink-0">
+        {/* Subtle decorative gradient orbs */}
+        <div className="absolute top-20 right-0 w-80 h-80 bg-oficaz-primary/5 rounded-full blur-[100px]" />
+        <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-blue-500/5 rounded-full blur-[80px]" />
         
-        {/* Logo and title */}
-        <div className="relative z-10">
-          <img src={oficazLogo} alt="Oficaz" className="h-8 mb-8" />
-          <h1 className="text-2xl font-semibold text-white mb-2">
-            Bienvenido a Oficaz
-          </h1>
-          <p className="text-gray-400 text-sm">
-            Configura tu empresa en menos de 2 minutos
-          </p>
+        {/* Logo - Centered at top */}
+        <div className="relative z-10 flex justify-center pt-4 pb-12">
+          <img src={oficazLogo} alt="Oficaz" className="h-10" />
         </div>
 
-        {/* Progress steps - vertical */}
-        <div className="relative z-10 flex-1 flex flex-col justify-center py-8">
-          <div className="space-y-4">
+        {/* Progress steps - vertical, centered */}
+        <div className="relative z-10 flex-1 flex flex-col justify-center">
+          <div className="space-y-5">
             {steps.map((step, idx) => {
               const Icon = step.icon;
               const isActive = currentStep === step.num;
@@ -467,10 +461,10 @@ export default function Register({ byInvitation = false, invitationEmail, invita
               return (
                 <div key={step.num} className="flex items-center gap-4">
                   <div className={`
-                    w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300
-                    ${isComplete ? 'bg-green-500 text-white' : ''}
-                    ${isActive ? 'bg-oficaz-primary text-white ring-4 ring-oficaz-primary/30' : ''}
-                    ${!isComplete && !isActive ? 'bg-gray-700 text-gray-400' : ''}
+                    w-11 h-11 rounded-full flex items-center justify-center transition-all duration-500
+                    ${isComplete ? 'bg-green-500/90 text-white' : ''}
+                    ${isActive ? 'bg-oficaz-primary text-white shadow-lg shadow-oficaz-primary/40' : ''}
+                    ${!isComplete && !isActive ? 'bg-white/5 text-gray-500 border border-white/10' : ''}
                   `}>
                     {isComplete ? (
                       <Check className="w-5 h-5" />
@@ -479,31 +473,26 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     )}
                   </div>
                   <div className="flex-1">
-                    <span className={`text-sm font-medium ${isActive ? 'text-white' : 'text-gray-400'}`}>
+                    <span className={`text-sm font-medium transition-colors duration-300 ${
+                      isActive ? 'text-white' : isComplete ? 'text-gray-300' : 'text-gray-500'
+                    }`}>
                       {step.label}
                     </span>
                   </div>
-                  {idx < steps.length - 1 && (
-                    <div className={`absolute left-[2.15rem] mt-14 w-0.5 h-4 ${isComplete ? 'bg-green-500' : 'bg-gray-700'}`} />
-                  )}
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Trust signals */}
-        <div className="relative z-10 space-y-4">
+        {/* Minimal footer - just key benefits */}
+        <div className="relative z-10 pt-8 space-y-3">
           <div className="flex items-center gap-3 text-gray-400 text-sm">
-            <Shield className="w-5 h-5 text-green-400" />
-            <span>Datos seguros y encriptados</span>
+            <Star className="w-4 h-4 text-yellow-400/80" />
+            <span>7 días de prueba gratis</span>
           </div>
           <div className="flex items-center gap-3 text-gray-400 text-sm">
-            <Star className="w-5 h-5 text-yellow-400" />
-            <span>7 días de prueba gratuita</span>
-          </div>
-          <div className="flex items-center gap-3 text-gray-400 text-sm">
-            <CheckCircle className="w-5 h-5 text-blue-400" />
+            <CheckCircle className="w-4 h-4 text-green-400/80" />
             <span>Cancela cuando quieras</span>
           </div>
         </div>
