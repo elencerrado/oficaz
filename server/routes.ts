@@ -9752,19 +9752,171 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
         });
         return;
       } else {
-        // Trial has ended: Create subscription WITHOUT capturing payment again 
-        // CRITICAL FIX: Don't capture PaymentIntent manually - let subscription handle billing
-        console.log(`🏦 TRIAL ENDED - Creating subscription (no manual capture needed)`);
+        // Trial has ended: Create subscription with SEPARATE ITEMS for each addon and user type
+        // This allows proper cancellation/addition of individual items later
+        console.log(`🏦 TRIAL ENDED - Creating subscription with separate items`);
         
-        // Create subscription which will automatically charge for first period
+        // Check for SuperAdmin custom price override
+        const customPriceOverride = company.subscription.customMonthlyPrice ? Number(company.subscription.customMonthlyPrice) : null;
+        
+        // Validate minimum requirements: 1 admin (€6) + 1 addon (€3) = €9 minimum
+        if (activeAddons.length === 0) {
+          console.error('🚨 No addons selected - minimum 1 addon required');
+          return res.status(400).json({ message: 'Se requiere al menos una funcionalidad para activar la suscripción' });
+        }
+        if (adminSeats < 1) {
+          console.error('🚨 No admin seats - minimum 1 admin required');
+          return res.status(400).json({ message: 'Se requiere al menos un administrador para activar la suscripción' });
+        }
+        
+        // Build subscription items array - each addon and user type as separate item
+        const subscriptionItems: Array<{ price: string; quantity: number; metadata?: Record<string, string> }> = [];
+        
+        // 1. Create items for each active addon
+        for (const companyAddon of activeAddons) {
+          const addon = companyAddon.addon;
+          if (!addon) continue;
+          
+          let stripePriceId = addon.stripePriceId;
+          
+          if (!stripePriceId) {
+            // Create Stripe product and price for this addon
+            const stripeProduct = await stripe.products.create({
+              name: `Oficaz: ${addon.name}`,
+              description: addon.description || addon.shortDescription || undefined,
+              metadata: { addon_key: addon.key, feature_key: addon.featureKey || addon.key }
+            });
+            
+            const stripePrice = await stripe.prices.create({
+              product: stripeProduct.id,
+              unit_amount: Math.round(Number(addon.monthlyPrice) * 100),
+              currency: 'eur',
+              recurring: { interval: 'month' },
+              nickname: addon.name,
+              metadata: { addon_key: addon.key }
+            });
+            
+            stripePriceId = stripePrice.id;
+            
+            // Update addon with Stripe IDs
+            await storage.updateAddon(addon.id, {
+              stripeProductId: stripeProduct.id,
+              stripePriceId: stripePrice.id,
+            });
+          }
+          
+          subscriptionItems.push({
+            price: stripePriceId,
+            quantity: 1,
+            metadata: { addon_id: addon.id.toString(), addon_key: addon.key }
+          });
+          
+          console.log(`  📦 Addon item: ${addon.name} (€${addon.monthlyPrice}/mes)`);
+        }
+        
+        // 2. Create items for user seats
+        const seatTypes = [
+          { key: 'admin', count: adminSeats, price: seatPriceMap['admin'] || 6, name: 'Admin' },
+          { key: 'manager', count: managerSeats, price: seatPriceMap['manager'] || 4, name: 'Manager' },
+          { key: 'employee', count: employeeSeats, price: seatPriceMap['employee'] || 2, name: 'Empleado' },
+        ];
+        
+        for (const seat of seatTypes) {
+          if (seat.count <= 0) continue;
+          
+          let seatPricingRecord = await storage.getSeatPricing(seat.key);
+          let stripePriceId = seatPricingRecord?.stripePriceId;
+          
+          if (!stripePriceId) {
+            // Create Stripe product and price for this seat type
+            const stripeProduct = await stripe.products.create({
+              name: `Oficaz: Usuario ${seat.name}`,
+              description: `Usuario tipo ${seat.name}`,
+              metadata: { seat_type: seat.key }
+            });
+            
+            const stripePrice = await stripe.prices.create({
+              product: stripeProduct.id,
+              unit_amount: Math.round(seat.price * 100),
+              currency: 'eur',
+              recurring: { interval: 'month' },
+              nickname: `Usuario ${seat.name}`,
+              metadata: { seat_type: seat.key }
+            });
+            
+            stripePriceId = stripePrice.id;
+            
+            // Update seat pricing with Stripe IDs
+            await db.execute(sql`
+              UPDATE seat_pricing 
+              SET stripe_product_id = ${stripeProduct.id}, stripe_price_id = ${stripePrice.id}
+              WHERE role_type = ${seat.key}
+            `);
+          }
+          
+          subscriptionItems.push({
+            price: stripePriceId,
+            quantity: seat.count,
+            metadata: { seat_type: seat.key }
+          });
+          
+          console.log(`  👤 Seat item: ${seat.count}x ${seat.name} (€${seat.price}/mes c/u)`);
+        }
+        
+        // Ensure we have at least one item
+        if (subscriptionItems.length === 0) {
+          console.error('No subscription items to create!');
+          return res.status(400).json({ message: 'No hay items para crear la suscripción' });
+        }
+        
+        // Handle SuperAdmin custom price override
+        let finalItems = subscriptionItems;
+        if (customPriceOverride && customPriceOverride > 0) {
+          console.log(`💰 SUPERADMIN OVERRIDE: Using custom price €${customPriceOverride}/month instead of itemized billing`);
+          
+          // Create a single custom price item
+          const customProduct = await stripe.products.create({
+            name: `Oficaz: Precio Personalizado - ${company.name}`,
+            description: `Precio especial para ${company.name}`,
+            metadata: { company_id: company.id.toString(), type: 'custom_price' }
+          });
+          
+          const customPrice = await stripe.prices.create({
+            product: customProduct.id,
+            unit_amount: Math.round(customPriceOverride * 100),
+            currency: 'eur',
+            recurring: { interval: 'month' },
+            nickname: 'Precio Personalizado',
+            metadata: { type: 'custom_price', company_id: company.id.toString() }
+          });
+          
+          finalItems = [{ price: customPrice.id, quantity: 1, metadata: { type: 'custom_price' } }];
+        }
+        
+        // Create subscription with all items
         const subscription = await stripe.subscriptions.create({
           customer: stripeCustomerId,
-          items: [{ price: price.id }],
+          items: finalItems,
           default_payment_method: paymentIntent.payment_method as string,
-          // No trial_end needed - this is the actual billing moment
         });
         
-        console.log(`💰 SUBSCRIPTION CREATED - Amount: €${price.unit_amount!/100}, Status: ${subscription.status}`);
+        console.log(`💰 SUBSCRIPTION CREATED with ${finalItems.length} items, Status: ${subscription.status}`);
+        
+        // Update company_addons with their Stripe subscription item IDs
+        for (const item of subscription.items.data) {
+          const addonKey = item.price?.metadata?.addon_key;
+          if (addonKey) {
+            const addon = await storage.getAddonByKey(addonKey);
+            if (addon) {
+              await db.execute(sql`
+                UPDATE company_addons 
+                SET stripe_subscription_item_id = ${item.id}
+                WHERE company_id = ${company.id} AND addon_id = ${addon.id}
+              `);
+              console.log(`  ✅ Updated addon ${addonKey} with stripeSubscriptionItemId: ${item.id}`);
+            }
+          }
+        }
         
         // Update database with Stripe subscription info and activate
         const firstPaymentDate = new Date(now);
@@ -13216,28 +13368,135 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
             
             console.log(`💰 MODULAR PRICING for ${t.company_name}: ${activeAddons.length} addons (€${addonsTotalPrice.toFixed(2)}) + ${adminSeats}a/${managerSeats}m/${employeeSeats}e seats (€${seatsTotalPrice.toFixed(2)}) = €${monthlyPrice.toFixed(2)}/month`);
             
-            // Create recurring product and price
-            const product = await stripe.products.create({
-              name: `Plan ${t.plan.charAt(0).toUpperCase() + t.plan.slice(1)} - ${t.company_name}`,
-            });
+            // Build subscription items array - each addon and user type as separate item
+            const subscriptionItems: Array<{ price: string; quantity: number; metadata?: Record<string, string> }> = [];
             
-            const price = await stripe.prices.create({
-              currency: 'eur',
-              unit_amount: Math.round(monthlyPrice * 100),
-              recurring: { interval: 'month' },
-              product: product.id,
-            });
+            // Create items for each active addon
+            for (const companyAddon of activeAddons) {
+              const addon = companyAddon.addon;
+              if (!addon) continue;
+              
+              let stripePriceId = addon.stripePriceId;
+              
+              if (!stripePriceId) {
+                const stripeProduct = await stripe.products.create({
+                  name: `Oficaz: ${addon.name}`,
+                  description: addon.description || addon.shortDescription || undefined,
+                  metadata: { addon_key: addon.key, feature_key: addon.featureKey || addon.key }
+                });
+                
+                const stripePrice = await stripe.prices.create({
+                  product: stripeProduct.id,
+                  unit_amount: Math.round(Number(addon.monthlyPrice) * 100),
+                  currency: 'eur',
+                  recurring: { interval: 'month' },
+                  nickname: addon.name,
+                  metadata: { addon_key: addon.key }
+                });
+                
+                stripePriceId = stripePrice.id;
+                await storage.updateAddon(addon.id, { stripeProductId: stripeProduct.id, stripePriceId: stripePrice.id });
+              }
+              
+              subscriptionItems.push({
+                price: stripePriceId,
+                quantity: 1,
+                metadata: { addon_id: addon.id.toString(), addon_key: addon.key }
+              });
+            }
             
-            // Create recurring subscription  
-            // CRITICAL FIX: Add trial_end to prevent double charging
+            // Create items for user seats
+            const seatTypes = [
+              { key: 'admin', count: adminSeats, price: seatPriceMap['admin'] || 6, name: 'Admin' },
+              { key: 'manager', count: managerSeats, price: seatPriceMap['manager'] || 4, name: 'Manager' },
+              { key: 'employee', count: employeeSeats, price: seatPriceMap['employee'] || 2, name: 'Empleado' },
+            ];
+            
+            for (const seat of seatTypes) {
+              if (seat.count <= 0) continue;
+              
+              let seatPricingRecord = await storage.getSeatPricing(seat.key);
+              let stripePriceId = seatPricingRecord?.stripePriceId;
+              
+              if (!stripePriceId) {
+                const stripeProduct = await stripe.products.create({
+                  name: `Oficaz: Usuario ${seat.name}`,
+                  description: `Usuario tipo ${seat.name}`,
+                  metadata: { seat_type: seat.key }
+                });
+                
+                const stripePrice = await stripe.prices.create({
+                  product: stripeProduct.id,
+                  unit_amount: Math.round(seat.price * 100),
+                  currency: 'eur',
+                  recurring: { interval: 'month' },
+                  nickname: `Usuario ${seat.name}`,
+                  metadata: { seat_type: seat.key }
+                });
+                
+                stripePriceId = stripePrice.id;
+                await db.execute(sql`
+                  UPDATE seat_pricing 
+                  SET stripe_product_id = ${stripeProduct.id}, stripe_price_id = ${stripePrice.id}
+                  WHERE role_type = ${seat.key}
+                `);
+              }
+              
+              subscriptionItems.push({
+                price: stripePriceId,
+                quantity: seat.count,
+                metadata: { seat_type: seat.key }
+              });
+            }
+            
+            // Handle SuperAdmin custom price override
+            let finalItems = subscriptionItems;
+            if (customPrice && customPrice > 0) {
+              console.log(`💰 SUPERADMIN OVERRIDE: Using custom price €${customPrice}/month`);
+              
+              const customProduct = await stripe.products.create({
+                name: `Oficaz: Precio Personalizado - ${t.company_name}`,
+                description: `Precio especial para ${t.company_name}`,
+                metadata: { company_id: t.company_id.toString(), type: 'custom_price' }
+              });
+              
+              const customStripePrice = await stripe.prices.create({
+                product: customProduct.id,
+                unit_amount: Math.round(customPrice * 100),
+                currency: 'eur',
+                recurring: { interval: 'month' },
+                nickname: 'Precio Personalizado',
+                metadata: { type: 'custom_price', company_id: t.company_id.toString() }
+              });
+              
+              finalItems = [{ price: customStripePrice.id, quantity: 1, metadata: { type: 'custom_price' } }];
+            }
+            
+            // Create recurring subscription with separate items
+            // Note: trial_end is used because payment was already captured above
             const subscription = await stripe.subscriptions.create({
               customer: t.stripe_customer_id,
-              items: [{ price: price.id }],
+              items: finalItems,
               default_payment_method: paymentIntent.payment_method as string,
-              trial_end: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60), // 30 days trial
+              trial_end: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60), // 30 days until first recurring charge
             });
             
-            console.log(`🔄 RECURRING SUBSCRIPTION CREATED: ${subscription.id} for ${t.company_name}`);
+            console.log(`🔄 RECURRING SUBSCRIPTION CREATED: ${subscription.id} for ${t.company_name} with ${finalItems.length} items`);
+            
+            // Update company_addons with their Stripe subscription item IDs
+            for (const item of subscription.items.data) {
+              const addonKey = item.price?.metadata?.addon_key;
+              if (addonKey) {
+                const addon = await storage.getAddonByKey(addonKey);
+                if (addon) {
+                  await db.execute(sql`
+                    UPDATE company_addons 
+                    SET stripe_subscription_item_id = ${item.id}
+                    WHERE company_id = ${t.company_id} AND addon_id = ${addon.id}
+                  `);
+                }
+              }
+            }
             
             // Update database to active status
             const firstPaymentDate = new Date(now);
