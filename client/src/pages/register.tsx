@@ -773,26 +773,6 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   </div>
                 </div>
 
-                {/* Total summary */}
-                <div className="bg-gray-50 rounded-2xl p-5 wizard-animate wizard-delay-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-gray-600">Tu equipo:</span>
-                      <div className="text-sm text-gray-500 mt-1">
-                        {step2Form.watch('admins')} admin{step2Form.watch('admins') > 1 ? 's' : ''}
-                        {step2Form.watch('managers') > 0 && `, ${step2Form.watch('managers')} manager${step2Form.watch('managers') > 1 ? 's' : ''}`}
-                        {step2Form.watch('employees') > 0 && `, ${step2Form.watch('employees')} empleado${step2Form.watch('employees') > 1 ? 's' : ''}`}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-2xl font-bold text-oficaz-primary">
-                        €{(step2Form.watch('admins') * 6) + (step2Form.watch('managers') * 4) + (step2Form.watch('employees') * 2)}
-                      </span>
-                      <span className="text-gray-500">/mes</span>
-                    </div>
-                  </div>
-                </div>
-
                 <div className="flex gap-3 pt-4">
                   <Button 
                     type="button" 
@@ -887,27 +867,6 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     );
                   })}
                 </div>
-
-                {/* Price summary */}
-                {(step1Form.watch('selectedFeatures') || []).length > 0 && (
-                  <div className="bg-gray-50 rounded-2xl p-4 flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-gray-600">Funcionalidades seleccionadas:</span>
-                      <span className="ml-2 font-medium text-gray-900">
-                        {(step1Form.watch('selectedFeatures') || []).length}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-sm text-gray-500">Subtotal: </span>
-                      <span className="text-lg font-bold text-oficaz-primary">
-                        €{(step1Form.watch('selectedFeatures') || []).reduce((sum, key) => {
-                          const addon = addons.find(a => a.key === key);
-                          return sum + Number(addon?.monthlyPrice || 0);
-                        }, 0)}/mes
-                      </span>
-                    </div>
-                  </div>
-                )}
 
                 {/* Validation error */}
                 {step1Form.formState.errors.selectedFeatures && (
