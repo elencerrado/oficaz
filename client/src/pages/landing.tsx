@@ -471,61 +471,55 @@ export default function Landing() {
           </div>
         </div>
       </section>
-      {/* Pricing Section - Interactive Calculator */}
-      <section id="precios" className="py-16 md:py-20 bg-gray-50 min-h-[80vh] flex items-center">
-        <div className="max-w-6xl mx-auto px-6 w-full">
-          {/* Header */}
-          <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
+      {/* Pricing Section - Fits in viewport minus header (80px) */}
+      <section id="precios" className="h-[calc(100vh-80px)] bg-gray-50 flex flex-col justify-center py-8">
+        <div className="max-w-5xl mx-auto px-6 w-full">
+          {/* Header - Compact */}
+          <div className="text-center mb-6">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
               Sin planes. Paga solo lo que necesitas.
             </h2>
-            <p className="text-lg text-gray-500">
+            <p className="text-base text-gray-500">
               Configura tu suscripción a medida
             </p>
           </div>
           
           {/* Calculator Layout - Two columns, same height */}
-          <div className="grid lg:grid-cols-2 gap-8 items-stretch">
-            {/* Left: Price Summary - matches right column height */}
-            <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100 flex flex-col justify-center">
+          <div className="grid lg:grid-cols-2 gap-6 items-stretch">
+            {/* Left: Price Summary */}
+            <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 flex flex-col justify-center">
               <div className="text-center">
-                <p className="text-gray-500 text-sm mb-2">Tu plan mensual</p>
-                <div className="flex items-baseline justify-center gap-1 mb-8">
-                  <span className="text-7xl md:text-8xl font-black text-gray-900">€{monthlyTotal}</span>
-                  <span className="text-xl text-gray-400">/mes</span>
+                <p className="text-gray-500 text-sm mb-1">Tu plan mensual</p>
+                <div className="flex items-baseline justify-center gap-1 mb-6">
+                  <span className="text-6xl md:text-7xl font-black text-gray-900">€{monthlyTotal}</span>
+                  <span className="text-lg text-gray-400">/mes</span>
                 </div>
-                
-                {monthlyTotal === 0 && (
-                  <p className="text-gray-400 text-sm mb-8">
-                    Selecciona funciones y usuarios
-                  </p>
-                )}
                 
                 {/* CTA */}
                 {registrationSettings?.publicRegistrationEnabled ? (
                   <Link href="/request-code">
-                    <Button className="w-full py-6 text-lg font-bold bg-[#007AFF] hover:bg-[#0056CC]">
+                    <Button className="w-full py-5 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]">
                       Prueba 7 días gratis
                     </Button>
                   </Link>
                 ) : (
                   <Button 
                     onClick={() => setIsContactFormOpen(true)}
-                    className="w-full py-6 text-lg font-bold bg-[#007AFF] hover:bg-[#0056CC]"
+                    className="w-full py-5 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]"
                   >
                     Contactar
                   </Button>
                 )}
-                <p className="text-center text-xs text-gray-400 mt-3">Sin compromiso • Cancela cuando quieras</p>
+                <p className="text-center text-xs text-gray-400 mt-2">Sin compromiso • Cancela cuando quieras</p>
               </div>
             </div>
             
             {/* Right: Feature Selector */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Functions */}
-              <div className="bg-white rounded-2xl p-6 border border-gray-100">
-                <h3 className="font-semibold text-gray-900 mb-4">Funciones</h3>
-                <div className="grid grid-cols-2 gap-2">
+              <div className="bg-white rounded-xl p-4 border border-gray-100">
+                <h3 className="font-semibold text-gray-900 mb-3 text-sm">Funciones</h3>
+                <div className="grid grid-cols-2 gap-1.5">
                   {addons.map((addon) => {
                     const isSelected = selectedAddons.has(addon.key);
                     const IconComponent = addon.icon;
@@ -533,14 +527,14 @@ export default function Landing() {
                       <button
                         key={addon.key}
                         onClick={() => toggleAddon(addon.key)}
-                        className={`flex items-center gap-3 p-4 rounded-xl text-left transition-all ${
+                        className={`flex items-center gap-2 p-2.5 rounded-lg text-left transition-all ${
                           isSelected 
                             ? 'bg-[#007AFF] text-white' 
                             : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                         }`}
                       >
-                        <IconComponent className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-gray-400'}`} />
-                        <span className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                        <IconComponent className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-gray-400'}`} />
+                        <span className={`text-xs font-medium ${isSelected ? 'text-white' : 'text-gray-900'}`}>
                           {addon.name}
                         </span>
                       </button>
@@ -550,23 +544,23 @@ export default function Landing() {
               </div>
               
               {/* Users */}
-              <div className="bg-white rounded-2xl p-6 border border-gray-100">
-                <h3 className="font-semibold text-gray-900 mb-4">Usuarios</h3>
-                <div className="space-y-4">
+              <div className="bg-white rounded-xl p-4 border border-gray-100">
+                <h3 className="font-semibold text-gray-900 mb-3 text-sm">Usuarios</h3>
+                <div className="space-y-3">
                   {/* Employees */}
                   <div className="flex items-center justify-between">
-                    <p className="font-medium text-gray-900">Empleados</p>
-                    <div className="flex items-center gap-3">
+                    <p className="font-medium text-gray-900 text-sm">Empleados</p>
+                    <div className="flex items-center gap-2">
                       <button 
                         onClick={() => setUserCounts(prev => ({ ...prev, employees: Math.max(0, prev.employees - 1) }))}
-                        className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold"
+                        className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-sm"
                       >
                         -
                       </button>
-                      <span className="w-8 text-center font-semibold text-gray-900">{userCounts.employees}</span>
+                      <span className="w-6 text-center font-semibold text-gray-900 text-sm">{userCounts.employees}</span>
                       <button 
                         onClick={() => setUserCounts(prev => ({ ...prev, employees: prev.employees + 1 }))}
-                        className="w-8 h-8 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold"
+                        className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
                       >
                         +
                       </button>
@@ -575,18 +569,18 @@ export default function Landing() {
                   
                   {/* Managers */}
                   <div className="flex items-center justify-between">
-                    <p className="font-medium text-gray-900">Managers</p>
-                    <div className="flex items-center gap-3">
+                    <p className="font-medium text-gray-900 text-sm">Managers</p>
+                    <div className="flex items-center gap-2">
                       <button 
                         onClick={() => setUserCounts(prev => ({ ...prev, managers: Math.max(0, prev.managers - 1) }))}
-                        className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold"
+                        className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-sm"
                       >
                         -
                       </button>
-                      <span className="w-8 text-center font-semibold text-gray-900">{userCounts.managers}</span>
+                      <span className="w-6 text-center font-semibold text-gray-900 text-sm">{userCounts.managers}</span>
                       <button 
                         onClick={() => setUserCounts(prev => ({ ...prev, managers: prev.managers + 1 }))}
-                        className="w-8 h-8 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold"
+                        className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
                       >
                         +
                       </button>
@@ -595,12 +589,12 @@ export default function Landing() {
                   
                   {/* Admins - minimum 1 required */}
                   <div className="flex items-center justify-between">
-                    <p className="font-medium text-gray-900">Admins</p>
-                    <div className="flex items-center gap-3">
+                    <p className="font-medium text-gray-900 text-sm">Admins</p>
+                    <div className="flex items-center gap-2">
                       <button 
                         onClick={() => setUserCounts(prev => ({ ...prev, admins: Math.max(1, prev.admins - 1) }))}
                         disabled={userCounts.admins <= 1}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                        className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm ${
                           userCounts.admins <= 1 
                             ? 'bg-gray-50 text-gray-300 cursor-not-allowed' 
                             : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
@@ -608,10 +602,10 @@ export default function Landing() {
                       >
                         -
                       </button>
-                      <span className="w-8 text-center font-semibold text-gray-900">{userCounts.admins}</span>
+                      <span className="w-6 text-center font-semibold text-gray-900 text-sm">{userCounts.admins}</span>
                       <button 
                         onClick={() => setUserCounts(prev => ({ ...prev, admins: prev.admins + 1 }))}
-                        className="w-8 h-8 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold"
+                        className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
                       >
                         +
                       </button>
