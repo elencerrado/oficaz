@@ -1496,6 +1496,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       <DemoLoadingOverlay 
         isVisible={showDemoLoading}
         isBackendComplete={isBackendComplete}
+        companyName={formData.companyName}
         onComplete={() => {
           setShowDemoLoading(false);
           setIsBackendComplete(false);
