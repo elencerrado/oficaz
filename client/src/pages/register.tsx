@@ -497,7 +497,6 @@ export default function Register({ byInvitation = false, invitationEmail, invita
           </div>
         </div>
       </div>
-
       {/* Right Panel - Main content with scroll */}
       <div className="flex-1 flex flex-col h-screen overflow-y-auto">
         {/* Mobile header - hidden on intro step */}
@@ -539,9 +538,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     Este es un pequeño paso para nosotros,
                   </p>
                   <h1 
-                    className={`text-[1.75rem] sm:text-[2.5rem] lg:text-[3.5rem] font-semibold text-[#1d1d1f] leading-[1.05] tracking-[-0.025em] transition-all duration-1000 ease-out delay-500 ${
-                      introAnimationStarted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
-                    }`}
+                    className="sm:text-[2.5rem] lg:text-[3.5rem] font-semibold text-[#1d1d1f] tracking-[-0.025em] transition-all duration-1000 ease-out delay-500 opacity-100 translate-y-0 text-[52px]"
                   >
                     pero un gran paso para que{' '}
                     <br className="hidden sm:block" />
@@ -1474,7 +1471,6 @@ export default function Register({ byInvitation = false, invitationEmail, invita
           </div>
         </div>
       </div>
-      
       <DemoLoadingOverlay 
         isVisible={showDemoLoading}
         isBackendComplete={isBackendComplete}
