@@ -293,25 +293,25 @@ export default function Landing() {
           <div className="space-y-6 lg:space-y-8">
             
             {/* Main Headline */}
-            <div className="space-y-4">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-slate-900 leading-[1.1] tracking-tight">
+            <div className="space-y-3">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white leading-[1.1] tracking-tight drop-shadow-lg" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
                 Haz lo que te mueve.
               </h1>
-              <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold text-slate-600">
+              <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#007AFF] drop-shadow-md" style={{ textShadow: '0 2px 10px rgba(0,122,255,0.3)' }}>
                 Déjanos la parte aburrida.
               </p>
             </div>
 
             {/* Subtext */}
-            <p className="text-lg md:text-xl lg:text-2xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
-              La plataforma de gestión empresarial más <span className="text-slate-800 font-semibold">intuitiva</span> del mercado
+            <p className="text-lg md:text-xl lg:text-2xl text-white/90 max-w-2xl mx-auto leading-relaxed font-medium drop-shadow-md">
+              La plataforma de gestión empresarial más <span className="text-white font-bold">intuitiva</span> del mercado
             </p>
 
             {/* CTA Button */}
             {registrationSettings?.publicRegistrationEnabled && (
               <div className="flex justify-center pt-4 lg:pt-6">
                 <Link href="/request-code">
-                  <Button size="lg" className="bg-slate-900 hover:bg-slate-800 text-white px-8 lg:px-10 py-4 lg:py-5 text-lg lg:text-xl font-semibold shadow-2xl shadow-slate-900/20 border-0 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-3xl">
+                  <Button size="lg" className="bg-[#007AFF] hover:bg-[#0066DD] text-white px-8 lg:px-10 py-4 lg:py-5 text-lg lg:text-xl font-semibold shadow-2xl shadow-[#007AFF]/40 border-0 rounded-2xl transition-all duration-300 hover:scale-105">
                     Empezar Gratis
                     <ArrowRight className="w-5 h-5 lg:w-6 lg:h-6 ml-3" />
                   </Button>
@@ -321,17 +321,17 @@ export default function Landing() {
 
             {/* Trust Indicators */}
             <div className="pt-6 lg:pt-8">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 text-slate-500 text-sm sm:text-base">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 text-white/90 text-sm sm:text-base font-medium">
+                <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <CheckCircle className="w-4 h-4 text-green-400" />
                   <span>7 días de prueba gratis</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-blue-500" />
+                <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <Shield className="w-4 h-4 text-[#007AFF]" />
                   <span>Datos 100% protegidos</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-amber-500" />
+                <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <Zap className="w-4 h-4 text-amber-400" />
                   <span>Activo en minutos</span>
                 </div>
               </div>
