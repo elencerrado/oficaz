@@ -492,8 +492,76 @@ export default function Register({ byInvitation = false, invitationEmail, invita
           </div>
         </div>
 
+        {/* Price summary - shows when there's data */}
+        {currentStep >= 1 && (
+          <div className="relative z-10 pt-6 border-t border-white/10">
+            <div className="bg-white/5 rounded-2xl p-4 backdrop-blur-sm">
+              <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Tu suscripción</div>
+              
+              {/* Users breakdown */}
+              {currentStep >= 1 && (formData.admins || formData.managers || formData.employees) && (
+                <div className="space-y-1 mb-3 text-sm">
+                  {(formData.admins || 0) > 0 && (
+                    <div className="flex justify-between text-gray-300">
+                      <span>{formData.admins} Admin{(formData.admins || 0) > 1 ? 's' : ''}</span>
+                      <span>€{(formData.admins || 0) * 6}</span>
+                    </div>
+                  )}
+                  {(formData.managers || 0) > 0 && (
+                    <div className="flex justify-between text-gray-300">
+                      <span>{formData.managers} Manager{(formData.managers || 0) > 1 ? 's' : ''}</span>
+                      <span>€{(formData.managers || 0) * 4}</span>
+                    </div>
+                  )}
+                  {(formData.employees || 0) > 0 && (
+                    <div className="flex justify-between text-gray-300">
+                      <span>{formData.employees} Empleado{(formData.employees || 0) > 1 ? 's' : ''}</span>
+                      <span>€{(formData.employees || 0) * 2}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Features breakdown */}
+              {currentStep >= 2 && formData.selectedFeatures && formData.selectedFeatures.length > 0 && (
+                <div className="space-y-1 mb-3 text-sm border-t border-white/10 pt-3">
+                  {formData.selectedFeatures.map((key: string) => {
+                    const addon = ADDON_DEFINITIONS.find(a => a.key === key);
+                    if (!addon) return null;
+                    return (
+                      <div key={key} className="flex justify-between text-gray-300">
+                        <span className="truncate mr-2">{addon.name}</span>
+                        <span>€{addon.monthlyPrice}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              
+              {/* Total */}
+              <div className="flex justify-between items-baseline pt-2 border-t border-white/10">
+                <span className="text-gray-300 font-medium">Total</span>
+                <div className="text-right">
+                  <span className="text-2xl font-bold text-white">
+                    €{
+                      ((formData.admins || 0) * 6) + 
+                      ((formData.managers || 0) * 4) + 
+                      ((formData.employees || 0) * 2) +
+                      (formData.selectedFeatures?.reduce((sum: number, key: string) => {
+                        const addon = ADDON_DEFINITIONS.find(a => a.key === key);
+                        return sum + (addon ? addon.monthlyPrice : 0);
+                      }, 0) || 0)
+                    }
+                  </span>
+                  <span className="text-gray-400 text-sm">/mes</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Minimal footer - just key benefits */}
-        <div className="relative z-10 pt-8 space-y-3">
+        <div className="relative z-10 pt-6 space-y-3">
           <div className="flex items-center gap-3 text-gray-400 text-sm">
             <Star className="w-4 h-4 text-yellow-400/80" />
             <span>7 días de prueba gratis</span>
