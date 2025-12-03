@@ -1659,7 +1659,7 @@ export default function Settings() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
   
-  const [activeTab, setActiveTab] = useState('company');
+  const [activeTab, setActiveTab] = useState(user?.role === 'admin' ? 'account' : 'company');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -2434,10 +2434,10 @@ export default function Settings() {
       ) : null}
       <TabNavigation
           tabs={[
+            ...(user?.role === 'admin' ? [{ id: 'account', label: 'Mi Cuenta', icon: CreditCard }] : []),
             { id: 'company', label: 'Empresa', icon: Building2 },
             { id: 'policies', label: 'Políticas', icon: Shield },
             { id: 'profile', label: 'Mi Perfil', icon: Users },
-            ...(user?.role === 'admin' ? [{ id: 'account', label: 'Mi Cuenta', icon: CreditCard }] : [])
           ]}
           activeTab={activeTab}
           onTabChange={setActiveTab}
