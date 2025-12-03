@@ -9575,37 +9575,58 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
         return res.status(404).json({ message: 'Usuario no encontrado' });
       }
 
-      // Get subscription plan details
-      const planResult = await db.execute(sql`
-        SELECT monthly_price FROM subscription_plans 
-        WHERE name = ${company.subscription.plan}
-      `);
-
-      if (!planResult.rows[0]) {
-        return res.status(404).json({ message: 'Plan no encontrado' });
-      }
-
-      const standardMonthlyPrice = (planResult.rows[0] as any).monthly_price;
+      // NEW MODULAR PRICING MODEL: Calculate total from addons + user seats
+      // 1. Get all active addons for this company and sum their prices
+      const companyAddons = await storage.getCompanyAddons(company.id);
+      const activeAddons = companyAddons.filter(ca => ca.status === 'active' || ca.isActive);
+      const addonsTotalPrice = activeAddons.reduce((sum, ca) => {
+        const addonPrice = parseFloat(ca.addon?.monthlyPrice?.toString() || '0');
+        return sum + addonPrice;
+      }, 0);
+      console.log(`💰 MODULAR: ${activeAddons.length} addons = €${addonsTotalPrice.toFixed(2)}/month`);
       
-      // Use custom monthly price if set, otherwise use standard plan price
-      // CRITICAL: Drizzle decimal fields come as strings, must convert to number for Stripe
+      // 2. Get seat pricing and calculate user seats total
+      const seatPricing = await storage.getAllSeatPricing();
+      const seatPriceMap: Record<string, number> = {};
+      for (const sp of seatPricing) {
+        seatPriceMap[sp.roleType] = parseFloat(sp.monthlyPrice?.toString() || '0');
+      }
+      
+      // User seats: extraAdmins, extraManagers, extraEmployees from subscription
+      // Note: First admin is included in base, rest are "extra"
+      const adminSeats = (company.subscription.extraAdmins || 0) + 1; // +1 for the creator admin
+      const managerSeats = company.subscription.extraManagers || 0;
+      const employeeSeats = company.subscription.extraEmployees || 0;
+      
+      const seatsTotalPrice = 
+        (adminSeats * (seatPriceMap['admin'] || 6)) +
+        (managerSeats * (seatPriceMap['manager'] || 4)) +
+        (employeeSeats * (seatPriceMap['employee'] || 2));
+      console.log(`💰 MODULAR: ${adminSeats} admins + ${managerSeats} managers + ${employeeSeats} employees = €${seatsTotalPrice.toFixed(2)}/month`);
+      
+      // 3. Calculate total monthly price
+      // If custom price is set (by SuperAdmin), use that instead
       const customPriceNum = company.subscription.customMonthlyPrice ? Number(company.subscription.customMonthlyPrice) : null;
-      const standardPriceNum = Number(standardMonthlyPrice);
-      let monthlyPrice = customPriceNum || standardPriceNum;
+      let monthlyPrice: number;
       
-      // EMERGENCY FIX: Force correct price if conversion fails
-      if (!monthlyPrice || monthlyPrice <= 0) {
-        console.log(`🚨 PRICE ERROR: monthlyPrice=${monthlyPrice}, forcing plan price`);
-        monthlyPrice = company.subscription.plan === 'pro' ? 39.95 : 
-                      company.subscription.plan === 'basic' ? 19.95 : 
-                      company.subscription.plan === 'master' ? 99.95 : 39.95;
-        console.log(`🚨 FORCED PRICE: Using €${monthlyPrice} for plan ${company.subscription.plan}`);
+      if (customPriceNum && customPriceNum > 0) {
+        // SuperAdmin has set a custom price - use that
+        monthlyPrice = customPriceNum;
+        console.log(`💰 MODULAR: Using SuperAdmin custom price: €${monthlyPrice.toFixed(2)}/month`);
+      } else {
+        // Calculate from addons + seats (base is €0 in modular model)
+        monthlyPrice = addonsTotalPrice + seatsTotalPrice;
+        console.log(`💰 MODULAR: Total = €${addonsTotalPrice.toFixed(2)} (addons) + €${seatsTotalPrice.toFixed(2)} (seats) = €${monthlyPrice.toFixed(2)}/month`);
       }
       
-      console.log(`💰 Using ${customPriceNum ? 'custom' : 'standard'} price: €${monthlyPrice}/month for ${company.name}`);
-      console.log(`💰 DEBUG: customMonthlyPrice="${company.subscription.customMonthlyPrice}" (${typeof company.subscription.customMonthlyPrice}) -> ${customPriceNum}`);
-      console.log(`💰 DEBUG: standardMonthlyPrice="${standardMonthlyPrice}" (${typeof standardMonthlyPrice}) -> ${standardPriceNum}`);
-      console.log(`💰 DEBUG: Final monthlyPrice=${monthlyPrice} (${typeof monthlyPrice})`);
+      // Minimum validation: At least 1 admin (€6) and 1 addon (€3) required
+      const minimumPrice = 6 + 3; // €6 for 1 admin + €3 for cheapest addon
+      if (monthlyPrice < minimumPrice && !customPriceNum) {
+        console.log(`🚨 MODULAR: Price €${monthlyPrice.toFixed(2)} below minimum €${minimumPrice}. Adjusting.`);
+        monthlyPrice = minimumPrice;
+      }
+      
+      console.log(`💰 FINAL: Charging €${monthlyPrice.toFixed(2)}/month for ${company.name}`);
 
       // Create or get Stripe customer
       let stripeCustomerId = user.stripeCustomerId;
