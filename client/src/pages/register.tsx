@@ -191,6 +191,14 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   }, []);
 
   useEffect(() => {
+    const scrollContainer = document.querySelector('.wizard-scroll-container');
+    if (scrollContainer) {
+      scrollContainer.scrollTo({ top: 0, behavior: 'instant' });
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [currentStep]);
+
+  useEffect(() => {
     if (currentStep === 0) {
       const timer = setTimeout(() => setIntroAnimationStarted(true), 100);
       return () => clearTimeout(timer);
@@ -498,7 +506,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
         </div>
       </div>
       {/* Right Panel - Main content with scroll */}
-      <div className="flex-1 flex flex-col h-screen overflow-y-auto">
+      <div className="flex-1 flex flex-col h-screen overflow-y-auto wizard-scroll-container">
         {/* Mobile header - hidden on intro step */}
         {currentStep > 0 && (
           <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-4 flex-shrink-0">
