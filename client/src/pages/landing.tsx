@@ -112,9 +112,17 @@ export default function Landing() {
   usePageTitle('Bienvenido a Oficaz');
   const [isScrolled, setIsScrolled] = useState(false);
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
+  const [heroScrollProgress, setHeroScrollProgress] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // Defer API calls until after critical content renders
   const [shouldLoadData, setShouldLoadData] = useState(false);
+  
+  useEffect(() => {
+    // Trigger entrance animations after mount
+    const timer = setTimeout(() => setIsLoaded(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
   
   useEffect(() => {
     // Defer data loading to prevent blocking initial render
@@ -165,6 +173,12 @@ export default function Landing() {
         requestAnimationFrame(() => {
           const scrollTop = window.scrollY;
           setIsScrolled(scrollTop > 50);
+          
+          // Calculate hero scroll progress (0 to 1) based on viewport height
+          const heroHeight = window.innerHeight;
+          const progress = Math.min(scrollTop / (heroHeight * 0.6), 1);
+          setHeroScrollProgress(progress);
+          
           ticking = false;
         });
         ticking = true;
@@ -341,46 +355,112 @@ export default function Landing() {
         <FaWhatsapp className="w-8 h-8" />
       </a>
 
-      {/* Hero Section - New Design with Background Image */}
-      <section className="relative overflow-hidden min-h-screen flex items-center justify-center pt-16"
+      {/* Hero Section - New Design with Background Image and Scroll Effects */}
+      <section className="relative min-h-screen flex items-center justify-center pt-16"
                style={{ minHeight: '100vh' }}>
-        {/* Background Image */}
+        {/* Fixed Background Image */}
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10"
           style={{ 
             backgroundImage: `url(${heroBackground})`,
+            backgroundAttachment: 'fixed',
           }}
         />
         
-        {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 bg-slate-900/70" />
+        {/* Dark overlay that fades to white on scroll */}
+        <div 
+          className="fixed inset-0 -z-10 transition-colors duration-100"
+          style={{ 
+            backgroundColor: `rgba(15, 23, 42, ${0.7 * (1 - heroScrollProgress)})`,
+          }}
+        />
         
-        <div className="relative max-w-5xl mx-auto px-6 text-center">
-          {/* Main Content */}
+        {/* White overlay that appears on scroll */}
+        <div 
+          className="fixed inset-0 -z-10"
+          style={{ 
+            backgroundColor: `rgba(255, 255, 255, ${heroScrollProgress})`,
+          }}
+        />
+        
+        {/* Content that fades out on scroll */}
+        <div 
+          className="relative max-w-5xl mx-auto px-6 text-center transition-all duration-100"
+          style={{
+            opacity: 1 - heroScrollProgress * 1.5,
+            transform: `translateY(${heroScrollProgress * -50}px) scale(${1 - heroScrollProgress * 0.1})`,
+            pointerEvents: heroScrollProgress > 0.5 ? 'none' : 'auto',
+          }}
+        >
+          {/* Main Content with staggered entrance animations */}
           <div className="space-y-8 lg:space-y-10">
             
-            {/* Main Headline */}
+            {/* Main Headline - First to animate */}
             <div className="space-y-3">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white leading-[1.1] tracking-tight">
+              <h1 
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white leading-[1.1] tracking-tight transition-all duration-1000 ease-out"
+                style={{
+                  opacity: isLoaded ? 1 : 0,
+                  transform: isLoaded ? 'translateY(0)' : 'translateY(40px)',
+                }}
+              >
                 Haz lo que te mueve.
               </h1>
-              <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#60B5FF]">
+              <p 
+                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#60B5FF] transition-all duration-1000 ease-out"
+                style={{
+                  opacity: isLoaded ? 1 : 0,
+                  transform: isLoaded ? 'translateY(0)' : 'translateY(40px)',
+                  transitionDelay: '150ms',
+                }}
+              >
                 Déjanos la parte aburrida.
               </p>
             </div>
 
-            {/* Subtext */}
-            <p className="text-lg md:text-xl lg:text-2xl text-white/90 max-w-2xl mx-auto leading-relaxed font-medium">
+            {/* Subtext - Second to animate */}
+            <p 
+              className="text-lg md:text-xl lg:text-2xl text-white/90 max-w-2xl mx-auto leading-relaxed font-medium transition-all duration-1000 ease-out"
+              style={{
+                opacity: isLoaded ? 1 : 0,
+                transform: isLoaded ? 'translateY(0)' : 'translateY(30px)',
+                transitionDelay: '300ms',
+              }}
+            >
               La app de gestión empresarial en un clic
             </p>
 
-            {/* Difficulty Slider */}
+            {/* Difficulty Slider - Third to animate */}
             {registrationSettings?.publicRegistrationEnabled && (
-              <div className="flex flex-col items-center gap-4 pt-4">
+              <div 
+                className="flex flex-col items-center gap-4 pt-4 transition-all duration-1000 ease-out"
+                style={{
+                  opacity: isLoaded ? 1 : 0,
+                  transform: isLoaded ? 'translateY(0)' : 'translateY(30px)',
+                  transitionDelay: '450ms',
+                }}
+              >
                 <p className="text-white/70 text-sm font-medium">Selecciona nivel de dificultad</p>
                 <DifficultySlider />
               </div>
             )}
+          </div>
+        </div>
+        
+        {/* Scroll indicator */}
+        <div 
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 transition-all duration-500"
+          style={{
+            opacity: isLoaded && heroScrollProgress < 0.3 ? 1 : 0,
+            transform: `translateY(${isLoaded ? 0 : 20}px)`,
+            transitionDelay: '600ms',
+          }}
+        >
+          <div className="flex flex-col items-center gap-2 text-white/50">
+            <span className="text-xs font-medium">Scroll</span>
+            <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2">
+              <div className="w-1.5 h-3 bg-white/50 rounded-full animate-bounce" />
+            </div>
           </div>
         </div>
       </section>
