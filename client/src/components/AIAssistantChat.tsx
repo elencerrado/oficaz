@@ -112,6 +112,23 @@ export function AIAssistantChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
+  
+  // Detect when welcome modal is open via body attribute
+  useEffect(() => {
+    const checkWelcomeModal = () => {
+      setIsWelcomeModalOpen(document.body.hasAttribute('data-welcome-modal-open'));
+    };
+    
+    // Check immediately
+    checkWelcomeModal();
+    
+    // Use MutationObserver to detect attribute changes
+    const observer = new MutationObserver(checkWelcomeModal);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['data-welcome-modal-open'] });
+    
+    return () => observer.disconnect();
+  }, []);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -390,6 +407,11 @@ export function AIAssistantChat() {
   );
 
   // PROFESSIONAL PATTERN: Render to body, use display:none instead of conditional rendering
+  // Hide completely when welcome modal is open
+  if (isWelcomeModalOpen) {
+    return null;
+  }
+  
   return createPortal(
     <>
       {hasAccess && (
