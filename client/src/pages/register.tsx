@@ -854,8 +854,8 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                           </div>
                         </div>
                         
-                        {/* Description - full text without clamp */}
-                        <p className="text-sm text-gray-500 flex-1 leading-relaxed">{addon.shortDescription}</p>
+                        {/* Description - full text with personality */}
+                        <p className="text-sm text-gray-500 flex-1 leading-relaxed">{addon.description}</p>
                         
                         {/* Price - bottom right */}
                         <div className="flex justify-end mt-3 pt-3 border-t border-gray-100">
