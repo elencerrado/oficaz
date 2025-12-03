@@ -438,8 +438,10 @@ export default function EmployeeTimeTracking() {
       breakPeriod.status === 'completed'
     );
     
+    // Duration is stored in MINUTES, convert to hours
     const totalBreakHours = sessionBreaks.reduce((total: number, breakPeriod: any) => {
-      return total + (parseFloat(breakPeriod.duration) || 0);
+      const breakMinutes = parseFloat(breakPeriod.duration) || 0;
+      return total + (breakMinutes / 60); // Convert minutes to hours
     }, 0);
     
     // Return net work hours (total time - break time)
