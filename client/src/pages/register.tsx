@@ -521,49 +521,55 @@ export default function Register({ byInvitation = false, invitationEmail, invita
         <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
           <div className="w-full max-w-2xl">
             
-            {/* Step 0: Introduction - Clean Apple Style */}
+            {/* Step 0: Introduction - Apple Style with original text */}
             {currentStep === 0 && (
               <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-6">
                 {/* Logo for mobile */}
-                <div className="lg:hidden mb-16">
-                  <img src={oficazLogo} alt="Oficaz" className="h-9 mx-auto" />
+                <div className="lg:hidden mb-20">
+                  <img src={oficazLogo} alt="Oficaz" className="h-10 mx-auto" />
                 </div>
                 
-                {/* Clean headline */}
-                <div className="max-w-lg mx-auto mb-12">
-                  <h1 
-                    className={`text-[2rem] sm:text-[2.5rem] lg:text-[3rem] font-semibold text-gray-900 leading-[1.1] tracking-tight transition-all duration-1000 ease-out ${
-                      introAnimationStarted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+                {/* Text content with refined Apple typography */}
+                <div className="max-w-2xl mx-auto space-y-8 mb-16">
+                  <p 
+                    className={`text-[1.125rem] sm:text-[1.375rem] text-[#86868b] font-normal tracking-[-0.01em] transition-all duration-1000 ease-out ${
+                      introAnimationStarted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
                     }`}
                   >
-                    Gestiona tu empresa de forma más eficiente.
+                    Este es un pequeño paso para nosotros,
+                  </p>
+                  <h1 
+                    className={`text-[1.75rem] sm:text-[2.5rem] lg:text-[3.5rem] font-semibold text-[#1d1d1f] leading-[1.05] tracking-[-0.025em] transition-all duration-1000 ease-out delay-500 ${
+                      introAnimationStarted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+                    }`}
+                  >
+                    pero un gran paso para que{' '}
+                    <br className="hidden sm:block" />
+                    tu empresa sea más{' '}
+                    <span className="text-oficaz-primary">
+                      Oficaz
+                    </span>
                   </h1>
                 </div>
                 
-                {/* Subtitle */}
-                <p 
-                  className={`text-lg sm:text-xl text-gray-500 font-normal mb-12 max-w-md transition-all duration-1000 ease-out delay-300 ${
-                    introAnimationStarted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                  }`}
-                >
-                  Configura tu cuenta en solo 2 minutos.
-                </p>
-                
-                {/* Clean button */}
+                {/* Button */}
                 <div 
-                  className={`transition-all duration-700 ease-out delay-700 ${
+                  className={`transition-all duration-700 ease-out delay-1000 ${
                     introAnimationStarted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
                   }`}
                 >
                   <Button
                     onClick={() => setCurrentStep(1)}
                     size="lg"
-                    className="h-12 px-8 rounded-full text-base font-medium bg-oficaz-primary hover:bg-oficaz-primary/90 transition-all duration-200"
+                    className="h-14 px-10 rounded-full text-[1.0625rem] font-medium bg-[#0071e3] hover:bg-[#0077ED] text-white transition-all duration-200"
                     data-testid="button-start-wizard"
                   >
                     Avanzar
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                    <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
+                  <p className="text-[0.875rem] text-[#86868b] mt-8 font-normal">
+                    Solo te llevará 2 minutos
+                  </p>
                 </div>
               </div>
             )}
