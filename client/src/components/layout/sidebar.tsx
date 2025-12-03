@@ -136,23 +136,22 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
         `}
         style={{
-          top: showBanner ? `${bannerHeight}px` : '0px',
-          height: showBanner ? `calc(100vh - ${bannerHeight}px)` : '100vh',
+          top: showBanner ? `calc(${bannerHeight}px + env(safe-area-inset-top, 0px))` : 'env(safe-area-inset-top, 0px)',
+          bottom: '0px',
           backgroundColor: 'hsl(var(--sidebar-background))',
-          marginTop: 'env(safe-area-inset-top, 0px)',
           paddingLeft: 'env(safe-area-inset-left, 0px)'
         }}
       >
         <div className="h-16 bg-sidebar flex-shrink-0" style={{ backgroundColor: 'hsl(var(--sidebar-background))' }} />
         
         <div 
-          className="flex-1 overflow-y-auto flex flex-col bg-sidebar"
+          className="flex-1 overflow-y-auto bg-sidebar min-h-0"
           style={{
             backgroundColor: 'hsl(var(--sidebar-background))'
           }}
         >
-          <div className="flex-1 p-4 bg-sidebar">
-            <div className="h-full flex flex-col justify-start space-y-1"
+          <div className="p-4 bg-sidebar">
+            <div className="flex flex-col justify-start space-y-1"
                  style={{ 
                    gap: 'clamp(0.3rem, 1.2vh, 0.8rem)'
                  }}>
