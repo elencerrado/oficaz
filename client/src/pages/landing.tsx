@@ -355,35 +355,31 @@ export default function Landing() {
         <FaWhatsapp className="w-8 h-8" />
       </a>
 
+      {/* Fixed Background that stays behind everything */}
+      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
+        {/* Background Image */}
+        <img 
+          src={heroBackground} 
+          alt="" 
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        
+        {/* Dark overlay - fades out on scroll */}
+        <div 
+          className="absolute inset-0 bg-slate-900 transition-opacity duration-150"
+          style={{ opacity: 0.7 * (1 - heroScrollProgress) }}
+        />
+        
+        {/* White overlay - fades in on scroll */}
+        <div 
+          className="absolute inset-0 bg-white transition-opacity duration-150"
+          style={{ opacity: heroScrollProgress }}
+        />
+      </div>
+
       {/* Hero Section - New Design with Background Image and Scroll Effects */}
       <section className="relative min-h-screen flex items-center justify-center pt-16"
-               style={{ minHeight: '100vh' }}>
-        {/* Fixed Background Image */}
-        <div 
-          className="fixed inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ 
-            backgroundImage: `url(${heroBackground})`,
-            zIndex: -20,
-          }}
-        />
-        
-        {/* Dark overlay that fades to white on scroll */}
-        <div 
-          className="fixed inset-0"
-          style={{ 
-            backgroundColor: `rgba(15, 23, 42, ${0.7 * (1 - heroScrollProgress)})`,
-            zIndex: -15,
-          }}
-        />
-        
-        {/* White overlay that appears on scroll */}
-        <div 
-          className="fixed inset-0"
-          style={{ 
-            backgroundColor: `rgba(255, 255, 255, ${heroScrollProgress})`,
-            zIndex: -10,
-          }}
-        />
+               style={{ minHeight: '100vh', zIndex: 1 }}>
         
         {/* Content that fades out on scroll */}
         <div 
