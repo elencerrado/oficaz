@@ -42,14 +42,14 @@ import { FaWhatsapp } from 'react-icons/fa';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 import heroBackground from '@assets/oficaz_hero_1764771312944.webp';
 
-// Avatar images for employee preview
-import avatarMan01 from '@assets/man01_1764778692814.webp';
-import avatarMan02 from '@assets/man02_1764778692815.webp';
-import avatarMan03 from '@assets/man03_1764778692815.webp';
-import avatarMan04 from '@assets/man04_1764778692815.webp';
-import avatarWoman01 from '@assets/woman01_1764778692816.webp';
-import avatarWoman02 from '@assets/woman02_1764778692816.webp';
-import avatarWoman03 from '@assets/woman03_1764778692816.webp';
+// Avatar images for employee preview (optimized thumbnails)
+import avatarMan01 from '@assets/man01_thumb.webp';
+import avatarMan02 from '@assets/man02_thumb.webp';
+import avatarMan03 from '@assets/man03_thumb.webp';
+import avatarMan04 from '@assets/man04_thumb.webp';
+import avatarWoman01 from '@assets/woman01_thumb.webp';
+import avatarWoman02 from '@assets/woman02_thumb.webp';
+import avatarWoman03 from '@assets/woman03_thumb.webp';
 
 function DifficultySlider() {
   const [selected, setSelected] = useState<'dificil' | 'normal' | 'oficaz'>('normal');
