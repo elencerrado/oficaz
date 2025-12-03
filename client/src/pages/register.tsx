@@ -521,54 +521,49 @@ export default function Register({ byInvitation = false, invitationEmail, invita
         <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
           <div className="w-full max-w-2xl">
             
-            {/* Step 0: Introduction - Apple Style Animation */}
+            {/* Step 0: Introduction - Clean Apple Style */}
             {currentStep === 0 && (
-              <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+              <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-6">
                 {/* Logo for mobile */}
-                <div className="lg:hidden mb-12">
-                  <img src={oficazLogo} alt="Oficaz" className="h-8 mx-auto" />
+                <div className="lg:hidden mb-16">
+                  <img src={oficazLogo} alt="Oficaz" className="h-9 mx-auto" />
                 </div>
                 
-                {/* Animated text */}
-                <div className="space-y-6 mb-16">
-                  <p 
-                    className={`text-lg sm:text-xl text-gray-500 font-light transition-all duration-1000 ease-out ${
-                      introAnimationStarted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                    }`}
-                  >
-                    Este es un pequeño paso para nosotros,
-                  </p>
+                {/* Clean headline */}
+                <div className="max-w-lg mx-auto mb-12">
                   <h1 
-                    className={`text-2xl sm:text-4xl lg:text-5xl font-semibold text-gray-900 leading-tight transition-all duration-1000 ease-out delay-500 ${
-                      introAnimationStarted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                    className={`text-[2rem] sm:text-[2.5rem] lg:text-[3rem] font-semibold text-gray-900 leading-[1.1] tracking-tight transition-all duration-1000 ease-out ${
+                      introAnimationStarted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
                     }`}
                   >
-                    pero un gran paso para que<br />
-                    tu empresa sea más{' '}
-                    <span className="bg-gradient-to-r from-oficaz-primary to-blue-600 bg-clip-text text-transparent">
-                      Oficaz
-                    </span>
+                    Gestiona tu empresa de forma más eficiente.
                   </h1>
                 </div>
                 
-                {/* Animated button */}
+                {/* Subtitle */}
+                <p 
+                  className={`text-lg sm:text-xl text-gray-500 font-normal mb-12 max-w-md transition-all duration-1000 ease-out delay-300 ${
+                    introAnimationStarted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`}
+                >
+                  Configura tu cuenta en solo 2 minutos.
+                </p>
+                
+                {/* Clean button */}
                 <div 
-                  className={`transition-all duration-700 ease-out delay-1000 ${
-                    introAnimationStarted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                  className={`transition-all duration-700 ease-out delay-700 ${
+                    introAnimationStarted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
                   }`}
                 >
                   <Button
                     onClick={() => setCurrentStep(1)}
                     size="lg"
-                    className="h-14 px-10 rounded-full text-base font-medium shadow-lg shadow-oficaz-primary/25 hover:shadow-xl hover:shadow-oficaz-primary/30 transition-all duration-300 hover:scale-105"
+                    className="h-12 px-8 rounded-full text-base font-medium bg-oficaz-primary hover:bg-oficaz-primary/90 transition-all duration-200"
                     data-testid="button-start-wizard"
                   >
-                    Comenzar
-                    <ArrowRight className="w-5 h-5 ml-2" />
+                    Avanzar
+                    <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
-                  <p className="text-sm text-gray-400 mt-6">
-                    Solo te llevará 2 minutos
-                  </p>
                 </div>
               </div>
             )}
