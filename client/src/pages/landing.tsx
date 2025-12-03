@@ -630,23 +630,40 @@ export default function Landing() {
                       {previewAddon === 'employees' && (
                         <div className="p-3 h-full bg-[#0a1628]">
                           <h3 className="text-white font-bold text-sm mb-0.5">Mi Equipo</h3>
-                          <p className="text-gray-400 text-[8px] mb-3">Gestiona tu plantilla</p>
+                          <p className="text-gray-400 text-[8px] mb-2">Gestiona tu plantilla</p>
                           
-                          <div className="bg-[#1a2942] rounded-xl p-3 mb-3">
-                            <p className="text-gray-400 text-[8px] mb-1">Empleados activos</p>
-                            <p className="text-white font-bold text-2xl">24</p>
+                          {/* 3 role count cards */}
+                          <div className="grid grid-cols-3 gap-1.5 mb-2">
+                            <div className="bg-[#1a2942] rounded-lg p-2 text-center">
+                              <p className="text-white font-bold text-sm">1</p>
+                              <p className="text-gray-400 text-[6px]">Admin</p>
+                            </div>
+                            <div className="bg-[#1a2942] rounded-lg p-2 text-center">
+                              <p className="text-white font-bold text-sm">1</p>
+                              <p className="text-gray-400 text-[6px]">Manager</p>
+                            </div>
+                            <div className="bg-[#1a2942] rounded-lg p-2 text-center">
+                              <p className="text-white font-bold text-sm">10</p>
+                              <p className="text-gray-400 text-[6px]">Empleados</p>
+                            </div>
                           </div>
                           
-                          <div className="bg-[#1a2942] rounded-xl p-2 space-y-2">
-                            {['María García', 'Carlos López', 'Ana Martín'].map((name, i) => (
-                              <div key={i} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-[#0a1628]">
-                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#007AFF] to-blue-600 flex items-center justify-center text-white text-[8px] font-bold">
-                                  {name.split(' ').map(n => n[0]).join('')}
+                          {/* Employee cards */}
+                          <div className="space-y-1.5">
+                            {[
+                              { name: 'María García', role: 'Admin', color: 'from-purple-500 to-pink-500' },
+                              { name: 'Carlos López', role: 'Manager', color: 'from-[#007AFF] to-blue-600' },
+                              { name: 'Ana Martín', role: 'Empleado', color: 'from-green-500 to-emerald-600' },
+                            ].map((emp, i) => (
+                              <div key={i} className="bg-[#1a2942] rounded-lg p-2 flex items-center gap-2">
+                                <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${emp.color} flex items-center justify-center text-white text-[8px] font-bold`}>
+                                  {emp.name.split(' ').map(n => n[0]).join('')}
                                 </div>
-                                <div>
-                                  <p className="text-white text-[8px] font-medium">{name}</p>
-                                  <p className="text-gray-500 text-[7px]">{['Admin', 'Manager', 'Empleado'][i]}</p>
+                                <div className="flex-1">
+                                  <p className="text-white text-[8px] font-medium">{emp.name}</p>
+                                  <p className="text-gray-500 text-[6px]">{emp.role}</p>
                                 </div>
+                                <Settings className="w-3 h-3 text-gray-500" />
                               </div>
                             ))}
                           </div>
