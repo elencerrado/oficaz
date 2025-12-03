@@ -458,29 +458,35 @@ export default function AddonStore() {
               <Users className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Gestionar usuarios</h2>
             </div>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
               {/* Employees Card */}
-              <Card className={`relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 min-h-[280px] flex flex-col ${
+              <Card className={`relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 flex flex-col ${
                 editedSeats && editedSeats.employees !== currentContractedSeats.employees ? 'ring-2 ring-blue-500' : ''
               }`} data-testid="seats-employees-card">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-3 mb-2">
+                <CardHeader className="pb-2 p-4 sm:p-6 sm:pb-2">
+                  <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                       <Users className="h-5 w-5" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <CardTitle className="text-base text-gray-900 dark:text-gray-100">Empleados</CardTitle>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
                         {currentUserCounts.employees} activos de {displaySeats.employees} contratados
                       </span>
                     </div>
+                    <div className="flex items-baseline gap-1 sm:hidden">
+                      <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        {seatPrices.employees.toFixed(2)}€
+                      </span>
+                      <span className="text-gray-500 dark:text-gray-400 text-xs">/mes</span>
+                    </div>
                   </div>
-                  <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
+                  <CardDescription className="text-sm text-gray-500 dark:text-gray-400 mt-2 hidden sm:block">
                     Tu equipo crece y necesitas más manos. Añade empleados sin límites y que todos fichen, pidan vacaciones y reciban mensajes.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex-grow flex flex-col justify-end pt-0">
-                  <div className="mb-3">
+                <CardContent className="flex-grow flex flex-col justify-end pt-0 p-4 sm:p-6 sm:pt-0">
+                  <div className="mb-3 hidden sm:block">
                     <div className="flex items-baseline gap-1">
                       <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
                         {seatPrices.employees.toFixed(2)}€
@@ -488,24 +494,24 @@ export default function AddonStore() {
                       <span className="text-gray-500 dark:text-gray-400 text-sm">/mes cada uno</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-center gap-4">
+                  <div className="flex items-center justify-center gap-3 sm:gap-4">
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-10 w-10"
+                      className="h-9 w-9 sm:h-10 sm:w-10"
                       onClick={() => updateSeatCount('employees', -1)}
                       disabled={displaySeats.employees === 0}
                       data-testid="seats-employees-minus"
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <span className="w-12 text-center text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-employees-count">
+                    <span className="w-10 sm:w-12 text-center text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-employees-count">
                       {displaySeats.employees}
                     </span>
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-9 w-9 sm:h-10 sm:w-10"
                       onClick={() => updateSeatCount('employees', 1)}
                       data-testid="seats-employees-plus"
                     >
@@ -516,27 +522,33 @@ export default function AddonStore() {
               </Card>
 
               {/* Managers Card */}
-              <Card className={`relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 min-h-[280px] flex flex-col ${
+              <Card className={`relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 flex flex-col ${
                 editedSeats && editedSeats.managers !== currentContractedSeats.managers ? 'ring-2 ring-purple-500' : ''
               }`} data-testid="seats-managers-card">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-3 mb-2">
+                <CardHeader className="pb-2 p-4 sm:p-6 sm:pb-2">
+                  <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
                       <Briefcase className="h-5 w-5" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <CardTitle className="text-base text-gray-900 dark:text-gray-100">Managers</CardTitle>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
                         {currentUserCounts.managers} activos de {displaySeats.managers} contratados
                       </span>
                     </div>
+                    <div className="flex items-baseline gap-1 sm:hidden">
+                      <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        {seatPrices.managers.toFixed(2)}€
+                      </span>
+                      <span className="text-gray-500 dark:text-gray-400 text-xs">/mes</span>
+                    </div>
                   </div>
-                  <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
+                  <CardDescription className="text-sm text-gray-500 dark:text-gray-400 mt-2 hidden sm:block">
                     ¿Necesitas ojos extra para supervisar? Los managers ven los fichajes, aprueban vacaciones y mantienen todo bajo control sin molestarte.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex-grow flex flex-col justify-end pt-0">
-                  <div className="mb-3">
+                <CardContent className="flex-grow flex flex-col justify-end pt-0 p-4 sm:p-6 sm:pt-0">
+                  <div className="mb-3 hidden sm:block">
                     <div className="flex items-baseline gap-1">
                       <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
                         {seatPrices.managers.toFixed(2)}€
@@ -544,24 +556,24 @@ export default function AddonStore() {
                       <span className="text-gray-500 dark:text-gray-400 text-sm">/mes cada uno</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-center gap-4">
+                  <div className="flex items-center justify-center gap-3 sm:gap-4">
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-10 w-10"
+                      className="h-9 w-9 sm:h-10 sm:w-10"
                       onClick={() => updateSeatCount('managers', -1)}
                       disabled={displaySeats.managers === 0}
                       data-testid="seats-managers-minus"
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <span className="w-12 text-center text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-managers-count">
+                    <span className="w-10 sm:w-12 text-center text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-managers-count">
                       {displaySeats.managers}
                     </span>
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-10 w-10"
+                      className="h-9 w-9 sm:h-10 sm:w-10"
                       onClick={() => updateSeatCount('managers', 1)}
                       data-testid="seats-managers-plus"
                     >
@@ -572,27 +584,33 @@ export default function AddonStore() {
               </Card>
 
               {/* Admins Card */}
-              <Card className={`relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 min-h-[280px] flex flex-col ${
+              <Card className={`relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 flex flex-col ${
                 editedSeats && editedSeats.admins !== currentContractedSeats.admins ? 'ring-2 ring-amber-500' : ''
               }`} data-testid="seats-admins-card">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-3 mb-2">
+                <CardHeader className="pb-2 p-4 sm:p-6 sm:pb-2">
+                  <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                       <Shield className="h-5 w-5" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <CardTitle className="text-base text-gray-900 dark:text-gray-100">Administradores</CardTitle>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
                         {currentUserCounts.admins} activos de {displaySeats.admins} contratados
                       </span>
                     </div>
+                    <div className="flex items-baseline gap-1 sm:hidden">
+                      <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        {seatPrices.admins.toFixed(2)}€
+                      </span>
+                      <span className="text-gray-500 dark:text-gray-400 text-xs">/mes</span>
+                    </div>
                   </div>
-                  <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
+                  <CardDescription className="text-sm text-gray-500 dark:text-gray-400 mt-2 hidden sm:block">
                     Para cuando necesitas a alguien de confianza con las llaves de todo. Control total sobre la empresa, igual que tú.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex-grow flex flex-col justify-end pt-0">
-                  <div className="mb-3">
+                <CardContent className="flex-grow flex flex-col justify-end pt-0 p-4 sm:p-6 sm:pt-0">
+                  <div className="mb-3 hidden sm:block">
                     <div className="flex items-baseline gap-1">
                       <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
                         {seatPrices.admins.toFixed(2)}€
@@ -600,24 +618,24 @@ export default function AddonStore() {
                       <span className="text-gray-500 dark:text-gray-400 text-sm">/mes cada uno</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-center gap-4">
+                  <div className="flex items-center justify-center gap-3 sm:gap-4">
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-10 w-10"
+                      className="h-9 w-9 sm:h-10 sm:w-10"
                       onClick={() => updateSeatCount('admins', -1)}
                       disabled={displaySeats.admins === 0}
                       data-testid="seats-admins-minus"
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <span className="w-12 text-center text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-admins-count">
+                    <span className="w-10 sm:w-12 text-center text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-admins-count">
                       {displaySeats.admins}
                     </span>
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-10 w-10"
+                      className="h-9 w-9 sm:h-10 sm:w-10"
                       onClick={() => updateSeatCount('admins', 1)}
                       data-testid="seats-admins-plus"
                     >
@@ -630,9 +648,9 @@ export default function AddonStore() {
 
             {/* Apply/Cancel Changes Bar - Shows when there are pending changes */}
             {hasChanges && (
-              <div className="mt-6 p-4 bg-white dark:bg-gray-800 rounded-lg border-2 border-blue-500 dark:border-blue-400">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div>
+              <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-lg border-2 border-blue-500 dark:border-blue-400">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                  <div className="text-center sm:text-left">
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Cambios pendientes</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {priceDifference > 0 ? (
@@ -644,21 +662,22 @@ export default function AddonStore() {
                       )}
                     </p>
                   </div>
-                  <div className="flex gap-3">
+                  <div className="flex gap-2 sm:gap-3">
                     <Button 
                       variant="outline"
                       onClick={cancelChanges}
                       data-testid="seats-cancel-changes"
+                      className="flex-1 sm:flex-none"
                     >
                       Cancelar
                     </Button>
                     <Button 
                       onClick={applyChanges}
-                      className="px-6"
+                      className="flex-1 sm:flex-none sm:px-6"
                       data-testid="seats-apply-changes"
                     >
                       <Check className="h-4 w-4 mr-2" />
-                      Aplicar cambios
+                      Aplicar
                     </Button>
                   </div>
                 </div>
