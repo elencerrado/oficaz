@@ -492,55 +492,21 @@ export default function Register({ byInvitation = false, invitationEmail, invita
           </div>
         </div>
 
-        {/* Price summary - shows when there's data */}
+        {/* Price summary - compact version */}
         {currentStep >= 1 && (
           <div className="relative z-10 pt-6 border-t border-white/10">
             <div className="bg-white/5 rounded-2xl p-4 backdrop-blur-sm">
-              <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Tu suscripción</div>
-              
-              {/* Users breakdown */}
-              {currentStep >= 1 && (formData.admins || formData.managers || formData.employees) && (
-                <div className="space-y-1 mb-3 text-sm">
-                  {(formData.admins || 0) > 0 && (
-                    <div className="flex justify-between text-gray-300">
-                      <span>{formData.admins} Admin{(formData.admins || 0) > 1 ? 's' : ''}</span>
-                      <span>€{(formData.admins || 0) * 6}</span>
-                    </div>
-                  )}
-                  {(formData.managers || 0) > 0 && (
-                    <div className="flex justify-between text-gray-300">
-                      <span>{formData.managers} Manager{(formData.managers || 0) > 1 ? 's' : ''}</span>
-                      <span>€{(formData.managers || 0) * 4}</span>
-                    </div>
-                  )}
-                  {(formData.employees || 0) > 0 && (
-                    <div className="flex justify-between text-gray-300">
-                      <span>{formData.employees} Empleado{(formData.employees || 0) > 1 ? 's' : ''}</span>
-                      <span>€{(formData.employees || 0) * 2}</span>
-                    </div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-xs text-gray-400 uppercase tracking-wider">Tu plan</div>
+                <div className="flex gap-3 text-xs text-gray-400">
+                  <span>{(formData.admins || 0) + (formData.managers || 0) + (formData.employees || 0)} usuarios</span>
+                  {currentStep >= 2 && formData.selectedFeatures && (
+                    <span>{formData.selectedFeatures.length} funciones</span>
                   )}
                 </div>
-              )}
-              
-              {/* Features breakdown */}
-              {currentStep >= 2 && formData.selectedFeatures && formData.selectedFeatures.length > 0 && (
-                <div className="space-y-1 mb-3 text-sm border-t border-white/10 pt-3">
-                  {formData.selectedFeatures.map((key: string) => {
-                    const addon = ADDON_DEFINITIONS.find(a => a.key === key);
-                    if (!addon) return null;
-                    return (
-                      <div key={key} className="flex justify-between text-gray-300">
-                        <span className="truncate mr-2">{addon.name}</span>
-                        <span>€{addon.monthlyPrice}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              
-              {/* Total */}
-              <div className="flex justify-between items-baseline pt-2 border-t border-white/10">
-                <span className="text-gray-300 font-medium">Total</span>
+              </div>
+              <div className="flex justify-between items-baseline">
+                <span className="text-gray-300 text-sm">Total</span>
                 <div className="text-right">
                   <span className="text-2xl font-bold text-white">
                     €{
