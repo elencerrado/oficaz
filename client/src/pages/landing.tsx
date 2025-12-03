@@ -568,7 +568,10 @@ export default function Landing() {
               {/* Functions - scrollable */}
               <div className="bg-white rounded-xl p-4 border border-gray-100">
                 <h3 className="font-semibold text-gray-900 mb-3 text-sm">Funciones</h3>
-                <div className="max-h-28 overflow-y-auto pr-1">
+                <div 
+                  className="pr-1"
+                  style={{ maxHeight: '7rem', overflowY: 'auto', overflowX: 'hidden' }}
+                >
                   <div className="grid grid-cols-2 gap-1.5">
                     {addons.map((addon) => {
                       const isSelected = selectedAddons.has(addon.key);
