@@ -285,9 +285,8 @@ export default function Landing() {
           }}
         />
         
-        {/* Dark overlay with primary color tint for text readability */}
-        <div className="absolute inset-0 bg-slate-900/50" />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#007AFF]/20 via-transparent to-[#007AFF]/10" />
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-slate-900/70" />
         
         <div className="relative max-w-5xl mx-auto px-6 text-center">
           {/* Main Content */}
@@ -295,10 +294,10 @@ export default function Landing() {
             
             {/* Main Headline */}
             <div className="space-y-3">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white leading-[1.1] tracking-tight drop-shadow-lg" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white leading-[1.1] tracking-tight">
                 Haz lo que te mueve.
               </h1>
-              <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#007AFF] drop-shadow-md" style={{ textShadow: '0 2px 10px rgba(0,122,255,0.3)' }}>
+              <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#60B5FF]">
                 Déjanos la parte aburrida.
               </p>
             </div>
