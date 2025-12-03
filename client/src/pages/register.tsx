@@ -797,7 +797,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   </p>
                 </div>
 
-                {/* Features grid - Apple style cards */}
+                {/* Features grid - Apple style cards with full description */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {addons.map((addon) => {
                     const Icon = getIcon(addon.icon);
@@ -811,7 +811,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                         htmlFor={`feature-${addon.key}`}
                         data-testid={`feature-${addon.key}`}
                         className={`
-                          relative flex items-start p-5 rounded-2xl cursor-pointer transition-all duration-300
+                          flex flex-col p-5 rounded-2xl cursor-pointer transition-all duration-300 min-h-[160px]
                           ${isSelected 
                             ? 'bg-oficaz-primary/5 border-2 border-oficaz-primary shadow-lg shadow-oficaz-primary/10 scale-[1.02]' 
                             : 'bg-white border-2 border-gray-100 hover:border-gray-200 hover:shadow-md'
@@ -826,31 +826,31 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                           className="sr-only"
                         />
                         
-                        {/* Icon */}
-                        <div className={`
-                          w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 mr-4 transition-colors
-                          ${isSelected ? 'bg-oficaz-primary text-white' : 'bg-gray-100 text-gray-500'}
-                        `}>
-                          <Icon className="w-6 h-6" />
-                        </div>
-                        
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-semibold text-gray-900">{addon.name}</span>
-                            <span className={`text-sm font-bold ${isSelected ? 'text-oficaz-primary' : 'text-gray-600'}`}>
-                              €{price}/mes
-                            </span>
+                        {/* Header: Icon + Name + Selection indicator */}
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className={`
+                            w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors
+                            ${isSelected ? 'bg-oficaz-primary text-white' : 'bg-gray-100 text-gray-500'}
+                          `}>
+                            <Icon className="w-5 h-5" />
                           </div>
-                          <p className="text-sm text-gray-500 line-clamp-2">{addon.shortDescription}</p>
+                          <span className="font-semibold text-gray-900 flex-1">{addon.name}</span>
+                          <div className={`
+                            w-6 h-6 rounded-full flex items-center justify-center transition-all flex-shrink-0
+                            ${isSelected ? 'bg-oficaz-primary text-white' : 'bg-gray-100'}
+                          `}>
+                            {isSelected && <Check className="w-4 h-4" />}
+                          </div>
                         </div>
                         
-                        {/* Selection indicator */}
-                        <div className={`
-                          absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center transition-all
-                          ${isSelected ? 'bg-oficaz-primary text-white' : 'bg-gray-100'}
-                        `}>
-                          {isSelected && <Check className="w-4 h-4" />}
+                        {/* Description - full text without clamp */}
+                        <p className="text-sm text-gray-500 flex-1 leading-relaxed">{addon.shortDescription}</p>
+                        
+                        {/* Price - bottom right */}
+                        <div className="flex justify-end mt-3 pt-3 border-t border-gray-100">
+                          <span className={`text-base font-bold ${isSelected ? 'text-oficaz-primary' : 'text-gray-700'}`}>
+                            €{price}<span className="text-sm font-normal text-gray-400">/mes</span>
+                          </span>
                         </div>
                       </label>
                     );
