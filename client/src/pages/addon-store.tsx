@@ -104,27 +104,65 @@ export default function AddonStore() {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showSeatsDialog, setShowSeatsDialog] = useState(false);
   
-  const [additionalSeats, setAdditionalSeats] = useState({
-    employees: 0,
-    managers: 0,
-    admins: 0
-  });
-
   const seatPrices = {
     employees: 2,
     managers: 4,
     admins: 6
   };
 
-  const totalSeatsPrice = 
-    additionalSeats.employees * seatPrices.employees +
-    additionalSeats.managers * seatPrices.managers +
-    additionalSeats.admins * seatPrices.admins;
-
   const { data: addons, isLoading: addonsLoading } = useQuery<Addon[]>({
     queryKey: ['/api/addons'],
     enabled: !!user
   });
+  
+  // Get subscription info with user counts
+  const { data: subscriptionInfo } = useQuery<{
+    userLimits: { maxEmployees: number; maxManagers: number; maxAdmins: number };
+    userCounts: { employees: number; managers: number; admins: number };
+  }>({
+    queryKey: ['/api/subscription/info'],
+    enabled: !!user && isAdmin
+  });
+  
+  // Current users by role (from actual users in system)
+  const currentUserCounts = subscriptionInfo?.userCounts || { employees: 0, managers: 0, admins: 0 };
+  
+  // Current contracted seats (from subscription)
+  const currentContractedSeats = {
+    employees: subscription?.extraEmployees || 0,
+    managers: subscription?.extraManagers || 0,
+    admins: subscription?.extraAdmins || 0
+  };
+  
+  // Editable seat counts (starts with current contracted)
+  const [editedSeats, setEditedSeats] = useState<{
+    employees: number;
+    managers: number;
+    admins: number;
+  } | null>(null);
+  
+  // Initialize edited seats when subscription loads
+  const displaySeats = editedSeats || currentContractedSeats;
+  
+  // Check if there are pending changes
+  const hasChanges = editedSeats !== null && (
+    editedSeats.employees !== currentContractedSeats.employees ||
+    editedSeats.managers !== currentContractedSeats.managers ||
+    editedSeats.admins !== currentContractedSeats.admins
+  );
+  
+  // Calculate price difference
+  const currentPrice = 
+    currentContractedSeats.employees * seatPrices.employees +
+    currentContractedSeats.managers * seatPrices.managers +
+    currentContractedSeats.admins * seatPrices.admins;
+    
+  const newPrice = 
+    displaySeats.employees * seatPrices.employees +
+    displaySeats.managers * seatPrices.managers +
+    displaySeats.admins * seatPrices.admins;
+    
+  const priceDifference = newPrice - currentPrice;
 
   const { data: companyAddons, isLoading: companyAddonsLoading } = useQuery<(CompanyAddon & { addon: Addon })[]>({
     queryKey: ['/api/company/addons'],
@@ -183,21 +221,54 @@ export default function AddonStore() {
     }
   });
 
-  const seatsMutation = useMutation({
-    mutationFn: async (seats: { employees: number; managers: number; admins: number }) => {
-      return await apiRequest('POST', '/api/subscription/seats', seats);
+  // Mutation for updating seats (handles both increase and decrease)
+  const updateSeatsMutation = useMutation({
+    mutationFn: async (data: { action: 'set'; seats: { employees: number; managers: number; admins: number } }) => {
+      // Calculate the difference from current
+      const diff = {
+        employees: data.seats.employees - currentContractedSeats.employees,
+        managers: data.seats.managers - currentContractedSeats.managers,
+        admins: data.seats.admins - currentContractedSeats.admins
+      };
+      
+      // If increasing, use add endpoint
+      if (diff.employees > 0 || diff.managers > 0 || diff.admins > 0) {
+        const toAdd = {
+          employees: Math.max(0, diff.employees),
+          managers: Math.max(0, diff.managers),
+          admins: Math.max(0, diff.admins)
+        };
+        if (toAdd.employees > 0 || toAdd.managers > 0 || toAdd.admins > 0) {
+          await apiRequest('POST', '/api/subscription/seats', toAdd);
+        }
+      }
+      
+      // If decreasing, use reduce endpoint
+      if (diff.employees < 0 || diff.managers < 0 || diff.admins < 0) {
+        const toReduce = {
+          employees: Math.max(0, -diff.employees),
+          managers: Math.max(0, -diff.managers),
+          admins: Math.max(0, -diff.admins)
+        };
+        if (toReduce.employees > 0 || toReduce.managers > 0 || toReduce.admins > 0) {
+          await apiRequest('POST', '/api/subscription/seats/reduce', toReduce);
+        }
+      }
+      
+      return { success: true };
     },
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       queryClient.invalidateQueries({ queryKey: ['/api/company/addons'] });
       queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/subscription/info'] });
       await refreshUser();
       toast({
         title: 'Usuarios actualizados',
-        description: 'Los usuarios adicionales se han añadido a tu suscripción.',
+        description: 'Los cambios en usuarios se han aplicado correctamente.',
       });
+      setEditedSeats(null);
       setShowSeatsDialog(false);
-      setAdditionalSeats({ employees: 0, managers: 0, admins: 0 });
     },
     onError: (error: any) => {
       toast({
@@ -208,52 +279,46 @@ export default function AddonStore() {
     }
   });
 
-  const reduceSeatssMutation = useMutation({
-    mutationFn: async (seats: { employees: number; managers: number; admins: number }) => {
-      return await apiRequest('POST', '/api/subscription/seats/reduce', seats);
-    },
-    onSuccess: async () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/company/addons'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
-      await refreshUser();
-      toast({
-        title: 'Usuarios reducidos',
-        description: 'Los usuarios se han eliminado de tu suscripción.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'No se pudo reducir los usuarios',
-        variant: 'destructive'
-      });
-    }
-  });
-
-  const currentExtraSeats = {
-    employees: subscription?.extraEmployees || 0,
-    managers: subscription?.extraManagers || 0,
-    admins: subscription?.extraAdmins || 0
-  };
-
-  const hasExtraSeats = currentExtraSeats.employees > 0 || currentExtraSeats.managers > 0 || currentExtraSeats.admins > 0;
-
-  const currentExtraPrice = 
-    currentExtraSeats.employees * seatPrices.employees +
-    currentExtraSeats.managers * seatPrices.managers +
-    currentExtraSeats.admins * seatPrices.admins;
-
+  // Update seat count with validation
   const updateSeatCount = (role: 'employees' | 'managers' | 'admins', delta: number) => {
-    setAdditionalSeats(prev => ({
-      ...prev,
-      [role]: Math.max(0, prev[role] + delta)
-    }));
+    const current = editedSeats || { ...currentContractedSeats };
+    const newValue = Math.max(0, current[role] + delta);
+    
+    // When reducing, check if there are users occupying those seats
+    if (delta < 0) {
+      const currentUsers = currentUserCounts[role];
+      if (newValue < currentUsers) {
+        const roleNames = { employees: 'empleados', managers: 'managers', admins: 'administradores' };
+        toast({
+          title: 'No se puede reducir',
+          description: `Tienes ${currentUsers} ${roleNames[role]} activos. Primero debes eliminar usuarios de ese rol antes de reducir las plazas.`,
+          variant: 'destructive'
+        });
+        return;
+      }
+    }
+    
+    setEditedSeats({
+      ...current,
+      [role]: newValue
+    });
   };
 
+  // Cancel changes
+  const cancelChanges = () => {
+    setEditedSeats(null);
+  };
+
+  // Apply changes
+  const applyChanges = () => {
+    if (hasChanges && editedSeats) {
+      setShowSeatsDialog(true);
+    }
+  };
+  
   const confirmSeats = () => {
-    if (totalSeatsPrice > 0) {
-      seatsMutation.mutate(additionalSeats);
+    if (hasChanges && editedSeats) {
+      updateSeatsMutation.mutate({ action: 'set', seats: editedSeats });
     }
   };
 
@@ -387,118 +452,28 @@ export default function AddonStore() {
         </div>
       ) : (
         <div className="space-y-8">
-          {/* Current Extra Seats Section - Show only if has extra seats */}
-          {hasExtraSeats && (
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-4">
-                <Users className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tus usuarios adicionales actuales</h2>
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                <div className="grid gap-4 md:grid-cols-3">
-                  {currentExtraSeats.employees > 0 && (
-                    <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
-                          {currentExtraSeats.employees} empleado(s) extra
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          +{(currentExtraSeats.employees * seatPrices.employees).toFixed(2)}€/mes
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
-                          onClick={() => reduceSeatssMutation.mutate({ employees: 1, managers: 0, admins: 0 })}
-                          disabled={reduceSeatssMutation.isPending}
-                          data-testid="reduce-employee-seat"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  {currentExtraSeats.managers > 0 && (
-                    <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <Briefcase className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
-                          {currentExtraSeats.managers} manager(s) extra
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          +{(currentExtraSeats.managers * seatPrices.managers).toFixed(2)}€/mes
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
-                          onClick={() => reduceSeatssMutation.mutate({ employees: 0, managers: 1, admins: 0 })}
-                          disabled={reduceSeatssMutation.isPending}
-                          data-testid="reduce-manager-seat"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  {currentExtraSeats.admins > 0 && (
-                    <div className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
-                          {currentExtraSeats.admins} admin(s) extra
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          +{(currentExtraSeats.admins * seatPrices.admins).toFixed(2)}€/mes
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
-                          onClick={() => reduceSeatssMutation.mutate({ employees: 0, managers: 0, admins: 1 })}
-                          disabled={reduceSeatssMutation.isPending}
-                          data-testid="reduce-admin-seat"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    Coste adicional mensual actual:
-                  </span>
-                  <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                    +{currentExtraPrice.toFixed(2)}€/mes
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Additional User Seats Section - FIRST */}
+          {/* User Seats Section - Integrated cards */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <UserPlus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Añadir usuarios adicionales</h2>
+              <Users className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Gestionar usuarios</h2>
             </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {/* Employees Card */}
-              <Card className="relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 min-h-[280px] flex flex-col" data-testid="seats-employees-card">
+              <Card className={`relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 min-h-[280px] flex flex-col ${
+                editedSeats && editedSeats.employees !== currentContractedSeats.employees ? 'ring-2 ring-blue-500' : ''
+              }`} data-testid="seats-employees-card">
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                       <Users className="h-5 w-5" />
                     </div>
-                    <CardTitle className="text-base text-gray-900 dark:text-gray-100">Empleados</CardTitle>
+                    <div className="flex-1">
+                      <CardTitle className="text-base text-gray-900 dark:text-gray-100">Empleados</CardTitle>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {currentUserCounts.employees} activos de {displaySeats.employees} contratados
+                      </span>
+                    </div>
                   </div>
                   <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
                     Tu equipo crece y necesitas más manos. Añade empleados sin límites y que todos fichen, pidan vacaciones y reciban mensajes.
@@ -517,15 +492,15 @@ export default function AddonStore() {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-10 w-10"
                       onClick={() => updateSeatCount('employees', -1)}
-                      disabled={additionalSeats.employees === 0}
+                      disabled={displaySeats.employees === 0}
                       data-testid="seats-employees-minus"
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <span className="w-8 text-center text-xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-employees-count">
-                      {additionalSeats.employees}
+                    <span className="w-12 text-center text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-employees-count">
+                      {displaySeats.employees}
                     </span>
                     <Button
                       variant="outline"
@@ -541,13 +516,20 @@ export default function AddonStore() {
               </Card>
 
               {/* Managers Card */}
-              <Card className="relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 min-h-[280px] flex flex-col" data-testid="seats-managers-card">
+              <Card className={`relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 min-h-[280px] flex flex-col ${
+                editedSeats && editedSeats.managers !== currentContractedSeats.managers ? 'ring-2 ring-purple-500' : ''
+              }`} data-testid="seats-managers-card">
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
                       <Briefcase className="h-5 w-5" />
                     </div>
-                    <CardTitle className="text-base text-gray-900 dark:text-gray-100">Managers</CardTitle>
+                    <div className="flex-1">
+                      <CardTitle className="text-base text-gray-900 dark:text-gray-100">Managers</CardTitle>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {currentUserCounts.managers} activos de {displaySeats.managers} contratados
+                      </span>
+                    </div>
                   </div>
                   <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
                     ¿Necesitas ojos extra para supervisar? Los managers ven los fichajes, aprueban vacaciones y mantienen todo bajo control sin molestarte.
@@ -566,20 +548,20 @@ export default function AddonStore() {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-10 w-10"
                       onClick={() => updateSeatCount('managers', -1)}
-                      disabled={additionalSeats.managers === 0}
+                      disabled={displaySeats.managers === 0}
                       data-testid="seats-managers-minus"
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <span className="w-8 text-center text-xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-managers-count">
-                      {additionalSeats.managers}
+                    <span className="w-12 text-center text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-managers-count">
+                      {displaySeats.managers}
                     </span>
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-10 w-10"
                       onClick={() => updateSeatCount('managers', 1)}
                       data-testid="seats-managers-plus"
                     >
@@ -590,13 +572,20 @@ export default function AddonStore() {
               </Card>
 
               {/* Admins Card */}
-              <Card className="relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 min-h-[280px] flex flex-col" data-testid="seats-admins-card">
+              <Card className={`relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 min-h-[280px] flex flex-col ${
+                editedSeats && editedSeats.admins !== currentContractedSeats.admins ? 'ring-2 ring-amber-500' : ''
+              }`} data-testid="seats-admins-card">
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                       <Shield className="h-5 w-5" />
                     </div>
-                    <CardTitle className="text-base text-gray-900 dark:text-gray-100">Administradores</CardTitle>
+                    <div className="flex-1">
+                      <CardTitle className="text-base text-gray-900 dark:text-gray-100">Administradores</CardTitle>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {currentUserCounts.admins} activos de {displaySeats.admins} contratados
+                      </span>
+                    </div>
                   </div>
                   <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
                     Para cuando necesitas a alguien de confianza con las llaves de todo. Control total sobre la empresa, igual que tú.
@@ -615,20 +604,20 @@ export default function AddonStore() {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-10 w-10"
                       onClick={() => updateSeatCount('admins', -1)}
-                      disabled={additionalSeats.admins === 0}
+                      disabled={displaySeats.admins === 0}
                       data-testid="seats-admins-minus"
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <span className="w-8 text-center text-xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-admins-count">
-                      {additionalSeats.admins}
+                    <span className="w-12 text-center text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="seats-admins-count">
+                      {displaySeats.admins}
                     </span>
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-10 w-10"
                       onClick={() => updateSeatCount('admins', 1)}
                       data-testid="seats-admins-plus"
                     >
@@ -639,28 +628,40 @@ export default function AddonStore() {
               </Card>
             </div>
 
-            {/* Total and Confirm Button */}
-            {totalSeatsPrice > 0 && (
-              <div className="mt-6 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
+            {/* Apply/Cancel Changes Bar - Shows when there are pending changes */}
+            {hasChanges && (
+              <div className="mt-6 p-4 bg-white dark:bg-gray-800 rounded-lg border-2 border-blue-500 dark:border-blue-400">
+                <div className="flex items-center justify-between flex-wrap gap-4">
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Total adicional mensual</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      +{totalSeatsPrice.toFixed(2)}€<span className="text-sm font-normal text-gray-500 dark:text-gray-400">/mes</span>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Cambios pendientes</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {priceDifference > 0 ? (
+                        <span className="text-blue-600 dark:text-blue-400">+{priceDifference.toFixed(2)}€/mes adicionales</span>
+                      ) : priceDifference < 0 ? (
+                        <span className="text-green-600 dark:text-green-400">{priceDifference.toFixed(2)}€/mes de ahorro</span>
+                      ) : (
+                        <span>Sin cambio en el precio</span>
+                      )}
                     </p>
                   </div>
-                  <Button 
-                    onClick={() => setShowSeatsDialog(true)}
-                    className="px-6"
-                    data-testid="seats-confirm-button"
-                  >
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Añadir usuarios
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button 
+                      variant="outline"
+                      onClick={cancelChanges}
+                      data-testid="seats-cancel-changes"
+                    >
+                      Cancelar
+                    </Button>
+                    <Button 
+                      onClick={applyChanges}
+                      className="px-6"
+                      data-testid="seats-apply-changes"
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      Aplicar cambios
+                    </Button>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  El importe se añadirá de forma proporcional a tu próxima factura.
-                </p>
               </div>
             )}
           </div>
@@ -915,58 +916,67 @@ export default function AddonStore() {
       <Dialog open={showSeatsDialog} onOpenChange={setShowSeatsDialog}>
         <DialogContent data-testid="seats-dialog">
           <DialogHeader>
-            <DialogTitle>Confirmar usuarios adicionales</DialogTitle>
+            <DialogTitle>Confirmar cambios de usuarios</DialogTitle>
             <DialogDescription>
-              Vas a añadir los siguientes usuarios a tu suscripción.
+              Vas a actualizar la cantidad de usuarios de tu suscripción.
             </DialogDescription>
           </DialogHeader>
           
           <div className="py-4">
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-3">
-              {additionalSeats.employees > 0 && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <span className="text-gray-700 dark:text-gray-300">{additionalSeats.employees} empleado(s)</span>
+              {editedSeats && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <span className="text-gray-700 dark:text-gray-300">Empleados</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-gray-500 dark:text-gray-400 text-sm">{currentContractedSeats.employees} → </span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{editedSeats.employees}</span>
+                    </div>
                   </div>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">
-                    +{(additionalSeats.employees * seatPrices.employees).toFixed(2)}€/mes
-                  </span>
-                </div>
-              )}
-              {additionalSeats.managers > 0 && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Briefcase className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                    <span className="text-gray-700 dark:text-gray-300">{additionalSeats.managers} manager(s)</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Briefcase className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      <span className="text-gray-700 dark:text-gray-300">Managers</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-gray-500 dark:text-gray-400 text-sm">{currentContractedSeats.managers} → </span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{editedSeats.managers}</span>
+                    </div>
                   </div>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">
-                    +{(additionalSeats.managers * seatPrices.managers).toFixed(2)}€/mes
-                  </span>
-                </div>
-              )}
-              {additionalSeats.admins > 0 && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                    <span className="text-gray-700 dark:text-gray-300">{additionalSeats.admins} administrador(es)</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      <span className="text-gray-700 dark:text-gray-300">Administradores</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-gray-500 dark:text-gray-400 text-sm">{currentContractedSeats.admins} → </span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{editedSeats.admins}</span>
+                    </div>
                   </div>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">
-                    +{(additionalSeats.admins * seatPrices.admins).toFixed(2)}€/mes
-                  </span>
-                </div>
+                </>
               )}
               <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
                 <div className="flex justify-between items-center">
-                  <span className="font-medium text-gray-900 dark:text-gray-100">Total mensual adicional:</span>
-                  <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                    +{totalSeatsPrice.toFixed(2)}€/mes
+                  <span className="font-medium text-gray-900 dark:text-gray-100">Cambio mensual:</span>
+                  <span className={`text-xl font-bold ${
+                    priceDifference > 0 ? 'text-blue-600 dark:text-blue-400' : 
+                    priceDifference < 0 ? 'text-green-600 dark:text-green-400' : 
+                    'text-gray-900 dark:text-gray-100'
+                  }`}>
+                    {priceDifference >= 0 ? '+' : ''}{priceDifference.toFixed(2)}€/mes
                   </span>
                 </div>
               </div>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
-              El importe se añadirá a tu próxima factura de forma proporcional.
+              {priceDifference > 0 
+                ? 'El importe se añadirá a tu próxima factura de forma proporcional.'
+                : priceDifference < 0
+                ? 'El ahorro se reflejará en tu próxima factura.'
+                : 'No hay cambio en el precio mensual.'}
             </p>
           </div>
 
@@ -981,19 +991,19 @@ export default function AddonStore() {
             </Button>
             <Button 
               onClick={confirmSeats}
-              disabled={seatsMutation.isPending}
+              disabled={updateSeatsMutation.isPending}
               data-testid="seats-confirm"
               className="w-full sm:w-auto"
             >
-              {seatsMutation.isPending ? (
+              {updateSeatsMutation.isPending ? (
                 <>
                   <LoadingSpinner className="h-4 w-4 mr-2" />
                   Procesando...
                 </>
               ) : (
                 <>
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Confirmar
+                  <Check className="h-4 w-4 mr-2" />
+                  Confirmar cambios
                 </>
               )}
             </Button>
