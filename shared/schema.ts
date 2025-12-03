@@ -147,13 +147,16 @@ export const subscriptions = pgTable("subscriptions", {
   nextPlan: varchar("next_plan", { length: 50 }), // DEPRECATED
   planChangeDate: timestamp("plan_change_date"), // DEPRECATED
   
-  // NEW MODEL: Base subscription pricing
-  baseMonthlyPrice: decimal("base_monthly_price", { precision: 10, scale: 2 }).default("39.00").notNull(), // Base plan price (39€)
+  // NEW MODEL V2: Flexible pricing (starts at 0€, pay for what you use)
+  baseMonthlyPrice: decimal("base_monthly_price", { precision: 10, scale: 2 }).default("0.00").notNull(), // Base plan price (0€ - pay per feature/user)
   
-  // NEW MODEL: Included users in base plan
-  includedAdmins: integer("included_admins").default(1).notNull(), // Admins included in base (1)
-  includedManagers: integer("included_managers").default(1).notNull(), // Managers included in base (1)
-  includedEmployees: integer("included_employees").default(10).notNull(), // Employees included in base (10)
+  // NEW MODEL V2: No included users (pay for all)
+  includedAdmins: integer("included_admins").default(0).notNull(), // Admins included in base (0 - pay for all)
+  includedManagers: integer("included_managers").default(0).notNull(), // Managers included in base (0 - pay for all)
+  includedEmployees: integer("included_employees").default(0).notNull(), // Employees included in base (0 - pay for all)
+  
+  // NEW MODEL V2: Legacy plan flag (for existing customers with old pricing)
+  isLegacyPlan: boolean("is_legacy_plan").default(false).notNull(), // True for existing customers grandfathered in
   
   // NEW MODEL: Extra users purchased (beyond included)
   extraAdmins: integer("extra_admins").default(0).notNull(), // Extra admins purchased
