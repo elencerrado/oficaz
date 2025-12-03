@@ -355,36 +355,31 @@ export default function Landing() {
         <FaWhatsapp className="w-8 h-8" />
       </a>
 
-      {/* FIXED BACKGROUND - Outside all sections, covers viewport */}
-      <div 
-        className="fixed inset-0 pointer-events-none"
-        style={{ zIndex: -10 }}
-      >
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${heroBackground})` }}
-        />
-        {/* Dark Overlay - fades out on scroll */}
-        <div 
-          className="absolute inset-0 bg-slate-900"
-          style={{ opacity: Math.max(0.7 - heroScrollProgress * 0.7, 0) }}
-        />
-        {/* White Overlay - fades in on scroll */}
-        <div 
-          className="absolute inset-0 bg-white"
-          style={{ opacity: Math.min(heroScrollProgress, 1) }}
-        />
-      </div>
-
-      {/* Hero Section - Transparent to show fixed background */}
+      {/* Hero Section with Background */}
       <section 
-        className="relative min-h-screen flex items-center justify-center pt-16"
-        style={{ minHeight: '100vh', background: 'transparent' }}
+        className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden"
+        style={{ minHeight: '100vh' }}
       >
-        {/* Content that fades out on scroll */}
+        {/* Background Image - Absolute positioned */}
         <div 
-          className="relative max-w-5xl mx-auto px-6 text-center"
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url(${heroBackground})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}
+        />
+        
+        {/* Dark Overlay - starts at 0.7 opacity */}
+        <div 
+          className="absolute inset-0 bg-slate-900 transition-opacity duration-300"
+          style={{ opacity: 0.7 }}
+        />
+        
+        {/* Content */}
+        <div 
+          className="relative z-10 max-w-5xl mx-auto px-6 text-center"
           style={{
             opacity: Math.max(1 - heroScrollProgress * 1.5, 0),
             transform: `translateY(${-heroScrollProgress * 60}px) scale(${1 - heroScrollProgress * 0.08})`,
@@ -445,10 +440,16 @@ export default function Landing() {
             )}
           </div>
         </div>
+        
+        {/* Bottom gradient fade to white - appears on scroll */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none transition-opacity duration-300"
+          style={{ opacity: Math.min(heroScrollProgress * 2, 1) }}
+        />
       </section>
 
-      {/* Unified Features Section - Solid white background to cover fixed bg */}
-      <section id="funciones" className="relative overflow-hidden bg-white" style={{ zIndex: 1 }}>
+      {/* Unified Features Section */}
+      <section id="funciones" className="relative overflow-hidden bg-white">
         {/* Subtle Background */}
         <div className="absolute inset-0 opacity-30">
           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-br from-[#007AFF]/10 to-transparent rounded-full blur-3xl"></div>
