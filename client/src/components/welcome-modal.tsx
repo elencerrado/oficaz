@@ -1,7 +1,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Users, Clock, Palmtree, Calendar, Star, Sparkles } from 'lucide-react';
-import oficazLogo from '@assets/oficaz logo_1750516757063.png';
+import oficazFavicon from '@assets/favicon oficaz_1757056517547.png';
+import { useEffect } from 'react';
 
 interface WelcomeModalProps {
   isOpen: boolean;
@@ -11,20 +12,31 @@ interface WelcomeModalProps {
 }
 
 export function WelcomeModal({ isOpen, onClose, companyName, trialDays = 7 }: WelcomeModalProps) {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.setAttribute('data-welcome-modal-open', 'true');
+    } else {
+      document.body.removeAttribute('data-welcome-modal-open');
+    }
+    return () => {
+      document.body.removeAttribute('data-welcome-modal-open');
+    };
+  }, [isOpen]);
+
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border-0 dark:border dark:border-gray-700">
+      <DialogContent className="sm:max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border-0 dark:border dark:border-gray-700 z-[9999]">
         <DialogHeader>
           <DialogTitle className="sr-only">Bienvenida a Oficaz</DialogTitle>
         </DialogHeader>
         
         <div className="py-6 px-5">
-          {/* Logo */}
+          {/* Logo - Favicon de Oficaz */}
           <div className="flex justify-center mb-5">
             <img 
-              src={oficazLogo} 
+              src={oficazFavicon} 
               alt="Oficaz" 
-              className="h-10 w-auto dark:brightness-0 dark:invert"
+              className="h-16 w-16"
             />
           </div>
           
