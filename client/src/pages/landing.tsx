@@ -17,6 +17,7 @@ import {
   CheckCircle,
   ArrowRight,
   Play,
+  ChevronLeft,
   ChevronRight,
   Star,
   Calendar,
@@ -517,75 +518,109 @@ export default function Landing() {
             {/* Right: Mobile Preview Mockup */}
             <div className="order-1 lg:order-2 flex justify-center lg:sticky lg:top-8">
               <div className="relative">
-                {/* Phone Frame */}
-                <div className="relative bg-gray-900 rounded-[3rem] p-3 shadow-2xl shadow-gray-400/30">
-                  {/* Screen */}
-                  <div className="relative bg-white rounded-[2.25rem] overflow-hidden" style={{ width: '280px', aspectRatio: '9/16' }}>
+                {/* Phone Frame - Narrower iPhone style */}
+                <div className="relative bg-gray-900 rounded-[2.5rem] p-2 shadow-2xl shadow-gray-400/30">
+                  {/* Screen - Dark theme like real app */}
+                  <div className="relative bg-[#0a1628] rounded-[2rem] overflow-hidden" style={{ width: '200px', aspectRatio: '9/19' }}>
                     {/* Status Bar */}
-                    <div className="absolute top-0 left-0 right-0 h-12 bg-white z-10 flex items-center justify-between px-6 pt-2">
-                      <span className="text-xs font-semibold text-gray-900">9:41</span>
+                    <div className="absolute top-0 left-0 right-0 h-8 bg-[#0a1628] z-10 flex items-center justify-between px-4 pt-1">
+                      <span className="text-[10px] font-semibold text-white">17:00</span>
                       <div className="flex items-center gap-1">
-                        <div className="w-4 h-2 bg-gray-900 rounded-sm"></div>
+                        <div className="w-3 h-1.5 bg-white rounded-sm"></div>
                       </div>
                     </div>
                     
                     {/* Dynamic Content based on selected addon */}
-                    <div className="pt-12 h-full overflow-hidden">
+                    <div className="pt-8 h-full overflow-hidden">
                       {previewAddon === 'time_tracking' && (
-                        <div className="p-4 h-full bg-gray-50">
-                          <div className="bg-white rounded-2xl p-4 shadow-sm mb-3">
-                            <p className="text-xs text-gray-500 mb-1">Horas este mes</p>
-                            <p className="text-3xl font-bold text-gray-900">156h 32m</p>
+                        <div className="p-3 h-full bg-[#0a1628]">
+                          {/* Header */}
+                          <h3 className="text-white font-bold text-sm mb-0.5">Control de Tiempo</h3>
+                          <p className="text-gray-400 text-[8px] mb-3">Revisa tu historial de fichajes</p>
+                          
+                          {/* Month nav */}
+                          <div className="flex items-center justify-center gap-3 mb-3">
+                            <ChevronLeft className="w-3 h-3 text-gray-400" />
+                            <span className="text-white text-[10px] font-medium">diciembre 2025</span>
+                            <ChevronRight className="w-3 h-3 text-gray-400" />
                           </div>
-                          <div className="bg-white rounded-2xl p-4 shadow-sm">
-                            <p className="text-xs font-medium text-gray-900 mb-3">Resumen semanal</p>
-                            <div className="flex items-end justify-between gap-1 h-20">
-                              {[65, 80, 75, 90, 85, 40, 0].map((h, i) => (
-                                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                                  <div 
-                                    className="w-full bg-[#007AFF] rounded-t-sm" 
-                                    style={{ height: `${h}%`, minHeight: h > 0 ? '4px' : '0' }}
-                                  ></div>
-                                  <span className="text-[8px] text-gray-400">{['L', 'M', 'X', 'J', 'V', 'S', 'D'][i]}</span>
+                          
+                          {/* Total del mes */}
+                          <div className="bg-[#1a2942] rounded-xl p-3 mb-3">
+                            <p className="text-gray-400 text-[8px] text-center mb-1">Total del mes</p>
+                            <p className="text-white font-bold text-lg text-center">194h 37m</p>
+                            
+                            {/* Mini month charts */}
+                            <div className="flex justify-between mt-3 gap-1">
+                              {[
+                                { month: 'sep', hours: '186h', active: false },
+                                { month: 'oct', hours: '179h', active: false },
+                                { month: 'nov', hours: '196h', active: false },
+                                { month: 'dic', hours: '195h', active: true },
+                              ].map((m, i) => (
+                                <div key={i} className={`flex-1 rounded-lg p-1.5 ${m.active ? 'bg-[#007AFF]/30 border border-[#007AFF]' : 'bg-[#0a1628]'}`}>
+                                  <div className="h-6 bg-[#007AFF] rounded-sm mb-1"></div>
+                                  <p className="text-gray-400 text-[7px] text-center">{m.month}</p>
+                                  <p className="text-white text-[7px] text-center font-medium">{m.hours}</p>
                                 </div>
                               ))}
                             </div>
                           </div>
-                          <div className="mt-3 bg-[#007AFF] rounded-2xl p-4 text-center">
-                            <Clock className="w-8 h-8 text-white mx-auto mb-2" />
-                            <p className="text-white font-semibold text-sm">Fichar entrada</p>
+                          
+                          {/* Week section */}
+                          <div className="bg-[#1a2942] rounded-xl p-2">
+                            <div className="flex justify-between items-center mb-2">
+                              <p className="text-white text-[8px]">Semana del 25-01</p>
+                              <span className="text-[#007AFF] text-[8px] font-medium">42h 18m</span>
+                            </div>
+                            {/* Day bars */}
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-400 text-[7px] w-10">viernes</span>
+                                <div className="flex-1 h-1.5 bg-[#007AFF] rounded-full"></div>
+                                <span className="text-white text-[7px]">8h 28m</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-400 text-[7px] w-10">jueves</span>
+                                <div className="flex-1 h-1.5 bg-[#007AFF] rounded-full" style={{width: '90%'}}></div>
+                                <span className="text-white text-[7px]">8h 29m</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       )}
                       
                       {previewAddon === 'vacation' && (
-                        <div className="p-4 h-full bg-gray-50">
-                          <div className="bg-white rounded-2xl p-4 shadow-sm mb-3">
-                            <div className="flex justify-between items-center mb-3">
-                              <p className="text-xs font-medium text-gray-900">Días disponibles</p>
-                              <span className="text-2xl font-bold text-[#007AFF]">18</span>
+                        <div className="p-3 h-full bg-[#0a1628]">
+                          <h3 className="text-white font-bold text-sm mb-0.5">Mis Vacaciones</h3>
+                          <p className="text-gray-400 text-[8px] mb-3">Solicita y gestiona tus días</p>
+                          
+                          {/* Days summary */}
+                          <div className="bg-[#1a2942] rounded-xl p-3 mb-3">
+                            <div className="flex justify-between items-center mb-2">
+                              <p className="text-gray-400 text-[8px]">Días disponibles</p>
+                              <span className="text-[#007AFF] font-bold text-lg">18</span>
                             </div>
-                            <div className="w-full bg-gray-100 rounded-full h-2">
-                              <div className="bg-[#007AFF] h-2 rounded-full" style={{ width: '60%' }}></div>
+                            <div className="w-full bg-[#0a1628] rounded-full h-1.5 mb-1">
+                              <div className="bg-[#007AFF] h-1.5 rounded-full" style={{ width: '60%' }}></div>
                             </div>
-                            <p className="text-[10px] text-gray-400 mt-1">12 días disfrutados de 30</p>
+                            <p className="text-gray-500 text-[7px]">12 días disfrutados de 30</p>
                           </div>
-                          <div className="bg-white rounded-2xl p-4 shadow-sm">
-                            <p className="text-xs font-medium text-gray-900 mb-3">Próximas vacaciones</p>
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
-                                <Calendar className="w-4 h-4 text-green-600" />
-                                <div>
-                                  <p className="text-xs font-medium text-gray-900">15-19 Dic</p>
-                                  <p className="text-[10px] text-green-600">Aprobado</p>
-                                </div>
+                          
+                          {/* Requests */}
+                          <div className="bg-[#1a2942] rounded-xl p-2 space-y-2">
+                            <div className="flex items-center gap-2 p-2 bg-green-500/20 rounded-lg border border-green-500/30">
+                              <Calendar className="w-3 h-3 text-green-400" />
+                              <div className="flex-1">
+                                <p className="text-white text-[8px] font-medium">15-19 Dic</p>
+                                <p className="text-green-400 text-[7px]">Aprobado</p>
                               </div>
-                              <div className="flex items-center gap-2 p-2 bg-yellow-50 rounded-lg">
-                                <Calendar className="w-4 h-4 text-yellow-600" />
-                                <div>
-                                  <p className="text-xs font-medium text-gray-900">23-31 Dic</p>
-                                  <p className="text-[10px] text-yellow-600">Pendiente</p>
-                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 p-2 bg-yellow-500/20 rounded-lg border border-yellow-500/30">
+                              <Calendar className="w-3 h-3 text-yellow-400" />
+                              <div className="flex-1">
+                                <p className="text-white text-[8px] font-medium">23-31 Dic</p>
+                                <p className="text-yellow-400 text-[7px]">Pendiente</p>
                               </div>
                             </div>
                           </div>
@@ -593,21 +628,24 @@ export default function Landing() {
                       )}
                       
                       {previewAddon === 'employees' && (
-                        <div className="p-4 h-full bg-gray-50">
-                          <div className="bg-white rounded-2xl p-4 shadow-sm mb-3">
-                            <p className="text-xs text-gray-500 mb-1">Tu equipo</p>
-                            <p className="text-3xl font-bold text-gray-900">24</p>
-                            <p className="text-xs text-gray-400">empleados activos</p>
+                        <div className="p-3 h-full bg-[#0a1628]">
+                          <h3 className="text-white font-bold text-sm mb-0.5">Mi Equipo</h3>
+                          <p className="text-gray-400 text-[8px] mb-3">Gestiona tu plantilla</p>
+                          
+                          <div className="bg-[#1a2942] rounded-xl p-3 mb-3">
+                            <p className="text-gray-400 text-[8px] mb-1">Empleados activos</p>
+                            <p className="text-white font-bold text-2xl">24</p>
                           </div>
-                          <div className="bg-white rounded-2xl p-3 shadow-sm space-y-2">
+                          
+                          <div className="bg-[#1a2942] rounded-xl p-2 space-y-2">
                             {['María García', 'Carlos López', 'Ana Martín'].map((name, i) => (
-                              <div key={i} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#007AFF] to-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                              <div key={i} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-[#0a1628]">
+                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#007AFF] to-blue-600 flex items-center justify-center text-white text-[8px] font-bold">
                                   {name.split(' ').map(n => n[0]).join('')}
                                 </div>
                                 <div>
-                                  <p className="text-xs font-medium text-gray-900">{name}</p>
-                                  <p className="text-[10px] text-gray-400">{['Admin', 'Manager', 'Empleado'][i]}</p>
+                                  <p className="text-white text-[8px] font-medium">{name}</p>
+                                  <p className="text-gray-500 text-[7px]">{['Admin', 'Manager', 'Empleado'][i]}</p>
                                 </div>
                               </div>
                             ))}
@@ -616,189 +654,194 @@ export default function Landing() {
                       )}
                       
                       {previewAddon === 'schedules' && (
-                        <div className="p-4 h-full bg-gray-50">
-                          <div className="bg-white rounded-2xl p-4 shadow-sm mb-3">
-                            <p className="text-xs font-medium text-gray-900 mb-3">Semana 49</p>
-                            <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                        <div className="p-3 h-full bg-[#0a1628]">
+                          <h3 className="text-white font-bold text-sm mb-0.5">Cuadrante</h3>
+                          <p className="text-gray-400 text-[8px] mb-3">Turnos de la semana</p>
+                          
+                          <div className="bg-[#1a2942] rounded-xl p-2 mb-3">
+                            <div className="grid grid-cols-7 gap-0.5 text-center mb-2">
                               {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((d, i) => (
-                                <span key={i} className="text-[8px] text-gray-400">{d}</span>
+                                <span key={i} className="text-gray-400 text-[7px]">{d}</span>
                               ))}
                             </div>
                             <div className="space-y-1">
-                              {['Mañana', 'Tarde', 'Noche'].map((t, i) => (
-                                <div key={t} className="grid grid-cols-7 gap-1">
+                              {['M', 'T', 'N'].map((t, i) => (
+                                <div key={t} className="grid grid-cols-7 gap-0.5">
                                   {[1, 1, 0, 1, 1, 0, 0].map((active, j) => (
                                     <div 
                                       key={j} 
-                                      className={`h-4 rounded text-[6px] flex items-center justify-center ${
-                                        active ? 'bg-[#007AFF] text-white' : 'bg-gray-100'
+                                      className={`h-3 rounded text-[5px] flex items-center justify-center ${
+                                        active ? 'bg-[#007AFF] text-white' : 'bg-[#0a1628]'
                                       }`}
                                     >
-                                      {active ? t[0] : ''}
+                                      {active ? t : ''}
                                     </div>
                                   ))}
                                 </div>
                               ))}
                             </div>
                           </div>
-                          <div className="bg-[#007AFF] rounded-2xl p-4 text-center">
-                            <Zap className="w-6 h-6 text-white mx-auto mb-1" />
-                            <p className="text-white font-semibold text-xs">Generar con IA</p>
-                          </div>
+                          
+                          <button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-2.5 text-center">
+                            <Zap className="w-4 h-4 text-white mx-auto mb-0.5" />
+                            <p className="text-white font-semibold text-[8px]">Generar con IA</p>
+                          </button>
                         </div>
                       )}
                       
                       {previewAddon === 'messages' && (
-                        <div className="p-4 h-full bg-gray-50">
-                          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                            <div className="p-3 border-b border-gray-100">
-                              <p className="text-xs font-medium text-gray-900">Conversaciones</p>
-                            </div>
-                            <div className="divide-y divide-gray-50">
-                              {[
-                                { name: 'Equipo Marketing', msg: 'Reunión mañana a las 10', time: '10:30', unread: 3 },
-                                { name: 'Carlos López', msg: 'He terminado el informe', time: '09:15', unread: 0 },
-                                { name: 'RRHH', msg: 'Recordatorio: evaluaciones', time: 'Ayer', unread: 1 },
-                              ].map((chat, i) => (
-                                <div key={i} className="p-3 flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#007AFF] to-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                                    {chat.name[0]}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-center">
-                                      <p className="text-xs font-medium text-gray-900 truncate">{chat.name}</p>
-                                      <span className="text-[10px] text-gray-400">{chat.time}</span>
-                                    </div>
-                                    <p className="text-[10px] text-gray-500 truncate">{chat.msg}</p>
-                                  </div>
-                                  {chat.unread > 0 && (
-                                    <span className="w-5 h-5 bg-[#007AFF] rounded-full text-white text-[10px] flex items-center justify-center">{chat.unread}</span>
-                                  )}
+                        <div className="p-3 h-full bg-[#0a1628]">
+                          <h3 className="text-white font-bold text-sm mb-0.5">Mensajes</h3>
+                          <p className="text-gray-400 text-[8px] mb-3">Conversaciones</p>
+                          
+                          <div className="bg-[#1a2942] rounded-xl overflow-hidden">
+                            {[
+                              { name: 'Equipo', msg: 'Reunión mañana', time: '10:30', unread: 3 },
+                              { name: 'Carlos', msg: 'Terminé el informe', time: '09:15', unread: 0 },
+                              { name: 'RRHH', msg: 'Recordatorio', time: 'Ayer', unread: 1 },
+                            ].map((chat, i) => (
+                              <div key={i} className="p-2 flex items-center gap-2 border-b border-[#0a1628] last:border-0">
+                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#007AFF] to-blue-600 flex items-center justify-center text-white text-[7px] font-bold">
+                                  {chat.name[0]}
                                 </div>
-                              ))}
-                            </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex justify-between items-center">
+                                    <p className="text-white text-[8px] font-medium truncate">{chat.name}</p>
+                                    <span className="text-gray-500 text-[7px]">{chat.time}</span>
+                                  </div>
+                                  <p className="text-gray-400 text-[7px] truncate">{chat.msg}</p>
+                                </div>
+                                {chat.unread > 0 && (
+                                  <span className="w-4 h-4 bg-[#007AFF] rounded-full text-white text-[7px] flex items-center justify-center">{chat.unread}</span>
+                                )}
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}
                       
                       {previewAddon === 'reminders' && (
-                        <div className="p-4 h-full bg-gray-50">
-                          <div className="bg-white rounded-2xl p-4 shadow-sm mb-3">
-                            <p className="text-xs font-medium text-gray-900 mb-3">Recordatorios hoy</p>
-                            <div className="space-y-2">
-                              {[
-                                { text: 'Revisar nóminas', time: '09:00', done: true },
-                                { text: 'Llamar proveedor', time: '11:30', done: false },
-                                { text: 'Enviar facturas', time: '15:00', done: false },
-                              ].map((r, i) => (
-                                <div key={i} className={`flex items-center gap-3 p-2 rounded-lg ${r.done ? 'bg-green-50' : 'bg-gray-50'}`}>
-                                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${r.done ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>
-                                    {r.done && <CheckCircle className="w-3 h-3 text-white" />}
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className={`text-xs ${r.done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{r.text}</p>
-                                  </div>
-                                  <span className="text-[10px] text-gray-400">{r.time}</span>
+                        <div className="p-3 h-full bg-[#0a1628]">
+                          <h3 className="text-white font-bold text-sm mb-0.5">Recordatorios</h3>
+                          <p className="text-gray-400 text-[8px] mb-3">Tus tareas pendientes</p>
+                          
+                          <div className="bg-[#1a2942] rounded-xl p-2 mb-3 space-y-2">
+                            {[
+                              { text: 'Revisar nóminas', time: '09:00', done: true },
+                              { text: 'Llamar proveedor', time: '11:30', done: false },
+                              { text: 'Enviar facturas', time: '15:00', done: false },
+                            ].map((r, i) => (
+                              <div key={i} className={`flex items-center gap-2 p-1.5 rounded-lg ${r.done ? 'bg-green-500/20' : 'bg-[#0a1628]'}`}>
+                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${r.done ? 'bg-green-500 border-green-500' : 'border-gray-500'}`}>
+                                  {r.done && <CheckCircle className="w-2.5 h-2.5 text-white" />}
                                 </div>
-                              ))}
-                            </div>
+                                <div className="flex-1">
+                                  <p className={`text-[8px] ${r.done ? 'text-gray-500 line-through' : 'text-white'}`}>{r.text}</p>
+                                </div>
+                                <span className="text-gray-500 text-[7px]">{r.time}</span>
+                              </div>
+                            ))}
                           </div>
-                          <button className="w-full bg-[#007AFF] rounded-2xl p-3 text-center">
-                            <p className="text-white font-semibold text-xs">+ Nuevo recordatorio</p>
+                          
+                          <button className="w-full bg-[#007AFF] rounded-xl p-2 text-center">
+                            <p className="text-white font-semibold text-[8px]">+ Nuevo recordatorio</p>
                           </button>
                         </div>
                       )}
                       
                       {previewAddon === 'documents' && (
-                        <div className="p-4 h-full bg-gray-50">
-                          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                            <div className="p-3 border-b border-gray-100">
-                              <p className="text-xs font-medium text-gray-900">Mis documentos</p>
-                            </div>
-                            <div className="divide-y divide-gray-50">
-                              {[
-                                { name: 'Nómina Nov 2024', type: 'PDF', icon: '📄' },
-                                { name: 'Contrato trabajo', type: 'PDF', icon: '📋' },
-                                { name: 'Certificado IRPF', type: 'PDF', icon: '📑' },
-                              ].map((doc, i) => (
-                                <div key={i} className="p-3 flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center text-lg">
-                                    {doc.icon}
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="text-xs font-medium text-gray-900">{doc.name}</p>
-                                    <p className="text-[10px] text-gray-400">{doc.type}</p>
-                                  </div>
-                                  <Eye className="w-4 h-4 text-gray-400" />
+                        <div className="p-3 h-full bg-[#0a1628]">
+                          <h3 className="text-white font-bold text-sm mb-0.5">Documentos</h3>
+                          <p className="text-gray-400 text-[8px] mb-3">Tus archivos</p>
+                          
+                          <div className="bg-[#1a2942] rounded-xl overflow-hidden">
+                            {[
+                              { name: 'Nómina Nov 2024', type: 'PDF' },
+                              { name: 'Contrato trabajo', type: 'PDF' },
+                              { name: 'Certificado IRPF', type: 'PDF' },
+                            ].map((doc, i) => (
+                              <div key={i} className="p-2 flex items-center gap-2 border-b border-[#0a1628] last:border-0">
+                                <div className="w-7 h-7 rounded-lg bg-red-500/20 flex items-center justify-center">
+                                  <FileText className="w-3.5 h-3.5 text-red-400" />
                                 </div>
-                              ))}
-                            </div>
+                                <div className="flex-1">
+                                  <p className="text-white text-[8px] font-medium">{doc.name}</p>
+                                  <p className="text-gray-500 text-[7px]">{doc.type}</p>
+                                </div>
+                                <Eye className="w-3 h-3 text-gray-500" />
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}
                       
                       {previewAddon === 'work_reports' && (
-                        <div className="p-4 h-full bg-gray-50">
-                          <div className="bg-white rounded-2xl p-4 shadow-sm mb-3">
-                            <p className="text-xs font-medium text-gray-900 mb-2">Nuevo parte de trabajo</p>
-                            <div className="space-y-2">
-                              <div className="p-2 bg-gray-50 rounded-lg">
-                                <p className="text-[10px] text-gray-400">Cliente</p>
-                                <p className="text-xs text-gray-900">Empresa ABC S.L.</p>
-                              </div>
-                              <div className="p-2 bg-gray-50 rounded-lg">
-                                <p className="text-[10px] text-gray-400">Ubicación</p>
-                                <p className="text-xs text-gray-900">📍 Calle Mayor, 15</p>
-                              </div>
-                              <div className="grid grid-cols-3 gap-2">
-                                {['📸', '📸', '+'].map((icon, i) => (
-                                  <div key={i} className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
-                                    {icon}
-                                  </div>
-                                ))}
-                              </div>
+                        <div className="p-3 h-full bg-[#0a1628]">
+                          <h3 className="text-white font-bold text-sm mb-0.5">Partes de Trabajo</h3>
+                          <p className="text-gray-400 text-[8px] mb-3">Documenta tus servicios</p>
+                          
+                          <div className="bg-[#1a2942] rounded-xl p-2 mb-3 space-y-2">
+                            <div className="p-1.5 bg-[#0a1628] rounded-lg">
+                              <p className="text-gray-500 text-[7px]">Cliente</p>
+                              <p className="text-white text-[8px]">Empresa ABC S.L.</p>
+                            </div>
+                            <div className="p-1.5 bg-[#0a1628] rounded-lg">
+                              <p className="text-gray-500 text-[7px]">Ubicación</p>
+                              <p className="text-white text-[8px]">📍 Calle Mayor, 15</p>
+                            </div>
+                            <div className="grid grid-cols-3 gap-1">
+                              {['📸', '📸', '+'].map((icon, i) => (
+                                <div key={i} className="aspect-square bg-[#0a1628] rounded-lg flex items-center justify-center text-gray-500 text-xs">
+                                  {icon}
+                                </div>
+                              ))}
                             </div>
                           </div>
-                          <button className="w-full bg-green-500 rounded-2xl p-3 text-center">
-                            <p className="text-white font-semibold text-xs">Firmar y enviar</p>
+                          
+                          <button className="w-full bg-green-500 rounded-xl p-2 text-center">
+                            <p className="text-white font-semibold text-[8px]">✍️ Firmar y enviar</p>
                           </button>
                         </div>
                       )}
                       
                       {previewAddon === 'ai_assistant' && (
-                        <div className="p-4 h-full bg-gray-50 flex flex-col">
-                          <div className="flex-1 space-y-3">
-                            <div className="flex gap-2">
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                                <Zap className="w-4 h-4 text-white" />
+                        <div className="p-3 h-full bg-[#0a1628] flex flex-col">
+                          <h3 className="text-white font-bold text-sm mb-0.5">OficazIA</h3>
+                          <p className="text-gray-400 text-[8px] mb-3">Tu asistente inteligente</p>
+                          
+                          <div className="flex-1 space-y-2">
+                            <div className="flex gap-1.5">
+                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                                <Zap className="w-2.5 h-2.5 text-white" />
                               </div>
-                              <div className="bg-white rounded-2xl rounded-tl-sm p-3 shadow-sm max-w-[80%]">
-                                <p className="text-xs text-gray-900">¡Hola! Soy OficazIA. ¿En qué puedo ayudarte?</p>
+                              <div className="bg-[#1a2942] rounded-xl rounded-tl-sm p-2 max-w-[85%]">
+                                <p className="text-white text-[8px]">¡Hola! ¿En qué puedo ayudarte?</p>
                               </div>
                             </div>
                             <div className="flex justify-end">
-                              <div className="bg-[#007AFF] rounded-2xl rounded-tr-sm p-3 max-w-[80%]">
-                                <p className="text-xs text-white">Hazme el cuadrante de la semana</p>
+                              <div className="bg-[#007AFF] rounded-xl rounded-tr-sm p-2 max-w-[85%]">
+                                <p className="text-white text-[8px]">Hazme el cuadrante</p>
                               </div>
                             </div>
-                            <div className="flex gap-2">
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                                <Zap className="w-4 h-4 text-white" />
+                            <div className="flex gap-1.5">
+                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                                <Zap className="w-2.5 h-2.5 text-white" />
                               </div>
-                              <div className="bg-white rounded-2xl rounded-tl-sm p-3 shadow-sm max-w-[80%]">
-                                <p className="text-xs text-gray-900">¡Listo! He creado el cuadrante respetando las preferencias de cada empleado.</p>
+                              <div className="bg-[#1a2942] rounded-xl rounded-tl-sm p-2 max-w-[85%]">
+                                <p className="text-white text-[8px]">¡Listo! Cuadrante creado.</p>
                               </div>
                             </div>
                           </div>
-                          <div className="mt-3 flex gap-2">
+                          
+                          <div className="mt-2 flex gap-1.5">
                             <input 
                               type="text" 
-                              placeholder="Escribe tu mensaje..."
-                              className="flex-1 bg-white rounded-full px-4 py-2 text-xs border border-gray-200"
+                              placeholder="Escribe..."
+                              className="flex-1 bg-[#1a2942] rounded-full px-3 py-1.5 text-[8px] text-white border border-[#2a3952] placeholder-gray-500"
                               readOnly
                             />
-                            <button className="w-8 h-8 bg-[#007AFF] rounded-full flex items-center justify-center">
-                              <ArrowRight className="w-4 h-4 text-white" />
+                            <button className="w-6 h-6 bg-[#007AFF] rounded-full flex items-center justify-center">
+                              <ArrowRight className="w-3 h-3 text-white" />
                             </button>
                           </div>
                         </div>
