@@ -386,7 +386,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       
       try {
         await register(finalData);
-        localStorage.setItem('showWelcomeModal', 'true');
+        // Welcome screen is handled by DemoLoadingOverlay, not the old modal
         setIsBackendComplete(true);
       } catch (error: any) {
         sessionStorage.removeItem('registrationWelcomeFlow');
