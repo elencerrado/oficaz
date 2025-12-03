@@ -484,41 +484,24 @@ export default function Landing() {
             </p>
           </div>
           
-          {/* Calculator Layout - Two columns */}
-          <div className="grid lg:grid-cols-2 gap-8 items-start">
-            {/* Left: Price Summary */}
-            <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100 sticky top-24">
-              <div className="text-center mb-6">
+          {/* Calculator Layout - Two columns, same height */}
+          <div className="grid lg:grid-cols-2 gap-8 items-stretch">
+            {/* Left: Price Summary - matches right column height */}
+            <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100 flex flex-col justify-center">
+              <div className="text-center">
                 <p className="text-gray-500 text-sm mb-2">Tu plan mensual</p>
-                <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-6xl md:text-7xl font-black text-gray-900">€{monthlyTotal}</span>
+                <div className="flex items-baseline justify-center gap-1 mb-8">
+                  <span className="text-7xl md:text-8xl font-black text-gray-900">€{monthlyTotal}</span>
                   <span className="text-xl text-gray-400">/mes</span>
                 </div>
-              </div>
-              
-              {/* Breakdown */}
-              <div className="border-t border-gray-100 pt-6 space-y-3">
-                {selectedAddons.size > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Funciones ({selectedAddons.size})</span>
-                    <span className="font-medium text-gray-900">€{addonsTotal}</span>
-                  </div>
-                )}
-                {usersTotal > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Usuarios</span>
-                    <span className="font-medium text-gray-900">€{usersTotal}</span>
-                  </div>
-                )}
+                
                 {monthlyTotal === 0 && (
-                  <p className="text-center text-gray-400 text-sm py-4">
-                    Selecciona funciones para calcular
+                  <p className="text-gray-400 text-sm mb-8">
+                    Selecciona funciones y usuarios
                   </p>
                 )}
-              </div>
-              
-              {/* CTA */}
-              <div className="mt-6">
+                
+                {/* CTA */}
                 {registrationSettings?.publicRegistrationEnabled ? (
                   <Link href="/request-code">
                     <Button className="w-full py-6 text-lg font-bold bg-[#007AFF] hover:bg-[#0056CC]">
@@ -550,21 +533,16 @@ export default function Landing() {
                       <button
                         key={addon.key}
                         onClick={() => toggleAddon(addon.key)}
-                        className={`flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
+                        className={`flex items-center gap-3 p-4 rounded-xl text-left transition-all ${
                           isSelected 
                             ? 'bg-[#007AFF] text-white' 
                             : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                         }`}
                       >
                         <IconComponent className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-gray-400'}`} />
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium truncate ${isSelected ? 'text-white' : 'text-gray-900'}`}>
-                            {addon.name}
-                          </p>
-                          <p className={`text-xs ${isSelected ? 'text-white/70' : 'text-gray-400'}`}>
-                            €{addon.price}/mes
-                          </p>
-                        </div>
+                        <span className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                          {addon.name}
+                        </span>
                       </button>
                     );
                   })}
@@ -577,10 +555,7 @@ export default function Landing() {
                 <div className="space-y-4">
                   {/* Employees */}
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900">Empleados</p>
-                      <p className="text-xs text-gray-400">€2/mes cada uno</p>
-                    </div>
+                    <p className="font-medium text-gray-900">Empleados</p>
                     <div className="flex items-center gap-3">
                       <button 
                         onClick={() => setUserCounts(prev => ({ ...prev, employees: Math.max(0, prev.employees - 1) }))}
@@ -600,10 +575,7 @@ export default function Landing() {
                   
                   {/* Managers */}
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900">Managers</p>
-                      <p className="text-xs text-gray-400">€4/mes cada uno</p>
-                    </div>
+                    <p className="font-medium text-gray-900">Managers</p>
                     <div className="flex items-center gap-3">
                       <button 
                         onClick={() => setUserCounts(prev => ({ ...prev, managers: Math.max(0, prev.managers - 1) }))}
@@ -623,10 +595,7 @@ export default function Landing() {
                   
                   {/* Admins */}
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900">Admins</p>
-                      <p className="text-xs text-gray-400">€6/mes cada uno</p>
-                    </div>
+                    <p className="font-medium text-gray-900">Admins</p>
                     <div className="flex items-center gap-3">
                       <button 
                         onClick={() => setUserCounts(prev => ({ ...prev, admins: Math.max(0, prev.admins - 1) }))}
