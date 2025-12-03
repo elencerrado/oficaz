@@ -2,10 +2,12 @@ import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { useEffect, useState } from 'react';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { useEffect, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { usePageTitle } from '@/hooks/use-page-title';
 import { lazy, Suspense } from 'react';
+import type { CarouselApi } from '@/components/ui/carousel';
 
 // Lazy load non-critical components for better initial load performance
 const ContactForm = lazy(() => import('@/components/contact-form'));
@@ -116,6 +118,338 @@ function DifficultySlider() {
       </button>
     </div>
   );
+}
+
+// Reusable component for mobile preview content in both carousel and desktop
+function MobilePreviewContent({ addonKey }: { addonKey: string }) {
+  if (addonKey === 'time_tracking') {
+    return (
+      <div className="p-2.5 h-full bg-[#0a1628]">
+        <h3 className="text-white font-bold text-xs mb-0.5">Control de Tiempo</h3>
+        <p className="text-gray-400 text-[7px] mb-2">Revisa tu historial de fichajes</p>
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <ChevronLeft className="w-2.5 h-2.5 text-gray-400" />
+          <span className="text-white text-[8px] font-medium">diciembre 2025</span>
+          <ChevronRight className="w-2.5 h-2.5 text-gray-400" />
+        </div>
+        <div className="bg-[#1a2942] rounded-lg p-2 mb-2">
+          <p className="text-gray-400 text-[7px] text-center mb-0.5">Total del mes</p>
+          <p className="text-white font-bold text-base text-center">194h 37m</p>
+          <div className="flex justify-between mt-2 gap-0.5">
+            {[
+              { month: 'sep', hours: '186h', active: false },
+              { month: 'oct', hours: '179h', active: false },
+              { month: 'nov', hours: '196h', active: false },
+              { month: 'dic', hours: '195h', active: true },
+            ].map((m, i) => (
+              <div key={i} className={`flex-1 rounded p-1 ${m.active ? 'bg-[#007AFF]/30 border border-[#007AFF]' : 'bg-[#0a1628]'}`}>
+                <div className="h-4 bg-[#007AFF] rounded-sm mb-0.5"></div>
+                <p className="text-gray-400 text-[6px] text-center">{m.month}</p>
+                <p className="text-white text-[6px] text-center font-medium">{m.hours}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="bg-[#1a2942] rounded-lg p-1.5">
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-white text-[7px]">Semana</p>
+            <span className="text-[#007AFF] text-[7px] font-medium">42h 18m</span>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-1">
+              <span className="text-gray-400 text-[6px] w-8">viernes</span>
+              <div className="flex-1 h-1 bg-[#007AFF] rounded-full"></div>
+              <span className="text-white text-[6px]">8h 28m</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-gray-400 text-[6px] w-8">jueves</span>
+              <div className="flex-1 h-1 bg-[#007AFF] rounded-full" style={{width: '90%'}}></div>
+              <span className="text-white text-[6px]">8h 29m</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (addonKey === 'vacation') {
+    return (
+      <div className="p-2.5 h-full bg-[#0a1628]">
+        <h3 className="text-white font-bold text-xs mb-0.5">Mis Vacaciones</h3>
+        <p className="text-gray-400 text-[7px] mb-2">Solicita y gestiona tus días</p>
+        <div className="bg-[#1a2942] rounded-lg p-2 mb-2">
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-gray-400 text-[7px]">Días disponibles</p>
+            <span className="text-[#007AFF] font-bold text-base">18</span>
+          </div>
+          <div className="w-full bg-[#0a1628] rounded-full h-1 mb-0.5">
+            <div className="bg-[#007AFF] h-1 rounded-full" style={{ width: '60%' }}></div>
+          </div>
+          <p className="text-gray-500 text-[6px]">12 días disfrutados de 30</p>
+        </div>
+        <div className="bg-[#1a2942] rounded-lg p-1.5 space-y-1.5">
+          <div className="flex items-center gap-1.5 p-1.5 bg-green-500/20 rounded border border-green-500/30">
+            <Calendar className="w-2.5 h-2.5 text-green-400" />
+            <div className="flex-1">
+              <p className="text-white text-[7px] font-medium">15-19 Dic</p>
+              <p className="text-green-400 text-[6px]">Aprobado</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 p-1.5 bg-yellow-500/20 rounded border border-yellow-500/30">
+            <Calendar className="w-2.5 h-2.5 text-yellow-400" />
+            <div className="flex-1">
+              <p className="text-white text-[7px] font-medium">23-31 Dic</p>
+              <p className="text-yellow-400 text-[6px]">Pendiente</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (addonKey === 'employees') {
+    return (
+      <div className="p-2.5 h-full bg-[#0a1628]">
+        <h3 className="text-white font-bold text-xs mb-0.5">Mi Equipo</h3>
+        <p className="text-gray-400 text-[7px] mb-1.5">Gestiona tu plantilla</p>
+        <div className="grid grid-cols-3 gap-1 mb-1.5">
+          <div className="bg-purple-500/20 border border-purple-500/30 rounded-lg p-1.5 text-center">
+            <p className="text-purple-400 font-bold text-xs">1</p>
+            <p className="text-purple-300/70 text-[5px]">Admin</p>
+          </div>
+          <div className="bg-[#007AFF]/20 border border-[#007AFF]/30 rounded-lg p-1.5 text-center">
+            <p className="text-[#007AFF] font-bold text-xs">1</p>
+            <p className="text-blue-300/70 text-[5px]">Manager</p>
+          </div>
+          <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-1.5 text-center">
+            <p className="text-green-400 font-bold text-xs">10</p>
+            <p className="text-green-300/70 text-[5px]">Empleados</p>
+          </div>
+        </div>
+        <button className="w-full bg-[#007AFF] rounded-lg p-1.5 mb-1.5 flex items-center justify-center gap-1">
+          <Users className="w-2.5 h-2.5 text-white" />
+          <span className="text-white text-[7px] font-semibold">Crear usuario</span>
+        </button>
+        <div className="space-y-0.5">
+          {[
+            { name: 'María García', role: 'Admin', roleColor: 'text-purple-400' },
+            { name: 'Carlos López', role: 'Manager', roleColor: 'text-[#007AFF]' },
+            { name: 'Ana Martín', role: 'Empleado', roleColor: 'text-green-400' },
+            { name: 'Pedro Ruiz', role: 'Empleado', roleColor: 'text-green-400' },
+          ].map((emp, i) => (
+            <div key={i} className="bg-[#1a2942] rounded p-1 flex items-center gap-1.5">
+              <div className="w-4 h-4 rounded-full bg-gradient-to-br from-[#007AFF] to-blue-600 flex items-center justify-center text-white text-[5px] font-bold">
+                {emp.name.split(' ').map(n => n[0]).join('')}
+              </div>
+              <div className="flex-1">
+                <p className="text-white text-[6px] font-medium">{emp.name}</p>
+                <p className={`text-[5px] ${emp.roleColor}`}>{emp.role}</p>
+              </div>
+              <Settings className="w-2 h-2 text-gray-500" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  
+  if (addonKey === 'schedules') {
+    return (
+      <div className="p-2.5 h-full bg-[#0a1628]">
+        <h3 className="text-white font-bold text-xs mb-0.5">Cuadrante</h3>
+        <p className="text-gray-400 text-[7px] mb-2">Turnos de la semana</p>
+        <div className="bg-[#1a2942] rounded-lg p-1.5 mb-2">
+          <div className="grid grid-cols-7 gap-0.5 text-center mb-1.5">
+            {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((d, i) => (
+              <span key={i} className="text-gray-400 text-[6px]">{d}</span>
+            ))}
+          </div>
+          <div className="space-y-0.5">
+            {['M', 'T', 'N'].map((t) => (
+              <div key={t} className="grid grid-cols-7 gap-0.5">
+                {[1, 1, 0, 1, 1, 0, 0].map((active, j) => (
+                  <div 
+                    key={j} 
+                    className={`h-2.5 rounded text-[4px] flex items-center justify-center ${
+                      active ? 'bg-[#007AFF] text-white' : 'bg-[#0a1628]'
+                    }`}
+                  >
+                    {active ? t : ''}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+        <button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-2 text-center">
+          <Zap className="w-3 h-3 text-white mx-auto mb-0.5" />
+          <p className="text-white font-semibold text-[7px]">Generar con IA</p>
+        </button>
+      </div>
+    );
+  }
+  
+  if (addonKey === 'messages') {
+    return (
+      <div className="p-2.5 h-full bg-[#0a1628]">
+        <h3 className="text-white font-bold text-xs mb-0.5">Mensajes</h3>
+        <p className="text-gray-400 text-[7px] mb-2">Conversaciones</p>
+        <div className="bg-[#1a2942] rounded-lg overflow-hidden">
+          {[
+            { name: 'Equipo', msg: 'Reunión mañana', time: '10:30', unread: 3 },
+            { name: 'Carlos', msg: 'Terminé el informe', time: '09:15', unread: 0 },
+            { name: 'RRHH', msg: 'Recordatorio', time: 'Ayer', unread: 1 },
+          ].map((chat, i) => (
+            <div key={i} className="p-1.5 flex items-center gap-1.5 border-b border-[#0a1628] last:border-0">
+              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#007AFF] to-blue-600 flex items-center justify-center text-white text-[6px] font-bold">
+                {chat.name[0]}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-center">
+                  <p className="text-white text-[7px] font-medium truncate">{chat.name}</p>
+                  <span className="text-gray-500 text-[6px]">{chat.time}</span>
+                </div>
+                <p className="text-gray-400 text-[6px] truncate">{chat.msg}</p>
+              </div>
+              {chat.unread > 0 && (
+                <span className="w-3 h-3 bg-[#007AFF] rounded-full text-white text-[5px] flex items-center justify-center">{chat.unread}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  
+  if (addonKey === 'reminders') {
+    return (
+      <div className="p-2.5 h-full bg-[#0a1628]">
+        <h3 className="text-white font-bold text-xs mb-0.5">Recordatorios</h3>
+        <p className="text-gray-400 text-[7px] mb-2">Tus tareas pendientes</p>
+        <div className="bg-[#1a2942] rounded-lg p-1.5 mb-2 space-y-1.5">
+          {[
+            { text: 'Revisar nóminas', time: '09:00', done: true },
+            { text: 'Llamar proveedor', time: '11:30', done: false },
+            { text: 'Enviar facturas', time: '15:00', done: false },
+          ].map((r, i) => (
+            <div key={i} className={`flex items-center gap-1.5 p-1 rounded ${r.done ? 'bg-green-500/20' : 'bg-[#0a1628]'}`}>
+              <div className={`w-3 h-3 rounded-full border flex items-center justify-center ${r.done ? 'bg-green-500 border-green-500' : 'border-gray-500'}`}>
+                {r.done && <CheckCircle className="w-2 h-2 text-white" />}
+              </div>
+              <div className="flex-1">
+                <p className={`text-[7px] ${r.done ? 'text-gray-500 line-through' : 'text-white'}`}>{r.text}</p>
+              </div>
+              <span className="text-gray-500 text-[6px]">{r.time}</span>
+            </div>
+          ))}
+        </div>
+        <button className="w-full bg-[#007AFF] rounded-lg p-1.5 text-center">
+          <p className="text-white font-semibold text-[7px]">+ Nuevo recordatorio</p>
+        </button>
+      </div>
+    );
+  }
+  
+  if (addonKey === 'documents') {
+    return (
+      <div className="p-2.5 h-full bg-[#0a1628]">
+        <h3 className="text-white font-bold text-xs mb-0.5">Documentos</h3>
+        <p className="text-gray-400 text-[7px] mb-2">Tus archivos</p>
+        <div className="bg-[#1a2942] rounded-lg overflow-hidden">
+          {[
+            { name: 'Nómina Nov 2024', type: 'PDF' },
+            { name: 'Contrato trabajo', type: 'PDF' },
+            { name: 'Certificado IRPF', type: 'PDF' },
+          ].map((doc, i) => (
+            <div key={i} className="p-1.5 flex items-center gap-1.5 border-b border-[#0a1628] last:border-0">
+              <div className="w-5 h-5 rounded bg-red-500/20 flex items-center justify-center">
+                <FileText className="w-3 h-3 text-red-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-white text-[7px] font-medium">{doc.name}</p>
+                <p className="text-gray-500 text-[6px]">{doc.type}</p>
+              </div>
+              <Eye className="w-2.5 h-2.5 text-gray-500" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  
+  if (addonKey === 'work_reports') {
+    return (
+      <div className="p-2.5 h-full bg-[#0a1628]">
+        <h3 className="text-white font-bold text-xs mb-0.5">Partes de Trabajo</h3>
+        <p className="text-gray-400 text-[7px] mb-2">Documenta tus servicios</p>
+        <div className="bg-[#1a2942] rounded-lg p-1.5 mb-2 space-y-1.5">
+          <div className="p-1 bg-[#0a1628] rounded">
+            <p className="text-gray-500 text-[6px]">Cliente</p>
+            <p className="text-white text-[7px]">Empresa ABC S.L.</p>
+          </div>
+          <div className="p-1 bg-[#0a1628] rounded">
+            <p className="text-gray-500 text-[6px]">Ubicación</p>
+            <p className="text-white text-[7px]">📍 Calle Mayor, 15</p>
+          </div>
+          <div className="grid grid-cols-3 gap-0.5">
+            {['📸', '📸', '+'].map((icon, i) => (
+              <div key={i} className="aspect-square bg-[#0a1628] rounded flex items-center justify-center text-gray-500 text-[8px]">
+                {icon}
+              </div>
+            ))}
+          </div>
+        </div>
+        <button className="w-full bg-green-500 rounded-lg p-1.5 text-center">
+          <p className="text-white font-semibold text-[7px]">✍️ Firmar y enviar</p>
+        </button>
+      </div>
+    );
+  }
+  
+  if (addonKey === 'ai_assistant') {
+    return (
+      <div className="p-2.5 h-full bg-[#0a1628] flex flex-col">
+        <h3 className="text-white font-bold text-xs mb-0.5">OficazIA</h3>
+        <p className="text-gray-400 text-[7px] mb-2">Tu asistente inteligente</p>
+        <div className="flex-1 space-y-1.5">
+          <div className="flex gap-1">
+            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+              <Zap className="w-2 h-2 text-white" />
+            </div>
+            <div className="bg-[#1a2942] rounded-lg rounded-tl-sm p-1.5 max-w-[85%]">
+              <p className="text-white text-[7px]">¡Hola! ¿En qué puedo ayudarte?</p>
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <div className="bg-[#007AFF] rounded-lg rounded-tr-sm p-1.5 max-w-[85%]">
+              <p className="text-white text-[7px]">Hazme el cuadrante</p>
+            </div>
+          </div>
+          <div className="flex gap-1">
+            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+              <Zap className="w-2 h-2 text-white" />
+            </div>
+            <div className="bg-[#1a2942] rounded-lg rounded-tl-sm p-1.5 max-w-[85%]">
+              <p className="text-white text-[7px]">¡Listo! Cuadrante creado.</p>
+            </div>
+          </div>
+        </div>
+        <div className="mt-1.5 flex gap-1">
+          <input 
+            type="text" 
+            placeholder="Escribe..."
+            className="flex-1 bg-[#1a2942] rounded-full px-2 py-1 text-[7px] text-white border border-[#2a3952] placeholder-gray-500"
+            readOnly
+          />
+          <button className="w-5 h-5 bg-[#007AFF] rounded-full flex items-center justify-center">
+            <ArrowRight className="w-2.5 h-2.5 text-white" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  return null;
 }
 
 export default function Landing() {
@@ -466,12 +800,100 @@ export default function Landing() {
             </p>
           </div>
 
-          {/* Two Column Layout */}
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+          {/* Mobile: Swipeable Carousel with Description Below */}
+          <div className="lg:hidden">
+            <Carousel 
+              className="w-full" 
+              opts={{ align: 'center', loop: true }}
+              setApi={(api) => {
+                if (api) {
+                  api.on('select', () => {
+                    const index = api.selectedScrollSnap();
+                    setPreviewAddon(addons[index]?.key || 'time_tracking');
+                  });
+                }
+              }}
+            >
+              <CarouselContent className="-ml-2">
+                {addons.map((addon, index) => (
+                  <CarouselItem key={addon.key} className="pl-2 basis-[75%] sm:basis-[60%]">
+                    <div className="flex flex-col items-center">
+                      {/* Phone Preview */}
+                      <div className="relative bg-gray-900 rounded-[2rem] p-1.5 shadow-2xl shadow-gray-400/30">
+                        <div className="relative bg-[#0a1628] rounded-[1.5rem] overflow-hidden" style={{ width: '180px', aspectRatio: '9/19' }}>
+                          <div className="absolute top-0 left-0 right-0 h-6 bg-[#0a1628] z-10 flex items-center justify-between px-3 pt-1">
+                            <span className="text-[9px] font-semibold text-white">17:00</span>
+                            <div className="w-2.5 h-1 bg-white rounded-sm"></div>
+                          </div>
+                          <div className="pt-6 h-full overflow-hidden">
+                            <MobilePreviewContent addonKey={addon.key} />
+                          </div>
+                        </div>
+                        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-16 h-0.5 bg-white/30 rounded-full"></div>
+                      </div>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <div className="flex justify-center gap-2 mt-4">
+                <CarouselPrevious className="static translate-y-0 h-8 w-8" />
+                <CarouselNext className="static translate-y-0 h-8 w-8" />
+              </div>
+            </Carousel>
+            
+            {/* Description below carousel */}
+            <div className="mt-6 px-4">
+              {addons.map((addon) => {
+                if (addon.key !== previewAddon) return null;
+                const IconComponent = addon.icon;
+                return (
+                  <div key={addon.key} className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                    <div className="flex items-start gap-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                        addon.isLocked 
+                          ? 'bg-gradient-to-br from-green-500 to-green-600' 
+                          : 'bg-gradient-to-br from-[#007AFF] to-blue-600'
+                      }`}>
+                        <IconComponent className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-lg font-semibold text-gray-900">{addon.name}</h3>
+                          {addon.isLocked && (
+                            <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded font-medium">Gratis</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500 leading-relaxed">{addon.description}</p>
+                        <p className={`text-base font-bold mt-2 ${addon.isLocked ? 'text-green-600' : 'text-[#007AFF]'}`}>
+                          {addon.isLocked ? 'Incluido' : `€${addon.price}/mes`}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Dots indicator */}
+            <div className="flex justify-center gap-1.5 mt-4">
+              {addons.map((addon, i) => (
+                <button
+                  key={addon.key}
+                  onClick={() => setPreviewAddon(addon.key)}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    previewAddon === addon.key ? 'bg-[#007AFF] w-4' : 'bg-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop: Two Column Layout */}
+          <div className="hidden lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             {/* Left: Scrollable Features Grid */}
-            <div className="order-2 lg:order-1">
-              <div className="scrollbar-visible max-h-[500px] lg:max-h-[600px] overflow-y-auto pr-2">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <div className="scrollbar-visible max-h-[600px] overflow-y-auto pr-2">
+                <div className="grid grid-cols-2 gap-3">
                   {addons.map((addon) => {
                     const IconComponent = addon.icon;
                     const isActive = previewAddon === addon.key;
@@ -525,7 +947,7 @@ export default function Landing() {
             </div>
 
             {/* Right: Mobile Preview Mockup */}
-            <div className="order-1 lg:order-2 flex justify-center lg:sticky lg:top-8">
+            <div className="flex justify-center lg:sticky lg:top-8">
               <div className="relative">
                 {/* Phone Frame - Narrower iPhone style */}
                 <div className="relative bg-gray-900 rounded-[2.5rem] p-2 shadow-2xl shadow-gray-400/30">
