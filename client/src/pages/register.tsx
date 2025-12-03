@@ -449,9 +449,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   ];
 
   return (
-    <div className="h-screen bg-[#f5f5f7] flex overflow-hidden">
-      {/* Left Rail - Desktop only - Apple style minimal */}
-      <div className="hidden lg:flex lg:w-80 xl:w-96 bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f0f23] flex-col p-8 relative overflow-hidden flex-shrink-0">
+    <div className="min-h-screen bg-[#f5f5f7]">
+      {/* Left Rail - Desktop only - Apple style minimal - FIXED position */}
+      <div className="hidden lg:flex lg:w-80 xl:w-96 bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f0f23] flex-col p-8 fixed inset-y-0 left-0 overflow-hidden z-40">
         {/* Subtle decorative gradient orbs */}
         <div className="absolute top-20 right-0 w-80 h-80 bg-oficaz-primary/5 rounded-full blur-[100px]" />
         <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-blue-500/5 rounded-full blur-[80px]" />
@@ -546,8 +546,8 @@ export default function Register({ byInvitation = false, invitationEmail, invita
           </div>
         </div>
       </div>
-      {/* Right Panel - Main content with scroll */}
-      <div className="flex-1 flex flex-col h-screen overflow-y-auto wizard-scroll-container">
+      {/* Right Panel - Main content with scroll - offset by fixed sidebar */}
+      <div className="lg:ml-80 xl:ml-96 min-h-screen flex flex-col overflow-y-auto wizard-scroll-container">
         {/* Mobile header - hidden on intro step */}
         {currentStep > 0 && (
           <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-4 flex-shrink-0">
