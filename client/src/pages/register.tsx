@@ -32,24 +32,19 @@ interface Addon {
 }
 
 const iconMap: Record<string, any> = {
-  clock: Clock,
-  palmtree: Palmtree,
-  'calendar-days': CalendarDays,
-  calendar: Calendar,
-  'calendar-clock': CalendarClock,
-  'message-square': MessageSquare,
-  mail: Mail,
-  bell: Bell,
-  'file-text': FileText,
-  'clipboard-list': ClipboardList,
-  sparkles: Sparkles,
-  brain: Brain,
-  star: Star,
+  Clock: Clock,
+  Calendar: Calendar,
+  CalendarClock: CalendarClock,
+  Mail: Mail,
+  Bell: Bell,
+  FileText: FileText,
+  ClipboardList: ClipboardList,
+  Sparkles: Sparkles,
 };
 
 const getIcon = (iconName: string | null) => {
-  if (!iconName) return Star;
-  return iconMap[iconName.toLowerCase()] || iconMap[iconName] || Star;
+  if (!iconName) return Clock;
+  return iconMap[iconName] || Clock;
 };
 
 const validateCompanyField = async (field: string, value: string) => {
@@ -1346,7 +1341,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                           ((formData.employees || 0) * 2) +
                           (formData.selectedFeatures?.reduce((sum: number, key: string) => {
                             const addon = addons.find(a => a.key === key);
-                            return sum + (addon ? parseFloat(addon.monthlyPrice) : 0);
+                            return sum + (addon ? Number(addon.monthlyPrice) : 0);
                           }, 0) || 0)
                         }
                       </span>

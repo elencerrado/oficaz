@@ -25,7 +25,7 @@ export const ADDON_DEFINITIONS: AddonDefinition[] = [
     shortDescription: '¿Cuántos días me quedan? Que te dejen de dar la brasa',
     isFreeFeature: false,
     monthlyPrice: 3,
-    icon: 'Palmtree',
+    icon: 'Calendar',
   },
   {
     key: 'schedules',
@@ -34,7 +34,7 @@ export const ADDON_DEFINITIONS: AddonDefinition[] = [
     shortDescription: 'Monta cuadrantes en minutos, no en horas de Excel',
     isFreeFeature: false,
     monthlyPrice: 3,
-    icon: 'CalendarDays',
+    icon: 'CalendarClock',
   },
   {
     key: 'messages',
@@ -43,7 +43,7 @@ export const ADDON_DEFINITIONS: AddonDefinition[] = [
     shortDescription: 'Tu equipo conectado sin grupos de WhatsApp locos',
     isFreeFeature: false,
     monthlyPrice: 5,
-    icon: 'MessageSquare',
+    icon: 'Mail',
   },
   {
     key: 'reminders',
