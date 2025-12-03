@@ -51,6 +51,26 @@
       })();
     </script>
     
+    <!-- CRITICAL: Apply theme BEFORE React loads to prevent flash -->
+    <script>
+      (function() {
+        var storageKey = 'oficaz-theme';
+        var theme = localStorage.getItem(storageKey) || 'system';
+        var isDark = false;
+        
+        if (theme === 'dark') {
+          isDark = true;
+        } else if (theme === 'system') {
+          isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+        
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.colorScheme = 'dark';
+        }
+      })();
+    </script>
+    
     <!-- PWA Configuration para iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
