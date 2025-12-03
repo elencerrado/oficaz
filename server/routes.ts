@@ -13175,19 +13175,46 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
             });
             console.log(`✅ PAYMENT CAPTURED: €${capturedPayment.amount/100} for ${t.company_name}`);
             
-            // Get plan pricing for recurring subscription
-            const planResult = await db.execute(sql`
-              SELECT monthly_price FROM subscription_plans 
-              WHERE name = ${t.plan}
-            `);
+            // NEW MODULAR PRICING: Calculate total from addons + user seats
+            // 1. Get all active addons for this company
+            const companyAddons = await storage.getCompanyAddons(t.company_id);
+            const activeAddons = companyAddons.filter(ca => ca.status === 'active' || ca.isActive);
+            const addonsTotalPrice = activeAddons.reduce((sum, ca) => {
+              const addonPrice = parseFloat(ca.addon?.monthlyPrice?.toString() || '0');
+              return sum + addonPrice;
+            }, 0);
             
-            if (!planResult.rows[0]) {
-              console.error(`❌ Plan ${t.plan} not found for company ${t.company_id}`);
-              errorCount++;
-              continue;
+            // 2. Get subscription for user seats
+            const companySubscription = await db.query.subscriptions.findFirst({
+              where: eq(subscriptions.companyId, t.company_id),
+            });
+            
+            // 3. Get seat pricing
+            const seatPricing = await storage.getAllSeatPricing();
+            const seatPriceMap: Record<string, number> = {};
+            for (const sp of seatPricing) {
+              seatPriceMap[sp.roleType] = parseFloat(sp.monthlyPrice?.toString() || '0');
             }
             
-            const monthlyPrice = Number((planResult.rows[0] as any).monthly_price);
+            // 4. Calculate user seats total
+            const adminSeats = (companySubscription?.extraAdmins || 0) + 1;
+            const managerSeats = companySubscription?.extraManagers || 0;
+            const employeeSeats = companySubscription?.extraEmployees || 0;
+            const seatsTotalPrice = 
+              (adminSeats * (seatPriceMap['admin'] || 6)) +
+              (managerSeats * (seatPriceMap['manager'] || 4)) +
+              (employeeSeats * (seatPriceMap['employee'] || 2));
+            
+            // 5. Calculate total (check for custom price first)
+            const customPrice = companySubscription?.customMonthlyPrice ? Number(companySubscription.customMonthlyPrice) : null;
+            let monthlyPrice = customPrice && customPrice > 0 ? customPrice : (addonsTotalPrice + seatsTotalPrice);
+            
+            // Minimum: 1 admin (€6) + 1 addon (€3) = €9
+            if (monthlyPrice < 9 && !customPrice) {
+              monthlyPrice = 9;
+            }
+            
+            console.log(`💰 MODULAR PRICING for ${t.company_name}: ${activeAddons.length} addons (€${addonsTotalPrice.toFixed(2)}) + ${adminSeats}a/${managerSeats}m/${employeeSeats}e seats (€${seatsTotalPrice.toFixed(2)}) = €${monthlyPrice.toFixed(2)}/month`);
             
             // Create recurring product and price
             const product = await stripe.products.create({
