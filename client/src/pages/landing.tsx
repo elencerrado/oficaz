@@ -42,6 +42,15 @@ import { FaWhatsapp } from 'react-icons/fa';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 import heroBackground from '@assets/oficaz_hero_1764771312944.webp';
 
+// Avatar images for employee preview
+import avatarMan01 from '@assets/man01_1764778692814.webp';
+import avatarMan02 from '@assets/man02_1764778692815.webp';
+import avatarMan03 from '@assets/man03_1764778692815.webp';
+import avatarMan04 from '@assets/man04_1764778692815.webp';
+import avatarWoman01 from '@assets/woman01_1764778692816.webp';
+import avatarWoman02 from '@assets/woman02_1764778692816.webp';
+import avatarWoman03 from '@assets/woman03_1764778692816.webp';
+
 function DifficultySlider() {
   const [selected, setSelected] = useState<'dificil' | 'normal' | 'oficaz'>('normal');
   const [, navigate] = useLocation();
@@ -657,16 +666,18 @@ export default function Landing() {
                           {/* Employee cards */}
                           <div className="space-y-1">
                             {[
-                              { name: 'María García', role: 'Admin', avatarColor: 'from-purple-500 to-pink-500', roleColor: 'text-purple-400' },
-                              { name: 'Carlos López', role: 'Manager', avatarColor: 'from-[#007AFF] to-blue-600', roleColor: 'text-[#007AFF]' },
-                              { name: 'Ana Martín', role: 'Empleado', avatarColor: 'from-green-500 to-emerald-600', roleColor: 'text-green-400' },
-                              { name: 'Pedro Ruiz', role: 'Empleado', avatarColor: 'from-green-500 to-emerald-600', roleColor: 'text-green-400' },
-                              { name: 'Laura Sanz', role: 'Empleado', avatarColor: 'from-green-500 to-emerald-600', roleColor: 'text-green-400' },
+                              { name: 'María García', role: 'Admin', avatar: avatarWoman01, roleColor: 'text-purple-400' },
+                              { name: 'Carlos López', role: 'Manager', avatar: avatarMan01, roleColor: 'text-[#007AFF]' },
+                              { name: 'Ana Martín', role: 'Empleado', avatar: avatarWoman02, roleColor: 'text-green-400' },
+                              { name: 'Pedro Ruiz', role: 'Empleado', avatar: avatarMan02, roleColor: 'text-green-400' },
+                              { name: 'Laura Sanz', role: 'Empleado', avatar: avatarWoman03, roleColor: 'text-green-400' },
                             ].map((emp, i) => (
                               <div key={i} className="bg-[#1a2942] rounded-lg p-1.5 flex items-center gap-2">
-                                <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${emp.avatarColor} flex items-center justify-center text-white text-[7px] font-bold`}>
-                                  {emp.name.split(' ').map(n => n[0]).join('')}
-                                </div>
+                                <img 
+                                  src={emp.avatar} 
+                                  alt={emp.name}
+                                  className="w-6 h-6 rounded-full object-cover"
+                                />
                                 <div className="flex-1">
                                   <p className="text-white text-[7px] font-medium">{emp.name}</p>
                                   <p className={`text-[6px] ${emp.roleColor}`}>{emp.role}</p>
