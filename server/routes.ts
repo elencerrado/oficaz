@@ -15396,9 +15396,51 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         where: eq(subscriptions.companyId, user.companyId),
       });
 
-      // For trial, just update limits
-      // For active subscription, we don't reduce Stripe charges mid-cycle (standard practice)
-      // The reduction will take effect at the next billing cycle
+      // For active Stripe subscription, update the seat quantities
+      if (subscription?.stripeSubscriptionId && subscription?.status === 'active') {
+        try {
+          const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripeSubscriptionId) as any;
+          
+          // Find and update seat items in Stripe
+          const seatReductions = [
+            { key: 'employee', reduction: employees },
+            { key: 'manager', reduction: managers },
+            { key: 'admin', reduction: admins },
+          ];
+          
+          for (const reduction of seatReductions) {
+            if (reduction.reduction <= 0) continue;
+            
+            // Find the subscription item for this seat type
+            const seatItem = stripeSubscription.items.data.find((item: any) => 
+              item.price?.metadata?.seat_type === reduction.key
+            );
+            
+            if (seatItem && seatItem.quantity > 0) {
+              const newQuantity = Math.max(0, seatItem.quantity - reduction.reduction);
+              
+              if (newQuantity === 0) {
+                // Remove the item entirely at period end
+                await stripe.subscriptionItems.update(seatItem.id, {
+                  quantity: 0,
+                  proration_behavior: 'none', // No refund for unused time
+                });
+                console.log(`📅 Scheduled ${reduction.key} seats removal from Stripe at period end`);
+              } else {
+                // Reduce quantity, effective at period end
+                await stripe.subscriptionItems.update(seatItem.id, {
+                  quantity: newQuantity,
+                  proration_behavior: 'none', // No refund for unused time
+                });
+                console.log(`📅 Reduced ${reduction.key} seats from ${seatItem.quantity} to ${newQuantity} in Stripe`);
+              }
+            }
+          }
+        } catch (stripeError: any) {
+          console.error('Error updating seats in Stripe:', stripeError);
+          // Continue with database update even if Stripe fails
+        }
+      }
 
       // Update user limits in database
       await storage.updateCompanyUserLimits(user.companyId, newLimits);
