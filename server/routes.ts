@@ -15492,7 +15492,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         try {
           const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripeSubscriptionId) as any;
           
-          // Find and update seat items in Stripe
+          // Find and update seat items in Stripe, consolidating duplicates
           const seatReductions = [
             { key: 'employee', reduction: employees },
             { key: 'manager', reduction: managers },
@@ -15502,30 +15502,57 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
           for (const reduction of seatReductions) {
             if (reduction.reduction <= 0) continue;
             
-            // Find the subscription item for this seat type
-            const seatItem = stripeSubscription.items.data.find((item: any) => 
+            // Find ALL subscription items for this seat type (handle legacy duplicates)
+            const seatItems = stripeSubscription.items.data.filter((item: any) => 
               item.price?.metadata?.seat_type === reduction.key
             );
             
-            if (seatItem && seatItem.quantity > 0) {
-              const newQuantity = Math.max(0, seatItem.quantity - reduction.reduction);
-              
-              if (newQuantity === 0) {
-                // Remove the item entirely at period end
-                await stripe.subscriptionItems.update(seatItem.id, {
+            if (seatItems.length === 0) continue;
+            
+            // Calculate total current quantity across all items for this seat type
+            const totalCurrentQuantity = seatItems.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
+            const newTotalQuantity = Math.max(0, totalCurrentQuantity - reduction.reduction);
+            
+            // Consolidate: Keep only the first item, remove duplicates
+            const primaryItem = seatItems[0];
+            const duplicateItems = seatItems.slice(1);
+            
+            // Delete duplicate items (set quantity to 0 for removal at period end)
+            for (const duplicate of duplicateItems) {
+              try {
+                await stripe.subscriptionItems.update(duplicate.id, {
                   quantity: 0,
-                  proration_behavior: 'none', // No refund for unused time
+                  proration_behavior: 'none',
                 });
-                console.log(`📅 Scheduled ${reduction.key} seats removal from Stripe at period end`);
-              } else {
-                // Reduce quantity, effective at period end
-                await stripe.subscriptionItems.update(seatItem.id, {
-                  quantity: newQuantity,
-                  proration_behavior: 'none', // No refund for unused time
-                });
-                console.log(`📅 Reduced ${reduction.key} seats from ${seatItem.quantity} to ${newQuantity} in Stripe`);
+                console.log(`🧹 Consolidated duplicate ${reduction.key} seat item ${duplicate.id} (quantity was ${duplicate.quantity})`);
+              } catch (deleteError: any) {
+                console.warn(`Could not consolidate duplicate item ${duplicate.id}: ${deleteError.message}`);
               }
             }
+            
+            // Update primary item with new total quantity
+            if (newTotalQuantity === 0) {
+              await stripe.subscriptionItems.update(primaryItem.id, {
+                quantity: 0,
+                proration_behavior: 'none',
+              });
+              console.log(`📅 Scheduled ${reduction.key} seats removal from Stripe at period end (consolidated from ${seatItems.length} items)`);
+            } else {
+              await stripe.subscriptionItems.update(primaryItem.id, {
+                quantity: newTotalQuantity,
+                proration_behavior: 'none',
+              });
+              console.log(`📅 Reduced ${reduction.key} seats from ${totalCurrentQuantity} to ${newTotalQuantity} in Stripe (consolidated from ${seatItems.length} items)`);
+            }
+            
+            // Update subscription record with the primary item ID
+            const seatColumn = reduction.key === 'admin' ? 'stripe_admin_seats_item_id' :
+                              reduction.key === 'manager' ? 'stripe_manager_seats_item_id' : 
+                              'stripe_employee_seats_item_id';
+            await db.execute(sql`
+              UPDATE subscriptions SET ${sql.raw(seatColumn)} = ${primaryItem.id}, updated_at = now()
+              WHERE company_id = ${user.companyId}
+            `);
           }
         } catch (stripeError: any) {
           console.error('Error updating seats in Stripe:', stripeError);
@@ -15735,8 +15762,17 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
 
           // Sync subscription items from Stripe to ensure consistency
           const stripeItems = stripeSubscription.items?.data || [];
+          
+          // Track seat item IDs for sync
+          let syncedAdminSeatsItemId: string | null = null;
+          let syncedManagerSeatsItemId: string | null = null;
+          let syncedEmployeeSeatsItemId: string | null = null;
+          
           for (const item of stripeItems) {
             const addonKey = item.price?.metadata?.addon_key;
+            const seatType = item.price?.metadata?.seat_type;
+            
+            // Handle addon items
             if (addonKey) {
               const addon = await storage.getAddonByKey(addonKey);
               if (addon) {
@@ -15761,6 +15797,27 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
                 }
               }
             }
+            
+            // Handle seat items - track IDs for database sync
+            if (seatType && item.quantity && item.quantity > 0) {
+              if (seatType === 'admin') syncedAdminSeatsItemId = item.id;
+              if (seatType === 'manager') syncedManagerSeatsItemId = item.id;
+              if (seatType === 'employee') syncedEmployeeSeatsItemId = item.id;
+            }
+          }
+          
+          // Sync seat item IDs to subscription record if we found any
+          if (syncedAdminSeatsItemId || syncedManagerSeatsItemId || syncedEmployeeSeatsItemId) {
+            await db.execute(sql`
+              UPDATE subscriptions 
+              SET 
+                stripe_admin_seats_item_id = COALESCE(${syncedAdminSeatsItemId}, stripe_admin_seats_item_id),
+                stripe_manager_seats_item_id = COALESCE(${syncedManagerSeatsItemId}, stripe_manager_seats_item_id),
+                stripe_employee_seats_item_id = COALESCE(${syncedEmployeeSeatsItemId}, stripe_employee_seats_item_id),
+                updated_at = now()
+              WHERE id = ${subscription.id}
+            `);
+            console.log(`✅ STRIPE WEBHOOK: Synced seat item IDs for subscription ${subscription.id}`);
           }
 
           console.log(`✅ STRIPE WEBHOOK: Subscription ${stripeSubscription.id} synced for company ${subscription.companyId}`);
