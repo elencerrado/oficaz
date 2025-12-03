@@ -179,15 +179,15 @@ export default function Landing() {
 
   // Addon definitions for pricing calculator - employees is free and always included
   const addons = [
-    { key: 'employees', name: 'Empleados', price: 0, icon: Users, isLocked: true },
-    { key: 'time_tracking', name: 'Fichajes', price: 3, icon: Clock, isLocked: false },
-    { key: 'vacation', name: 'Vacaciones', price: 3, icon: Calendar, isLocked: false },
-    { key: 'schedules', name: 'Cuadrante', price: 3, icon: CalendarDays, isLocked: false },
-    { key: 'messages', name: 'Mensajes', price: 5, icon: MessageSquare, isLocked: false },
-    { key: 'reminders', name: 'Recordatorios', price: 5, icon: Bell, isLocked: false },
-    { key: 'documents', name: 'Documentos', price: 10, icon: FileText, isLocked: false },
-    { key: 'work_reports', name: 'Partes de Trabajo', price: 8, icon: Settings, isLocked: false },
-    { key: 'ai_assistant', name: 'OficazIA', price: 15, icon: Zap, isLocked: false },
+    { key: 'employees', name: 'Empleados', price: 0, icon: Users, isLocked: true, description: 'Alta, baja, datos personales, roles y permisos. Todo centralizado.' },
+    { key: 'time_tracking', name: 'Fichajes', price: 3, icon: Clock, isLocked: false, description: 'Registro horario obligatorio. Fichan en dos toques y exportas PDF.' },
+    { key: 'vacation', name: 'Vacaciones', price: 3, icon: Calendar, isLocked: false, description: 'Cada empleado ve sus días, solicita fechas, y tú apruebas.' },
+    { key: 'schedules', name: 'Cuadrante', price: 3, icon: CalendarDays, isLocked: false, description: 'Arrastra turnos, duplica semanas. Con IA lo montas en segundos.' },
+    { key: 'messages', name: 'Mensajes', price: 5, icon: MessageSquare, isLocked: false, description: 'Comunicación profesional sin mezclar con WhatsApp personal.' },
+    { key: 'reminders', name: 'Recordatorios', price: 5, icon: Bell, isLocked: false, description: 'Alertas para ti o tu equipo con notificaciones push.' },
+    { key: 'documents', name: 'Documentos', price: 10, icon: FileText, isLocked: false, description: 'Nóminas, contratos, certificados... todo digital con firma.' },
+    { key: 'work_reports', name: 'Partes de Trabajo', price: 8, icon: Settings, isLocked: false, description: 'Documenta trabajos con fotos, ubicación y firma del cliente.' },
+    { key: 'ai_assistant', name: 'OficazIA', price: 15, icon: Zap, isLocked: false, description: 'Dile "crea el horario" y lo hace en segundos. Tu asistente 24/7.' },
   ];
 
   // Calculate total price (employees is free, not counted)
@@ -579,21 +579,30 @@ export default function Landing() {
                           key={addon.key}
                           onClick={() => toggleAddon(addon.key)}
                           disabled={isLocked}
-                          className={`flex items-center gap-2 p-2.5 rounded-lg text-left transition-all ${
+                          className={`group/card relative flex flex-col p-2.5 rounded-lg text-left transition-all duration-300 ${
                             isLocked
                               ? 'bg-green-500 text-white cursor-default'
                               : isSelected 
                                 ? 'bg-[#007AFF] text-white' 
                                 : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                          }`}
+                          } hover:z-10 hover:shadow-lg`}
                         >
-                          <IconComponent className={`w-4 h-4 ${isSelected || isLocked ? 'text-white' : 'text-gray-400'}`} />
-                          <span className={`text-xs font-medium ${isSelected || isLocked ? 'text-white' : 'text-gray-900'}`}>
-                            {addon.name}
-                          </span>
-                          {isLocked && (
-                            <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded ml-auto">Gratis</span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <IconComponent className={`w-4 h-4 flex-shrink-0 ${isSelected || isLocked ? 'text-white' : 'text-gray-400'}`} />
+                            <span className={`text-xs font-medium ${isSelected || isLocked ? 'text-white' : 'text-gray-900'}`}>
+                              {addon.name}
+                            </span>
+                            {isLocked && (
+                              <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded ml-auto">Gratis</span>
+                            )}
+                          </div>
+                          <div className={`overflow-hidden transition-all duration-300 max-h-0 group-hover/card:max-h-24 group-hover/card:mt-2 ${
+                            isSelected || isLocked ? 'text-white/90' : 'text-gray-500'
+                          }`}>
+                            <p className="text-[10px] leading-relaxed">
+                              {addon.description}
+                            </p>
+                          </div>
                         </button>
                       );
                     })}
