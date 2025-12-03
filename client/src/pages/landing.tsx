@@ -360,26 +360,28 @@ export default function Landing() {
                style={{ minHeight: '100vh' }}>
         {/* Fixed Background Image */}
         <div 
-          className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10"
+          className="fixed inset-0 bg-cover bg-center bg-no-repeat"
           style={{ 
             backgroundImage: `url(${heroBackground})`,
-            backgroundAttachment: 'fixed',
+            zIndex: -20,
           }}
         />
         
         {/* Dark overlay that fades to white on scroll */}
         <div 
-          className="fixed inset-0 -z-10 transition-colors duration-100"
+          className="fixed inset-0"
           style={{ 
             backgroundColor: `rgba(15, 23, 42, ${0.7 * (1 - heroScrollProgress)})`,
+            zIndex: -15,
           }}
         />
         
         {/* White overlay that appears on scroll */}
         <div 
-          className="fixed inset-0 -z-10"
+          className="fixed inset-0"
           style={{ 
             backgroundColor: `rgba(255, 255, 255, ${heroScrollProgress})`,
+            zIndex: -10,
           }}
         />
         
