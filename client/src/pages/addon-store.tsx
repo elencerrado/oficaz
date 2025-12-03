@@ -47,6 +47,8 @@ interface AddonWithStatus extends Omit<Addon, 'isFreeFeature'> {
 
 const getAddonIcon = (key: string) => {
   switch (key) {
+    case 'employees':
+      return <Users className="h-6 w-6" />;
     case 'ai_assistant':
       return <Sparkles className="h-6 w-6" />;
     case 'work_reports':
@@ -68,8 +70,13 @@ const getAddonIcon = (key: string) => {
   }
 };
 
-const getAddonColor = (key: string) => {
+const getAddonColor = (key: string, isFree: boolean = false) => {
+  if (isFree) {
+    return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+  }
   switch (key) {
+    case 'employees':
+      return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
     case 'ai_assistant':
       return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
     case 'work_reports':
@@ -717,7 +724,7 @@ export default function AddonStore() {
                     >
                       <CardHeader className="pb-2">
                         <div className="flex items-center gap-3 mb-2">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${getAddonColor(addon.key)}`}>
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${getAddonColor(addon.key, addon.isFreeFeature)}`}>
                             {getAddonIcon(addon.key)}
                           </div>
                           <CardTitle className="text-base text-gray-900 dark:text-gray-100">{addon.name}</CardTitle>
@@ -746,14 +753,32 @@ export default function AddonStore() {
 
                         <div className="mt-auto">
                           <div className="mb-3">
-                            <div className="flex items-baseline gap-1">
-                              <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                                {Number(addon.monthlyPrice).toFixed(2)}€
-                              </span>
-                              <span className="text-gray-500 dark:text-gray-400 text-sm">/mes</span>
-                            </div>
+                            {addon.isFreeFeature ? (
+                              <div className="flex items-center gap-2">
+                                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0">
+                                  Gratis - Incluido
+                                </Badge>
+                              </div>
+                            ) : (
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                                  {Number(addon.monthlyPrice).toFixed(2)}€
+                                </span>
+                                <span className="text-gray-500 dark:text-gray-400 text-sm">/mes</span>
+                              </div>
+                            )}
                           </div>
-                          {isPendingCancel ? (
+                          {addon.isFreeFeature ? (
+                            <Button 
+                              variant="outline" 
+                              className="w-full text-green-600 border-green-200 bg-green-50 cursor-default"
+                              disabled
+                              data-testid={`addon-included-${addon.key}`}
+                            >
+                              <Check className="h-4 w-4 mr-2" />
+                              Siempre incluido
+                            </Button>
+                          ) : isPendingCancel ? (
                             <Button 
                               variant="outline" 
                               className="w-full text-gray-500"

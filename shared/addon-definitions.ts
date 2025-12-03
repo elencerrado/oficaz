@@ -10,6 +10,15 @@ export interface AddonDefinition {
 
 export const ADDON_DEFINITIONS: AddonDefinition[] = [
   {
+    key: 'employees',
+    name: 'Gestión de Empleados',
+    description: 'El corazón de tu equipo. Alta, baja, datos personales, roles y permisos. Todo centralizado para que tengas el control total de tu plantilla.',
+    shortDescription: 'Tu plantilla organizada y siempre al día',
+    isFreeFeature: true,
+    monthlyPrice: 0,
+    icon: 'Users',
+  },
+  {
     key: 'time_tracking',
     name: 'Control de Fichajes',
     description: 'El registro horario es obligatorio en España. Tus empleados fichan en dos toques desde el móvil y tú exportas PDF si viene una inspección. Que no te pillen en blanco.',

@@ -114,8 +114,8 @@ export default function Landing() {
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Pricing calculator state - starts with 1 admin (required) and time_tracking selected
-  const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set(['time_tracking']));
+  // Pricing calculator state - starts with 1 admin (required), employees (always included) and time_tracking selected
+  const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set(['employees', 'time_tracking']));
   const [userCounts, setUserCounts] = useState({ employees: 0, managers: 0, admins: 1 });
 
   // Defer API calls until after critical content renders
@@ -177,24 +177,28 @@ export default function Landing() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Addon definitions for pricing calculator
+  // Addon definitions for pricing calculator - employees is free and always included
   const addons = [
-    { key: 'time_tracking', name: 'Fichajes', price: 3, icon: Clock },
-    { key: 'vacation', name: 'Vacaciones', price: 3, icon: Calendar },
-    { key: 'schedules', name: 'Cuadrante', price: 3, icon: CalendarDays },
-    { key: 'messages', name: 'Mensajes', price: 5, icon: MessageSquare },
-    { key: 'reminders', name: 'Recordatorios', price: 5, icon: Bell },
-    { key: 'documents', name: 'Documentos', price: 10, icon: FileText },
-    { key: 'work_reports', name: 'Partes de Trabajo', price: 8, icon: Settings },
-    { key: 'ai_assistant', name: 'OficazIA', price: 15, icon: Zap },
+    { key: 'employees', name: 'Empleados', price: 0, icon: Users, isLocked: true },
+    { key: 'time_tracking', name: 'Fichajes', price: 3, icon: Clock, isLocked: false },
+    { key: 'vacation', name: 'Vacaciones', price: 3, icon: Calendar, isLocked: false },
+    { key: 'schedules', name: 'Cuadrante', price: 3, icon: CalendarDays, isLocked: false },
+    { key: 'messages', name: 'Mensajes', price: 5, icon: MessageSquare, isLocked: false },
+    { key: 'reminders', name: 'Recordatorios', price: 5, icon: Bell, isLocked: false },
+    { key: 'documents', name: 'Documentos', price: 10, icon: FileText, isLocked: false },
+    { key: 'work_reports', name: 'Partes de Trabajo', price: 8, icon: Settings, isLocked: false },
+    { key: 'ai_assistant', name: 'OficazIA', price: 15, icon: Zap, isLocked: false },
   ];
 
-  // Calculate total price
-  const addonsTotal = addons.filter(a => selectedAddons.has(a.key)).reduce((sum, a) => sum + a.price, 0);
+  // Calculate total price (employees is free, not counted)
+  const addonsTotal = addons.filter(a => selectedAddons.has(a.key) && a.price > 0).reduce((sum, a) => sum + a.price, 0);
   const usersTotal = (userCounts.employees * 2) + (userCounts.managers * 4) + (userCounts.admins * 6);
   const monthlyTotal = addonsTotal + usersTotal;
 
   const toggleAddon = (key: string) => {
+    // Employees is always included, cannot be removed
+    if (key === 'employees') return;
+    
     const newSet = new Set(selectedAddons);
     if (newSet.has(key)) {
       newSet.delete(key);
@@ -458,13 +462,19 @@ export default function Landing() {
               return (
                 <div 
                   key={addon.key}
-                  className="group bg-gray-50 hover:bg-white rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:shadow-gray-200/50 border border-transparent hover:border-gray-100"
+                  className={`group rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:shadow-gray-200/50 border border-transparent hover:border-gray-100 ${
+                    addon.isLocked ? 'bg-green-50 hover:bg-green-50' : 'bg-gray-50 hover:bg-white'
+                  }`}
                 >
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#007AFF] to-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 ${
+                    addon.isLocked ? 'bg-gradient-to-br from-green-500 to-green-600' : 'bg-gradient-to-br from-[#007AFF] to-blue-600'
+                  }`}>
                     <IconComponent className="w-6 h-6 text-white" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-1">{addon.name}</h3>
-                  <p className="text-sm text-gray-500">€{addon.price}/mes</p>
+                  <p className={`text-sm ${addon.isLocked ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
+                    {addon.isLocked ? 'Gratis - Incluido' : `€${addon.price}/mes`}
+                  </p>
                 </div>
               );
             })}
@@ -523,20 +533,27 @@ export default function Landing() {
                   {addons.map((addon) => {
                     const isSelected = selectedAddons.has(addon.key);
                     const IconComponent = addon.icon;
+                    const isLocked = addon.isLocked;
                     return (
                       <button
                         key={addon.key}
                         onClick={() => toggleAddon(addon.key)}
+                        disabled={isLocked}
                         className={`flex items-center gap-2 p-2.5 rounded-lg text-left transition-all ${
-                          isSelected 
-                            ? 'bg-[#007AFF] text-white' 
-                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                          isLocked
+                            ? 'bg-green-500 text-white cursor-default'
+                            : isSelected 
+                              ? 'bg-[#007AFF] text-white' 
+                              : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                         }`}
                       >
-                        <IconComponent className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-gray-400'}`} />
-                        <span className={`text-xs font-medium ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                        <IconComponent className={`w-4 h-4 ${isSelected || isLocked ? 'text-white' : 'text-gray-400'}`} />
+                        <span className={`text-xs font-medium ${isSelected || isLocked ? 'text-white' : 'text-gray-900'}`}>
                           {addon.name}
                         </span>
+                        {isLocked && (
+                          <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded ml-auto">Gratis</span>
+                        )}
                       </button>
                     );
                   })}

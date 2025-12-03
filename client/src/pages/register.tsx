@@ -32,6 +32,7 @@ interface Addon {
 }
 
 const iconMap: Record<string, any> = {
+  Users: Users,
   Clock: Clock,
   Calendar: Calendar,
   CalendarClock: CalendarClock,
@@ -149,7 +150,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   const [validatingStep2, setValidatingStep2] = useState(false);
   const [validatingStep3, setValidatingStep3] = useState(false);
   const [formData, setFormData] = useState<Partial<FormData>>({
-    selectedFeatures: [],
+    selectedFeatures: ['employees'], // employees is always included (free)
     admins: 1,
     managers: 0,
     employees: 0,
@@ -842,6 +843,8 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     const selectedFeatures = step1Form.watch('selectedFeatures') || [];
                     const isSelected = selectedFeatures.includes(addon.key);
                     const price = Number(addon.monthlyPrice);
+                    const isFree = addon.isFreeFeature;
+                    const isLocked = addon.key === 'employees'; // employees is always included
                     
                     return (
                       <label
@@ -849,11 +852,13 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                         htmlFor={`feature-${addon.key}`}
                         data-testid={`feature-${addon.key}`}
                         className={`
-                          flex flex-col p-5 rounded-2xl cursor-pointer min-h-[160px]
+                          flex flex-col p-5 rounded-2xl min-h-[160px]
                           wizard-animate wizard-delay-${index}
-                          ${isSelected 
-                            ? 'bg-oficaz-primary/5 border-2 border-oficaz-primary shadow-lg shadow-oficaz-primary/10 scale-[1.02]' 
-                            : 'bg-white border-2 border-gray-100 hover:border-gray-200 hover:shadow-md'
+                          ${isLocked 
+                            ? 'bg-green-50 border-2 border-green-300 cursor-default'
+                            : isSelected 
+                              ? 'bg-oficaz-primary/5 border-2 border-oficaz-primary shadow-lg shadow-oficaz-primary/10 scale-[1.02] cursor-pointer' 
+                              : 'bg-white border-2 border-gray-100 hover:border-gray-200 hover:shadow-md cursor-pointer'
                           }
                         `}
                       >
@@ -863,22 +868,24 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                           value={addon.key}
                           {...step1Form.register('selectedFeatures')}
                           className="sr-only"
+                          disabled={isLocked}
+                          checked={isLocked ? true : undefined}
                         />
                         
                         {/* Header: Icon + Name + Selection indicator */}
                         <div className="flex items-center gap-3 mb-3">
                           <div className={`
                             w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors
-                            ${isSelected ? 'bg-oficaz-primary text-white' : 'bg-gray-100 text-gray-500'}
+                            ${isLocked ? 'bg-green-500 text-white' : isSelected ? 'bg-oficaz-primary text-white' : 'bg-gray-100 text-gray-500'}
                           `}>
                             <Icon className="w-5 h-5" />
                           </div>
                           <span className="font-semibold text-gray-900 flex-1">{addon.name}</span>
                           <div className={`
                             w-6 h-6 rounded-full flex items-center justify-center transition-all flex-shrink-0
-                            ${isSelected ? 'bg-oficaz-primary text-white' : 'bg-gray-100'}
+                            ${isLocked ? 'bg-green-500 text-white' : isSelected ? 'bg-oficaz-primary text-white' : 'bg-gray-100'}
                           `}>
-                            {isSelected && <Check className="w-4 h-4" />}
+                            {(isSelected || isLocked) && <Check className="w-4 h-4" />}
                           </div>
                         </div>
                         
@@ -887,9 +894,15 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                         
                         {/* Price - bottom right */}
                         <div className="flex justify-end mt-3 pt-3 border-t border-gray-100">
-                          <span className={`text-base font-bold ${isSelected ? 'text-oficaz-primary' : 'text-gray-700'}`}>
-                            €{price}<span className="text-sm font-normal text-gray-400">/mes</span>
-                          </span>
+                          {isFree ? (
+                            <Badge className="bg-green-100 text-green-700 border-0">
+                              Gratis - Incluido
+                            </Badge>
+                          ) : (
+                            <span className={`text-base font-bold ${isSelected ? 'text-oficaz-primary' : 'text-gray-700'}`}>
+                              €{price}<span className="text-sm font-normal text-gray-400">/mes</span>
+                            </span>
+                          )}
                         </div>
                       </label>
                     );
