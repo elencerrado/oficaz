@@ -192,6 +192,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await apiRequest('POST', '/api/auth/register', formData);
     console.log('🔐 Register response received:', { hasToken: !!data.token, hasUser: !!data.user });
     
+    // CRITICAL FIX: Clear ALL cached queries before setting new auth data
+    // This prevents stale data from previous sessions from appearing
+    queryClient.clear();
+    console.log('🔄 Queries cleared for fresh registration');
+    
     // Save initial auth data to localStorage
     localStorage.setItem('authData', JSON.stringify(data));
     saveAuthData(data);
@@ -233,6 +238,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('⚠️ Error refreshing user data after registration:', error);
       // Registration still succeeded, just subscription data might be missing
     }
+    
+    // CRITICAL FIX: Invalidate all queries after registration to ensure fresh data loads
+    // This is essential for the dashboard to show newly created demo employees
+    queryClient.invalidateQueries();
+    console.log('🔄 All queries invalidated for fresh data after registration');
+    
+    // Set flag for welcome modal to show after navigation to dashboard
+    localStorage.setItem('showWelcomeModal', 'true');
+    console.log('🎉 Welcome modal flag set');
     
     return data;
   };
