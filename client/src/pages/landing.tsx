@@ -648,6 +648,12 @@ export default function Landing() {
                             </div>
                           </div>
                           
+                          {/* Add user button */}
+                          <button className="w-full bg-[#007AFF] rounded-lg p-2 mb-2 flex items-center justify-center gap-1.5">
+                            <Users className="w-3 h-3 text-white" />
+                            <span className="text-white text-[8px] font-semibold">Crear usuario</span>
+                          </button>
+                          
                           {/* Employee cards */}
                           <div className="space-y-1">
                             {[
