@@ -1,4 +1,4 @@
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -40,6 +40,73 @@ import { FaWhatsapp } from 'react-icons/fa';
 
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 import heroBackground from '@assets/oficaz_hero_1764771312944.webp';
+
+function DifficultySlider() {
+  const [selected, setSelected] = useState<'dificil' | 'normal' | 'oficaz'>('normal');
+  const [, navigate] = useLocation();
+  
+  const handleSelect = (option: 'dificil' | 'normal' | 'oficaz') => {
+    setSelected(option);
+    if (option === 'oficaz') {
+      setTimeout(() => {
+        navigate('/request-code');
+      }, 400);
+    }
+  };
+  
+  return (
+    <div className="relative inline-flex bg-white/10 backdrop-blur-md rounded-2xl p-1.5 border border-white/20">
+      {/* Sliding background indicator */}
+      <div 
+        className="absolute top-1.5 bottom-1.5 rounded-xl transition-all duration-300 ease-out"
+        style={{
+          width: 'calc(33.333% - 4px)',
+          left: selected === 'dificil' ? '6px' : selected === 'normal' ? 'calc(33.333% + 2px)' : 'calc(66.666% - 2px)',
+          background: selected === 'oficaz' 
+            ? 'linear-gradient(135deg, #007AFF 0%, #0066DD 100%)' 
+            : selected === 'dificil'
+            ? 'rgba(239, 68, 68, 0.3)'
+            : 'rgba(255, 255, 255, 0.15)',
+          boxShadow: selected === 'oficaz' ? '0 4px 20px rgba(0, 122, 255, 0.4)' : 'none'
+        }}
+      />
+      
+      {/* Options */}
+      <button
+        onClick={() => handleSelect('dificil')}
+        className={`relative z-10 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-semibold transition-all duration-300 ${
+          selected === 'dificil' 
+            ? 'text-red-400' 
+            : 'text-white/60 hover:text-white/80'
+        }`}
+      >
+        Difícil
+      </button>
+      
+      <button
+        onClick={() => handleSelect('normal')}
+        className={`relative z-10 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-semibold transition-all duration-300 ${
+          selected === 'normal' 
+            ? 'text-white' 
+            : 'text-white/60 hover:text-white/80'
+        }`}
+      >
+        Normal
+      </button>
+      
+      <button
+        onClick={() => handleSelect('oficaz')}
+        className={`relative z-10 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold transition-all duration-300 ${
+          selected === 'oficaz' 
+            ? 'text-white' 
+            : 'text-white/60 hover:text-white/80'
+        }`}
+      >
+        Oficaz
+      </button>
+    </div>
+  );
+}
 
 export default function Landing() {
   usePageTitle('Bienvenido a Oficaz');
@@ -290,7 +357,7 @@ export default function Landing() {
         
         <div className="relative max-w-5xl mx-auto px-6 text-center">
           {/* Main Content */}
-          <div className="space-y-6 lg:space-y-8">
+          <div className="space-y-8 lg:space-y-10">
             
             {/* Main Headline */}
             <div className="space-y-3">
@@ -303,39 +370,17 @@ export default function Landing() {
             </div>
 
             {/* Subtext */}
-            <p className="text-lg md:text-xl lg:text-2xl text-white/90 max-w-2xl mx-auto leading-relaxed font-medium drop-shadow-md">
-              La plataforma de gestión empresarial más <span className="text-white font-bold">intuitiva</span> del mercado
+            <p className="text-lg md:text-xl lg:text-2xl text-white/90 max-w-2xl mx-auto leading-relaxed font-medium">
+              La app de gestión empresarial en un clic
             </p>
 
-            {/* CTA Button */}
+            {/* Difficulty Slider */}
             {registrationSettings?.publicRegistrationEnabled && (
-              <div className="flex justify-center pt-4 lg:pt-6">
-                <Link href="/request-code">
-                  <Button size="lg" className="bg-[#007AFF] hover:bg-[#0066DD] text-white px-8 lg:px-10 py-4 lg:py-5 text-lg lg:text-xl font-semibold shadow-2xl shadow-[#007AFF]/40 border-0 rounded-2xl transition-all duration-300 hover:scale-105">
-                    Empezar Gratis
-                    <ArrowRight className="w-5 h-5 lg:w-6 lg:h-6 ml-3" />
-                  </Button>
-                </Link>
+              <div className="flex flex-col items-center gap-4 pt-4">
+                <p className="text-white/70 text-sm font-medium">Selecciona nivel de dificultad</p>
+                <DifficultySlider />
               </div>
             )}
-
-            {/* Trust Indicators */}
-            <div className="pt-6 lg:pt-8">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 text-white/90 text-sm sm:text-base font-medium">
-                <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                  <CheckCircle className="w-4 h-4 text-green-400" />
-                  <span>7 días de prueba gratis</span>
-                </div>
-                <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                  <Shield className="w-4 h-4 text-[#007AFF]" />
-                  <span>Datos 100% protegidos</span>
-                </div>
-                <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                  <Zap className="w-4 h-4 text-amber-400" />
-                  <span>Activo en minutos</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
