@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import oficazLogo from '@/assets/oficaz-logo.png';
+
+function OficazIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 120 120" className={className}>
+      <circle cx="60" cy="60" r="60" fill="currentColor"/>
+      <circle cx="60" cy="60" r="20" fill="white"/>
+    </svg>
+  );
+}
 
 interface DemoLoadingOverlayProps {
   isVisible: boolean;
@@ -91,14 +100,11 @@ export function DemoLoadingOverlay({ isVisible, isBackendComplete = false, onCom
       if (ratio < 1) {
         requestAnimationFrame(animate);
       } else {
+        setContentFadeIn(false);
         setTimeout(() => {
-          setPhase('transitioning');
-          setContentFadeIn(false);
-          setTimeout(() => {
-            setPhase('welcome');
-            setTimeout(() => setContentFadeIn(true), 100);
-          }, 400);
-        }, 500);
+          setPhase('welcome');
+          setTimeout(() => setContentFadeIn(true), 50);
+        }, 300);
       }
     };
 
@@ -121,9 +127,9 @@ export function DemoLoadingOverlay({ isVisible, isBackendComplete = false, onCom
         phase === 'exiting' ? 'opacity-0' : 'opacity-100'
       }`}
     >
-      {(phase === 'loading' || phase === 'transitioning') && (
-        <div className={`flex flex-col items-center transition-all duration-500 ease-out ${
-          contentFadeIn && phase === 'loading' ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'
+      {phase === 'loading' && (
+        <div className={`flex flex-col items-center transition-all duration-300 ease-out ${
+          contentFadeIn ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'
         }`}>
           <div className="mb-12">
             <img 
@@ -188,10 +194,10 @@ export function DemoLoadingOverlay({ isVisible, isBackendComplete = false, onCom
           contentFadeIn ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
         }`}>
           <div className="mb-8">
-            <div className={`w-24 h-24 mx-auto bg-gradient-to-br from-oficaz-primary to-blue-600 rounded-[28px] flex items-center justify-center mb-8 shadow-2xl shadow-oficaz-primary/40 transition-all duration-1000 ${
+            <div className={`w-24 h-24 mx-auto rounded-[28px] flex items-center justify-center mb-8 shadow-2xl shadow-oficaz-primary/40 transition-all duration-1000 overflow-hidden ${
               contentFadeIn ? 'rotate-0 scale-100' : 'rotate-12 scale-75'
             }`}>
-              <Sparkles className="w-12 h-12 text-white" />
+              <OficazIcon className="w-24 h-24 text-oficaz-primary" />
             </div>
             
             <h1 className={`text-4xl lg:text-5xl font-bold text-gray-900 mb-5 transition-all duration-700 delay-100 ${
