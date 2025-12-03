@@ -70,13 +70,13 @@ const validateUserField = async (field: string, value: string) => {
 };
 
 const step1Schema = z.object({
-  interestedFeatures: z.array(z.string()).optional(),
+  selectedFeatures: z.array(z.string()).min(1, 'Selecciona al menos 1 funcionalidad'),
 });
 
 const step2Schema = z.object({
-  additionalAdmins: z.number().min(0).default(0),
-  additionalManagers: z.number().min(0).default(0),
-  additionalEmployees: z.number().min(0).default(0),
+  admins: z.number().min(1).default(1),
+  managers: z.number().min(0).default(0),
+  employees: z.number().min(0).default(0),
 });
 
 const step3Schema = z.object({
@@ -153,7 +153,10 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   const [validatingStep2, setValidatingStep2] = useState(false);
   const [validatingStep3, setValidatingStep3] = useState(false);
   const [formData, setFormData] = useState<Partial<FormData>>({
-    interestedFeatures: [],
+    selectedFeatures: [],
+    admins: 1,
+    managers: 0,
+    employees: 0,
     sameAsAdmin: true,
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -191,21 +194,18 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     queryKey: ['/api/public/addons'],
   });
 
-  // Split into free and paid addons
-  const freeAddons = addons.filter(a => a.isFreeFeature);
-  const paidAddons = addons.filter(a => !a.isFreeFeature);
 
   const step1Form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
-    defaultValues: { interestedFeatures: formData.interestedFeatures || [] },
+    defaultValues: { selectedFeatures: formData.selectedFeatures || [] },
   });
 
   const step2Form = useForm<Step2Data>({
     resolver: zodResolver(step2Schema),
     defaultValues: { 
-      additionalAdmins: formData.additionalAdmins || 0,
-      additionalManagers: formData.additionalManagers || 0,
-      additionalEmployees: formData.additionalEmployees || 0,
+      admins: formData.admins || 1,
+      managers: formData.managers || 0,
+      employees: formData.employees || 0,
     },
   });
 
@@ -529,334 +529,315 @@ export default function Register({ byInvitation = false, invitationEmail, invita
               </div>
             )}
 
-            {/* Step 1: Features */}
+            {/* Step 1: Features Selection - Apple Style */}
             {currentStep === 1 && (
               <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="space-y-6">
-                <div className="text-center lg:text-left mb-6">
-                  <h2 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-2">
-                    ¿Qué funciones necesitas?
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-3">
+                    Monta tu Oficaz
                   </h2>
-                  <p className="text-gray-500 text-sm">
-                    Selecciona las que quieras probar. Tendrás acceso a todo durante el trial.
+                  <p className="text-gray-500">
+                    Elige las funciones que necesitas. Paga solo por lo que uses.
                   </p>
                 </div>
 
-                {/* Included features - display only, not selectable */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                      Incluido en tu plan
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {freeAddons.map((addon) => {
-                      const Icon = getIcon(addon.icon);
-                      return (
-                        <div
-                          key={addon.key}
-                          data-testid={`feature-${addon.key}`}
-                          className="relative flex flex-row sm:flex-col items-center p-3 sm:p-4 rounded-2xl bg-green-50 border-2 border-green-200"
-                        >
-                          <Icon className="w-6 h-6 mr-3 sm:mr-0 sm:mb-2 text-green-600 flex-shrink-0" />
-                          <div className="flex-1 sm:text-center">
-                            <span className="text-sm font-medium text-gray-900 block">{addon.name}</span>
-                            <span className="text-xs text-gray-500 block mt-0.5">{addon.shortDescription}</span>
-                          </div>
-                          <div className="sm:absolute sm:top-2 sm:right-2">
-                            <Check className="w-4 h-4 text-green-600" />
-                          </div>
+                {/* Features grid - Apple style cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {addons.map((addon) => {
+                    const Icon = getIcon(addon.icon);
+                    const selectedFeatures = step1Form.watch('selectedFeatures') || [];
+                    const isSelected = selectedFeatures.includes(addon.key);
+                    const price = Number(addon.monthlyPrice);
+                    
+                    return (
+                      <label
+                        key={addon.key}
+                        htmlFor={`feature-${addon.key}`}
+                        data-testid={`feature-${addon.key}`}
+                        className={`
+                          relative flex items-start p-5 rounded-2xl cursor-pointer transition-all duration-300
+                          ${isSelected 
+                            ? 'bg-oficaz-primary/5 border-2 border-oficaz-primary shadow-lg shadow-oficaz-primary/10 scale-[1.02]' 
+                            : 'bg-white border-2 border-gray-100 hover:border-gray-200 hover:shadow-md'
+                          }
+                        `}
+                      >
+                        <input
+                          type="checkbox"
+                          id={`feature-${addon.key}`}
+                          value={addon.key}
+                          {...step1Form.register('selectedFeatures')}
+                          className="sr-only"
+                        />
+                        
+                        {/* Icon */}
+                        <div className={`
+                          w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 mr-4 transition-colors
+                          ${isSelected ? 'bg-oficaz-primary text-white' : 'bg-gray-100 text-gray-500'}
+                        `}>
+                          <Icon className="w-6 h-6" />
                         </div>
-                      );
-                    })}
-                  </div>
+                        
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-semibold text-gray-900">{addon.name}</span>
+                            <span className={`text-sm font-bold ${isSelected ? 'text-oficaz-primary' : 'text-gray-600'}`}>
+                              €{price}/mes
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500 line-clamp-2">{addon.shortDescription}</p>
+                        </div>
+                        
+                        {/* Selection indicator */}
+                        <div className={`
+                          absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center transition-all
+                          ${isSelected ? 'bg-oficaz-primary text-white' : 'bg-gray-100'}
+                        `}>
+                          {isSelected && <Check className="w-4 h-4" />}
+                        </div>
+                      </label>
+                    );
+                  })}
                 </div>
 
-                {/* Additional add-ons - selectable */}
-                <div className="space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                    <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full w-fit">
-                      Complementos adicionales
-                    </span>
-                    <span className="text-xs text-gray-400">Pruébalos gratis durante el trial</span>
+                {/* Price summary */}
+                {(step1Form.watch('selectedFeatures') || []).length > 0 && (
+                  <div className="bg-gray-50 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-gray-600">Funcionalidades seleccionadas:</span>
+                      <span className="ml-2 font-medium text-gray-900">
+                        {(step1Form.watch('selectedFeatures') || []).length}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm text-gray-500">Subtotal: </span>
+                      <span className="text-lg font-bold text-oficaz-primary">
+                        €{(step1Form.watch('selectedFeatures') || []).reduce((sum, key) => {
+                          const addon = addons.find(a => a.key === key);
+                          return sum + Number(addon?.monthlyPrice || 0);
+                        }, 0)}/mes
+                      </span>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {paidAddons.map((addon) => {
-                      const Icon = getIcon(addon.icon);
-                      const selectedFeatures = step1Form.watch('interestedFeatures') || [];
-                      const isSelected = selectedFeatures.includes(addon.key);
-                      return (
-                        <label
-                          key={addon.key}
-                          htmlFor={`feature-${addon.key}`}
-                          data-testid={`feature-${addon.key}`}
-                          className={`
-                            relative flex flex-row sm:flex-col items-center p-3 sm:p-4 rounded-2xl cursor-pointer transition-all duration-200
-                            ${isSelected 
-                              ? 'bg-blue-50 border-2 border-blue-400 shadow-sm' 
-                              : 'bg-white border-2 border-gray-100 hover:border-gray-200 hover:shadow-sm'
-                            }
-                          `}
-                        >
-                          <input
-                            type="checkbox"
-                            id={`feature-${addon.key}`}
-                            value={addon.key}
-                            {...step1Form.register('interestedFeatures')}
-                            className="sr-only"
-                          />
-                          <Icon className={`w-6 h-6 mr-3 sm:mr-0 sm:mb-2 flex-shrink-0 ${isSelected ? 'text-blue-600' : 'text-gray-400'}`} />
-                          <div className="flex-1 sm:text-center">
-                            <span className="text-sm font-medium text-gray-900 block">{addon.name}</span>
-                            <span className="text-xs text-gray-500 block mt-0.5">{addon.shortDescription}</span>
-                          </div>
-                          {isSelected && (
-                            <div className="sm:absolute sm:top-2 sm:right-2">
-                              <Check className="w-4 h-4 text-blue-600" />
-                            </div>
-                          )}
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
+                )}
+
+                {/* Validation error */}
+                {step1Form.formState.errors.selectedFeatures && (
+                  <p className="text-sm text-red-500 text-center">
+                    {step1Form.formState.errors.selectedFeatures.message}
+                  </p>
+                )}
 
                 <div className="pt-4">
                   <Button 
                     type="submit" 
                     data-testid="button-step1-continue"
-                    className={`w-full h-12 rounded-xl text-base font-medium ${
-                      (step1Form.watch('interestedFeatures') || []).length === 0 
-                        ? 'bg-gray-200 hover:bg-gray-300 text-gray-700' 
-                        : ''
-                    }`}
-                    variant={(step1Form.watch('interestedFeatures') || []).length === 0 ? 'outline' : 'default'}
+                    disabled={(step1Form.watch('selectedFeatures') || []).length === 0}
+                    className="w-full h-14 rounded-2xl text-base font-medium"
                   >
-                    {(step1Form.watch('interestedFeatures') || []).length > 0 ? (
-                      <>
-                        Continuar
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </>
-                    ) : (
-                      'Decidir luego'
-                    )}
+                    Continuar
+                    <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
+                  {(step1Form.watch('selectedFeatures') || []).length === 0 && (
+                    <p className="text-xs text-gray-400 text-center mt-2">
+                      Selecciona al menos 1 funcionalidad para continuar
+                    </p>
+                  )}
                 </div>
               </form>
             )}
 
-            {/* Step 2: Team Size */}
+            {/* Step 2: Team Size - Apple Style */}
             {currentStep === 2 && (
               <form onSubmit={step2Form.handleSubmit(handleStep2Submit)} className="space-y-6">
-                  <div className="text-center lg:text-left mb-6">
-                    <h2 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-2">
-                      Configura tu equipo
-                    </h2>
-                    <p className="text-gray-500 text-sm">
-                      El plan base incluye usuarios. Añade más si los necesitas.
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-3">
+                    Configura tu equipo
+                  </h2>
+                  <p className="text-gray-500">
+                    Añade los usuarios que necesitas. Siempre puedes ajustarlo después.
+                  </p>
+                </div>
+
+                {/* User counters - Visual Apple style */}
+                <div className="space-y-4">
+                  {/* Admin counter - minimum 1 required */}
+                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl p-5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-amber-500 flex items-center justify-center">
+                          <Crown className="w-7 h-7 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900 text-lg">Administradores</h3>
+                          <p className="text-sm text-gray-500">Control total y facturación</p>
+                          <span className="text-sm font-medium text-amber-600">€6/usuario/mes</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const current = step2Form.getValues('admins');
+                            if (current > 1) step2Form.setValue('admins', current - 1);
+                          }}
+                          disabled={step2Form.watch('admins') <= 1}
+                          className="w-12 h-12 rounded-xl bg-white border-2 border-gray-200 hover:bg-gray-50 flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          data-testid="button-minus-admins"
+                        >
+                          <Minus className="w-5 h-5 text-gray-600" />
+                        </button>
+                        <span className="w-14 text-center text-2xl font-bold text-gray-900">
+                          {step2Form.watch('admins')}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const current = step2Form.getValues('admins');
+                            step2Form.setValue('admins', current + 1);
+                          }}
+                          className="w-12 h-12 rounded-xl bg-amber-500 hover:bg-amber-600 flex items-center justify-center transition-colors"
+                          data-testid="button-plus-admins"
+                        >
+                          <Plus className="w-5 h-5 text-white" />
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-amber-600 mt-3 flex items-center gap-1">
+                      <Shield className="w-3 h-3" />
+                      Mínimo 1 administrador requerido (tú serás el primero)
                     </p>
                   </div>
 
-                  {/* Plan base card */}
-                  <div className="bg-gradient-to-r from-oficaz-primary/5 to-blue-50 border border-oficaz-primary/20 rounded-2xl p-5">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <span className="text-lg font-semibold text-gray-900">Plan Oficaz</span>
-                        <span className="text-xs text-gray-500 ml-2">Incluye:</span>
-                      </div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-bold text-oficaz-primary">€39</span>
-                        <span className="text-gray-500 text-sm">/mes</span>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-3 text-center">
-                      <div className="bg-white/80 rounded-xl p-3">
-                        <div className="text-xl font-bold text-oficaz-primary">1</div>
-                        <div className="text-xs text-gray-600 font-medium">Admin</div>
-                      </div>
-                      <div className="bg-white/80 rounded-xl p-3">
-                        <div className="text-xl font-bold text-oficaz-primary">1</div>
-                        <div className="text-xs text-gray-600 font-medium">Manager</div>
-                      </div>
-                      <div className="bg-white/80 rounded-xl p-3">
-                        <div className="text-xl font-bold text-oficaz-primary">10</div>
-                        <div className="text-xs text-gray-600 font-medium">Empleados</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Additional users section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-700">¿Necesitas más usuarios?</span>
-                      <span className="text-xs text-gray-400">Opcional</span>
-                    </div>
-
-                    {/* Counters grid - Order: Empleados, Managers, Admins */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                      {/* Additional Employees */}
-                      <div className="bg-white border-2 border-gray-100 rounded-2xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium text-gray-900">Empleados</span>
-                          <span className="text-xs text-oficaz-primary font-medium">+€2/mes</span>
+                  {/* Manager counter */}
+                  <div className="bg-white border-2 border-gray-100 hover:border-gray-200 rounded-2xl p-5 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-purple-500 flex items-center justify-center">
+                          <Users className="w-7 h-7 text-white" />
                         </div>
-                        <p className="text-xs text-gray-500 mb-3">Ficha, vacaciones, nóminas</p>
-                        <div className="flex items-center justify-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const current = step2Form.getValues('additionalEmployees');
-                              if (current > 0) step2Form.setValue('additionalEmployees', current - 1);
-                            }}
-                            className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
-                            data-testid="button-minus-employees"
-                          >
-                            <Minus className="w-4 h-4 text-gray-600" />
-                          </button>
-                          <span className="w-12 text-center text-xl font-semibold text-gray-900">
-                            {step2Form.watch('additionalEmployees')}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const current = step2Form.getValues('additionalEmployees');
-                              step2Form.setValue('additionalEmployees', current + 1);
-                            }}
-                            className="w-10 h-10 rounded-xl bg-oficaz-primary hover:bg-oficaz-primary/90 flex items-center justify-center transition-colors"
-                            data-testid="button-plus-employees"
-                          >
-                            <Plus className="w-4 h-4 text-white" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Additional Managers */}
-                      <div className="bg-white border-2 border-gray-100 rounded-2xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium text-gray-900">Managers</span>
-                          <span className="text-xs text-oficaz-primary font-medium">+€4/mes</span>
-                        </div>
-                        <p className="text-xs text-gray-500 mb-3">Gestiona equipos e informes</p>
-                        <div className="flex items-center justify-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const current = step2Form.getValues('additionalManagers');
-                              if (current > 0) step2Form.setValue('additionalManagers', current - 1);
-                            }}
-                            className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
-                            data-testid="button-minus-managers"
-                          >
-                            <Minus className="w-4 h-4 text-gray-600" />
-                          </button>
-                          <span className="w-12 text-center text-xl font-semibold text-gray-900">
-                            {step2Form.watch('additionalManagers')}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const current = step2Form.getValues('additionalManagers');
-                              step2Form.setValue('additionalManagers', current + 1);
-                            }}
-                            className="w-10 h-10 rounded-xl bg-oficaz-primary hover:bg-oficaz-primary/90 flex items-center justify-center transition-colors"
-                            data-testid="button-plus-managers"
-                          >
-                            <Plus className="w-4 h-4 text-white" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Additional Admins */}
-                      <div className="bg-white border-2 border-gray-100 rounded-2xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium text-gray-900">Admins</span>
-                          <span className="text-xs text-oficaz-primary font-medium">+€6/mes</span>
-                        </div>
-                        <p className="text-xs text-gray-500 mb-3">Control total, facturación</p>
-                        <div className="flex items-center justify-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const current = step2Form.getValues('additionalAdmins');
-                              if (current > 0) step2Form.setValue('additionalAdmins', current - 1);
-                            }}
-                            className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
-                            data-testid="button-minus-admins"
-                          >
-                            <Minus className="w-4 h-4 text-gray-600" />
-                          </button>
-                          <span className="w-12 text-center text-xl font-semibold text-gray-900">
-                            {step2Form.watch('additionalAdmins')}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const current = step2Form.getValues('additionalAdmins');
-                              step2Form.setValue('additionalAdmins', current + 1);
-                            }}
-                            className="w-10 h-10 rounded-xl bg-oficaz-primary hover:bg-oficaz-primary/90 flex items-center justify-center transition-colors"
-                            data-testid="button-plus-admins"
-                          >
-                            <Plus className="w-4 h-4 text-white" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Total summary */}
-                  {(step2Form.watch('additionalAdmins') > 0 || step2Form.watch('additionalManagers') > 0 || step2Form.watch('additionalEmployees') > 0) && (
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <div className="flex items-center justify-between">
                         <div>
-                          <span className="text-sm font-medium text-gray-700">Total usuarios adicionales:</span>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {step2Form.watch('additionalAdmins') > 0 && `+${step2Form.watch('additionalAdmins')} admin${step2Form.watch('additionalAdmins') > 1 ? 's' : ''}`}
-                            {step2Form.watch('additionalAdmins') > 0 && (step2Form.watch('additionalManagers') > 0 || step2Form.watch('additionalEmployees') > 0) && ', '}
-                            {step2Form.watch('additionalManagers') > 0 && `+${step2Form.watch('additionalManagers')} manager${step2Form.watch('additionalManagers') > 1 ? 's' : ''}`}
-                            {step2Form.watch('additionalManagers') > 0 && step2Form.watch('additionalEmployees') > 0 && ', '}
-                            {step2Form.watch('additionalEmployees') > 0 && `+${step2Form.watch('additionalEmployees')} empleado${step2Form.watch('additionalEmployees') > 1 ? 's' : ''}`}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-lg font-bold text-oficaz-primary">
-                            +€{(step2Form.watch('additionalAdmins') * 6) + (step2Form.watch('additionalManagers') * 4) + (step2Form.watch('additionalEmployees') * 2)}
-                          </span>
-                          <span className="text-gray-500 text-sm">/mes</span>
+                          <h3 className="font-semibold text-gray-900 text-lg">Managers</h3>
+                          <p className="text-sm text-gray-500">Gestión de equipos e informes</p>
+                          <span className="text-sm font-medium text-purple-600">€4/usuario/mes</span>
                         </div>
                       </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const current = step2Form.getValues('managers');
+                            if (current > 0) step2Form.setValue('managers', current - 1);
+                          }}
+                          disabled={step2Form.watch('managers') <= 0}
+                          className="w-12 h-12 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          data-testid="button-minus-managers"
+                        >
+                          <Minus className="w-5 h-5 text-gray-600" />
+                        </button>
+                        <span className="w-14 text-center text-2xl font-bold text-gray-900">
+                          {step2Form.watch('managers')}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const current = step2Form.getValues('managers');
+                            step2Form.setValue('managers', current + 1);
+                          }}
+                          className="w-12 h-12 rounded-xl bg-purple-500 hover:bg-purple-600 flex items-center justify-center transition-colors"
+                          data-testid="button-plus-managers"
+                        >
+                          <Plus className="w-5 h-5 text-white" />
+                        </button>
+                      </div>
                     </div>
-                  )}
-
-                  <div className="flex gap-3 pt-4">
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={() => goToStep(1)}
-                      className="flex-1 h-12 rounded-xl"
-                    >
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      Atrás
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      data-testid="button-step2-continue"
-                      className={`flex-1 h-12 rounded-xl ${
-                        (step2Form.watch('additionalAdmins') === 0 && step2Form.watch('additionalManagers') === 0 && step2Form.watch('additionalEmployees') === 0)
-                          ? 'bg-gray-200 hover:bg-gray-300 text-gray-700' 
-                          : ''
-                      }`}
-                      variant={(step2Form.watch('additionalAdmins') === 0 && step2Form.watch('additionalManagers') === 0 && step2Form.watch('additionalEmployees') === 0) ? 'outline' : 'default'}
-                    >
-                      {(step2Form.watch('additionalAdmins') > 0 || step2Form.watch('additionalManagers') > 0 || step2Form.watch('additionalEmployees') > 0) ? (
-                        <>
-                          Continuar
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </>
-                      ) : (
-                        'Seguir con el plan base'
-                      )}
-                    </Button>
                   </div>
+
+                  {/* Employee counter */}
+                  <div className="bg-white border-2 border-gray-100 hover:border-gray-200 rounded-2xl p-5 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-blue-500 flex items-center justify-center">
+                          <User className="w-7 h-7 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900 text-lg">Empleados</h3>
+                          <p className="text-sm text-gray-500">Fichajes, vacaciones, nóminas</p>
+                          <span className="text-sm font-medium text-blue-600">€2/usuario/mes</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const current = step2Form.getValues('employees');
+                            if (current > 0) step2Form.setValue('employees', current - 1);
+                          }}
+                          disabled={step2Form.watch('employees') <= 0}
+                          className="w-12 h-12 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          data-testid="button-minus-employees"
+                        >
+                          <Minus className="w-5 h-5 text-gray-600" />
+                        </button>
+                        <span className="w-14 text-center text-2xl font-bold text-gray-900">
+                          {step2Form.watch('employees')}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const current = step2Form.getValues('employees');
+                            step2Form.setValue('employees', current + 1);
+                          }}
+                          className="w-12 h-12 rounded-xl bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-colors"
+                          data-testid="button-plus-employees"
+                        >
+                          <Plus className="w-5 h-5 text-white" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Total summary */}
+                <div className="bg-gray-50 rounded-2xl p-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-gray-600">Total equipo:</span>
+                      <div className="text-sm text-gray-500 mt-1">
+                        {step2Form.watch('admins')} admin{step2Form.watch('admins') > 1 ? 's' : ''}
+                        {step2Form.watch('managers') > 0 && `, ${step2Form.watch('managers')} manager${step2Form.watch('managers') > 1 ? 's' : ''}`}
+                        {step2Form.watch('employees') > 0 && `, ${step2Form.watch('employees')} empleado${step2Form.watch('employees') > 1 ? 's' : ''}`}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-2xl font-bold text-oficaz-primary">
+                        €{(step2Form.watch('admins') * 6) + (step2Form.watch('managers') * 4) + (step2Form.watch('employees') * 2)}
+                      </span>
+                      <span className="text-gray-500">/mes</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => goToStep(1)}
+                    className="flex-1 h-14 rounded-2xl"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Atrás
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    data-testid="button-step2-continue"
+                    className="flex-1 h-14 rounded-2xl"
+                  >
+                    Continuar
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </div>
               </form>
             )}
 
@@ -1233,34 +1214,23 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   </p>
                 </div>
 
-                {/* Features included */}
+                {/* Features selected */}
                 <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                  <span className="text-sm font-medium text-gray-900 block mb-3">Funcionalidades incluidas</span>
+                  <span className="text-sm font-medium text-gray-900 block mb-3">Tus funcionalidades</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {/* Free features always included */}
-                    {addons.filter(a => a.isFreeFeature).map((addon) => {
-                      const Icon = iconMap[addon.icon as keyof typeof iconMap] || Clock;
-                      return (
-                        <div key={addon.key} className="flex items-center gap-2 text-sm text-gray-700">
-                          <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                            <Icon className="w-3.5 h-3.5 text-green-600" />
-                          </div>
-                          <span>{addon.name}</span>
-                        </div>
-                      );
-                    })}
-                    {/* Paid features selected by user */}
-                    {formData.interestedFeatures && formData.interestedFeatures.map((featureKey: string) => {
+                    {formData.selectedFeatures && formData.selectedFeatures.map((featureKey: string) => {
                       const addon = addons.find(a => a.key === featureKey);
-                      if (!addon || addon.isFreeFeature) return null;
+                      if (!addon) return null;
                       const Icon = iconMap[addon.icon as keyof typeof iconMap] || Clock;
                       return (
-                        <div key={featureKey} className="flex items-center gap-2 text-sm text-gray-700">
-                          <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                            <Icon className="w-3.5 h-3.5 text-blue-600" />
+                        <div key={featureKey} className="flex items-center justify-between text-sm text-gray-700 bg-gray-50 rounded-xl p-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-oficaz-primary/10 flex items-center justify-center flex-shrink-0">
+                              <Icon className="w-4 h-4 text-oficaz-primary" />
+                            </div>
+                            <span className="font-medium">{addon.name}</span>
                           </div>
-                          <span>{addon.name}</span>
-                          <span className="text-xs text-oficaz-primary">+€{addon.monthlyPrice}</span>
+                          <span className="text-oficaz-primary font-semibold">€{addon.monthlyPrice}/mes</span>
                         </div>
                       );
                     })}
@@ -1272,21 +1242,24 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-medium text-gray-900">Tu equipo</span>
                     <span className="text-xs text-gray-500">
-                      {(1 + (formData.additionalAdmins || 0)) + (1 + (formData.additionalManagers || 0)) + (10 + (formData.additionalEmployees || 0))} usuarios en total
+                      {(formData.admins || 1) + (formData.managers || 0) + (formData.employees || 0)} usuarios en total
                     </span>
                   </div>
                   <div className="flex gap-3 text-center">
                     <div className="flex-1 bg-white/80 rounded-xl py-2">
-                      <div className="text-lg font-bold text-oficaz-primary">{10 + (formData.additionalEmployees || 0)}</div>
+                      <div className="text-lg font-bold text-blue-600">{formData.employees || 0}</div>
                       <div className="text-xs text-gray-600">Empleados</div>
+                      <div className="text-xs text-gray-400">€{(formData.employees || 0) * 2}/mes</div>
                     </div>
                     <div className="flex-1 bg-white/80 rounded-xl py-2">
-                      <div className="text-lg font-bold text-oficaz-primary">{1 + (formData.additionalManagers || 0)}</div>
+                      <div className="text-lg font-bold text-purple-600">{formData.managers || 0}</div>
                       <div className="text-xs text-gray-600">Managers</div>
+                      <div className="text-xs text-gray-400">€{(formData.managers || 0) * 4}/mes</div>
                     </div>
                     <div className="flex-1 bg-white/80 rounded-xl py-2">
-                      <div className="text-lg font-bold text-oficaz-primary">{1 + (formData.additionalAdmins || 0)}</div>
+                      <div className="text-lg font-bold text-amber-600">{formData.admins || 1}</div>
                       <div className="text-xs text-gray-600">Admins</div>
+                      <div className="text-xs text-gray-400">€{(formData.admins || 1) * 6}/mes</div>
                     </div>
                   </div>
                 </div>
@@ -1297,11 +1270,11 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     <span className="text-lg font-semibold">Total mensual</span>
                     <div className="text-right">
                       <span className="text-3xl font-bold">
-                        €{39 + 
-                          ((formData.additionalAdmins || 0) * 6) + 
-                          ((formData.additionalManagers || 0) * 4) + 
-                          ((formData.additionalEmployees || 0) * 2) +
-                          (formData.interestedFeatures?.reduce((sum: number, key: string) => {
+                        €{
+                          ((formData.admins || 1) * 6) + 
+                          ((formData.managers || 0) * 4) + 
+                          ((formData.employees || 0) * 2) +
+                          (formData.selectedFeatures?.reduce((sum: number, key: string) => {
                             const addon = addons.find(a => a.key === key);
                             return sum + (addon ? parseFloat(addon.monthlyPrice) : 0);
                           }, 0) || 0)
@@ -1311,8 +1284,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     </div>
                   </div>
                   <p className="text-sm text-gray-300 leading-relaxed">
-                    Menudo chollazo por todo el tiempo que te va a ahorrar Oficaz. 
-                    Seguro que tu tiempo vale mucho más que esto.
+                    Paga solo por lo que usas. Sin sorpresas ni costes ocultos.
                   </p>
                 </div>
 
