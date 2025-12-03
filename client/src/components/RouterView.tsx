@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useFeatureCheck } from "@/hooks/use-feature-check";
 import { PageLoading } from "@/components/ui/page-loading";
+import { AuthPageLoading } from "@/components/ui/auth-page-loading";
 import { useState } from "react";
 import * as React from "react";
 import { useDemoBanner } from "@/hooks/use-demo-banner";
@@ -289,9 +290,14 @@ function AppLayoutContent({
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, company, isLoading } = useAuth();
+  const [location] = useLocation();
+  
+  // Routes with dark background need dark loader
+  const darkBackgroundRoutes = ['/request-code', '/verify-code', '/login', '/forgot-password', '/reset-password'];
+  const isDarkRoute = darkBackgroundRoutes.some(route => location.startsWith(route));
 
   if (isLoading) {
-    return <PageLoading />;
+    return isDarkRoute ? <AuthPageLoading /> : <PageLoading />;
   }
 
   // Don't redirect during registration welcome flow
@@ -446,7 +452,7 @@ function Router() {
 
       <Route path="/request-code">
         <PublicRoute>
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<AuthPageLoading />}>
             <RequestCode />
           </Suspense>
         </PublicRoute>
@@ -454,7 +460,7 @@ function Router() {
 
       <Route path="/verify-code">
         <PublicRoute>
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<AuthPageLoading />}>
             <VerifyCode />
           </Suspense>
         </PublicRoute>
