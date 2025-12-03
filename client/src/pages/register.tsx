@@ -546,14 +546,12 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     Este es un pequeño paso para nosotros,
                   </p>
                   <h1 
-                    className="sm:text-[2.5rem] lg:text-[3.5rem] font-semibold text-[#1d1d1f] tracking-[-0.025em] transition-all duration-1000 ease-out delay-500 opacity-100 translate-y-0 text-[52px]"
+                    className={`text-[1.5rem] sm:text-[1.75rem] lg:text-[2.25rem] font-semibold text-[#1d1d1f] leading-[1.15] tracking-[-0.02em] transition-all duration-1000 ease-out delay-500 ${
+                      introAnimationStarted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+                    }`}
                   >
-                    pero un gran paso para que{' '}
-                    <br className="hidden sm:block" />
-                    tu empresa sea más{' '}
-                    <span className="text-oficaz-primary">
-                      Oficaz
-                    </span>
+                    pero un gran paso para que tu empresa sea más{' '}
+                    <span className="text-oficaz-primary">Oficaz</span>
                   </h1>
                 </div>
                 
