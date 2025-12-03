@@ -1288,74 +1288,72 @@ export default function Register({ byInvitation = false, invitationEmail, invita
               </form>
             )}
 
-            {/* Step 5: Confirmation */}
+            {/* Step 5: Confirmation - Apple Style */}
             {currentStep === 5 && (
-              <form key={`step-5-${currentStep}`} onSubmit={step5Form.handleSubmit(handleStep5Submit)} className="space-y-5">
-                <div className="text-center lg:text-left mb-4 wizard-section-animate">
-                  <h2 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-2">
-                    Tu plan Oficaz
+              <form key={`step-5-${currentStep}`} onSubmit={step5Form.handleSubmit(handleStep5Submit)} className="space-y-8">
+                {/* Header - Personalized */}
+                <div className="text-center mb-6 wizard-section-animate">
+                  <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-3">
+                    Este es tu plan perfecto para {formData.companyName || 'tu empresa'}
                   </h2>
-                  <p className="text-gray-500 text-sm">
-                    Esto es lo que tendrás disponible
+                  <p className="text-gray-500">
+                    Ni más ni menos, solo lo que necesitas.
                   </p>
                 </div>
 
-                {/* Features selected */}
-                <div className="bg-white border border-gray-200 rounded-2xl p-4 wizard-animate wizard-delay-1">
-                  <span className="text-sm font-medium text-gray-900 block mb-3">Tus funcionalidades</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {formData.selectedFeatures && formData.selectedFeatures.map((featureKey: string) => {
-                      const addon = addons.find(a => a.key === featureKey);
-                      if (!addon) return null;
-                      const Icon = iconMap[addon.icon as keyof typeof iconMap] || Clock;
-                      return (
-                        <div key={featureKey} className="flex items-center justify-between text-sm text-gray-700 bg-gray-50 rounded-xl p-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-oficaz-primary/10 flex items-center justify-center flex-shrink-0">
-                              <Icon className="w-4 h-4 text-oficaz-primary" />
-                            </div>
-                            <span className="font-medium">{addon.name}</span>
+                {/* Minimal Summary Card */}
+                <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm wizard-animate wizard-delay-1">
+                  {/* Features - Compact list */}
+                  <div className="mb-6">
+                    <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Funcionalidades</span>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {formData.selectedFeatures && formData.selectedFeatures.map((featureKey: string) => {
+                        const addon = addons.find(a => a.key === featureKey);
+                        if (!addon) return null;
+                        const Icon = iconMap[addon.icon as keyof typeof iconMap] || Clock;
+                        return (
+                          <div key={featureKey} className="inline-flex items-center gap-2 bg-gray-50 rounded-full px-4 py-2">
+                            <Icon className="w-4 h-4 text-oficaz-primary" />
+                            <span className="text-sm font-medium text-gray-700">{addon.name}</span>
                           </div>
-                          <span className="text-oficaz-primary font-semibold">€{addon.monthlyPrice}/mes</span>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="h-px bg-gray-100 my-6" />
+
+                  {/* Team - Simple numbers */}
+                  <div className="mb-6">
+                    <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Tu equipo</span>
+                    <div className="flex items-center gap-6 mt-3">
+                      {(formData.employees || 0) > 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl font-bold text-gray-900">{formData.employees}</span>
+                          <span className="text-sm text-gray-500">empleados</span>
                         </div>
-                      );
-                    })}
+                      )}
+                      {(formData.managers || 0) > 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl font-bold text-gray-900">{formData.managers}</span>
+                          <span className="text-sm text-gray-500">managers</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold text-gray-900">{formData.admins || 1}</span>
+                        <span className="text-sm text-gray-500">admin{(formData.admins || 1) > 1 ? 's' : ''}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                {/* Users summary */}
-                <div className="bg-gradient-to-br from-oficaz-primary/5 to-blue-50 border border-oficaz-primary/20 rounded-2xl p-4 wizard-animate wizard-delay-2">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-gray-900">Tu equipo</span>
-                    <span className="text-xs text-gray-500">
-                      {(formData.admins || 1) + (formData.managers || 0) + (formData.employees || 0)} usuarios en total
-                    </span>
-                  </div>
-                  <div className="flex gap-3 text-center">
-                    <div className="flex-1 bg-white/80 rounded-xl py-2">
-                      <div className="text-lg font-bold text-blue-600">{formData.employees || 0}</div>
-                      <div className="text-xs text-gray-600">Empleados</div>
-                      <div className="text-xs text-gray-400">€{(formData.employees || 0) * 2}/mes</div>
-                    </div>
-                    <div className="flex-1 bg-white/80 rounded-xl py-2">
-                      <div className="text-lg font-bold text-purple-600">{formData.managers || 0}</div>
-                      <div className="text-xs text-gray-600">Managers</div>
-                      <div className="text-xs text-gray-400">€{(formData.managers || 0) * 4}/mes</div>
-                    </div>
-                    <div className="flex-1 bg-white/80 rounded-xl py-2">
-                      <div className="text-lg font-bold text-amber-600">{formData.admins || 1}</div>
-                      <div className="text-xs text-gray-600">Admins</div>
-                      <div className="text-xs text-gray-400">€{(formData.admins || 1) * 6}/mes</div>
-                    </div>
-                  </div>
-                </div>
+                  {/* Divider */}
+                  <div className="h-px bg-gray-100 my-6" />
 
-                {/* Price summary */}
-                <div className="bg-gray-900 text-white rounded-2xl p-5 wizard-animate wizard-delay-3">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-lg font-semibold">Total mensual</span>
-                    <div className="text-right">
-                      <span className="text-3xl font-bold">
+                  {/* Price - Big and centered */}
+                  <div className="text-center">
+                    <div className="mb-2">
+                      <span className="text-5xl font-bold text-gray-900">
                         €{
                           ((formData.admins || 1) * 6) + 
                           ((formData.managers || 0) * 4) + 
@@ -1366,33 +1364,30 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                           }, 0) || 0)
                         }
                       </span>
-                      <span className="text-gray-400 text-sm">/mes</span>
+                      <span className="text-xl text-gray-400">/mes</span>
                     </div>
+                    <p className="text-sm text-gray-500 max-w-sm mx-auto">
+                      A este precio hay que descontarle las horas que te vamos a ahorrar en trabajo.
+                    </p>
                   </div>
-                  <p className="text-sm text-gray-300 leading-relaxed">
-                    Paga solo por lo que usas. Sin sorpresas ni costes ocultos.
-                  </p>
                 </div>
 
-                {/* Trial notice - friendly message */}
-                <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                      <Star className="w-5 h-5 text-green-600" />
+                {/* Trial Badge - Minimal */}
+                <div className="text-center py-6 wizard-animate wizard-delay-2">
+                  <div className="inline-flex items-center gap-3 bg-green-50 rounded-full px-6 py-3">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <Star className="w-4 h-4 text-green-600" />
                     </div>
-                    <div>
+                    <div className="text-left">
                       <span className="font-semibold text-green-900 block">
                         {promoCodeValidation.status === 'valid' && promoCodeValidation.trialDays 
-                          ? `${promoCodeValidation.trialDays} días gratis` 
-                          : '7 días gratis'
+                          ? `${promoCodeValidation.trialDays} días para probarlo todo` 
+                          : '7 días para probarlo todo'
                         }
                       </span>
-                      <span className="text-xs text-green-700">Sin compromiso, cancela cuando quieras</span>
+                      <span className="text-xs text-green-700">Hoy no tienes que pagar nada</span>
                     </div>
                   </div>
-                  <p className="text-sm text-green-800 mt-2">
-                    Pero bueno, no te preocupes ahora. Disfruta de tu prueba gratuita y descubre todo lo que Oficaz puede hacer por ti.
-                  </p>
                 </div>
 
                 {/* Promo code */}
