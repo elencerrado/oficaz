@@ -867,9 +867,6 @@ export default function Landing() {
                           )}
                         </div>
                         <p className="text-sm text-gray-500 leading-relaxed">{addon.description}</p>
-                        <p className={`text-base font-bold mt-2 ${addon.isLocked ? 'text-green-600' : 'text-[#007AFF]'}`}>
-                          {addon.isLocked ? 'Incluido' : `€${addon.price}/mes`}
-                        </p>
                       </div>
                     </div>
                   </div>
@@ -934,11 +931,6 @@ export default function Landing() {
                             </div>
                             <p className={`text-sm leading-relaxed ${isActive ? 'text-white/90' : 'text-gray-500'}`}>
                               {addon.description}
-                            </p>
-                            <p className={`text-sm font-semibold mt-2 ${
-                              isActive ? 'text-white/80' : addon.isLocked ? 'text-green-600' : 'text-[#007AFF]'
-                            }`}>
-                              {addon.isLocked ? 'Incluido' : `€${addon.price}/mes`}
                             </p>
                           </div>
                         </div>
