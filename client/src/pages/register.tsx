@@ -161,8 +161,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
   const [showDemoLoading, setShowDemoLoading] = useState(false);
+  const [introAnimationStarted, setIntroAnimationStarted] = useState(false);
   const [isBackendComplete, setIsBackendComplete] = useState(false);
   const [promoCodeValidation, setPromoCodeValidation] = useState<{ status: 'idle' | 'checking' | 'valid' | 'invalid', message?: string, trialDays?: number }>({ status: 'idle' });
 
@@ -188,6 +189,13 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       document.documentElement.classList.remove('dark-notch');
     };
   }, []);
+
+  useEffect(() => {
+    if (currentStep === 0) {
+      const timer = setTimeout(() => setIntroAnimationStarted(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep]);
 
   // Load addons from API (public endpoint, no auth required)
   const { data: addons = [] } = useQuery<Addon[]>({
@@ -253,12 +261,12 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     setValidatingStep3(false);
   };
 
-  const handleStep1Submit = (data: Step1Data) => {
+  const handleTeamSubmit = (data: Step2Data) => {
     setFormData(prev => ({ ...prev, ...data }));
     setCurrentStep(2);
   };
 
-  const handleStep2Submit = (data: Step2Data) => {
+  const handleFeaturesSubmit = (data: Step1Data) => {
     setFormData(prev => ({ ...prev, ...data }));
     setCurrentStep(3);
   };
@@ -419,11 +427,11 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     }
   };
 
-  const progressPercentage = (currentStep / 5) * 100;
+  const progressPercentage = currentStep === 0 ? 0 : (currentStep / 5) * 100;
 
   const steps = [
-    { num: 1, label: 'Funciones', icon: Star },
-    { num: 2, label: 'Equipo', icon: Users },
+    { num: 1, label: 'Equipo', icon: Users },
+    { num: 2, label: 'Funciones', icon: Star },
     { num: 3, label: 'Empresa', icon: Building },
     { num: 4, label: 'Admin', icon: Shield },
     { num: 5, label: 'Confirmar', icon: Check },
@@ -503,160 +511,96 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
       {/* Right Panel - Main content with scroll */}
       <div className="flex-1 flex flex-col h-screen overflow-y-auto">
-        {/* Mobile header */}
-        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-4 flex-shrink-0">
-          <div className="flex items-center justify-between mb-4">
-            <img src={oficazLogo} alt="Oficaz" className="h-6" />
-            <span className="text-sm text-gray-500">Paso {currentStep}/5</span>
+        {/* Mobile header - hidden on intro step */}
+        {currentStep > 0 && (
+          <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-4 flex-shrink-0">
+            <div className="flex items-center justify-between mb-4">
+              <img src={oficazLogo} alt="Oficaz" className="h-6" />
+              <span className="text-sm text-gray-500">Paso {currentStep}/5</span>
+            </div>
+            {/* Mobile progress bar */}
+            <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-oficaz-primary transition-all duration-300"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
           </div>
-          {/* Mobile progress bar */}
-          <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-oficaz-primary transition-all duration-300"
-              style={{ width: `${progressPercentage}%` }}
-            />
-          </div>
-        </div>
+        )}
 
         {/* Main content area */}
         <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
           <div className="w-full max-w-2xl">
+            
+            {/* Step 0: Introduction - Apple Style Animation */}
+            {currentStep === 0 && (
+              <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+                {/* Logo for mobile */}
+                <div className="lg:hidden mb-12">
+                  <img src={oficazLogo} alt="Oficaz" className="h-8 mx-auto" />
+                </div>
+                
+                {/* Animated text */}
+                <div className="space-y-6 mb-16">
+                  <p 
+                    className={`text-lg sm:text-xl text-gray-500 font-light transition-all duration-1000 ease-out ${
+                      introAnimationStarted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                    }`}
+                  >
+                    Este es un pequeño paso para nosotros,
+                  </p>
+                  <h1 
+                    className={`text-2xl sm:text-4xl lg:text-5xl font-semibold text-gray-900 leading-tight transition-all duration-1000 ease-out delay-500 ${
+                      introAnimationStarted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                    }`}
+                  >
+                    pero un gran paso para que<br />
+                    tu empresa sea más{' '}
+                    <span className="bg-gradient-to-r from-oficaz-primary to-blue-600 bg-clip-text text-transparent">
+                      Oficaz
+                    </span>
+                  </h1>
+                </div>
+                
+                {/* Animated button */}
+                <div 
+                  className={`transition-all duration-700 ease-out delay-1000 ${
+                    introAnimationStarted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                  }`}
+                >
+                  <Button
+                    onClick={() => setCurrentStep(1)}
+                    size="lg"
+                    className="h-14 px-10 rounded-full text-base font-medium shadow-lg shadow-oficaz-primary/25 hover:shadow-xl hover:shadow-oficaz-primary/30 transition-all duration-300 hover:scale-105"
+                    data-testid="button-start-wizard"
+                  >
+                    Comenzar
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                  <p className="text-sm text-gray-400 mt-6">
+                    Solo te llevará 2 minutos
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Invitation message */}
-            {byInvitation && invitationWelcomeMessage && (
+            {currentStep > 0 && byInvitation && invitationWelcomeMessage && (
               <div className="bg-green-50 border border-green-200 rounded-2xl p-4 mb-6 flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
                 <span className="text-sm text-green-700">{invitationWelcomeMessage}</span>
               </div>
             )}
 
-            {/* Step 1: Features Selection - Apple Style */}
+            {/* Step 1: Team Configuration - Apple Style (friendly tone) */}
             {currentStep === 1 && (
-              <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="space-y-6">
+              <form onSubmit={step2Form.handleSubmit(handleTeamSubmit)} className="space-y-6">
                 <div className="text-center mb-8">
                   <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-3">
-                    Monta tu Oficaz
+                    Vamos a configurar tu equipo
                   </h2>
                   <p className="text-gray-500">
-                    Elige las funciones que necesitas. Paga solo por lo que uses.
-                  </p>
-                </div>
-
-                {/* Features grid - Apple style cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {addons.map((addon) => {
-                    const Icon = getIcon(addon.icon);
-                    const selectedFeatures = step1Form.watch('selectedFeatures') || [];
-                    const isSelected = selectedFeatures.includes(addon.key);
-                    const price = Number(addon.monthlyPrice);
-                    
-                    return (
-                      <label
-                        key={addon.key}
-                        htmlFor={`feature-${addon.key}`}
-                        data-testid={`feature-${addon.key}`}
-                        className={`
-                          relative flex items-start p-5 rounded-2xl cursor-pointer transition-all duration-300
-                          ${isSelected 
-                            ? 'bg-oficaz-primary/5 border-2 border-oficaz-primary shadow-lg shadow-oficaz-primary/10 scale-[1.02]' 
-                            : 'bg-white border-2 border-gray-100 hover:border-gray-200 hover:shadow-md'
-                          }
-                        `}
-                      >
-                        <input
-                          type="checkbox"
-                          id={`feature-${addon.key}`}
-                          value={addon.key}
-                          {...step1Form.register('selectedFeatures')}
-                          className="sr-only"
-                        />
-                        
-                        {/* Icon */}
-                        <div className={`
-                          w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 mr-4 transition-colors
-                          ${isSelected ? 'bg-oficaz-primary text-white' : 'bg-gray-100 text-gray-500'}
-                        `}>
-                          <Icon className="w-6 h-6" />
-                        </div>
-                        
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-semibold text-gray-900">{addon.name}</span>
-                            <span className={`text-sm font-bold ${isSelected ? 'text-oficaz-primary' : 'text-gray-600'}`}>
-                              €{price}/mes
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-500 line-clamp-2">{addon.shortDescription}</p>
-                        </div>
-                        
-                        {/* Selection indicator */}
-                        <div className={`
-                          absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center transition-all
-                          ${isSelected ? 'bg-oficaz-primary text-white' : 'bg-gray-100'}
-                        `}>
-                          {isSelected && <Check className="w-4 h-4" />}
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
-
-                {/* Price summary */}
-                {(step1Form.watch('selectedFeatures') || []).length > 0 && (
-                  <div className="bg-gray-50 rounded-2xl p-4 flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-gray-600">Funcionalidades seleccionadas:</span>
-                      <span className="ml-2 font-medium text-gray-900">
-                        {(step1Form.watch('selectedFeatures') || []).length}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-sm text-gray-500">Subtotal: </span>
-                      <span className="text-lg font-bold text-oficaz-primary">
-                        €{(step1Form.watch('selectedFeatures') || []).reduce((sum, key) => {
-                          const addon = addons.find(a => a.key === key);
-                          return sum + Number(addon?.monthlyPrice || 0);
-                        }, 0)}/mes
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Validation error */}
-                {step1Form.formState.errors.selectedFeatures && (
-                  <p className="text-sm text-red-500 text-center">
-                    {step1Form.formState.errors.selectedFeatures.message}
-                  </p>
-                )}
-
-                <div className="pt-4">
-                  <Button 
-                    type="submit" 
-                    data-testid="button-step1-continue"
-                    disabled={(step1Form.watch('selectedFeatures') || []).length === 0}
-                    className="w-full h-14 rounded-2xl text-base font-medium"
-                  >
-                    Continuar
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-                  {(step1Form.watch('selectedFeatures') || []).length === 0 && (
-                    <p className="text-xs text-gray-400 text-center mt-2">
-                      Selecciona al menos 1 funcionalidad para continuar
-                    </p>
-                  )}
-                </div>
-              </form>
-            )}
-
-            {/* Step 2: Team Size - Apple Style */}
-            {currentStep === 2 && (
-              <form onSubmit={step2Form.handleSubmit(handleStep2Submit)} className="space-y-6">
-                <div className="text-center mb-8">
-                  <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-3">
-                    Configura tu equipo
-                  </h2>
-                  <p className="text-gray-500">
-                    Añade los usuarios que necesitas. Siempre puedes ajustarlo después.
+                    Cuéntanos cuántas personas usarán Oficaz. No te preocupes, podrás cambiarlo cuando quieras.
                   </p>
                 </div>
 
@@ -706,7 +650,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     </div>
                     <p className="text-xs text-amber-600 mt-3 flex items-center gap-1">
                       <Shield className="w-3 h-3" />
-                      Mínimo 1 administrador requerido (tú serás el primero)
+                      Mínimo 1 administrador (tú serás el primero)
                     </p>
                   </div>
 
@@ -803,7 +747,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 <div className="bg-gray-50 rounded-2xl p-5">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-sm text-gray-600">Total equipo:</span>
+                      <span className="text-sm text-gray-600">Tu equipo:</span>
                       <div className="text-sm text-gray-500 mt-1">
                         {step2Form.watch('admins')} admin{step2Form.watch('admins') > 1 ? 's' : ''}
                         {step2Form.watch('managers') > 0 && `, ${step2Form.watch('managers')} manager${step2Form.watch('managers') > 1 ? 's' : ''}`}
@@ -823,7 +767,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   <Button 
                     type="button" 
                     variant="outline"
-                    onClick={() => goToStep(1)}
+                    onClick={() => goToStep(0)}
                     className="flex-1 h-14 rounded-2xl"
                   >
                     <ArrowLeft className="w-4 h-4 mr-2" />
@@ -831,7 +775,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   </Button>
                   <Button 
                     type="submit" 
-                    data-testid="button-step2-continue"
+                    data-testid="button-step1-continue"
                     className="flex-1 h-14 rounded-2xl"
                   >
                     Continuar
@@ -841,15 +785,143 @@ export default function Register({ byInvitation = false, invitationEmail, invita
               </form>
             )}
 
-            {/* Step 3: Company */}
+            {/* Step 2: Features Selection - Apple Style (friendly tone) */}
+            {currentStep === 2 && (
+              <form onSubmit={step1Form.handleSubmit(handleFeaturesSubmit)} className="space-y-6">
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-3">
+                    Elige las funciones que te interesan
+                  </h2>
+                  <p className="text-gray-500">
+                    Selecciona lo que necesitas ahora. Podrás añadir más cuando quieras.
+                  </p>
+                </div>
+
+                {/* Features grid - Apple style cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {addons.map((addon) => {
+                    const Icon = getIcon(addon.icon);
+                    const selectedFeatures = step1Form.watch('selectedFeatures') || [];
+                    const isSelected = selectedFeatures.includes(addon.key);
+                    const price = Number(addon.monthlyPrice);
+                    
+                    return (
+                      <label
+                        key={addon.key}
+                        htmlFor={`feature-${addon.key}`}
+                        data-testid={`feature-${addon.key}`}
+                        className={`
+                          relative flex items-start p-5 rounded-2xl cursor-pointer transition-all duration-300
+                          ${isSelected 
+                            ? 'bg-oficaz-primary/5 border-2 border-oficaz-primary shadow-lg shadow-oficaz-primary/10 scale-[1.02]' 
+                            : 'bg-white border-2 border-gray-100 hover:border-gray-200 hover:shadow-md'
+                          }
+                        `}
+                      >
+                        <input
+                          type="checkbox"
+                          id={`feature-${addon.key}`}
+                          value={addon.key}
+                          {...step1Form.register('selectedFeatures')}
+                          className="sr-only"
+                        />
+                        
+                        {/* Icon */}
+                        <div className={`
+                          w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 mr-4 transition-colors
+                          ${isSelected ? 'bg-oficaz-primary text-white' : 'bg-gray-100 text-gray-500'}
+                        `}>
+                          <Icon className="w-6 h-6" />
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-semibold text-gray-900">{addon.name}</span>
+                            <span className={`text-sm font-bold ${isSelected ? 'text-oficaz-primary' : 'text-gray-600'}`}>
+                              €{price}/mes
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500 line-clamp-2">{addon.shortDescription}</p>
+                        </div>
+                        
+                        {/* Selection indicator */}
+                        <div className={`
+                          absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center transition-all
+                          ${isSelected ? 'bg-oficaz-primary text-white' : 'bg-gray-100'}
+                        `}>
+                          {isSelected && <Check className="w-4 h-4" />}
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                {/* Price summary */}
+                {(step1Form.watch('selectedFeatures') || []).length > 0 && (
+                  <div className="bg-gray-50 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-gray-600">Funcionalidades seleccionadas:</span>
+                      <span className="ml-2 font-medium text-gray-900">
+                        {(step1Form.watch('selectedFeatures') || []).length}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm text-gray-500">Subtotal: </span>
+                      <span className="text-lg font-bold text-oficaz-primary">
+                        €{(step1Form.watch('selectedFeatures') || []).reduce((sum, key) => {
+                          const addon = addons.find(a => a.key === key);
+                          return sum + Number(addon?.monthlyPrice || 0);
+                        }, 0)}/mes
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Validation error */}
+                {step1Form.formState.errors.selectedFeatures && (
+                  <p className="text-sm text-red-500 text-center">
+                    {step1Form.formState.errors.selectedFeatures.message}
+                  </p>
+                )}
+
+                <div className="flex gap-3 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => goToStep(1)}
+                    className="flex-1 h-14 rounded-2xl"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Atrás
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    data-testid="button-step2-continue"
+                    disabled={(step1Form.watch('selectedFeatures') || []).length === 0}
+                    className="flex-1 h-14 rounded-2xl"
+                  >
+                    Continuar
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </div>
+                {(step1Form.watch('selectedFeatures') || []).length === 0 && (
+                  <p className="text-xs text-gray-400 text-center">
+                    Selecciona al menos 1 funcionalidad para continuar
+                  </p>
+                )}
+              </form>
+            )}
+
+            {/* Step 3: Company - Friendly tone */}
             {currentStep === 3 && (
               <form onSubmit={step3Form.handleSubmit(handleStep3Submit)} className="space-y-6">
                 <div className="text-center lg:text-left mb-6">
                   <h2 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-2">
-                    Datos de tu empresa
+                    Cuéntanos sobre tu empresa
                   </h2>
                   <p className="text-gray-500 text-sm">
-                    Información básica para configurar tu cuenta
+                    Solo necesitamos unos datos básicos para empezar
                   </p>
                 </div>
 
@@ -972,15 +1044,15 @@ export default function Register({ byInvitation = false, invitationEmail, invita
               </form>
             )}
 
-            {/* Step 4: Admin */}
+            {/* Step 4: Admin - Friendly tone */}
             {currentStep === 4 && (
               <form onSubmit={step4Form.handleSubmit(handleStep4Submit)} className="space-y-6">
                 <div className="text-center lg:text-left mb-6">
                   <h2 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-2">
-                    Tu cuenta de administrador
+                    Crea tu cuenta
                   </h2>
                   <p className="text-gray-500 text-sm">
-                    Datos de acceso para gestionar tu empresa
+                    Estos serán tus datos de acceso como administrador
                   </p>
                 </div>
 
