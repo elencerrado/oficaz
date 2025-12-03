@@ -662,9 +662,17 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                         >
                           <Minus className="w-5 h-5 text-gray-600" />
                         </button>
-                        <span className="w-14 text-center text-2xl font-bold text-gray-900">
-                          {step2Form.watch('admins')}
-                        </span>
+                        <input
+                          type="number"
+                          min={1}
+                          value={step2Form.watch('admins')}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 1;
+                            step2Form.setValue('admins', Math.max(1, val));
+                          }}
+                          className="w-14 h-12 text-center text-2xl font-bold text-gray-900 bg-transparent border-none outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          data-testid="input-admins"
+                        />
                         <button
                           type="button"
                           onClick={() => {
@@ -710,9 +718,17 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                         >
                           <Minus className="w-5 h-5 text-gray-600" />
                         </button>
-                        <span className="w-14 text-center text-2xl font-bold text-gray-900">
-                          {step2Form.watch('managers')}
-                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={step2Form.watch('managers')}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 0;
+                            step2Form.setValue('managers', Math.max(0, val));
+                          }}
+                          className="w-14 h-12 text-center text-2xl font-bold text-gray-900 bg-transparent border-none outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          data-testid="input-managers"
+                        />
                         <button
                           type="button"
                           onClick={() => {
@@ -754,9 +770,17 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                         >
                           <Minus className="w-5 h-5 text-gray-600" />
                         </button>
-                        <span className="w-14 text-center text-2xl font-bold text-gray-900">
-                          {step2Form.watch('employees')}
-                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={step2Form.watch('employees')}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 0;
+                            step2Form.setValue('employees', Math.max(0, val));
+                          }}
+                          className="w-14 h-12 text-center text-2xl font-bold text-gray-900 bg-transparent border-none outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          data-testid="input-employees"
+                        />
                         <button
                           type="button"
                           onClick={() => {
