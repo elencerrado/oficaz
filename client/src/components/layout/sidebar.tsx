@@ -202,8 +202,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             paddingBottom: 'env(safe-area-inset-bottom, 0px)'
           }}
         >
-          <div className="px-4 py-4">
-            <div className="flex items-center justify-center gap-2">
+          <div className="px-2 py-4">
+            <div className="flex items-center justify-evenly w-full">
               <TooltipProvider delayDuration={100}>
                 {footerItems.map((item) => {
                   const isActive = location === item.href;
@@ -215,7 +215,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         <Link href={item.href}>
                           <button
                             className={`
-                              relative p-3 rounded-xl transition-all duration-200 ease-out
+                              relative p-2.5 rounded-xl transition-all duration-200 ease-out flex-shrink-0
                               ${isActive 
                                 ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-105' 
                                 : 'text-muted-foreground hover:text-foreground hover:bg-muted/80 hover:scale-105'
@@ -224,7 +224,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                             onClick={handleLinkClick}
                             data-testid={`footer-${item.name.toLowerCase()}`}
                           >
-                            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                            <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
                             {isActive && (
                               <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary-foreground rounded-full" />
                             )}
