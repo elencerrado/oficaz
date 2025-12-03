@@ -2598,19 +2598,18 @@ Responde directamente a este email para contactar con la persona.
       });
 
       // Create subscription - dates are calculated from companies.created_at
-      // Use selectedPlan from the wizard, default to 'oficaz' for the unified subscription model
+      // NEW MODULAR MODEL: Base €0, all users and features are paid
       const selectedPlan = data.selectedPlan || 'oficaz';
       
-      // Extract additional users from wizard (Step 2) - parse as integers to handle string inputs
-      const extraAdmins = parseInt(String(data.additionalAdmins || 0), 10) || 0;
-      const extraManagers = parseInt(String(data.additionalManagers || 0), 10) || 0;
-      const extraEmployees = parseInt(String(data.additionalEmployees || 0), 10) || 0;
+      // Extract user counts from wizard (Step 2) - minimum 1 admin required
+      const admins = Math.max(1, parseInt(String(data.admins || 1), 10) || 1);
+      const managers = parseInt(String(data.managers || 0), 10) || 0;
+      const employees = parseInt(String(data.employees || 0), 10) || 0;
       
-      console.log(`👥 Additional users from wizard: ${extraAdmins} admins, ${extraManagers} managers, ${extraEmployees} employees`);
+      console.log(`👥 Users from wizard: ${admins} admins, ${managers} managers, ${employees} employees`);
       
-      // Calculate maxUsers: base plan (1 admin + 1 manager + 10 employees = 12) + extras
-      const baseUsers = 12;
-      const totalMaxUsers = baseUsers + extraAdmins + extraManagers + extraEmployees;
+      // Calculate maxUsers: sum of all user types (no base users anymore)
+      const totalMaxUsers = admins + managers + employees;
       
       const subscription = await storage.createSubscription({
         companyId: company.id,
@@ -2618,15 +2617,15 @@ Responde directamente a este email para contactar con la persona.
         status: 'trial',
         isTrialActive: true,
         maxUsers: totalMaxUsers,
-        extraAdmins: extraAdmins,
-        extraManagers: extraManagers,
-        extraEmployees: extraEmployees,
+        extraAdmins: admins - 1, // First admin is the creator, rest are "extra"
+        extraManagers: managers,
+        extraEmployees: employees,
       });
       
       console.log(`✅ Subscription created: plan=${selectedPlan}, maxUsers=${totalMaxUsers}`);
       
-      // Activate selected add-ons (interestedFeatures from Step 1) - after subscription is created
-      const selectedAddons: string[] = Array.isArray(data.interestedFeatures) ? data.interestedFeatures : [];
+      // Activate selected features (selectedFeatures from Step 1) - all features are now paid
+      const selectedAddons: string[] = Array.isArray(data.selectedFeatures) ? data.selectedFeatures : [];
       if (selectedAddons.length > 0 && subscription) {
         console.log(`🔌 Activating ${selectedAddons.length} add-ons for company ${company.id}:`, selectedAddons);
         for (const addonKey of selectedAddons) {

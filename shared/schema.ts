@@ -770,14 +770,22 @@ export const companyRegistrationSchema = z.object({
   // Contact person information
   sameAsAdmin: z.boolean().optional(),
   
-  // Step 1 data (for plan recommendation)
-  teamSize: z.string().optional(),
-  interestedFeatures: z.array(z.string()).optional(),
+  // Step 1 data - NEW MODULAR MODEL (all features are paid)
+  selectedFeatures: z.array(z.string()).min(1, "Selecciona al menos 1 funcionalidad").optional(),
+  teamSize: z.string().optional(), // Legacy support
+  interestedFeatures: z.array(z.string()).optional(), // Legacy support
   
-  // Step 2 data (additional users beyond base plan)
+  // Step 2 data - NEW MODEL (all users are paid, minimum 1 admin)
+  admins: z.number().min(1).optional().default(1),
+  managers: z.number().min(0).optional().default(0),
+  employees: z.number().min(0).optional().default(0),
+  // Legacy support - additional users beyond base plan
   additionalAdmins: z.number().min(0).optional().default(0),
   additionalManagers: z.number().min(0).optional().default(0),
   additionalEmployees: z.number().min(0).optional().default(0),
+  
+  // Marketing consent
+  acceptMarketing: z.boolean().optional().default(false),
   
   // Step 4 data (selected plan)
   selectedPlan: z.string().min(1, "Plan de suscripción requerido"),
