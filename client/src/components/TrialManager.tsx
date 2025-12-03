@@ -255,9 +255,6 @@ export function TrialManager() {
                   <span className="hidden sm:inline">
                     Hasta el {new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • 
                     <span className="font-medium text-foreground ml-1">€{projectedPrice.toFixed(2)}/mes</span>
-                    {projectedPrice > 39 && (
-                      <span className="ml-1 text-emerald-600 dark:text-emerald-400">(base €39 + complementos)</span>
-                    )}
                   </span>
                   <span className="sm:hidden font-medium text-foreground">€{projectedPrice.toFixed(2)}/mes</span>
                 </>
