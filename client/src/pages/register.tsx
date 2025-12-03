@@ -492,39 +492,43 @@ export default function Register({ byInvitation = false, invitationEmail, invita
           </div>
         </div>
 
-        {/* Price summary - compact version */}
-        {currentStep >= 1 && (
-          <div className="relative z-10 pt-6 border-t border-white/10">
-            <div className="bg-white/5 rounded-2xl p-4 backdrop-blur-sm">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-xs text-gray-400 uppercase tracking-wider">Tu plan</div>
-                <div className="flex gap-3 text-xs text-gray-400">
-                  <span>{(formData.admins || 0) + (formData.managers || 0) + (formData.employees || 0)} usuarios</span>
-                  {currentStep >= 2 && formData.selectedFeatures && (
-                    <span>{formData.selectedFeatures.length} funciones</span>
-                  )}
+        {/* Price summary - compact version with real-time updates */}
+        {currentStep >= 1 && (() => {
+          const liveAdmins = currentStep === 1 ? step2Form.watch('admins') : (formData.admins || 0);
+          const liveManagers = currentStep === 1 ? step2Form.watch('managers') : (formData.managers || 0);
+          const liveEmployees = currentStep === 1 ? step2Form.watch('employees') : (formData.employees || 0);
+          const liveFeatures = currentStep === 2 ? (step1Form.watch('selectedFeatures') || []) : (formData.selectedFeatures || []);
+          const totalUsers = liveAdmins + liveManagers + liveEmployees;
+          const totalFeatures = liveFeatures.length;
+          const totalPrice = (liveAdmins * 6) + (liveManagers * 4) + (liveEmployees * 2) +
+            liveFeatures.reduce((sum: number, key: string) => {
+              const addon = ADDON_DEFINITIONS.find(a => a.key === key);
+              return sum + (addon ? addon.monthlyPrice : 0);
+            }, 0);
+          
+          return (
+            <div className="relative z-10 pt-6 border-t border-white/10">
+              <div className="bg-white/5 rounded-2xl p-4 backdrop-blur-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-xs text-gray-400 uppercase tracking-wider">Tu plan</div>
+                  <div className="flex gap-3 text-xs text-gray-400">
+                    <span>{totalUsers} usuarios</span>
+                    {(currentStep >= 2 || totalFeatures > 0) && (
+                      <span>{totalFeatures} funciones</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="flex justify-between items-baseline">
-                <span className="text-gray-300 text-sm">Total</span>
-                <div className="text-right">
-                  <span className="text-2xl font-bold text-white">
-                    €{
-                      ((formData.admins || 0) * 6) + 
-                      ((formData.managers || 0) * 4) + 
-                      ((formData.employees || 0) * 2) +
-                      (formData.selectedFeatures?.reduce((sum: number, key: string) => {
-                        const addon = ADDON_DEFINITIONS.find(a => a.key === key);
-                        return sum + (addon ? addon.monthlyPrice : 0);
-                      }, 0) || 0)
-                    }
-                  </span>
-                  <span className="text-gray-400 text-sm">/mes</span>
+                <div className="flex justify-between items-baseline">
+                  <span className="text-gray-300 text-sm">Total</span>
+                  <div className="text-right">
+                    <span className="text-2xl font-bold text-white">€{totalPrice}</span>
+                    <span className="text-gray-400 text-sm">/mes</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Minimal footer - just key benefits */}
         <div className="relative z-10 pt-6 space-y-3">
