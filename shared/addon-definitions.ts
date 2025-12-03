@@ -15,7 +15,7 @@ export const ADDON_DEFINITIONS: AddonDefinition[] = [
     description: 'El registro horario es obligatorio en España. Tus empleados fichan en dos toques desde el móvil y tú exportas PDF si viene una inspección. Que no te pillen en blanco.',
     shortDescription: 'Obligatorio por ley, pero aquí lo hacemos fácil y sin dramas',
     isFreeFeature: false,
-    monthlyPrice: 5,
+    monthlyPrice: 3,
     icon: 'Clock',
   },
   {
@@ -33,7 +33,7 @@ export const ADDON_DEFINITIONS: AddonDefinition[] = [
     description: 'Arrastra turnos, duplica semanas, y listo. Con OficazIA le dices "hazme el cuadrante" y te lo monta en segundos. Una maravilla.',
     shortDescription: 'Monta cuadrantes en minutos, no en horas de Excel',
     isFreeFeature: false,
-    monthlyPrice: 5,
+    monthlyPrice: 3,
     icon: 'CalendarDays',
   },
   {
