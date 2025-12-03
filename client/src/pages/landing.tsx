@@ -356,7 +356,7 @@ export default function Landing() {
       </a>
 
       {/* Fixed Background that stays behind everything */}
-      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
+      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: -1 }}>
         {/* Background Image */}
         <img 
           src={heroBackground} 
@@ -366,20 +366,20 @@ export default function Landing() {
         
         {/* Dark overlay - fades out on scroll */}
         <div 
-          className="absolute inset-0 bg-slate-900 transition-opacity duration-150"
+          className="absolute inset-0 bg-slate-900"
           style={{ opacity: 0.7 * (1 - heroScrollProgress) }}
         />
         
         {/* White overlay - fades in on scroll */}
         <div 
-          className="absolute inset-0 bg-white transition-opacity duration-150"
+          className="absolute inset-0 bg-white"
           style={{ opacity: heroScrollProgress }}
         />
       </div>
 
-      {/* Hero Section - New Design with Background Image and Scroll Effects */}
+      {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center pt-16"
-               style={{ minHeight: '100vh', zIndex: 1 }}>
+               style={{ minHeight: '100vh' }}>
         
         {/* Content that fades out on scroll */}
         <div 
@@ -445,25 +445,9 @@ export default function Landing() {
           </div>
         </div>
         
-        {/* Scroll indicator */}
-        <div 
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 transition-all duration-500"
-          style={{
-            opacity: isLoaded && heroScrollProgress < 0.3 ? 1 : 0,
-            transform: `translateY(${isLoaded ? 0 : 20}px)`,
-            transitionDelay: '600ms',
-          }}
-        >
-          <div className="flex flex-col items-center gap-2 text-white/50">
-            <span className="text-xs font-medium">Scroll</span>
-            <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2">
-              <div className="w-1.5 h-3 bg-white/50 rounded-full animate-bounce" />
-            </div>
-          </div>
-        </div>
       </section>
       {/* Unified Features Section - Apple Style */}
-      <section id="funciones" className="bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden">
+      <section id="funciones" className="bg-white relative overflow-hidden" style={{ zIndex: 10 }}>
         {/* Subtle Background */}
         <div className="absolute inset-0 opacity-30">
           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-br from-[#007AFF]/10 to-transparent rounded-full blur-3xl"></div>
