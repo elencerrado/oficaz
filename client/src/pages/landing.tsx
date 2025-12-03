@@ -113,6 +113,7 @@ export default function Landing() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [previewAddon, setPreviewAddon] = useState<string>('time_tracking');
 
   // Pricing calculator state - starts with 1 admin (required), employees (always included) and time_tracking selected
   const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set(['employees', 'time_tracking']));
@@ -442,11 +443,11 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Features Section - Apple Style Grid */}
+      {/* Features Section - Two Columns with Mobile Preview */}
       <section id="funciones" className="py-20 md:py-28 bg-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           {/* Header */}
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 tracking-tight">
               Funciones modulares
             </h2>
@@ -455,29 +456,365 @@ export default function Landing() {
             </p>
           </div>
 
-          {/* Features Grid - 4 columns on desktop */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {addons.map((addon) => {
-              const IconComponent = addon.icon;
-              return (
-                <div 
-                  key={addon.key}
-                  className={`group rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:shadow-gray-200/50 border border-transparent hover:border-gray-100 ${
-                    addon.isLocked ? 'bg-green-50 hover:bg-green-50' : 'bg-gray-50 hover:bg-white'
-                  }`}
-                >
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 ${
-                    addon.isLocked ? 'bg-gradient-to-br from-green-500 to-green-600' : 'bg-gradient-to-br from-[#007AFF] to-blue-600'
-                  }`}>
-                    <IconComponent className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{addon.name}</h3>
-                  <p className={`text-sm ${addon.isLocked ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
-                    {addon.isLocked ? 'Gratis - Incluido' : `€${addon.price}/mes`}
-                  </p>
+          {/* Two Column Layout */}
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+            {/* Left: Scrollable Features Grid */}
+            <div className="order-2 lg:order-1">
+              <div className="scrollbar-visible max-h-[500px] lg:max-h-[600px] overflow-y-auto pr-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {addons.map((addon) => {
+                    const IconComponent = addon.icon;
+                    const isActive = previewAddon === addon.key;
+                    return (
+                      <button 
+                        key={addon.key}
+                        onClick={() => setPreviewAddon(addon.key)}
+                        onMouseEnter={() => setPreviewAddon(addon.key)}
+                        className={`group text-left rounded-2xl p-5 transition-all duration-300 border-2 ${
+                          isActive 
+                            ? 'bg-[#007AFF] border-[#007AFF] shadow-xl shadow-blue-200/50' 
+                            : addon.isLocked 
+                              ? 'bg-green-50 border-green-200 hover:border-green-300' 
+                              : 'bg-gray-50 border-transparent hover:border-gray-200 hover:bg-white hover:shadow-lg'
+                        }`}
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${
+                            isActive 
+                              ? 'bg-white/20' 
+                              : addon.isLocked 
+                                ? 'bg-gradient-to-br from-green-500 to-green-600' 
+                                : 'bg-gradient-to-br from-[#007AFF] to-blue-600'
+                          }`}>
+                            <IconComponent className={`w-6 h-6 ${isActive ? 'text-white' : 'text-white'}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className={`text-base font-semibold ${isActive ? 'text-white' : 'text-gray-900'}`}>
+                                {addon.name}
+                              </h3>
+                              {addon.isLocked && !isActive && (
+                                <span className="text-[10px] bg-green-500 text-white px-1.5 py-0.5 rounded font-medium">Gratis</span>
+                              )}
+                            </div>
+                            <p className={`text-sm leading-relaxed ${isActive ? 'text-white/90' : 'text-gray-500'}`}>
+                              {addon.description}
+                            </p>
+                            <p className={`text-sm font-semibold mt-2 ${
+                              isActive ? 'text-white/80' : addon.isLocked ? 'text-green-600' : 'text-[#007AFF]'
+                            }`}>
+                              {addon.isLocked ? 'Incluido' : `€${addon.price}/mes`}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
-              );
-            })}
+              </div>
+            </div>
+
+            {/* Right: Mobile Preview Mockup */}
+            <div className="order-1 lg:order-2 flex justify-center lg:sticky lg:top-8">
+              <div className="relative">
+                {/* Phone Frame */}
+                <div className="relative bg-gray-900 rounded-[3rem] p-3 shadow-2xl shadow-gray-400/30">
+                  {/* Screen */}
+                  <div className="relative bg-white rounded-[2.25rem] overflow-hidden" style={{ width: '280px', aspectRatio: '9/16' }}>
+                    {/* Status Bar */}
+                    <div className="absolute top-0 left-0 right-0 h-12 bg-white z-10 flex items-center justify-between px-6 pt-2">
+                      <span className="text-xs font-semibold text-gray-900">9:41</span>
+                      <div className="flex items-center gap-1">
+                        <div className="w-4 h-2 bg-gray-900 rounded-sm"></div>
+                      </div>
+                    </div>
+                    
+                    {/* Dynamic Content based on selected addon */}
+                    <div className="pt-12 h-full overflow-hidden">
+                      {previewAddon === 'time_tracking' && (
+                        <div className="p-4 h-full bg-gray-50">
+                          <div className="bg-white rounded-2xl p-4 shadow-sm mb-3">
+                            <p className="text-xs text-gray-500 mb-1">Horas este mes</p>
+                            <p className="text-3xl font-bold text-gray-900">156h 32m</p>
+                          </div>
+                          <div className="bg-white rounded-2xl p-4 shadow-sm">
+                            <p className="text-xs font-medium text-gray-900 mb-3">Resumen semanal</p>
+                            <div className="flex items-end justify-between gap-1 h-20">
+                              {[65, 80, 75, 90, 85, 40, 0].map((h, i) => (
+                                <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                                  <div 
+                                    className="w-full bg-[#007AFF] rounded-t-sm" 
+                                    style={{ height: `${h}%`, minHeight: h > 0 ? '4px' : '0' }}
+                                  ></div>
+                                  <span className="text-[8px] text-gray-400">{['L', 'M', 'X', 'J', 'V', 'S', 'D'][i]}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="mt-3 bg-[#007AFF] rounded-2xl p-4 text-center">
+                            <Clock className="w-8 h-8 text-white mx-auto mb-2" />
+                            <p className="text-white font-semibold text-sm">Fichar entrada</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {previewAddon === 'vacation' && (
+                        <div className="p-4 h-full bg-gray-50">
+                          <div className="bg-white rounded-2xl p-4 shadow-sm mb-3">
+                            <div className="flex justify-between items-center mb-3">
+                              <p className="text-xs font-medium text-gray-900">Días disponibles</p>
+                              <span className="text-2xl font-bold text-[#007AFF]">18</span>
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-2">
+                              <div className="bg-[#007AFF] h-2 rounded-full" style={{ width: '60%' }}></div>
+                            </div>
+                            <p className="text-[10px] text-gray-400 mt-1">12 días disfrutados de 30</p>
+                          </div>
+                          <div className="bg-white rounded-2xl p-4 shadow-sm">
+                            <p className="text-xs font-medium text-gray-900 mb-3">Próximas vacaciones</p>
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+                                <Calendar className="w-4 h-4 text-green-600" />
+                                <div>
+                                  <p className="text-xs font-medium text-gray-900">15-19 Dic</p>
+                                  <p className="text-[10px] text-green-600">Aprobado</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 p-2 bg-yellow-50 rounded-lg">
+                                <Calendar className="w-4 h-4 text-yellow-600" />
+                                <div>
+                                  <p className="text-xs font-medium text-gray-900">23-31 Dic</p>
+                                  <p className="text-[10px] text-yellow-600">Pendiente</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {previewAddon === 'employees' && (
+                        <div className="p-4 h-full bg-gray-50">
+                          <div className="bg-white rounded-2xl p-4 shadow-sm mb-3">
+                            <p className="text-xs text-gray-500 mb-1">Tu equipo</p>
+                            <p className="text-3xl font-bold text-gray-900">24</p>
+                            <p className="text-xs text-gray-400">empleados activos</p>
+                          </div>
+                          <div className="bg-white rounded-2xl p-3 shadow-sm space-y-2">
+                            {['María García', 'Carlos López', 'Ana Martín'].map((name, i) => (
+                              <div key={i} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#007AFF] to-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                                  {name.split(' ').map(n => n[0]).join('')}
+                                </div>
+                                <div>
+                                  <p className="text-xs font-medium text-gray-900">{name}</p>
+                                  <p className="text-[10px] text-gray-400">{['Admin', 'Manager', 'Empleado'][i]}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {previewAddon === 'schedules' && (
+                        <div className="p-4 h-full bg-gray-50">
+                          <div className="bg-white rounded-2xl p-4 shadow-sm mb-3">
+                            <p className="text-xs font-medium text-gray-900 mb-3">Semana 49</p>
+                            <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                              {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((d, i) => (
+                                <span key={i} className="text-[8px] text-gray-400">{d}</span>
+                              ))}
+                            </div>
+                            <div className="space-y-1">
+                              {['Mañana', 'Tarde', 'Noche'].map((t, i) => (
+                                <div key={t} className="grid grid-cols-7 gap-1">
+                                  {[1, 1, 0, 1, 1, 0, 0].map((active, j) => (
+                                    <div 
+                                      key={j} 
+                                      className={`h-4 rounded text-[6px] flex items-center justify-center ${
+                                        active ? 'bg-[#007AFF] text-white' : 'bg-gray-100'
+                                      }`}
+                                    >
+                                      {active ? t[0] : ''}
+                                    </div>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="bg-[#007AFF] rounded-2xl p-4 text-center">
+                            <Zap className="w-6 h-6 text-white mx-auto mb-1" />
+                            <p className="text-white font-semibold text-xs">Generar con IA</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {previewAddon === 'messages' && (
+                        <div className="p-4 h-full bg-gray-50">
+                          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                            <div className="p-3 border-b border-gray-100">
+                              <p className="text-xs font-medium text-gray-900">Conversaciones</p>
+                            </div>
+                            <div className="divide-y divide-gray-50">
+                              {[
+                                { name: 'Equipo Marketing', msg: 'Reunión mañana a las 10', time: '10:30', unread: 3 },
+                                { name: 'Carlos López', msg: 'He terminado el informe', time: '09:15', unread: 0 },
+                                { name: 'RRHH', msg: 'Recordatorio: evaluaciones', time: 'Ayer', unread: 1 },
+                              ].map((chat, i) => (
+                                <div key={i} className="p-3 flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#007AFF] to-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                                    {chat.name[0]}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex justify-between items-center">
+                                      <p className="text-xs font-medium text-gray-900 truncate">{chat.name}</p>
+                                      <span className="text-[10px] text-gray-400">{chat.time}</span>
+                                    </div>
+                                    <p className="text-[10px] text-gray-500 truncate">{chat.msg}</p>
+                                  </div>
+                                  {chat.unread > 0 && (
+                                    <span className="w-5 h-5 bg-[#007AFF] rounded-full text-white text-[10px] flex items-center justify-center">{chat.unread}</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {previewAddon === 'reminders' && (
+                        <div className="p-4 h-full bg-gray-50">
+                          <div className="bg-white rounded-2xl p-4 shadow-sm mb-3">
+                            <p className="text-xs font-medium text-gray-900 mb-3">Recordatorios hoy</p>
+                            <div className="space-y-2">
+                              {[
+                                { text: 'Revisar nóminas', time: '09:00', done: true },
+                                { text: 'Llamar proveedor', time: '11:30', done: false },
+                                { text: 'Enviar facturas', time: '15:00', done: false },
+                              ].map((r, i) => (
+                                <div key={i} className={`flex items-center gap-3 p-2 rounded-lg ${r.done ? 'bg-green-50' : 'bg-gray-50'}`}>
+                                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${r.done ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>
+                                    {r.done && <CheckCircle className="w-3 h-3 text-white" />}
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className={`text-xs ${r.done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{r.text}</p>
+                                  </div>
+                                  <span className="text-[10px] text-gray-400">{r.time}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <button className="w-full bg-[#007AFF] rounded-2xl p-3 text-center">
+                            <p className="text-white font-semibold text-xs">+ Nuevo recordatorio</p>
+                          </button>
+                        </div>
+                      )}
+                      
+                      {previewAddon === 'documents' && (
+                        <div className="p-4 h-full bg-gray-50">
+                          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                            <div className="p-3 border-b border-gray-100">
+                              <p className="text-xs font-medium text-gray-900">Mis documentos</p>
+                            </div>
+                            <div className="divide-y divide-gray-50">
+                              {[
+                                { name: 'Nómina Nov 2024', type: 'PDF', icon: '📄' },
+                                { name: 'Contrato trabajo', type: 'PDF', icon: '📋' },
+                                { name: 'Certificado IRPF', type: 'PDF', icon: '📑' },
+                              ].map((doc, i) => (
+                                <div key={i} className="p-3 flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center text-lg">
+                                    {doc.icon}
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="text-xs font-medium text-gray-900">{doc.name}</p>
+                                    <p className="text-[10px] text-gray-400">{doc.type}</p>
+                                  </div>
+                                  <Eye className="w-4 h-4 text-gray-400" />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {previewAddon === 'work_reports' && (
+                        <div className="p-4 h-full bg-gray-50">
+                          <div className="bg-white rounded-2xl p-4 shadow-sm mb-3">
+                            <p className="text-xs font-medium text-gray-900 mb-2">Nuevo parte de trabajo</p>
+                            <div className="space-y-2">
+                              <div className="p-2 bg-gray-50 rounded-lg">
+                                <p className="text-[10px] text-gray-400">Cliente</p>
+                                <p className="text-xs text-gray-900">Empresa ABC S.L.</p>
+                              </div>
+                              <div className="p-2 bg-gray-50 rounded-lg">
+                                <p className="text-[10px] text-gray-400">Ubicación</p>
+                                <p className="text-xs text-gray-900">📍 Calle Mayor, 15</p>
+                              </div>
+                              <div className="grid grid-cols-3 gap-2">
+                                {['📸', '📸', '+'].map((icon, i) => (
+                                  <div key={i} className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
+                                    {icon}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <button className="w-full bg-green-500 rounded-2xl p-3 text-center">
+                            <p className="text-white font-semibold text-xs">Firmar y enviar</p>
+                          </button>
+                        </div>
+                      )}
+                      
+                      {previewAddon === 'ai_assistant' && (
+                        <div className="p-4 h-full bg-gray-50 flex flex-col">
+                          <div className="flex-1 space-y-3">
+                            <div className="flex gap-2">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                                <Zap className="w-4 h-4 text-white" />
+                              </div>
+                              <div className="bg-white rounded-2xl rounded-tl-sm p-3 shadow-sm max-w-[80%]">
+                                <p className="text-xs text-gray-900">¡Hola! Soy OficazIA. ¿En qué puedo ayudarte?</p>
+                              </div>
+                            </div>
+                            <div className="flex justify-end">
+                              <div className="bg-[#007AFF] rounded-2xl rounded-tr-sm p-3 max-w-[80%]">
+                                <p className="text-xs text-white">Hazme el cuadrante de la semana</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                                <Zap className="w-4 h-4 text-white" />
+                              </div>
+                              <div className="bg-white rounded-2xl rounded-tl-sm p-3 shadow-sm max-w-[80%]">
+                                <p className="text-xs text-gray-900">¡Listo! He creado el cuadrante respetando las preferencias de cada empleado.</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex gap-2">
+                            <input 
+                              type="text" 
+                              placeholder="Escribe tu mensaje..."
+                              className="flex-1 bg-white rounded-full px-4 py-2 text-xs border border-gray-200"
+                              readOnly
+                            />
+                            <button className="w-8 h-8 bg-[#007AFF] rounded-full flex items-center justify-center">
+                              <ArrowRight className="w-4 h-4 text-white" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Home Indicator */}
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 bg-white/30 rounded-full"></div>
+                </div>
+                
+                {/* Decorative elements */}
+                <div className="absolute -z-10 top-1/4 -right-8 w-32 h-32 bg-[#007AFF]/10 rounded-full blur-2xl"></div>
+                <div className="absolute -z-10 bottom-1/4 -left-8 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
