@@ -365,6 +365,8 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   const handleStep5Submit = async (data: Step5Data) => {
     try {
       setIsLoading(true);
+      // Set flag BEFORE showing loader to prevent PublicRoute redirect
+      sessionStorage.setItem('registrationWelcomeFlow', 'true');
       setShowDemoLoading(true);
       setIsBackendComplete(false);
       
@@ -387,6 +389,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
         localStorage.setItem('showWelcomeModal', 'true');
         setIsBackendComplete(true);
       } catch (error: any) {
+        sessionStorage.removeItem('registrationWelcomeFlow');
         setShowDemoLoading(false);
         setIsBackendComplete(false);
         
@@ -398,6 +401,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
         setIsLoading(false);
       }
     } catch (error: any) {
+      sessionStorage.removeItem('registrationWelcomeFlow');
       setShowDemoLoading(false);
       setIsLoading(false);
       alert(error.message || 'Error al crear la empresa');
@@ -1498,6 +1502,8 @@ export default function Register({ byInvitation = false, invitationEmail, invita
         isBackendComplete={isBackendComplete}
         companyName={formData.companyName}
         onComplete={() => {
+          // Clear the welcome flow flag to allow normal routing
+          sessionStorage.removeItem('registrationWelcomeFlow');
           setShowDemoLoading(false);
           setIsBackendComplete(false);
           setLocation('/dashboard');

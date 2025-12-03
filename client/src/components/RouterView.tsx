@@ -294,7 +294,10 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
     return <PageLoading />;
   }
 
-  if (user && company) {
+  // Don't redirect during registration welcome flow
+  const isInWelcomeFlow = sessionStorage.getItem('registrationWelcomeFlow') === 'true';
+  
+  if (user && company && !isInWelcomeFlow) {
     return <Redirect to={`/${company.companyAlias}/inicio`} />;
   }
 

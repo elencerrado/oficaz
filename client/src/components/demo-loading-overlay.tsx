@@ -46,13 +46,14 @@ export function DemoLoadingOverlay({ isVisible, isBackendComplete = false, onCom
 
     let animationFrameId: number;
     const startTime = Date.now();
-    const targetProgress = 85;
-    const totalDuration = 2500;
+    const targetProgress = 80;
+    const totalDuration = 4500; // Slower loader for better UX
 
     const animateProgress = () => {
       const elapsed = Date.now() - startTime;
       const ratio = elapsed / totalDuration;
-      const easeOut = 1 - Math.pow(1 - Math.min(ratio, 1), 3);
+      // Smoother ease-out curve
+      const easeOut = 1 - Math.pow(1 - Math.min(ratio, 1), 4);
       const calculatedProgress = Math.min(easeOut * targetProgress, targetProgress);
       
       setProgress(calculatedProgress);
@@ -80,13 +81,13 @@ export function DemoLoadingOverlay({ isVisible, isBackendComplete = false, onCom
 
     const startProgress = progress;
     const remainingProgress = 100 - startProgress;
-    const completionDuration = 400;
+    const completionDuration = 800; // Slower completion for smooth finish
     const startTime = Date.now();
 
     const animate = () => {
       const elapsed = Date.now() - startTime;
       const ratio = Math.min(elapsed / completionDuration, 1);
-      const easeOut = 1 - Math.pow(1 - ratio, 2);
+      const easeOut = 1 - Math.pow(1 - ratio, 3);
       const currentProgress = startProgress + (remainingProgress * easeOut);
       
       setProgress(currentProgress);
@@ -94,13 +95,14 @@ export function DemoLoadingOverlay({ isVisible, isBackendComplete = false, onCom
       if (ratio < 1) {
         requestAnimationFrame(animate);
       } else {
+        // Pause at 100% for a moment before transitioning
         setTimeout(() => {
           setLoadingFadeIn(false);
           setTimeout(() => {
             setShowWelcome(true);
-            setTimeout(() => setFadeIn(true), 100);
-          }, 400);
-        }, 200);
+            setTimeout(() => setFadeIn(true), 150);
+          }, 500);
+        }, 400);
       }
     };
 
