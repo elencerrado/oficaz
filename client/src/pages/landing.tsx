@@ -507,8 +507,24 @@ export default function Landing() {
                 
                 {/* Dynamic summary - scrollable if many items */}
                 <div className="max-h-28 overflow-y-auto mb-4 px-2">
+                  {/* User counts first */}
+                  <div className="flex flex-wrap justify-center gap-1.5 mb-2">
+                    {userCounts.employees > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                        {userCounts.employees} Empleado{userCounts.employees !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {userCounts.managers > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                        {userCounts.managers} Manager{userCounts.managers !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                      {userCounts.admins} Admin{userCounts.admins !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  {/* Selected addons below */}
                   <div className="flex flex-wrap justify-center gap-1.5">
-                    {/* Selected addons */}
                     {addons.filter(a => selectedAddons.has(a.key) || a.isLocked).map((addon) => {
                       const IconComponent = addon.icon;
                       return (
@@ -525,20 +541,6 @@ export default function Landing() {
                         </span>
                       );
                     })}
-                    {/* User counts */}
-                    {userCounts.employees > 0 && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                        {userCounts.employees} Empleado{userCounts.employees !== 1 ? 's' : ''}
-                      </span>
-                    )}
-                    {userCounts.managers > 0 && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                        {userCounts.managers} Manager{userCounts.managers !== 1 ? 's' : ''}
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                      {userCounts.admins} Admin{userCounts.admins !== 1 ? 's' : ''}
-                    </span>
                   </div>
                 </div>
                 
