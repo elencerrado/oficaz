@@ -775,8 +775,8 @@ export const companyRegistrationSchema = z.object({
   teamSize: z.string().optional(), // Legacy support
   interestedFeatures: z.array(z.string()).optional(), // Legacy support
   
-  // Step 2 data - NEW MODEL (all users are paid, minimum 1 admin)
-  admins: z.number().min(1).optional().default(1),
+  // Step 2 data - NEW MODEL (all users are paid, minimum 1 admin REQUIRED)
+  admins: z.number().min(1, "Mínimo 1 administrador requerido").default(1),
   managers: z.number().min(0).optional().default(0),
   employees: z.number().min(0).optional().default(0),
   // Legacy support - additional users beyond base plan

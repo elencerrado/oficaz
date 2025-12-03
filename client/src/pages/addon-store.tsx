@@ -289,11 +289,7 @@ export default function AddonStore() {
     };
   });
 
-  const freeAddonOrder = ['time_tracking', 'vacation', 'schedules'];
-  const freeAddons = addonsWithStatus
-    .filter(a => a.isFreeFeature)
-    .sort((a, b) => freeAddonOrder.indexOf(a.key) - freeAddonOrder.indexOf(b.key));
-  const paidAddons = addonsWithStatus.filter(a => !a.isFreeFeature);
+  const allAddons = addonsWithStatus;
 
   const handlePurchase = (addon: AddonWithStatus) => {
     setSelectedAddon(addon);
@@ -391,55 +387,6 @@ export default function AddonStore() {
         </div>
       ) : (
         <div className="space-y-8">
-          {freeAddons.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Gift className="h-5 w-5 text-green-600 dark:text-green-400" />
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Incluido en tu plan</h2>
-                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Gratis</Badge>
-              </div>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {freeAddons.map((addon) => (
-                  <Card 
-                    key={addon.id} 
-                    className="relative overflow-hidden border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/20 min-h-[280px] flex flex-col"
-                    data-testid={`addon-card-${addon.key}`}
-                  >
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${getAddonColor(addon.key)}`}>
-                          {getAddonIcon(addon.key)}
-                        </div>
-                        <CardTitle className="text-base text-gray-900 dark:text-gray-100">{addon.name}</CardTitle>
-                      </div>
-                      <CardDescription className="text-sm text-gray-500 dark:text-gray-400 line-clamp-5">
-                        {addon.description}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow flex flex-col justify-end pt-0">
-                      <div className="mt-auto">
-                        <div className="mb-3">
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-xl font-bold text-green-600 dark:text-green-400">Gratis</span>
-                          </div>
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          className="w-full text-green-600 border-green-300 hover:bg-green-50 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/30" 
-                          disabled
-                          data-testid={`addon-included-${addon.key}`}
-                        >
-                          <Check className="h-4 w-4 mr-2" />
-                          Incluido en tu plan
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Current Extra Seats Section - Show only if has extra seats */}
           {hasExtraSeats && (
             <div className="mb-8">
@@ -718,14 +665,14 @@ export default function AddonStore() {
             )}
           </div>
 
-          {paidAddons.length > 0 && (
+          {allAddons.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <ShoppingCart className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Complementos disponibles</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Funcionalidades</h2>
               </div>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {paidAddons.map((addon) => {
+                {allAddons.map((addon) => {
                   const isPurchased = addon.isPurchased;
                   const isPendingCancel = addon.isPendingCancel;
                   const isInCooldown = addon.isInCooldown && !isPurchased;
