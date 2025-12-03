@@ -10224,7 +10224,7 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
       const aiTokensResetDate = planData?.ai_tokens_reset_date;
       
       // Check if company has OficazIA addon active (new modular model)
-      const hasOficazIA = await storage.hasActiveAddon(companyId, 'oficazia');
+      const hasOficazIA = await storage.hasActiveAddon(companyId, 'ai_assistant');
       // If OficazIA is active, set limit to 10M tokens/month, otherwise 0
       const aiTokensLimit = hasOficazIA ? 10000000 : 0;
       
