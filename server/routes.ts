@@ -15272,6 +15272,16 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
             { key: 'admin', count: admins, price: seatPricing.admin, name: 'Admin Adicional' },
           ];
 
+          // Map seat type to subscription column for stored item ID
+          const seatItemColumns: Record<string, keyof typeof subscription> = {
+            admin: 'stripeAdminSeatsItemId',
+            manager: 'stripeManagerSeatsItemId',
+            employee: 'stripeEmployeeSeatsItemId',
+          };
+          
+          // Track new item IDs for database update
+          const newSeatItemIds: Record<string, string> = {};
+
           for (const seat of seatTypes) {
             if (seat.count <= 0) continue;
 
@@ -15310,19 +15320,86 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
               `);
             }
 
-            // Add subscription item for the seats with proration
-            await stripe.subscriptionItems.create({
-              subscription: subscription.stripeSubscriptionId,
-              price: stripePriceId,
-              quantity: seat.count,
-              proration_behavior: 'create_prorations',
-              metadata: {
-                seat_type: seat.key,
-                company_id: user.companyId.toString(),
+            // Check if we already have a Stripe item for this seat type
+            const existingItemId = subscription[seatItemColumns[seat.key]] as string | null;
+            
+            if (existingItemId) {
+              // Update existing item quantity
+              try {
+                const existingItem = await stripe.subscriptionItems.retrieve(existingItemId);
+                const newQuantity = (existingItem.quantity || 0) + seat.count;
+                
+                await stripe.subscriptionItems.update(existingItemId, {
+                  quantity: newQuantity,
+                  proration_behavior: 'create_prorations',
+                });
+                
+                console.log(`✅ Updated ${seat.key} seats from ${existingItem.quantity} to ${newQuantity} in Stripe`);
+              } catch (retrieveError: any) {
+                // Item might not exist anymore, create new one
+                console.warn(`Could not retrieve existing item ${existingItemId}: ${retrieveError.message}`);
+                
+                const newItem = await stripe.subscriptionItems.create({
+                  subscription: subscription.stripeSubscriptionId,
+                  price: stripePriceId,
+                  quantity: seat.count,
+                  proration_behavior: 'create_prorations',
+                  metadata: {
+                    seat_type: seat.key,
+                    company_id: user.companyId.toString(),
+                  }
+                }, { idempotencyKey: `${idempotencyKey}-${seat.key}-new` });
+                
+                newSeatItemIds[seat.key] = newItem.id;
+                console.log(`✅ Created new ${seat.key} seats item with ${seat.count} seats`);
               }
-            }, { idempotencyKey: `${idempotencyKey}-${seat.key}` });
-
-            console.log(`✅ Added ${seat.count} ${seat.key} seat(s) to Stripe subscription`);
+            } else {
+              // No existing item - check subscription items by metadata
+              const existingSeatItem = stripeSubscription.items.data.find((item: any) => 
+                item.price?.metadata?.seat_type === seat.key
+              );
+              
+              if (existingSeatItem) {
+                // Found item by metadata, update it
+                const newQuantity = (existingSeatItem.quantity || 0) + seat.count;
+                
+                await stripe.subscriptionItems.update(existingSeatItem.id, {
+                  quantity: newQuantity,
+                  proration_behavior: 'create_prorations',
+                });
+                
+                newSeatItemIds[seat.key] = existingSeatItem.id;
+                console.log(`✅ Updated ${seat.key} seats from ${existingSeatItem.quantity} to ${newQuantity} (found by metadata)`);
+              } else {
+                // Create new subscription item
+                const newItem = await stripe.subscriptionItems.create({
+                  subscription: subscription.stripeSubscriptionId,
+                  price: stripePriceId,
+                  quantity: seat.count,
+                  proration_behavior: 'create_prorations',
+                  metadata: {
+                    seat_type: seat.key,
+                    company_id: user.companyId.toString(),
+                  }
+                }, { idempotencyKey: `${idempotencyKey}-${seat.key}` });
+                
+                newSeatItemIds[seat.key] = newItem.id;
+                console.log(`✅ Added ${seat.count} ${seat.key} seat(s) to Stripe subscription`);
+              }
+            }
+          }
+          
+          // Update subscription with any new item IDs
+          if (Object.keys(newSeatItemIds).length > 0) {
+            await db.execute(sql`
+              UPDATE subscriptions 
+              SET 
+                stripe_admin_seats_item_id = COALESCE(${newSeatItemIds.admin || null}, stripe_admin_seats_item_id),
+                stripe_manager_seats_item_id = COALESCE(${newSeatItemIds.manager || null}, stripe_manager_seats_item_id),
+                stripe_employee_seats_item_id = COALESCE(${newSeatItemIds.employee || null}, stripe_employee_seats_item_id),
+                updated_at = now()
+              WHERE company_id = ${user.companyId}
+            `);
           }
 
           stripeChargeInfo = {
