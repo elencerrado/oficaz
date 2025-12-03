@@ -166,6 +166,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   const [introAnimationStarted, setIntroAnimationStarted] = useState(false);
   const [isBackendComplete, setIsBackendComplete] = useState(false);
   const [promoCodeValidation, setPromoCodeValidation] = useState<{ status: 'idle' | 'checking' | 'valid' | 'invalid', message?: string, trialDays?: number }>({ status: 'idle' });
+  const [stepAnimationReady, setStepAnimationReady] = useState(false);
 
   const params = new URLSearchParams(search);
   const verificationToken = params.get('token');
@@ -196,6 +197,10 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       scrollContainer.scrollTo({ top: 0, behavior: 'instant' });
     }
     window.scrollTo({ top: 0, behavior: 'instant' });
+    
+    setStepAnimationReady(false);
+    const timer = setTimeout(() => setStepAnimationReady(true), 50);
+    return () => clearTimeout(timer);
   }, [currentStep]);
 
   useEffect(() => {
@@ -588,7 +593,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
             {/* Step 1: Team Configuration - Apple Style (friendly tone) */}
             {currentStep === 1 && (
               <form onSubmit={step2Form.handleSubmit(handleTeamSubmit)} className="space-y-6">
-                <div className="text-center mb-8">
+                <div className={`text-center mb-8 transition-all duration-700 ease-out ${
+                  stepAnimationReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                }`}>
                   <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-3">
                     Vamos a configurar tu equipo
                   </h2>
@@ -597,10 +604,12 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   </p>
                 </div>
 
-                {/* User counters - Visual Apple style */}
+                {/* User counters - Visual Apple style with cascade animation */}
                 <div className="space-y-4">
                   {/* Admin counter - minimum 1 required */}
-                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl p-5">
+                  <div className={`bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl p-5 transition-all duration-500 ease-out delay-100 ${
+                    stepAnimationReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+                  }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-amber-500 flex items-center justify-center">
@@ -648,7 +657,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   </div>
 
                   {/* Manager counter */}
-                  <div className="bg-white border-2 border-gray-100 hover:border-gray-200 rounded-2xl p-5 transition-colors">
+                  <div className={`bg-white border-2 border-gray-100 hover:border-gray-200 rounded-2xl p-5 transition-all duration-500 ease-out delay-200 ${
+                    stepAnimationReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+                  }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-purple-500 flex items-center justify-center">
@@ -692,7 +703,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   </div>
 
                   {/* Employee counter */}
-                  <div className="bg-white border-2 border-gray-100 hover:border-gray-200 rounded-2xl p-5 transition-colors">
+                  <div className={`bg-white border-2 border-gray-100 hover:border-gray-200 rounded-2xl p-5 transition-all duration-500 ease-out delay-300 ${
+                    stepAnimationReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+                  }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-blue-500 flex items-center justify-center">
@@ -737,7 +750,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 </div>
 
                 {/* Total summary */}
-                <div className="bg-gray-50 rounded-2xl p-5">
+                <div className={`bg-gray-50 rounded-2xl p-5 transition-all duration-500 ease-out delay-[400ms] ${
+                  stepAnimationReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+                }`}>
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-sm text-gray-600">Tu equipo:</span>
@@ -781,7 +796,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
             {/* Step 2: Features Selection - Apple Style (friendly tone) */}
             {currentStep === 2 && (
               <form onSubmit={step1Form.handleSubmit(handleFeaturesSubmit)} className="space-y-6">
-                <div className="text-center mb-8">
+                <div className={`text-center mb-8 transition-all duration-700 ease-out ${
+                  stepAnimationReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                }`}>
                   <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-3">
                     Elige las funciones que te interesan
                   </h2>
@@ -790,21 +807,25 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   </p>
                 </div>
 
-                {/* Features grid - Apple style cards with full description */}
+                {/* Features grid - Apple style cards with cascade animation */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {addons.map((addon) => {
+                  {addons.map((addon, index) => {
                     const Icon = getIcon(addon.icon);
                     const selectedFeatures = step1Form.watch('selectedFeatures') || [];
                     const isSelected = selectedFeatures.includes(addon.key);
                     const price = Number(addon.monthlyPrice);
+                    const delay = 100 + (index * 75);
                     
                     return (
                       <label
                         key={addon.key}
                         htmlFor={`feature-${addon.key}`}
                         data-testid={`feature-${addon.key}`}
+                        style={{ transitionDelay: stepAnimationReady ? '0ms' : `${delay}ms` }}
                         className={`
-                          flex flex-col p-5 rounded-2xl cursor-pointer transition-all duration-300 min-h-[160px]
+                          flex flex-col p-5 rounded-2xl cursor-pointer min-h-[160px]
+                          transition-all duration-500 ease-out
+                          ${stepAnimationReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
                           ${isSelected 
                             ? 'bg-oficaz-primary/5 border-2 border-oficaz-primary shadow-lg shadow-oficaz-primary/10 scale-[1.02]' 
                             : 'bg-white border-2 border-gray-100 hover:border-gray-200 hover:shadow-md'
@@ -909,7 +930,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
             {/* Step 3: Company - Friendly tone */}
             {currentStep === 3 && (
               <form onSubmit={step3Form.handleSubmit(handleStep3Submit)} className="space-y-6">
-                <div className="text-center lg:text-left mb-6">
+                <div className={`text-center lg:text-left mb-6 transition-all duration-700 ease-out ${
+                  stepAnimationReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                }`}>
                   <h2 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-2">
                     Cuéntanos sobre tu empresa
                   </h2>
@@ -918,7 +941,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className={`grid grid-cols-1 lg:grid-cols-2 gap-4 transition-all duration-500 ease-out delay-150 ${
+                  stepAnimationReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+                }`}>
                   <div className="space-y-2">
                     <Label htmlFor="companyName" className="text-sm font-medium text-gray-700">
                       Nombre de la empresa
@@ -1040,7 +1065,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
             {/* Step 4: Admin - Friendly tone */}
             {currentStep === 4 && (
               <form onSubmit={step4Form.handleSubmit(handleStep4Submit)} className="space-y-6">
-                <div className="text-center lg:text-left mb-6">
+                <div className={`text-center lg:text-left mb-6 transition-all duration-700 ease-out ${
+                  stepAnimationReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                }`}>
                   <h2 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-2">
                     Crea tu cuenta
                   </h2>
@@ -1049,7 +1076,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className={`grid grid-cols-1 lg:grid-cols-2 gap-4 transition-all duration-500 ease-out delay-150 ${
+                  stepAnimationReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+                }`}>
                   <div className="space-y-2">
                     <Label htmlFor="adminFullName" className="text-sm font-medium text-gray-700">
                       Nombre completo
@@ -1270,7 +1299,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
             {/* Step 5: Confirmation */}
             {currentStep === 5 && (
               <form onSubmit={step5Form.handleSubmit(handleStep5Submit)} className="space-y-5">
-                <div className="text-center lg:text-left mb-4">
+                <div className={`text-center lg:text-left mb-4 transition-all duration-700 ease-out ${
+                  stepAnimationReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                }`}>
                   <h2 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-2">
                     Tu plan Oficaz
                   </h2>
@@ -1280,7 +1311,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 </div>
 
                 {/* Features selected */}
-                <div className="bg-white border border-gray-200 rounded-2xl p-4">
+                <div className={`bg-white border border-gray-200 rounded-2xl p-4 transition-all duration-500 ease-out delay-100 ${
+                  stepAnimationReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+                }`}>
                   <span className="text-sm font-medium text-gray-900 block mb-3">Tus funcionalidades</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {formData.selectedFeatures && formData.selectedFeatures.map((featureKey: string) => {
@@ -1303,7 +1336,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 </div>
 
                 {/* Users summary */}
-                <div className="bg-gradient-to-br from-oficaz-primary/5 to-blue-50 border border-oficaz-primary/20 rounded-2xl p-4">
+                <div className={`bg-gradient-to-br from-oficaz-primary/5 to-blue-50 border border-oficaz-primary/20 rounded-2xl p-4 transition-all duration-500 ease-out delay-200 ${
+                  stepAnimationReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+                }`}>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-medium text-gray-900">Tu equipo</span>
                     <span className="text-xs text-gray-500">
@@ -1330,7 +1365,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 </div>
 
                 {/* Price summary */}
-                <div className="bg-gray-900 text-white rounded-2xl p-5">
+                <div className={`bg-gray-900 text-white rounded-2xl p-5 transition-all duration-500 ease-out delay-300 ${
+                  stepAnimationReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+                }`}>
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-lg font-semibold">Total mensual</span>
                     <div className="text-right">
