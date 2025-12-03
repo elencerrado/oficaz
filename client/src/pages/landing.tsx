@@ -481,8 +481,8 @@ export default function Landing() {
           </div>
         </div>
       </section>
-      {/* Pricing Section - Responsive layout with generous padding */}
-      <section id="precios" className="min-h-screen bg-gray-50 py-16 md:py-24 lg:py-32 flex items-center">
+      {/* Pricing Section - Compact, fits in viewport */}
+      <section id="precios" className="bg-gray-50 py-12 md:py-16 lg:py-20 flex items-center">
         <div className="max-w-5xl mx-auto px-6 w-full">
           {/* Header */}
           <div className="text-center mb-10 lg:mb-12">
@@ -563,37 +563,39 @@ export default function Landing() {
             
             {/* Right: Feature Selector */}
             <div className="space-y-4">
-              {/* Functions */}
+              {/* Functions - scrollable */}
               <div className="bg-white rounded-xl p-4 border border-gray-100">
                 <h3 className="font-semibold text-gray-900 mb-3 text-sm">Funciones</h3>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {addons.map((addon) => {
-                    const isSelected = selectedAddons.has(addon.key);
-                    const IconComponent = addon.icon;
-                    const isLocked = addon.isLocked;
-                    return (
-                      <button
-                        key={addon.key}
-                        onClick={() => toggleAddon(addon.key)}
-                        disabled={isLocked}
-                        className={`flex items-center gap-2 p-2.5 rounded-lg text-left transition-all ${
-                          isLocked
-                            ? 'bg-green-500 text-white cursor-default'
-                            : isSelected 
-                              ? 'bg-[#007AFF] text-white' 
-                              : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        <IconComponent className={`w-4 h-4 ${isSelected || isLocked ? 'text-white' : 'text-gray-400'}`} />
-                        <span className={`text-xs font-medium ${isSelected || isLocked ? 'text-white' : 'text-gray-900'}`}>
-                          {addon.name}
-                        </span>
-                        {isLocked && (
-                          <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded ml-auto">Gratis</span>
-                        )}
-                      </button>
-                    );
-                  })}
+                <div className="max-h-40 overflow-y-auto">
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {addons.map((addon) => {
+                      const isSelected = selectedAddons.has(addon.key);
+                      const IconComponent = addon.icon;
+                      const isLocked = addon.isLocked;
+                      return (
+                        <button
+                          key={addon.key}
+                          onClick={() => toggleAddon(addon.key)}
+                          disabled={isLocked}
+                          className={`flex items-center gap-2 p-2.5 rounded-lg text-left transition-all ${
+                            isLocked
+                              ? 'bg-green-500 text-white cursor-default'
+                              : isSelected 
+                                ? 'bg-[#007AFF] text-white' 
+                                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          <IconComponent className={`w-4 h-4 ${isSelected || isLocked ? 'text-white' : 'text-gray-400'}`} />
+                          <span className={`text-xs font-medium ${isSelected || isLocked ? 'text-white' : 'text-gray-900'}`}>
+                            {addon.name}
+                          </span>
+                          {isLocked && (
+                            <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded ml-auto">Gratis</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
               
