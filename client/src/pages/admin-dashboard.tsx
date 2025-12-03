@@ -42,7 +42,6 @@ import { TrialManager } from '@/components/TrialManager';
 import BlockedAccountOverlay from '@/components/BlockedAccountOverlay';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PaymentMethodManager } from '@/components/PaymentMethodManager';
-import { WelcomeModal } from '@/components/welcome-modal';
 
 export default function AdminDashboard() {
   usePageTitle('Panel Principal');
@@ -63,13 +62,6 @@ export default function AdminDashboard() {
   const [currentLocation, setLocation] = useLocation() || ['', () => {}];
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showWelcomeModal, setShowWelcomeModal] = useState(() => {
-    const shouldShow = localStorage.getItem('showWelcomeModal') === 'true';
-    if (shouldShow) {
-      localStorage.removeItem('showWelcomeModal');
-    }
-    return shouldShow;
-  });
   const temporaryMessageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // ⚠️ PROTECTED - DO NOT MODIFY - Message system states identical to employee system
@@ -1532,13 +1524,6 @@ export default function AdminDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Welcome Modal */}
-      <WelcomeModal
-        isOpen={showWelcomeModal}
-        onClose={() => setShowWelcomeModal(false)}
-        companyName={company?.name || 'tu empresa'}
-        trialDays={company?.trialDurationDays || 7}
-      />
     </div>
   );
 }

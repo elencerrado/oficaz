@@ -1,16 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
-import oficazLogo from '@/assets/oficaz-logo.png';
-
-function OficazIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 120 120" className={className}>
-      <circle cx="60" cy="60" r="60" fill="currentColor"/>
-      <circle cx="60" cy="60" r="20" fill="white"/>
-    </svg>
-  );
-}
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import oficazFavicon from '@assets/favicon oficaz_1757056517547.png';
 
 interface DemoLoadingOverlayProps {
   isVisible: boolean;
@@ -133,45 +125,14 @@ export function DemoLoadingOverlay({ isVisible, isBackendComplete = false, onCom
         }`}>
           <div className="mb-12">
             <img 
-              src={oficazLogo} 
+              src={oficazFavicon} 
               alt="Oficaz" 
-              className="h-10 w-auto"
+              className="h-16 w-16"
             />
           </div>
 
           <div className="mb-10">
-            <div className="w-14 h-14 relative">
-              <svg 
-                className="w-14 h-14" 
-                viewBox="0 0 50 50"
-                style={{ animation: 'spin 0.8s linear infinite' }}
-              >
-                <circle
-                  cx="25"
-                  cy="25"
-                  r="20"
-                  fill="none"
-                  stroke="#f3f4f6"
-                  strokeWidth="3"
-                />
-                <circle
-                  cx="25"
-                  cy="25"
-                  r="20"
-                  fill="none"
-                  stroke="url(#loaderGradient)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeDasharray="60, 200"
-                />
-                <defs>
-                  <linearGradient id="loaderGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#3b82f6" />
-                    <stop offset="100%" stopColor="#2563eb" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
+            <LoadingSpinner size="lg" />
           </div>
 
           <p className="text-gray-600 text-lg mb-10 min-h-[1.75rem] text-center">
@@ -197,7 +158,7 @@ export function DemoLoadingOverlay({ isVisible, isBackendComplete = false, onCom
             <div className={`w-24 h-24 mx-auto rounded-[28px] flex items-center justify-center mb-8 shadow-2xl shadow-oficaz-primary/40 transition-all duration-1000 overflow-hidden ${
               contentFadeIn ? 'rotate-0 scale-100' : 'rotate-12 scale-75'
             }`}>
-              <OficazIcon className="w-24 h-24 text-oficaz-primary" />
+              <img src={oficazFavicon} alt="Oficaz" className="w-24 h-24" />
             </div>
             
             <h1 className={`text-4xl lg:text-5xl font-bold text-gray-900 mb-5 transition-all duration-700 delay-100 ${
@@ -255,12 +216,6 @@ export function DemoLoadingOverlay({ isVisible, isBackendComplete = false, onCom
         </div>
       )}
 
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }
