@@ -10221,8 +10221,12 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
       const storageLimitGB = planData?.storage_limit_gb || 25; // Default to Basic plan limit
       const maxUsers = planData?.max_users || 10;
       const aiTokensUsed = planData?.ai_tokens_used || 0;
-      const aiTokensLimit = planData?.ai_tokens_limit_monthly || 0;
       const aiTokensResetDate = planData?.ai_tokens_reset_date;
+      
+      // Check if company has OficazIA addon active (new modular model)
+      const hasOficazIA = await storage.hasActiveAddon(companyId, 'oficazia');
+      // If OficazIA is active, set limit to 10M tokens/month, otherwise 0
+      const aiTokensLimit = hasOficazIA ? 10000000 : 0;
       
       // Get real-time stats from actual data using proper ORM
       const employeeCount = await db.select({ count: count() })
