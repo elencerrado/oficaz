@@ -481,15 +481,15 @@ export default function Landing() {
           </div>
         </div>
       </section>
-      {/* Pricing Section - Fits in viewport minus header (80px) */}
-      <section id="precios" className="h-[calc(100vh-80px)] bg-gray-50 flex flex-col justify-center py-8">
+      {/* Pricing Section - Responsive layout with generous padding */}
+      <section id="precios" className="min-h-screen bg-gray-50 py-16 md:py-24 lg:py-32 flex items-center">
         <div className="max-w-5xl mx-auto px-6 w-full">
-          {/* Header - Compact */}
-          <div className="text-center mb-6">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+          {/* Header */}
+          <div className="text-center mb-10 lg:mb-12">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
               Sin planes. Paga solo lo que necesitas.
             </h2>
-            <p className="text-base text-gray-500">
+            <p className="text-base md:text-lg text-gray-500">
               Configura tu suscripción a medida
             </p>
           </div>
