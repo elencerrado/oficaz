@@ -112,8 +112,11 @@ export default function Landing() {
   usePageTitle('Bienvenido a Oficaz');
   const [isScrolled, setIsScrolled] = useState(false);
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
-  const [heroScrollProgress, setHeroScrollProgress] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  // Pricing calculator state
+  const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set());
+  const [userCounts, setUserCounts] = useState({ employees: 1, managers: 0, admins: 0 });
 
   // Defer API calls until after critical content renders
   const [shouldLoadData, setShouldLoadData] = useState(false);
@@ -166,28 +169,40 @@ export default function Landing() {
   });
 
   useEffect(() => {
-    let ticking = false;
-    
     const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          const scrollTop = window.scrollY;
-          setIsScrolled(scrollTop > 50);
-          
-          // Calculate hero scroll progress (0 to 1) based on viewport height
-          const heroHeight = window.innerHeight;
-          const progress = Math.min(scrollTop / (heroHeight * 0.6), 1);
-          setHeroScrollProgress(progress);
-          
-          ticking = false;
-        });
-        ticking = true;
-      }
+      setIsScrolled(window.scrollY > 50);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Addon definitions for pricing calculator
+  const addons = [
+    { key: 'time_tracking', name: 'Fichajes', price: 3, icon: Clock },
+    { key: 'vacation', name: 'Vacaciones', price: 3, icon: Calendar },
+    { key: 'schedules', name: 'Cuadrante', price: 3, icon: CalendarDays },
+    { key: 'messages', name: 'Mensajes', price: 5, icon: MessageSquare },
+    { key: 'reminders', name: 'Recordatorios', price: 5, icon: Bell },
+    { key: 'documents', name: 'Documentos', price: 10, icon: FileText },
+    { key: 'work_reports', name: 'Partes de Trabajo', price: 8, icon: Settings },
+    { key: 'ai_assistant', name: 'OficazIA', price: 15, icon: Zap },
+  ];
+
+  // Calculate total price
+  const addonsTotal = addons.filter(a => selectedAddons.has(a.key)).reduce((sum, a) => sum + a.price, 0);
+  const usersTotal = (userCounts.employees * 2) + (userCounts.managers * 4) + (userCounts.admins * 6);
+  const monthlyTotal = addonsTotal + usersTotal;
+
+  const toggleAddon = (key: string) => {
+    const newSet = new Set(selectedAddons);
+    if (newSet.has(key)) {
+      newSet.delete(key);
+    } else {
+      newSet.add(key);
+    }
+    setSelectedAddons(newSet);
+  };
 
   // Funciones principales
   const mainFeatures = [
@@ -355,41 +370,22 @@ export default function Landing() {
         <FaWhatsapp className="w-8 h-8" />
       </a>
 
-      {/* Hero Section with Background */}
+      {/* Hero Section - Static, no scroll effects */}
       <section 
-        className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden"
-        style={{ minHeight: '100vh' }}
+        className="relative min-h-screen flex items-center justify-center pt-16"
+        style={{ 
+          backgroundImage: `url(${heroBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
       >
-        {/* Background Image - Absolute positioned */}
-        <div 
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `url(${heroBackground})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-          }}
-        />
-        
-        {/* Dark Overlay - starts at 0.7 opacity */}
-        <div 
-          className="absolute inset-0 bg-slate-900 transition-opacity duration-300"
-          style={{ opacity: 0.7 }}
-        />
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-slate-900/70" />
         
         {/* Content */}
-        <div 
-          className="relative z-10 max-w-5xl mx-auto px-6 text-center"
-          style={{
-            opacity: Math.max(1 - heroScrollProgress * 1.5, 0),
-            transform: `translateY(${-heroScrollProgress * 60}px) scale(${1 - heroScrollProgress * 0.08})`,
-            pointerEvents: heroScrollProgress > 0.5 ? 'none' : 'auto',
-          }}
-        >
-          {/* Main Content with staggered entrance animations */}
+        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
           <div className="space-y-8 lg:space-y-10">
-            
-            {/* Main Headline - First to animate */}
+            {/* Main Headline */}
             <div className="space-y-3">
               <h1 
                 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white leading-[1.1] tracking-tight transition-all duration-1000 ease-out"
@@ -412,7 +408,7 @@ export default function Landing() {
               </p>
             </div>
 
-            {/* Subtext - Second to animate */}
+            {/* Subtext */}
             <p 
               className="text-lg md:text-xl lg:text-2xl text-white/90 max-w-2xl mx-auto leading-relaxed font-medium transition-all duration-1000 ease-out"
               style={{
@@ -424,7 +420,7 @@ export default function Landing() {
               La app de gestión empresarial en un clic
             </p>
 
-            {/* Difficulty Slider - Third to animate */}
+            {/* Difficulty Slider */}
             {registrationSettings?.publicRegistrationEnabled && (
               <div 
                 className="flex flex-col items-center gap-4 pt-4 transition-all duration-1000 ease-out"
@@ -440,787 +436,215 @@ export default function Landing() {
             )}
           </div>
         </div>
-        
-        {/* Bottom gradient fade to white - appears on scroll */}
-        <div 
-          className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none transition-opacity duration-300"
-          style={{ opacity: Math.min(heroScrollProgress * 2, 1) }}
-        />
       </section>
 
-      {/* Unified Features Section */}
-      <section id="funciones" className="relative overflow-hidden bg-white">
-        {/* Subtle Background */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-br from-[#007AFF]/10 to-transparent rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-purple-500/10 to-transparent rounded-full blur-3xl"></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-24 md:py-32">
-          {/* Hero Header */}
-          <div className="text-center mb-20 md:mb-32">
-            <div className="inline-flex items-center gap-2 bg-[#007AFF]/10 backdrop-blur-sm border border-[#007AFF]/20 rounded-full px-6 py-2.5 mb-6">
-              <div className="w-2 h-2 bg-[#007AFF] rounded-full animate-pulse"></div>
-              <span className="text-[#007AFF] font-semibold text-sm">Funcionalidades</span>
-            </div>
-            <h2 className="text-5xl md:text-7xl lg:text-8xl font-bold text-gray-900 mb-6 tracking-tight leading-none">
-              Todo lo que necesitas,
-              <br />
-              <span className="bg-gradient-to-r from-[#007AFF] via-blue-500 to-cyan-400 bg-clip-text text-transparent">nada que sobre</span>
+      {/* Features Section - Apple Style Grid */}
+      <section id="funciones" className="py-20 md:py-28 bg-white relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6">
+          {/* Header */}
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 tracking-tight">
+              Funciones modulares
             </h2>
-            <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Descubre cómo cada función está diseñada para <span className="text-gray-900 font-semibold">simplificar tu trabajo</span>
+            <p className="text-xl text-gray-500 max-w-2xl mx-auto">
+              Activa solo lo que necesitas. Sin paquetes, sin compromisos.
             </p>
           </div>
 
-          {/* BASIC PLAN FEATURES */}
-          <div className="mb-24 md:mb-32">
-            <div className="flex items-center gap-3 mb-16">
-              <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2 rounded-full text-sm font-bold shadow-lg">
-                PLAN BASIC
+          {/* Features Grid - 4 columns on desktop */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {addons.map((addon) => {
+              const IconComponent = addon.icon;
+              return (
+                <div 
+                  key={addon.key}
+                  className="group bg-gray-50 hover:bg-white rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:shadow-gray-200/50 border border-transparent hover:border-gray-100"
+                >
+                  <div className="w-12 h-12 bg-gradient-to-br from-[#007AFF] to-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <IconComponent className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{addon.name}</h3>
+                  <p className="text-sm text-gray-500">€{addon.price}/mes</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+      {/* Pricing Section - Interactive Calculator */}
+      <section id="precios" className="py-16 md:py-20 bg-gray-50 min-h-[80vh] flex items-center">
+        <div className="max-w-6xl mx-auto px-6 w-full">
+          {/* Header */}
+          <div className="text-center mb-10">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
+              Sin planes. Paga solo lo que necesitas.
+            </h2>
+            <p className="text-lg text-gray-500">
+              Configura tu suscripción a medida
+            </p>
+          </div>
+          
+          {/* Calculator Layout - Two columns */}
+          <div className="grid lg:grid-cols-2 gap-8 items-start">
+            {/* Left: Price Summary */}
+            <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100 sticky top-24">
+              <div className="text-center mb-6">
+                <p className="text-gray-500 text-sm mb-2">Tu plan mensual</p>
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-6xl md:text-7xl font-black text-gray-900">€{monthlyTotal}</span>
+                  <span className="text-xl text-gray-400">/mes</span>
+                </div>
               </div>
-              <div className="flex-1 h-px bg-gradient-to-r from-green-500/20 to-transparent"></div>
+              
+              {/* Breakdown */}
+              <div className="border-t border-gray-100 pt-6 space-y-3">
+                {selectedAddons.size > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Funciones ({selectedAddons.size})</span>
+                    <span className="font-medium text-gray-900">€{addonsTotal}</span>
+                  </div>
+                )}
+                {usersTotal > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Usuarios</span>
+                    <span className="font-medium text-gray-900">€{usersTotal}</span>
+                  </div>
+                )}
+                {monthlyTotal === 0 && (
+                  <p className="text-center text-gray-400 text-sm py-4">
+                    Selecciona funciones para calcular
+                  </p>
+                )}
+              </div>
+              
+              {/* CTA */}
+              <div className="mt-6">
+                {registrationSettings?.publicRegistrationEnabled ? (
+                  <Link href="/request-code">
+                    <Button className="w-full py-6 text-lg font-bold bg-[#007AFF] hover:bg-[#0056CC]">
+                      Prueba 7 días gratis
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button 
+                    onClick={() => setIsContactFormOpen(true)}
+                    className="w-full py-6 text-lg font-bold bg-[#007AFF] hover:bg-[#0056CC]"
+                  >
+                    Contactar
+                  </Button>
+                )}
+                <p className="text-center text-xs text-gray-400 mt-3">Sin compromiso • Cancela cuando quieras</p>
+              </div>
             </div>
             
-            {/* 1. Control Horario - Image Left */}
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center mb-32">
-              <div className="order-2 lg:order-1">
-                <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-full px-4 py-1.5 mb-6">
-                  <Clock className="w-4 h-4 text-green-600" />
-                  <span className="text-green-700 font-semibold text-sm">Plan Basic</span>
-                </div>
-                <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-                  Control horario
-                  <span className="block text-[#007AFF]">en tiempo real</span>
-                </h3>
-                <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
-                  Sigue el tiempo de trabajo al instante con barras visuales intuitivas. Registra fichajes y descansos sin complicaciones.
-                </p>
-                <ul className="space-y-4">
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                    </div>
-                    <span className="text-gray-700">Visualizacion en directo</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                    </div>
-                    <span className="text-gray-700">Gestión de ausencias</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                    </div>
-                    <span className="text-gray-700">Reportes automaticos de horas trabajadas</span>
-                  </li>
-                </ul>
-              </div>
-              <div className="order-1 lg:order-2">
-                <div className="relative bg-white rounded-3xl p-6 lg:p-8 shadow-2xl border border-gray-100">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <Clock className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-bold text-gray-900">Fichajes</h4>
-                      <p className="text-sm text-blue-500 font-medium">Control horario</p>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700">Hoy</span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-sm text-blue-600 font-bold">7h 45m</span>
-                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                        </div>
-                      </div>
-                      <div className="relative h-8 bg-gray-100 rounded-lg overflow-hidden">
-                        <div className="absolute inset-0 bg-blue-500 rounded-lg" style={{ width: '82%' }}></div>
-                        <div className="absolute top-1 bottom-1 bg-orange-400 rounded-md animate-pulse" style={{ left: '77%', width: '4%' }}></div>
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span>09:00</span>
-                        <span className="text-orange-600 font-medium">En descanso</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-6 flex gap-4 justify-center">
-                    <button className="w-32 h-32 rounded-full bg-[#007AFF] hover:bg-[#0056CC] text-white text-xl font-bold shadow-lg transition-all duration-300">
-                      SALIR
-                    </button>
-                    <button className="w-32 h-32 rounded-full bg-orange-500 hover:bg-orange-600 text-white text-xl font-bold shadow-lg transition-all duration-300">
-                      <span className="whitespace-pre-line leading-tight">Finalizar{'\n'}Descanso</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 2. Gestión de Vacaciones - Image Right */}
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center mb-32">
-              <div className="order-1">
-                <div className="relative bg-white rounded-3xl p-6 lg:p-8 shadow-2xl border border-gray-100">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
-                      <Calendar className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-bold text-gray-900">Vacaciones</h4>
-                      <p className="text-sm text-blue-500 font-medium">Control automático</p>
-                    </div>
-                  </div>
-                  <div className="text-center p-6 bg-blue-50/50 rounded-2xl border border-blue-100 mb-4">
-                    <div className="text-xl font-bold text-blue-600 mb-2">Juan Pérez</div>
-                    <div className="text-sm text-gray-500 mb-4">Balance 2024</div>
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-gray-800">12</div>
-                        <div className="text-sm text-red-600">Usados</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-gray-800">18</div>
-                        <div className="text-sm text-green-600">Disponibles</div>
-                      </div>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-lg h-8">
-                      <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-8 rounded-lg w-[40%]"></div>
-                    </div>
-                    <div className="text-sm text-gray-500 mt-2">40% utilizados</div>
-                  </div>
-                  <button className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-3 rounded-xl text-sm font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all">
-                    Nueva Solicitud
-                  </button>
-                </div>
-              </div>
-              <div className="order-2">
-                <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-full px-4 py-1.5 mb-6">
-                  <Calendar className="w-4 h-4 text-green-600" />
-                  <span className="text-green-700 font-semibold text-sm">Plan Basic</span>
-                </div>
-                <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-                  Vacaciones
-                  <span className="block text-[#007AFF]">sin papeleos</span>
-                </h3>
-                <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
-                  Solicita vacaciones digitalmente con aprobación instantánea. Consulta el balance en tiempo real y planifica tu descanso sin complicaciones.
-                </p>
-                <ul className="space-y-4">
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                    </div>
-                    <span className="text-gray-700">Solicitudes digitales instantáneas</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                    </div>
-                    <span className="text-gray-700">Días restantes en tiempo real</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                    </div>
-                    <span className="text-gray-700">Gestión de días extra</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            {/* 3. Cuadrante - Image Left */}
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center mb-40">
-              <div className="order-2 lg:order-1">
-                <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-full px-4 py-1.5 mb-6">
-                  <CalendarDays className="w-4 h-4 text-green-600" />
-                  <span className="text-green-700 font-semibold text-sm">Plan Basic</span>
-                </div>
-                <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-                  Cuadrante
-                  <span className="block text-[#007AFF]">drag & drop</span>
-                </h3>
-                <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
-                  Planifica turnos visualmente arrastrando y soltando. Gestiona toda la semana de un vistazo con turnos partidos y duplicación inteligente.
-                </p>
-                <ul className="space-y-4">
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                    </div>
-                    <span className="text-gray-700">Planificación visual drag & drop</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                    </div>
-                    <span className="text-gray-700">Turnos partidos y personalizados</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                    </div>
-                    <span className="text-gray-700">Duplicación de semanas</span>
-                  </li>
-                </ul>
-              </div>
-              <div className="order-1 lg:order-2">
-                <div className="relative bg-white rounded-3xl p-6 lg:p-8 shadow-2xl border border-gray-100">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-500 rounded-xl flex items-center justify-center shadow-lg">
-                      <CalendarDays className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-bold text-gray-900">Cuadrantes</h4>
-                      <p className="text-sm text-purple-500 font-medium">Planificación</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-[60px_repeat(5,1fr)] gap-1 text-xs font-medium mb-3">
-                    <div></div>
-                    <div className="text-center text-gray-500">L</div>
-                    <div className="text-center text-gray-500">M</div>
-                    <div className="text-center text-gray-500">X</div>
-                    <div className="text-center text-gray-500">J</div>
-                    <div className="text-center text-gray-500">V</div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-[60px_repeat(5,1fr)] gap-1 items-stretch h-24">
-                      <div className="flex flex-col items-center justify-center">
-                        <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                          M
-                        </div>
-                      </div>
-                      <div className="bg-blue-500 rounded text-white flex flex-col items-center justify-center text-xs font-medium">
-                        <span className="text-[10px] opacity-75 mb-0.5">Comida</span>
-                        <span className="font-bold">12-17h</span>
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <div className="flex-1 bg-green-500 rounded text-white flex flex-col items-center justify-center text-xs">
-                          <span className="text-[9px] opacity-75">Comida</span>
-                          <span className="font-medium">13-17h</span>
-                        </div>
-                        <div className="flex-1 bg-orange-500 rounded text-white flex flex-col items-center justify-center text-xs">
-                          <span className="text-[9px] opacity-75">Cena</span>
-                          <span className="font-medium">20-24h</span>
-                        </div>
-                      </div>
-                      <div className="bg-blue-500 rounded text-white flex flex-col items-center justify-center text-xs font-medium">
-                        <span className="text-[10px] opacity-75 mb-0.5">Comida</span>
-                        <span className="font-bold">12-17h</span>
-                      </div>
-                      <div className="bg-gray-100 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
-                        <span className="text-gray-400">+</span>
-                      </div>
-                      <div className="bg-gray-100 rounded"></div>
-                    </div>
-                    <div className="grid grid-cols-[60px_repeat(5,1fr)] gap-1 items-stretch h-24">
-                      <div className="flex flex-col items-center justify-center">
-                        <div className="w-9 h-9 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                          C
-                        </div>
-                      </div>
-                      <div className="bg-green-500 rounded text-white flex flex-col items-center justify-center text-xs font-medium">
-                        <span className="text-[10px] opacity-75 mb-0.5">Cena</span>
-                        <span className="font-bold">19-1h</span>
-                      </div>
-                      <div className="bg-orange-500 rounded text-white flex flex-col items-center justify-center text-xs font-medium">
-                        <span className="text-[10px] opacity-75 mb-0.5">Cierre</span>
-                        <span className="font-bold">23-2h</span>
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <div className="flex-1 bg-blue-500 rounded text-white flex flex-col items-center justify-center text-xs">
-                          <span className="text-[9px] opacity-75">Apertura</span>
-                          <span className="font-medium">9-13h</span>
-                        </div>
-                        <div className="flex-1 bg-green-500 rounded text-white flex flex-col items-center justify-center text-xs">
-                          <span className="text-[9px] opacity-75">Comida</span>
-                          <span className="font-medium">13-17h</span>
-                        </div>
-                      </div>
-                      <div className="bg-green-500 rounded text-white flex flex-col items-center justify-center text-xs font-medium">
-                        <span className="text-[10px] opacity-75 mb-0.5">Cena</span>
-                        <span className="font-bold">19-1h</span>
-                      </div>
-                      <div className="bg-gray-100 rounded"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* PRO PLAN FEATURES */}
-          <div className="mb-24 md:mb-32">
-            <div className="flex items-center gap-3 mb-16">
-              <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-5 py-2 rounded-full text-sm font-bold shadow-lg">
-                PLAN PRO
-              </div>
-              <div className="flex-1 h-px bg-gradient-to-r from-purple-500/20 to-transparent"></div>
-            </div>
-
-            {/* 4. Documentos - Image Right */}
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center mb-32">
-              <div className="order-1">
-                <div className="relative bg-white rounded-3xl p-6 lg:p-8 shadow-2xl border border-gray-100">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                      <FileText className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-bold text-gray-900">Documentos</h4>
-                      <p className="text-sm text-amber-500 font-medium">Auto-distribución</p>
-                    </div>
-                  </div>
-                  <div className="border-2 border-dashed border-amber-300 rounded-2xl p-8 bg-amber-50/30 hover:bg-amber-50/50 transition-colors mb-4 flex flex-col justify-center min-h-[160px]">
-                    <div className="text-center">
-                      <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
-                        <FileText className="w-6 h-6 text-amber-600" />
-                      </div>
-                      <p className="text-base font-medium text-gray-700 mb-1">Arrastra documentos aquí</p>
-                      <p className="text-sm text-gray-500">Distribución automática</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between p-3 bg-card rounded-lg border border-border">
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="p-2 rounded-lg bg-muted flex-shrink-0">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-medium text-sm text-foreground truncate">
-                            Nómina_Marzo_2025.pdf
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
-                              ✓ Firmada
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                      <Button variant="outline" size="sm" className="h-8 w-8 p-0 flex-shrink-0">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-card rounded-lg border border-border">
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="p-2 rounded-lg bg-muted flex-shrink-0">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-medium text-sm text-foreground truncate">
-                            Contrato_2025.pdf
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300">
-                              Pendiente firma
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                      <Button variant="outline" size="sm" className="h-8 w-8 p-0 flex-shrink-0">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="order-2">
-                <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 rounded-full px-4 py-1.5 mb-6">
-                  <FileText className="w-4 h-4 text-purple-600" />
-                  <span className="text-purple-700 font-semibold text-sm">Plan Pro</span>
-                </div>
-                <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-                  Documentos
-                  <span className="block text-[#007AFF]">inteligentes</span>
-                </h3>
-                <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
-                  Sube documentos masivamente. Detección automática y distribución instantánea a cada empleado.
-                </p>
-                <ul className="space-y-4">
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <span className="text-gray-700">Detección automática de empleados</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <span className="text-gray-700">Distribución instantánea</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <span className="text-gray-700">Categorización inteligente</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            {/* 5. Mensajes - Image Left */}
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center mb-32">
-              <div className="order-2 lg:order-1">
-                <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 rounded-full px-4 py-1.5 mb-6">
-                  <MessageSquare className="w-4 h-4 text-purple-600" />
-                  <span className="text-purple-700 font-semibold text-sm">Plan Pro</span>
-                </div>
-                <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-                  Mensajería
-                  <span className="block text-[#007AFF]">interna</span>
-                </h3>
-                <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
-                  Comunicación directa con empleados. Mensajes individuales y circulares a todo el equipo.
-                </p>
-                <ul className="space-y-4">
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <span className="text-gray-700">Mensajes individuales</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <span className="text-gray-700">Circulares a todo el equipo</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <span className="text-gray-700">Historial completo</span>
-                  </li>
-                </ul>
-              </div>
-              <div className="order-1 lg:order-2">
-                <div className="relative bg-white rounded-3xl p-6 lg:p-8 shadow-2xl border border-gray-100">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
-                      <MessageSquare className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-bold text-gray-900">Mensajes</h4>
-                      <p className="text-sm text-indigo-500 font-medium">Chat empresarial</p>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                          JR
-                        </div>
-                        <span className="text-sm font-medium text-gray-700">Juan Ramírez</span>
-                        <span className="text-xs text-gray-400 ml-auto">9:30</span>
-                      </div>
-                      <p className="text-sm text-gray-600">¿A qué hora es la reunión de mañana?</p>
-                    </div>
-                    <div className="p-4 bg-gray-50/50 rounded-xl border border-gray-100">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                          MP
-                        </div>
-                        <span className="text-sm font-medium text-gray-700">Marta Pérez</span>
-                        <span className="text-xs text-gray-400 ml-auto">8:45</span>
-                      </div>
-                      <p className="text-sm text-gray-600">Buenos días equipo! 👋</p>
-                    </div>
-                  </div>
-                  <div className="mt-6 flex gap-3">
-                    <button className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-3 rounded-xl text-sm font-semibold hover:from-indigo-600 hover:to-purple-600 transition-all">
-                      Individual
-                    </button>
-                    <button className="flex-1 bg-gray-200 text-gray-700 px-4 py-3 rounded-xl text-sm font-semibold hover:bg-gray-300 transition-all">
-                      Circular
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 6. Recordatorios - Image Right */}
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center mb-40">
-              <div className="order-1">
-                <div className="relative bg-white rounded-3xl p-6 lg:p-8 shadow-2xl border border-gray-100">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
-                      <Bell className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-bold text-gray-900">Recordatorios</h4>
-                      <p className="text-sm text-teal-500 font-medium">Tareas automáticas</p>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="p-4 bg-teal-50/50 rounded-xl border border-teal-100">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700">Revisar nóminas</span>
-                        <span className="text-sm text-teal-600 font-bold">14:00</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-teal-400 rounded-full animate-pulse"></div>
-                        <span className="text-sm text-gray-500">Pendiente</span>
-                      </div>
-                    </div>
-                    <div className="p-4 bg-green-50/50 rounded-xl border border-green-100">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700">Llamar cliente</span>
-                        <span className="text-sm text-gray-600 font-bold">10:30</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="text-sm text-green-600">Completado</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-6 flex gap-3">
-                    <button className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-4 py-3 rounded-xl text-sm font-semibold hover:from-teal-600 hover:to-cyan-600 transition-all">
-                      Crear
-                    </button>
-                    <button className="flex-1 bg-gray-200 text-gray-700 px-4 py-3 rounded-xl text-sm font-semibold hover:bg-gray-300 transition-all">
-                      Ver todos
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div className="order-2">
-                <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 rounded-full px-4 py-1.5 mb-6">
-                  <Bell className="w-4 h-4 text-purple-600" />
-                  <span className="text-purple-700 font-semibold text-sm">Plan Pro</span>
-                </div>
-                <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-                  Recordatorios
-                  <span className="block text-[#007AFF]">personalizados</span>
-                </h3>
-                <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
-                  Programa tareas automáticas con recordatorios inteligentes. Asigna responsables y haz seguimiento del progreso en tiempo real.
-                </p>
-                <ul className="space-y-4">
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <span className="text-gray-700">Notificaciones automáticas</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <span className="text-gray-700">Asignación de responsables</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <span className="text-gray-700">Seguimiento de progreso</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* PRO+ Section - Customization */}
-          <div className="relative mb-24">
-            <div className="text-center max-w-5xl mx-auto">
-              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-full px-6 py-2.5 mb-8">
-                <Settings className="w-5 h-5 text-purple-600" />
-                <span className="text-purple-700 font-semibold">Plan Pro - Sin límites</span>
-              </div>
-              <h3 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-8 leading-tight">
-                ¿Necesitas más?
-                <br />
-                <span className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 bg-clip-text text-transparent">Personalízalo todo</span>
-              </h3>
-              <p className="text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed max-w-4xl mx-auto">
-                El Plan Pro te permite añadir funciones personalizadas según tus necesidades específicas
-              </p>
-              
-              <div className="grid md:grid-cols-3 gap-6 mb-12">
-                <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100 rounded-2xl p-8">
-                  <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                    <TrendingUp className="w-7 h-7 text-white" />
-                  </div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-3">Informes avanzados</h4>
-                  <p className="text-gray-600">Crea reportes personalizados con los datos que realmente necesitas</p>
-                </div>
-                
-                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-100 rounded-2xl p-8">
-                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                    <CreditCard className="w-7 h-7 text-white" />
-                  </div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-3">Gestión de gastos</h4>
-                  <p className="text-gray-600">Control completo de gastos empresariales y reembolsos</p>
-                </div>
-                
-                <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 rounded-2xl p-8">
-                  <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                    <Zap className="w-7 h-7 text-white" />
-                  </div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-3">Y mucho más</h4>
-                  <p className="text-gray-600">Integraciones, API personalizada, módulos a medida...</p>
-                </div>
-              </div>
-              
-              <p className="text-lg text-gray-600">
-                <span className="font-semibold text-gray-900">¿Tienes una necesidad específica?</span> Cuéntanos y lo hacemos realidad
-              </p>
-            </div>
-          </div>
-
-          {/* CTA */}
-          {registrationSettings?.publicRegistrationEnabled && (
-            <div className="text-center">
-              <Link href="/request-code">
-                <Button size="lg" className="bg-gradient-to-r from-[#007AFF] via-blue-500 to-cyan-500 hover:from-[#0056CC] hover:via-blue-600 hover:to-cyan-600 text-white px-14 py-7 text-xl font-bold shadow-2xl shadow-[#007AFF]/25 border-0 rounded-2xl transform hover:scale-105 transition-all duration-300">
-                  Comenzar Prueba Gratis
-                  <ArrowRight className="w-6 h-6 ml-3" />
-                </Button>
-              </Link>
-            </div>
-          )}
-        </div>
-      </section>
-      {/* Pricing Section - Nuevo Modelo Oficaz */}
-      <section id="precios" className="py-24 md:py-32 bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 relative overflow-hidden">
-        {/* Modern Background Elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-0 w-full h-full opacity-30"
-               style={{
-                 backgroundImage: `radial-gradient(circle at 20% 20%, #007AFF20 0%, transparent 50%), 
-                                  radial-gradient(circle at 80% 80%, #8B5CF620 0%, transparent 50%),
-                                  linear-gradient(135deg, #1F293700 0%, #1F293720 100%)`
-               }}></div>
-          <div className="absolute top-10 right-10 w-96 h-96 bg-gradient-to-r from-[#007AFF]/10 to-cyan-400/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 left-20 w-80 h-80 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-full blur-3xl"></div>
-        </div>
-        
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
-          {/* Header */}
-          <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-8">
-              <div className="w-2 h-2 bg-[#007AFF] rounded-full animate-pulse"></div>
-              <span className="text-white font-semibold">Plan Oficaz</span>
-            </div>
-            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 tracking-tight">
-              Un plan,
-              <span className="bg-gradient-to-r from-[#007AFF] via-cyan-400 to-blue-300 bg-clip-text text-transparent"> sin límites</span>
-            </h2>
-            <p className="text-xl md:text-2xl text-white/80 max-w-4xl mx-auto leading-relaxed">
-              Paga solo por lo que necesitas. <span className="text-white font-semibold">Añade funcionalidades según crezcas.</span>
-            </p>
-          </div>
-          
-          {/* Main Pricing Card + Add-ons Grid */}
-          <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-            {/* Plan Principal */}
-            <div className="relative group">
-              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20">
-                <div className="bg-gradient-to-r from-[#007AFF] to-cyan-500 text-white px-6 py-2 rounded-full font-bold text-sm shadow-2xl">
-                  ⭐ Todo Incluido
-                </div>
-              </div>
-              
-              <div className="relative backdrop-blur-xl rounded-3xl p-8 border transition-all duration-700 group-hover:scale-105 group-hover:-translate-y-2 h-full flex flex-col bg-white/20 border-[#007AFF]/50 shadow-2xl shadow-[#007AFF]/25">
-                <div className="text-center mb-8">
-                  <h3 className="text-3xl font-bold text-white mb-3">Plan Oficaz</h3>
-                  <p className="text-white/70 mb-6">Todo lo que necesitas para gestionar tu empresa</p>
-                  <div className="mb-6 flex flex-col items-center">
-                    <span className="text-5xl md:text-6xl font-black text-white">€39</span>
-                    <span className="text-white/70 text-lg">/mes</span>
-                  </div>
-                </div>
-                
-                <ul className="space-y-4 mb-8 flex-grow">
-                  {['Panel de control completo', 'Gestión de empleados', 'Control de fichajes', 'Gestión de vacaciones', 'Cuadrante de trabajo', 'Tienda de add-ons', '1 Admin + 1 Manager + 10 Empleados'].map((feature, index) => (
-                    <li key={index} className="flex items-center">
-                      <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
-                        <CheckCircle className="w-4 h-4 text-green-400" />
-                      </div>
-                      <span className="text-white/90 font-medium">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                
-                <div className="mt-auto">
-                  {registrationSettings?.publicRegistrationEnabled ? (
-                    <Link href="/request-code">
-                      <button className="w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 bg-gradient-to-r from-[#007AFF] to-cyan-500 hover:from-[#0056CC] hover:to-cyan-600 text-white shadow-2xl shadow-[#007AFF]/30 hover:scale-105">
-                        Empezar Prueba Gratis
-                      </button>
-                    </Link>
-                  ) : (
-                    <button 
-                      onClick={() => setIsContactFormOpen(true)}
-                      className="w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 bg-gradient-to-r from-[#007AFF] to-cyan-500 hover:from-[#0056CC] hover:to-cyan-600 text-white shadow-2xl shadow-[#007AFF]/30 hover:scale-105">
-                      Contacta
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Add-ons y Usuarios */}
+            {/* Right: Feature Selector */}
             <div className="space-y-6">
-              {/* Add-ons Card */}
-              <div className="backdrop-blur-xl rounded-3xl p-6 border bg-white/10 border-white/20">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 bg-[#007AFF]/20 rounded-lg flex items-center justify-center">
-                    <Zap className="w-4 h-4 text-[#007AFF]" />
-                  </div>
-                  <h4 className="text-xl font-bold text-white">Add-ons Disponibles</h4>
-                </div>
-                <div className="space-y-3">
-                  {[
-                    { name: 'Mensajería', price: 9, desc: 'Comunicación interna' },
-                    { name: 'Recordatorios', price: 6, desc: 'Alertas programadas' },
-                    { name: 'Documentos', price: 15, desc: 'Gestión de archivos' },
-                    { name: 'Partes de Trabajo', price: 12, desc: 'Reportes de trabajo' },
-                    { name: 'Asistente IA', price: 25, desc: 'Automatización inteligente' },
-                  ].map((addon, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
-                      <div>
-                        <p className="font-medium text-white">{addon.name}</p>
-                        <p className="text-xs text-white/50">{addon.desc}</p>
-                      </div>
-                      <span className="text-sm font-semibold text-[#007AFF]">+€{addon.price}/mes</span>
-                    </div>
-                  ))}
+              {/* Functions */}
+              <div className="bg-white rounded-2xl p-6 border border-gray-100">
+                <h3 className="font-semibold text-gray-900 mb-4">Funciones</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {addons.map((addon) => {
+                    const isSelected = selectedAddons.has(addon.key);
+                    const IconComponent = addon.icon;
+                    return (
+                      <button
+                        key={addon.key}
+                        onClick={() => toggleAddon(addon.key)}
+                        className={`flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
+                          isSelected 
+                            ? 'bg-[#007AFF] text-white' 
+                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <IconComponent className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-gray-400'}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium truncate ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                            {addon.name}
+                          </p>
+                          <p className={`text-xs ${isSelected ? 'text-white/70' : 'text-gray-400'}`}>
+                            €{addon.price}/mes
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-
-              {/* Usuarios Adicionales Card */}
-              <div className="backdrop-blur-xl rounded-3xl p-6 border bg-white/10 border-white/20">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                    <Users className="w-4 h-4 text-purple-400" />
-                  </div>
-                  <h4 className="text-xl font-bold text-white">Usuarios Adicionales</h4>
-                </div>
-                <div className="space-y-2">
-                  {[
-                    { role: 'Empleado', price: 2 },
-                    { role: 'Manager', price: 6 },
-                    { role: 'Admin', price: 12 },
-                  ].map((user, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
-                      <p className="font-medium text-white">{user.role}</p>
-                      <span className="text-sm font-semibold text-purple-400">+€{user.price}/mes</span>
+              
+              {/* Users */}
+              <div className="bg-white rounded-2xl p-6 border border-gray-100">
+                <h3 className="font-semibold text-gray-900 mb-4">Usuarios</h3>
+                <div className="space-y-4">
+                  {/* Employees */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900">Empleados</p>
+                      <p className="text-xs text-gray-400">€2/mes cada uno</p>
                     </div>
-                  ))}
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => setUserCounts(prev => ({ ...prev, employees: Math.max(0, prev.employees - 1) }))}
+                        className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold"
+                      >
+                        -
+                      </button>
+                      <span className="w-8 text-center font-semibold text-gray-900">{userCounts.employees}</span>
+                      <button 
+                        onClick={() => setUserCounts(prev => ({ ...prev, employees: prev.employees + 1 }))}
+                        className="w-8 h-8 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Managers */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900">Managers</p>
+                      <p className="text-xs text-gray-400">€4/mes cada uno</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => setUserCounts(prev => ({ ...prev, managers: Math.max(0, prev.managers - 1) }))}
+                        className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold"
+                      >
+                        -
+                      </button>
+                      <span className="w-8 text-center font-semibold text-gray-900">{userCounts.managers}</span>
+                      <button 
+                        onClick={() => setUserCounts(prev => ({ ...prev, managers: prev.managers + 1 }))}
+                        className="w-8 h-8 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Admins */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900">Admins</p>
+                      <p className="text-xs text-gray-400">€6/mes cada uno</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => setUserCounts(prev => ({ ...prev, admins: Math.max(0, prev.admins - 1) }))}
+                        className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold"
+                      >
+                        -
+                      </button>
+                      <span className="w-8 text-center font-semibold text-gray-900">{userCounts.admins}</span>
+                      <button 
+                        onClick={() => setUserCounts(prev => ({ ...prev, admins: prev.admins + 1 }))}
+                        className="w-8 h-8 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs text-white/40 mt-3">*Más allá de los usuarios incluidos en el plan base</p>
               </div>
-            </div>
-          </div>
-          
-          {/* Bottom Section */}
-          <div className="text-center mt-16">
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 max-w-4xl mx-auto">
-              <p className="text-white/90 text-lg">
-                <span className="font-bold text-white">14 días de prueba gratuita</span> • Sin tarjeta de crédito • Cancela cuando quieras
-              </p>
             </div>
           </div>
         </div>
