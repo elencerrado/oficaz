@@ -704,6 +704,32 @@ html:not(.employee-mode) #root {
 
 /* Custom scrollbar styles */
 @layer utilities {
+  /* Force visible scrollbar - overrides global hide */
+  .scrollbar-visible {
+    scrollbar-width: thin !important;
+    -ms-overflow-style: auto !important;
+    overflow-y: auto !important;
+  }
+  
+  .scrollbar-visible::-webkit-scrollbar {
+    display: block !important;
+    width: 6px !important;
+  }
+  
+  .scrollbar-visible::-webkit-scrollbar-track {
+    background: #f1f1f1 !important;
+    border-radius: 3px !important;
+  }
+  
+  .scrollbar-visible::-webkit-scrollbar-thumb {
+    background: #c1c1c1 !important;
+    border-radius: 3px !important;
+  }
+  
+  .scrollbar-visible:hover::-webkit-scrollbar-thumb {
+    background: #a1a1a1 !important;
+  }
+
   .scrollbar-thin {
     scrollbar-width: thin;
   }
