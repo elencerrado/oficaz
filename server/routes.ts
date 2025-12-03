@@ -249,7 +249,7 @@ async function generateDemoData(companyId: number) {
     // Generate unique identifiers to avoid conflicts
     const uniqueId = Date.now();
     
-    // Demo employees data - 4 realistic employees with avatar assignments
+    // Demo employees data - 7 realistic employees with new avatar photos
     const demoEmployees = [
       {
         fullName: "María García López",
@@ -257,9 +257,9 @@ async function generateDemoData(companyId: number) {
         dni: `${uniqueId.toString().slice(-8)}A`,
         position: "Desarrolladora Senior",
         role: "employee" as const,
-        status: "working", // Currently working
-        startDate: new Date(registrationDate.getTime() - 365 * 24 * 60 * 60 * 1000), // 1 year before company registration
-        avatarSource: "mujer01_1760949930548.jpg", // Assigned avatar
+        status: "working",
+        startDate: new Date(registrationDate.getTime() - 365 * 24 * 60 * 60 * 1000),
+        avatarSource: "woman01_1764778692816.webp",
       },
       {
         fullName: "Carlos Rodríguez Martín",
@@ -267,9 +267,9 @@ async function generateDemoData(companyId: number) {
         dni: `${(uniqueId + 1).toString().slice(-8)}B`,
         position: "Jefe de Proyectos",
         role: "manager" as const,
-        status: "working", // Currently working
-        startDate: new Date(registrationDate.getTime() - 200 * 24 * 60 * 60 * 1000), // 200 days before
-        avatarSource: "hombre02_1760949930547.jpg", // Assigned avatar
+        status: "working",
+        startDate: new Date(registrationDate.getTime() - 200 * 24 * 60 * 60 * 1000),
+        avatarSource: "man01_1764778692814.webp",
       },
       {
         fullName: "Ana Fernández Silva",
@@ -277,9 +277,9 @@ async function generateDemoData(companyId: number) {
         dni: `${(uniqueId + 2).toString().slice(-8)}C`, 
         position: "Analista de Marketing",
         role: "employee" as const,
-        status: "vacation", // Currently on vacation
-        startDate: new Date(registrationDate.getTime() - 180 * 24 * 60 * 60 * 1000), // 180 days before
-        avatarSource: "mujer02_1760949930549.jpg", // Assigned avatar
+        status: "vacation",
+        startDate: new Date(registrationDate.getTime() - 180 * 24 * 60 * 60 * 1000),
+        avatarSource: "woman02_1764778692816.webp",
       },
       {
         fullName: "David López Ruiz",
@@ -287,9 +287,39 @@ async function generateDemoData(companyId: number) {
         dni: `${(uniqueId + 3).toString().slice(-8)}D`,
         position: "Diseñador UX/UI", 
         role: "employee" as const,
-        status: "working", // Currently working
-        startDate: new Date(registrationDate.getTime() - 90 * 24 * 60 * 60 * 1000), // 90 days before
-        avatarSource: "hombre01_1760949930545.jpg", // Assigned avatar
+        status: "working",
+        startDate: new Date(registrationDate.getTime() - 90 * 24 * 60 * 60 * 1000),
+        avatarSource: "man02_1764778692815.webp",
+      },
+      {
+        fullName: "Laura Martínez Sánchez",
+        companyEmail: `laura.martinez.${uniqueId + 4}@demo.com`,
+        dni: `${(uniqueId + 4).toString().slice(-8)}E`,
+        position: "Contable",
+        role: "employee" as const,
+        status: "working",
+        startDate: new Date(registrationDate.getTime() - 120 * 24 * 60 * 60 * 1000),
+        avatarSource: "woman03_1764778692816.webp",
+      },
+      {
+        fullName: "Javier Hernández Gómez",
+        companyEmail: `javier.hernandez.${uniqueId + 5}@demo.com`,
+        dni: `${(uniqueId + 5).toString().slice(-8)}F`,
+        position: "Comercial",
+        role: "employee" as const,
+        status: "working",
+        startDate: new Date(registrationDate.getTime() - 60 * 24 * 60 * 60 * 1000),
+        avatarSource: "man03_1764778692815.webp",
+      },
+      {
+        fullName: "Pablo Ruiz Torres",
+        companyEmail: `pablo.ruiz.${uniqueId + 6}@demo.com`,
+        dni: `${(uniqueId + 6).toString().slice(-8)}G`,
+        position: "Técnico de Soporte",
+        role: "employee" as const,
+        status: "working",
+        startDate: new Date(registrationDate.getTime() - 30 * 24 * 60 * 60 * 1000),
+        avatarSource: "man04_1764778692815.webp",
       }
     ];
 
