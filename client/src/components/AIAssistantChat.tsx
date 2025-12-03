@@ -399,7 +399,7 @@ export function AIAssistantChat() {
             onClick={() => setIsOpen(!isOpen)}
             data-testid="button-ai-assistant-toggle"
             className={cn(
-              "fixed bottom-6 right-6 z-50 cursor-pointer transition-all duration-300",
+              "fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 cursor-pointer transition-all duration-300",
               !isOpen && "hover:scale-110"
             )}
           >
@@ -407,11 +407,11 @@ export function AIAssistantChat() {
           </div>
 
           {/* CRITICAL FIX: Keep position fixed, hide with visibility/opacity instead of moving off-screen */}
+          {/* Mobile: full width with margins, Desktop: fixed width */}
           <div
-        className="fixed z-50 flex max-h-[500px] w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 transition-all duration-300"
+        className="fixed z-50 flex flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 transition-all duration-300 left-3 right-3 sm:left-auto sm:right-6 sm:w-[400px] max-h-[70vh] sm:max-h-[500px]"
         style={{
-          bottom: '6rem',
-          right: '1.5rem',
+          bottom: '5.5rem',
           visibility: isOpen ? 'visible' : 'hidden',
           opacity: isOpen ? 1 : 0,
           pointerEvents: isOpen ? 'auto' : 'none'
