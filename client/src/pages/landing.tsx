@@ -285,8 +285,9 @@ export default function Landing() {
           }}
         />
         
-        {/* Subtle overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-white/60" />
+        {/* Dark overlay with primary color tint for text readability */}
+        <div className="absolute inset-0 bg-slate-900/50" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#007AFF]/20 via-transparent to-[#007AFF]/10" />
         
         <div className="relative max-w-5xl mx-auto px-6 text-center">
           {/* Main Content */}
