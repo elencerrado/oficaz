@@ -649,21 +649,23 @@ export default function Landing() {
                           </div>
                           
                           {/* Employee cards */}
-                          <div className="space-y-1.5">
+                          <div className="space-y-1">
                             {[
-                              { name: 'María García', role: 'Admin', color: 'from-purple-500 to-pink-500' },
-                              { name: 'Carlos López', role: 'Manager', color: 'from-[#007AFF] to-blue-600' },
-                              { name: 'Ana Martín', role: 'Empleado', color: 'from-green-500 to-emerald-600' },
+                              { name: 'María García', role: 'Admin', avatarColor: 'from-purple-500 to-pink-500', roleColor: 'text-purple-400' },
+                              { name: 'Carlos López', role: 'Manager', avatarColor: 'from-[#007AFF] to-blue-600', roleColor: 'text-[#007AFF]' },
+                              { name: 'Ana Martín', role: 'Empleado', avatarColor: 'from-green-500 to-emerald-600', roleColor: 'text-green-400' },
+                              { name: 'Pedro Ruiz', role: 'Empleado', avatarColor: 'from-green-500 to-emerald-600', roleColor: 'text-green-400' },
+                              { name: 'Laura Sanz', role: 'Empleado', avatarColor: 'from-green-500 to-emerald-600', roleColor: 'text-green-400' },
                             ].map((emp, i) => (
-                              <div key={i} className="bg-[#1a2942] rounded-lg p-2 flex items-center gap-2">
-                                <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${emp.color} flex items-center justify-center text-white text-[8px] font-bold`}>
+                              <div key={i} className="bg-[#1a2942] rounded-lg p-1.5 flex items-center gap-2">
+                                <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${emp.avatarColor} flex items-center justify-center text-white text-[7px] font-bold`}>
                                   {emp.name.split(' ').map(n => n[0]).join('')}
                                 </div>
                                 <div className="flex-1">
-                                  <p className="text-white text-[8px] font-medium">{emp.name}</p>
-                                  <p className="text-gray-500 text-[6px]">{emp.role}</p>
+                                  <p className="text-white text-[7px] font-medium">{emp.name}</p>
+                                  <p className={`text-[6px] ${emp.roleColor}`}>{emp.role}</p>
                                 </div>
-                                <Settings className="w-3 h-3 text-gray-500" />
+                                <Settings className="w-2.5 h-2.5 text-gray-500" />
                               </div>
                             ))}
                           </div>
