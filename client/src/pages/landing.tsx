@@ -355,36 +355,44 @@ export default function Landing() {
         <FaWhatsapp className="w-8 h-8" />
       </a>
 
-      {/* Fixed Background that stays behind everything */}
-      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: -1 }}>
-        {/* Background Image */}
-        <img 
-          src={heroBackground} 
-          alt="" 
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        
-        {/* Dark overlay - fades out on scroll */}
+      {/* Hero Section with Fixed Background */}
+      <section 
+        className="relative min-h-screen flex items-center justify-center pt-16"
+        style={{ minHeight: '100vh' }}
+      >
+        {/* Fixed Background Container */}
         <div 
-          className="absolute inset-0 bg-slate-900"
-          style={{ opacity: 0.7 * (1 - heroScrollProgress) }}
-        />
-        
-        {/* White overlay - fades in on scroll */}
-        <div 
-          className="absolute inset-0 bg-white"
-          style={{ opacity: heroScrollProgress }}
-        />
-      </div>
-
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center pt-16"
-               style={{ minHeight: '100vh' }}>
+          className="fixed inset-0 w-full h-full"
+          style={{ 
+            zIndex: 0,
+            backgroundImage: `url(${heroBackground})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}
+        >
+          {/* Dark overlay - always visible, fades based on scroll */}
+          <div 
+            className="absolute inset-0"
+            style={{ 
+              backgroundColor: 'rgba(15, 23, 42, 0.7)',
+              opacity: 1 - heroScrollProgress,
+            }}
+          />
+          {/* White overlay - appears on scroll */}
+          <div 
+            className="absolute inset-0 bg-white"
+            style={{ 
+              opacity: heroScrollProgress,
+            }}
+          />
+        </div>
         
         {/* Content that fades out on scroll */}
         <div 
-          className="relative max-w-5xl mx-auto px-6 text-center transition-all duration-100"
+          className="relative max-w-5xl mx-auto px-6 text-center"
           style={{
+            zIndex: 1,
             opacity: 1 - heroScrollProgress * 1.5,
             transform: `translateY(${heroScrollProgress * -50}px) scale(${1 - heroScrollProgress * 0.1})`,
             pointerEvents: heroScrollProgress > 0.5 ? 'none' : 'auto',
