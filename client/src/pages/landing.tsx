@@ -497,12 +497,49 @@ export default function Landing() {
           {/* Calculator Layout - Two columns, same height */}
           <div className="grid lg:grid-cols-2 gap-6 items-stretch">
             {/* Left: Price Summary */}
-            <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 flex flex-col justify-center">
+            <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 flex flex-col">
               <div className="text-center">
                 <p className="text-gray-500 text-sm mb-1">Tu plan mensual</p>
-                <div className="flex items-baseline justify-center gap-1 mb-6">
+                <div className="flex items-baseline justify-center gap-1 mb-4">
                   <span className="text-6xl md:text-7xl font-black text-gray-900">€{monthlyTotal}</span>
                   <span className="text-lg text-gray-400">/mes</span>
+                </div>
+                
+                {/* Dynamic summary - scrollable if many items */}
+                <div className="max-h-28 overflow-y-auto mb-4 px-2">
+                  <div className="flex flex-wrap justify-center gap-1.5">
+                    {/* Selected addons */}
+                    {addons.filter(a => selectedAddons.has(a.key) || a.isLocked).map((addon) => {
+                      const IconComponent = addon.icon;
+                      return (
+                        <span 
+                          key={addon.key}
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                            addon.isLocked 
+                              ? 'bg-green-100 text-green-700' 
+                              : 'bg-blue-100 text-blue-700'
+                          }`}
+                        >
+                          <IconComponent className="w-3 h-3" />
+                          {addon.name}
+                        </span>
+                      );
+                    })}
+                    {/* User counts */}
+                    {userCounts.employees > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                        {userCounts.employees} Empleado{userCounts.employees !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {userCounts.managers > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                        {userCounts.managers} Manager{userCounts.managers !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                      {userCounts.admins} Admin{userCounts.admins !== 1 ? 's' : ''}
+                    </span>
+                  </div>
                 </div>
                 
                 {/* CTA */}
