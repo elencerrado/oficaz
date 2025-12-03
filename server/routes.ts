@@ -13483,9 +13483,15 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
             
             console.log(`🔄 RECURRING SUBSCRIPTION CREATED: ${subscription.id} for ${t.company_name} with ${finalItems.length} items`);
             
-            // Update company_addons with their Stripe subscription item IDs
+            // Update company_addons with their Stripe subscription item IDs and track seat item IDs
+            let adminSeatsItemId: string | null = null;
+            let managerSeatsItemId: string | null = null;
+            let employeeSeatsItemId: string | null = null;
+            
             for (const item of subscription.items.data) {
               const addonKey = item.price?.metadata?.addon_key;
+              const seatType = item.price?.metadata?.seat_type;
+              
               if (addonKey) {
                 const addon = await storage.getAddonByKey(addonKey);
                 if (addon) {
@@ -13496,6 +13502,11 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
                   `);
                 }
               }
+              
+              // Track seat item IDs for subscription update
+              if (seatType === 'admin') adminSeatsItemId = item.id;
+              if (seatType === 'manager') managerSeatsItemId = item.id;
+              if (seatType === 'employee') employeeSeatsItemId = item.id;
             }
             
             // Update database to active status
@@ -13509,6 +13520,9 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
                 status = 'active',
                 is_trial_active = false,
                 stripe_subscription_id = ${subscription.id},
+                stripe_admin_seats_item_id = ${adminSeatsItemId},
+                stripe_manager_seats_item_id = ${managerSeatsItemId},
+                stripe_employee_seats_item_id = ${employeeSeatsItemId},
                 first_payment_date = ${firstPaymentDate.toISOString()},
                 next_payment_date = ${nextPaymentDate.toISOString()},
                 updated_at = now()
