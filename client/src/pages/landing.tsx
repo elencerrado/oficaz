@@ -632,19 +632,19 @@ export default function Landing() {
                           <h3 className="text-white font-bold text-sm mb-0.5">Mi Equipo</h3>
                           <p className="text-gray-400 text-[8px] mb-2">Gestiona tu plantilla</p>
                           
-                          {/* 3 role count cards */}
+                          {/* 3 role count cards with distinct colors */}
                           <div className="grid grid-cols-3 gap-1.5 mb-2">
-                            <div className="bg-[#1a2942] rounded-lg p-2 text-center">
-                              <p className="text-white font-bold text-sm">1</p>
-                              <p className="text-gray-400 text-[6px]">Admin</p>
+                            <div className="bg-purple-500/20 border border-purple-500/30 rounded-lg p-2 text-center">
+                              <p className="text-purple-400 font-bold text-sm">1</p>
+                              <p className="text-purple-300/70 text-[6px]">Admin</p>
                             </div>
-                            <div className="bg-[#1a2942] rounded-lg p-2 text-center">
-                              <p className="text-white font-bold text-sm">1</p>
-                              <p className="text-gray-400 text-[6px]">Manager</p>
+                            <div className="bg-[#007AFF]/20 border border-[#007AFF]/30 rounded-lg p-2 text-center">
+                              <p className="text-[#007AFF] font-bold text-sm">1</p>
+                              <p className="text-blue-300/70 text-[6px]">Manager</p>
                             </div>
-                            <div className="bg-[#1a2942] rounded-lg p-2 text-center">
-                              <p className="text-white font-bold text-sm">10</p>
-                              <p className="text-gray-400 text-[6px]">Empleados</p>
+                            <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-2 text-center">
+                              <p className="text-green-400 font-bold text-sm">10</p>
+                              <p className="text-green-300/70 text-[6px]">Empleados</p>
                             </div>
                           </div>
                           
