@@ -114,9 +114,9 @@ export default function Landing() {
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Pricing calculator state
-  const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set());
-  const [userCounts, setUserCounts] = useState({ employees: 1, managers: 0, admins: 0 });
+  // Pricing calculator state - starts with 1 admin (required) and time_tracking selected
+  const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set(['time_tracking']));
+  const [userCounts, setUserCounts] = useState({ employees: 0, managers: 0, admins: 1 });
 
   // Defer API calls until after critical content renders
   const [shouldLoadData, setShouldLoadData] = useState(false);
@@ -593,13 +593,18 @@ export default function Landing() {
                     </div>
                   </div>
                   
-                  {/* Admins */}
+                  {/* Admins - minimum 1 required */}
                   <div className="flex items-center justify-between">
                     <p className="font-medium text-gray-900">Admins</p>
                     <div className="flex items-center gap-3">
                       <button 
-                        onClick={() => setUserCounts(prev => ({ ...prev, admins: Math.max(0, prev.admins - 1) }))}
-                        className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold"
+                        onClick={() => setUserCounts(prev => ({ ...prev, admins: Math.max(1, prev.admins - 1) }))}
+                        disabled={userCounts.admins <= 1}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                          userCounts.admins <= 1 
+                            ? 'bg-gray-50 text-gray-300 cursor-not-allowed' 
+                            : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                        }`}
                       >
                         -
                       </button>
