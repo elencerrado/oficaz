@@ -148,12 +148,8 @@ export default function RequestCode() {
           console.log('Account recovery flow initiated');
         }
         
-        // Redirect to verification page with secure session ID
-        const sessionId = result.sessionId;
-        // Use setTimeout to ensure proper navigation
-        setTimeout(() => {
-          setLocation(`/verify-code?session=${sessionId}`);
-        }, 100);
+        // Redirect to verification page with secure session ID - instant navigation
+        setLocation(`/verify-code?session=${result.sessionId}`);
       } else {
         console.error('Request error:', result.message || 'No se pudo enviar el código.');
         // ✅ Update visual state to show error with icons
@@ -242,7 +238,7 @@ export default function RequestCode() {
 
   return (
     <div className="h-screen flex items-center justify-center px-4 bg-gradient-to-br from-slate-900 to-slate-800">
-      <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
+      <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
         <CardHeader className="text-center pt-6 pb-4">
           <div className="flex justify-center mb-4">
             <Link href="/">
