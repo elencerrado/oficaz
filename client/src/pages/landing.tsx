@@ -39,6 +39,7 @@ import {
 import { FaWhatsapp } from 'react-icons/fa';
 
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
+import heroBackground from '@assets/oficaz_hero_1764771312944.webp';
 
 export default function Landing() {
   usePageTitle('Bienvenido a Oficaz');
@@ -273,104 +274,65 @@ export default function Landing() {
         <FaWhatsapp className="w-8 h-8" />
       </a>
 
-      {/* Hero Section - Responsive Height */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 to-gray-900 min-h-screen flex items-center justify-center py-20 lg:py-24 pt-16"
+      {/* Hero Section - New Design with Background Image */}
+      <section className="relative overflow-hidden min-h-screen flex items-center justify-center pt-16"
                style={{ minHeight: '100vh' }}>
-        {/* Optimized 3D Background - Simple geometric shapes */}
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 opacity-15">
-            <div className="absolute inset-0 flex items-center justify-center" style={{ perspective: '2000px' }}>
-              <div 
-                className="hero-icons-grid" 
-                style={{ 
-                  transform: 'rotateX(25deg) rotateY(-15deg)',
-                  transformStyle: 'preserve-3d'
-                }}
-              >
-                {/* Simple geometric shapes - high impact, zero JS weight */}
-                <div className="hero-icon hero-shape-circle" style={{ transform: 'translateZ(60px)' }}></div>
-                <div className="hero-icon hero-shape-square" style={{ transform: 'translateZ(45px)' }}></div>
-                <div className="hero-icon hero-shape-diamond" style={{ transform: 'translateZ(75px)' }}></div>
-                <div className="hero-icon hero-shape-hexagon" style={{ transform: 'translateZ(30px)' }}></div>
-                
-                <div className="hero-icon hero-shape-triangle" style={{ transform: 'translateZ(50px)' }}></div>
-                <div className="hero-icon hero-shape-star" style={{ transform: 'translateZ(65px)' }}></div>
-                <div className="hero-icon hero-shape-oval" style={{ transform: 'translateZ(35px)' }}></div>
-                <div className="hero-icon hero-shape-cross" style={{ transform: 'translateZ(80px)' }}></div>
-                
-                <div className="hero-icon hero-shape-rhombus" style={{ transform: 'translateZ(40px)' }}></div>
-                <div className="hero-icon hero-shape-octagon" style={{ transform: 'translateZ(70px)' }}></div>
-                <div className="hero-icon hero-shape-heart" style={{ transform: 'translateZ(55px)' }}></div>
-                <div className="hero-icon hero-shape-arrow" style={{ transform: 'translateZ(85px)' }}></div>
-              </div>
-            </div>
-          </div>
-          {/* Enhanced radial fade overlay for text readability */}
-          <div className="absolute inset-0" style={{
-            background: 'radial-gradient(circle at center, rgba(0,0,0,0.75) 15%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.15) 85%)'
-          }}></div>
-        </div>
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ 
+            backgroundImage: `url(${heroBackground})`,
+          }}
+        />
         
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/20 to-gray-900/40"></div>
+        {/* Subtle overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-white/60" />
         
-
-        
-        {/* Subtle Light Effects */}
-        <div className="absolute inset-0">
-          <div className="absolute top-20 right-1/3 w-32 h-32 bg-[#007AFF]/10 rounded-full blur-2xl"></div>
-          <div className="absolute bottom-20 left-1/3 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
-        </div>
-        
-        <div className="relative max-w-4xl mx-auto px-6 text-center">
+        <div className="relative max-w-5xl mx-auto px-6 text-center">
           {/* Main Content */}
-          <div className="space-y-4 lg:space-y-6">
+          <div className="space-y-6 lg:space-y-8">
             
-            {/* Compact Badge */}
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-white/90 text-sm font-medium">Gestión empresarial inteligente</span>
-            </div>
-            
-            {/* Responsive Heading */}
-            <div className="space-y-2 lg:space-y-3">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black text-white leading-tight">
-                Para empresas que lo quieren
-                <span className="block bg-gradient-to-r from-[#007AFF] to-cyan-400 bg-clip-text text-transparent">
-                  fácil
-                </span>
+            {/* Main Headline */}
+            <div className="space-y-4">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-slate-900 leading-[1.1] tracking-tight">
+                Haz lo que te mueve.
               </h1>
-              <p className="text-base md:text-lg lg:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed px-4">
-                Diseñada para ser la plataforma <span className="text-white font-semibold">más intuitiva</span> del mercado
+              <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold text-slate-600">
+                Déjanos la parte aburrida.
               </p>
             </div>
 
-            {/* Responsive CTA Button */}
+            {/* Subtext */}
+            <p className="text-lg md:text-xl lg:text-2xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
+              La plataforma de gestión empresarial más <span className="text-slate-800 font-semibold">intuitiva</span> del mercado
+            </p>
+
+            {/* CTA Button */}
             {registrationSettings?.publicRegistrationEnabled && (
-              <div className="flex justify-center pt-2 lg:pt-4">
+              <div className="flex justify-center pt-4 lg:pt-6">
                 <Link href="/request-code">
-                  <Button size="lg" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white px-6 lg:px-8 py-3 lg:py-4 text-base lg:text-lg font-semibold shadow-xl shadow-[#007AFF]/25 border-0 rounded-xl">
+                  <Button size="lg" className="bg-slate-900 hover:bg-slate-800 text-white px-8 lg:px-10 py-4 lg:py-5 text-lg lg:text-xl font-semibold shadow-2xl shadow-slate-900/20 border-0 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-3xl">
                     Empezar Gratis
-                    <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5 ml-2" />
+                    <ArrowRight className="w-5 h-5 lg:w-6 lg:h-6 ml-3" />
                   </Button>
                 </Link>
               </div>
             )}
 
-            {/* Responsive Trust Indicators */}
-            <div className="pt-2 lg:pt-4">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 text-slate-400 text-xs sm:text-sm">
+            {/* Trust Indicators */}
+            <div className="pt-6 lg:pt-8">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 text-slate-500 text-sm sm:text-base">
                 <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                  <span>Siempre disponible</span>
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>7 días de prueba gratis</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
-                  <span>Datos protegidos</span>
+                  <Shield className="w-4 h-4 text-blue-500" />
+                  <span>Datos 100% protegidos</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
-                  <span>Cumple normativas</span>
+                  <Zap className="w-4 h-4 text-amber-500" />
+                  <span>Activo en minutos</span>
                 </div>
               </div>
             </div>
