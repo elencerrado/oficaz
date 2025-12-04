@@ -105,6 +105,21 @@ export default function AddonStore() {
   const queryClient = useQueryClient();
   
   const isAdmin = user?.role === 'admin';
+  const isManager = user?.role === 'manager';
+
+  // Query for manager permissions
+  const { data: permissionsData } = useQuery<{ managerPermissions: {
+    canCreateDeleteEmployees: boolean;
+    canCreateDeleteManagers: boolean;
+    canBuyRemoveFeatures: boolean;
+    canBuyRemoveUsers: boolean;
+    canEditCompanyData: boolean;
+  } }>({
+    queryKey: ['/api/settings/manager-permissions'],
+    enabled: isAdmin || isManager,
+  });
+  
+  const managerPermissions = permissionsData?.managerPermissions;
   
   const [selectedAddon, setSelectedAddon] = useState<AddonWithStatus | null>(null);
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
@@ -293,6 +308,16 @@ export default function AddonStore() {
 
   // Update seat count with validation
   const updateSeatCount = (role: 'employees' | 'managers' | 'admins', delta: number) => {
+    // Check manager permissions for buying/removing users
+    if (isManager && !managerPermissions?.canBuyRemoveUsers) {
+      toast({
+        title: 'Sin Permisos',
+        description: 'No tienes permiso para modificar usuarios. Contacta con tu administrador.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     const current = editedSeats || { ...contractedSeats };
     // Cannot go below minimum seats (1 admin minimum required)
     const minValue = minimumSeats[role];
@@ -336,13 +361,19 @@ export default function AddonStore() {
     }
   };
 
-  if (!isAdmin) {
+  // Check if manager has any store-related permissions
+  const managerCanAccessStore = isManager && (
+    managerPermissions?.canBuyRemoveFeatures || 
+    managerPermissions?.canBuyRemoveUsers
+  );
+
+  if (!isAdmin && !managerCanAccessStore) {
     return (
       <div className="px-6 py-4 min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <AlertCircle className="h-12 w-12 text-gray-400 mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Acceso restringido</h2>
-          <p className="text-gray-500 dark:text-gray-400 mt-2">Solo los administradores pueden acceder a la tienda de complementos.</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">No tienes permisos para acceder a la tienda de complementos.</p>
         </div>
       </div>
     );
@@ -371,11 +402,29 @@ export default function AddonStore() {
   const allAddons = addonsWithStatus;
 
   const handlePurchase = (addon: AddonWithStatus) => {
+    // Check manager permissions for buying features
+    if (isManager && !managerPermissions?.canBuyRemoveFeatures) {
+      toast({
+        title: 'Sin Permisos',
+        description: 'No tienes permiso para comprar funcionalidades. Contacta con tu administrador.',
+        variant: 'destructive',
+      });
+      return;
+    }
     setSelectedAddon(addon);
     setShowPurchaseDialog(true);
   };
 
   const handleCancel = (addon: AddonWithStatus) => {
+    // Check manager permissions for removing features
+    if (isManager && !managerPermissions?.canBuyRemoveFeatures) {
+      toast({
+        title: 'Sin Permisos',
+        description: 'No tienes permiso para eliminar funcionalidades. Contacta con tu administrador.',
+        variant: 'destructive',
+      });
+      return;
+    }
     setSelectedAddon(addon);
     setShowCancelDialog(true);
   };
