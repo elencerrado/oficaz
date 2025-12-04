@@ -104,20 +104,30 @@ export function DocumentSignatureModal({
   const getEventPos = useCallback((event: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
     
-    // On mobile, use touch coordinates with proper scroll/viewport handling
+    // Calculate scale factors to handle canvas buffer vs display size mismatch
+    // This is critical for touch accuracy on mobile devices
+    const dpr = Math.max(window.devicePixelRatio || 1, 2);
+    const scaleX = rect.width / (canvas.width / dpr);
+    const scaleY = rect.height / (canvas.height / dpr);
+    
+    let clientX: number, clientY: number;
+    
+    // On mobile, use touch coordinates
     if ('touches' in event && event.touches.length > 0) {
       const touch = event.touches[0];
-      return {
-        x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top
-      };
+      clientX = touch.clientX;
+      clientY = touch.clientY;
+    } else {
+      // For mouse events
+      const mouseEvent = event as React.MouseEvent;
+      clientX = mouseEvent.clientX;
+      clientY = mouseEvent.clientY;
     }
     
-    // For mouse events - cast to MouseEvent to access clientX/Y
-    const mouseEvent = event as React.MouseEvent;
+    // Convert client coordinates to canvas coordinates with proper scaling
     return {
-      x: mouseEvent.clientX - rect.left,
-      y: mouseEvent.clientY - rect.top
+      x: (clientX - rect.left) / scaleX,
+      y: (clientY - rect.top) / scaleY
     };
   }, []);
 
@@ -282,6 +292,10 @@ export function DocumentSignatureModal({
 
   useEffect(() => {
     if (isOpen && showDrawMode) {
+      // Setup canvas immediately and also after animations complete
+      // Run immediately for fast devices
+      setupCanvas();
+      
       // Use multiple timeouts to ensure canvas is set up after modal animations complete
       // This is especially important on mobile where animations can affect layout
       const timer1 = setTimeout(() => setupCanvas(), 50);
