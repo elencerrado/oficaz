@@ -830,14 +830,14 @@ export default function Landing() {
       <section id="funciones" className="py-20 md:py-28 bg-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           {/* Header */}
-          <div className="text-center mb-12">
+          <ScrollReveal className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 tracking-tight">
               Funciones modulares
             </h2>
             <p className="text-xl text-gray-500 max-w-2xl mx-auto">
               Activa solo lo que necesitas. Sin paquetes, sin compromisos.
             </p>
-          </div>
+          </ScrollReveal>
 
           {/* Mobile: Swipeable Carousel with Description Below */}
           <div className="lg:hidden">
@@ -1402,16 +1402,17 @@ export default function Landing() {
       <section id="precios" className="bg-gray-50 py-12 md:py-16 lg:py-20 flex items-center">
         <div className="max-w-5xl mx-auto px-6 w-full">
           {/* Header */}
-          <div className="text-center mb-10 lg:mb-12">
+          <ScrollReveal className="text-center mb-10 lg:mb-12">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
               Sin planes. Paga solo lo que necesitas.
             </h2>
             <p className="text-base md:text-lg text-gray-500">
               Configura tu suscripción a medida
             </p>
-          </div>
+          </ScrollReveal>
           
           {/* Calculator Layout - Two columns, same height */}
+          <ScrollReveal delay={0.1}>
           <div className="grid lg:grid-cols-2 gap-6 items-stretch">
             {/* Left: Price Summary */}
             <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 flex flex-col">
@@ -1599,6 +1600,7 @@ export default function Landing() {
               </div>
             </div>
           </div>
+          </ScrollReveal>
         </div>
       </section>
       {/* Enhanced CTA Section */}
@@ -1611,6 +1613,7 @@ export default function Landing() {
         </div>
         
         <div className="max-w-6xl mx-auto px-6 lg:px-8 text-center relative z-10">
+          <ScrollReveal>
           {/* Header Badge */}
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-8">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
@@ -1696,6 +1699,7 @@ export default function Landing() {
               <span className="text-sm font-medium">Sin tarjeta de crédito</span>
             </div>
           </div>
+          </ScrollReveal>
         </div>
       </section>
       {/* Footer */}
