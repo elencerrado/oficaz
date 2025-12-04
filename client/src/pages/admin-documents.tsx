@@ -17,6 +17,7 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 import { DocumentSignatureModal } from '@/components/document-signature-modal';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
+import { getAuthHeaders } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import StatsCard from '@/components/StatsCard';
 import { TabNavigation } from '@/components/ui/tab-navigation';
@@ -297,9 +298,7 @@ export default function AdminDocuments() {
     mutationFn: async (formData: FormData) => {
       const response = await fetch('/api/documents/upload-admin', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authData') ? JSON.parse(localStorage.getItem('authData')!).token : ''}`,
-        },
+        headers: getAuthHeaders(),
         body: formData,
       });
       if (!response.ok) throw new Error('Error al subir documento');
@@ -313,9 +312,7 @@ export default function AdminDocuments() {
     mutationFn: async (docId: number) => {
       const response = await fetch(`/api/documents/${docId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authData') ? JSON.parse(localStorage.getItem('authData')!).token : ''}`,
-        },
+        headers: getAuthHeaders(),
       });
       
       if (!response.ok) {
@@ -351,9 +348,7 @@ export default function AdminDocuments() {
     mutationFn: async (requestId: number) => {
       const response = await fetch(`/api/document-notifications/${requestId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authData') ? JSON.parse(localStorage.getItem('authData')!).token : ''}`,
-        },
+        headers: getAuthHeaders(),
       });
       
       if (!response.ok) {
@@ -416,17 +411,14 @@ export default function AdminDocuments() {
   // Undo last circular upload - delete multiple documents
   const undoCircularMutation = useMutation({
     mutationFn: async (documentIds: number[]) => {
-      const authData = localStorage.getItem('authData');
-      const token = authData ? JSON.parse(authData).token : '';
+      const headers = getAuthHeaders();
       
       // Delete each document
       const results = await Promise.all(
         documentIds.map(async (docId) => {
           const response = await fetch(`/api/documents/${docId}`, {
             method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
+            headers,
           });
           return response.ok;
         })
@@ -581,9 +573,7 @@ export default function AdminDocuments() {
           
           const response = await fetch('/api/documents/upload-circular', {
             method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('authData') ? JSON.parse(localStorage.getItem('authData')!).token : ''}`,
-            },
+            headers: getAuthHeaders(),
             body: formData,
           });
           
