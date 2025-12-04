@@ -103,16 +103,21 @@ export function DocumentSignatureModal({
 
   const getEventPos = useCallback((event: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
-    // Use CSS coordinates since context is scaled by DPR
-    if ('touches' in event) {
+    
+    // On mobile, use touch coordinates with proper scroll/viewport handling
+    if ('touches' in event && event.touches.length > 0) {
+      const touch = event.touches[0];
       return {
-        x: event.touches[0].clientX - rect.left,
-        y: event.touches[0].clientY - rect.top
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
       };
     }
+    
+    // For mouse events - cast to MouseEvent to access clientX/Y
+    const mouseEvent = event as React.MouseEvent;
     return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top
+      x: mouseEvent.clientX - rect.left,
+      y: mouseEvent.clientY - rect.top
     };
   }, []);
 
@@ -277,7 +282,17 @@ export function DocumentSignatureModal({
 
   useEffect(() => {
     if (isOpen && showDrawMode) {
-      setTimeout(() => setupCanvas(), 100);
+      // Use multiple timeouts to ensure canvas is set up after modal animations complete
+      // This is especially important on mobile where animations can affect layout
+      const timer1 = setTimeout(() => setupCanvas(), 50);
+      const timer2 = setTimeout(() => setupCanvas(), 150);
+      const timer3 = setTimeout(() => setupCanvas(), 300);
+      
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+      };
     }
   }, [isOpen, showDrawMode, setupCanvas]);
 
@@ -404,16 +419,21 @@ export function DocumentSignatureModal({
           </Button>
         </div>
         
-        <div className="relative border rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+        <div 
+          className="relative border rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 overflow-hidden"
+          style={{ touchAction: 'none' }}
+        >
           <canvas
             ref={canvasRef}
             width={600}
             height={200}
-            className="w-full h-32 sm:h-40 touch-none cursor-crosshair"
+            className="w-full h-32 sm:h-40 touch-none cursor-crosshair block"
             style={{ 
               touchAction: 'none',
               WebkitUserSelect: 'none',
-              userSelect: 'none'
+              userSelect: 'none',
+              WebkitTouchCallout: 'none',
+              WebkitTapHighlightColor: 'transparent'
             }}
             onMouseDown={startDrawing}
             onMouseMove={draw}
@@ -474,7 +494,10 @@ export function DocumentSignatureModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-w-[95vw] p-4">
+      <DialogContent 
+        className="sm:max-w-lg max-w-[95vw] p-4 max-h-[90vh] overflow-y-auto"
+        onPointerDownOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
             <PenTool className="h-5 w-5" />

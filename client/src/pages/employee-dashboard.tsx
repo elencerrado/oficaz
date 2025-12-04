@@ -843,7 +843,6 @@ export default function EmployeeDashboard() {
   // Determine session state and status 
   const getSessionStatus = () => {
     if (!activeSession) {
-      console.log('🕐 getSessionStatus: No active session found');
       return { isActive: false, isIncomplete: false, isToday: false, canStartNew: true };
     }
     
@@ -853,18 +852,6 @@ export default function EmployeeDashboard() {
     const hoursFromClockIn = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
     const maxDailyHours = (companySettings as any)?.workingHoursPerDay || 8;
     const maxHoursWithOvertime = Number(maxDailyHours) + 4;
-    
-    console.log('🕐 getSessionStatus:', {
-      sessionId: activeSession.id,
-      clockIn: clockIn.toISOString(),
-      currentTime: currentTime.toISOString(),
-      clockInDateStr: clockIn.toDateString(),
-      currentDateStr: currentTime.toDateString(),
-      isToday,
-      hoursFromClockIn: hoursFromClockIn.toFixed(2),
-      maxDailyHours,
-      maxHoursWithOvertime
-    });
     
     // If session is from previous day and has no clock out, it's incomplete
     if (!isToday && !activeSession.clockOut) {
