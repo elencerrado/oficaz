@@ -105,6 +105,23 @@ function DashboardRouter() {
   return <AdminDashboard />;
 }
 
+function RoleBasedPage({ 
+  adminComponent: AdminComponent, 
+  employeeComponent: EmployeeComponent 
+}: { 
+  adminComponent: React.ComponentType; 
+  employeeComponent: React.ComponentType;
+}) {
+  const { user } = useAuth();
+  const { isEmployeeViewMode } = useEmployeeViewMode();
+  
+  if (user?.role === 'employee' || isEmployeeViewMode) {
+    return <EmployeeComponent />;
+  }
+  
+  return <AdminComponent />;
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading, token } = useAuth();
   const [, setLocation] = useLocation();
@@ -654,11 +671,10 @@ function Router() {
         <ProtectedRoute>
           <ManagerFeatureGate feature="vacation">
             <AppLayout>
-              {user && (user.role === 'admin' || user.role === 'manager') ? (
-                <VacationManagement />
-              ) : (
-                <VacationRequests />
-              )}
+              <RoleBasedPage 
+                adminComponent={VacationManagement} 
+                employeeComponent={VacationRequests} 
+              />
             </AppLayout>
           </ManagerFeatureGate>
         </ProtectedRoute>
@@ -668,11 +684,10 @@ function Router() {
         <ProtectedRoute>
           <ManagerFeatureGate feature="schedules">
             <AppLayout>
-              {user && (user.role === 'admin' || user.role === 'manager') ? (
-                <Schedules />
-              ) : (
-                <EmployeeSchedule />
-              )}
+              <RoleBasedPage 
+                adminComponent={Schedules} 
+                employeeComponent={EmployeeSchedule} 
+              />
             </AppLayout>
           </ManagerFeatureGate>
         </ProtectedRoute>
@@ -683,11 +698,10 @@ function Router() {
           <FeatureProtectedRoute feature="documents">
             <ManagerFeatureGate feature="documents">
               <AppLayout>
-                {user?.role === 'employee' ? (
-                  <Documents />
-                ) : (
-                  <AdminDocuments />
-                )}
+                <RoleBasedPage 
+                  adminComponent={AdminDocuments} 
+                  employeeComponent={Documents} 
+                />
               </AppLayout>
             </ManagerFeatureGate>
           </FeatureProtectedRoute>
@@ -711,11 +725,10 @@ function Router() {
           <FeatureProtectedRoute feature="reminders">
             <ManagerFeatureGate feature="reminders">
               <AppLayout>
-                {user?.role === 'employee' ? (
-                  <EmployeeReminders />
-                ) : (
-                  <Reminders />
-                )}
+                <RoleBasedPage 
+                  adminComponent={Reminders} 
+                  employeeComponent={EmployeeReminders} 
+                />
               </AppLayout>
             </ManagerFeatureGate>
           </FeatureProtectedRoute>
@@ -727,11 +740,10 @@ function Router() {
           <FeatureProtectedRoute feature="work_reports">
             <ManagerFeatureGate feature="work_reports">
               <AppLayout>
-                {user?.role === 'employee' ? (
-                  <WorkReports />
-                ) : (
-                  <AdminWorkReports />
-                )}
+                <RoleBasedPage 
+                  adminComponent={AdminWorkReports} 
+                  employeeComponent={WorkReports} 
+                />
               </AppLayout>
             </ManagerFeatureGate>
           </FeatureProtectedRoute>
