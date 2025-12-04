@@ -517,7 +517,8 @@ export default function AddonStore() {
         </div>
       ) : (
         <div className="space-y-8">
-          {/* User Seats Section - Integrated cards */}
+          {/* User Seats Section - Only show for admins or managers with canBuyRemoveUsers permission */}
+          {(isAdmin || managerPermissions?.canBuyRemoveUsers) && (
           <div>
             <div className="flex items-center gap-2 mb-4">
               <Users className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
@@ -749,8 +750,10 @@ export default function AddonStore() {
               </div>
             )}
           </div>
+          )}
 
-          {allAddons.length > 0 && (
+          {/* Addons Section - Only show for admins or managers with canBuyRemoveFeatures permission */}
+          {(isAdmin || managerPermissions?.canBuyRemoveFeatures) && allAddons.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <ShoppingCart className="h-5 w-5 text-blue-600 dark:text-blue-400" />
