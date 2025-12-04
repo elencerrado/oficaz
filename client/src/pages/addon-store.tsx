@@ -134,35 +134,16 @@ export default function AddonStore() {
   // Current users by role (from actual users in system)
   const currentUserCounts = subscriptionInfo?.userCounts || { employees: 0, managers: 0, admins: 0 };
   
-  // Check if this is a legacy plan (has free included seats)
-  const isLegacyPlan = subscription?.isLegacyPlan || false;
-  
-  // Included seats - ONLY for legacy plans (new plans have 0 included, all paid)
-  const includedSeats = isLegacyPlan ? {
-    employees: subscription?.includedEmployees || 0,
-    managers: subscription?.includedManagers || 0,
-    admins: subscription?.includedAdmins || 0
-  } : { employees: 0, managers: 0, admins: 0 };
-  
-  // Extra seats (paid seats in database)
-  const extraSeats = {
+  // All seats are paid - no free included seats
+  // extraSeats in DB = total contracted seats
+  const contractedSeats = {
     employees: subscription?.extraEmployees || 0,
     managers: subscription?.extraManagers || 0,
     admins: subscription?.extraAdmins || 0
   };
   
-  // Total contracted seats - what users SEE and work with
-  // For legacy: included + extra. For new plans: just extra (all paid)
-  const totalContractedSeats = {
-    employees: includedSeats.employees + extraSeats.employees,
-    managers: includedSeats.managers + extraSeats.managers,
-    admins: includedSeats.admins + extraSeats.admins
-  };
-  
-  // Minimum seats: for new plans, must have at least 1 admin (paid)
-  const minimumSeats = isLegacyPlan 
-    ? includedSeats 
-    : { employees: 0, managers: 0, admins: 1 };
+  // Minimum: must have at least 1 admin (paid €6)
+  const minimumSeats = { employees: 0, managers: 0, admins: 1 };
   
   // Editable seat counts (starts with TOTAL contracted, not just extras)
   const [editedSeats, setEditedSeats] = useState<{
@@ -172,31 +153,26 @@ export default function AddonStore() {
   } | null>(null);
   
   // Initialize edited seats when subscription loads - show TOTAL seats
-  const displaySeats = editedSeats || totalContractedSeats;
+  const displaySeats = editedSeats || contractedSeats;
   
   // Check if there are pending changes (compare against total, not extras)
   const hasChanges = editedSeats !== null && (
-    editedSeats.employees !== totalContractedSeats.employees ||
-    editedSeats.managers !== totalContractedSeats.managers ||
-    editedSeats.admins !== totalContractedSeats.admins
+    editedSeats.employees !== contractedSeats.employees ||
+    editedSeats.managers !== contractedSeats.managers ||
+    editedSeats.admins !== contractedSeats.admins
   );
   
-  // Calculate price difference (only EXTRA seats cost money, included are free)
+  // Calculate price difference (all seats are paid)
   const currentPrice = 
-    extraSeats.employees * seatPrices.employees +
-    extraSeats.managers * seatPrices.managers +
-    extraSeats.admins * seatPrices.admins;
+    contractedSeats.employees * seatPrices.employees +
+    contractedSeats.managers * seatPrices.managers +
+    contractedSeats.admins * seatPrices.admins;
     
-  // New price: Only count extras (total - included = extras to pay for)
-  const newExtraSeats = {
-    employees: Math.max(0, displaySeats.employees - includedSeats.employees),
-    managers: Math.max(0, displaySeats.managers - includedSeats.managers),
-    admins: Math.max(0, displaySeats.admins - includedSeats.admins)
-  };
+  // New price: all seats are paid
   const newPrice = 
-    newExtraSeats.employees * seatPrices.employees +
-    newExtraSeats.managers * seatPrices.managers +
-    newExtraSeats.admins * seatPrices.admins;
+    displaySeats.employees * seatPrices.employees +
+    displaySeats.managers * seatPrices.managers +
+    displaySeats.admins * seatPrices.admins;
     
   const priceDifference = newPrice - currentPrice;
 
@@ -260,19 +236,11 @@ export default function AddonStore() {
   // Mutation for updating seats (handles both increase and decrease)
   const updateSeatsMutation = useMutation({
     mutationFn: async (data: { action: 'set'; seats: { employees: number; managers: number; admins: number } }) => {
-      // User edits TOTAL seats, but backend works with EXTRA seats
-      // Convert: new extras = edited total - included
-      const newExtras = {
-        employees: Math.max(0, data.seats.employees - includedSeats.employees),
-        managers: Math.max(0, data.seats.managers - includedSeats.managers),
-        admins: Math.max(0, data.seats.admins - includedSeats.admins)
-      };
-      
-      // Calculate the difference from current extras
+      // All seats are paid, calculate difference from current
       const diff = {
-        employees: newExtras.employees - extraSeats.employees,
-        managers: newExtras.managers - extraSeats.managers,
-        admins: newExtras.admins - extraSeats.admins
+        employees: data.seats.employees - contractedSeats.employees,
+        managers: data.seats.managers - contractedSeats.managers,
+        admins: data.seats.admins - contractedSeats.admins
       };
       
       // If increasing, use add endpoint
@@ -325,8 +293,8 @@ export default function AddonStore() {
 
   // Update seat count with validation
   const updateSeatCount = (role: 'employees' | 'managers' | 'admins', delta: number) => {
-    const current = editedSeats || { ...totalContractedSeats };
-    // Cannot go below minimum seats (legacy: included seats, new plans: 1 admin minimum)
+    const current = editedSeats || { ...contractedSeats };
+    // Cannot go below minimum seats (1 admin minimum required)
     const minValue = minimumSeats[role];
     const newValue = Math.max(minValue, current[role] + delta);
     
@@ -507,7 +475,7 @@ export default function AddonStore() {
             <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
               {/* Employees Card */}
               <Card className={`relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 flex flex-col ${
-                editedSeats && editedSeats.employees !== totalContractedSeats.employees ? 'ring-2 ring-blue-500' : ''
+                editedSeats && editedSeats.employees !== contractedSeats.employees ? 'ring-2 ring-blue-500' : ''
               }`} data-testid="seats-employees-card">
                 <CardHeader className="pb-2 p-4 sm:p-6 sm:pb-2">
                   <div className="flex items-center gap-3">
@@ -569,7 +537,7 @@ export default function AddonStore() {
 
               {/* Managers Card */}
               <Card className={`relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 flex flex-col ${
-                editedSeats && editedSeats.managers !== totalContractedSeats.managers ? 'ring-2 ring-purple-500' : ''
+                editedSeats && editedSeats.managers !== contractedSeats.managers ? 'ring-2 ring-purple-500' : ''
               }`} data-testid="seats-managers-card">
                 <CardHeader className="pb-2 p-4 sm:p-6 sm:pb-2">
                   <div className="flex items-center gap-3">
@@ -631,7 +599,7 @@ export default function AddonStore() {
 
               {/* Admins Card */}
               <Card className={`relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 flex flex-col ${
-                editedSeats && editedSeats.admins !== totalContractedSeats.admins ? 'ring-2 ring-amber-500' : ''
+                editedSeats && editedSeats.admins !== contractedSeats.admins ? 'ring-2 ring-amber-500' : ''
               }`} data-testid="seats-admins-card">
                 <CardHeader className="pb-2 p-4 sm:p-6 sm:pb-2">
                   <div className="flex items-center gap-3">
@@ -997,7 +965,7 @@ export default function AddonStore() {
                       <span className="text-gray-700 dark:text-gray-300">Empleados</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-gray-500 dark:text-gray-400 text-sm">{totalContractedSeats.employees} → </span>
+                      <span className="text-gray-500 dark:text-gray-400 text-sm">{contractedSeats.employees} → </span>
                       <span className="font-medium text-gray-900 dark:text-gray-100">{editedSeats.employees}</span>
                     </div>
                   </div>
@@ -1007,7 +975,7 @@ export default function AddonStore() {
                       <span className="text-gray-700 dark:text-gray-300">Managers</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-gray-500 dark:text-gray-400 text-sm">{totalContractedSeats.managers} → </span>
+                      <span className="text-gray-500 dark:text-gray-400 text-sm">{contractedSeats.managers} → </span>
                       <span className="font-medium text-gray-900 dark:text-gray-100">{editedSeats.managers}</span>
                     </div>
                   </div>
@@ -1017,7 +985,7 @@ export default function AddonStore() {
                       <span className="text-gray-700 dark:text-gray-300">Administradores</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-gray-500 dark:text-gray-400 text-sm">{totalContractedSeats.admins} → </span>
+                      <span className="text-gray-500 dark:text-gray-400 text-sm">{contractedSeats.admins} → </span>
                       <span className="font-medium text-gray-900 dark:text-gray-100">{editedSeats.admins}</span>
                     </div>
                   </div>
