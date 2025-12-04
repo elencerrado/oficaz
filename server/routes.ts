@@ -7073,6 +7073,77 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Update manager permissions - Admin only
+  app.patch('/api/settings/manager-permissions', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const { managerPermissions } = req.body;
+      const userId = req.user!.id;
+      const user = await storage.getUser(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+
+      // Validate permissions structure
+      const validPermissions = {
+        canCreateDeleteEmployees: Boolean(managerPermissions?.canCreateDeleteEmployees ?? true),
+        canCreateDeleteManagers: Boolean(managerPermissions?.canCreateDeleteManagers ?? false),
+        canBuyRemoveFeatures: Boolean(managerPermissions?.canBuyRemoveFeatures ?? false),
+        canBuyRemoveUsers: Boolean(managerPermissions?.canBuyRemoveUsers ?? false),
+        canEditCompanyData: Boolean(managerPermissions?.canEditCompanyData ?? false),
+      };
+
+      const updatedCompany = await storage.updateCompany(user.companyId, {
+        managerPermissions: validPermissions
+      });
+
+      if (!updatedCompany) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
+      res.json({ 
+        message: 'Permisos de manager actualizados',
+        managerPermissions: updatedCompany.managerPermissions
+      });
+    } catch (error) {
+      console.error('Error updating manager permissions:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // Get manager permissions - Admin/Manager
+  app.get('/api/settings/manager-permissions', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const user = await storage.getUser(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+
+      const company = await storage.getCompany(user.companyId);
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
+      // Return default permissions if not set
+      const defaultPermissions = {
+        canCreateDeleteEmployees: true,
+        canCreateDeleteManagers: false,
+        canBuyRemoveFeatures: false,
+        canBuyRemoveUsers: false,
+        canEditCompanyData: false,
+      };
+
+      res.json({ 
+        managerPermissions: company.managerPermissions || defaultPermissions
+      });
+    } catch (error) {
+      console.error('Error getting manager permissions:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   // Dashboard stats
   app.get('/api/dashboard/stats', authenticateToken, async (req: AuthRequest, res) => {
     try {

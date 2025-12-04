@@ -29,6 +29,7 @@ export const companies = pgTable("companies", {
   timezone: text("timezone").default("Europe/Madrid").notNull(),
   customAiRules: text("custom_ai_rules").default(""),
   allowManagersToGrantRoles: boolean("allow_managers_to_grant_roles").default(false).notNull(),
+  managerPermissions: jsonb("manager_permissions").default('{"canCreateDeleteEmployees":true,"canCreateDeleteManagers":false,"canBuyRemoveFeatures":false,"canBuyRemoveUsers":false,"canEditCompanyData":false}').notNull(),
   // Campos migrados desde account_info (datos de facturación)
   accountId: text("account_id"), // OFZ-2024-001234 format (nullable, not unique to allow multiple NULL values)
   billingPostalCode: text("billing_postal_code"),

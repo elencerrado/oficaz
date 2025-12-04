@@ -30,8 +30,10 @@ import {
   AlertTriangle,
   Trash2,
   Lock,
-  ClipboardList
+  ClipboardList,
+  Settings
 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { DatePickerDayEmployee } from '@/components/ui/date-picker';
 import { apiRequest } from '@/lib/queryClient';
@@ -61,6 +63,14 @@ export default function EmployeesSimple() {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [showLimitDialog, setShowLimitDialog] = useState(false);
   const [limitMessage, setLimitMessage] = useState('');
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [managerPermissions, setManagerPermissions] = useState({
+    canCreateDeleteEmployees: true,
+    canCreateDeleteManagers: false,
+    canBuyRemoveFeatures: false,
+    canBuyRemoveUsers: false,
+    canEditCompanyData: false,
+  });
   const [editEmployee, setEditEmployee] = useState({
     companyEmail: '',
     companyPhone: '',
@@ -95,6 +105,39 @@ export default function EmployeesSimple() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Query for manager permissions
+  const { data: permissionsData } = useQuery({
+    queryKey: ['/api/settings/manager-permissions'],
+    enabled: user?.role === 'admin',
+  });
+
+  // Update local state when permissions are fetched
+  useEffect(() => {
+    if (permissionsData?.managerPermissions) {
+      setManagerPermissions(permissionsData.managerPermissions);
+    }
+  }, [permissionsData]);
+
+  // Mutation for updating manager permissions
+  const updatePermissionsMutation = useMutation({
+    mutationFn: (permissions: typeof managerPermissions) => 
+      apiRequest('PATCH', '/api/settings/manager-permissions', { managerPermissions: permissions }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings/manager-permissions'] });
+      toast({
+        title: 'Permisos Actualizados',
+        description: 'Los permisos de managers se han guardado correctamente.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudieron actualizar los permisos.',
+        variant: 'destructive',
+      });
+    },
+  });
 
   // Mutation for updating employee
   const updateEmployeeMutation = useMutation({
@@ -532,8 +575,22 @@ export default function EmployeesSimple() {
           <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
             <span className="text-sm sm:text-lg font-medium">Lista de Empleados</span>
             
-            {/* Button in card header */}
-            <Button onClick={async () => {
+            <div className="flex items-center gap-2">
+              {/* Settings Button - Admin only */}
+              {user?.role === 'admin' && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowSettingsModal(true)}
+                  className="h-9 w-9 p-0"
+                  title="Configuración de roles"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              )}
+              
+              {/* Create User Button */}
+              <Button onClick={async () => {
               // CRITICAL: Force fresh subscription data
               queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
               
@@ -587,6 +644,7 @@ export default function EmployeesSimple() {
               <UserPlus className="h-4 w-4 mr-2" />
               Crear Usuario
             </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -1583,6 +1641,143 @@ export default function EmployeesSimple() {
               {deleteEmployeeMutation.isPending ? 'Eliminando...' : 'Eliminar Permanentemente'}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Settings Modal - Manager Permissions */}
+      <Dialog open={showSettingsModal} onOpenChange={setShowSettingsModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                <Settings className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Permisos de Managers
+                </DialogTitle>
+                <DialogDescription className="text-sm text-gray-600 dark:text-gray-400">
+                  Configura qué acciones pueden realizar los managers
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            {/* Permission: Create/Delete Employees */}
+            <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex-1 pr-4">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Crear/borrar empleados
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Permite gestionar usuarios con rol empleado
+                </p>
+              </div>
+              <Switch
+                checked={managerPermissions.canCreateDeleteEmployees}
+                onCheckedChange={(checked) => {
+                  const newPermissions = { ...managerPermissions, canCreateDeleteEmployees: checked };
+                  setManagerPermissions(newPermissions);
+                  updatePermissionsMutation.mutate(newPermissions);
+                }}
+                className="data-[state=checked]:bg-blue-500"
+              />
+            </div>
+
+            {/* Permission: Create/Delete Managers */}
+            <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex-1 pr-4">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Crear/borrar managers
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Permite gestionar otros managers
+                </p>
+              </div>
+              <Switch
+                checked={managerPermissions.canCreateDeleteManagers}
+                onCheckedChange={(checked) => {
+                  const newPermissions = { ...managerPermissions, canCreateDeleteManagers: checked };
+                  setManagerPermissions(newPermissions);
+                  updatePermissionsMutation.mutate(newPermissions);
+                }}
+                className="data-[state=checked]:bg-blue-500"
+              />
+            </div>
+
+            {/* Permission: Buy/Remove Features */}
+            <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex-1 pr-4">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Comprar/eliminar funcionalidades
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Permite gestionar add-ons de la suscripción
+                </p>
+              </div>
+              <Switch
+                checked={managerPermissions.canBuyRemoveFeatures}
+                onCheckedChange={(checked) => {
+                  const newPermissions = { ...managerPermissions, canBuyRemoveFeatures: checked };
+                  setManagerPermissions(newPermissions);
+                  updatePermissionsMutation.mutate(newPermissions);
+                }}
+                className="data-[state=checked]:bg-blue-500"
+              />
+            </div>
+
+            {/* Permission: Buy/Remove Users */}
+            <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex-1 pr-4">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Comprar/eliminar usuarios
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Permite añadir o quitar asientos de usuarios
+                </p>
+              </div>
+              <Switch
+                checked={managerPermissions.canBuyRemoveUsers}
+                onCheckedChange={(checked) => {
+                  const newPermissions = { ...managerPermissions, canBuyRemoveUsers: checked };
+                  setManagerPermissions(newPermissions);
+                  updatePermissionsMutation.mutate(newPermissions);
+                }}
+                className="data-[state=checked]:bg-blue-500"
+              />
+            </div>
+
+            {/* Permission: Edit Company Data */}
+            <div className="flex items-center justify-between py-3">
+              <div className="flex-1 pr-4">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Editar datos de empresa
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Permite acceder a la pestaña Empresa en configuración
+                </p>
+              </div>
+              <Switch
+                checked={managerPermissions.canEditCompanyData}
+                onCheckedChange={(checked) => {
+                  const newPermissions = { ...managerPermissions, canEditCompanyData: checked };
+                  setManagerPermissions(newPermissions);
+                  updatePermissionsMutation.mutate(newPermissions);
+                }}
+                className="data-[state=checked]:bg-blue-500"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              onClick={() => setShowSettingsModal(false)}
+              className="w-full"
+            >
+              Cerrar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
