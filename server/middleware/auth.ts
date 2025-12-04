@@ -80,3 +80,64 @@ export function generateRefreshToken(userId: number) {
   }, JWT_SECRET, { expiresIn: '30d' });
   return token;
 }
+
+// Mapping of feature keys to addon keys
+const featureToAddonKey: Record<string, string> = {
+  timeTracking: 'time_tracking',
+  time_tracking: 'time_tracking',
+  vacation: 'vacation',
+  schedules: 'schedules',
+  documents: 'documents',
+  messages: 'messages',
+  reminders: 'reminders',
+  work_reports: 'work_reports',
+  reports: 'work_reports',
+  ai_assistant: 'ai_assistant',
+};
+
+// Middleware to check if a manager has visibility to a feature
+export function requireVisibleFeature(featureKey: string, getStorage: () => any) {
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    // Admins and employees bypass this check
+    if (req.user.role !== 'manager') {
+      return next();
+    }
+
+    try {
+      const storage = getStorage();
+      const company = await storage.getCompany(req.user.companyId);
+      
+      if (!company) {
+        return res.status(404).json({ message: 'Company not found' });
+      }
+
+      const managerPermissions = company.managerPermissions as { visibleFeatures?: string[] | null } | null;
+      const visibleFeatures = managerPermissions?.visibleFeatures;
+
+      // If visibleFeatures is null/undefined, all features are visible (never configured)
+      if (visibleFeatures === null || visibleFeatures === undefined) {
+        return next();
+      }
+
+      // If visibleFeatures is empty array, no features are visible
+      if (visibleFeatures.length === 0) {
+        return res.status(403).json({ message: 'Access to this feature has been restricted' });
+      }
+
+      // Check if the feature is in the visible list
+      const addonKey = featureToAddonKey[featureKey] || featureKey;
+      if (!visibleFeatures.includes(addonKey)) {
+        return res.status(403).json({ message: 'Access to this feature has been restricted' });
+      }
+
+      next();
+    } catch (error) {
+      console.error('Error checking feature visibility:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+  };
+}

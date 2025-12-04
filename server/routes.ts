@@ -14,7 +14,7 @@ import Stripe from 'stripe';
 import webpush from 'web-push';
 import { subDays, startOfDay } from 'date-fns';
 import { storage } from "./storage";
-import { authenticateToken, requireRole, generateToken, generateRefreshToken, AuthRequest } from './middleware/auth';
+import { authenticateToken, requireRole, generateToken, generateRefreshToken, AuthRequest, requireVisibleFeature } from './middleware/auth';
 import { withDatabaseRetry } from './utils';
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertWorkShiftSchema, insertMessageSchema, passwordResetRequestSchema, passwordResetSchema, contactFormSchema } from '@shared/schema';
 import { z } from 'zod';
@@ -4040,7 +4040,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.get('/api/work-sessions/company', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.get('/api/work-sessions/company', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('time_tracking', () => storage), async (req: AuthRequest, res) => {
     try {
       // Pagination parameters - default 50 per page for fast loading
       const limit = parseInt(req.query.limit as string) || 50;
@@ -4099,7 +4099,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Optimized endpoint for Summary tab - returns aggregated stats per employee (no individual sessions)
-  app.get('/api/work-sessions/summary-stats', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.get('/api/work-sessions/summary-stats', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('time_tracking', () => storage), async (req: AuthRequest, res) => {
     try {
       const companyId = req.user!.companyId;
       
@@ -4181,7 +4181,7 @@ Responde directamente a este email para contactar con la persona.
   // Work Session Modification & Audit (Legal Compliance RD-ley 8/2019)
   
   // Admin: Create manual work session (forgotten check-in)
-  app.post('/api/admin/work-sessions/create-manual', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.post('/api/admin/work-sessions/create-manual', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('time_tracking', () => storage), async (req: AuthRequest, res) => {
     try {
       const { employeeId, date, clockIn, clockOut, reason } = req.body;
 
@@ -4256,7 +4256,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Admin: Modify existing work session
-  app.patch('/api/admin/work-sessions/:id/modify', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.patch('/api/admin/work-sessions/:id/modify', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('time_tracking', () => storage), async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const { clockIn, clockOut, reason } = req.body;
