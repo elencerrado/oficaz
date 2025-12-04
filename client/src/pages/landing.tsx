@@ -1192,21 +1192,27 @@ export default function Landing() {
                           {/* Employee cards */}
                           <div className="space-y-1">
                             {[
-                              { name: 'María García', role: 'Admin', avatar: avatarWoman01, roleColor: 'text-purple-400', swiped: false },
-                              { name: 'Carlos López', role: 'Manager', avatar: avatarMan01, roleColor: 'text-[#007AFF]', swiped: false },
-                              { name: 'Ana Martín', role: 'Empleado', avatar: avatarWoman02, roleColor: 'text-green-400', swiped: true },
-                              { name: 'Pedro Ruiz', role: 'Empleado', avatar: avatarMan02, roleColor: 'text-green-400', swiped: false },
-                              { name: 'Laura Sanz', role: 'Empleado', avatar: avatarWoman03, roleColor: 'text-green-400', swiped: false },
+                              { name: 'María García', role: 'Admin', avatar: avatarWoman01, roleColor: 'text-purple-400', swipeDir: null },
+                              { name: 'Carlos López', role: 'Manager', avatar: avatarMan01, roleColor: 'text-[#007AFF]', swipeDir: 'right' },
+                              { name: 'Ana Martín', role: 'Empleado', avatar: avatarWoman02, roleColor: 'text-green-400', swipeDir: 'left' },
+                              { name: 'Pedro Ruiz', role: 'Empleado', avatar: avatarMan02, roleColor: 'text-green-400', swipeDir: null },
+                              { name: 'Laura Sanz', role: 'Empleado', avatar: avatarWoman03, roleColor: 'text-green-400', swipeDir: null },
                             ].map((emp, i) => (
                               <div key={i} className="relative overflow-hidden rounded-lg">
-                                {/* Swipe action background */}
+                                {/* Swipe left action background (call - green) */}
                                 <div className="absolute inset-0 bg-green-500 flex items-center justify-end pr-2">
                                   <Phone className="w-3 h-3 text-white" />
+                                </div>
+                                {/* Swipe right action background (message - blue) */}
+                                <div className="absolute inset-0 bg-[#007AFF] flex items-center justify-start pl-2">
+                                  <MessageSquare className="w-3 h-3 text-white" />
                                 </div>
                                 {/* Card content */}
                                 <div 
                                   className={`bg-[#1a2942] p-1.5 flex items-center gap-2 relative transition-transform ${
-                                    emp.swiped ? 'translate-x-[-20px] rounded-r-lg' : ''
+                                    emp.swipeDir === 'left' ? 'translate-x-[-20px] rounded-r-lg' : ''
+                                  } ${
+                                    emp.swipeDir === 'right' ? 'translate-x-[20px] rounded-l-lg' : ''
                                   }`}
                                 >
                                   <img 
