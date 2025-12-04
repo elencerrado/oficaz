@@ -224,23 +224,28 @@ const superAdminAccessLimiter = rateLimit({
 // ⚠️ PROTECTED - DO NOT MODIFY
 // Demo data generation for new companies
 async function generateDemoData(companyId: number) {
+  console.log('🎭 [DEMO DATA] Starting generation for company:', companyId);
+  
+  let demoDataStarted = false;
+  
   try {
-    console.log('🎭 Generating comprehensive demo data for company:', companyId);
-    
     // Get company registration date for dynamic data generation
     const company = await db.select().from(companies).where(eq(companies.id, companyId)).limit(1);
     if (!company[0]) {
-      console.error('Company not found for demo data generation');
+      console.error('🎭 [DEMO DATA] ERROR: Company not found for demo data generation, ID:', companyId);
       return;
     }
     
     const registrationDate = new Date(company[0].createdAt);
-    console.log('📅 Company registered on:', registrationDate.toISOString());
+    console.log('🎭 [DEMO DATA] Company registered on:', registrationDate.toISOString());
     
-    // Mark company as having demo data
+    // Mark company as having demo data BEFORE starting
     await db.update(companies)
       .set({ hasDemoData: true })
       .where(eq(companies.id, companyId));
+    
+    demoDataStarted = true;
+    console.log('🎭 [DEMO DATA] Flag set to true, starting employee creation...');
     
     // Generate unique identifiers to avoid conflicts
     const uniqueId = Date.now();
@@ -374,18 +379,39 @@ async function generateDemoData(companyId: number) {
     }
 
     // Generate comprehensive demo data based on registration date
+    console.log('🎭 [DEMO DATA] Starting comprehensive data generation for', createdEmployees.length, 'employees...');
     await generateComprehensiveDemoData(companyId, createdEmployees, registrationDate);
     
-    console.log('✅ Comprehensive demo data generation completed for company:', companyId);
+    console.log('✅ [DEMO DATA] Complete! Generated demo data for company:', companyId);
     
   } catch (error) {
-    console.error('❌ Error generating demo data:', error);
+    console.error('❌ [DEMO DATA] ERROR generating demo data for company', companyId, ':', error);
+    
+    // If we started but failed, reset the flag so user knows data wasn't generated
+    if (demoDataStarted) {
+      try {
+        await db.update(companies)
+          .set({ hasDemoData: false })
+          .where(eq(companies.id, companyId));
+        console.log('🎭 [DEMO DATA] Reset hasDemoData flag to false due to error');
+      } catch (resetError) {
+        console.error('🎭 [DEMO DATA] Could not reset hasDemoData flag:', resetError);
+      }
+    }
+    
+    // Re-throw to propagate to caller
+    throw error;
   }
 }
 
 // Generate comprehensive demo data based on company registration date
 async function generateComprehensiveDemoData(companyId: number, employees: any[], registrationDate: Date) {
-  console.log('📊 Generating comprehensive demo data...');
+  console.log('📊 [DEMO DATA] Generating comprehensive data for', employees.length, 'employees...');
+  
+  if (employees.length === 0) {
+    console.warn('⚠️ [DEMO DATA] No employees provided, skipping comprehensive data generation');
+    return;
+  }
   
   const now = new Date();
   const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -14198,22 +14224,27 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         
         console.log('✅ Deleted all company reminders');
         
-        // Step 6: Delete documents
+        // Step 6: Delete work shifts for demo employees
+        await db.delete(schema.workShifts)
+          .where(inArray(schema.workShifts.employeeId, demoEmployeeIds));
+        console.log('✅ Deleted work shifts');
+        
+        // Step 7: Delete documents
         await db.delete(documents)
           .where(inArray(documents.userId, demoEmployeeIds));
         console.log('✅ Deleted documents');
         
-        // Step 7: Delete notifications (foreign key reference to users)
+        // Step 8: Delete notifications (foreign key reference to users)
         await db.delete(schema.systemNotifications)
           .where(inArray(schema.systemNotifications.userId, demoEmployeeIds));
         console.log('✅ Deleted notifications');
         
-        // Step 8: Final attempt to delete any remaining break periods that might have regenerated
+        // Step 9: Final attempt to delete any remaining break periods that might have regenerated
         await db.delete(breakPeriods)
           .where(inArray(breakPeriods.userId, demoEmployeeIds));
         console.log('✅ Final cleanup of break periods');
         
-        // Step 9: Delete demo employees (this should now work without foreign key violations)
+        // Step 10: Delete demo employees (this should now work without foreign key violations)
         await db.delete(users)
           .where(and(
             eq(users.companyId, company.id),

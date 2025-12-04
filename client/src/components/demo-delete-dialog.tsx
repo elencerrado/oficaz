@@ -16,12 +16,18 @@ export function DemoDeleteDialog({ isOpen, onClose }: DemoDeleteDialogProps) {
   const deleteDemoDataMutation = useMutation({
     mutationFn: () => apiRequest('DELETE', '/api/demo-data/clear'),
     onSuccess: () => {
-      // Invalidate specific queries to refresh the data and hide banner
+      // Invalidate ALL relevant queries to refresh the data and hide banner
       queryClient.invalidateQueries({ queryKey: ['/api/demo-data/status'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/company/employees'] });
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
       queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
       queryClient.invalidateQueries({ queryKey: ['/api/reminders/dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/document-notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
       onClose();
     },
     onError: (error) => {
