@@ -88,8 +88,8 @@ export default function EmployeeReminders() {
     return (
       <FeatureRestrictedPage
         featureName="Recordatorios"
-        description="Tu plan actual no incluye la funcionalidad de recordatorios. Contacta con el administrador para actualizar tu plan."
-        requiredPlan="Pro"
+        description="No tienes acceso a la funcionalidad de recordatorios. Contacta con el administrador para activar este addon."
+        requiredPlan="Addon"
       />
     );
   }

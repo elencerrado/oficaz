@@ -611,8 +611,8 @@ export default function AdminWorkReportsPage() {
     return (
       <FeatureRestrictedPage 
         featureName="Partes de Trabajo" 
-        description="Visualiza y exporta los partes de trabajo de todos tus empleados con esta funcionalidad exclusiva del plan Pro o disponible como complemento." 
-        requiredPlan="Pro" 
+        description="Visualiza y exporta los partes de trabajo de todos tus empleados. Activa este addon desde la Tienda para comenzar a usarlo." 
+        requiredPlan="Addon" 
       />
     );
   }

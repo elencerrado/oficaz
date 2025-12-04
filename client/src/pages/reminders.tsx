@@ -175,8 +175,8 @@ export default function Reminders() {
     return (
       <FeatureRestrictedPage
         featureName="Recordatorios"
-        description="Tu plan actual no incluye la funcionalidad de recordatorios. Contacta con el administrador para actualizar tu plan."
-        requiredPlan="Pro"
+        description="No tienes acceso a la funcionalidad de recordatorios. Activa este addon desde la Tienda para comenzar a usarlo."
+        requiredPlan="Addon"
       />
     );
   }

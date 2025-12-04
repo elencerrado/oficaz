@@ -3726,53 +3726,20 @@ Responde directamente a este email para contactar con la persona.
       }, {});
       
       const requestedRole = role || 'employee';
-      const planName = subscription?.plan || 'basic';
       
       console.log(`🔒 USER LIMIT CHECK: Current users: ${currentUserCount}, Max allowed: ${subscription?.maxUsers}`);
       console.log(`🔒 ROLE COUNT CHECK: Current roles:`, usersByRole);
-      console.log(`🔒 REQUESTING ROLE: ${requestedRole} for plan: ${planName}`);
+      console.log(`🔒 REQUESTING ROLE: ${requestedRole}`);
       
-      // Define role limits by plan
-      const roleLimits: Record<string, Record<string, number>> = {
-        'basic': {
-          admin: 1,
-          manager: 1,
-          employee: (subscription?.maxUsers || 5) - 2 // Total minus admin and manager
-        },
-        'pro': {
-          admin: 1,
-          manager: 3,
-          employee: (subscription?.maxUsers || 30) - 4 // Total minus admin and managers
-        },
-        'master': {
-          admin: 999, // Unlimited
-          manager: 999, // Unlimited
-          employee: 999 // Unlimited
-        }
-      };
-      
-      // Get current role limits for this plan
-      const currentPlanLimits = roleLimits[planName] || roleLimits['basic'];
-      const roleLimit = currentPlanLimits[requestedRole];
+      // In modular system, check total user limit (maxUsers includes all roles)
+      // Each role type has its own pricing: admin €6, manager €4, employee €2
+      // No per-role limits - only total user limit matters
       const currentRoleCount = usersByRole[requestedRole] || 0;
       
-      // Check total user limit first
+      // Check total user limit
       if (subscription?.maxUsers && currentUserCount >= subscription.maxUsers) {
         return res.status(400).json({ 
-          message: `Límite de usuarios alcanzado. Tu plan permite máximo ${subscription.maxUsers} usuarios y actualmente tienes ${currentUserCount}.` 
-        });
-      }
-      
-      // Check role-specific limits
-      if (roleLimit !== 999 && currentRoleCount >= roleLimit) {
-        const roleNames: Record<string, string> = {
-          admin: 'administradores',
-          manager: 'managers',
-          employee: 'empleados'
-        };
-        
-        return res.status(400).json({ 
-          message: `Límite de ${roleNames[requestedRole]} alcanzado. Tu plan ${planName.toUpperCase()} permite máximo ${roleLimit} ${roleNames[requestedRole]} y actualmente tienes ${currentRoleCount}.` 
+          message: `Límite de usuarios alcanzado. Tu suscripción permite máximo ${subscription.maxUsers} usuarios y actualmente tienes ${currentUserCount}. Añade más usuarios desde la Tienda.` 
         });
       }
 
@@ -9542,7 +9509,7 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
         customer: stripeCustomerId,
         payment_method_types: ['card'],
         usage: 'off_session', // Will be charged after trial ends
-        description: `Verificación de tarjeta para Plan ${company.subscription.plan} - ${company.name}`,
+        description: `Verificación de tarjeta para Oficaz - ${company.name}`,
       });
 
       res.json({
@@ -9690,7 +9657,7 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
           metadata: {
             userId: userId.toString(),
             companyId: company.id.toString(),
-            plan: company.subscription.plan,
+            plan: 'oficaz',
             contact_name: user.fullName,
             tax_id: company.cif || 'B00000000'
           }
@@ -9722,7 +9689,7 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
 
       // Create product first
       const product = await stripe.products.create({
-        name: `Plan ${company.subscription.plan.charAt(0).toUpperCase() + company.subscription.plan.slice(1)} - ${company.name}`,
+        name: `Oficaz - ${company.name}`,
       });
 
       // Create a price for that product
@@ -9757,11 +9724,9 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
         
         // Store the payment intent in company custom_features for later capture
         // Save original custom price for final billing even if authorization was higher
+        // In modular system, use calculated price from addons + users, or custom override
         const actualCustomPrice = company.subscription.customMonthlyPrice ? Number(company.subscription.customMonthlyPrice) : null;
-        const actualStandardPrice = company.subscription.plan === 'pro' ? 39.95 : 
-                                   company.subscription.plan === 'basic' ? 19.95 : 
-                                   company.subscription.plan === 'master' ? 99.95 : 39.95;
-        const originalCustomPrice = actualCustomPrice || actualStandardPrice;
+        const originalCustomPrice = actualCustomPrice || monthlyPrice;
         await db.execute(sql`
           UPDATE companies 
           SET custom_features = COALESCE(custom_features, '{}') || jsonb_build_object(

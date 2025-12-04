@@ -240,7 +240,7 @@ export default function EmployeesSimple() {
     if (maxUsers && currentUserCount >= maxUsers) {
       toast({
         title: 'Límite de usuarios alcanzado',
-        description: `No puedes añadir más usuarios. Tu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.`,
+        description: `No puedes añadir más usuarios. Tu suscripción permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}. Añade más desde la Tienda.`,
         variant: 'destructive',
       });
       return;
@@ -546,7 +546,6 @@ export default function EmployeesSimple() {
               
               const maxUsers = freshSubscription?.maxUsers || freshSubscription?.max_users || freshSubscription?.dynamic_max_users;
               const currentUserCount = employeeList?.length || 0;
-              const planName = freshSubscription?.plan || 'basic';
               
               // Count users by role for validation
               const usersByRole = (employeeList || []).reduce((acc: Record<string, number>, emp: any) => {
@@ -556,15 +555,14 @@ export default function EmployeesSimple() {
               
               console.log('USER LIMIT CHECK:', { 
                 maxUsers, 
-                currentUserCount, 
-                planName,
+                currentUserCount,
                 usersByRole,
                 freshSubscription 
               });
               
               // Check total user limit first
               if (maxUsers && currentUserCount >= maxUsers) {
-                setLimitMessage(`No puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
+                setLimitMessage(`No puedes añadir más usuarios.\n\nTu suscripción permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nAñade más usuarios desde la Tienda.`);
                 setShowLimitDialog(true);
                 return; // Do NOT open modal
               }
@@ -1604,7 +1602,7 @@ export default function EmployeesSimple() {
                   Límite de usuarios alcanzado
                 </DialogTitle>
                 <DialogDescription className="text-sm text-gray-600 dark:text-gray-400">
-                  No puedes crear más usuarios en tu plan actual.
+                  No puedes crear más usuarios con tu suscripción actual.
                 </DialogDescription>
               </div>
             </div>

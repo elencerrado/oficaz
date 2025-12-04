@@ -222,7 +222,7 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
       
       toast({
         title: "¡Suscripción activada!",
-        description: `Tu plan ${actualPlan?.toUpperCase()} se ha activado correctamente.`,
+        description: `Tu suscripción Oficaz se ha activado correctamente.`,
       });
       
       // Call the parent's onPaymentSuccess callback if provided
