@@ -106,10 +106,10 @@ export default function EmployeesSimple() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Query for manager permissions
+  // Query for manager permissions - fetch for both admin and manager
   const { data: permissionsData } = useQuery({
     queryKey: ['/api/settings/manager-permissions'],
-    enabled: user?.role === 'admin',
+    enabled: user?.role === 'admin' || user?.role === 'manager',
   });
 
   // Update local state when permissions are fetched
@@ -248,6 +248,41 @@ export default function EmployeesSimple() {
 
   const handleDeleteEmployee = () => {
     if (deleteConfirmText === 'ELIMINAR PERMANENTEMENTE' && selectedEmployee) {
+      // Check manager permissions for deletion
+      if (user?.role === 'manager') {
+        const perms = permissionsData?.managerPermissions || managerPermissions;
+        
+        // Check if manager can delete employees
+        if (selectedEmployee.role === 'employee' && !perms.canCreateDeleteEmployees) {
+          toast({
+            title: 'Sin Permisos',
+            description: 'No tienes permiso para eliminar empleados. Contacta con tu administrador.',
+            variant: 'destructive',
+          });
+          return;
+        }
+        
+        // Check if manager can delete managers
+        if (selectedEmployee.role === 'manager' && !perms.canCreateDeleteManagers) {
+          toast({
+            title: 'Sin Permisos',
+            description: 'No tienes permiso para eliminar managers. Contacta con tu administrador.',
+            variant: 'destructive',
+          });
+          return;
+        }
+        
+        // Managers can never delete admins
+        if (selectedEmployee.role === 'admin') {
+          toast({
+            title: 'Sin Permisos',
+            description: 'Solo los administradores pueden eliminar otros administradores.',
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+      
       deleteEmployeeMutation.mutate(selectedEmployee.id);
     }
   };
@@ -262,6 +297,41 @@ export default function EmployeesSimple() {
         variant: 'destructive',
       });
       return;
+    }
+
+    // Check manager permissions
+    if (user?.role === 'manager') {
+      const perms = permissionsData?.managerPermissions || managerPermissions;
+      
+      // Check if manager can create employees
+      if (newEmployee.role === 'employee' && !perms.canCreateDeleteEmployees) {
+        toast({
+          title: 'Sin Permisos',
+          description: 'No tienes permiso para crear empleados. Contacta con tu administrador.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      // Check if manager can create managers
+      if (newEmployee.role === 'manager' && !perms.canCreateDeleteManagers) {
+        toast({
+          title: 'Sin Permisos',
+          description: 'No tienes permiso para crear managers. Contacta con tu administrador.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      // Managers can never create admins
+      if (newEmployee.role === 'admin') {
+        toast({
+          title: 'Sin Permisos',
+          description: 'Solo los administradores pueden crear otros administradores.',
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     // Validate at least one email is provided
