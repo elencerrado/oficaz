@@ -474,9 +474,15 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
               <div className="flex-1">
                 <p className="text-white text-[7px] font-medium">Reunión con cliente</p>
                 <p className="text-gray-400 text-[6px]">Preparar documentos</p>
-                <div className="flex items-center gap-1 mt-1">
-                  <span className="bg-yellow-500/20 text-yellow-400 text-[5px] px-1.5 py-0.5 rounded">Hace 2 días</span>
-                  <span className="bg-green-500/20 text-green-400 text-[5px] px-1.5 py-0.5 rounded">Activo</span>
+                <div className="flex items-center justify-between mt-1">
+                  <div className="flex items-center gap-1">
+                    <span className="bg-yellow-500/20 text-yellow-400 text-[5px] px-1.5 py-0.5 rounded">Hace 2 días</span>
+                    <span className="bg-green-500/20 text-green-400 text-[5px] px-1.5 py-0.5 rounded">Activo</span>
+                  </div>
+                  <div className="flex -space-x-1.5">
+                    <img src={avatarWoman01} alt="" className="w-4 h-4 rounded-full border border-[#1a2942] object-cover" />
+                    <img src={avatarMan01} alt="" className="w-4 h-4 rounded-full border border-[#1a2942] object-cover" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -1590,9 +1596,15 @@ export default function Landing() {
                                 <div className="flex-1">
                                   <p className="text-white text-[8px] font-medium">Reunión con cliente</p>
                                   <p className="text-gray-400 text-[6px] mt-0.5">Preparar documentos y revisar presupuesto</p>
-                                  <div className="flex items-center gap-1.5 mt-1">
-                                    <span className="bg-yellow-500/20 text-yellow-400 text-[5px] px-1.5 py-0.5 rounded">Hace 2 días</span>
-                                    <span className="bg-green-500/20 text-green-400 text-[5px] px-1.5 py-0.5 rounded">Activo</span>
+                                  <div className="flex items-center justify-between mt-1">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="bg-yellow-500/20 text-yellow-400 text-[5px] px-1.5 py-0.5 rounded">Hace 2 días</span>
+                                      <span className="bg-green-500/20 text-green-400 text-[5px] px-1.5 py-0.5 rounded">Activo</span>
+                                    </div>
+                                    <div className="flex -space-x-1.5">
+                                      <img src={avatarWoman01} alt="" className="w-4 h-4 rounded-full border border-[#1a2942] object-cover" />
+                                      <img src={avatarMan01} alt="" className="w-4 h-4 rounded-full border border-[#1a2942] object-cover" />
+                                    </div>
                                   </div>
                                 </div>
                               </div>
