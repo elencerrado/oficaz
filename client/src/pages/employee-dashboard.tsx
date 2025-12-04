@@ -1045,7 +1045,7 @@ export default function EmployeeDashboard() {
       icon: MessageSquare, 
       title: 'Mensajes', 
       route: `/${companyAlias}/mensajes`,
-      notification: hasNewMessages,
+      notification: !isEmployeeViewMode && hasNewMessages,
       notificationType: 'green',
       feature: 'messages' as const
     },
