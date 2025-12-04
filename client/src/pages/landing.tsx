@@ -39,7 +39,8 @@ import {
   Bell,
   Square,
   Eye,
-  Phone
+  Phone,
+  MapPin
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
@@ -1286,36 +1287,43 @@ export default function Landing() {
                         >
                         <div className="p-3 h-full bg-[#0a1628]">
                           <h3 className="text-white font-bold text-sm mb-0.5">Cuadrante</h3>
-                          <p className="text-gray-400 text-[8px] mb-3">Turnos de la semana</p>
+                          <p className="text-gray-400 text-[8px] mb-2">Consulta tus turnos asignados</p>
                           
-                          <div className="bg-[#1a2942] rounded-xl p-2 mb-3">
-                            <div className="grid grid-cols-7 gap-0.5 text-center mb-2">
-                              {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((d, i) => (
-                                <span key={i} className="text-gray-400 text-[7px]">{d}</span>
-                              ))}
+                          {/* Week navigation */}
+                          <div className="bg-[#1a2942] rounded-lg p-1.5 mb-2 flex items-center justify-between">
+                            <span className="text-gray-500 text-[8px]">{'<'}</span>
+                            <span className="text-white text-[8px] font-medium">Semana 29 - 5 oct</span>
+                            <span className="text-gray-500 text-[8px]">{'>'}</span>
+                          </div>
+                          
+                          {/* Day with shifts */}
+                          <div className="bg-[#1a2942] rounded-xl p-2 mb-2">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <p className="text-white text-[8px] font-semibold">Lunes <span className="text-gray-400 font-normal">29 sep</span></p>
+                              <p className="text-gray-500 text-[7px]">2 turnos</p>
                             </div>
                             <div className="space-y-1">
-                              {['M', 'T', 'N'].map((t, i) => (
-                                <div key={t} className="grid grid-cols-7 gap-0.5">
-                                  {[1, 1, 0, 1, 1, 0, 0].map((active, j) => (
-                                    <div 
-                                      key={j} 
-                                      className={`h-3 rounded text-[5px] flex items-center justify-center ${
-                                        active ? 'bg-[#007AFF] text-white' : 'bg-[#0a1628]'
-                                      }`}
-                                    >
-                                      {active ? t : ''}
-                                    </div>
-                                  ))}
-                                </div>
-                              ))}
+                              <div className="flex items-center gap-1.5 bg-red-500 rounded-md px-2 py-1">
+                                <span className="text-white text-[7px] flex-1">Mañana</span>
+                                <span className="text-white/80 text-[6px]">09:00-14:00</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 bg-[#007AFF] rounded-md px-2 py-1">
+                                <span className="text-white text-[7px] flex-1">Tarde</span>
+                                <span className="text-white/80 text-[6px]">15:00-20:00</span>
+                              </div>
                             </div>
                           </div>
                           
-                          <button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-2.5 text-center">
-                            <Zap className="w-4 h-4 text-white mx-auto mb-0.5" />
-                            <p className="text-white font-semibold text-[8px]">Generar con IA</p>
-                          </button>
+                          {/* Location link */}
+                          <div className="bg-[#1a2942] rounded-lg p-2 flex items-center gap-2">
+                            <div className="w-5 h-5 bg-green-500/20 rounded-full flex items-center justify-center">
+                              <MapPin className="w-3 h-3 text-green-400" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-white text-[7px]">Oficina Central</p>
+                              <p className="text-[#007AFF] text-[6px]">Ver en Maps →</p>
+                            </div>
+                          </div>
                         </div>
                         </motion.div>
                       )}
