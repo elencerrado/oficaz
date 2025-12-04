@@ -1041,14 +1041,14 @@ export default function EmployeeDashboard() {
       notificationType: hasOverdueReminders ? 'red' : (hasActiveReminders ? 'blue' : 'none'),
       feature: 'reminders' as const
     },
-    { 
+    ...(!isEmployeeViewMode ? [{ 
       icon: MessageSquare, 
       title: 'Mensajes', 
       route: `/${companyAlias}/mensajes`,
-      notification: !isEmployeeViewMode && hasNewMessages,
+      notification: hasNewMessages,
       notificationType: 'green',
       feature: 'messages' as const
-    },
+    }] : []),
     ...(user?.workReportMode === 'manual' || user?.workReportMode === 'both' || user?.workReportMode === 'on_clockout' ? [
       { 
         icon: ClipboardList, 
