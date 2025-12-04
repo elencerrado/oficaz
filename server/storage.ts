@@ -220,6 +220,8 @@ export interface IStorage {
   // Account deletion operations
   scheduleCompanyDeletion(companyId: number): Promise<boolean>;
   cancelAccountDeletion(companyId: number): Promise<boolean>;
+  deleteCompanyPermanently(companyId: number): Promise<boolean>;
+  getCompaniesReadyForDeletion(): Promise<any[]>;
   
   // Company subscription operations
   getCompanySubscription(companyId: number): Promise<any | undefined>;
@@ -2530,6 +2532,144 @@ export class DrizzleStorage implements IStorage {
     } catch (error) {
       console.error('Error canceling company deletion:', error);
       return false;
+    }
+  }
+
+  // ⚠️ CRITICAL: Permanently delete all company data after 30-day grace period
+  async deleteCompanyPermanently(companyId: number): Promise<boolean> {
+    try {
+      console.log(`🗑️ PERMANENT DELETION: Starting for company ${companyId}`);
+      
+      // Get all user IDs for this company (needed for related tables)
+      const companyUsers = await db.select({ id: schema.users.id })
+        .from(schema.users)
+        .where(eq(schema.users.companyId, companyId));
+      const userIds = companyUsers.map(u => u.id);
+      
+      console.log(`🗑️ Found ${userIds.length} users to delete for company ${companyId}`);
+      
+      // Delete in correct order (respecting foreign keys)
+      // 1. Delete refresh tokens for all users
+      if (userIds.length > 0) {
+        await db.delete(schema.refreshTokens)
+          .where(sql`user_id = ANY(ARRAY[${sql.join(userIds.map(id => sql`${id}`), sql`, `)}]::integer[])`);
+        console.log(`   ✅ Deleted refresh tokens`);
+      }
+      
+      // 2. Delete push subscriptions
+      if (userIds.length > 0) {
+        await db.delete(schema.pushSubscriptions)
+          .where(sql`user_id = ANY(ARRAY[${sql.join(userIds.map(id => sql`${id}`), sql`, `)}]::integer[])`);
+        console.log(`   ✅ Deleted push subscriptions`);
+      }
+      
+      // 3. Delete system notifications
+      if (userIds.length > 0) {
+        await db.delete(schema.systemNotifications)
+          .where(sql`user_id = ANY(ARRAY[${sql.join(userIds.map(id => sql`${id}`), sql`, `)}]::integer[])`);
+        console.log(`   ✅ Deleted system notifications`);
+      }
+      
+      // 4. Delete messages
+      await db.delete(schema.messages)
+        .where(eq(schema.messages.companyId, companyId));
+      console.log(`   ✅ Deleted messages`);
+      
+      // 5. Delete reminders
+      await db.delete(schema.reminders)
+        .where(eq(schema.reminders.companyId, companyId));
+      console.log(`   ✅ Deleted reminders`);
+      
+      // 6. Delete work sessions (time tracking)
+      await db.delete(schema.workSessions)
+        .where(eq(schema.workSessions.companyId, companyId));
+      console.log(`   ✅ Deleted work sessions`);
+      
+      // 7. Delete documents
+      await db.delete(schema.documents)
+        .where(eq(schema.documents.companyId, companyId));
+      console.log(`   ✅ Deleted documents`);
+      
+      // 8. Delete vacation requests
+      await db.delete(schema.vacationRequests)
+        .where(eq(schema.vacationRequests.companyId, companyId));
+      console.log(`   ✅ Deleted vacation requests`);
+      
+      // 9. Delete audit log
+      await db.delete(schema.auditLog)
+        .where(eq(schema.auditLog.companyId, companyId));
+      console.log(`   ✅ Deleted audit log`);
+      
+      // 10. Delete modification requests
+      await db.delete(schema.modificationRequests)
+        .where(eq(schema.modificationRequests.companyId, companyId));
+      console.log(`   ✅ Deleted modification requests`);
+      
+      // 11. Delete company addons
+      await db.delete(schema.companyAddons)
+        .where(eq(schema.companyAddons.companyId, companyId));
+      console.log(`   ✅ Deleted company addons`);
+      
+      // 12. Delete vacation info
+      if (userIds.length > 0) {
+        await db.delete(schema.vacationInfo)
+          .where(sql`user_id = ANY(ARRAY[${sql.join(userIds.map(id => sql`${id}`), sql`, `)}]::integer[])`);
+        console.log(`   ✅ Deleted vacation info`);
+      }
+      
+      // 13. Delete subscriptions
+      await db.delete(schema.subscriptions)
+        .where(eq(schema.subscriptions.companyId, companyId));
+      console.log(`   ✅ Deleted subscriptions`);
+      
+      // 14. Delete users
+      await db.delete(schema.users)
+        .where(eq(schema.users.companyId, companyId));
+      console.log(`   ✅ Deleted ${userIds.length} users`);
+      
+      // 15. Mark company as permanently deleted (soft delete for audit trail)
+      await db.update(schema.companies)
+        .set({
+          isDeleted: true,
+          name: `[DELETED] ${companyId}`,
+          email: `deleted_${companyId}@deleted.local`,
+          cif: `DELETED_${companyId}`,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.companies.id, companyId));
+      console.log(`   ✅ Marked company as deleted`);
+      
+      console.log(`🗑️ PERMANENT DELETION COMPLETE for company ${companyId}`);
+      return true;
+    } catch (error) {
+      console.error(`❌ Error permanently deleting company ${companyId}:`, error);
+      return false;
+    }
+  }
+
+  // Get companies that have passed their 30-day grace period
+  async getCompaniesReadyForDeletion(): Promise<any[]> {
+    try {
+      const now = new Date();
+      const companies = await db.select({
+        id: schema.companies.id,
+        name: schema.companies.name,
+        email: schema.companies.email,
+        deletionWillOccurAt: schema.companies.deletionWillOccurAt
+      })
+      .from(schema.companies)
+      .where(
+        and(
+          eq(schema.companies.scheduledForDeletion, true),
+          eq(schema.companies.isDeleted, false),
+          sql`${schema.companies.deletionWillOccurAt} <= ${now.toISOString()}`
+        )
+      );
+      
+      return companies;
+    } catch (error) {
+      console.error('Error getting companies ready for deletion:', error);
+      return [];
     }
   }
 
