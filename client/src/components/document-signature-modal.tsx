@@ -287,9 +287,37 @@ export function DocumentSignatureModal({
 
   useEffect(() => {
     if (isOpen && showDrawMode) {
-      setTimeout(() => setupCanvas(), 100);
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      // Initial setup after a small delay for dialog animation to start
+      const initialTimer = setTimeout(() => setupCanvas(), 100);
+      
+      // Use ResizeObserver to re-setup canvas when modal animation completes
+      // This fixes the touch offset issue caused by CSS transforms during animation
+      let lastWidth = 0;
+      let lastHeight = 0;
+      
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const { width, height } = entry.contentRect;
+          // Only re-setup if size actually changed and user hasn't started drawing
+          if ((width !== lastWidth || height !== lastHeight) && !hasDrawnSignature) {
+            lastWidth = width;
+            lastHeight = height;
+            setupCanvas();
+          }
+        }
+      });
+      
+      resizeObserver.observe(canvas);
+      
+      return () => {
+        clearTimeout(initialTimer);
+        resizeObserver.disconnect();
+      };
     }
-  }, [isOpen, showDrawMode, setupCanvas]);
+  }, [isOpen, showDrawMode, setupCanvas, hasDrawnSignature]);
 
   useEffect(() => {
     if (isOpen) {
