@@ -7638,6 +7638,24 @@ Responde directamente a este email para contactar con la persona.
         updates
       });
 
+      // 🔒 SUBSCRIPTION LIMIT CHECK: Verify role change doesn't exceed subscription limits
+      if (updates.role && updates.role !== user.role) {
+        const newRole = updates.role as 'admin' | 'manager' | 'employee';
+        const roleCheck = await storage.canAddUserOfRole(req.user!.companyId, newRole);
+        
+        if (!roleCheck.canAdd) {
+          const roleNames: Record<string, string> = {
+            admin: 'administradores',
+            manager: 'managers',
+            employee: 'empleados'
+          };
+          console.log(`🚨 SUBSCRIPTION LIMIT: Cannot change role to ${newRole}. Current: ${roleCheck.currentCount}, Limit: ${roleCheck.limit}`);
+          return res.status(403).json({ 
+            error: `Has alcanzado el límite de ${roleNames[newRole]} contratados (${roleCheck.limit}). Para añadir más ${roleNames[newRole]}, actualiza tu suscripción en la Tienda.`
+          });
+        }
+      }
+
       // Only allow specific fields to be updated by admin/manager
       const allowedUpdates: any = {};
       
