@@ -13318,19 +13318,10 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
           const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
           
           if (paymentIntent.status === 'requires_capture') {
-            // Get the actual billing amount (may be different from authorization amount)
-            const actualBillingCents = t.custom_features?.actual_billing_amount || paymentIntent.amount;
+            // ⚠️ CRITICAL: Calculate CURRENT price at capture time (not authorization time)
+            // This ensures if customer removed addons during trial, they pay the lower amount
             
-            console.log(`💰 CAPTURING payment for ${t.company_name}: authorized=€${paymentIntent.amount/100}, billing=€${actualBillingCents/100}`);
-            
-            // Capture the payment (Stripe allows partial capture if actual amount is lower)
-            const capturedPayment = await stripe.paymentIntents.capture(paymentIntentId, {
-              amount_to_capture: actualBillingCents
-            });
-            console.log(`✅ PAYMENT CAPTURED: €${capturedPayment.amount/100} for ${t.company_name}`);
-            
-            // NEW MODULAR PRICING: Calculate total from addons + user seats
-            // NOTE: ALL addons are paid (time_tracking, vacation, schedules = €3, etc.)
+            // 1. Get CURRENT active addons (may have changed since authorization)
             const companyAddons = await storage.getCompanyAddons(t.company_id);
             const activeAddons = companyAddons.filter(ca => ca.status === 'active' || ca.status === 'pending_cancel');
             
@@ -13351,7 +13342,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
               seatPriceMap[sp.roleType] = parseFloat(sp.monthlyPrice?.toString() || '0');
             }
             
-            // 4. Calculate user seats total
+            // 4. Calculate CURRENT user seats total
             const adminSeats = (companySubscription?.extraAdmins || 0) + 1;
             const managerSeats = companySubscription?.extraManagers || 0;
             const employeeSeats = companySubscription?.extraEmployees || 0;
@@ -13360,7 +13351,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
               (managerSeats * (seatPriceMap['manager'] || 4)) +
               (employeeSeats * (seatPriceMap['employee'] || 2));
             
-            // 5. Calculate total (check for custom price first)
+            // 5. Calculate CURRENT total (check for custom price first)
             const customPrice = companySubscription?.customMonthlyPrice ? Number(companySubscription.customMonthlyPrice) : null;
             let monthlyPrice = customPrice && customPrice > 0 ? customPrice : (addonsTotalPrice + seatsTotalPrice);
             
@@ -13369,7 +13360,23 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
               monthlyPrice = 9;
             }
             
+            // Convert to cents for Stripe
+            const currentBillingCents = Math.round(monthlyPrice * 100);
+            const authorizedCents = paymentIntent.amount;
+            
             console.log(`💰 MODULAR PRICING for ${t.company_name}: ${activeAddons.length} addons (€${addonsTotalPrice.toFixed(2)}) + ${adminSeats}a/${managerSeats}m/${employeeSeats}e seats (€${seatsTotalPrice.toFixed(2)}) = €${monthlyPrice.toFixed(2)}/month`);
+            
+            // ⚠️ CRITICAL: Capture the CURRENT price, not the authorized amount
+            // Stripe allows partial capture if current amount is lower than authorized
+            // If current > authorized, we can only capture up to authorized (edge case)
+            const amountToCapture = Math.min(currentBillingCents, authorizedCents);
+            
+            console.log(`💰 CAPTURING payment for ${t.company_name}: authorized=€${authorizedCents/100}, current=€${currentBillingCents/100}, capturing=€${amountToCapture/100}`);
+            
+            const capturedPayment = await stripe.paymentIntents.capture(paymentIntentId, {
+              amount_to_capture: amountToCapture
+            });
+            console.log(`✅ PAYMENT CAPTURED: €${capturedPayment.amount/100} for ${t.company_name}`);
             
             // Build subscription items array - each addon and user type as separate item
             const subscriptionItems: Array<{ price: string; quantity: number; metadata?: Record<string, string> }> = [];
