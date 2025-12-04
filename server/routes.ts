@@ -13555,11 +13555,26 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         } catch (error) {
           console.error(`❌ Error processing trial for company ${t.company_id}:`, error);
           
-          // If payment failed, block the account
+          // If payment failed, block the account and schedule for deletion in 30 days
           await db.execute(sql`
             UPDATE subscriptions SET status = 'blocked', is_trial_active = false 
             WHERE company_id = ${t.company_id}
           `);
+          
+          // Schedule company for automatic deletion in 30 days
+          const deletionDate = new Date();
+          deletionDate.setDate(deletionDate.getDate() + 30);
+          
+          await db.execute(sql`
+            UPDATE companies 
+            SET 
+              scheduled_for_deletion = true,
+              deletion_scheduled_at = now(),
+              deletion_will_occur_at = ${deletionDate.toISOString()}
+            WHERE id = ${t.company_id}
+          `);
+          
+          console.log(`⏰ Company ${t.company_name} scheduled for deletion on ${deletionDate.toISOString()} (payment failed)`);
           
           errorCount++;
         }
@@ -13595,6 +13610,15 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
       for (const company of companiesReadyForDeletion) {
         try {
           console.log(`🗑️ Processing permanent deletion for company: ${company.name} (ID: ${company.id})`);
+          
+          // Double-check: Don't delete if company has an active subscription (they paid after being scheduled)
+          const subscription = await storage.getCompanySubscription(company.id);
+          if (subscription?.stripeSubscriptionId && subscription?.status === 'active') {
+            console.log(`⚠️ SKIPPING deletion for ${company.name}: Company has active subscription (paid after being scheduled)`);
+            // Cancel the scheduled deletion since they paid
+            await storage.cancelCompanyDeletion(company.id);
+            continue;
+          }
           
           const success = await storage.deleteCompanyPermanently(company.id);
           
