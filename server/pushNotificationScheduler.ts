@@ -31,6 +31,28 @@ interface WorkStatus {
 const checkedAlarms = new Map<string, Date>();
 const sentIncompleteSessionNotifications = new Map<string, Date>(); // Track daily incomplete session notifications
 
+// Auto-process expired trials every 5 minutes
+async function processExpiredTrials(): Promise<void> {
+  try {
+    const response = await fetch(`http://localhost:5000/api/subscription/auto-trial-process`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      if (result.processedCount > 0 || result.errorCount > 0) {
+        console.log(`🏦 AUTO-TRIAL SCHEDULER: ${result.processedCount} processed, ${result.errorCount} errors`);
+      }
+    }
+  } catch (error: any) {
+    // Silent fail - server might be restarting
+    if (!error.message?.includes('ECONNREFUSED')) {
+      console.error('❌ Auto-trial processing error:', error.message);
+    }
+  }
+}
+
 // 🔒 CRITICAL iOS SAFARI BUG WORKAROUND: Prevent duplicate push sends within 10 seconds
 // Maps "userId-endpoint-notificationType-minute" -> timestamp of last send
 const recentPushSends = new Map<string, number>();
@@ -1244,6 +1266,11 @@ export function startPushNotificationScheduler() {
     clearInterval(global.pushSchedulerReminderInterval);
     global.pushSchedulerReminderInterval = undefined;
   }
+  if (global.pushSchedulerTrialInterval) {
+    console.log(`🧹 Forcefully clearing old trial interval (hot reload cleanup) [${processId}]`);
+    clearInterval(global.pushSchedulerTrialInterval);
+    global.pushSchedulerTrialInterval = undefined;
+  }
   
   // Mark as running BEFORE creating intervals
   global.pushSchedulerRunning = true;
@@ -1272,13 +1299,20 @@ export function startPushNotificationScheduler() {
     });
   }, 60000); // Every 1 minute
   
+  // Check every 5 minutes for expired trials to auto-process payments
+  global.pushSchedulerTrialInterval = setInterval(() => {
+    processExpiredTrials().catch(err => {
+      console.error('❌ Error processing expired trials:', err);
+    });
+  }, 5 * 60 * 1000); // Every 5 minutes
+  
   // Mark as running
   global.pushSchedulerRunning = true;
   
   // ⚠️ DO NOT run immediately on start to avoid duplicate notifications
   // Let the interval handle all checks consistently
   
-  console.log('✅ Push Notification Scheduler started - checking alarms every 30s, incomplete sessions every 5min, reminders every 1min');
+  console.log('✅ Push Notification Scheduler started - checking alarms every 30s, incomplete sessions every 5min, reminders every 1min, expired trials every 5min');
   
   return { 
     alarmInterval: global.pushSchedulerAlarmInterval, 
