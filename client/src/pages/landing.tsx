@@ -1039,7 +1039,16 @@ export default function Landing() {
                     
                     {/* Dynamic Content based on selected addon */}
                     <div className="pt-8 h-full overflow-hidden">
+                      <AnimatePresence mode="wait">
                       {previewAddon === 'time_tracking' && (
+                        <motion.div
+                          key="time_tracking"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
                         <div className="p-3 h-full bg-[#0a1628]">
                           {/* Header */}
                           <h3 className="text-white font-bold text-sm mb-0.5">Control de Tiempo</h3>
@@ -1095,9 +1104,18 @@ export default function Landing() {
                             </div>
                           </div>
                         </div>
+                        </motion.div>
                       )}
                       
                       {previewAddon === 'vacation' && (
+                        <motion.div
+                          key="vacation"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
                         <div className="p-3 h-full bg-[#0a1628]">
                           <h3 className="text-white font-bold text-sm mb-0.5">Mis Vacaciones</h3>
                           <p className="text-gray-400 text-[8px] mb-3">Solicita y gestiona tus días</p>
@@ -1132,9 +1150,18 @@ export default function Landing() {
                             </div>
                           </div>
                         </div>
+                        </motion.div>
                       )}
                       
                       {previewAddon === 'employees' && (
+                        <motion.div
+                          key="employees"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
                         <div className="p-3 h-full bg-[#0a1628]">
                           <h3 className="text-white font-bold text-sm mb-0.5">Mi Equipo</h3>
                           <p className="text-gray-400 text-[8px] mb-2">Gestiona tu plantilla</p>
@@ -1185,9 +1212,18 @@ export default function Landing() {
                             ))}
                           </div>
                         </div>
+                        </motion.div>
                       )}
                       
                       {previewAddon === 'schedules' && (
+                        <motion.div
+                          key="schedules"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
                         <div className="p-3 h-full bg-[#0a1628]">
                           <h3 className="text-white font-bold text-sm mb-0.5">Cuadrante</h3>
                           <p className="text-gray-400 text-[8px] mb-3">Turnos de la semana</p>
@@ -1221,9 +1257,18 @@ export default function Landing() {
                             <p className="text-white font-semibold text-[8px]">Generar con IA</p>
                           </button>
                         </div>
+                        </motion.div>
                       )}
                       
                       {previewAddon === 'messages' && (
+                        <motion.div
+                          key="messages"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
                         <div className="p-3 h-full bg-[#0a1628]">
                           <h3 className="text-white font-bold text-sm mb-0.5">Mensajes</h3>
                           <p className="text-gray-400 text-[8px] mb-3">Conversaciones</p>
@@ -1252,9 +1297,18 @@ export default function Landing() {
                             ))}
                           </div>
                         </div>
+                        </motion.div>
                       )}
                       
                       {previewAddon === 'reminders' && (
+                        <motion.div
+                          key="reminders"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
                         <div className="p-3 h-full bg-[#0a1628]">
                           <h3 className="text-white font-bold text-sm mb-0.5">Recordatorios</h3>
                           <p className="text-gray-400 text-[8px] mb-3">Tus tareas pendientes</p>
@@ -1281,9 +1335,18 @@ export default function Landing() {
                             <p className="text-white font-semibold text-[8px]">+ Nuevo recordatorio</p>
                           </button>
                         </div>
+                        </motion.div>
                       )}
                       
                       {previewAddon === 'documents' && (
+                        <motion.div
+                          key="documents"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
                         <div className="p-3 h-full bg-[#0a1628]">
                           <h3 className="text-white font-bold text-sm mb-0.5">Documentos</h3>
                           <p className="text-gray-400 text-[8px] mb-3">Tus archivos</p>
@@ -1307,9 +1370,18 @@ export default function Landing() {
                             ))}
                           </div>
                         </div>
+                        </motion.div>
                       )}
                       
                       {previewAddon === 'work_reports' && (
+                        <motion.div
+                          key="work_reports"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
                         <div className="p-3 h-full bg-[#0a1628]">
                           <h3 className="text-white font-bold text-sm mb-0.5">Partes de Trabajo</h3>
                           <p className="text-gray-400 text-[8px] mb-3">Documenta tus servicios</p>
@@ -1336,9 +1408,18 @@ export default function Landing() {
                             <p className="text-white font-semibold text-[8px]">✍️ Firmar y enviar</p>
                           </button>
                         </div>
+                        </motion.div>
                       )}
                       
                       {previewAddon === 'ai_assistant' && (
+                        <motion.div
+                          key="ai_assistant"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
                         <div className="p-3 h-full bg-[#0a1628] flex flex-col">
                           <h3 className="text-white font-bold text-sm mb-0.5">OficazIA</h3>
                           <p className="text-gray-400 text-[8px] mb-3">Tu asistente inteligente</p>
@@ -1379,7 +1460,9 @@ export default function Landing() {
                             </button>
                           </div>
                         </div>
+                        </motion.div>
                       )}
+                      </AnimatePresence>
                     </div>
                   </div>
                   
