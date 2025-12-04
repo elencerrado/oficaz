@@ -1206,7 +1206,7 @@ export default function Landing() {
                                 {/* Card content */}
                                 <div 
                                   className={`bg-[#1a2942] p-1.5 flex items-center gap-2 relative transition-transform ${
-                                    emp.swiped ? 'translate-x-[-20px]' : ''
+                                    emp.swiped ? 'translate-x-[-20px] rounded-r-lg' : ''
                                   }`}
                                 >
                                   <img 
