@@ -9576,11 +9576,19 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
       // 1. Get all active addons for this company and sum their prices
       const companyAddons = await storage.getCompanyAddons(company.id);
       const activeAddons = companyAddons.filter(ca => ca.status === 'active' || ca.isActive);
-      const addonsTotalPrice = activeAddons.reduce((sum, ca) => {
+      
+      // Separate free addons from paid addons - only paid addons are billed
+      const paidAddons = activeAddons.filter(ca => {
+        const price = parseFloat(ca.addon?.monthlyPrice?.toString() || '0');
+        const isFree = ca.addon?.isFreeFeature === true;
+        return !isFree && price > 0;
+      });
+      
+      const addonsTotalPrice = paidAddons.reduce((sum, ca) => {
         const addonPrice = parseFloat(ca.addon?.monthlyPrice?.toString() || '0');
         return sum + addonPrice;
       }, 0);
-      console.log(`💰 MODULAR: ${activeAddons.length} addons = €${addonsTotalPrice.toFixed(2)}/month`);
+      console.log(`💰 MODULAR: ${activeAddons.length} addons total (${paidAddons.length} paid) = €${addonsTotalPrice.toFixed(2)}/month`);
       
       // 2. Get seat pricing and calculate user seats total
       const seatPricing = await storage.getAllSeatPricing();
@@ -9754,21 +9762,18 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
         // Check for SuperAdmin custom price override
         const customPriceOverride = company.subscription.customMonthlyPrice ? Number(company.subscription.customMonthlyPrice) : null;
         
-        // Validate minimum requirements: 1 admin (€6) + 1 addon (€3) = €9 minimum
-        if (activeAddons.length === 0) {
-          console.error('🚨 No addons selected - minimum 1 addon required');
-          return res.status(400).json({ message: 'Se requiere al menos una funcionalidad para activar la suscripción' });
-        }
+        // Validate minimum requirements: 1 admin (€6) required
+        // Note: Free addons don't count towards billing, so we only check admin seats
         if (adminSeats < 1) {
           console.error('🚨 No admin seats - minimum 1 admin required');
           return res.status(400).json({ message: 'Se requiere al menos un administrador para activar la suscripción' });
         }
         
-        // Build subscription items array - each addon and user type as separate item
+        // Build subscription items array - each PAID addon and user type as separate item
         const subscriptionItems: Array<{ price: string; quantity: number; metadata?: Record<string, string> }> = [];
         
-        // 1. Create items for each active addon
-        for (const companyAddon of activeAddons) {
+        // 1. Create items for each PAID addon only (skip free addons)
+        for (const companyAddon of paidAddons) {
           const addon = companyAddon.addon;
           if (!addon) continue;
           
@@ -13330,7 +13335,15 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
             // 1. Get all active addons for this company
             const companyAddons = await storage.getCompanyAddons(t.company_id);
             const activeAddons = companyAddons.filter(ca => ca.status === 'active' || ca.isActive);
-            const addonsTotalPrice = activeAddons.reduce((sum, ca) => {
+            
+            // Separate free addons from paid addons - only paid addons are billed
+            const paidAddons = activeAddons.filter(ca => {
+              const price = parseFloat(ca.addon?.monthlyPrice?.toString() || '0');
+              const isFree = ca.addon?.isFreeFeature === true;
+              return !isFree && price > 0;
+            });
+            
+            const addonsTotalPrice = paidAddons.reduce((sum, ca) => {
               const addonPrice = parseFloat(ca.addon?.monthlyPrice?.toString() || '0');
               return sum + addonPrice;
             }, 0);
@@ -13365,13 +13378,13 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
               monthlyPrice = 9;
             }
             
-            console.log(`💰 MODULAR PRICING for ${t.company_name}: ${activeAddons.length} addons (€${addonsTotalPrice.toFixed(2)}) + ${adminSeats}a/${managerSeats}m/${employeeSeats}e seats (€${seatsTotalPrice.toFixed(2)}) = €${monthlyPrice.toFixed(2)}/month`);
+            console.log(`💰 MODULAR PRICING for ${t.company_name}: ${paidAddons.length} paid addons (€${addonsTotalPrice.toFixed(2)}) + ${adminSeats}a/${managerSeats}m/${employeeSeats}e seats (€${seatsTotalPrice.toFixed(2)}) = €${monthlyPrice.toFixed(2)}/month`);
             
-            // Build subscription items array - each addon and user type as separate item
+            // Build subscription items array - each PAID addon and user type as separate item
             const subscriptionItems: Array<{ price: string; quantity: number; metadata?: Record<string, string> }> = [];
             
-            // Create items for each active addon
-            for (const companyAddon of activeAddons) {
+            // Create items for each PAID addon only (skip free addons)
+            for (const companyAddon of paidAddons) {
               const addon = companyAddon.addon;
               if (!addon) continue;
               
