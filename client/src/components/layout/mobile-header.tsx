@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Menu, LogOut, Sun, Moon, Monitor } from 'lucide-react';
+import { Menu, LogOut, Sun, Moon, Monitor, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useDemoBanner } from '@/hooks/use-demo-banner';
 import { useTheme } from '@/lib/theme-provider';
+import { useEmployeeViewMode } from '@/hooks/use-employee-view-mode';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
 
 interface MobileHeaderProps {
@@ -18,6 +19,9 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
   const { hasAccess } = useFeatureCheck();
   const { showBanner } = useDemoBanner();
   const { theme, setTheme } = useTheme();
+  const { isEmployeeViewMode, toggleEmployeeView } = useEmployeeViewMode();
+  
+  const canUseEmployeeView = user?.role === 'admin' || user?.role === 'manager';
   
   // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
   const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
@@ -173,6 +177,20 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
                 </div>
               </div>
             </div>
+            
+            {canUseEmployeeView && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={toggleEmployeeView}
+                  className={isEmployeeViewMode ? "bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400" : ""}
+                  data-testid="toggle-employee-view"
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  {isEmployeeViewMode ? 'Volver a Modo Admin' : 'Modo Empleado'}
+                </DropdownMenuItem>
+              </>
+            )}
             
             <DropdownMenuSeparator />
             
