@@ -30,9 +30,9 @@ export type WorkSessionWithAudit = WorkSession & {
 };
 
 // Initialize Stripe
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_TEST;
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 if (!stripeSecretKey) {
-  throw new Error('STRIPE_SECRET_KEY or STRIPE_SECRET_KEY_TEST environment variable is required');
+  throw new Error('STRIPE_SECRET_KEY environment variable is required');
 }
 
 const stripe = new Stripe(stripeSecretKey, {

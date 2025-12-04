@@ -33,17 +33,13 @@ import 'jspdf-autotable';
 import { PDFDocument, rgb } from 'pdf-lib';
 import * as XLSX from 'xlsx';
 
-// Initialize Stripe with intelligent key detection
-// Priority: Use production keys if available, otherwise fall back to test keys
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_TEST;
-const isProduction = !!process.env.STRIPE_SECRET_KEY && stripeSecretKey?.startsWith('sk_live');
-
+// Initialize Stripe
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 if (!stripeSecretKey) {
-  throw new Error('STRIPE_SECRET_KEY or STRIPE_SECRET_KEY_TEST environment variable is required');
+  throw new Error('STRIPE_SECRET_KEY environment variable is required');
 }
 
-console.log('Stripe Environment:', isProduction ? 'Production (Live)' : 'Development (Test)');
-console.log('Stripe key type:', stripeSecretKey.startsWith('sk_live') ? 'sk_live' : 'sk_test');
+console.log('Stripe initialized:', stripeSecretKey.substring(0, 8) + '...');
 
 const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2025-05-28.basil',
@@ -15616,7 +15612,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
   // Stripe Webhook - Handle payment events (raw body required for signature verification)
   app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'];
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET_TEST;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
       console.error('⚠️ STRIPE WEBHOOK: No webhook secret configured');
