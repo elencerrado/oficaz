@@ -150,12 +150,20 @@ export default function AddonStore() {
   // Current users by role (from actual users in system)
   const currentUserCounts = subscriptionInfo?.userCounts || { employees: 0, managers: 0, admins: 0 };
   
-  // All seats are paid - no free included seats
-  // extraSeats in DB = total contracted seats
+  // For legacy plans: total = included + extra
+  // For new plans: total = extra only (all seats are paid)
+  const isLegacyPlan = subscription?.isLegacyPlan || false;
+  
   const contractedSeats = {
-    employees: subscription?.extraEmployees || 0,
-    managers: subscription?.extraManagers || 0,
-    admins: subscription?.extraAdmins || 0
+    employees: isLegacyPlan 
+      ? (subscription?.includedEmployees || 0) + (subscription?.extraEmployees || 0)
+      : (subscription?.extraEmployees || 0),
+    managers: isLegacyPlan 
+      ? (subscription?.includedManagers || 0) + (subscription?.extraManagers || 0)
+      : (subscription?.extraManagers || 0),
+    admins: isLegacyPlan 
+      ? (subscription?.includedAdmins || 0) + (subscription?.extraAdmins || 0)
+      : (subscription?.extraAdmins || 0)
   };
   
   // Minimum: must have at least 1 admin (paid €6)
