@@ -887,10 +887,10 @@ export default function Landing() {
           </div>
 
           {/* Desktop: Two Column Layout */}
-          <div className="hidden lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-            {/* Left: Scrollable Features Grid */}
+          <div className="hidden lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Left: Scrollable Features Grid - matches phone height */}
             <div>
-              <div className="scrollbar-visible max-h-[600px] overflow-y-auto pr-2">
+              <div className="scrollbar-visible max-h-[440px] overflow-y-auto pr-2">
                 <div className="grid grid-cols-2 gap-3">
                   {addons.map((addon) => {
                     const IconComponent = addon.icon;
