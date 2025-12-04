@@ -615,28 +615,29 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
             { name: 'Nómina Octubre 2024', type: 'Nómina', signed: false, size: '120 KB', date: '24 oct' },
             { name: 'Nómina Septiembre 2024', type: 'Nómina', signed: true, size: '118 KB', date: '25 sep' },
             { name: 'Nómina Agosto 2024', type: 'Nómina', signed: true, size: '115 KB', date: '26 ago' },
+            { name: 'Nómina Julio 2024', type: 'Nómina', signed: true, size: '122 KB', date: '25 jul' },
             { name: 'Contrato trabajo', type: 'Documento', signed: true, size: '1.2 MB', date: '15 ene' },
           ].map((doc, i) => (
-            <div key={i} className="p-1.5 flex items-center gap-1.5 border-b border-[#0a1628] last:border-0">
-              <div className="w-5 h-5 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-                <FileText className="w-2.5 h-2.5 text-orange-400" />
+            <div key={i} className="p-2 flex items-center gap-2 border-b border-[#0a1628] last:border-0">
+              <div className="w-6 h-6 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                <FileText className="w-3 h-3 text-orange-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-white text-[6px] font-medium truncate">{doc.name}</p>
+                <p className="text-white text-[7px] font-medium truncate">{doc.name}</p>
                 <div className="flex items-center gap-1">
-                  <span className="text-orange-400 text-[5px]">{doc.type}</span>
-                  <span className={`text-[5px] ${doc.signed ? 'text-green-400' : 'text-yellow-400'}`}>
+                  <span className="text-orange-400 text-[6px]">{doc.type}</span>
+                  <span className={`text-[6px] ${doc.signed ? 'text-green-400' : 'text-yellow-400'}`}>
                     {doc.signed ? '✓ Firmada' : ''}
                   </span>
                 </div>
-                <p className="text-gray-500 text-[4px]">{doc.size} · {doc.date}</p>
+                <p className="text-gray-500 text-[5px]">{doc.size} · {doc.date}</p>
               </div>
-              <div className="flex items-center gap-1">
-                <Eye className="w-2 h-2 text-gray-500" />
+              <div className="flex items-center gap-1.5">
+                <Eye className="w-2.5 h-2.5 text-gray-500" />
                 {!doc.signed ? (
-                  <PenLine className="w-2 h-2 text-[#007AFF]" />
+                  <PenLine className="w-2.5 h-2.5 text-[#007AFF]" />
                 ) : (
-                  <ArrowRight className="w-2 h-2 text-gray-500 rotate-90" />
+                  <ArrowRight className="w-2.5 h-2.5 text-gray-500 rotate-90" />
                 )}
               </div>
             </div>
@@ -1838,28 +1839,29 @@ export default function Landing() {
                               { name: 'Nómina Octubre 2024', type: 'Nómina', signed: false, size: '120 KB', date: '24 oct' },
                               { name: 'Nómina Septiembre 2024', type: 'Nómina', signed: true, size: '118 KB', date: '25 sep' },
                               { name: 'Nómina Agosto 2024', type: 'Nómina', signed: true, size: '115 KB', date: '26 ago' },
+                              { name: 'Nómina Julio 2024', type: 'Nómina', signed: true, size: '122 KB', date: '25 jul' },
                               { name: 'Contrato trabajo', type: 'Documento', signed: true, size: '1.2 MB', date: '15 ene' },
                             ].map((doc, i) => (
-                              <div key={i} className="p-1.5 flex items-center gap-1.5 border-b border-[#0a1628] last:border-0">
-                                <div className="w-5 h-5 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-                                  <FileText className="w-2.5 h-2.5 text-orange-400" />
+                              <div key={i} className="p-2 flex items-center gap-2 border-b border-[#0a1628] last:border-0">
+                                <div className="w-6 h-6 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                                  <FileText className="w-3 h-3 text-orange-400" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-white text-[6px] font-medium truncate">{doc.name}</p>
+                                  <p className="text-white text-[7px] font-medium truncate">{doc.name}</p>
                                   <div className="flex items-center gap-1">
-                                    <span className="text-orange-400 text-[5px]">{doc.type}</span>
-                                    <span className={`text-[5px] ${doc.signed ? 'text-green-400' : 'text-yellow-400'}`}>
+                                    <span className="text-orange-400 text-[6px]">{doc.type}</span>
+                                    <span className={`text-[6px] ${doc.signed ? 'text-green-400' : 'text-yellow-400'}`}>
                                       {doc.signed ? '✓ Firmada' : ''}
                                     </span>
                                   </div>
-                                  <p className="text-gray-500 text-[4px]">{doc.size} · {doc.date}</p>
+                                  <p className="text-gray-500 text-[5px]">{doc.size} · {doc.date}</p>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                  <Eye className="w-2 h-2 text-gray-500" />
+                                <div className="flex items-center gap-1.5">
+                                  <Eye className="w-2.5 h-2.5 text-gray-500" />
                                   {!doc.signed ? (
-                                    <PenLine className="w-2 h-2 text-[#007AFF]" />
+                                    <PenLine className="w-2.5 h-2.5 text-[#007AFF]" />
                                   ) : (
-                                    <ArrowRight className="w-2 h-2 text-gray-500 rotate-90" />
+                                    <ArrowRight className="w-2.5 h-2.5 text-gray-500 rotate-90" />
                                   )}
                                 </div>
                               </div>
