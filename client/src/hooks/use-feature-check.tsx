@@ -20,11 +20,13 @@ export function useFeatureCheck() {
   const { subscription, user } = useAuth();
   const { isEmployeeViewMode } = useEmployeeViewMode();
 
-  const { data: permissionsData } = useQuery<{ managerPermissions?: { visibleFeatures?: string[] | null } }>({
+  const { data: permissionsData, isLoading: isLoadingPermissions } = useQuery<{ managerPermissions?: { visibleFeatures?: string[] | null } }>({
     queryKey: ['/api/settings/manager-permissions'],
     enabled: user?.role === 'manager',
     staleTime: 60000,
   });
+
+  const isManagerPermissionsLoading = user?.role === 'manager' && isLoadingPermissions;
 
   const hasAccess = (feature: FeatureKey): boolean => {
     const subscriptionAccess = checkFeatureAccess(subscription, feature);
@@ -37,6 +39,11 @@ export function useFeatureCheck() {
     }
 
     if (user?.role === 'manager') {
+      // While permissions are loading, deny access to prevent flicker
+      if (isLoadingPermissions) {
+        return false;
+      }
+      
       const visibleFeatures = permissionsData?.managerPermissions?.visibleFeatures;
 
       if (visibleFeatures === null || visibleFeatures === undefined) {
@@ -66,6 +73,7 @@ export function useFeatureCheck() {
     hasAccess,
     getRequiredPlan,
     isFeatureRestricted,
-    subscription
+    subscription,
+    isManagerPermissionsLoading
   };
 }
