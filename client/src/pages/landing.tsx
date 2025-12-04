@@ -1327,7 +1327,7 @@ export default function Landing() {
                           </div>
                           
                           {/* Second day */}
-                          <div className="bg-[#1a2942] rounded-xl p-2">
+                          <div className="bg-[#1a2942] rounded-xl p-2 mb-2">
                             <div className="flex justify-between items-center mb-1.5">
                               <p className="text-white text-[8px] font-semibold">Martes <span className="text-gray-400 font-normal">30 sep</span></p>
                               <p className="text-gray-500 text-[7px]">1 turno</p>
@@ -1340,6 +1340,42 @@ export default function Landing() {
                               <div className="flex items-center gap-1 text-white/90">
                                 <MapPin className="w-2.5 h-2.5" />
                                 <span className="text-[6px]">Almacén Norte →</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Third day */}
+                          <div className="bg-[#1a2942] rounded-xl p-2 mb-2">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <p className="text-white text-[8px] font-semibold">Miércoles <span className="text-gray-400 font-normal">1 oct</span></p>
+                              <p className="text-gray-500 text-[7px]">1 turno</p>
+                            </div>
+                            <div className="bg-purple-500 rounded-md px-2 py-1.5">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-white text-[7px] font-medium">Noche</span>
+                                <span className="text-white/80 text-[6px]">22:00-06:00</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-white/90">
+                                <MapPin className="w-2.5 h-2.5" />
+                                <span className="text-[6px]">Fábrica Sur →</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Fourth day */}
+                          <div className="bg-[#1a2942] rounded-xl p-2">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <p className="text-white text-[8px] font-semibold">Jueves <span className="text-gray-400 font-normal">2 oct</span></p>
+                              <p className="text-gray-500 text-[7px]">1 turno</p>
+                            </div>
+                            <div className="bg-orange-500 rounded-md px-2 py-1.5">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-white text-[7px] font-medium">Mañana</span>
+                                <span className="text-white/80 text-[6px]">07:00-15:00</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-white/90">
+                                <MapPin className="w-2.5 h-2.5" />
+                                <span className="text-[6px]">Sede Principal →</span>
                               </div>
                             </div>
                           </div>
