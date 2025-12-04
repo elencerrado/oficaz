@@ -1123,37 +1123,68 @@ export default function Landing() {
                           className="h-full"
                         >
                         <div className="p-3 h-full bg-[#0a1628]">
-                          <h3 className="text-white font-bold text-sm mb-0.5">Mis Vacaciones</h3>
-                          <p className="text-gray-400 text-[8px] mb-3">Solicita y gestiona tus días</p>
+                          <h3 className="text-white font-bold text-sm mb-0.5">Vacaciones</h3>
+                          <p className="text-gray-400 text-[8px] mb-2">Solicita y consulta el estado</p>
                           
-                          {/* Days summary */}
-                          <div className="bg-[#1a2942] rounded-xl p-3 mb-3">
-                            <div className="flex justify-between items-center mb-2">
-                              <p className="text-gray-400 text-[8px]">Días disponibles</p>
-                              <span className="text-[#007AFF] font-bold text-lg">18</span>
+                          {/* Stats row */}
+                          <div className="bg-[#1a2942] rounded-xl p-2 mb-2">
+                            <div className="grid grid-cols-3 gap-1 text-center mb-2">
+                              <div>
+                                <p className="text-[#007AFF] font-bold text-sm">30</p>
+                                <p className="text-gray-500 text-[6px]">TOTAL</p>
+                              </div>
+                              <div>
+                                <p className="text-green-400 font-bold text-sm">26</p>
+                                <p className="text-gray-500 text-[6px]">APROBADOS</p>
+                              </div>
+                              <div>
+                                <p className="text-[#007AFF] font-bold text-sm">4</p>
+                                <p className="text-gray-500 text-[6px]">DISPONIBLES</p>
+                              </div>
                             </div>
-                            <div className="w-full bg-[#0a1628] rounded-full h-1.5 mb-1">
-                              <div className="bg-[#007AFF] h-1.5 rounded-full" style={{ width: '60%' }}></div>
+                            <div className="flex justify-between items-center mb-1">
+                              <p className="text-gray-400 text-[7px]">Progreso anual</p>
+                              <p className="text-gray-400 text-[7px]">86.7%</p>
                             </div>
-                            <p className="text-gray-500 text-[7px]">12 días disfrutados de 30</p>
+                            <div className="w-full bg-[#0a1628] rounded-full h-2">
+                              <div className="bg-[#007AFF] h-2 rounded-full" style={{ width: '87%' }}></div>
+                            </div>
                           </div>
                           
-                          {/* Requests */}
-                          <div className="bg-[#1a2942] rounded-xl p-2 space-y-2">
-                            <div className="flex items-center gap-2 p-2 bg-green-500/20 rounded-lg border border-green-500/30">
-                              <Calendar className="w-3 h-3 text-green-400" />
-                              <div className="flex-1">
-                                <p className="text-white text-[8px] font-medium">15-19 Dic</p>
-                                <p className="text-green-400 text-[7px]">Aprobado</p>
-                              </div>
+                          {/* Solicitar button */}
+                          <button className="w-full bg-[#1a2942] border border-[#2a3952] rounded-lg p-1.5 mb-2 flex items-center justify-center gap-1">
+                            <Calendar className="w-3 h-3 text-white" />
+                            <span className="text-white text-[7px] font-medium">Solicitar Vacaciones</span>
+                          </button>
+                          
+                          {/* Requests table */}
+                          <div className="bg-[#1a2942] rounded-xl overflow-hidden">
+                            <div className="grid grid-cols-4 gap-1 p-1.5 border-b border-[#0a1628]">
+                              <p className="text-gray-500 text-[6px]">Periodo</p>
+                              <p className="text-gray-500 text-[6px] text-center">Días</p>
+                              <p className="text-gray-500 text-[6px] text-center">Estado</p>
+                              <p className="text-gray-500 text-[6px] text-center">Fecha</p>
                             </div>
-                            <div className="flex items-center gap-2 p-2 bg-yellow-500/20 rounded-lg border border-yellow-500/30">
-                              <Calendar className="w-3 h-3 text-yellow-400" />
-                              <div className="flex-1">
-                                <p className="text-white text-[8px] font-medium">23-31 Dic</p>
-                                <p className="text-yellow-400 text-[7px]">Pendiente</p>
+                            {[
+                              { period: '10-12 dic', days: '3', status: 'approved', date: '10 nov' },
+                              { period: '5-5 nov', days: '1', status: 'approved', date: '23 oct' },
+                              { period: '5-8 nov', days: '4', status: 'rejected', date: '20 oct' },
+                            ].map((req, i) => (
+                              <div key={i} className="grid grid-cols-4 gap-1 p-1.5 border-b border-[#0a1628] last:border-0">
+                                <p className="text-white text-[6px]">{req.period}</p>
+                                <p className="text-white text-[6px] text-center">{req.days}</p>
+                                <div className="flex justify-center">
+                                  <div className={`w-3 h-3 rounded-full flex items-center justify-center ${
+                                    req.status === 'approved' ? 'bg-green-500/20 border border-green-500' : 
+                                    req.status === 'rejected' ? 'bg-red-500/20 border border-red-500' : 
+                                    'bg-yellow-500/20 border border-yellow-500'
+                                  }`}>
+                                    {req.status === 'approved' && <CheckCircle className="w-2 h-2 text-green-400" />}
+                                  </div>
+                                </div>
+                                <p className="text-gray-400 text-[6px] text-center">{req.date}</p>
                               </div>
-                            </div>
+                            ))}
                           </div>
                         </div>
                         </motion.div>
