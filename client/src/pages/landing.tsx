@@ -612,10 +612,10 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
         
         <div className="bg-[#1a2942] rounded-xl overflow-hidden">
           {[
-            { name: 'Nómina Octubre 2024', type: 'Nómina', signed: false, size: '120 KB', date: '24 oct' },
-            { name: 'Nómina Septiembre 2024', type: 'Nómina', signed: true, size: '118 KB', date: '25 sep' },
-            { name: 'Nómina Agosto 2024', type: 'Nómina', signed: true, size: '115 KB', date: '26 ago' },
-            { name: 'Nómina Julio 2024', type: 'Nómina', signed: true, size: '122 KB', date: '25 jul' },
+            { name: 'Nómina Noviembre 2025', type: 'Nómina', signed: false, size: '120 KB', date: '24 nov' },
+            { name: 'Nómina Octubre 2025', type: 'Nómina', signed: true, size: '118 KB', date: '25 oct' },
+            { name: 'Nómina Septiembre 2025', type: 'Nómina', signed: true, size: '115 KB', date: '26 sep' },
+            { name: 'Nómina Agosto 2025', type: 'Nómina', signed: true, size: '122 KB', date: '25 ago' },
             { name: 'Contrato trabajo', type: 'Documento', signed: true, size: '1.2 MB', date: '15 ene' },
           ].map((doc, i) => (
             <div key={i} className="p-2 flex items-center gap-2 border-b border-[#0a1628] last:border-0">
@@ -1836,10 +1836,10 @@ export default function Landing() {
                           
                           <div className="bg-[#1a2942] rounded-xl overflow-hidden">
                             {[
-                              { name: 'Nómina Octubre 2024', type: 'Nómina', signed: false, size: '120 KB', date: '24 oct' },
-                              { name: 'Nómina Septiembre 2024', type: 'Nómina', signed: true, size: '118 KB', date: '25 sep' },
-                              { name: 'Nómina Agosto 2024', type: 'Nómina', signed: true, size: '115 KB', date: '26 ago' },
-                              { name: 'Nómina Julio 2024', type: 'Nómina', signed: true, size: '122 KB', date: '25 jul' },
+                              { name: 'Nómina Noviembre 2025', type: 'Nómina', signed: false, size: '120 KB', date: '24 nov' },
+                              { name: 'Nómina Octubre 2025', type: 'Nómina', signed: true, size: '118 KB', date: '25 oct' },
+                              { name: 'Nómina Septiembre 2025', type: 'Nómina', signed: true, size: '115 KB', date: '26 sep' },
+                              { name: 'Nómina Agosto 2025', type: 'Nómina', signed: true, size: '122 KB', date: '25 ago' },
                               { name: 'Contrato trabajo', type: 'Documento', signed: true, size: '1.2 MB', date: '15 ene' },
                             ].map((doc, i) => (
                               <div key={i} className="p-2 flex items-center gap-2 border-b border-[#0a1628] last:border-0">
