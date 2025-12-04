@@ -3,11 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { usePageTitle } from '@/hooks/use-page-title';
 import { lazy, Suspense } from 'react';
 import type { CarouselApi } from '@/components/ui/carousel';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 
 // Lazy load non-critical components for better initial load performance
 const ContactForm = lazy(() => import('@/components/contact-form'));
@@ -52,6 +53,41 @@ import avatarMan04 from '@assets/man04_thumb.webp';
 import avatarWoman01 from '@assets/woman01_thumb.webp';
 import avatarWoman02 from '@assets/woman02_thumb.webp';
 import avatarWoman03 from '@assets/woman03_thumb.webp';
+
+// Apple-style scroll animation component
+function ScrollReveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-80px" });
+  
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+      transition={{ 
+        duration: 0.8, 
+        delay: delay,
+        ease: [0.25, 0.1, 0.25, 1] // Apple-style easing
+      }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// Extended addon descriptions for desktop carousel
+const addonExtendedDescriptions: Record<string, string> = {
+  employees: "Centraliza toda la información de tu equipo en un solo lugar. Alta y baja de empleados, gestión de datos personales, asignación de roles y permisos, histórico de cambios y acceso seguro para cada miembro según su nivel.",
+  time_tracking: "Cumple con la normativa de registro horario de forma sencilla. Tus empleados fichan en dos toques desde el móvil, y tú obtienes informes detallados en PDF listos para inspección. Control total sin complicaciones.",
+  vacation: "Olvídate del caos de las hojas de cálculo. Cada empleado ve sus días disponibles, solicita fechas con un clic, y tú apruebas o rechazas al instante. Calendario visual para evitar solapamientos.",
+  schedules: "Planifica turnos arrastrando y soltando. Duplica semanas enteras, crea plantillas reutilizables, y con OficazIA genera cuadrantes optimizados en segundos. Tu equipo recibe notificaciones automáticas.",
+  messages: "Mantén la comunicación profesional separada del WhatsApp personal. Crea grupos por departamento, envía anuncios a toda la empresa, y guarda historial de conversaciones importantes.",
+  reminders: "Configura alertas para ti o para cualquier empleado. Notificaciones push que llegan aunque la app esté cerrada. Perfectas para fechas límite, renovaciones de contratos o tareas recurrentes.",
+  documents: "Sube nóminas, contratos, certificados y cualquier documento. Organización automática por empleado y categoría. Firma digital integrada y acceso controlado según permisos.",
+  work_reports: "Ideal para servicios técnicos y trabajo en campo. Tus empleados documentan cada trabajo con fotos, ubicación GPS y descripción. El cliente firma en pantalla y se genera un PDF profesional.",
+  ai_assistant: "Tu asistente inteligente disponible 24/7. Dile 'crea el horario de esta semana' y lo hace. Pregúntale 'cuántas horas trabajó Ana en octubre' y te responde al instante. Gestión por voz o texto."
+};
 
 function DifficultySlider() {
   const [selected, setSelected] = useState<'dificil' | 'normal' | 'oficaz'>('normal');
@@ -886,60 +922,110 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Desktop: Two Column Layout */}
-          <div className="hidden lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            {/* Left: Scrollable Features Grid - matches phone height */}
-            <div>
-              <div className="scrollbar-visible max-h-[440px] overflow-y-auto pr-2">
-                <div className="grid grid-cols-2 gap-3">
+          {/* Desktop: Two Column Carousel Layout - Apple Style */}
+          <div className="hidden lg:block">
+            <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+              {/* Left: Feature Card with Extended Description */}
+              <div className="relative">
+                <AnimatePresence mode="wait">
                   {addons.map((addon) => {
+                    if (addon.key !== previewAddon) return null;
                     const IconComponent = addon.icon;
-                    const isActive = previewAddon === addon.key;
+                    const currentIndex = addons.findIndex(a => a.key === previewAddon);
+                    
                     return (
-                      <button 
+                      <motion.div
                         key={addon.key}
-                        onClick={() => setPreviewAddon(addon.key)}
-                        className={`group text-left rounded-2xl p-5 transition-all duration-300 border-2 ${
-                          isActive 
-                            ? 'bg-[#007AFF] border-[#007AFF] shadow-xl shadow-blue-200/50' 
-                            : addon.isLocked 
-                              ? 'bg-green-50 border-green-200 hover:border-green-300' 
-                              : 'bg-gray-50 border-transparent hover:border-gray-200 hover:bg-white hover:shadow-lg'
-                        }`}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                        className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100"
                       >
-                        <div className="flex items-start gap-4">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${
-                            isActive 
-                              ? 'bg-white/20' 
-                              : addon.isLocked 
-                                ? 'bg-gradient-to-br from-green-500 to-green-600' 
-                                : 'bg-gradient-to-br from-[#007AFF] to-blue-600'
+                        {/* Feature Header */}
+                        <div className="flex items-start gap-5 mb-6">
+                          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+                            addon.isLocked 
+                              ? 'bg-gradient-to-br from-green-500 to-green-600' 
+                              : 'bg-gradient-to-br from-[#007AFF] to-blue-600'
                           }`}>
-                            <IconComponent className={`w-6 h-6 ${isActive ? 'text-white' : 'text-white'}`} />
+                            <IconComponent className="w-8 h-8 text-white" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className={`text-base font-semibold ${isActive ? 'text-white' : 'text-gray-900'}`}>
-                                {addon.name}
-                              </h3>
-                              {addon.isLocked && !isActive && (
-                                <span className="text-[10px] bg-green-500 text-white px-1.5 py-0.5 rounded font-medium">Gratis</span>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-2xl font-bold text-gray-900">{addon.name}</h3>
+                              {addon.isLocked ? (
+                                <span className="text-xs bg-green-500 text-white px-2.5 py-1 rounded-full font-semibold">Incluido</span>
+                              ) : (
+                                <span className="text-sm text-gray-400 font-medium">€{addon.price}/mes</span>
                               )}
                             </div>
-                            <p className={`text-sm leading-relaxed ${isActive ? 'text-white/90' : 'text-gray-500'}`}>
-                              {addon.description}
-                            </p>
+                            <p className="text-gray-500 text-base leading-relaxed">{addon.description}</p>
                           </div>
                         </div>
-                      </button>
+                        
+                        {/* Extended Description */}
+                        <div className="bg-gray-50 rounded-2xl p-5 mb-6">
+                          <p className="text-gray-600 text-sm leading-relaxed">
+                            {addonExtendedDescriptions[addon.key]}
+                          </p>
+                        </div>
+                        
+                        {/* Navigation - Apple Style */}
+                        <div className="flex items-center justify-between">
+                          {/* Arrow Navigation */}
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => {
+                                const prevIndex = currentIndex === 0 ? addons.length - 1 : currentIndex - 1;
+                                setPreviewAddon(addons[prevIndex].key);
+                              }}
+                              className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all duration-200 hover:scale-105"
+                              aria-label="Anterior"
+                            >
+                              <ChevronLeft className="w-5 h-5 text-gray-600" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                const nextIndex = currentIndex === addons.length - 1 ? 0 : currentIndex + 1;
+                                setPreviewAddon(addons[nextIndex].key);
+                              }}
+                              className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all duration-200 hover:scale-105"
+                              aria-label="Siguiente"
+                            >
+                              <ChevronRight className="w-5 h-5 text-gray-600" />
+                            </button>
+                          </div>
+                          
+                          {/* Pagination Dots */}
+                          <div className="flex items-center gap-2">
+                            {addons.map((a, i) => (
+                              <button
+                                key={a.key}
+                                onClick={() => setPreviewAddon(a.key)}
+                                className={`transition-all duration-300 rounded-full ${
+                                  a.key === previewAddon 
+                                    ? 'w-6 h-2 bg-[#007AFF]' 
+                                    : 'w-2 h-2 bg-gray-300 hover:bg-gray-400'
+                                }`}
+                                aria-label={`Ver ${a.name}`}
+                              />
+                            ))}
+                          </div>
+                          
+                          {/* Page Counter */}
+                          <span className="text-sm text-gray-400 font-medium">
+                            {currentIndex + 1} / {addons.length}
+                          </span>
+                        </div>
+                      </motion.div>
                     );
                   })}
-                </div>
+                </AnimatePresence>
               </div>
-            </div>
 
-            {/* Right: Mobile Preview Mockup */}
-            <div className="flex justify-center lg:sticky lg:top-8">
+              {/* Right: Mobile Preview Mockup */}
+              <div className="flex justify-center">
               <div className="relative">
                 {/* Phone Frame - Narrower iPhone style */}
                 <div className="relative bg-gray-900 rounded-[2.5rem] p-2 shadow-2xl shadow-gray-400/30">
@@ -1306,6 +1392,7 @@ export default function Landing() {
                 {/* Decorative elements */}
                 <div className="absolute -z-10 top-1/4 -right-8 w-32 h-32 bg-[#007AFF]/10 rounded-full blur-2xl"></div>
                 <div className="absolute -z-10 bottom-1/4 -left-8 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
+              </div>
               </div>
             </div>
           </div>
