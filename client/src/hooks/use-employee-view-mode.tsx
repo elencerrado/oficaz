@@ -1,4 +1,6 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { useLocation } from 'wouter';
+import { useAuth } from '@/hooks/use-auth';
 
 interface EmployeeViewModeContextType {
   isEmployeeViewMode: boolean;
@@ -11,10 +13,35 @@ const EmployeeViewModeContext = createContext<EmployeeViewModeContextType | unde
 
 export function EmployeeViewModeProvider({ children }: { children: ReactNode }) {
   const [isEmployeeViewMode, setIsEmployeeViewMode] = useState(false);
+  const [previousAdminPath, setPreviousAdminPath] = useState<string | null>(null);
+  const [location, setLocation] = useLocation();
+  const { company } = useAuth();
+  
+  const companyAlias = company?.companyAlias || 'test';
 
-  const enableEmployeeView = () => setIsEmployeeViewMode(true);
-  const disableEmployeeView = () => setIsEmployeeViewMode(false);
-  const toggleEmployeeView = () => setIsEmployeeViewMode(prev => !prev);
+  const enableEmployeeView = useCallback(() => {
+    // Save current path before switching to employee mode
+    setPreviousAdminPath(location);
+    setIsEmployeeViewMode(true);
+    // Navigate to employee dashboard
+    setLocation(`/${companyAlias}/inicio`);
+  }, [location, companyAlias, setLocation]);
+
+  const disableEmployeeView = useCallback(() => {
+    setIsEmployeeViewMode(false);
+    // Return to previous admin path or default to admin dashboard
+    const returnPath = previousAdminPath || `/${companyAlias}/inicio`;
+    setLocation(returnPath);
+    setPreviousAdminPath(null);
+  }, [previousAdminPath, companyAlias, setLocation]);
+
+  const toggleEmployeeView = useCallback(() => {
+    if (isEmployeeViewMode) {
+      disableEmployeeView();
+    } else {
+      enableEmployeeView();
+    }
+  }, [isEmployeeViewMode, enableEmployeeView, disableEmployeeView]);
 
   return (
     <EmployeeViewModeContext.Provider value={{
@@ -28,10 +55,16 @@ export function EmployeeViewModeProvider({ children }: { children: ReactNode }) 
   );
 }
 
+// Default values when used outside provider
+const defaultValue: EmployeeViewModeContextType = {
+  isEmployeeViewMode: false,
+  enableEmployeeView: () => {},
+  disableEmployeeView: () => {},
+  toggleEmployeeView: () => {}
+};
+
 export function useEmployeeViewMode() {
   const context = useContext(EmployeeViewModeContext);
-  if (context === undefined) {
-    throw new Error('useEmployeeViewMode must be used within an EmployeeViewModeProvider');
-  }
-  return context;
+  // Return default value when used outside provider (safe fallback)
+  return context ?? defaultValue;
 }
