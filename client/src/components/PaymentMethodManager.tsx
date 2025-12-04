@@ -30,10 +30,8 @@ interface PaymentMethodManagerProps {
 
 
 
-// Initialize Stripe with auto-detection (production first, then test)
-const stripePromise = loadStripe(
-  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST!
-);
+// Initialize Stripe
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY!);
 
 export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selectedPlan, selectedPlanPrice }: PaymentMethodManagerProps) {
   const [isAddingCard, setIsAddingCard] = useState(false);

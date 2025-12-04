@@ -32,12 +32,9 @@ export function LazyStripeForm({
   useEffect(() => {
     const initializeStripe = async () => {
       console.log('🔧 STRIPE INIT - Starting Stripe initialization...');
-      console.log('🔧 STRIPE KEYS - VITE_STRIPE_PUBLISHABLE_KEY exists:', !!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
-      console.log('🔧 STRIPE KEYS - VITE_STRIPE_PUBLISHABLE_KEY_TEST exists:', !!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST);
       try {
-        // Use production key first, fallback to test key (same logic as backend)
-        const publicKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST;
-        console.log('🔧 STRIPE KEYS - Using key starting with:', publicKey ? publicKey.substring(0, 10) + '...' : 'NONE');
+        const publicKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+        console.log('🔧 STRIPE - Using key:', publicKey ? publicKey.substring(0, 10) + '...' : 'NONE');
         
         if (!publicKey) {
           console.log('🚨 STRIPE ERROR - No public key found!');
