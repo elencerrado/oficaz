@@ -9563,6 +9563,17 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
         return res.status(404).json({ message: 'Suscripción no encontrada' });
       }
 
+      // ⚠️ DUPLICATE PREVENTION: Check if subscription already has a Stripe subscription
+      if (company.subscription.stripeSubscriptionId) {
+        console.log(`⚠️ DUPLICATE PREVENTION - Company ${company.id} already has Stripe subscription: ${company.subscription.stripeSubscriptionId}`);
+        return res.json({ 
+          success: true, 
+          message: 'La suscripción ya está activa',
+          subscriptionId: company.subscription.stripeSubscriptionId,
+          alreadyActive: true
+        });
+      }
+
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: 'Usuario no encontrado' });
@@ -13301,6 +13312,15 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         
         try {
           console.log(`🏦 Processing trial for company ${t.company_name} (ID: ${t.company_id})`);
+          
+          // ⚠️ DUPLICATE PREVENTION: Double-check no subscription exists
+          const existingSubscription = await db.query.subscriptions.findFirst({
+            where: eq(subscriptions.companyId, t.company_id),
+          });
+          if (existingSubscription?.stripeSubscriptionId) {
+            console.log(`⚠️ DUPLICATE PREVENTION - Company ${t.company_id} already has Stripe subscription: ${existingSubscription.stripeSubscriptionId}, skipping`);
+            continue;
+          }
           
           // Check if customer has a default payment method
           const stripeCustomer = await stripe.customers.retrieve(t.stripe_customer_id) as Stripe.Customer;
