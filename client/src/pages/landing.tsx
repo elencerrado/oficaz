@@ -1096,7 +1096,7 @@ export default function Landing() {
                                 { day: 'viernes', num: '31', hours: '8h 28m', breakPos: 60 },
                                 { day: 'jueves', num: '30', hours: '8h 29m', breakPos: 55 },
                               ].map((entry, i) => (
-                                <div key={i} className="bg-[#0a1628] rounded p-1.5">
+                                <div key={i} className="bg-[#0a1628] rounded-md p-1.5">
                                   <div className="flex justify-between items-center mb-1">
                                     <span className="text-white text-[7px] font-medium">{entry.day} {entry.num}</span>
                                     <span className="text-gray-400 text-[7px]">{entry.hours}</span>
