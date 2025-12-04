@@ -649,18 +649,18 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 <div className="space-y-4">
                   {/* Admin counter - minimum 1 required */}
                   <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl p-5 wizard-animate wizard-delay-1">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-amber-500 flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-2xl bg-amber-500 flex items-center justify-center flex-shrink-0">
                           <Crown className="w-7 h-7 text-white" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <h3 className="font-semibold text-gray-900 text-lg">Administradores</h3>
                           <p className="text-sm text-gray-500">Control total y facturación</p>
                           <span className="text-sm font-medium text-amber-600">€6/usuario/mes</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-end gap-2 flex-shrink-0">
                         <button
                           type="button"
                           onClick={() => {
@@ -668,7 +668,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                             if (current > 1) step2Form.setValue('admins', current - 1);
                           }}
                           disabled={step2Form.watch('admins') <= 1}
-                          className="w-12 h-12 rounded-xl bg-white border-2 border-gray-200 hover:bg-gray-50 flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="w-11 h-11 rounded-xl bg-white border-2 border-gray-200 hover:bg-gray-50 flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                           data-testid="button-minus-admins"
                         >
                           <Minus className="w-5 h-5 text-gray-600" />
@@ -681,7 +681,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                             const val = parseInt(e.target.value) || 1;
                             step2Form.setValue('admins', Math.max(1, val));
                           }}
-                          className="w-14 h-12 text-center text-2xl font-bold text-gray-900 bg-transparent border-none outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          className="w-12 h-11 text-center text-2xl font-bold text-gray-900 bg-transparent border-none outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           data-testid="input-admins"
                         />
                         <button
@@ -690,7 +690,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                             const current = step2Form.getValues('admins');
                             step2Form.setValue('admins', current + 1);
                           }}
-                          className="w-12 h-12 rounded-xl bg-amber-500 hover:bg-amber-600 flex items-center justify-center transition-colors"
+                          className="w-11 h-11 rounded-xl bg-amber-500 hover:bg-amber-600 flex items-center justify-center transition-colors"
                           data-testid="button-plus-admins"
                         >
                           <Plus className="w-5 h-5 text-white" />
@@ -705,18 +705,18 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
                   {/* Manager counter */}
                   <div className="bg-white border-2 border-gray-100 hover:border-gray-200 rounded-2xl p-5 wizard-animate wizard-delay-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-purple-500 flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-2xl bg-purple-500 flex items-center justify-center flex-shrink-0">
                           <Users className="w-7 h-7 text-white" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <h3 className="font-semibold text-gray-900 text-lg">Managers</h3>
                           <p className="text-sm text-gray-500">Gestión de equipos e informes</p>
                           <span className="text-sm font-medium text-purple-600">€4/usuario/mes</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-end gap-2 flex-shrink-0">
                         <button
                           type="button"
                           onClick={() => {
@@ -724,7 +724,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                             if (current > 0) step2Form.setValue('managers', current - 1);
                           }}
                           disabled={step2Form.watch('managers') <= 0}
-                          className="w-12 h-12 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="w-11 h-11 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                           data-testid="button-minus-managers"
                         >
                           <Minus className="w-5 h-5 text-gray-600" />
@@ -737,7 +737,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                             const val = parseInt(e.target.value) || 0;
                             step2Form.setValue('managers', Math.max(0, val));
                           }}
-                          className="w-14 h-12 text-center text-2xl font-bold text-gray-900 bg-transparent border-none outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          className="w-12 h-11 text-center text-2xl font-bold text-gray-900 bg-transparent border-none outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           data-testid="input-managers"
                         />
                         <button
@@ -746,7 +746,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                             const current = step2Form.getValues('managers');
                             step2Form.setValue('managers', current + 1);
                           }}
-                          className="w-12 h-12 rounded-xl bg-purple-500 hover:bg-purple-600 flex items-center justify-center transition-colors"
+                          className="w-11 h-11 rounded-xl bg-purple-500 hover:bg-purple-600 flex items-center justify-center transition-colors"
                           data-testid="button-plus-managers"
                         >
                           <Plus className="w-5 h-5 text-white" />
@@ -757,18 +757,18 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
                   {/* Employee counter */}
                   <div className="bg-white border-2 border-gray-100 hover:border-gray-200 rounded-2xl p-5 wizard-animate wizard-delay-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-blue-500 flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-2xl bg-blue-500 flex items-center justify-center flex-shrink-0">
                           <User className="w-7 h-7 text-white" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <h3 className="font-semibold text-gray-900 text-lg">Empleados</h3>
                           <p className="text-sm text-gray-500">Fichajes, vacaciones, nóminas</p>
                           <span className="text-sm font-medium text-blue-600">€2/usuario/mes</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-end gap-2 flex-shrink-0">
                         <button
                           type="button"
                           onClick={() => {
@@ -776,7 +776,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                             if (current > 0) step2Form.setValue('employees', current - 1);
                           }}
                           disabled={step2Form.watch('employees') <= 0}
-                          className="w-12 h-12 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="w-11 h-11 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                           data-testid="button-minus-employees"
                         >
                           <Minus className="w-5 h-5 text-gray-600" />
@@ -789,7 +789,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                             const val = parseInt(e.target.value) || 0;
                             step2Form.setValue('employees', Math.max(0, val));
                           }}
-                          className="w-14 h-12 text-center text-2xl font-bold text-gray-900 bg-transparent border-none outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          className="w-12 h-11 text-center text-2xl font-bold text-gray-900 bg-transparent border-none outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           data-testid="input-employees"
                         />
                         <button
@@ -798,7 +798,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                             const current = step2Form.getValues('employees');
                             step2Form.setValue('employees', current + 1);
                           }}
-                          className="w-12 h-12 rounded-xl bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-colors"
+                          className="w-11 h-11 rounded-xl bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-colors"
                           data-testid="button-plus-employees"
                         >
                           <Plus className="w-5 h-5 text-white" />
