@@ -1296,32 +1296,51 @@ export default function Landing() {
                             <span className="text-gray-500 text-[8px]">{'>'}</span>
                           </div>
                           
-                          {/* Day with shifts */}
+                          {/* Day with shifts - each with location */}
                           <div className="bg-[#1a2942] rounded-xl p-2 mb-2">
                             <div className="flex justify-between items-center mb-1.5">
                               <p className="text-white text-[8px] font-semibold">Lunes <span className="text-gray-400 font-normal">29 sep</span></p>
                               <p className="text-gray-500 text-[7px]">2 turnos</p>
                             </div>
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-1.5 bg-red-500 rounded-md px-2 py-1">
-                                <span className="text-white text-[7px] flex-1">Mañana</span>
-                                <span className="text-white/80 text-[6px]">09:00-14:00</span>
+                            <div className="space-y-1.5">
+                              <div className="bg-red-500 rounded-md px-2 py-1.5">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-white text-[7px] font-medium">Mañana</span>
+                                  <span className="text-white/80 text-[6px]">09:00-14:00</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-white/90">
+                                  <MapPin className="w-2.5 h-2.5" />
+                                  <span className="text-[6px]">Oficina Central →</span>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-1.5 bg-[#007AFF] rounded-md px-2 py-1">
-                                <span className="text-white text-[7px] flex-1">Tarde</span>
-                                <span className="text-white/80 text-[6px]">15:00-20:00</span>
+                              <div className="bg-green-500 rounded-md px-2 py-1.5">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-white text-[7px] font-medium">Tarde</span>
+                                  <span className="text-white/80 text-[6px]">15:00-20:00</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-white/90">
+                                  <MapPin className="w-2.5 h-2.5" />
+                                  <span className="text-[6px]">Cliente ABC S.L. →</span>
+                                </div>
                               </div>
                             </div>
                           </div>
                           
-                          {/* Location link */}
-                          <div className="bg-[#1a2942] rounded-lg p-2 flex items-center gap-2">
-                            <div className="w-5 h-5 bg-green-500/20 rounded-full flex items-center justify-center">
-                              <MapPin className="w-3 h-3 text-green-400" />
+                          {/* Second day */}
+                          <div className="bg-[#1a2942] rounded-xl p-2">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <p className="text-white text-[8px] font-semibold">Martes <span className="text-gray-400 font-normal">30 sep</span></p>
+                              <p className="text-gray-500 text-[7px]">1 turno</p>
                             </div>
-                            <div className="flex-1">
-                              <p className="text-white text-[7px]">Oficina Central</p>
-                              <p className="text-[#007AFF] text-[6px]">Ver en Maps →</p>
+                            <div className="bg-[#007AFF] rounded-md px-2 py-1.5">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-white text-[7px] font-medium">Completo</span>
+                                <span className="text-white/80 text-[6px]">08:00-17:00</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-white/90">
+                                <MapPin className="w-2.5 h-2.5" />
+                                <span className="text-[6px]">Almacén Norte →</span>
+                              </div>
                             </div>
                           </div>
                         </div>
