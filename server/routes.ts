@@ -5107,10 +5107,10 @@ Responde directamente a este email para contactar con la persona.
   // Employee: Create work report
   app.post('/api/work-reports', authenticateToken, async (req: AuthRequest, res) => {
     try {
-      // Check if company has Pro plan
-      const subscription = await storage.getSubscriptionByCompanyId(req.user!.companyId);
-      if (!subscription || (subscription.plan !== 'pro' && subscription.plan !== 'master')) {
-        return res.status(403).json({ message: 'Esta función requiere el plan Pro' });
+      // Check if company has work_reports addon
+      const hasWorkReportsAddon = await storage.hasActiveAddon(req.user!.companyId, 'work_reports');
+      if (!hasWorkReportsAddon) {
+        return res.status(403).json({ message: 'Esta función requiere el addon Partes de Trabajo' });
       }
 
       const { reportDate, location, locationCoords, startTime, endTime, description, clientName, notes, status } = req.body;
@@ -5163,10 +5163,10 @@ Responde directamente a este email para contactar con la persona.
   // Employee: Get own work reports
   app.get('/api/work-reports', authenticateToken, async (req: AuthRequest, res) => {
     try {
-      // Check if company has Pro plan
-      const subscription = await storage.getSubscriptionByCompanyId(req.user!.companyId);
-      if (!subscription || (subscription.plan !== 'pro' && subscription.plan !== 'master')) {
-        return res.status(403).json({ message: 'Esta función requiere el plan Pro' });
+      // Check if company has work_reports addon
+      const hasWorkReportsAddon = await storage.hasActiveAddon(req.user!.companyId, 'work_reports');
+      if (!hasWorkReportsAddon) {
+        return res.status(403).json({ message: 'Esta función requiere el addon Partes de Trabajo' });
       }
 
       const { startDate, endDate } = req.query;
@@ -5327,10 +5327,10 @@ Responde directamente a este email para contactar con la persona.
   // Admin/Manager: Get all company work reports with filters
   app.get('/api/admin/work-reports', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
-      // Check if company has Pro plan
-      const subscription = await storage.getSubscriptionByCompanyId(req.user!.companyId);
-      if (!subscription || (subscription.plan !== 'pro' && subscription.plan !== 'master')) {
-        return res.status(403).json({ message: 'Esta función requiere el plan Pro' });
+      // Check if company has work_reports addon
+      const hasWorkReportsAddon = await storage.hasActiveAddon(req.user!.companyId, 'work_reports');
+      if (!hasWorkReportsAddon) {
+        return res.status(403).json({ message: 'Esta función requiere el addon Partes de Trabajo' });
       }
 
       const { employeeId, startDate, endDate } = req.query;
@@ -5353,10 +5353,10 @@ Responde directamente a este email para contactar con la persona.
     try {
       const id = parseInt(req.params.id);
       
-      // Check if company has Pro plan
-      const subscription = await storage.getSubscriptionByCompanyId(req.user!.companyId);
-      if (!subscription || (subscription.plan !== 'pro' && subscription.plan !== 'master')) {
-        return res.status(403).json({ message: 'Esta función requiere el plan Pro' });
+      // Check if company has work_reports addon
+      const hasWorkReportsAddon = await storage.hasActiveAddon(req.user!.companyId, 'work_reports');
+      if (!hasWorkReportsAddon) {
+        return res.status(403).json({ message: 'Esta función requiere el addon Partes de Trabajo' });
       }
 
       // Get existing report
@@ -5404,10 +5404,10 @@ Responde directamente a este email para contactar con la persona.
   // Admin/Manager: Create work report on behalf of an employee
   app.post('/api/admin/work-reports', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
-      // Check if company has Pro plan
-      const subscription = await storage.getSubscriptionByCompanyId(req.user!.companyId);
-      if (!subscription || (subscription.plan !== 'pro' && subscription.plan !== 'master')) {
-        return res.status(403).json({ message: 'Esta función requiere el plan Pro' });
+      // Check if company has work_reports addon
+      const hasWorkReportsAddon = await storage.hasActiveAddon(req.user!.companyId, 'work_reports');
+      if (!hasWorkReportsAddon) {
+        return res.status(403).json({ message: 'Esta función requiere el addon Partes de Trabajo' });
       }
 
       const { employeeId, reportDate, refCode, location, startTime, endTime, durationMinutes, description, clientName, notes, status } = req.body;
