@@ -38,7 +38,8 @@ import {
   CreditCard,
   Bell,
   Square,
-  Eye
+  Eye,
+  Phone
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
@@ -1191,23 +1192,34 @@ export default function Landing() {
                           {/* Employee cards */}
                           <div className="space-y-1">
                             {[
-                              { name: 'María García', role: 'Admin', avatar: avatarWoman01, roleColor: 'text-purple-400' },
-                              { name: 'Carlos López', role: 'Manager', avatar: avatarMan01, roleColor: 'text-[#007AFF]' },
-                              { name: 'Ana Martín', role: 'Empleado', avatar: avatarWoman02, roleColor: 'text-green-400' },
-                              { name: 'Pedro Ruiz', role: 'Empleado', avatar: avatarMan02, roleColor: 'text-green-400' },
-                              { name: 'Laura Sanz', role: 'Empleado', avatar: avatarWoman03, roleColor: 'text-green-400' },
+                              { name: 'María García', role: 'Admin', avatar: avatarWoman01, roleColor: 'text-purple-400', swiped: false },
+                              { name: 'Carlos López', role: 'Manager', avatar: avatarMan01, roleColor: 'text-[#007AFF]', swiped: false },
+                              { name: 'Ana Martín', role: 'Empleado', avatar: avatarWoman02, roleColor: 'text-green-400', swiped: true },
+                              { name: 'Pedro Ruiz', role: 'Empleado', avatar: avatarMan02, roleColor: 'text-green-400', swiped: false },
+                              { name: 'Laura Sanz', role: 'Empleado', avatar: avatarWoman03, roleColor: 'text-green-400', swiped: false },
                             ].map((emp, i) => (
-                              <div key={i} className="bg-[#1a2942] rounded-lg p-1.5 flex items-center gap-2">
-                                <img 
-                                  src={emp.avatar} 
-                                  alt={emp.name}
-                                  className="w-6 h-6 rounded-full object-cover"
-                                />
-                                <div className="flex-1">
-                                  <p className="text-white text-[7px] font-medium">{emp.name}</p>
-                                  <p className={`text-[6px] ${emp.roleColor}`}>{emp.role}</p>
+                              <div key={i} className="relative overflow-hidden rounded-lg">
+                                {/* Swipe action background */}
+                                <div className="absolute inset-0 bg-green-500 flex items-center justify-end pr-2">
+                                  <Phone className="w-3 h-3 text-white" />
                                 </div>
-                                <Settings className="w-2.5 h-2.5 text-gray-500" />
+                                {/* Card content */}
+                                <div 
+                                  className={`bg-[#1a2942] p-1.5 flex items-center gap-2 relative transition-transform ${
+                                    emp.swiped ? 'translate-x-[-20px]' : ''
+                                  }`}
+                                >
+                                  <img 
+                                    src={emp.avatar} 
+                                    alt={emp.name}
+                                    className="w-6 h-6 rounded-full object-cover"
+                                  />
+                                  <div className="flex-1">
+                                    <p className="text-white text-[7px] font-medium">{emp.name}</p>
+                                    <p className={`text-[6px] ${emp.roleColor}`}>{emp.role}</p>
+                                  </div>
+                                  <Settings className="w-2.5 h-2.5 text-gray-500" />
+                                </div>
                               </div>
                             ))}
                           </div>
