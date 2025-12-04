@@ -1011,15 +1011,22 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       Alias (URL única)
                     </Label>
                     <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                        oficaz.es/
+                      </span>
                       <Input
                         id="companyAlias"
                         placeholder="mi-empresa"
-                        className="h-12 rounded-xl bg-white border-gray-200 pr-24"
+                        className="h-12 rounded-xl bg-white border-gray-200 pl-20"
                         {...step3Form.register('companyAlias')}
+                        onChange={(e) => {
+                          const normalized = e.target.value
+                            .toLowerCase()
+                            .replace(/\s+/g, '-')
+                            .replace(/[^a-z0-9-]/g, '');
+                          step3Form.setValue('companyAlias', normalized, { shouldValidate: true });
+                        }}
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                        .oficaz.com
-                      </span>
                     </div>
                     {step3Form.formState.errors.companyAlias && (
                       <p className="text-xs text-red-500">{step3Form.formState.errors.companyAlias.message}</p>
