@@ -13269,7 +13269,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
     }
   });
 
-  // Auto-process expired trials (capture authorized payments and activate)
+  // Auto-process expired trials (charge using saved payment method)
   app.post('/api/subscription/auto-trial-process', async (req, res) => {
     try {
       console.log('🏦 AUTO-TRIAL PROCESSING - Checking for expired trials to activate...');
@@ -13278,7 +13278,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
       let processedCount = 0;
       let errorCount = 0;
       
-      // Get all companies with expired trials that have pending payment intents
+      // Get all companies with expired trials that have a Stripe customer (saved payment method)
       const expiredTrials = await db.execute(sql`
         SELECT 
           c.id as company_id,
@@ -13295,11 +13295,10 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         WHERE 
           s.status = 'trial'
           AND s.trial_end_date < ${now.toISOString()}
-          AND c.custom_features ? 'pending_payment_intent_id'
-          AND c.custom_features ->> 'pending_payment_intent_id' IS NOT NULL
+          AND s.stripe_customer_id IS NOT NULL
       `);
       
-      console.log(`🏦 Found ${expiredTrials.rows.length} expired trials with pending payments`);
+      console.log(`🏦 Found ${expiredTrials.rows.length} expired trials with saved payment methods`);
       
       for (const trial of expiredTrials.rows) {
         const t = trial as any;
@@ -13307,76 +13306,64 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         try {
           console.log(`🏦 Processing trial for company ${t.company_name} (ID: ${t.company_id})`);
           
-          // Get payment intent from custom_features
-          const paymentIntentId = t.custom_features?.pending_payment_intent_id;
-          if (!paymentIntentId) {
-            console.log(`⚠️ No payment intent found for company ${t.company_id}`);
+          // Check if customer has a default payment method
+          const stripeCustomer = await stripe.customers.retrieve(t.stripe_customer_id) as Stripe.Customer;
+          const defaultPaymentMethod = stripeCustomer.invoice_settings?.default_payment_method as string;
+          
+          if (!defaultPaymentMethod) {
+            console.log(`⚠️ No default payment method for company ${t.company_id} - blocking account`);
+            await db.execute(sql`
+              UPDATE subscriptions SET status = 'blocked', is_trial_active = false 
+              WHERE company_id = ${t.company_id}
+            `);
             continue;
           }
           
-          // Retrieve and capture the authorized payment
-          const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+          // ⚠️ CRITICAL: Calculate CURRENT price at billing time
+          // This ensures customer pays for what they have NOW, not what they had when they added the card
           
-          if (paymentIntent.status === 'requires_capture') {
-            // ⚠️ CRITICAL: Calculate CURRENT price at capture time (not authorization time)
-            // This ensures if customer removed addons during trial, they pay the lower amount
-            
-            // 1. Get CURRENT active addons (may have changed since authorization)
-            const companyAddons = await storage.getCompanyAddons(t.company_id);
-            const activeAddons = companyAddons.filter(ca => ca.status === 'active' || ca.status === 'pending_cancel');
-            
-            const addonsTotalPrice = activeAddons.reduce((sum, ca) => {
-              const addonPrice = parseFloat(ca.addon?.monthlyPrice?.toString() || '0');
-              return sum + addonPrice;
-            }, 0);
-            
-            // 2. Get subscription for user seats
-            const companySubscription = await db.query.subscriptions.findFirst({
-              where: eq(subscriptions.companyId, t.company_id),
-            });
-            
-            // 3. Get seat pricing
-            const seatPricing = await storage.getAllSeatPricing();
-            const seatPriceMap: Record<string, number> = {};
-            for (const sp of seatPricing) {
-              seatPriceMap[sp.roleType] = parseFloat(sp.monthlyPrice?.toString() || '0');
-            }
-            
-            // 4. Calculate CURRENT user seats total
-            const adminSeats = (companySubscription?.extraAdmins || 0) + 1;
-            const managerSeats = companySubscription?.extraManagers || 0;
-            const employeeSeats = companySubscription?.extraEmployees || 0;
-            const seatsTotalPrice = 
-              (adminSeats * (seatPriceMap['admin'] || 6)) +
-              (managerSeats * (seatPriceMap['manager'] || 4)) +
-              (employeeSeats * (seatPriceMap['employee'] || 2));
-            
-            // 5. Calculate CURRENT total (check for custom price first)
-            const customPrice = companySubscription?.customMonthlyPrice ? Number(companySubscription.customMonthlyPrice) : null;
-            let monthlyPrice = customPrice && customPrice > 0 ? customPrice : (addonsTotalPrice + seatsTotalPrice);
-            
-            // Minimum: 1 admin (€6) + 1 addon (€3) = €9
-            if (monthlyPrice < 9 && !customPrice) {
-              monthlyPrice = 9;
-            }
-            
-            // Convert to cents for Stripe
-            const currentBillingCents = Math.round(monthlyPrice * 100);
-            const authorizedCents = paymentIntent.amount;
-            
-            console.log(`💰 MODULAR PRICING for ${t.company_name}: ${activeAddons.length} addons (€${addonsTotalPrice.toFixed(2)}) + ${adminSeats}a/${managerSeats}m/${employeeSeats}e seats (€${seatsTotalPrice.toFixed(2)}) = €${monthlyPrice.toFixed(2)}/month`);
-            
-            // ⚠️ CRITICAL: Capture the CURRENT price, not the authorized amount
-            // Stripe allows partial capture if current amount is lower than authorized
-            // If current > authorized, we can only capture up to authorized (edge case)
-            const amountToCapture = Math.min(currentBillingCents, authorizedCents);
-            
-            console.log(`💰 CAPTURING payment for ${t.company_name}: authorized=€${authorizedCents/100}, current=€${currentBillingCents/100}, capturing=€${amountToCapture/100}`);
-            
-            const capturedPayment = await stripe.paymentIntents.capture(paymentIntentId, {
-              amount_to_capture: amountToCapture
-            });
-            console.log(`✅ PAYMENT CAPTURED: €${capturedPayment.amount/100} for ${t.company_name}`);
+          // 1. Get CURRENT active addons
+          const companyAddons = await storage.getCompanyAddons(t.company_id);
+          const activeAddons = companyAddons.filter(ca => ca.status === 'active' || ca.status === 'pending_cancel');
+          
+          const addonsTotalPrice = activeAddons.reduce((sum, ca) => {
+            const addonPrice = parseFloat(ca.addon?.monthlyPrice?.toString() || '0');
+            return sum + addonPrice;
+          }, 0);
+          
+          // 2. Get subscription for user seats
+          const companySubscription = await db.query.subscriptions.findFirst({
+            where: eq(subscriptions.companyId, t.company_id),
+          });
+          
+          // 3. Get seat pricing
+          const seatPricing = await storage.getAllSeatPricing();
+          const seatPriceMap: Record<string, number> = {};
+          for (const sp of seatPricing) {
+            seatPriceMap[sp.roleType] = parseFloat(sp.monthlyPrice?.toString() || '0');
+          }
+          
+          // 4. Calculate CURRENT user seats total
+          const adminSeats = (companySubscription?.extraAdmins || 0) + 1;
+          const managerSeats = companySubscription?.extraManagers || 0;
+          const employeeSeats = companySubscription?.extraEmployees || 0;
+          const seatsTotalPrice = 
+            (adminSeats * (seatPriceMap['admin'] || 6)) +
+            (managerSeats * (seatPriceMap['manager'] || 4)) +
+            (employeeSeats * (seatPriceMap['employee'] || 2));
+          
+          // 5. Calculate CURRENT total (check for custom price first)
+          const customPrice = companySubscription?.customMonthlyPrice ? Number(companySubscription.customMonthlyPrice) : null;
+          let monthlyPrice = customPrice && customPrice > 0 ? customPrice : (addonsTotalPrice + seatsTotalPrice);
+          
+          // Minimum: 1 admin (€6) + 1 addon (€3) = €9
+          if (monthlyPrice < 9 && !customPrice) {
+            monthlyPrice = 9;
+          }
+          
+          const billingCents = Math.round(monthlyPrice * 100);
+          
+          console.log(`💰 MODULAR PRICING for ${t.company_name}: ${activeAddons.length} addons (€${addonsTotalPrice.toFixed(2)}) + ${adminSeats}a/${managerSeats}m/${employeeSeats}e seats (€${seatsTotalPrice.toFixed(2)}) = €${monthlyPrice.toFixed(2)}/month`);
             
             // Build subscription items array - each addon and user type as separate item
             const subscriptionItems: Array<{ price: string; quantity: number; metadata?: Record<string, string> }> = [];
@@ -13482,14 +13469,14 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
               finalItems = [{ price: customStripePrice.id, quantity: 1, metadata: { type: 'custom_price' } }];
             }
             
-            // Create recurring subscription with separate items
-            // Note: trial_end is used because payment was already captured above
-            const subscription = await stripe.subscriptions.create({
-              customer: t.stripe_customer_id,
-              items: finalItems,
-              default_payment_method: paymentIntent.payment_method as string,
-              trial_end: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60), // 30 days until first recurring charge
-            });
+          // Create recurring subscription with separate items
+          // First payment is made immediately, then monthly thereafter
+          const subscription = await stripe.subscriptions.create({
+            customer: t.stripe_customer_id,
+            items: finalItems,
+            default_payment_method: defaultPaymentMethod,
+            payment_behavior: 'error_if_incomplete', // Fail immediately if payment fails
+          });
             
             console.log(`🔄 RECURRING SUBSCRIPTION CREATED: ${subscription.id} for ${t.company_name} with ${finalItems.length} items`);
             
@@ -13546,16 +13533,18 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
               WHERE id = ${t.company_id}
             `);
             
-            console.log(`✅ TRIAL CONVERTED: ${t.company_name} activated successfully`);
-            processedCount++;
-            
-          } else {
-            console.log(`⚠️ PaymentIntent ${paymentIntentId} status: ${paymentIntent.status} - cannot capture`);
-            errorCount++;
-          }
+          console.log(`✅ TRIAL CONVERTED: ${t.company_name} activated with first payment of €${(subscription.items.data.reduce((sum, item) => sum + (item.price?.unit_amount || 0) * (item.quantity || 1), 0) / 100).toFixed(2)}`);
+          processedCount++;
           
         } catch (error) {
           console.error(`❌ Error processing trial for company ${t.company_id}:`, error);
+          
+          // If payment failed, block the account
+          await db.execute(sql`
+            UPDATE subscriptions SET status = 'blocked', is_trial_active = false 
+            WHERE company_id = ${t.company_id}
+          `);
+          
           errorCount++;
         }
       }
