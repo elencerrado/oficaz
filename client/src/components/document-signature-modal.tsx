@@ -105,24 +105,16 @@ export function DocumentSignatureModal({
 
   const getEventPos = useCallback((event: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
-    
-    // Get client coordinates from touch or mouse event
-    let clientX: number, clientY: number;
-    
-    if ('touches' in event && event.touches.length > 0) {
-      const touch = event.touches[0];
-      clientX = touch.clientX;
-      clientY = touch.clientY;
-    } else {
-      const mouseEvent = event as React.MouseEvent;
-      clientX = mouseEvent.clientX;
-      clientY = mouseEvent.clientY;
+    // Use CSS coordinates since context is scaled by DPR
+    if ('touches' in event) {
+      return {
+        x: event.touches[0].clientX - rect.left,
+        y: event.touches[0].clientY - rect.top
+      };
     }
-    
-    // Return CSS-space coordinates - the canvas context transform handles DPI scaling
     return {
-      x: clientX - rect.left,
-      y: clientY - rect.top
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
     };
   }, []);
 
@@ -287,37 +279,12 @@ export function DocumentSignatureModal({
 
   useEffect(() => {
     if (isOpen && showDrawMode) {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      // Initial setup after a small delay for dialog animation to start
-      const initialTimer = setTimeout(() => setupCanvas(), 100);
-      
-      // Use ResizeObserver to re-setup canvas when modal animation completes
-      // This fixes the touch offset issue caused by CSS transforms during animation
-      let lastWidth = 0;
-      let lastHeight = 0;
-      
-      const resizeObserver = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          const { width, height } = entry.contentRect;
-          // Only re-setup if size actually changed and user hasn't started drawing
-          if ((width !== lastWidth || height !== lastHeight) && !hasDrawnSignature) {
-            lastWidth = width;
-            lastHeight = height;
-            setupCanvas();
-          }
-        }
-      });
-      
-      resizeObserver.observe(canvas);
-      
-      return () => {
-        clearTimeout(initialTimer);
-        resizeObserver.disconnect();
-      };
+      // Wait for modal animation to complete before setting up canvas
+      // Modal has 200ms animation, so 300ms ensures it's fully open
+      const timer = setTimeout(() => setupCanvas(), 300);
+      return () => clearTimeout(timer);
     }
-  }, [isOpen, showDrawMode, setupCanvas, hasDrawnSignature]);
+  }, [isOpen, showDrawMode, setupCanvas]);
 
   useEffect(() => {
     if (isOpen) {
