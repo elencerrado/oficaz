@@ -338,7 +338,23 @@ async function checkIncompleteSessions() {
       const user = sessions[0].user;
       const sessionCount = sessions.length;
       
-      console.log(`📱 Sending incomplete session notification to user ${userId} (${sessionCount} session(s))`);
+      console.log(`📱 Checking incomplete session notification for user ${userId} (${sessionCount} session(s))`);
+      
+      // 🔒 Check if we already sent a push notification TODAY for this user (using database, not memory)
+      const todayStart = getSpainTime();
+      todayStart.setHours(0, 0, 0, 0);
+      
+      const existingTodayPushNotification = await db.select()
+        .from(systemNotifications)
+        .where(and(
+          eq(systemNotifications.userId, userId),
+          eq(systemNotifications.type, 'incomplete_session'),
+          eq(systemNotifications.category, 'time-tracking'),
+          sql`${systemNotifications.createdAt} >= ${todayStart}`
+        ))
+        .limit(1);
+      
+      const alreadySentPushToday = existingTodayPushNotification.length > 0;
       
       // 🔒 Create database notifications for each incomplete session (UI notifications)
       for (const session of sessions) {
@@ -371,6 +387,12 @@ async function checkIncompleteSessions() {
           });
           console.log(`📊 System notification created for session ${session.id}`);
         }
+      }
+      
+      // 🔒 Skip push notification if already sent today (prevents duplicates on server restart)
+      if (alreadySentPushToday) {
+        console.log(`⏭️  Push notification already sent today for user ${userId}, skipping`);
+        continue;
       }
       
       // Get push subscriptions
