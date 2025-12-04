@@ -1152,9 +1152,9 @@ export default function Landing() {
                           </div>
                           
                           {/* Solicitar button */}
-                          <button className="w-full bg-[#1a2942] border border-[#2a3952] rounded-lg p-1.5 mb-2 flex items-center justify-center gap-1">
+                          <button className="w-full bg-[#007AFF] rounded-lg p-1.5 mb-2 flex items-center justify-center gap-1">
                             <Calendar className="w-3 h-3 text-white" />
-                            <span className="text-white text-[7px] font-medium">Solicitar Vacaciones</span>
+                            <span className="text-white text-[7px] font-medium">Solicitar días</span>
                           </button>
                           
                           {/* Requests table */}
