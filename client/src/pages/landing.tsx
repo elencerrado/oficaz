@@ -1199,14 +1199,18 @@ export default function Landing() {
                               { name: 'Laura Sanz', role: 'Empleado', avatar: avatarWoman03, roleColor: 'text-green-400', swipeDir: null },
                             ].map((emp, i) => (
                               <div key={i} className="relative overflow-hidden rounded-lg">
-                                {/* Swipe left action background (call - green) */}
-                                <div className="absolute inset-0 bg-green-500 flex items-center justify-end pr-2">
-                                  <Phone className="w-3 h-3 text-white" />
-                                </div>
-                                {/* Swipe right action background (message - blue) */}
-                                <div className="absolute inset-0 bg-[#007AFF] flex items-center justify-start pl-2">
-                                  <MessageSquare className="w-3 h-3 text-white" />
-                                </div>
+                                {/* Swipe left action background (call - green) - shown on right side */}
+                                {emp.swipeDir === 'left' && (
+                                  <div className="absolute inset-0 bg-green-500 flex items-center justify-end pr-2">
+                                    <Phone className="w-3 h-3 text-white" />
+                                  </div>
+                                )}
+                                {/* Swipe right action background (message - blue) - shown on left side */}
+                                {emp.swipeDir === 'right' && (
+                                  <div className="absolute inset-0 bg-[#007AFF] flex items-center justify-start pl-2">
+                                    <MessageSquare className="w-3 h-3 text-white" />
+                                  </div>
+                                )}
                                 {/* Card content */}
                                 <div 
                                   className={`bg-[#1a2942] p-1.5 flex items-center gap-2 relative transition-transform ${
