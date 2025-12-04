@@ -2,6 +2,7 @@ import { Switch, Route, Redirect, useLocation } from "wouter";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useFeatureCheck } from "@/hooks/use-feature-check";
+import { useEmployeeViewMode } from "@/hooks/use-employee-view-mode";
 import { PageLoading } from "@/components/ui/page-loading";
 import { AuthPageLoading } from "@/components/ui/auth-page-loading";
 import { useState } from "react";
@@ -95,8 +96,9 @@ const TestEmail = lazy(() => import("@/pages/test-email"));
 
 function DashboardRouter() {
   const { user } = useAuth();
+  const { isEmployeeViewMode } = useEmployeeViewMode();
   
-  if (user?.role === 'employee') {
+  if (user?.role === 'employee' || isEmployeeViewMode) {
     return <EmployeeDashboard />;
   }
   
@@ -201,39 +203,33 @@ function ManagerFeatureGate({
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const { isEmployeeViewMode } = useEmployeeViewMode();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { showBanner } = useDemoBanner();
   
-  // Reset scroll position on route changes
+  // Determine if we should use employee view (either employee role OR employee view mode)
+  const useEmployeeLayout = user?.role === 'employee' || isEmployeeViewMode;
+  
+  // Reset scroll position on route changes (always called)
   useScrollReset();
   
   // Enable reminder notifications (toasts) for all authenticated users
   useReminderNotifications();
 
-  // Calculate padding-top dynamically with safe area support for iOS PWA
-  // Header is positioned at top-[60px] when banner is shown, plus header height (60px) = 120px total
-  const paddingTop = showBanner ? 'pt-header-banner-safe' : 'pt-header-safe';
-
-  // Employee gets simplified view without sidebar - direct render
-  if (user?.role === 'employee') {
-    // Reset scroll for employees too
-    useScrollReset();
+  // Apply employee-mode class when in employee layout
+  useEffect(() => {
+    const root = document.documentElement;
     
-    // Apply employee-mode class to html for notch color and sync PWA theme-color
-    useEffect(() => {
-      const root = document.documentElement;
+    if (useEmployeeLayout) {
       root.classList.add('employee-mode');
       
-      // Sync theme-color with current theme
       const syncThemeColor = () => {
         const isDark = root.classList.contains('dark');
         updateThemeColor(isDark ? THEME_COLORS.employeeDark : THEME_COLORS.employeeLight);
       };
       
-      // Initial sync
       syncThemeColor();
       
-      // Listen for theme changes
       const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
           if (mutation.attributeName === 'class') {
@@ -248,8 +244,14 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         observer.disconnect();
         root.classList.remove('employee-mode');
       };
-    }, []);
-    
+    }
+  }, [useEmployeeLayout]);
+
+  // Calculate padding-top dynamically with safe area support for iOS PWA
+  const paddingTop = showBanner ? 'pt-header-banner-safe' : 'pt-header-safe';
+
+  // Employee gets simplified view without sidebar - direct render
+  if (useEmployeeLayout) {
     return (
       <>
         <ReminderBanner />
