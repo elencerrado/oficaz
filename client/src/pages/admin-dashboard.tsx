@@ -792,25 +792,58 @@ export default function AdminDashboard() {
         <div className="space-y-6">
           
           {/* Quick Clock In/Out */}
-          <Card className={getCardAnimationClass(1)}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Fichaje Rápido
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between min-h-[60px] gap-4">
-                <div className="flex flex-col justify-center items-center md:items-start">
-                  {/* Estado actual */}
-                  <div className="mb-2">
-                    {(() => {
-                      // ✨ OPTIMIZED: Using memoized currentWorkHours (calculated once per render)
-                      const workHours = currentWorkHours;
-                      
-                      if (workHours) {
-                        // If session has exceeded max hours + overtime, show as "Fuera del trabajo"
-                        if (workHours.isExceeded) {
+          {hasAccess('time_tracking') && (
+            <Card className={getCardAnimationClass(1)}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Fichaje Rápido
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between min-h-[60px] gap-4">
+                  <div className="flex flex-col justify-center items-center md:items-start">
+                    {/* Estado actual */}
+                    <div className="mb-2">
+                      {(() => {
+                        // ✨ OPTIMIZED: Using memoized currentWorkHours (calculated once per render)
+                        const workHours = currentWorkHours;
+                        
+                        if (workHours) {
+                          // If session has exceeded max hours + overtime, show as "Fuera del trabajo"
+                          if (workHours.isExceeded) {
+                            return (
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                <span className="text-red-600 font-medium">Fuera del trabajo</span>
+                              </div>
+                            );
+                          }
+                          
+                          // Normal flow for active sessions
+                          if (activeBreak) {
+                            return (
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                                <span className="text-orange-600 font-medium">En descanso</span>
+                              </div>
+                            );
+                          } else if (workHours.isOvertime) {
+                            return (
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                                <span className="text-red-600 font-medium">Incompleto</span>
+                              </div>
+                            );
+                          } else {
+                            return (
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                <span className="text-green-600 font-medium">Trabajando</span>
+                              </div>
+                            );
+                          }
+                        } else {
                           return (
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 bg-red-500 rounded-full"></div>
@@ -818,44 +851,12 @@ export default function AdminDashboard() {
                             </div>
                           );
                         }
-                        
-                        // Normal flow for active sessions
-                        if (activeBreak) {
-                          return (
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-                              <span className="text-orange-600 font-medium">En descanso</span>
-                            </div>
-                          );
-                        } else if (workHours.isOvertime) {
-                          return (
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                              <span className="text-red-600 font-medium">Incompleto</span>
-                            </div>
-                          );
-                        } else {
-                          return (
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                              <span className="text-green-600 font-medium">Trabajando</span>
-                            </div>
-                          );
-                        }
-                      } else {
-                        return (
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                            <span className="text-red-600 font-medium">Fuera del trabajo</span>
-                          </div>
-                        );
-                      }
-                    })()}
+                      })()}
+                    </div>
+                    <p className="text-sm text-muted-foreground text-center md:text-left">
+                      Tu último fichaje: {getLastClockInTime()}
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground text-center md:text-left">
-                    Tu último fichaje: {getLastClockInTime()}
-                  </p>
-                </div>
                 <div className="flex flex-row md:flex-col justify-center gap-2">
                   {(() => {
                     // ✨ OPTIMIZED: Using memoized currentWorkHours (calculated once per render)
@@ -991,8 +992,9 @@ export default function AdminDashboard() {
                   })()}
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Quick Summary of Pending Items */}
           {totalPending > 0 && (
