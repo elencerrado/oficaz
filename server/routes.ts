@@ -5942,60 +5942,26 @@ Responde directamente a este email para contactar con la persona.
       // No exceptions for admin/manager - they should use separate endpoints if needed
       const allDocuments = await storage.getDocumentsByUser(req.user!.id);
       
-      // Filter out documents that don't have physical files
-      const validDocuments = [];
-      const orphanedDocuments = [];
+      // ⚠️ REMOVED ORPHAN CLEANUP - Was incorrectly deleting documents stored in Object Storage
+      // Documents are stored in cloud Object Storage, not local filesystem
+      // The old code checked local fs.existsSync which always failed for cloud-stored files
       
-      for (const document of allDocuments) {
-        const filePath = path.join(uploadDir, document.fileName);
-        if (fs.existsSync(filePath)) {
-          validDocuments.push(document);
-        } else {
-          orphanedDocuments.push(document);
-        }
-      }
-      
-      // 🧹 Automatic cleanup of orphaned documents
-      if (orphanedDocuments.length > 0) {
-        const orphanIds = orphanedDocuments.map(d => d.id);
-        console.log(`🧹 ORPHAN CLEANUP: User ${req.user!.id} - Found ${orphanedDocuments.length} orphaned documents: ${orphanIds.join(', ')}`);
-        const result = await storage.deleteOrphanedDocuments(orphanIds);
-        console.log(`🧹 ORPHAN CLEANUP COMPLETE: Deleted ${result.deleted} records, failed: ${result.failed.length > 0 ? result.failed.join(', ') : 'none'}`);
-      }
-      
-      res.json(validDocuments);
+      res.json(allDocuments);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
 
-  // Get all documents for admin/manager view - filter out orphaned documents
+  // Get all documents for admin/manager view
   app.get('/api/documents/all', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
       const allDocuments = await storage.getDocumentsByCompany(req.user!.companyId);
       
-      // Filter out documents that don't have physical files
-      const validDocuments = [];
-      const orphanedDocuments = [];
+      // ⚠️ REMOVED ORPHAN CLEANUP - Was incorrectly deleting documents stored in Object Storage
+      // Documents are stored in cloud Object Storage, not local filesystem
+      // The old code checked local fs.existsSync which always failed for cloud-stored files
       
-      for (const document of allDocuments) {
-        const filePath = path.join(uploadDir, document.fileName);
-        if (fs.existsSync(filePath)) {
-          validDocuments.push(document);
-        } else {
-          orphanedDocuments.push(document);
-        }
-      }
-      
-      // 🧹 Automatic cleanup of orphaned documents
-      if (orphanedDocuments.length > 0) {
-        const orphanIds = orphanedDocuments.map((d: any) => d.id);
-        console.log(`🧹 ORPHAN CLEANUP (admin): Found ${orphanedDocuments.length} orphaned documents: ${orphanIds.join(', ')}`);
-        const result = await storage.deleteOrphanedDocuments(orphanIds);
-        console.log(`🧹 ORPHAN CLEANUP COMPLETE: Deleted ${result.deleted} records, failed: ${result.failed.length > 0 ? result.failed.join(', ') : 'none'}`);
-      }
-      
-      res.json(validDocuments);
+      res.json(allDocuments);
     } catch (error) {
       console.error("Error fetching all documents:", error);
       res.status(500).json({ message: "Failed to fetch documents" });
