@@ -1087,21 +1087,29 @@ export default function Landing() {
                           {/* Week section */}
                           <div className="bg-[#1a2942] rounded-xl p-2">
                             <div className="flex justify-between items-center mb-2">
-                              <p className="text-white text-[8px]">Semana del 25-01</p>
-                              <span className="text-[#007AFF] text-[8px] font-medium">42h 18m</span>
+                              <p className="text-white text-[8px]">diciembre semana del 27-02</p>
+                              <span className="bg-[#007AFF]/20 text-[#007AFF] text-[7px] font-medium px-1.5 py-0.5 rounded">42h 18m</span>
                             </div>
-                            {/* Day bars */}
+                            {/* Day entries with break indicators */}
                             <div className="space-y-1.5">
-                              <div className="flex items-center gap-2">
-                                <span className="text-gray-400 text-[7px] w-10">viernes</span>
-                                <div className="flex-1 h-1.5 bg-[#007AFF] rounded-full"></div>
-                                <span className="text-white text-[7px]">8h 28m</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-gray-400 text-[7px] w-10">jueves</span>
-                                <div className="flex-1 h-1.5 bg-[#007AFF] rounded-full" style={{width: '90%'}}></div>
-                                <span className="text-white text-[7px]">8h 29m</span>
-                              </div>
+                              {[
+                                { day: 'viernes', num: '31', hours: '8h 28m', breakPos: 55 },
+                                { day: 'jueves', num: '30', hours: '8h 29m', breakPos: 50 },
+                                { day: 'miércoles', num: '29', hours: '8h 22m', breakPos: 48 },
+                              ].map((entry, i) => (
+                                <div key={i} className="bg-[#0a1628] rounded-lg p-1.5">
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className="text-white text-[7px] font-medium">{entry.day} {entry.num}</span>
+                                    <span className="text-gray-400 text-[7px]">{entry.hours}</span>
+                                  </div>
+                                  {/* Progress bar with orange break indicator */}
+                                  <div className="relative h-1.5 bg-[#1a2942] rounded-full overflow-visible">
+                                    <div className="absolute left-0 top-0 h-full bg-[#007AFF] rounded-full" style={{ width: `${entry.breakPos}%` }}></div>
+                                    <div className="absolute top-1/2 -translate-y-1/2 w-2 h-2 bg-orange-400 rounded-full border border-[#0a1628]" style={{ left: `${entry.breakPos}%`, transform: 'translate(-50%, -50%)' }}></div>
+                                    <div className="absolute top-0 h-full bg-[#007AFF] rounded-full" style={{ left: `${entry.breakPos + 5}%`, width: `${95 - entry.breakPos}%` }}></div>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         </div>
