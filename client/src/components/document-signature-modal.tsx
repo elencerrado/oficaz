@@ -78,19 +78,21 @@ export function DocumentSignatureModal({
       const dpr = Math.max(window.devicePixelRatio || 1, 2);
       const rect = canvas.getBoundingClientRect();
       
-      // Set canvas internal resolution to 2x or more for high quality
+      // Set canvas internal resolution to match display * DPI
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
       
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // Scale context to match DPI
-        ctx.scale(dpr, dpr);
+        // Use setTransform to reset and apply DPI scaling (prevents stacking on multiple calls)
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         
+        // Fill background
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, rect.width, rect.height);
+        
+        // Setup stroke style
         ctx.strokeStyle = '#1a1a1a';
-        // Fine line width - will be crisp at high DPI
         ctx.lineWidth = 1.5;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
@@ -104,30 +106,23 @@ export function DocumentSignatureModal({
   const getEventPos = useCallback((event: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
     
-    // Calculate scale factors to handle canvas buffer vs display size mismatch
-    // This is critical for touch accuracy on mobile devices
-    const dpr = Math.max(window.devicePixelRatio || 1, 2);
-    const scaleX = rect.width / (canvas.width / dpr);
-    const scaleY = rect.height / (canvas.height / dpr);
-    
+    // Get client coordinates from touch or mouse event
     let clientX: number, clientY: number;
     
-    // On mobile, use touch coordinates
     if ('touches' in event && event.touches.length > 0) {
       const touch = event.touches[0];
       clientX = touch.clientX;
       clientY = touch.clientY;
     } else {
-      // For mouse events
       const mouseEvent = event as React.MouseEvent;
       clientX = mouseEvent.clientX;
       clientY = mouseEvent.clientY;
     }
     
-    // Convert client coordinates to canvas coordinates with proper scaling
+    // Return CSS-space coordinates - the canvas context transform handles DPI scaling
     return {
-      x: (clientX - rect.left) / scaleX,
-      y: (clientY - rect.top) / scaleY
+      x: clientX - rect.left,
+      y: clientY - rect.top
     };
   }, []);
 
