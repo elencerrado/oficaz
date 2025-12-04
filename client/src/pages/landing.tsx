@@ -42,7 +42,9 @@ import {
   Phone,
   MapPin,
   Edit,
-  Trash2
+  Trash2,
+  Search,
+  PenLine
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
@@ -577,42 +579,66 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
     return (
       <div className="p-3 h-full bg-[#0a1628]">
         <h3 className="text-white font-bold text-sm mb-0.5">Documentos</h3>
-        <p className="text-gray-400 text-[8px] mb-2">Tus archivos</p>
+        <p className="text-gray-400 text-[8px] mb-2">Gestiona tus documentos laborales</p>
         
-        {/* Category tabs */}
-        <div className="flex gap-1 mb-2">
-          <div className="flex-1 bg-[#007AFF] rounded-lg py-1 px-1.5 flex items-center justify-center gap-0.5">
-            <CreditCard className="w-2 h-2 text-white" />
-            <span className="text-white text-[5px] font-medium">Nóminas</span>
+        {/* Category tabs - 2 rows */}
+        <div className="flex gap-1 mb-1">
+          <div className="flex-1 bg-[#007AFF] rounded-lg py-1 px-1 flex items-center justify-center gap-0.5">
+            <FileText className="w-2 h-2 text-white" />
+            <span className="text-white text-[5px] font-medium">Todos</span>
           </div>
-          <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1.5 flex items-center justify-center gap-0.5">
+          <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1 flex items-center justify-center gap-0.5">
+            <CreditCard className="w-2 h-2 text-gray-400" />
+            <span className="text-gray-400 text-[5px]">Nóminas</span>
+          </div>
+        </div>
+        <div className="flex gap-1 mb-2">
+          <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1 flex items-center justify-center gap-0.5">
             <FileText className="w-2 h-2 text-gray-400" />
             <span className="text-gray-400 text-[5px]">Contratos</span>
           </div>
-          <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1.5 flex items-center justify-center gap-0.5">
+          <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1 flex items-center justify-center gap-0.5">
             <FileText className="w-2 h-2 text-gray-400" />
-            <span className="text-gray-400 text-[5px]">Otros</span>
+            <span className="text-gray-400 text-[5px]">Otros...</span>
           </div>
+        </div>
+        
+        {/* Search bar */}
+        <div className="flex items-center gap-2 bg-[#1a2942] rounded-lg px-2 py-1 mb-2">
+          <Search className="w-2.5 h-2.5 text-gray-500" />
+          <span className="text-gray-500 text-[5px] flex-1">Buscar documentos...</span>
+          <span className="text-gray-400 text-[5px]">6 docs</span>
         </div>
         
         <div className="bg-[#1a2942] rounded-xl overflow-hidden">
           {[
-            { name: 'Nómina Octubre 2024', signed: false },
-            { name: 'Nómina Septiembre 2024', signed: true },
-            { name: 'Nómina Agosto 2024', signed: true },
-            { name: 'Nómina Julio 2024', signed: true },
+            { name: 'Nómina Octubre 2024', type: 'Nómina', signed: false, size: '120 KB', date: '24 oct' },
+            { name: 'Nómina Septiembre 2024', type: 'Nómina', signed: true, size: '118 KB', date: '25 sep' },
+            { name: 'Nómina Agosto 2024', type: 'Nómina', signed: true, size: '115 KB', date: '26 ago' },
+            { name: 'Contrato trabajo', type: 'Documento', signed: true, size: '1.2 MB', date: '15 ene' },
           ].map((doc, i) => (
-            <div key={i} className="p-1.5 flex items-center gap-2 border-b border-[#0a1628] last:border-0">
-              <div className="w-5 h-5 rounded-lg bg-red-500/20 flex items-center justify-center">
-                <FileText className="w-2.5 h-2.5 text-red-400" />
+            <div key={i} className="p-1.5 flex items-center gap-1.5 border-b border-[#0a1628] last:border-0">
+              <div className="w-5 h-5 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                <FileText className="w-2.5 h-2.5 text-orange-400" />
               </div>
-              <div className="flex-1">
-                <p className="text-white text-[6px] font-medium">{doc.name}</p>
-                <p className={`text-[5px] ${doc.signed ? 'text-green-400' : 'text-yellow-400'}`}>
-                  {doc.signed ? '✓ Firmado' : '⏳ Pendiente de firma'}
-                </p>
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-[6px] font-medium truncate">{doc.name}</p>
+                <div className="flex items-center gap-1">
+                  <span className="text-orange-400 text-[5px]">{doc.type}</span>
+                  <span className={`text-[5px] ${doc.signed ? 'text-green-400' : 'text-yellow-400'}`}>
+                    {doc.signed ? '✓ Firmada' : ''}
+                  </span>
+                </div>
+                <p className="text-gray-500 text-[4px]">{doc.size} · {doc.date}</p>
               </div>
-              <Eye className="w-2.5 h-2.5 text-gray-500" />
+              <div className="flex items-center gap-1">
+                <Eye className="w-2 h-2 text-gray-500" />
+                {!doc.signed ? (
+                  <PenLine className="w-2 h-2 text-[#007AFF]" />
+                ) : (
+                  <ArrowRight className="w-2 h-2 text-gray-500 rotate-90" />
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -1776,42 +1802,66 @@ export default function Landing() {
                         >
                         <div className="p-3 h-full bg-[#0a1628]">
                           <h3 className="text-white font-bold text-sm mb-0.5">Documentos</h3>
-                          <p className="text-gray-400 text-[8px] mb-2">Tus archivos</p>
+                          <p className="text-gray-400 text-[8px] mb-2">Gestiona tus documentos laborales</p>
                           
-                          {/* Category tabs */}
-                          <div className="flex gap-1 mb-2">
-                            <div className="flex-1 bg-[#007AFF] rounded-lg py-1 px-1.5 flex items-center justify-center gap-0.5">
-                              <CreditCard className="w-2 h-2 text-white" />
-                              <span className="text-white text-[5px] font-medium">Nóminas</span>
+                          {/* Category tabs - 2 rows */}
+                          <div className="flex gap-1 mb-1">
+                            <div className="flex-1 bg-[#007AFF] rounded-lg py-1 px-1 flex items-center justify-center gap-0.5">
+                              <FileText className="w-2 h-2 text-white" />
+                              <span className="text-white text-[5px] font-medium">Todos</span>
                             </div>
-                            <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1.5 flex items-center justify-center gap-0.5">
+                            <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1 flex items-center justify-center gap-0.5">
+                              <CreditCard className="w-2 h-2 text-gray-400" />
+                              <span className="text-gray-400 text-[5px]">Nóminas</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-1 mb-2">
+                            <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1 flex items-center justify-center gap-0.5">
                               <FileText className="w-2 h-2 text-gray-400" />
                               <span className="text-gray-400 text-[5px]">Contratos</span>
                             </div>
-                            <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1.5 flex items-center justify-center gap-0.5">
+                            <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1 flex items-center justify-center gap-0.5">
                               <FileText className="w-2 h-2 text-gray-400" />
-                              <span className="text-gray-400 text-[5px]">Otros</span>
+                              <span className="text-gray-400 text-[5px]">Otros...</span>
                             </div>
+                          </div>
+                          
+                          {/* Search bar */}
+                          <div className="flex items-center gap-2 bg-[#1a2942] rounded-lg px-2 py-1 mb-2">
+                            <Search className="w-2.5 h-2.5 text-gray-500" />
+                            <span className="text-gray-500 text-[5px] flex-1">Buscar documentos...</span>
+                            <span className="text-gray-400 text-[5px]">6 docs</span>
                           </div>
                           
                           <div className="bg-[#1a2942] rounded-xl overflow-hidden">
                             {[
-                              { name: 'Nómina Octubre 2024', signed: false },
-                              { name: 'Nómina Septiembre 2024', signed: true },
-                              { name: 'Nómina Agosto 2024', signed: true },
-                              { name: 'Nómina Julio 2024', signed: true },
+                              { name: 'Nómina Octubre 2024', type: 'Nómina', signed: false, size: '120 KB', date: '24 oct' },
+                              { name: 'Nómina Septiembre 2024', type: 'Nómina', signed: true, size: '118 KB', date: '25 sep' },
+                              { name: 'Nómina Agosto 2024', type: 'Nómina', signed: true, size: '115 KB', date: '26 ago' },
+                              { name: 'Contrato trabajo', type: 'Documento', signed: true, size: '1.2 MB', date: '15 ene' },
                             ].map((doc, i) => (
-                              <div key={i} className="p-1.5 flex items-center gap-2 border-b border-[#0a1628] last:border-0">
-                                <div className="w-5 h-5 rounded-lg bg-red-500/20 flex items-center justify-center">
-                                  <FileText className="w-2.5 h-2.5 text-red-400" />
+                              <div key={i} className="p-1.5 flex items-center gap-1.5 border-b border-[#0a1628] last:border-0">
+                                <div className="w-5 h-5 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                                  <FileText className="w-2.5 h-2.5 text-orange-400" />
                                 </div>
-                                <div className="flex-1">
-                                  <p className="text-white text-[6px] font-medium">{doc.name}</p>
-                                  <p className={`text-[5px] ${doc.signed ? 'text-green-400' : 'text-yellow-400'}`}>
-                                    {doc.signed ? '✓ Firmado' : '⏳ Pendiente de firma'}
-                                  </p>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-white text-[6px] font-medium truncate">{doc.name}</p>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-orange-400 text-[5px]">{doc.type}</span>
+                                    <span className={`text-[5px] ${doc.signed ? 'text-green-400' : 'text-yellow-400'}`}>
+                                      {doc.signed ? '✓ Firmada' : ''}
+                                    </span>
+                                  </div>
+                                  <p className="text-gray-500 text-[4px]">{doc.size} · {doc.date}</p>
                                 </div>
-                                <Eye className="w-2.5 h-2.5 text-gray-500" />
+                                <div className="flex items-center gap-1">
+                                  <Eye className="w-2 h-2 text-gray-500" />
+                                  {!doc.signed ? (
+                                    <PenLine className="w-2 h-2 text-[#007AFF]" />
+                                  ) : (
+                                    <ArrowRight className="w-2 h-2 text-gray-500 rotate-90" />
+                                  )}
+                                </div>
                               </div>
                             ))}
                           </div>
