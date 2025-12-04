@@ -899,7 +899,6 @@ export default function Landing() {
                       <button 
                         key={addon.key}
                         onClick={() => setPreviewAddon(addon.key)}
-                        onMouseEnter={() => setPreviewAddon(addon.key)}
                         className={`group text-left rounded-2xl p-5 transition-all duration-300 border-2 ${
                           isActive 
                             ? 'bg-[#007AFF] border-[#007AFF] shadow-xl shadow-blue-200/50' 
