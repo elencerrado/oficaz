@@ -1102,8 +1102,7 @@ export default function Landing() {
                                     <span className="text-gray-400 text-[7px]">{entry.hours}</span>
                                   </div>
                                   {/* Progress bar with orange break indicator inside */}
-                                  <div className="relative h-2.5 bg-[#1a2942] rounded-full">
-                                    <div className="h-full bg-[#007AFF] rounded-full" style={{ width: '95%' }}></div>
+                                  <div className="relative h-2.5 bg-[#007AFF] rounded-full">
                                     <div className="absolute top-1/2 w-1.5 h-1.5 bg-orange-400 rounded-full" style={{ left: `${entry.breakPos}%`, transform: 'translate(-50%, -50%)' }}></div>
                                   </div>
                                 </div>
