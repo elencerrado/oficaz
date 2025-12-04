@@ -53,6 +53,28 @@ async function processExpiredTrials(): Promise<void> {
   }
 }
 
+// Auto-process scheduled deletions (companies past 30-day grace period) - runs every hour
+async function processScheduledDeletions(): Promise<void> {
+  try {
+    const response = await fetch(`http://localhost:5000/api/account/auto-deletion-process`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      if (result.deletedCount > 0 || result.errorCount > 0) {
+        console.log(`🗑️ AUTO-DELETION SCHEDULER: ${result.deletedCount} deleted, ${result.errorCount} errors`);
+      }
+    }
+  } catch (error: any) {
+    // Silent fail - server might be restarting
+    if (!error.message?.includes('ECONNREFUSED')) {
+      console.error('❌ Auto-deletion processing error:', error.message);
+    }
+  }
+}
+
 // 🔒 CRITICAL iOS SAFARI BUG WORKAROUND: Prevent duplicate push sends within 10 seconds
 // Maps "userId-endpoint-notificationType-minute" -> timestamp of last send
 const recentPushSends = new Map<string, number>();
@@ -1306,13 +1328,20 @@ export function startPushNotificationScheduler() {
     });
   }, 5 * 60 * 1000); // Every 5 minutes
   
+  // Check every hour for scheduled deletions (companies past 30-day grace period)
+  global.pushSchedulerDeletionInterval = setInterval(() => {
+    processScheduledDeletions().catch(err => {
+      console.error('❌ Error processing scheduled deletions:', err);
+    });
+  }, 60 * 60 * 1000); // Every 1 hour
+  
   // Mark as running
   global.pushSchedulerRunning = true;
   
   // ⚠️ DO NOT run immediately on start to avoid duplicate notifications
   // Let the interval handle all checks consistently
   
-  console.log('✅ Push Notification Scheduler started - checking alarms every 30s, incomplete sessions every 5min, reminders every 1min, expired trials every 5min');
+  console.log('✅ Push Notification Scheduler started - checking alarms every 30s, incomplete sessions every 5min, reminders every 1min, expired trials every 5min, scheduled deletions every 1hr');
   
   return { 
     alarmInterval: global.pushSchedulerAlarmInterval, 

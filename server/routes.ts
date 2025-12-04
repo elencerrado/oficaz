@@ -13579,6 +13579,53 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
     }
   });
 
+  // Auto-process scheduled deletions (companies that passed 30-day grace period)
+  app.post('/api/account/auto-deletion-process', async (req, res) => {
+    try {
+      console.log('🗑️ AUTO-DELETION PROCESSING - Checking for companies ready for permanent deletion...');
+      
+      let deletedCount = 0;
+      let errorCount = 0;
+      
+      // Get all companies that have passed their 30-day grace period
+      const companiesReadyForDeletion = await storage.getCompaniesReadyForDeletion();
+      
+      console.log(`🗑️ Found ${companiesReadyForDeletion.length} companies ready for permanent deletion`);
+      
+      for (const company of companiesReadyForDeletion) {
+        try {
+          console.log(`🗑️ Processing permanent deletion for company: ${company.name} (ID: ${company.id})`);
+          
+          const success = await storage.deleteCompanyPermanently(company.id);
+          
+          if (success) {
+            console.log(`✅ PERMANENTLY DELETED: ${company.name} (ID: ${company.id})`);
+            deletedCount++;
+          } else {
+            console.error(`❌ Failed to delete company ${company.id}`);
+            errorCount++;
+          }
+          
+        } catch (error) {
+          console.error(`❌ Error deleting company ${company.id}:`, error);
+          errorCount++;
+        }
+      }
+      
+      console.log(`🗑️ AUTO-DELETION PROCESSING COMPLETE: ${deletedCount} deleted, ${errorCount} errors`);
+      
+      res.json({ 
+        message: `Processed ${companiesReadyForDeletion.length} companies for deletion. ${deletedCount} deleted, ${errorCount} errors.`,
+        deletedCount,
+        errorCount 
+      });
+      
+    } catch (error) {
+      console.error('❌ Error in auto-deletion processing:', error);
+      res.status(500).json({ message: 'Error during auto-deletion processing' });
+    }
+  });
+
   // ADMIN: Test trial processing (manual trigger for testing)
   app.post('/api/admin/test-trial-processing', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
     try {
