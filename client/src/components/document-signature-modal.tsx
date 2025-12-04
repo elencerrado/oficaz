@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { PenTool, RotateCcw, Check, X, Edit3, Info } from 'lucide-react';
@@ -74,24 +74,17 @@ export function DocumentSignatureModal({
   const setupCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (canvas) {
-      // High-DPI canvas for crisp signatures
       const dpr = Math.max(window.devicePixelRatio || 1, 2);
       const rect = canvas.getBoundingClientRect();
       
-      // Set canvas internal resolution to match display * DPI
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
       
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // Use setTransform to reset and apply DPI scaling (prevents stacking on multiple calls)
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        
-        // Fill background
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, rect.width, rect.height);
-        
-        // Setup stroke style
         ctx.strokeStyle = '#1a1a1a';
         ctx.lineWidth = 1.5;
         ctx.lineCap = 'round';
@@ -105,7 +98,6 @@ export function DocumentSignatureModal({
 
   const getEventPos = useCallback((event: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
-    // Use CSS coordinates since context is scaled by DPR
     if ('touches' in event) {
       return {
         x: event.touches[0].clientX - rect.left,
@@ -194,7 +186,6 @@ export function DocumentSignatureModal({
       }
     }
     
-    // Higher padding for better margins
     const padding = 40;
     minX = Math.max(0, minX - padding);
     minY = Math.max(0, minY - padding);
@@ -204,7 +195,6 @@ export function DocumentSignatureModal({
     const width = maxX - minX;
     const height = maxY - minY;
     
-    // Export at higher resolution (800px) for crisp PDF rendering
     const optimizedCanvas = document.createElement('canvas');
     const targetWidth = Math.min(800, width);
     const scale = targetWidth / width;
@@ -224,7 +214,6 @@ export function DocumentSignatureModal({
         const imgData = tempCtx.getImageData(0, 0, width, height);
         const pixels = imgData.data;
         
-        // Make white pixels transparent
         for (let i = 0; i < pixels.length; i += 4) {
           const r = pixels[i];
           const g = pixels[i + 1];
@@ -236,7 +225,6 @@ export function DocumentSignatureModal({
         
         tempCtx.putImageData(imgData, 0, 0);
         
-        // Draw with high quality anti-aliasing
         optCtx.clearRect(0, 0, optimizedCanvas.width, optimizedCanvas.height);
         optCtx.imageSmoothingEnabled = true;
         optCtx.imageSmoothingQuality = 'high';
@@ -277,15 +265,24 @@ export function DocumentSignatureModal({
     onSign(signatureData);
   }, [getOptimizedSignature, onSign, saveSignatureMutation]);
 
+  // Lock body scroll when open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isOpen]);
+
+  // Setup canvas when draw mode is shown
   useEffect(() => {
     if (isOpen && showDrawMode) {
-      // Wait for modal animation to complete before setting up canvas
-      // Modal has 200ms animation, so 300ms ensures it's fully open
-      const timer = setTimeout(() => setupCanvas(), 300);
-      return () => clearTimeout(timer);
+      setTimeout(() => setupCanvas(), 100);
     }
   }, [isOpen, showDrawMode, setupCanvas]);
 
+  // Reset state when opened
   useEffect(() => {
     if (isOpen) {
       setShowDrawMode(false);
@@ -293,6 +290,7 @@ export function DocumentSignatureModal({
     }
   }, [isOpen]);
 
+  if (!isOpen) return null;
 
   const renderSavedSignatureView = () => (
     <div className="space-y-4">
@@ -325,6 +323,20 @@ export function DocumentSignatureModal({
       <Separator />
 
       <div className="flex flex-col gap-2 pt-2">
+        <Button
+          type="button"
+          onClick={handleSignWithSavedSignature}
+          disabled={isLoading}
+          className="w-full"
+        >
+          {isLoading ? (
+            <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+          ) : (
+            <Check className="h-4 w-4 mr-2" />
+          )}
+          {isLoading ? 'Firmando...' : 'Firmar con esta firma'}
+        </Button>
+        
         <div className="flex gap-2">
           <Button
             type="button"
@@ -338,28 +350,15 @@ export function DocumentSignatureModal({
           </Button>
           <Button
             type="button"
-            onClick={handleSignWithSavedSignature}
+            variant="outline"
+            onClick={() => setShowDrawMode(true)}
             disabled={isLoading}
-            className="flex-1 bg-green-600 hover:bg-green-700"
+            className="flex-1"
           >
-            {isLoading ? (
-              <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
-            ) : (
-              <Check className="h-4 w-4 mr-2" />
-            )}
-            {isLoading ? 'Firmando...' : 'Firmar y Aceptar'}
+            <Edit3 className="h-4 w-4 mr-2" />
+            Dibujar nueva
           </Button>
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => setShowDrawMode(true)}
-          disabled={isLoading}
-          className="text-sm text-gray-500"
-        >
-          <Edit3 className="h-3 w-3 mr-1" />
-          Cambiar mi firma
-        </Button>
       </div>
     </div>
   );
@@ -461,28 +460,41 @@ export function DocumentSignatureModal({
     </div>
   );
 
-  return (
-    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="max-h-[85vh] px-4 pb-6">
-        <DrawerHeader className="pb-2">
-          <DrawerTitle className="flex items-center justify-center gap-2 text-base sm:text-lg">
-            <PenTool className="h-5 w-5" />
-            Firmar Documento
-          </DrawerTitle>
-        </DrawerHeader>
-
-        <div className="overflow-y-auto px-2">
-          {signatureLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            </div>
-          ) : (
-            hasSavedSignature && !showDrawMode 
-              ? renderSavedSignatureView() 
-              : renderDrawSignatureView()
-          )}
+  // Custom overlay without any CSS transforms
+  const modalContent = (
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div 
+        className="bg-background rounded-lg shadow-xl w-full max-w-lg mx-4 p-4 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <PenTool className="h-5 w-5" />
+          <h2 className="text-lg font-semibold">Firmar Documento</h2>
+          <button
+            onClick={onClose}
+            className="ml-auto p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
-      </DrawerContent>
-    </Drawer>
+
+        {signatureLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        ) : (
+          hasSavedSignature && !showDrawMode 
+            ? renderSavedSignatureView() 
+            : renderDrawSignatureView()
+        )}
+      </div>
+    </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
