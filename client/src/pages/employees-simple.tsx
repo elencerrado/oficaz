@@ -31,7 +31,14 @@ import {
   Trash2,
   Lock,
   ClipboardList,
-  Settings
+  Settings,
+  Sparkles,
+  FileText,
+  Bell,
+  FolderOpen,
+  CalendarDays,
+  LayoutGrid,
+  Eye
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -70,6 +77,7 @@ export default function EmployeesSimple() {
     canBuyRemoveFeatures: false,
     canBuyRemoveUsers: false,
     canEditCompanyData: false,
+    visibleFeatures: [] as string[],
   });
   const [editEmployee, setEditEmployee] = useState({
     companyEmail: '',
@@ -112,10 +120,24 @@ export default function EmployeesSimple() {
     enabled: user?.role === 'admin' || user?.role === 'manager',
   });
 
+  // Query for company addons (to show which features are contracted)
+  const { data: companyAddons } = useQuery<Array<{
+    id: number;
+    addonId: number;
+    status: string;
+    addon: { id: number; key: string; name: string; description: string };
+  }>>({
+    queryKey: ['/api/company/addons'],
+    enabled: user?.role === 'admin',
+  });
+
   // Update local state when permissions are fetched
   useEffect(() => {
     if (permissionsData?.managerPermissions) {
-      setManagerPermissions(permissionsData.managerPermissions);
+      setManagerPermissions({
+        ...permissionsData.managerPermissions,
+        visibleFeatures: permissionsData.managerPermissions.visibleFeatures || [],
+      });
     }
   }, [permissionsData]);
 
@@ -1734,6 +1756,92 @@ export default function EmployeesSimple() {
           </DialogHeader>
           
           <div className="py-4 space-y-4">
+            {/* Features Grid - Visible Features for Managers */}
+            {companyAddons && companyAddons.filter(ca => ca.status === 'active').length > 0 && (
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Eye className="h-4 w-4 text-gray-500" />
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Funcionalidades Visibles
+                  </p>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                  Selecciona qué funcionalidades pueden ver los managers en el menú
+                </p>
+                <div className="grid grid-cols-4 gap-2">
+                  {companyAddons.filter(ca => ca.status === 'active').map((ca) => {
+                    const isVisible = managerPermissions.visibleFeatures.includes(ca.addon.key);
+                    const getFeatureIcon = (key: string) => {
+                      switch (key) {
+                        case 'time_tracking': return <Clock className="h-5 w-5" />;
+                        case 'vacation': return <CalendarDays className="h-5 w-5" />;
+                        case 'schedules': return <LayoutGrid className="h-5 w-5" />;
+                        case 'messages': return <MessageCircle className="h-5 w-5" />;
+                        case 'reminders': return <Bell className="h-5 w-5" />;
+                        case 'work_reports': return <FileText className="h-5 w-5" />;
+                        case 'documents': return <FolderOpen className="h-5 w-5" />;
+                        case 'ai_assistant': return <Sparkles className="h-5 w-5" />;
+                        default: return <Settings className="h-5 w-5" />;
+                      }
+                    };
+                    const getFeatureColor = (key: string, active: boolean) => {
+                      if (!active) return 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600';
+                      switch (key) {
+                        case 'time_tracking': return 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400';
+                        case 'vacation': return 'bg-cyan-100 text-cyan-600 dark:bg-cyan-900/40 dark:text-cyan-400';
+                        case 'schedules': return 'bg-teal-100 text-teal-600 dark:bg-teal-900/40 dark:text-teal-400';
+                        case 'messages': return 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400';
+                        case 'reminders': return 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400';
+                        case 'work_reports': return 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400';
+                        case 'documents': return 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400';
+                        case 'ai_assistant': return 'bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400';
+                        default: return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
+                      }
+                    };
+                    const getFeatureName = (key: string) => {
+                      switch (key) {
+                        case 'time_tracking': return 'Fichajes';
+                        case 'vacation': return 'Vacaciones';
+                        case 'schedules': return 'Cuadrante';
+                        case 'messages': return 'Mensajes';
+                        case 'reminders': return 'Recordatorios';
+                        case 'work_reports': return 'Partes';
+                        case 'documents': return 'Documentos';
+                        case 'ai_assistant': return 'OficazIA';
+                        default: return ca.addon.name;
+                      }
+                    };
+                    return (
+                      <button
+                        key={ca.addon.key}
+                        onClick={() => {
+                          const newVisibleFeatures = isVisible
+                            ? managerPermissions.visibleFeatures.filter(f => f !== ca.addon.key)
+                            : [...managerPermissions.visibleFeatures, ca.addon.key];
+                          const newPermissions = { ...managerPermissions, visibleFeatures: newVisibleFeatures };
+                          setManagerPermissions(newPermissions);
+                          updatePermissionsMutation.mutate(newPermissions);
+                        }}
+                        className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200 ${getFeatureColor(ca.addon.key, isVisible)} ${isVisible ? 'ring-2 ring-offset-1 ring-blue-500 dark:ring-offset-gray-900' : 'opacity-50 hover:opacity-75'}`}
+                        title={isVisible ? `Ocultar ${getFeatureName(ca.addon.key)} del menú` : `Mostrar ${getFeatureName(ca.addon.key)} en el menú`}
+                      >
+                        {getFeatureIcon(ca.addon.key)}
+                        <span className="text-[10px] font-medium mt-1 truncate w-full text-center">
+                          {getFeatureName(ca.addon.key)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+                Permisos de Gestión
+              </p>
+            </div>
+
             {/* Permission: Create/Delete Employees */}
             <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800">
               <div className="flex-1 pr-4">
