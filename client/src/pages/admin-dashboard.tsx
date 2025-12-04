@@ -738,10 +738,12 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      {/* Trial Status Management */}
-      <div className={`mb-6 ${getCardAnimationClass(0)}`}>
-        <TrialManager />
-      </div>
+      {/* Trial Status Management - Only visible to admins */}
+      {user?.role === 'admin' && (
+        <div className={`mb-6 ${getCardAnimationClass(0)}`}>
+          <TrialManager />
+        </div>
+      )}
 
       {/* Blocked Account Overlay */}
       {trialStatus?.isBlocked && (

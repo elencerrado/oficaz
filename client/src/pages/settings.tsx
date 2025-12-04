@@ -2450,8 +2450,9 @@ export default function Settings() {
   // Admin/Manager configuration view
   return (
     <div className="bg-background" style={{ overflowX: 'clip' }}>
-      {/* Trial Manager - shown for companies in trial or active accounts (but not blocked) */}
-      {((subscription?.status === 'trial' && subscription?.isTrialActive) || 
+      {/* Trial Manager - shown only for admins in trial or active accounts (but not blocked) */}
+      {user?.role === 'admin' && 
+       ((subscription?.status === 'trial' && subscription?.isTrialActive) || 
         (subscription?.status === 'active')) && 
         subscription?.status !== 'blocked' ? (
         <div className="mb-6">
