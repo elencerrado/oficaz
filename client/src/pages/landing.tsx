@@ -464,65 +464,55 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
         </div>
         
         <div className="space-y-2">
-          {/* Card 1 - Alta prioridad (rosa) */}
-          <div className="bg-white rounded-xl overflow-hidden shadow-sm">
-            <div className="flex">
-              <div className="w-1 bg-pink-400"></div>
-              <div className="flex-1 p-2">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-pink-500 text-[6px] font-medium">Alta</span>
-                  <div className="flex items-center gap-1">
-                    <Edit className="w-2 h-2 text-gray-400" />
-                    <Users className="w-2 h-2 text-gray-400" />
-                  </div>
-                </div>
-                <p className="text-gray-900 text-[7px] font-semibold">Test Banner Madrid</p>
-                <p className="text-gray-500 text-[5px] mt-0.5">Recordatorio para probar el banner</p>
-                <div className="flex items-center gap-1 mt-1 text-gray-400">
-                  <Calendar className="w-2 h-2" />
-                  <span className="text-[5px]">Hace 5 meses</span>
-                </div>
-                <div className="flex items-center justify-between mt-1.5">
-                  <div className="flex -space-x-1">
-                    <img src={avatarWoman01} alt="" className="w-4 h-4 rounded-full border-2 border-white object-cover" />
-                    <img src={avatarMan01} alt="" className="w-4 h-4 rounded-full border-2 border-white object-cover" />
-                  </div>
-                  <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
-                    <div className="w-2.5 h-2.5 rounded-full border border-gray-300"></div>
-                    Completar
-                  </button>
-                </div>
+          {/* Card 1 - Alta prioridad (rosa suave) */}
+          <div className="bg-pink-50 rounded-xl p-2 shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-pink-500 text-[6px] font-medium">Alta</span>
+              <div className="flex items-center gap-1">
+                <Edit className="w-2 h-2 text-pink-400" />
+                <Users className="w-2 h-2 text-pink-400" />
               </div>
+            </div>
+            <p className="text-gray-900 text-[7px] font-semibold">Test Banner Madrid</p>
+            <p className="text-gray-600 text-[5px] mt-0.5">Recordatorio para probar el banner</p>
+            <div className="flex items-center gap-1 mt-1 text-pink-400">
+              <Calendar className="w-2 h-2" />
+              <span className="text-[5px]">Hace 5 meses</span>
+            </div>
+            <div className="flex items-center justify-between mt-1.5">
+              <div className="flex -space-x-1">
+                <img src={avatarWoman01} alt="" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
+                <img src={avatarMan01} alt="" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
+              </div>
+              <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                Completar
+              </button>
             </div>
           </div>
           
-          {/* Card 2 - Media prioridad (amarillo) */}
-          <div className="bg-white rounded-xl overflow-hidden shadow-sm">
-            <div className="flex">
-              <div className="w-1 bg-yellow-400"></div>
-              <div className="flex-1 p-2">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-yellow-600 text-[6px] font-medium">Media</span>
-                  <div className="flex items-center gap-1">
-                    <Edit className="w-2 h-2 text-gray-400" />
-                  </div>
-                </div>
-                <p className="text-gray-900 text-[7px] font-semibold">Reunión</p>
-                <div className="flex items-center gap-1 mt-1 text-gray-400">
-                  <Calendar className="w-2 h-2" />
-                  <span className="text-[5px]">Hace 23 días</span>
-                </div>
-                <div className="flex items-center justify-between mt-1.5">
-                  <div className="flex -space-x-1">
-                    <img src={avatarMan02} alt="" className="w-4 h-4 rounded-full border-2 border-white object-cover" />
-                    <img src={avatarWoman02} alt="" className="w-4 h-4 rounded-full border-2 border-white object-cover" />
-                  </div>
-                  <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
-                    <div className="w-2.5 h-2.5 rounded-full border border-gray-300"></div>
-                    Completar
-                  </button>
-                </div>
+          {/* Card 2 - Media prioridad (amarillo suave) */}
+          <div className="bg-yellow-50 rounded-xl p-2 shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-yellow-600 text-[6px] font-medium">Media</span>
+              <div className="flex items-center gap-1">
+                <Edit className="w-2 h-2 text-yellow-500" />
               </div>
+            </div>
+            <p className="text-gray-900 text-[7px] font-semibold">Reunión</p>
+            <div className="flex items-center gap-1 mt-1 text-yellow-500">
+              <Calendar className="w-2 h-2" />
+              <span className="text-[5px]">Hace 23 días</span>
+            </div>
+            <div className="flex items-center justify-between mt-1.5">
+              <div className="flex -space-x-1">
+                <img src={avatarMan02} alt="" className="w-4 h-4 rounded-full border-2 border-yellow-50 object-cover" />
+                <img src={avatarWoman02} alt="" className="w-4 h-4 rounded-full border-2 border-yellow-50 object-cover" />
+              </div>
+              <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                Completar
+              </button>
             </div>
           </div>
         </div>
@@ -1595,65 +1585,55 @@ export default function Landing() {
                           
                           {/* Reminder cards */}
                           <div className="space-y-2">
-                            {/* Card 1 - Alta prioridad (rosa) */}
-                            <div className="bg-white rounded-xl overflow-hidden shadow-sm">
-                              <div className="flex">
-                                <div className="w-1 bg-pink-400"></div>
-                                <div className="flex-1 p-2">
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="text-pink-500 text-[6px] font-medium">Alta</span>
-                                    <div className="flex items-center gap-1">
-                                      <Edit className="w-2 h-2 text-gray-400" />
-                                      <Users className="w-2 h-2 text-gray-400" />
-                                    </div>
-                                  </div>
-                                  <p className="text-gray-900 text-[7px] font-semibold">Test Banner Madrid</p>
-                                  <p className="text-gray-500 text-[5px] mt-0.5">Recordatorio para probar el banner</p>
-                                  <div className="flex items-center gap-1 mt-1 text-gray-400">
-                                    <Calendar className="w-2 h-2" />
-                                    <span className="text-[5px]">Hace 5 meses</span>
-                                  </div>
-                                  <div className="flex items-center justify-between mt-1.5">
-                                    <div className="flex -space-x-1">
-                                      <img src={avatarWoman01} alt="" className="w-4 h-4 rounded-full border-2 border-white object-cover" />
-                                      <img src={avatarMan01} alt="" className="w-4 h-4 rounded-full border-2 border-white object-cover" />
-                                    </div>
-                                    <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
-                                      <div className="w-2.5 h-2.5 rounded-full border border-gray-300"></div>
-                                      Completar
-                                    </button>
-                                  </div>
+                            {/* Card 1 - Alta prioridad (rosa suave) */}
+                            <div className="bg-pink-50 rounded-xl p-2 shadow-sm">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-pink-500 text-[6px] font-medium">Alta</span>
+                                <div className="flex items-center gap-1">
+                                  <Edit className="w-2 h-2 text-pink-400" />
+                                  <Users className="w-2 h-2 text-pink-400" />
                                 </div>
+                              </div>
+                              <p className="text-gray-900 text-[7px] font-semibold">Test Banner Madrid</p>
+                              <p className="text-gray-600 text-[5px] mt-0.5">Recordatorio para probar el banner</p>
+                              <div className="flex items-center gap-1 mt-1 text-pink-400">
+                                <Calendar className="w-2 h-2" />
+                                <span className="text-[5px]">Hace 5 meses</span>
+                              </div>
+                              <div className="flex items-center justify-between mt-1.5">
+                                <div className="flex -space-x-1">
+                                  <img src={avatarWoman01} alt="" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
+                                  <img src={avatarMan01} alt="" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
+                                </div>
+                                <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                                  <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                                  Completar
+                                </button>
                               </div>
                             </div>
                             
-                            {/* Card 2 - Media prioridad (amarillo) */}
-                            <div className="bg-white rounded-xl overflow-hidden shadow-sm">
-                              <div className="flex">
-                                <div className="w-1 bg-yellow-400"></div>
-                                <div className="flex-1 p-2">
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="text-yellow-600 text-[6px] font-medium">Media</span>
-                                    <div className="flex items-center gap-1">
-                                      <Edit className="w-2 h-2 text-gray-400" />
-                                    </div>
-                                  </div>
-                                  <p className="text-gray-900 text-[7px] font-semibold">Reunión</p>
-                                  <div className="flex items-center gap-1 mt-1 text-gray-400">
-                                    <Calendar className="w-2 h-2" />
-                                    <span className="text-[5px]">Hace 23 días</span>
-                                  </div>
-                                  <div className="flex items-center justify-between mt-1.5">
-                                    <div className="flex -space-x-1">
-                                      <img src={avatarMan02} alt="" className="w-4 h-4 rounded-full border-2 border-white object-cover" />
-                                      <img src={avatarWoman02} alt="" className="w-4 h-4 rounded-full border-2 border-white object-cover" />
-                                    </div>
-                                    <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
-                                      <div className="w-2.5 h-2.5 rounded-full border border-gray-300"></div>
-                                      Completar
-                                    </button>
-                                  </div>
+                            {/* Card 2 - Media prioridad (amarillo suave) */}
+                            <div className="bg-yellow-50 rounded-xl p-2 shadow-sm">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-yellow-600 text-[6px] font-medium">Media</span>
+                                <div className="flex items-center gap-1">
+                                  <Edit className="w-2 h-2 text-yellow-500" />
                                 </div>
+                              </div>
+                              <p className="text-gray-900 text-[7px] font-semibold">Reunión</p>
+                              <div className="flex items-center gap-1 mt-1 text-yellow-500">
+                                <Calendar className="w-2 h-2" />
+                                <span className="text-[5px]">Hace 23 días</span>
+                              </div>
+                              <div className="flex items-center justify-between mt-1.5">
+                                <div className="flex -space-x-1">
+                                  <img src={avatarMan02} alt="" className="w-4 h-4 rounded-full border-2 border-yellow-50 object-cover" />
+                                  <img src={avatarWoman02} alt="" className="w-4 h-4 rounded-full border-2 border-yellow-50 object-cover" />
+                                </div>
+                                <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                                  <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                                  Completar
+                                </button>
                               </div>
                             </div>
                           </div>
