@@ -464,77 +464,93 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
         </div>
         
         <div className="space-y-1.5">
-          {/* Card 1 - Alta prioridad (rosa suave) */}
-          <div className="bg-pink-50 rounded-lg p-1.5 shadow-sm">
-            <div className="flex items-center justify-between mb-0.5">
-              <span className="text-pink-500 text-[5px] font-medium">Alta</span>
-              <div className="flex items-center gap-0.5">
-                <Edit className="w-1.5 h-1.5 text-pink-400" />
-                <Users className="w-1.5 h-1.5 text-pink-400" />
+          {/* Card 1 - Alta prioridad (rosa suave) - compartido */}
+          <div className="bg-pink-50 rounded-xl p-2 shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-pink-500 text-[6px] font-medium">Alta</span>
+              <div className="flex items-center gap-1">
+                <Edit className="w-2 h-2 text-pink-400" />
+                <Users className="w-2 h-2 text-pink-400" />
               </div>
             </div>
-            <p className="text-gray-900 text-[6px] font-semibold">Renovar contrato proveedor</p>
-            <p className="text-gray-600 text-[5px]">Revisar condiciones y firmar antes del día 15</p>
-            <div className="flex items-center justify-between mt-1">
-              <div className="flex items-center gap-1">
-                <Calendar className="w-1.5 h-1.5 text-pink-400" />
-                <span className="text-[5px] text-pink-400">Mañana</span>
-              </div>
+            <p className="text-gray-900 text-[7px] font-semibold">Renovar contrato proveedor</p>
+            <p className="text-gray-600 text-[5px] mt-0.5">Revisar condiciones y firmar antes del día 15</p>
+            <div className="flex items-center gap-1 mt-1 text-pink-400">
+              <Calendar className="w-2 h-2" />
+              <span className="text-[5px]">Mañana</span>
+            </div>
+            <div className="flex items-center justify-between mt-1.5">
               <div className="flex -space-x-1">
-                <img src={avatarWoman01} alt="" className="w-3 h-3 rounded-full border border-pink-50 object-cover" />
-                <img src={avatarMan01} alt="" className="w-3 h-3 rounded-full border border-pink-50 object-cover" />
+                <img src={avatarWoman01} alt="" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
+                <img src={avatarMan01} alt="" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
               </div>
+              <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                Completar
+              </button>
             </div>
           </div>
           
-          {/* Card 2 - Media prioridad (amarillo suave) */}
-          <div className="bg-yellow-50 rounded-lg p-1.5 shadow-sm">
-            <div className="flex items-center justify-between mb-0.5">
-              <span className="text-yellow-600 text-[5px] font-medium">Media</span>
-              <Edit className="w-1.5 h-1.5 text-yellow-500" />
+          {/* Card 2 - Media prioridad (amarillo suave) - sin compartir */}
+          <div className="bg-yellow-50 rounded-xl p-2 shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-yellow-600 text-[6px] font-medium">Media</span>
+              <Edit className="w-2 h-2 text-yellow-500" />
             </div>
-            <p className="text-gray-900 text-[6px] font-semibold">Enviar nóminas noviembre</p>
-            <div className="flex items-center justify-between mt-1">
-              <div className="flex items-center gap-1">
-                <Calendar className="w-1.5 h-1.5 text-yellow-500" />
-                <span className="text-[5px] text-yellow-500">Hace 2 días</span>
-              </div>
+            <p className="text-gray-900 text-[7px] font-semibold">Enviar nóminas noviembre</p>
+            <div className="flex items-center gap-1 mt-1 text-yellow-500">
+              <Calendar className="w-2 h-2" />
+              <span className="text-[5px]">Hace 2 días</span>
+            </div>
+            <div className="flex items-center justify-end mt-1.5">
+              <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                Completar
+              </button>
             </div>
           </div>
           
-          {/* Card 3 - Baja prioridad (verde suave) */}
-          <div className="bg-green-50 rounded-lg p-1.5 shadow-sm">
-            <div className="flex items-center justify-between mb-0.5">
-              <span className="text-green-600 text-[5px] font-medium">Baja</span>
-              <div className="flex items-center gap-0.5">
-                <Edit className="w-1.5 h-1.5 text-green-500" />
-                <Users className="w-1.5 h-1.5 text-green-500" />
+          {/* Card 3 - Baja prioridad (verde suave) - compartido con 1 persona */}
+          <div className="bg-green-50 rounded-xl p-2 shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-green-600 text-[6px] font-medium">Baja</span>
+              <div className="flex items-center gap-1">
+                <Edit className="w-2 h-2 text-green-500" />
+                <Users className="w-2 h-2 text-green-500" />
               </div>
             </div>
-            <p className="text-gray-900 text-[6px] font-semibold">Revisión equipos oficina</p>
-            <div className="flex items-center justify-between mt-1">
-              <div className="flex items-center gap-1">
-                <Calendar className="w-1.5 h-1.5 text-green-500" />
-                <span className="text-[5px] text-green-500">Próxima semana</span>
-              </div>
+            <p className="text-gray-900 text-[7px] font-semibold">Revisión equipos oficina</p>
+            <div className="flex items-center gap-1 mt-1 text-green-500">
+              <Calendar className="w-2 h-2" />
+              <span className="text-[5px]">Próxima semana</span>
+            </div>
+            <div className="flex items-center justify-between mt-1.5">
               <div className="flex -space-x-1">
-                <img src={avatarMan02} alt="" className="w-3 h-3 rounded-full border border-green-50 object-cover" />
+                <img src={avatarMan02} alt="" className="w-4 h-4 rounded-full border-2 border-green-50 object-cover" />
               </div>
+              <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                Completar
+              </button>
             </div>
           </div>
           
-          {/* Card 4 - Media prioridad (amarillo suave) */}
-          <div className="bg-yellow-50 rounded-lg p-1.5 shadow-sm">
-            <div className="flex items-center justify-between mb-0.5">
-              <span className="text-yellow-600 text-[5px] font-medium">Media</span>
-              <Edit className="w-1.5 h-1.5 text-yellow-500" />
+          {/* Card 4 - Media prioridad (amarillo suave) - sin compartir */}
+          <div className="bg-yellow-50 rounded-xl p-2 shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-yellow-600 text-[6px] font-medium">Media</span>
+              <Edit className="w-2 h-2 text-yellow-500" />
             </div>
-            <p className="text-gray-900 text-[6px] font-semibold">Llamar gestoría fiscal</p>
-            <div className="flex items-center justify-between mt-1">
-              <div className="flex items-center gap-1">
-                <Calendar className="w-1.5 h-1.5 text-yellow-500" />
-                <span className="text-[5px] text-yellow-500">Viernes</span>
-              </div>
+            <p className="text-gray-900 text-[7px] font-semibold">Llamar gestoría fiscal</p>
+            <div className="flex items-center gap-1 mt-1 text-yellow-500">
+              <Calendar className="w-2 h-2" />
+              <span className="text-[5px]">Viernes</span>
+            </div>
+            <div className="flex items-center justify-end mt-1.5">
+              <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                Completar
+              </button>
             </div>
           </div>
         </div>
@@ -1607,77 +1623,93 @@ export default function Landing() {
                           
                           {/* Reminder cards */}
                           <div className="space-y-1.5">
-                            {/* Card 1 - Alta prioridad (rosa suave) */}
-                            <div className="bg-pink-50 rounded-lg p-1.5 shadow-sm">
-                              <div className="flex items-center justify-between mb-0.5">
-                                <span className="text-pink-500 text-[5px] font-medium">Alta</span>
-                                <div className="flex items-center gap-0.5">
-                                  <Edit className="w-1.5 h-1.5 text-pink-400" />
-                                  <Users className="w-1.5 h-1.5 text-pink-400" />
+                            {/* Card 1 - Alta prioridad (rosa suave) - compartido */}
+                            <div className="bg-pink-50 rounded-xl p-2 shadow-sm">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-pink-500 text-[6px] font-medium">Alta</span>
+                                <div className="flex items-center gap-1">
+                                  <Edit className="w-2 h-2 text-pink-400" />
+                                  <Users className="w-2 h-2 text-pink-400" />
                                 </div>
                               </div>
-                              <p className="text-gray-900 text-[6px] font-semibold">Renovar contrato proveedor</p>
-                              <p className="text-gray-600 text-[5px]">Revisar condiciones y firmar antes del día 15</p>
-                              <div className="flex items-center justify-between mt-1">
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-1.5 h-1.5 text-pink-400" />
-                                  <span className="text-[5px] text-pink-400">Mañana</span>
-                                </div>
+                              <p className="text-gray-900 text-[7px] font-semibold">Renovar contrato proveedor</p>
+                              <p className="text-gray-600 text-[5px] mt-0.5">Revisar condiciones y firmar antes del día 15</p>
+                              <div className="flex items-center gap-1 mt-1 text-pink-400">
+                                <Calendar className="w-2 h-2" />
+                                <span className="text-[5px]">Mañana</span>
+                              </div>
+                              <div className="flex items-center justify-between mt-1.5">
                                 <div className="flex -space-x-1">
-                                  <img src={avatarWoman01} alt="" className="w-3 h-3 rounded-full border border-pink-50 object-cover" />
-                                  <img src={avatarMan01} alt="" className="w-3 h-3 rounded-full border border-pink-50 object-cover" />
+                                  <img src={avatarWoman01} alt="" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
+                                  <img src={avatarMan01} alt="" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
                                 </div>
+                                <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                                  <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                                  Completar
+                                </button>
                               </div>
                             </div>
                             
-                            {/* Card 2 - Media prioridad (amarillo suave) */}
-                            <div className="bg-yellow-50 rounded-lg p-1.5 shadow-sm">
-                              <div className="flex items-center justify-between mb-0.5">
-                                <span className="text-yellow-600 text-[5px] font-medium">Media</span>
-                                <Edit className="w-1.5 h-1.5 text-yellow-500" />
+                            {/* Card 2 - Media prioridad (amarillo suave) - sin compartir */}
+                            <div className="bg-yellow-50 rounded-xl p-2 shadow-sm">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-yellow-600 text-[6px] font-medium">Media</span>
+                                <Edit className="w-2 h-2 text-yellow-500" />
                               </div>
-                              <p className="text-gray-900 text-[6px] font-semibold">Enviar nóminas noviembre</p>
-                              <div className="flex items-center justify-between mt-1">
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-1.5 h-1.5 text-yellow-500" />
-                                  <span className="text-[5px] text-yellow-500">Hace 2 días</span>
-                                </div>
+                              <p className="text-gray-900 text-[7px] font-semibold">Enviar nóminas noviembre</p>
+                              <div className="flex items-center gap-1 mt-1 text-yellow-500">
+                                <Calendar className="w-2 h-2" />
+                                <span className="text-[5px]">Hace 2 días</span>
+                              </div>
+                              <div className="flex items-center justify-end mt-1.5">
+                                <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                                  <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                                  Completar
+                                </button>
                               </div>
                             </div>
                             
-                            {/* Card 3 - Baja prioridad (verde suave) */}
-                            <div className="bg-green-50 rounded-lg p-1.5 shadow-sm">
-                              <div className="flex items-center justify-between mb-0.5">
-                                <span className="text-green-600 text-[5px] font-medium">Baja</span>
-                                <div className="flex items-center gap-0.5">
-                                  <Edit className="w-1.5 h-1.5 text-green-500" />
-                                  <Users className="w-1.5 h-1.5 text-green-500" />
+                            {/* Card 3 - Baja prioridad (verde suave) - compartido con 1 persona */}
+                            <div className="bg-green-50 rounded-xl p-2 shadow-sm">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-green-600 text-[6px] font-medium">Baja</span>
+                                <div className="flex items-center gap-1">
+                                  <Edit className="w-2 h-2 text-green-500" />
+                                  <Users className="w-2 h-2 text-green-500" />
                                 </div>
                               </div>
-                              <p className="text-gray-900 text-[6px] font-semibold">Revisión equipos oficina</p>
-                              <div className="flex items-center justify-between mt-1">
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-1.5 h-1.5 text-green-500" />
-                                  <span className="text-[5px] text-green-500">Próxima semana</span>
-                                </div>
+                              <p className="text-gray-900 text-[7px] font-semibold">Revisión equipos oficina</p>
+                              <div className="flex items-center gap-1 mt-1 text-green-500">
+                                <Calendar className="w-2 h-2" />
+                                <span className="text-[5px]">Próxima semana</span>
+                              </div>
+                              <div className="flex items-center justify-between mt-1.5">
                                 <div className="flex -space-x-1">
-                                  <img src={avatarMan02} alt="" className="w-3 h-3 rounded-full border border-green-50 object-cover" />
+                                  <img src={avatarMan02} alt="" className="w-4 h-4 rounded-full border-2 border-green-50 object-cover" />
                                 </div>
+                                <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                                  <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                                  Completar
+                                </button>
                               </div>
                             </div>
                             
-                            {/* Card 4 - Media prioridad (amarillo suave) */}
-                            <div className="bg-yellow-50 rounded-lg p-1.5 shadow-sm">
-                              <div className="flex items-center justify-between mb-0.5">
-                                <span className="text-yellow-600 text-[5px] font-medium">Media</span>
-                                <Edit className="w-1.5 h-1.5 text-yellow-500" />
+                            {/* Card 4 - Media prioridad (amarillo suave) - sin compartir */}
+                            <div className="bg-yellow-50 rounded-xl p-2 shadow-sm">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-yellow-600 text-[6px] font-medium">Media</span>
+                                <Edit className="w-2 h-2 text-yellow-500" />
                               </div>
-                              <p className="text-gray-900 text-[6px] font-semibold">Llamar gestoría fiscal</p>
-                              <div className="flex items-center justify-between mt-1">
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-1.5 h-1.5 text-yellow-500" />
-                                  <span className="text-[5px] text-yellow-500">Viernes</span>
-                                </div>
+                              <p className="text-gray-900 text-[7px] font-semibold">Llamar gestoría fiscal</p>
+                              <div className="flex items-center gap-1 mt-1 text-yellow-500">
+                                <Calendar className="w-2 h-2" />
+                                <span className="text-[5px]">Viernes</span>
+                              </div>
+                              <div className="flex items-center justify-end mt-1.5">
+                                <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                                  <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                                  Completar
+                                </button>
                               </div>
                             </div>
                           </div>
