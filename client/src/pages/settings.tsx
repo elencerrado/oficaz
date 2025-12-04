@@ -1658,8 +1658,34 @@ export default function Settings() {
     queryKey: ['/api/subscription-plans'],
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Query for manager permissions (for conditionally showing tabs)
+  const isManager = user?.role === 'manager';
+  const { data: permissionsData } = useQuery<{ managerPermissions: {
+    canCreateDeleteEmployees: boolean;
+    canCreateDeleteManagers: boolean;
+    canBuyRemoveFeatures: boolean;
+    canBuyRemoveUsers: boolean;
+    canEditCompanyData: boolean;
+  } }>({
+    queryKey: ['/api/settings/manager-permissions'],
+    enabled: user?.role === 'admin' || isManager,
+  });
+  const managerPermissions = permissionsData?.managerPermissions;
+
+  // Determine if manager can see company tab
+  const managerCanEditCompany = isManager && managerPermissions?.canEditCompanyData;
   
-  const [activeTab, setActiveTab] = useState(user?.role === 'admin' ? 'account' : 'company');
+  // Initialize active tab - admins start at 'account', others at 'profile'
+  // Managers with company access will be switched to 'company' via effect
+  const [activeTab, setActiveTab] = useState(user?.role === 'admin' ? 'account' : 'profile');
+  
+  // Update default tab when permissions become available for managers with company access
+  useEffect(() => {
+    if (isManager && managerPermissions?.canEditCompanyData && activeTab === 'profile') {
+      setActiveTab('company');
+    }
+  }, [isManager, managerPermissions?.canEditCompanyData, activeTab]);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -2435,7 +2461,7 @@ export default function Settings() {
       <TabNavigation
           tabs={[
             ...(user?.role === 'admin' ? [{ id: 'account', label: 'Mi Cuenta', icon: CreditCard }] : []),
-            { id: 'company', label: 'Empresa', icon: Building2 },
+            ...((user?.role === 'admin' || managerCanEditCompany) ? [{ id: 'company', label: 'Empresa', icon: Building2 }] : []),
             { id: 'policies', label: 'Políticas', icon: Shield },
             { id: 'profile', label: 'Mi Perfil', icon: Users },
           ]}

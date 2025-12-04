@@ -137,13 +137,14 @@ export default function AddonStore() {
     enabled: !!user
   });
   
-  // Get subscription info with user counts
+  // Get subscription info with user counts - enabled for admins and managers (server validates role)
+  // Permissions check is only for actions (buying/removing users), not for viewing data
   const { data: subscriptionInfo } = useQuery<{
     userLimits: { maxEmployees: number; maxManagers: number; maxAdmins: number };
     userCounts: { employees: number; managers: number; admins: number };
   }>({
     queryKey: ['/api/subscription/info'],
-    enabled: !!user && isAdmin
+    enabled: !!user && (isAdmin || isManager)
   });
   
   // Current users by role (from actual users in system)
@@ -191,9 +192,11 @@ export default function AddonStore() {
     
   const priceDifference = newPrice - currentPrice;
 
+  // Company addons - enabled for admins and managers (server validates role)
+  // Permissions check is only for actions (buying/removing features), not for viewing data
   const { data: companyAddons, isLoading: companyAddonsLoading } = useQuery<(CompanyAddon & { addon: Addon })[]>({
     queryKey: ['/api/company/addons'],
-    enabled: !!user && isAdmin
+    enabled: !!user && (isAdmin || isManager)
   });
 
   const purchaseMutation = useMutation({
