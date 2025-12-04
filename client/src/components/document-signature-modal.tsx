@@ -275,12 +275,16 @@ export function DocumentSignatureModal({
     }
   }, [isOpen]);
 
-  // Setup canvas when draw mode is shown
+  // Setup canvas when draw mode is shown OR when there's no saved signature
   useEffect(() => {
-    if (isOpen && showDrawMode) {
-      setTimeout(() => setupCanvas(), 100);
+    if (isOpen && !signatureLoading) {
+      // Show draw mode if no saved signature exists
+      const shouldShowDraw = showDrawMode || !hasSavedSignature;
+      if (shouldShowDraw) {
+        setTimeout(() => setupCanvas(), 100);
+      }
     }
-  }, [isOpen, showDrawMode, setupCanvas]);
+  }, [isOpen, showDrawMode, signatureLoading, hasSavedSignature, setupCanvas]);
 
   // Reset state when opened
   useEffect(() => {
