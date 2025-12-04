@@ -17,6 +17,19 @@ import { ReminderBanner } from "@/components/ui/reminder-banner";
 import { TestBanner } from "@/components/test-banner";
 import { updateThemeColor, THEME_COLORS } from "@/lib/theme-provider";
 import type { FeatureKey } from "@/lib/feature-restrictions";
+import { useQuery } from "@tanstack/react-query";
+
+const featureToAddonKey: Record<string, string> = {
+  timeTracking: 'time_tracking',
+  vacation: 'vacation',
+  schedules: 'schedules',
+  documents: 'documents',
+  messages: 'messages',
+  reminders: 'reminders',
+  work_reports: 'work_reports',
+  reports: 'work_reports',
+  ai_assistant: 'ai_assistant',
+};
 
 import { lazy, Suspense } from "react";
 
@@ -137,6 +150,50 @@ function FeatureProtectedRoute({
   if (!hasAccess(feature)) {
     const companyAlias = company?.companyAlias || 'test';
     return <Redirect to={`/${companyAlias}/tienda`} />;
+  }
+  
+  return <>{children}</>;
+}
+
+function ManagerFeatureGate({ 
+  children, 
+  feature 
+}: { 
+  children: React.ReactNode; 
+  feature: string;
+}) {
+  const { user, company, isLoading } = useAuth();
+  
+  const { data: managerPermissionsData, isLoading: permissionsLoading } = useQuery<{ 
+    managerPermissions: { visibleFeatures?: string[] | null } 
+  }>({
+    queryKey: ['/api/settings/manager-permissions'],
+    enabled: user?.role === 'manager',
+  });
+
+  if (isLoading || (user?.role === 'manager' && permissionsLoading)) {
+    return <PageLoading />;
+  }
+
+  if (user?.role !== 'manager') {
+    return <>{children}</>;
+  }
+
+  const addonKey = featureToAddonKey[feature] || feature;
+  const visibleFeatures = managerPermissionsData?.managerPermissions?.visibleFeatures;
+
+  if (visibleFeatures === undefined || visibleFeatures === null) {
+    return <>{children}</>;
+  }
+
+  if (visibleFeatures.length === 0) {
+    const companyAlias = company?.companyAlias || 'test';
+    return <Redirect to={`/${companyAlias}/inicio`} />;
+  }
+
+  if (!visibleFeatures.includes(addonKey)) {
+    const companyAlias = company?.companyAlias || 'test';
+    return <Redirect to={`/${companyAlias}/inicio`} />;
   }
   
   return <>{children}</>;
@@ -547,13 +604,15 @@ function Router() {
 
       <Route path="/:companyAlias/fichajes">
         <ProtectedRoute>
-          <AppLayout>
-            {user && (user.role === 'admin' || user.role === 'manager') ? (
-              <TimeTracking />
-            ) : (
-              <Redirect to={`/${company?.companyAlias || 'test'}/misfichajes`} />
-            )}
-          </AppLayout>
+          <ManagerFeatureGate feature="timeTracking">
+            <AppLayout>
+              {user && (user.role === 'admin' || user.role === 'manager') ? (
+                <TimeTracking />
+              ) : (
+                <Redirect to={`/${company?.companyAlias || 'test'}/misfichajes`} />
+              )}
+            </AppLayout>
+          </ManagerFeatureGate>
         </ProtectedRoute>
       </Route>
 
@@ -591,38 +650,44 @@ function Router() {
 
       <Route path="/:companyAlias/vacaciones">
         <ProtectedRoute>
-          <AppLayout>
-            {user && (user.role === 'admin' || user.role === 'manager') ? (
-              <VacationManagement />
-            ) : (
-              <VacationRequests />
-            )}
-          </AppLayout>
+          <ManagerFeatureGate feature="vacation">
+            <AppLayout>
+              {user && (user.role === 'admin' || user.role === 'manager') ? (
+                <VacationManagement />
+              ) : (
+                <VacationRequests />
+              )}
+            </AppLayout>
+          </ManagerFeatureGate>
         </ProtectedRoute>
       </Route>
 
       <Route path="/:companyAlias/cuadrante">
         <ProtectedRoute>
-          <AppLayout>
-            {user && (user.role === 'admin' || user.role === 'manager') ? (
-              <Schedules />
-            ) : (
-              <EmployeeSchedule />
-            )}
-          </AppLayout>
+          <ManagerFeatureGate feature="schedules">
+            <AppLayout>
+              {user && (user.role === 'admin' || user.role === 'manager') ? (
+                <Schedules />
+              ) : (
+                <EmployeeSchedule />
+              )}
+            </AppLayout>
+          </ManagerFeatureGate>
         </ProtectedRoute>
       </Route>
 
       <Route path="/:companyAlias/documentos">
         <ProtectedRoute>
           <FeatureProtectedRoute feature="documents">
-            <AppLayout>
-              {user?.role === 'employee' ? (
-                <Documents />
-              ) : (
-                <AdminDocuments />
-              )}
-            </AppLayout>
+            <ManagerFeatureGate feature="documents">
+              <AppLayout>
+                {user?.role === 'employee' ? (
+                  <Documents />
+                ) : (
+                  <AdminDocuments />
+                )}
+              </AppLayout>
+            </ManagerFeatureGate>
           </FeatureProtectedRoute>
         </ProtectedRoute>
       </Route>
@@ -630,9 +695,11 @@ function Router() {
       <Route path="/:companyAlias/mensajes">
         <ProtectedRoute>
           <FeatureProtectedRoute feature="messages">
-            <AppLayout>
-              <Messages />
-            </AppLayout>
+            <ManagerFeatureGate feature="messages">
+              <AppLayout>
+                <Messages />
+              </AppLayout>
+            </ManagerFeatureGate>
           </FeatureProtectedRoute>
         </ProtectedRoute>
       </Route>
@@ -640,13 +707,15 @@ function Router() {
       <Route path="/:companyAlias/recordatorios">
         <ProtectedRoute>
           <FeatureProtectedRoute feature="reminders">
-            <AppLayout>
-              {user?.role === 'employee' ? (
-                <EmployeeReminders />
-              ) : (
-                <Reminders />
-              )}
-            </AppLayout>
+            <ManagerFeatureGate feature="reminders">
+              <AppLayout>
+                {user?.role === 'employee' ? (
+                  <EmployeeReminders />
+                ) : (
+                  <Reminders />
+                )}
+              </AppLayout>
+            </ManagerFeatureGate>
           </FeatureProtectedRoute>
         </ProtectedRoute>
       </Route>
@@ -654,13 +723,15 @@ function Router() {
       <Route path="/:companyAlias/partes-trabajo">
         <ProtectedRoute>
           <FeatureProtectedRoute feature="work_reports">
-            <AppLayout>
-              {user?.role === 'employee' ? (
-                <WorkReports />
-              ) : (
-                <AdminWorkReports />
-              )}
-            </AppLayout>
+            <ManagerFeatureGate feature="work_reports">
+              <AppLayout>
+                {user?.role === 'employee' ? (
+                  <WorkReports />
+                ) : (
+                  <AdminWorkReports />
+                )}
+              </AppLayout>
+            </ManagerFeatureGate>
           </FeatureProtectedRoute>
         </ProtectedRoute>
       </Route>
