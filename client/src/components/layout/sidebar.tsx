@@ -39,10 +39,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     refetchInterval: 30000,
   });
 
-  const { data: managerPermissionsData } = useQuery<{ managerPermissions: { visibleFeatures?: string[] } }>({
+  const { data: managerPermissionsData } = useQuery<{ managerPermissions: { visibleFeatures?: string[]; canBuyRemoveFeatures?: boolean; canBuyRemoveUsers?: boolean } }>({
     queryKey: ['/api/settings/manager-permissions'],
     enabled: user?.role === 'manager',
   });
+
+  const canAccessStore = user?.role === 'admin' || 
+    (user?.role === 'manager' && (
+      managerPermissionsData?.managerPermissions?.canBuyRemoveFeatures || 
+      managerPermissionsData?.managerPermissions?.canBuyRemoveUsers
+    ));
 
   const isFeatureVisibleForManager = (featureKey: string | undefined): boolean => {
     if (!featureKey || user?.role !== 'manager') return true;
@@ -134,7 +140,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       href: `/${companyAlias}/configuracion`, 
       icon: Settings
     },
-    ...(user?.role === 'admin' ? [
+    ...(canAccessStore ? [
       { 
         name: 'Tienda', 
         href: `/${companyAlias}/tienda`, 
