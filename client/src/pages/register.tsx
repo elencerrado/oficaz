@@ -188,11 +188,17 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   }, []);
 
   useEffect(() => {
-    const scrollContainer = document.querySelector('.wizard-scroll-container');
-    if (scrollContainer) {
-      scrollContainer.scrollTo({ top: 0, behavior: 'instant' });
-    }
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    // Use setTimeout to ensure DOM has updated before scrolling
+    const timer = setTimeout(() => {
+      const scrollContainer = document.querySelector('.wizard-scroll-container');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = 0;
+      }
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 50);
+    return () => clearTimeout(timer);
   }, [currentStep]);
 
   useEffect(() => {
@@ -267,33 +273,16 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     setIsLoading(false);
     setValidatingStep2(false);
     setValidatingStep3(false);
-    
-    // Scroll to top when changing steps
-    const scrollContainer = document.querySelector('.wizard-scroll-container');
-    if (scrollContainer) {
-      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const scrollToTop = () => {
-    const scrollContainer = document.querySelector('.wizard-scroll-container');
-    if (scrollContainer) {
-      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleTeamSubmit = (data: Step2Data) => {
     setFormData(prev => ({ ...prev, ...data }));
     setCurrentStep(2);
-    scrollToTop();
   };
 
   const handleFeaturesSubmit = (data: Step1Data) => {
     setFormData(prev => ({ ...prev, ...data }));
     setCurrentStep(3);
-    scrollToTop();
   };
 
   const handleStep3Submit = async (data: Step3Data) => {
@@ -326,7 +315,6 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
       setFormData(prev => ({ ...prev, ...data }));
       setCurrentStep(4);
-      scrollToTop();
     } catch (error) {
       console.error("Validation error");
     } finally {
@@ -374,7 +362,6 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
       setFormData(prev => ({ ...prev, ...data }));
       setCurrentStep(5);
-      scrollToTop();
     } catch (error) {
       console.error('Validation error');
     } finally {
@@ -623,7 +610,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   }`}
                 >
                   <Button
-                    onClick={() => { setCurrentStep(1); scrollToTop(); }}
+                    onClick={() => setCurrentStep(1)}
                     size="lg"
                     className="h-14 px-10 rounded-full text-[1.0625rem] font-medium bg-[#0071e3] hover:bg-[#0077ED] text-white transition-all duration-200"
                     data-testid="button-start-wizard"
