@@ -398,21 +398,16 @@ export function DocumentSignatureModal({
           </Button>
         </div>
         
-        <div 
-          className="relative border rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 overflow-hidden"
-          style={{ touchAction: 'none' }}
-        >
+        <div className="relative border rounded-lg bg-white border-gray-300 dark:border-gray-600">
           <canvas
             ref={canvasRef}
             width={600}
             height={200}
-            className="w-full h-32 sm:h-40 touch-none cursor-crosshair block"
+            className="w-full h-40 touch-none cursor-crosshair rounded-lg"
             style={{ 
               touchAction: 'none',
               WebkitUserSelect: 'none',
-              userSelect: 'none',
-              WebkitTouchCallout: 'none',
-              WebkitTapHighlightColor: 'transparent'
+              userSelect: 'none'
             }}
             onMouseDown={startDrawing}
             onMouseMove={draw}
@@ -424,8 +419,8 @@ export function DocumentSignatureModal({
           />
           {!hasDrawnSignature && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <p className="text-gray-400 text-xs sm:text-sm">
-                Usa tu dedo o stylus para firmar aquí
+              <p className="text-gray-400 text-sm">
+                Usa tu dedo o ratón para firmar aquí
               </p>
             </div>
           )}
