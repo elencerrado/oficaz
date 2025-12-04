@@ -287,21 +287,7 @@ export function DocumentSignatureModal({
 
   useEffect(() => {
     if (isOpen && showDrawMode) {
-      // Setup canvas immediately and also after animations complete
-      // Run immediately for fast devices
-      setupCanvas();
-      
-      // Use multiple timeouts to ensure canvas is set up after modal animations complete
-      // This is especially important on mobile where animations can affect layout
-      const timer1 = setTimeout(() => setupCanvas(), 50);
-      const timer2 = setTimeout(() => setupCanvas(), 150);
-      const timer3 = setTimeout(() => setupCanvas(), 300);
-      
-      return () => {
-        clearTimeout(timer1);
-        clearTimeout(timer2);
-        clearTimeout(timer3);
-      };
+      setTimeout(() => setupCanvas(), 100);
     }
   }, [isOpen, showDrawMode, setupCanvas]);
 
@@ -312,22 +298,6 @@ export function DocumentSignatureModal({
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const preventDefault = (e: Event) => e.preventDefault();
-    
-    canvas.addEventListener('touchstart', preventDefault, { passive: false });
-    canvas.addEventListener('touchend', preventDefault, { passive: false });
-    canvas.addEventListener('touchmove', preventDefault, { passive: false });
-
-    return () => {
-      canvas.removeEventListener('touchstart', preventDefault);
-      canvas.removeEventListener('touchend', preventDefault);
-      canvas.removeEventListener('touchmove', preventDefault);
-    };
-  }, [isOpen, showDrawMode]);
 
   const renderSavedSignatureView = () => (
     <div className="space-y-4">
