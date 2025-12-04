@@ -49,7 +49,7 @@ import * as XLSX from 'xlsx';
 export default function TimeTracking() {
   usePageTitle('Gestión de Fichajes');
   const { user, company } = useAuth();
-  const { hasAccess, getRequiredPlan } = useFeatureCheck();
+  const { hasAccess } = useFeatureCheck();
   const { setHeader, resetHeader } = usePageHeader();
 
   // Set page header
@@ -108,7 +108,6 @@ export default function TimeTracking() {
       <FeatureRestrictedPage
         featureName="Fichajes"
         description="Gestión de fichajes y control horario de empleados"
-        requiredPlan={getRequiredPlan('timeTracking')}
         icon={Clock}
       />
     );
