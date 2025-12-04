@@ -753,32 +753,14 @@ export default function AddonStore() {
 
                         <div className="mt-auto">
                           <div className="mb-3">
-                            {addon.isFreeFeature ? (
-                              <div className="flex items-center gap-2">
-                                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0">
-                                  Gratis - Incluido
-                                </Badge>
-                              </div>
-                            ) : (
-                              <div className="flex items-baseline gap-1">
-                                <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                                  {Number(addon.monthlyPrice).toFixed(2)}€
-                                </span>
-                                <span className="text-gray-500 dark:text-gray-400 text-sm">/mes</span>
-                              </div>
-                            )}
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                                {Number(addon.monthlyPrice).toFixed(2)}€
+                              </span>
+                              <span className="text-gray-500 dark:text-gray-400 text-sm">/mes</span>
+                            </div>
                           </div>
-                          {addon.isFreeFeature ? (
-                            <Button 
-                              variant="outline" 
-                              className="w-full text-green-600 border-green-200 bg-green-50 cursor-default"
-                              disabled
-                              data-testid={`addon-included-${addon.key}`}
-                            >
-                              <Check className="h-4 w-4 mr-2" />
-                              Siempre incluido
-                            </Button>
-                          ) : isPendingCancel ? (
+                          {isPendingCancel ? (
                             <Button 
                               variant="outline" 
                               className="w-full text-gray-500"

@@ -52,13 +52,13 @@ Preferred communication style: Simple, everyday language.
 - **Session Management**: Express sessions with PostgreSQL store.
 - **Security**: Helmet for CSP, CORS, rate limiting, HSTS, X-XSS-Protection, Referrer-Policy; SQL injection protection. SuperAdmin access requires email verification.
 - **Core Modules**: Authentication, Time Tracking (with audit trail), Vacation Management, Document Management, Messaging, Administrative Features, Subscription Management, Reminders, Email Marketing (SuperAdmin), PWA System, and AI Assistant.
-- **Subscription Model**: Single "Oficaz" plan (39€/month) with modular add-ons and role-based user pricing.
-  - **Trial Period**: 7 days with full access to all features (including paid add-ons)
+- **Subscription Model**: Fully modular pricing - pay only for what you use (NO base plan, NO free addons)
+  - **Trial Period**: 7 days with full access to all features
   - **PÁGINAS BASE** (siempre disponibles, NO son add-ons): Panel de Control, Configuración, Empleados, Tienda
-  - **Add-ons Gratuitos** (incluidos automáticamente): Fichajes, Vacaciones, Cuadrante
-  - **Add-ons de Pago**: Mensajes (€5), Recordatorios (€5), Documentos (€10), Partes de Trabajo (€8), OficazIA (€15)
+  - **MARKETING ONLY**: "Gestión de Empleados" se menciona como gratis SOLO en landing/wizard, no en tienda ni Stripe
+  - **Add-ons (TODOS DE PAGO)**: Control de Fichajes (€3), Gestión de Vacaciones (€3), Cuadrante de Horarios (€3), Mensajería (€5), Recordatorios (€5), Partes de Trabajo (€8), Documentos (€10), OficazIA (€15)
   - **Usuarios adicionales**: Empleados +€2, Managers +€4, Admins +€6
-  - **Stripe Integration**: Full proration support for add-ons and seats, automatic billing via subscription items
+  - **Stripe Integration**: Full proration support, each addon = separate subscription item, automatic billing
 - **AI Assistant System**: GPT-5 Nano assistant for admin/manager roles, providing administrative task automation with conversational context. Includes comprehensive work schedule management (create, delete, modify, copy, swap, bulk operations), smart reminder creation with natural language interpretation, employee data management, and time tracking report generation. Employs a "Consultar→Decidir→Actuar" methodology for error prevention and consistent timezone handling.
 - **Object Storage**: Replit Object Storage for persistent file storage.
 - **Account Management**: 30-day grace period for account deletion, immediate blocking of cancelled accounts.
