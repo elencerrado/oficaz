@@ -1434,29 +1434,71 @@ export default function Landing() {
                         >
                         <div className="p-3 h-full bg-[#0a1628]">
                           <h3 className="text-white font-bold text-sm mb-0.5">Recordatorios</h3>
-                          <p className="text-gray-400 text-[8px] mb-3">Tus tareas pendientes</p>
+                          <p className="text-gray-400 text-[8px] mb-2">Gestiona tus recordatorios</p>
                           
-                          <div className="bg-[#1a2942] rounded-xl p-2 mb-3 space-y-2">
-                            {[
-                              { text: 'Revisar nóminas', time: '09:00', done: true },
-                              { text: 'Llamar proveedor', time: '11:30', done: false },
-                              { text: 'Enviar facturas', time: '15:00', done: false },
-                            ].map((r, i) => (
-                              <div key={i} className={`flex items-center gap-2 p-1.5 rounded-lg ${r.done ? 'bg-green-500/20' : 'bg-[#0a1628]'}`}>
-                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${r.done ? 'bg-green-500 border-green-500' : 'border-gray-500'}`}>
-                                  {r.done && <CheckCircle className="w-2.5 h-2.5 text-white" />}
-                                </div>
-                                <div className="flex-1">
-                                  <p className={`text-[8px] ${r.done ? 'text-gray-500 line-through' : 'text-white'}`}>{r.text}</p>
-                                </div>
-                                <span className="text-gray-500 text-[7px]">{r.time}</span>
-                              </div>
-                            ))}
+                          {/* Search and filter row */}
+                          <div className="flex gap-1.5 mb-2">
+                            <div className="flex-1 bg-[#1a2942] rounded-lg px-2 py-1.5">
+                              <p className="text-gray-500 text-[6px]">Buscar...</p>
+                            </div>
+                            <div className="bg-[#1a2942] rounded-lg px-2 py-1.5 flex items-center gap-1">
+                              <p className="text-gray-300 text-[6px]">Activos</p>
+                            </div>
+                            <div className="bg-[#007AFF] rounded-lg px-2 py-1.5">
+                              <p className="text-white text-[6px]">+ Nuevo</p>
+                            </div>
                           </div>
                           
-                          <button className="w-full bg-[#007AFF] rounded-xl p-2 text-center">
-                            <p className="text-white font-semibold text-[8px]">+ Nuevo recordatorio</p>
-                          </button>
+                          {/* Reminder cards */}
+                          <div className="space-y-2">
+                            <div className="bg-[#1a2942] rounded-xl p-2">
+                              <div className="flex items-start gap-2">
+                                <div className="w-4 h-4 rounded-full border-2 border-yellow-400 flex items-center justify-center mt-0.5">
+                                  <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-white text-[8px] font-medium">Reunión con cliente</p>
+                                  <p className="text-gray-400 text-[6px] mt-0.5">Preparar documentos y revisar presupuesto</p>
+                                  <div className="flex items-center gap-1.5 mt-1">
+                                    <span className="bg-yellow-500/20 text-yellow-400 text-[5px] px-1.5 py-0.5 rounded">Hace 2 días</span>
+                                    <span className="bg-green-500/20 text-green-400 text-[5px] px-1.5 py-0.5 rounded">Activo</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-[#1a2942] rounded-xl p-2">
+                              <div className="flex items-start gap-2">
+                                <div className="w-4 h-4 rounded-full border-2 border-yellow-400 flex items-center justify-center mt-0.5">
+                                  <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-white text-[8px] font-medium">Enviar nóminas</p>
+                                  <p className="text-gray-400 text-[6px] mt-0.5">Subir las nóminas de noviembre</p>
+                                  <div className="flex items-center gap-1.5 mt-1">
+                                    <span className="bg-yellow-500/20 text-yellow-400 text-[5px] px-1.5 py-0.5 rounded">Hoy</span>
+                                    <span className="bg-green-500/20 text-green-400 text-[5px] px-1.5 py-0.5 rounded">Activo</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-[#1a2942] rounded-xl p-2">
+                              <div className="flex items-start gap-2">
+                                <div className="w-4 h-4 rounded-full border-2 border-gray-500 flex items-center justify-center mt-0.5">
+                                  <CheckCircle className="w-2.5 h-2.5 text-green-400" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-gray-500 text-[8px] font-medium line-through">Llamar proveedor</p>
+                                  <p className="text-gray-500 text-[6px] mt-0.5">Confirmar pedido de material</p>
+                                  <div className="flex items-center gap-1.5 mt-1">
+                                    <span className="bg-gray-500/20 text-gray-400 text-[5px] px-1.5 py-0.5 rounded">Hace 1 semana</span>
+                                    <span className="bg-gray-500/20 text-gray-400 text-[5px] px-1.5 py-0.5 rounded">Completado</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                         </motion.div>
                       )}
