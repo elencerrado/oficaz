@@ -123,14 +123,6 @@ export function DemoLoadingOverlay({ isVisible, isBackendComplete = false, onCom
         <div className={`flex flex-col items-center transition-all duration-300 ease-out ${
           contentFadeIn ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'
         }`}>
-          <div className="mb-12">
-            <img 
-              src={oficazFavicon} 
-              alt="Oficaz" 
-              className="h-16 w-16"
-            />
-          </div>
-
           <div className="mb-10">
             <LoadingSpinner size="lg" />
           </div>
@@ -155,11 +147,13 @@ export function DemoLoadingOverlay({ isVisible, isBackendComplete = false, onCom
           contentFadeIn ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
         }`}>
           <div className="mb-8">
-            <div className={`w-24 h-24 mx-auto rounded-[28px] flex items-center justify-center mb-8 shadow-2xl shadow-oficaz-primary/40 transition-all duration-1000 overflow-hidden ${
-              contentFadeIn ? 'rotate-0 scale-100' : 'rotate-12 scale-75'
-            }`}>
-              <img src={oficazFavicon} alt="Oficaz" className="w-24 h-24" />
-            </div>
+            <img 
+              src={oficazFavicon} 
+              alt="Oficaz" 
+              className={`w-24 h-24 mx-auto mb-8 transition-all duration-1000 ${
+                contentFadeIn ? 'rotate-0 scale-100' : 'rotate-12 scale-75'
+              }`}
+            />
             
             <h1 className={`text-4xl lg:text-5xl font-bold text-gray-900 mb-5 transition-all duration-700 delay-100 ${
               contentFadeIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
