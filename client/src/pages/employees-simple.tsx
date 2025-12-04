@@ -131,12 +131,20 @@ export default function EmployeesSimple() {
     enabled: user?.role === 'admin',
   });
 
+  // Track if permissions grid has been manually configured (null = never configured, array = configured)
+  const [hasConfiguredFeatures, setHasConfiguredFeatures] = useState(false);
+
   // Update local state when permissions are fetched
   useEffect(() => {
     if (permissionsData?.managerPermissions) {
+      const fetchedVisibleFeatures = permissionsData.managerPermissions.visibleFeatures;
+      // null = never configured, array (even empty) = has been configured
+      const isConfigured = fetchedVisibleFeatures !== null && fetchedVisibleFeatures !== undefined;
+      
+      setHasConfiguredFeatures(isConfigured);
       setManagerPermissions({
         ...permissionsData.managerPermissions,
-        visibleFeatures: permissionsData.managerPermissions.visibleFeatures || [],
+        visibleFeatures: fetchedVisibleFeatures || [],
       });
     }
   }, [permissionsData]);
@@ -1770,7 +1778,9 @@ export default function EmployeesSimple() {
                 </p>
                 <div className="grid grid-cols-4 gap-2">
                   {companyAddons.filter(ca => ca.status === 'active').map((ca) => {
-                    const isVisible = managerPermissions.visibleFeatures.includes(ca.addon.key);
+                    const isVisible = hasConfiguredFeatures 
+                      ? managerPermissions.visibleFeatures.includes(ca.addon.key)
+                      : true;
                     const getFeatureIcon = (key: string) => {
                       switch (key) {
                         case 'time_tracking': return <Clock className="h-5 w-5" />;
@@ -1815,9 +1825,16 @@ export default function EmployeesSimple() {
                       <button
                         key={ca.addon.key}
                         onClick={() => {
+                          const activeAddonKeys = companyAddons.filter(ca => ca.status === 'active').map(ca => ca.addon.key);
+                          let currentFeatures = hasConfiguredFeatures 
+                            ? managerPermissions.visibleFeatures 
+                            : activeAddonKeys;
+                          
                           const newVisibleFeatures = isVisible
-                            ? managerPermissions.visibleFeatures.filter(f => f !== ca.addon.key)
-                            : [...managerPermissions.visibleFeatures, ca.addon.key];
+                            ? currentFeatures.filter(f => f !== ca.addon.key)
+                            : [...currentFeatures, ca.addon.key];
+                          
+                          setHasConfiguredFeatures(true);
                           const newPermissions = { ...managerPermissions, visibleFeatures: newVisibleFeatures };
                           setManagerPermissions(newPermissions);
                           updatePermissionsMutation.mutate(newPermissions);

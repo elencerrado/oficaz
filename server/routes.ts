@@ -7136,13 +7136,17 @@ Responde directamente a este email para contactar con la persona.
         canBuyRemoveFeatures: false,
         canBuyRemoveUsers: false,
         canEditCompanyData: false,
-        visibleFeatures: [],
+        visibleFeatures: null,
       };
 
-      // Merge company permissions with defaults to ensure visibleFeatures is always present
+      // Merge company permissions with defaults
+      // visibleFeatures: null = never configured (all visible)
+      // visibleFeatures: [] = configured to show nothing
+      // visibleFeatures: ['addon1', ...] = configured to show specific addons
+      const storedPermissions = company.managerPermissions as object || {};
       const mergedPermissions = {
         ...defaultPermissions,
-        ...(company.managerPermissions as object || {}),
+        ...storedPermissions,
       };
 
       res.json({ 

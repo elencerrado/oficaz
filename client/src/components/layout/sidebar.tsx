@@ -9,6 +9,18 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useQuery } from '@tanstack/react-query';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
+const featureToAddonKey: Record<string, string> = {
+  timeTracking: 'time_tracking',
+  vacation: 'vacation',
+  schedules: 'schedules',
+  documents: 'documents',
+  messages: 'messages',
+  reminders: 'reminders',
+  work_reports: 'work_reports',
+  reports: 'work_reports',
+  ai_assistant: 'ai_assistant',
+};
+
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
@@ -26,6 +38,20 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     queryKey: ['/api/messages/unread-count'],
     refetchInterval: 30000,
   });
+
+  const { data: managerPermissionsData } = useQuery<{ managerPermissions: { visibleFeatures?: string[] } }>({
+    queryKey: ['/api/settings/manager-permissions'],
+    enabled: user?.role === 'manager',
+  });
+
+  const isFeatureVisibleForManager = (featureKey: string | undefined): boolean => {
+    if (!featureKey || user?.role !== 'manager') return true;
+    const addonKey = featureToAddonKey[featureKey] || featureKey;
+    const visibleFeatures = managerPermissionsData?.managerPermissions?.visibleFeatures;
+    if (visibleFeatures === undefined || visibleFeatures === null) return true;
+    if (visibleFeatures.length === 0) return false;
+    return visibleFeatures.includes(addonKey);
+  };
 
   const companyAlias = company?.companyAlias || 'test';
   
@@ -156,7 +182,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                    gap: 'clamp(0.3rem, 1.2vh, 0.8rem)'
                  }}>
               {navigation
-                .filter((item) => !item.feature || hasAccess(item.feature))
+                .filter((item) => (!item.feature || hasAccess(item.feature)) && isFeatureVisibleForManager(item.feature))
                 .map((item) => {
                 const isActive = location === item.href;
                 const Icon = item.icon;
