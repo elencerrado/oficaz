@@ -74,30 +74,21 @@ export function DocumentSignatureModal({
   const setupCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (canvas) {
-      // High-DPI canvas for crisp signatures
-      const dpr = Math.max(window.devicePixelRatio || 1, 2);
       const rect = canvas.getBoundingClientRect();
       
-      // Set canvas internal resolution to match display * DPI
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
+      // Simple 1:1 canvas - no DPI scaling to avoid transform issues in modal
+      canvas.width = rect.width;
+      canvas.height = rect.height;
       
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // Use setTransform to reset and apply DPI scaling (prevents stacking on multiple calls)
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        
-        // Fill background
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, rect.width, rect.height);
-        
-        // Setup stroke style
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.strokeStyle = '#1a1a1a';
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 2;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
         lastPointRef.current = null;
       }
     }
