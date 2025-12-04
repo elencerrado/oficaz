@@ -805,44 +805,46 @@ export default function Landing() {
 
           {/* Mobile: Swipeable Carousel with Description Below */}
           <div className="lg:hidden">
-            <Carousel 
-              className="w-full" 
-              opts={{ align: 'center', loop: true }}
-              setApi={(api) => {
-                if (api) {
-                  api.on('select', () => {
-                    const index = api.selectedScrollSnap();
-                    setPreviewAddon(addons[index]?.key || 'time_tracking');
-                  });
-                }
-              }}
-            >
-              <CarouselContent className="-ml-2">
-                {addons.map((addon, index) => (
-                  <CarouselItem key={addon.key} className="pl-2 basis-[75%] sm:basis-[60%]">
-                    <div className="flex flex-col items-center">
-                      {/* Phone Preview */}
-                      <div className="relative bg-gray-900 rounded-[2rem] p-1.5 shadow-2xl shadow-gray-400/30">
-                        <div className="relative bg-[#0a1628] rounded-[1.5rem] overflow-hidden" style={{ width: '180px', aspectRatio: '9/19' }}>
-                          <div className="absolute top-0 left-0 right-0 h-6 bg-[#0a1628] z-10 flex items-center justify-between px-3 pt-1">
-                            <span className="text-[9px] font-semibold text-white">17:00</span>
-                            <div className="w-2.5 h-1 bg-white rounded-sm"></div>
+            <div className="-mx-6">
+              <Carousel 
+                className="w-full" 
+                opts={{ align: 'center', loop: true }}
+                setApi={(api) => {
+                  if (api) {
+                    api.on('select', () => {
+                      const index = api.selectedScrollSnap();
+                      setPreviewAddon(addons[index]?.key || 'time_tracking');
+                    });
+                  }
+                }}
+              >
+                <CarouselContent className="-ml-2">
+                  {addons.map((addon, index) => (
+                    <CarouselItem key={addon.key} className="pl-2 basis-[75%] sm:basis-[60%]">
+                      <div className="flex flex-col items-center">
+                        {/* Phone Preview */}
+                        <div className="relative bg-gray-900 rounded-[2rem] p-1.5 shadow-2xl shadow-gray-400/30">
+                          <div className="relative bg-[#0a1628] rounded-[1.5rem] overflow-hidden" style={{ width: '180px', aspectRatio: '9/19' }}>
+                            <div className="absolute top-0 left-0 right-0 h-6 bg-[#0a1628] z-10 flex items-center justify-between px-3 pt-1">
+                              <span className="text-[9px] font-semibold text-white">17:00</span>
+                              <div className="w-2.5 h-1 bg-white rounded-sm"></div>
+                            </div>
+                            <div className="pt-6 h-full overflow-hidden">
+                              <MobilePreviewContent addonKey={addon.key} />
+                            </div>
                           </div>
-                          <div className="pt-6 h-full overflow-hidden">
-                            <MobilePreviewContent addonKey={addon.key} />
-                          </div>
+                          <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-16 h-0.5 bg-white/30 rounded-full"></div>
                         </div>
-                        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-16 h-0.5 bg-white/30 rounded-full"></div>
                       </div>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <div className="flex justify-center gap-2 mt-4">
-                <CarouselPrevious className="static translate-y-0 h-8 w-8" />
-                <CarouselNext className="static translate-y-0 h-8 w-8" />
-              </div>
-            </Carousel>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <div className="flex justify-center gap-2 mt-4">
+                  <CarouselPrevious className="static translate-y-0 h-8 w-8" />
+                  <CarouselNext className="static translate-y-0 h-8 w-8" />
+                </div>
+              </Carousel>
+            </div>
             
             {/* Description below carousel */}
             <div className="mt-6 px-4">
