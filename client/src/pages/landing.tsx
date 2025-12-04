@@ -1093,19 +1093,18 @@ export default function Landing() {
                             {/* Day entries with break indicators */}
                             <div className="space-y-1.5">
                               {[
-                                { day: 'viernes', num: '31', hours: '8h 28m', breakPos: 55 },
-                                { day: 'jueves', num: '30', hours: '8h 29m', breakPos: 50 },
-                                { day: 'miércoles', num: '29', hours: '8h 22m', breakPos: 48 },
+                                { day: 'viernes', num: '31', hours: '8h 28m', breakPos: 60 },
+                                { day: 'jueves', num: '30', hours: '8h 29m', breakPos: 55 },
                               ].map((entry, i) => (
                                 <div key={i} className="bg-[#0a1628] rounded-lg p-1.5">
                                   <div className="flex justify-between items-center mb-1">
                                     <span className="text-white text-[7px] font-medium">{entry.day} {entry.num}</span>
                                     <span className="text-gray-400 text-[7px]">{entry.hours}</span>
                                   </div>
-                                  {/* Progress bar with orange break indicator on top */}
-                                  <div className="relative h-1.5 bg-[#1a2942] rounded-full">
+                                  {/* Progress bar with orange break indicator inside */}
+                                  <div className="relative h-2.5 bg-[#1a2942] rounded-full">
                                     <div className="h-full bg-[#007AFF] rounded-full" style={{ width: '95%' }}></div>
-                                    <div className="absolute top-1/2 w-2 h-2 bg-orange-400 rounded-full" style={{ left: `${entry.breakPos}%`, transform: 'translate(-50%, -50%)' }}></div>
+                                    <div className="absolute top-1/2 w-1.5 h-1.5 bg-orange-400 rounded-full" style={{ left: `${entry.breakPos}%`, transform: 'translate(-50%, -50%)' }}></div>
                                   </div>
                                 </div>
                               ))}
