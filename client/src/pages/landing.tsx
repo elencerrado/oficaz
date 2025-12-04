@@ -1167,10 +1167,12 @@ export default function Landing() {
                             </div>
                             {[
                               { period: '10-12 dic', days: '3', status: 'approved', date: '10 nov' },
-                              { period: '5-5 nov', days: '1', status: 'approved', date: '23 oct' },
-                              { period: '5-8 nov', days: '4', status: 'rejected', date: '20 oct' },
+                              { period: '1-15 ago', days: '15', status: 'approved', date: '5 jun' },
+                              { period: '10-14 abr', days: '5', status: 'approved', date: '1 mar' },
+                              { period: '5-5 nov', days: '1', status: 'pending', date: '23 oct' },
+                              { period: '5-8 jul', days: '4', status: 'rejected', date: '20 may' },
                             ].map((req, i) => (
-                              <div key={i} className="grid grid-cols-4 gap-1 p-1.5 border-b border-[#0a1628] last:border-0">
+                              <div key={i} className="grid grid-cols-4 gap-1 p-2 border-b border-[#0a1628] last:border-0">
                                 <p className="text-white text-[6px]">{req.period}</p>
                                 <p className="text-white text-[6px] text-center">{req.days}</p>
                                 <div className="flex justify-center">
