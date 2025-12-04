@@ -567,18 +567,15 @@ export default function EmployeesSimple() {
                 return; // Do NOT open modal
               }
               
-              // Calculate role limits dynamically from subscription (includes extras)
-              const includedAdmins = freshSubscription?.includedAdmins || 1;
-              const includedManagers = freshSubscription?.includedManagers || 1;
-              const includedEmployees = freshSubscription?.includedEmployees || 10;
-              const extraAdmins = freshSubscription?.extraAdmins || 0;
+              // All seats are paid - extraXXX contains the contracted seats
+              const extraAdmins = freshSubscription?.extraAdmins || 1; // Minimum 1 admin
               const extraManagers = freshSubscription?.extraManagers || 0;
               const extraEmployees = freshSubscription?.extraEmployees || 0;
               
               const currentPlanLimits = {
-                admin: includedAdmins + extraAdmins,
-                manager: includedManagers + extraManagers,
-                employee: includedEmployees + extraEmployees
+                admin: extraAdmins,
+                manager: extraManagers,
+                employee: extraEmployees
               };
               console.log('ROLE LIMITS FOR PLAN:', currentPlanLimits);
               

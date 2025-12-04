@@ -4229,7 +4229,7 @@ export class DrizzleStorage implements IStorage {
 
   /**
    * Calculate the total number of users allowed for a company.
-   * NEW MODEL: includedX + extraX for each role type.
+   * All seats are paid - extraXXX contains the contracted seats.
    */
   async getCompanyUserLimits(companyId: number): Promise<{
     admins: { included: number; extra: number; total: number };
@@ -4238,9 +4238,6 @@ export class DrizzleStorage implements IStorage {
     totalUsers: number;
   }> {
     const [subscription] = await db.select({
-      includedAdmins: schema.subscriptions.includedAdmins,
-      includedManagers: schema.subscriptions.includedManagers,
-      includedEmployees: schema.subscriptions.includedEmployees,
       extraAdmins: schema.subscriptions.extraAdmins,
       extraManagers: schema.subscriptions.extraManagers,
       extraEmployees: schema.subscriptions.extraEmployees,
@@ -4250,29 +4247,30 @@ export class DrizzleStorage implements IStorage {
       .limit(1);
 
     if (!subscription) {
-      // Default limits if no subscription found
+      // Default limits if no subscription found - minimum 1 admin
       return {
-        admins: { included: 1, extra: 0, total: 1 },
-        managers: { included: 1, extra: 0, total: 1 },
-        employees: { included: 10, extra: 0, total: 10 },
-        totalUsers: 12,
+        admins: { included: 0, extra: 1, total: 1 },
+        managers: { included: 0, extra: 0, total: 0 },
+        employees: { included: 0, extra: 0, total: 0 },
+        totalUsers: 1,
       };
     }
 
+    // All seats are paid - no included seats
     const admins = {
-      included: subscription.includedAdmins,
+      included: 0,
       extra: subscription.extraAdmins,
-      total: subscription.includedAdmins + subscription.extraAdmins,
+      total: subscription.extraAdmins,
     };
     const managers = {
-      included: subscription.includedManagers,
+      included: 0,
       extra: subscription.extraManagers,
-      total: subscription.includedManagers + subscription.extraManagers,
+      total: subscription.extraManagers,
     };
     const employees = {
-      included: subscription.includedEmployees,
+      included: 0,
       extra: subscription.extraEmployees,
-      total: subscription.includedEmployees + subscription.extraEmployees,
+      total: subscription.extraEmployees,
     };
 
     return {

@@ -212,9 +212,10 @@ export default function Employees() {
   const employeeCount = filteredEmployees.filter((emp: any) => emp.role === 'employee').length;
 
   // Calculate available slots for each role based on subscription
-  const maxEmployees = (subscription?.includedEmployees || 10) + (subscription?.extraEmployees || 0);
-  const maxManagers = (subscription?.includedManagers || 1) + (subscription?.extraManagers || 0);
-  const maxAdmins = (subscription?.includedAdmins || 1) + (subscription?.extraAdmins || 0);
+  // All seats are paid - extraXXX contains the contracted seats
+  const maxEmployees = subscription?.extraEmployees || 0;
+  const maxManagers = subscription?.extraManagers || 0;
+  const maxAdmins = subscription?.extraAdmins || 1; // Minimum 1 admin required
 
   // All employees count (from the full list, not filtered)
   const allEmployees = Array.isArray(employees) ? employees : [];
