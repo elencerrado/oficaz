@@ -134,29 +134,35 @@ export default function AddonStore() {
   // Current users by role (from actual users in system)
   const currentUserCounts = subscriptionInfo?.userCounts || { employees: 0, managers: 0, admins: 0 };
   
-  // Included seats (base subscription)
-  const includedSeats = {
+  // Check if this is a legacy plan (has free included seats)
+  const isLegacyPlan = subscription?.isLegacyPlan || false;
+  
+  // Included seats - ONLY for legacy plans (new plans have 0 included, all paid)
+  const includedSeats = isLegacyPlan ? {
     employees: subscription?.includedEmployees || 0,
     managers: subscription?.includedManagers || 0,
     admins: subscription?.includedAdmins || 0
-  };
+  } : { employees: 0, managers: 0, admins: 0 };
   
-  // Extra seats (purchased additional)
+  // Extra seats (paid seats in database)
   const extraSeats = {
     employees: subscription?.extraEmployees || 0,
     managers: subscription?.extraManagers || 0,
     admins: subscription?.extraAdmins || 0
   };
   
-  // Total contracted seats (included + extra) - what users SEE
+  // Total contracted seats - what users SEE and work with
+  // For legacy: included + extra. For new plans: just extra (all paid)
   const totalContractedSeats = {
     employees: includedSeats.employees + extraSeats.employees,
     managers: includedSeats.managers + extraSeats.managers,
     admins: includedSeats.admins + extraSeats.admins
   };
   
-  // For backwards compatibility - internal operations still use extras
-  const currentContractedSeats = extraSeats;
+  // Minimum seats: for new plans, must have at least 1 admin (paid)
+  const minimumSeats = isLegacyPlan 
+    ? includedSeats 
+    : { employees: 0, managers: 0, admins: 1 };
   
   // Editable seat counts (starts with TOTAL contracted, not just extras)
   const [editedSeats, setEditedSeats] = useState<{
@@ -320,8 +326,8 @@ export default function AddonStore() {
   // Update seat count with validation
   const updateSeatCount = (role: 'employees' | 'managers' | 'admins', delta: number) => {
     const current = editedSeats || { ...totalContractedSeats };
-    // Cannot go below included seats (those are mandatory)
-    const minValue = includedSeats[role];
+    // Cannot go below minimum seats (legacy: included seats, new plans: 1 admin minimum)
+    const minValue = minimumSeats[role];
     const newValue = Math.max(minValue, current[role] + delta);
     
     // When reducing, check if there are users occupying those seats
