@@ -14203,12 +14203,17 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
           .where(inArray(documents.userId, demoEmployeeIds));
         console.log('✅ Deleted documents');
         
-        // Step 7: Final attempt to delete any remaining break periods that might have regenerated
+        // Step 7: Delete notifications (foreign key reference to users)
+        await db.delete(schema.systemNotifications)
+          .where(inArray(schema.systemNotifications.userId, demoEmployeeIds));
+        console.log('✅ Deleted notifications');
+        
+        // Step 8: Final attempt to delete any remaining break periods that might have regenerated
         await db.delete(breakPeriods)
           .where(inArray(breakPeriods.userId, demoEmployeeIds));
         console.log('✅ Final cleanup of break periods');
         
-        // Step 8: Delete demo employees (this should now work without foreign key violations)
+        // Step 9: Delete demo employees (this should now work without foreign key violations)
         await db.delete(users)
           .where(and(
             eq(users.companyId, company.id),
