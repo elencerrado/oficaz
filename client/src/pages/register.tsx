@@ -267,16 +267,33 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     setIsLoading(false);
     setValidatingStep2(false);
     setValidatingStep3(false);
+    
+    // Scroll to top when changing steps
+    const scrollContainer = document.querySelector('.wizard-scroll-container');
+    if (scrollContainer) {
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const scrollToTop = () => {
+    const scrollContainer = document.querySelector('.wizard-scroll-container');
+    if (scrollContainer) {
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleTeamSubmit = (data: Step2Data) => {
     setFormData(prev => ({ ...prev, ...data }));
     setCurrentStep(2);
+    scrollToTop();
   };
 
   const handleFeaturesSubmit = (data: Step1Data) => {
     setFormData(prev => ({ ...prev, ...data }));
     setCurrentStep(3);
+    scrollToTop();
   };
 
   const handleStep3Submit = async (data: Step3Data) => {
@@ -309,6 +326,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
       setFormData(prev => ({ ...prev, ...data }));
       setCurrentStep(4);
+      scrollToTop();
     } catch (error) {
       console.error("Validation error");
     } finally {
@@ -356,6 +374,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
       setFormData(prev => ({ ...prev, ...data }));
       setCurrentStep(5);
+      scrollToTop();
     } catch (error) {
       console.error('Validation error');
     } finally {
@@ -604,7 +623,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   }`}
                 >
                   <Button
-                    onClick={() => setCurrentStep(1)}
+                    onClick={() => { setCurrentStep(1); scrollToTop(); }}
                     size="lg"
                     className="h-14 px-10 rounded-full text-[1.0625rem] font-medium bg-[#0071e3] hover:bg-[#0077ED] text-white transition-all duration-200"
                     data-testid="button-start-wizard"
