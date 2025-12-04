@@ -883,6 +883,7 @@ export class DrizzleStorage implements IStorage {
   }
 
   // ⚠️ PROTECTED - Automatically mark old sessions as incomplete
+  // Sessions are only marked incomplete after: workingHoursPerDay + 4 hours margin
   async markOldSessionsAsIncomplete(userId: number): Promise<void> {
     try {
       // Get user's company settings for working hours
@@ -890,13 +891,38 @@ export class DrizzleStorage implements IStorage {
       if (!user) return;
 
       const company = await this.getCompany(user.companyId);
-      const maxHours = company?.workingHoursPerDay || 8;
-      const marginHours = 4; // 4 hours margin
-      const totalMaxHours = maxHours + marginHours;
+      const maxHours = Number(company?.workingHoursPerDay) || 8;
+      const marginHours = 4; // 4 hours margin - CRITICAL: DO NOT REDUCE
+      const totalMaxHours = maxHours + marginHours; // Total: 12 hours for 8-hour workday
       const now = new Date();
       
       // Calculate cutoff time (now - maxHours - marginHours)
+      // Example: If now is 20:00 and totalMaxHours is 12, cutoff is 08:00
+      // Only sessions that started BEFORE 08:00 will be marked incomplete
       const cutoffTime = new Date(now.getTime() - (totalMaxHours * 60 * 60 * 1000));
+
+      // First, check if there are any sessions that would be affected
+      const sessionsToMark = await db.select({
+        id: schema.workSessions.id,
+        clockIn: schema.workSessions.clockIn,
+        status: schema.workSessions.status
+      })
+        .from(schema.workSessions)
+        .where(and(
+          eq(schema.workSessions.userId, userId),
+          eq(schema.workSessions.status, 'active'),
+          isNull(schema.workSessions.clockOut),
+          sql`${schema.workSessions.clockIn} < ${cutoffTime}`
+        ));
+
+      if (sessionsToMark.length > 0) {
+        console.log(`⚠️ Marking ${sessionsToMark.length} session(s) as incomplete for user ${userId}:`);
+        console.log(`   Now: ${now.toISOString()}, Cutoff: ${cutoffTime.toISOString()} (${totalMaxHours}h = ${maxHours}h work + ${marginHours}h margin)`);
+        sessionsToMark.forEach(s => {
+          const hoursElapsed = (now.getTime() - new Date(s.clockIn).getTime()) / (1000 * 60 * 60);
+          console.log(`   Session ${s.id}: started ${new Date(s.clockIn).toISOString()}, elapsed: ${hoursElapsed.toFixed(2)}h`);
+        });
+      }
 
       // Find and mark sessions that started before cutoff time as incomplete
       await db.update(schema.workSessions)
