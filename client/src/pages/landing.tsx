@@ -839,15 +839,11 @@ export default function Landing() {
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <div className="flex justify-center gap-2 mt-4">
-                  <CarouselPrevious className="static translate-y-0 h-8 w-8" />
-                  <CarouselNext className="static translate-y-0 h-8 w-8" />
-                </div>
               </Carousel>
             </div>
             
             {/* Description below carousel */}
-            <div className="mt-6 px-4">
+            <div className="mt-3 px-4">
               {addons.map((addon) => {
                 if (addon.key !== previewAddon) return null;
                 const IconComponent = addon.icon;
