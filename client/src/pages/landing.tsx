@@ -1076,7 +1076,7 @@ export default function Landing() {
                                 { month: 'dic', hours: '195h', active: true },
                               ].map((m, i) => (
                                 <div key={i} className={`flex-1 rounded-lg p-1.5 ${m.active ? 'bg-[#007AFF]/30 border border-[#007AFF]' : 'bg-[#0a1628]'}`}>
-                                  <div className="h-6 bg-[#007AFF] rounded-sm mb-1"></div>
+                                  <div className="h-6 bg-[#007AFF] rounded-t-sm mb-1"></div>
                                   <p className="text-gray-400 text-[7px] text-center">{m.month}</p>
                                   <p className="text-white text-[7px] text-center font-medium">{m.hours}</p>
                                 </div>
