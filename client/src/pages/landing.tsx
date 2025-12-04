@@ -40,7 +40,8 @@ import {
   Square,
   Eye,
   Phone,
-  MapPin
+  MapPin,
+  Edit
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
@@ -451,69 +452,75 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
     return (
       <div className="p-3 h-full bg-[#0a1628]">
         <h3 className="text-white font-bold text-sm mb-0.5">Recordatorios</h3>
-        <p className="text-gray-400 text-[8px] mb-2">Gestiona tus recordatorios</p>
+        <p className="text-gray-400 text-[8px] mb-2">Gestiona tus tareas</p>
         
         <div className="flex gap-1.5 mb-2">
           <div className="flex-1 bg-[#1a2942] rounded-lg px-2 py-1.5">
             <p className="text-gray-500 text-[6px]">Buscar...</p>
           </div>
-          <div className="bg-[#1a2942] rounded-lg px-2 py-1.5">
-            <p className="text-gray-300 text-[6px]">Activos</p>
-          </div>
           <div className="bg-[#007AFF] rounded-lg px-2 py-1.5">
-            <p className="text-white text-[6px]">+ Nuevo</p>
+            <p className="text-white text-[6px]">+ Crear</p>
           </div>
         </div>
         
         <div className="space-y-2">
-          <div className="bg-[#1a2942] rounded-xl p-2">
-            <div className="flex items-start gap-2">
-              <div className="w-4 h-4 rounded-full border-2 border-yellow-400 flex items-center justify-center mt-0.5">
-                <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
-              </div>
-              <div className="flex-1">
-                <p className="text-white text-[7px] font-medium">Reunión con cliente</p>
-                <p className="text-gray-400 text-[6px]">Preparar documentos</p>
-                <div className="flex items-center justify-between mt-1">
+          {/* Card 1 - Alta prioridad (rosa) */}
+          <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+            <div className="flex">
+              <div className="w-1 bg-pink-400"></div>
+              <div className="flex-1 p-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-pink-500 text-[6px] font-medium">Alta</span>
                   <div className="flex items-center gap-1">
-                    <span className="bg-yellow-500/20 text-yellow-400 text-[5px] px-1.5 py-0.5 rounded">Hace 2 días</span>
-                    <span className="bg-green-500/20 text-green-400 text-[5px] px-1.5 py-0.5 rounded">Activo</span>
+                    <Edit className="w-2 h-2 text-gray-400" />
+                    <Users className="w-2 h-2 text-gray-400" />
                   </div>
-                  <div className="flex -space-x-1.5">
-                    <img src={avatarWoman01} alt="" className="w-4 h-4 rounded-full border border-[#1a2942] object-cover" />
-                    <img src={avatarMan01} alt="" className="w-4 h-4 rounded-full border border-[#1a2942] object-cover" />
+                </div>
+                <p className="text-gray-900 text-[7px] font-semibold">Test Banner Madrid</p>
+                <p className="text-gray-500 text-[5px] mt-0.5">Recordatorio para probar el banner</p>
+                <div className="flex items-center gap-1 mt-1 text-gray-400">
+                  <Calendar className="w-2 h-2" />
+                  <span className="text-[5px]">Hace 5 meses</span>
+                </div>
+                <div className="flex items-center justify-between mt-1.5">
+                  <div className="flex -space-x-1">
+                    <img src={avatarWoman01} alt="" className="w-4 h-4 rounded-full border-2 border-white object-cover" />
+                    <img src={avatarMan01} alt="" className="w-4 h-4 rounded-full border-2 border-white object-cover" />
                   </div>
+                  <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                    <div className="w-2.5 h-2.5 rounded-full border border-gray-300"></div>
+                    Completar
+                  </button>
                 </div>
               </div>
             </div>
           </div>
           
-          <div className="bg-[#1a2942] rounded-xl p-2">
-            <div className="flex items-start gap-2">
-              <div className="w-4 h-4 rounded-full border-2 border-yellow-400 flex items-center justify-center mt-0.5">
-                <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
-              </div>
-              <div className="flex-1">
-                <p className="text-white text-[7px] font-medium">Enviar nóminas</p>
-                <p className="text-gray-400 text-[6px]">Subir nóminas noviembre</p>
-                <div className="flex items-center gap-1 mt-1">
-                  <span className="bg-yellow-500/20 text-yellow-400 text-[5px] px-1.5 py-0.5 rounded">Hoy</span>
-                  <span className="bg-green-500/20 text-green-400 text-[5px] px-1.5 py-0.5 rounded">Activo</span>
+          {/* Card 2 - Media prioridad (amarillo) */}
+          <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+            <div className="flex">
+              <div className="w-1 bg-yellow-400"></div>
+              <div className="flex-1 p-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-yellow-600 text-[6px] font-medium">Media</span>
+                  <div className="flex items-center gap-1">
+                    <Edit className="w-2 h-2 text-gray-400" />
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-[#1a2942] rounded-xl p-2">
-            <div className="flex items-start gap-2">
-              <div className="w-4 h-4 rounded-full border-2 border-gray-500 flex items-center justify-center mt-0.5">
-                <CheckCircle className="w-2.5 h-2.5 text-green-400" />
-              </div>
-              <div className="flex-1">
-                <p className="text-gray-500 text-[7px] font-medium line-through">Llamar proveedor</p>
-                <p className="text-gray-500 text-[6px]">Confirmar pedido</p>
-                <div className="flex items-center gap-1 mt-1">
-                  <span className="bg-gray-500/20 text-gray-400 text-[5px] px-1.5 py-0.5 rounded">Hace 1 semana</span>
+                <p className="text-gray-900 text-[7px] font-semibold">Reunión</p>
+                <div className="flex items-center gap-1 mt-1 text-gray-400">
+                  <Calendar className="w-2 h-2" />
+                  <span className="text-[5px]">Hace 23 días</span>
+                </div>
+                <div className="flex items-center justify-between mt-1.5">
+                  <div className="flex -space-x-1">
+                    <img src={avatarMan02} alt="" className="w-4 h-4 rounded-full border-2 border-white object-cover" />
+                    <img src={avatarWoman02} alt="" className="w-4 h-4 rounded-full border-2 border-white object-cover" />
+                  </div>
+                  <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                    <div className="w-2.5 h-2.5 rounded-full border border-gray-300"></div>
+                    Completar
+                  </button>
                 </div>
               </div>
             </div>
@@ -1588,55 +1595,63 @@ export default function Landing() {
                           
                           {/* Reminder cards */}
                           <div className="space-y-2">
-                            <div className="bg-[#1a2942] rounded-xl p-2">
-                              <div className="flex items-start gap-2">
-                                <div className="w-4 h-4 rounded-full border-2 border-yellow-400 flex items-center justify-center mt-0.5">
-                                  <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
-                                </div>
-                                <div className="flex-1">
-                                  <p className="text-white text-[8px] font-medium">Reunión con cliente</p>
-                                  <p className="text-gray-400 text-[6px] mt-0.5">Preparar documentos y revisar presupuesto</p>
-                                  <div className="flex items-center justify-between mt-1">
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="bg-yellow-500/20 text-yellow-400 text-[5px] px-1.5 py-0.5 rounded">Hace 2 días</span>
-                                      <span className="bg-green-500/20 text-green-400 text-[5px] px-1.5 py-0.5 rounded">Activo</span>
+                            {/* Card 1 - Alta prioridad (rosa) */}
+                            <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+                              <div className="flex">
+                                <div className="w-1 bg-pink-400"></div>
+                                <div className="flex-1 p-2">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-pink-500 text-[6px] font-medium">Alta</span>
+                                    <div className="flex items-center gap-1">
+                                      <Edit className="w-2 h-2 text-gray-400" />
+                                      <Users className="w-2 h-2 text-gray-400" />
                                     </div>
-                                    <div className="flex -space-x-1.5">
-                                      <img src={avatarWoman01} alt="" className="w-4 h-4 rounded-full border border-[#1a2942] object-cover" />
-                                      <img src={avatarMan01} alt="" className="w-4 h-4 rounded-full border border-[#1a2942] object-cover" />
+                                  </div>
+                                  <p className="text-gray-900 text-[7px] font-semibold">Test Banner Madrid</p>
+                                  <p className="text-gray-500 text-[5px] mt-0.5">Recordatorio para probar el banner</p>
+                                  <div className="flex items-center gap-1 mt-1 text-gray-400">
+                                    <Calendar className="w-2 h-2" />
+                                    <span className="text-[5px]">Hace 5 meses</span>
+                                  </div>
+                                  <div className="flex items-center justify-between mt-1.5">
+                                    <div className="flex -space-x-1">
+                                      <img src={avatarWoman01} alt="" className="w-4 h-4 rounded-full border-2 border-white object-cover" />
+                                      <img src={avatarMan01} alt="" className="w-4 h-4 rounded-full border-2 border-white object-cover" />
                                     </div>
+                                    <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                                      <div className="w-2.5 h-2.5 rounded-full border border-gray-300"></div>
+                                      Completar
+                                    </button>
                                   </div>
                                 </div>
                               </div>
                             </div>
                             
-                            <div className="bg-[#1a2942] rounded-xl p-2">
-                              <div className="flex items-start gap-2">
-                                <div className="w-4 h-4 rounded-full border-2 border-yellow-400 flex items-center justify-center mt-0.5">
-                                  <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
-                                </div>
-                                <div className="flex-1">
-                                  <p className="text-white text-[8px] font-medium">Enviar nóminas</p>
-                                  <p className="text-gray-400 text-[6px] mt-0.5">Subir las nóminas de noviembre</p>
-                                  <div className="flex items-center gap-1.5 mt-1">
-                                    <span className="bg-yellow-500/20 text-yellow-400 text-[5px] px-1.5 py-0.5 rounded">Hoy</span>
-                                    <span className="bg-green-500/20 text-green-400 text-[5px] px-1.5 py-0.5 rounded">Activo</span>
+                            {/* Card 2 - Media prioridad (amarillo) */}
+                            <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+                              <div className="flex">
+                                <div className="w-1 bg-yellow-400"></div>
+                                <div className="flex-1 p-2">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-yellow-600 text-[6px] font-medium">Media</span>
+                                    <div className="flex items-center gap-1">
+                                      <Edit className="w-2 h-2 text-gray-400" />
+                                    </div>
                                   </div>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="bg-[#1a2942] rounded-xl p-2">
-                              <div className="flex items-start gap-2">
-                                <div className="w-4 h-4 rounded-full border-2 border-gray-500 flex items-center justify-center mt-0.5">
-                                  <CheckCircle className="w-2.5 h-2.5 text-green-400" />
-                                </div>
-                                <div className="flex-1">
-                                  <p className="text-gray-500 text-[8px] font-medium line-through">Llamar proveedor</p>
-                                  <p className="text-gray-500 text-[6px] mt-0.5">Confirmar pedido de material</p>
-                                  <div className="flex items-center gap-1.5 mt-1">
-                                    <span className="bg-gray-500/20 text-gray-400 text-[5px] px-1.5 py-0.5 rounded">Hace 1 semana</span>
-                                    <span className="bg-gray-500/20 text-gray-400 text-[5px] px-1.5 py-0.5 rounded">Completado</span>
+                                  <p className="text-gray-900 text-[7px] font-semibold">Reunión</p>
+                                  <div className="flex items-center gap-1 mt-1 text-gray-400">
+                                    <Calendar className="w-2 h-2" />
+                                    <span className="text-[5px]">Hace 23 días</span>
+                                  </div>
+                                  <div className="flex items-center justify-between mt-1.5">
+                                    <div className="flex -space-x-1">
+                                      <img src={avatarMan02} alt="" className="w-4 h-4 rounded-full border-2 border-white object-cover" />
+                                      <img src={avatarWoman02} alt="" className="w-4 h-4 rounded-full border-2 border-white object-cover" />
+                                    </div>
+                                    <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                                      <div className="w-2.5 h-2.5 rounded-full border border-gray-300"></div>
+                                      Completar
+                                    </button>
                                   </div>
                                 </div>
                               </div>
