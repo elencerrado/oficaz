@@ -1132,15 +1132,15 @@ export default function Landing() {
                             <div className="grid grid-cols-3 gap-1 text-center mb-2">
                               <div>
                                 <p className="text-[#007AFF] font-bold text-sm">30</p>
-                                <p className="text-gray-500 text-[6px]">TOTAL</p>
+                                <p className="text-gray-300 text-[6px]">TOTAL</p>
                               </div>
                               <div>
                                 <p className="text-green-400 font-bold text-sm">26</p>
-                                <p className="text-gray-500 text-[6px]">APROBADOS</p>
+                                <p className="text-gray-300 text-[6px]">APROBADOS</p>
                               </div>
                               <div>
                                 <p className="text-[#007AFF] font-bold text-sm">4</p>
-                                <p className="text-gray-500 text-[6px]">DISPONIBLES</p>
+                                <p className="text-gray-300 text-[6px]">DISPONIBLES</p>
                               </div>
                             </div>
                             <div className="flex justify-between items-center mb-1">
