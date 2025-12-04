@@ -164,46 +164,54 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
     return (
       <div className="p-2.5 h-full bg-[#0a1628]">
         <h3 className="text-white font-bold text-xs mb-0.5">Control de Tiempo</h3>
-        <p className="text-gray-400 text-[7px] mb-2">Revisa tu historial de fichajes</p>
+        <p className="text-gray-400 text-[6px] mb-2">Revisa tu historial de fichajes</p>
+        
         <div className="flex items-center justify-center gap-2 mb-2">
           <ChevronLeft className="w-2.5 h-2.5 text-gray-400" />
-          <span className="text-white text-[8px] font-medium">diciembre 2025</span>
+          <span className="text-white text-[8px] font-medium">octubre 2025</span>
           <ChevronRight className="w-2.5 h-2.5 text-gray-400" />
         </div>
-        <div className="bg-[#1a2942] rounded-lg p-2 mb-2">
-          <p className="text-gray-400 text-[7px] text-center mb-0.5">Total del mes</p>
-          <p className="text-white font-bold text-base text-center">194h 37m</p>
+        
+        <div className="bg-[#1a2942] rounded-xl p-2 mb-2">
+          <p className="text-gray-400 text-[6px] text-center mb-0.5">Total del mes</p>
+          <p className="text-white font-bold text-sm text-center">160h 45m</p>
+          
           <div className="flex justify-between mt-2 gap-0.5">
             {[
-              { month: 'sep', hours: '186h', active: false },
-              { month: 'oct', hours: '179h', active: false },
-              { month: 'nov', hours: '196h', active: false },
-              { month: 'dic', hours: '195h', active: true },
+              { month: 'jul', hours: '162h', active: false },
+              { month: 'ago', hours: '158h', active: false },
+              { month: 'sep', hours: '165h', active: false },
+              { month: 'oct', hours: '160h', active: true },
             ].map((m, i) => (
-              <div key={i} className={`flex-1 rounded p-1 ${m.active ? 'bg-[#007AFF]/30 border border-[#007AFF]' : 'bg-[#0a1628]'}`}>
-                <div className="h-4 bg-[#007AFF] rounded-sm mb-0.5"></div>
-                <p className="text-gray-400 text-[6px] text-center">{m.month}</p>
-                <p className="text-white text-[6px] text-center font-medium">{m.hours}</p>
+              <div key={i} className={`flex-1 rounded-lg p-1 ${m.active ? 'bg-[#007AFF]/30 border border-[#007AFF]' : 'bg-[#0a1628]'}`}>
+                <div className="h-4 bg-[#007AFF] rounded-t-sm mb-0.5"></div>
+                <p className="text-gray-400 text-[5px] text-center">{m.month}</p>
+                <p className="text-white text-[5px] text-center font-medium">{m.hours}</p>
               </div>
             ))}
           </div>
         </div>
-        <div className="bg-[#1a2942] rounded-lg p-1.5">
+        
+        <div className="bg-[#1a2942] rounded-xl p-1.5">
           <div className="flex justify-between items-center mb-1">
-            <p className="text-white text-[7px]">Semana</p>
-            <span className="text-[#007AFF] text-[7px] font-medium">42h 18m</span>
+            <p className="text-white text-[6px]">octubre semana 27-02</p>
+            <span className="bg-[#007AFF]/20 text-[#007AFF] text-[5px] font-medium px-1 py-0.5 rounded">40h 12m</span>
           </div>
           <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <span className="text-gray-400 text-[6px] w-8">viernes</span>
-              <div className="flex-1 h-1 bg-[#007AFF] rounded-full"></div>
-              <span className="text-white text-[6px]">8h 28m</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-gray-400 text-[6px] w-8">jueves</span>
-              <div className="flex-1 h-1 bg-[#007AFF] rounded-full" style={{width: '90%'}}></div>
-              <span className="text-white text-[6px]">8h 29m</span>
-            </div>
+            {[
+              { day: 'viernes', num: '31', hours: '8h 28m', breakPos: 60 },
+              { day: 'jueves', num: '30', hours: '8h 29m', breakPos: 55 },
+            ].map((entry, i) => (
+              <div key={i} className="bg-[#0a1628] rounded-md p-1">
+                <div className="flex justify-between items-center mb-0.5">
+                  <span className="text-white text-[6px] font-medium">{entry.day} {entry.num}</span>
+                  <span className="text-gray-400 text-[5px]">{entry.hours}</span>
+                </div>
+                <div className="relative h-2 bg-[#007AFF] rounded-full">
+                  <div className="absolute top-1/2 w-1 h-1 bg-orange-400 rounded-full" style={{ left: `${entry.breakPos}%`, transform: 'translate(-50%, -50%)' }}></div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -213,33 +221,65 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
   if (addonKey === 'vacation') {
     return (
       <div className="p-2.5 h-full bg-[#0a1628]">
-        <h3 className="text-white font-bold text-xs mb-0.5">Mis Vacaciones</h3>
-        <p className="text-gray-400 text-[7px] mb-2">Solicita y gestiona tus días</p>
-        <div className="bg-[#1a2942] rounded-lg p-2 mb-2">
-          <div className="flex justify-between items-center mb-1">
-            <p className="text-gray-400 text-[7px]">Días disponibles</p>
-            <span className="text-[#007AFF] font-bold text-base">18</span>
+        <h3 className="text-white font-bold text-xs mb-0.5">Vacaciones</h3>
+        <p className="text-gray-400 text-[6px] mb-1.5">Solicita y consulta el estado</p>
+        
+        <div className="bg-[#1a2942] rounded-xl p-1.5 mb-1.5">
+          <div className="grid grid-cols-3 gap-1 text-center mb-1.5">
+            <div>
+              <p className="text-[#007AFF] font-bold text-xs">30</p>
+              <p className="text-gray-300 text-[5px]">TOTAL</p>
+            </div>
+            <div>
+              <p className="text-green-400 font-bold text-xs">26</p>
+              <p className="text-gray-300 text-[5px]">APROBADOS</p>
+            </div>
+            <div>
+              <p className="text-[#007AFF] font-bold text-xs">4</p>
+              <p className="text-gray-300 text-[5px]">DISPONIBLES</p>
+            </div>
           </div>
-          <div className="w-full bg-[#0a1628] rounded-full h-1 mb-0.5">
-            <div className="bg-[#007AFF] h-1 rounded-full" style={{ width: '60%' }}></div>
+          <div className="flex justify-between items-center mb-0.5">
+            <p className="text-gray-400 text-[5px]">Progreso anual</p>
+            <p className="text-gray-400 text-[5px]">86.7%</p>
           </div>
-          <p className="text-gray-500 text-[6px]">12 días disfrutados de 30</p>
+          <div className="w-full bg-[#0a1628] rounded-full h-1.5">
+            <div className="bg-[#007AFF] h-1.5 rounded-full" style={{ width: '87%' }}></div>
+          </div>
         </div>
-        <div className="bg-[#1a2942] rounded-lg p-1.5 space-y-1.5">
-          <div className="flex items-center gap-1.5 p-1.5 bg-green-500/20 rounded border border-green-500/30">
-            <Calendar className="w-2.5 h-2.5 text-green-400" />
-            <div className="flex-1">
-              <p className="text-white text-[7px] font-medium">15-19 Dic</p>
-              <p className="text-green-400 text-[6px]">Aprobado</p>
-            </div>
+        
+        <button className="w-full bg-[#007AFF] rounded-lg p-1 mb-1.5 flex items-center justify-center gap-1">
+          <Calendar className="w-2.5 h-2.5 text-white" />
+          <span className="text-white text-[6px] font-medium">Solicitar días</span>
+        </button>
+        
+        <div className="bg-[#1a2942] rounded-xl overflow-hidden">
+          <div className="grid grid-cols-4 gap-0.5 p-1 border-b border-[#0a1628]">
+            <p className="text-gray-500 text-[5px]">Periodo</p>
+            <p className="text-gray-500 text-[5px] text-center">Días</p>
+            <p className="text-gray-500 text-[5px] text-center">Estado</p>
+            <p className="text-gray-500 text-[5px] text-center">Fecha</p>
           </div>
-          <div className="flex items-center gap-1.5 p-1.5 bg-yellow-500/20 rounded border border-yellow-500/30">
-            <Calendar className="w-2.5 h-2.5 text-yellow-400" />
-            <div className="flex-1">
-              <p className="text-white text-[7px] font-medium">23-31 Dic</p>
-              <p className="text-yellow-400 text-[6px]">Pendiente</p>
+          {[
+            { period: '10-12 dic', days: '3', status: 'approved', date: '10 nov' },
+            { period: '1-15 ago', days: '15', status: 'approved', date: '5 jun' },
+            { period: '10-14 abr', days: '5', status: 'approved', date: '1 mar' },
+            { period: '5-5 nov', days: '1', status: 'pending', date: '23 oct' },
+          ].map((req, i) => (
+            <div key={i} className="grid grid-cols-4 gap-0.5 p-1 border-b border-[#0a1628] last:border-0">
+              <p className="text-white text-[5px]">{req.period}</p>
+              <p className="text-white text-[5px] text-center">{req.days}</p>
+              <div className="flex justify-center">
+                <div className={`w-2.5 h-2.5 rounded-full flex items-center justify-center ${
+                  req.status === 'approved' ? 'bg-green-500/20 border border-green-500' : 
+                  'bg-yellow-500/20 border border-yellow-500'
+                }`}>
+                  {req.status === 'approved' && <CheckCircle className="w-1.5 h-1.5 text-green-400" />}
+                </div>
+              </div>
+              <p className="text-gray-400 text-[5px] text-center">{req.date}</p>
             </div>
-          </div>
+          ))}
         </div>
       </div>
     );
@@ -249,26 +289,29 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
     return (
       <div className="p-2.5 h-full bg-[#0a1628]">
         <h3 className="text-white font-bold text-xs mb-0.5">Mi Equipo</h3>
-        <p className="text-gray-400 text-[7px] mb-1.5">Gestiona tu plantilla</p>
+        <p className="text-gray-400 text-[6px] mb-1.5">Gestiona tu plantilla</p>
+        
         <div className="grid grid-cols-3 gap-1 mb-1.5">
           <div className="bg-purple-500/20 border border-purple-500/30 rounded-lg p-1.5 text-center">
-            <p className="text-purple-400 font-bold text-sm">1</p>
-            <p className="text-purple-300/70 text-[6px]">Admin</p>
+            <p className="text-purple-400 font-bold text-xs">1</p>
+            <p className="text-purple-300/70 text-[5px]">Admin</p>
           </div>
           <div className="bg-[#007AFF]/20 border border-[#007AFF]/30 rounded-lg p-1.5 text-center">
-            <p className="text-[#007AFF] font-bold text-sm">1</p>
-            <p className="text-blue-300/70 text-[6px]">Manager</p>
+            <p className="text-[#007AFF] font-bold text-xs">1</p>
+            <p className="text-blue-300/70 text-[5px]">Manager</p>
           </div>
           <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-1.5 text-center">
-            <p className="text-green-400 font-bold text-sm">10</p>
-            <p className="text-green-300/70 text-[6px]">Empleados</p>
+            <p className="text-green-400 font-bold text-xs">10</p>
+            <p className="text-green-300/70 text-[5px]">Empleados</p>
           </div>
         </div>
+        
         <button className="w-full bg-[#007AFF] rounded-lg p-1.5 mb-1.5 flex items-center justify-center gap-1">
           <Users className="w-2.5 h-2.5 text-white" />
-          <span className="text-white text-[7px] font-semibold">Crear usuario</span>
+          <span className="text-white text-[6px] font-semibold">Crear usuario</span>
         </button>
-        <div className="space-y-1">
+        
+        <div className="space-y-0.5">
           {[
             { name: 'María García', role: 'Admin', avatar: avatarWoman01, roleColor: 'text-purple-400' },
             { name: 'Carlos López', role: 'Manager', avatar: avatarMan01, roleColor: 'text-[#007AFF]' },
@@ -276,17 +319,17 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
             { name: 'Pedro Ruiz', role: 'Empleado', avatar: avatarMan02, roleColor: 'text-green-400' },
             { name: 'Laura Sanz', role: 'Empleado', avatar: avatarWoman03, roleColor: 'text-green-400' },
           ].map((emp, i) => (
-            <div key={i} className="bg-[#1a2942] rounded-lg p-1.5 flex items-center gap-2">
+            <div key={i} className="bg-[#1a2942] rounded-lg p-1 flex items-center gap-1.5">
               <img 
                 src={emp.avatar} 
                 alt={emp.name}
-                className="w-5 h-5 rounded-full object-cover"
+                className="w-4 h-4 rounded-full object-cover"
               />
               <div className="flex-1">
-                <p className="text-white text-[7px] font-medium">{emp.name}</p>
-                <p className={`text-[6px] ${emp.roleColor}`}>{emp.role}</p>
+                <p className="text-white text-[6px] font-medium">{emp.name}</p>
+                <p className={`text-[5px] ${emp.roleColor}`}>{emp.role}</p>
               </div>
-              <Settings className="w-2.5 h-2.5 text-gray-500" />
+              <Settings className="w-2 h-2 text-gray-500" />
             </div>
           ))}
         </div>
@@ -298,34 +341,59 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
     return (
       <div className="p-2.5 h-full bg-[#0a1628]">
         <h3 className="text-white font-bold text-xs mb-0.5">Cuadrante</h3>
-        <p className="text-gray-400 text-[7px] mb-2">Turnos de la semana</p>
-        <div className="bg-[#1a2942] rounded-lg p-1.5 mb-2">
-          <div className="grid grid-cols-7 gap-0.5 text-center mb-1.5">
-            {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((d, i) => (
-              <span key={i} className="text-gray-400 text-[6px]">{d}</span>
-            ))}
+        <p className="text-gray-400 text-[6px] mb-1.5">Consulta tus turnos asignados</p>
+        
+        <div className="bg-[#1a2942] rounded-lg p-1 mb-1.5 flex items-center justify-between">
+          <span className="text-gray-500 text-[6px]">{'<'}</span>
+          <span className="text-white text-[7px] font-medium">Semana 29 - 5 oct</span>
+          <span className="text-gray-500 text-[6px]">{'>'}</span>
+        </div>
+        
+        <div className="bg-[#1a2942] rounded-xl p-1.5 mb-1.5">
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-white text-[6px] font-semibold">Lunes <span className="text-gray-400 font-normal">29 sep</span></p>
+            <p className="text-gray-500 text-[5px]">2 turnos</p>
           </div>
-          <div className="space-y-0.5">
-            {['M', 'T', 'N'].map((t) => (
-              <div key={t} className="grid grid-cols-7 gap-0.5">
-                {[1, 1, 0, 1, 1, 0, 0].map((active, j) => (
-                  <div 
-                    key={j} 
-                    className={`h-2.5 rounded text-[4px] flex items-center justify-center ${
-                      active ? 'bg-[#007AFF] text-white' : 'bg-[#0a1628]'
-                    }`}
-                  >
-                    {active ? t : ''}
-                  </div>
-                ))}
+          <div className="space-y-1">
+            <div className="bg-red-500 rounded-md px-1.5 py-1">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-white text-[6px] font-medium">Mañana</span>
+                <span className="text-white/80 text-[5px]">09:00-14:00</span>
               </div>
-            ))}
+              <div className="flex items-center gap-0.5 text-white/90">
+                <MapPin className="w-2 h-2" />
+                <span className="text-[5px]">Oficina Central →</span>
+              </div>
+            </div>
+            <div className="bg-green-500 rounded-md px-1.5 py-1">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-white text-[6px] font-medium">Tarde</span>
+                <span className="text-white/80 text-[5px]">15:00-20:00</span>
+              </div>
+              <div className="flex items-center gap-0.5 text-white/90">
+                <MapPin className="w-2 h-2" />
+                <span className="text-[5px]">Cliente ABC →</span>
+              </div>
+            </div>
           </div>
         </div>
-        <button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-2 text-center">
-          <Zap className="w-3 h-3 text-white mx-auto mb-0.5" />
-          <p className="text-white font-semibold text-[7px]">Generar con IA</p>
-        </button>
+        
+        <div className="bg-[#1a2942] rounded-xl p-1.5">
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-white text-[6px] font-semibold">Martes <span className="text-gray-400 font-normal">30 sep</span></p>
+            <p className="text-gray-500 text-[5px]">1 turno</p>
+          </div>
+          <div className="bg-[#007AFF] rounded-md px-1.5 py-1">
+            <div className="flex items-center justify-between mb-0.5">
+              <span className="text-white text-[6px] font-medium">Completo</span>
+              <span className="text-white/80 text-[5px]">08:00-17:00</span>
+            </div>
+            <div className="flex items-center gap-0.5 text-white/90">
+              <MapPin className="w-2 h-2" />
+              <span className="text-[5px]">Almacén Norte →</span>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -334,12 +402,12 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
     return (
       <div className="p-2.5 h-full bg-[#0a1628]">
         <h3 className="text-white font-bold text-xs mb-0.5">Mensajes</h3>
-        <p className="text-gray-400 text-[7px] mb-2">Conversaciones</p>
-        <div className="bg-[#1a2942] rounded-lg overflow-hidden">
+        <p className="text-gray-400 text-[6px] mb-2">Conversaciones</p>
+        <div className="bg-[#1a2942] rounded-xl overflow-hidden">
           {[
-            { name: 'Equipo', msg: 'Reunión mañana', time: '10:30', unread: 3 },
+            { name: 'Equipo', msg: 'Reunión mañana a las 10', time: '10:30', unread: 3 },
             { name: 'Carlos', msg: 'Terminé el informe', time: '09:15', unread: 0 },
-            { name: 'RRHH', msg: 'Recordatorio', time: 'Ayer', unread: 1 },
+            { name: 'RRHH', msg: 'Recordatorio vacaciones', time: 'Ayer', unread: 1 },
           ].map((chat, i) => (
             <div key={i} className="p-1.5 flex items-center gap-1.5 border-b border-[#0a1628] last:border-0">
               <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#007AFF] to-blue-600 flex items-center justify-center text-white text-[6px] font-bold">
@@ -348,9 +416,9 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-center">
                   <p className="text-white text-[7px] font-medium truncate">{chat.name}</p>
-                  <span className="text-gray-500 text-[6px]">{chat.time}</span>
+                  <span className="text-gray-500 text-[5px]">{chat.time}</span>
                 </div>
-                <p className="text-gray-400 text-[6px] truncate">{chat.msg}</p>
+                <p className="text-gray-400 text-[5px] truncate">{chat.msg}</p>
               </div>
               {chat.unread > 0 && (
                 <span className="w-3 h-3 bg-[#007AFF] rounded-full text-white text-[5px] flex items-center justify-center">{chat.unread}</span>
@@ -366,27 +434,68 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
     return (
       <div className="p-2.5 h-full bg-[#0a1628]">
         <h3 className="text-white font-bold text-xs mb-0.5">Recordatorios</h3>
-        <p className="text-gray-400 text-[7px] mb-2">Tus tareas pendientes</p>
-        <div className="bg-[#1a2942] rounded-lg p-1.5 mb-2 space-y-1.5">
-          {[
-            { text: 'Revisar nóminas', time: '09:00', done: true },
-            { text: 'Llamar proveedor', time: '11:30', done: false },
-            { text: 'Enviar facturas', time: '15:00', done: false },
-          ].map((r, i) => (
-            <div key={i} className={`flex items-center gap-1.5 p-1 rounded ${r.done ? 'bg-green-500/20' : 'bg-[#0a1628]'}`}>
-              <div className={`w-3 h-3 rounded-full border flex items-center justify-center ${r.done ? 'bg-green-500 border-green-500' : 'border-gray-500'}`}>
-                {r.done && <CheckCircle className="w-2 h-2 text-white" />}
+        <p className="text-gray-400 text-[6px] mb-1.5">Gestiona tus recordatorios</p>
+        
+        <div className="flex gap-1 mb-1.5">
+          <div className="flex-1 bg-[#1a2942] rounded-lg px-1.5 py-1">
+            <p className="text-gray-500 text-[5px]">Buscar...</p>
+          </div>
+          <div className="bg-[#1a2942] rounded-lg px-1.5 py-1">
+            <p className="text-gray-300 text-[5px]">Activos</p>
+          </div>
+          <div className="bg-[#007AFF] rounded-lg px-1.5 py-1">
+            <p className="text-white text-[5px]">+ Nuevo</p>
+          </div>
+        </div>
+        
+        <div className="space-y-1.5">
+          <div className="bg-[#1a2942] rounded-xl p-1.5">
+            <div className="flex items-start gap-1.5">
+              <div className="w-3 h-3 rounded-full border-2 border-yellow-400 flex items-center justify-center mt-0.5">
+                <div className="w-1 h-1 bg-yellow-400 rounded-full"></div>
               </div>
               <div className="flex-1">
-                <p className={`text-[7px] ${r.done ? 'text-gray-500 line-through' : 'text-white'}`}>{r.text}</p>
+                <p className="text-white text-[6px] font-medium">Reunión con cliente</p>
+                <p className="text-gray-400 text-[5px]">Preparar documentos</p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="bg-yellow-500/20 text-yellow-400 text-[4px] px-1 py-0.5 rounded">Hace 2 días</span>
+                  <span className="bg-green-500/20 text-green-400 text-[4px] px-1 py-0.5 rounded">Activo</span>
+                </div>
               </div>
-              <span className="text-gray-500 text-[6px]">{r.time}</span>
             </div>
-          ))}
+          </div>
+          
+          <div className="bg-[#1a2942] rounded-xl p-1.5">
+            <div className="flex items-start gap-1.5">
+              <div className="w-3 h-3 rounded-full border-2 border-yellow-400 flex items-center justify-center mt-0.5">
+                <div className="w-1 h-1 bg-yellow-400 rounded-full"></div>
+              </div>
+              <div className="flex-1">
+                <p className="text-white text-[6px] font-medium">Enviar nóminas</p>
+                <p className="text-gray-400 text-[5px]">Subir nóminas noviembre</p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="bg-yellow-500/20 text-yellow-400 text-[4px] px-1 py-0.5 rounded">Hoy</span>
+                  <span className="bg-green-500/20 text-green-400 text-[4px] px-1 py-0.5 rounded">Activo</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-[#1a2942] rounded-xl p-1.5">
+            <div className="flex items-start gap-1.5">
+              <div className="w-3 h-3 rounded-full border-2 border-gray-500 flex items-center justify-center mt-0.5">
+                <CheckCircle className="w-2 h-2 text-green-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-gray-500 text-[6px] font-medium line-through">Llamar proveedor</p>
+                <p className="text-gray-500 text-[5px]">Confirmar pedido</p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="bg-gray-500/20 text-gray-400 text-[4px] px-1 py-0.5 rounded">Hace 1 semana</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <button className="w-full bg-[#007AFF] rounded-lg p-1.5 text-center">
-          <p className="text-white font-semibold text-[7px]">+ Nuevo recordatorio</p>
-        </button>
       </div>
     );
   }
@@ -395,20 +504,20 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
     return (
       <div className="p-2.5 h-full bg-[#0a1628]">
         <h3 className="text-white font-bold text-xs mb-0.5">Documentos</h3>
-        <p className="text-gray-400 text-[7px] mb-2">Tus archivos</p>
-        <div className="bg-[#1a2942] rounded-lg overflow-hidden">
+        <p className="text-gray-400 text-[6px] mb-2">Tus archivos</p>
+        <div className="bg-[#1a2942] rounded-xl overflow-hidden">
           {[
             { name: 'Nómina Nov 2024', type: 'PDF' },
             { name: 'Contrato trabajo', type: 'PDF' },
             { name: 'Certificado IRPF', type: 'PDF' },
           ].map((doc, i) => (
             <div key={i} className="p-1.5 flex items-center gap-1.5 border-b border-[#0a1628] last:border-0">
-              <div className="w-5 h-5 rounded bg-red-500/20 flex items-center justify-center">
+              <div className="w-5 h-5 rounded-lg bg-red-500/20 flex items-center justify-center">
                 <FileText className="w-3 h-3 text-red-400" />
               </div>
               <div className="flex-1">
                 <p className="text-white text-[7px] font-medium">{doc.name}</p>
-                <p className="text-gray-500 text-[6px]">{doc.type}</p>
+                <p className="text-gray-500 text-[5px]">{doc.type}</p>
               </div>
               <Eye className="w-2.5 h-2.5 text-gray-500" />
             </div>
@@ -422,26 +531,26 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
     return (
       <div className="p-2.5 h-full bg-[#0a1628]">
         <h3 className="text-white font-bold text-xs mb-0.5">Partes de Trabajo</h3>
-        <p className="text-gray-400 text-[7px] mb-2">Documenta tus servicios</p>
-        <div className="bg-[#1a2942] rounded-lg p-1.5 mb-2 space-y-1.5">
-          <div className="p-1 bg-[#0a1628] rounded">
-            <p className="text-gray-500 text-[6px]">Cliente</p>
-            <p className="text-white text-[7px]">Empresa ABC S.L.</p>
+        <p className="text-gray-400 text-[6px] mb-2">Documenta tus servicios</p>
+        <div className="bg-[#1a2942] rounded-xl p-1.5 mb-2 space-y-1.5">
+          <div className="p-1 bg-[#0a1628] rounded-lg">
+            <p className="text-gray-500 text-[5px]">Cliente</p>
+            <p className="text-white text-[6px]">Empresa ABC S.L.</p>
           </div>
-          <div className="p-1 bg-[#0a1628] rounded">
-            <p className="text-gray-500 text-[6px]">Ubicación</p>
-            <p className="text-white text-[7px]">📍 Calle Mayor, 15</p>
+          <div className="p-1 bg-[#0a1628] rounded-lg">
+            <p className="text-gray-500 text-[5px]">Ubicación</p>
+            <p className="text-white text-[6px]">📍 Calle Mayor, 15</p>
           </div>
           <div className="grid grid-cols-3 gap-0.5">
             {['📸', '📸', '+'].map((icon, i) => (
-              <div key={i} className="aspect-square bg-[#0a1628] rounded flex items-center justify-center text-gray-500 text-[8px]">
+              <div key={i} className="aspect-square bg-[#0a1628] rounded-lg flex items-center justify-center text-gray-500 text-[7px]">
                 {icon}
               </div>
             ))}
           </div>
         </div>
-        <button className="w-full bg-green-500 rounded-lg p-1.5 text-center">
-          <p className="text-white font-semibold text-[7px]">✍️ Firmar y enviar</p>
+        <button className="w-full bg-green-500 rounded-xl p-1.5 text-center">
+          <p className="text-white font-semibold text-[6px]">✍️ Firmar y enviar</p>
         </button>
       </div>
     );
@@ -451,27 +560,27 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
     return (
       <div className="p-2.5 h-full bg-[#0a1628] flex flex-col">
         <h3 className="text-white font-bold text-xs mb-0.5">OficazIA</h3>
-        <p className="text-gray-400 text-[7px] mb-2">Tu asistente inteligente</p>
+        <p className="text-gray-400 text-[6px] mb-2">Tu asistente inteligente</p>
         <div className="flex-1 space-y-1.5">
           <div className="flex gap-1">
             <div className="w-4 h-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
               <Zap className="w-2 h-2 text-white" />
             </div>
-            <div className="bg-[#1a2942] rounded-lg rounded-tl-sm p-1.5 max-w-[85%]">
-              <p className="text-white text-[7px]">¡Hola! ¿En qué puedo ayudarte?</p>
+            <div className="bg-[#1a2942] rounded-xl rounded-tl-sm p-1.5 max-w-[85%]">
+              <p className="text-white text-[6px]">¡Hola! ¿En qué puedo ayudarte?</p>
             </div>
           </div>
           <div className="flex justify-end">
-            <div className="bg-[#007AFF] rounded-lg rounded-tr-sm p-1.5 max-w-[85%]">
-              <p className="text-white text-[7px]">Hazme el cuadrante</p>
+            <div className="bg-[#007AFF] rounded-xl rounded-tr-sm p-1.5 max-w-[85%]">
+              <p className="text-white text-[6px]">Hazme el cuadrante</p>
             </div>
           </div>
           <div className="flex gap-1">
             <div className="w-4 h-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
               <Zap className="w-2 h-2 text-white" />
             </div>
-            <div className="bg-[#1a2942] rounded-lg rounded-tl-sm p-1.5 max-w-[85%]">
-              <p className="text-white text-[7px]">¡Listo! Cuadrante creado.</p>
+            <div className="bg-[#1a2942] rounded-xl rounded-tl-sm p-1.5 max-w-[85%]">
+              <p className="text-white text-[6px]">¡Listo! Cuadrante creado.</p>
             </div>
           </div>
         </div>
@@ -479,11 +588,11 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
           <input 
             type="text" 
             placeholder="Escribe..."
-            className="flex-1 bg-[#1a2942] rounded-full px-2 py-1 text-[7px] text-white border border-[#2a3952] placeholder-gray-500"
+            className="flex-1 bg-[#1a2942] rounded-full px-2 py-1 text-[6px] text-white border border-[#2a3952] placeholder-gray-500"
             readOnly
           />
-          <button className="w-5 h-5 bg-[#007AFF] rounded-full flex items-center justify-center">
-            <ArrowRight className="w-2.5 h-2.5 text-white" />
+          <button className="w-4 h-4 bg-[#007AFF] rounded-full flex items-center justify-center">
+            <ArrowRight className="w-2 h-2 text-white" />
           </button>
         </div>
       </div>
