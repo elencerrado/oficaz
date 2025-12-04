@@ -577,23 +577,42 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
     return (
       <div className="p-3 h-full bg-[#0a1628]">
         <h3 className="text-white font-bold text-sm mb-0.5">Documentos</h3>
-        <p className="text-gray-400 text-[8px] mb-3">Tus archivos</p>
+        <p className="text-gray-400 text-[8px] mb-2">Tus archivos</p>
+        
+        {/* Category tabs */}
+        <div className="flex gap-1 mb-2">
+          <div className="flex-1 bg-[#007AFF] rounded-lg py-1 px-1.5 flex items-center justify-center gap-0.5">
+            <CreditCard className="w-2 h-2 text-white" />
+            <span className="text-white text-[5px] font-medium">Nóminas</span>
+          </div>
+          <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1.5 flex items-center justify-center gap-0.5">
+            <FileText className="w-2 h-2 text-gray-400" />
+            <span className="text-gray-400 text-[5px]">Contratos</span>
+          </div>
+          <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1.5 flex items-center justify-center gap-0.5">
+            <FileText className="w-2 h-2 text-gray-400" />
+            <span className="text-gray-400 text-[5px]">Otros</span>
+          </div>
+        </div>
+        
         <div className="bg-[#1a2942] rounded-xl overflow-hidden">
           {[
-            { name: 'Nómina Nov 2024', type: 'PDF', size: '245 KB' },
-            { name: 'Contrato trabajo', type: 'PDF', size: '1.2 MB' },
-            { name: 'Certificado IRPF', type: 'PDF', size: '156 KB' },
-            { name: 'Anexo formación', type: 'PDF', size: '89 KB' },
+            { name: 'Nómina Octubre 2024', signed: false },
+            { name: 'Nómina Septiembre 2024', signed: true },
+            { name: 'Nómina Agosto 2024', signed: true },
+            { name: 'Nómina Julio 2024', signed: true },
           ].map((doc, i) => (
-            <div key={i} className="p-2 flex items-center gap-2 border-b border-[#0a1628] last:border-0">
-              <div className="w-7 h-7 rounded-lg bg-red-500/20 flex items-center justify-center">
-                <FileText className="w-4 h-4 text-red-400" />
+            <div key={i} className="p-1.5 flex items-center gap-2 border-b border-[#0a1628] last:border-0">
+              <div className="w-5 h-5 rounded-lg bg-red-500/20 flex items-center justify-center">
+                <FileText className="w-2.5 h-2.5 text-red-400" />
               </div>
               <div className="flex-1">
-                <p className="text-white text-[8px] font-medium">{doc.name}</p>
-                <p className="text-gray-500 text-[6px]">{doc.type} · {doc.size}</p>
+                <p className="text-white text-[6px] font-medium">{doc.name}</p>
+                <p className={`text-[5px] ${doc.signed ? 'text-green-400' : 'text-yellow-400'}`}>
+                  {doc.signed ? '✓ Firmado' : '⏳ Pendiente de firma'}
+                </p>
               </div>
-              <Eye className="w-3 h-3 text-gray-500" />
+              <Eye className="w-2.5 h-2.5 text-gray-500" />
             </div>
           ))}
         </div>
@@ -1757,23 +1776,42 @@ export default function Landing() {
                         >
                         <div className="p-3 h-full bg-[#0a1628]">
                           <h3 className="text-white font-bold text-sm mb-0.5">Documentos</h3>
-                          <p className="text-gray-400 text-[8px] mb-3">Tus archivos</p>
+                          <p className="text-gray-400 text-[8px] mb-2">Tus archivos</p>
+                          
+                          {/* Category tabs */}
+                          <div className="flex gap-1 mb-2">
+                            <div className="flex-1 bg-[#007AFF] rounded-lg py-1 px-1.5 flex items-center justify-center gap-0.5">
+                              <CreditCard className="w-2 h-2 text-white" />
+                              <span className="text-white text-[5px] font-medium">Nóminas</span>
+                            </div>
+                            <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1.5 flex items-center justify-center gap-0.5">
+                              <FileText className="w-2 h-2 text-gray-400" />
+                              <span className="text-gray-400 text-[5px]">Contratos</span>
+                            </div>
+                            <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1.5 flex items-center justify-center gap-0.5">
+                              <FileText className="w-2 h-2 text-gray-400" />
+                              <span className="text-gray-400 text-[5px]">Otros</span>
+                            </div>
+                          </div>
                           
                           <div className="bg-[#1a2942] rounded-xl overflow-hidden">
                             {[
-                              { name: 'Nómina Nov 2024', type: 'PDF' },
-                              { name: 'Contrato trabajo', type: 'PDF' },
-                              { name: 'Certificado IRPF', type: 'PDF' },
+                              { name: 'Nómina Octubre 2024', signed: false },
+                              { name: 'Nómina Septiembre 2024', signed: true },
+                              { name: 'Nómina Agosto 2024', signed: true },
+                              { name: 'Nómina Julio 2024', signed: true },
                             ].map((doc, i) => (
-                              <div key={i} className="p-2 flex items-center gap-2 border-b border-[#0a1628] last:border-0">
-                                <div className="w-7 h-7 rounded-lg bg-red-500/20 flex items-center justify-center">
-                                  <FileText className="w-3.5 h-3.5 text-red-400" />
+                              <div key={i} className="p-1.5 flex items-center gap-2 border-b border-[#0a1628] last:border-0">
+                                <div className="w-5 h-5 rounded-lg bg-red-500/20 flex items-center justify-center">
+                                  <FileText className="w-2.5 h-2.5 text-red-400" />
                                 </div>
                                 <div className="flex-1">
-                                  <p className="text-white text-[8px] font-medium">{doc.name}</p>
-                                  <p className="text-gray-500 text-[7px]">{doc.type}</p>
+                                  <p className="text-white text-[6px] font-medium">{doc.name}</p>
+                                  <p className={`text-[5px] ${doc.signed ? 'text-green-400' : 'text-yellow-400'}`}>
+                                    {doc.signed ? '✓ Firmado' : '⏳ Pendiente de firma'}
+                                  </p>
                                 </div>
-                                <Eye className="w-3 h-3 text-gray-500" />
+                                <Eye className="w-2.5 h-2.5 text-gray-500" />
                               </div>
                             ))}
                           </div>
