@@ -205,19 +205,21 @@ export default function EmployeeProfile() {
       const dpr = Math.max(window.devicePixelRatio || 1, 2);
       const rect = canvas.getBoundingClientRect();
       
-      // Set canvas internal resolution to 2x or more for high quality
+      // Set canvas internal resolution to match display * DPI
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
       
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // Scale context to match DPI
-        ctx.scale(dpr, dpr);
+        // Use setTransform to reset and apply DPI scaling (prevents stacking on multiple calls)
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         
+        // Fill background
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, rect.width, rect.height);
+        
+        // Setup stroke style
         ctx.strokeStyle = '#1a1a1a';
-        // Fine line width - will be crisp at high DPI
         ctx.lineWidth = 1.5;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
