@@ -1058,22 +1058,22 @@ export default function Landing() {
                           {/* Month nav */}
                           <div className="flex items-center justify-center gap-3 mb-3">
                             <ChevronLeft className="w-3 h-3 text-gray-400" />
-                            <span className="text-white text-[10px] font-medium">diciembre 2025</span>
+                            <span className="text-white text-[10px] font-medium">octubre 2025</span>
                             <ChevronRight className="w-3 h-3 text-gray-400" />
                           </div>
                           
                           {/* Total del mes */}
                           <div className="bg-[#1a2942] rounded-xl p-3 mb-3">
                             <p className="text-gray-400 text-[8px] text-center mb-1">Total del mes</p>
-                            <p className="text-white font-bold text-lg text-center">194h 37m</p>
+                            <p className="text-white font-bold text-lg text-center">160h 45m</p>
                             
                             {/* Mini month charts */}
                             <div className="flex justify-between mt-3 gap-1">
                               {[
-                                { month: 'sep', hours: '186h', active: false },
-                                { month: 'oct', hours: '179h', active: false },
-                                { month: 'nov', hours: '196h', active: false },
-                                { month: 'dic', hours: '195h', active: true },
+                                { month: 'jul', hours: '162h', active: false },
+                                { month: 'ago', hours: '158h', active: false },
+                                { month: 'sep', hours: '165h', active: false },
+                                { month: 'oct', hours: '160h', active: true },
                               ].map((m, i) => (
                                 <div key={i} className={`flex-1 rounded-lg p-1.5 ${m.active ? 'bg-[#007AFF]/30 border border-[#007AFF]' : 'bg-[#0a1628]'}`}>
                                   <div className="h-6 bg-[#007AFF] rounded-t-sm mb-1"></div>
@@ -1087,8 +1087,8 @@ export default function Landing() {
                           {/* Week section */}
                           <div className="bg-[#1a2942] rounded-xl p-2">
                             <div className="flex justify-between items-center mb-2">
-                              <p className="text-white text-[8px]">diciembre semana del 27-02</p>
-                              <span className="bg-[#007AFF]/20 text-[#007AFF] text-[7px] font-medium px-1.5 py-0.5 rounded">42h 18m</span>
+                              <p className="text-white text-[8px]">octubre semana del 27-02</p>
+                              <span className="bg-[#007AFF]/20 text-[#007AFF] text-[7px] font-medium px-1.5 py-0.5 rounded">40h 12m</span>
                             </div>
                             {/* Day entries with break indicators */}
                             <div className="space-y-1.5">
