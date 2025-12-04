@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { PenTool, RotateCcw, Check, X, Edit3, Info } from 'lucide-react';
@@ -74,21 +74,30 @@ export function DocumentSignatureModal({
   const setupCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (canvas) {
+      // High-DPI canvas for crisp signatures
+      const dpr = Math.max(window.devicePixelRatio || 1, 2);
       const rect = canvas.getBoundingClientRect();
       
-      // Simple 1:1 canvas - no DPI scaling to avoid transform issues in modal
-      canvas.width = rect.width;
-      canvas.height = rect.height;
+      // Set canvas internal resolution to match display * DPI
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
       
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        // Use setTransform to reset and apply DPI scaling (prevents stacking on multiple calls)
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        
+        // Fill background
         ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, rect.width, rect.height);
+        
+        // Setup stroke style
         ctx.strokeStyle = '#1a1a1a';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1.5;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         lastPointRef.current = null;
       }
     }
@@ -453,28 +462,27 @@ export function DocumentSignatureModal({
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent 
-        className="sm:max-w-lg max-w-[95vw] p-4 max-h-[90vh] overflow-y-auto"
-        onPointerDownOutside={(e) => e.preventDefault()}
-      >
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DrawerContent className="max-h-[85vh] px-4 pb-6">
+        <DrawerHeader className="pb-2">
+          <DrawerTitle className="flex items-center justify-center gap-2 text-base sm:text-lg">
             <PenTool className="h-5 w-5" />
             Firmar Documento
-          </DialogTitle>
-        </DialogHeader>
+          </DrawerTitle>
+        </DrawerHeader>
 
-        {signatureLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          </div>
-        ) : (
-          hasSavedSignature && !showDrawMode 
-            ? renderSavedSignatureView() 
-            : renderDrawSignatureView()
-        )}
-      </DialogContent>
-    </Dialog>
+        <div className="overflow-y-auto px-2">
+          {signatureLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+          ) : (
+            hasSavedSignature && !showDrawMode 
+              ? renderSavedSignatureView() 
+              : renderDrawSignatureView()
+          )}
+        </div>
+      </DrawerContent>
+    </Drawer>
   );
 }
