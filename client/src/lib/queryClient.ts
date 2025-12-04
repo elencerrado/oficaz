@@ -57,11 +57,13 @@ export async function apiRequest(
   });
 
   // 🔒 SECURITY: Handle token expiration with auto-refresh
+  let cachedErrorText: string | null = null;
+  
   if (res.status === 403 || res.status === 401) {
     let isAuthError = false;
     try {
-      const errorText = await res.text();
-      if (errorText.includes('Invalid or expired token') || errorText.includes('Access token required')) {
+      cachedErrorText = await res.text();
+      if (cachedErrorText.includes('Invalid or expired token') || cachedErrorText.includes('Access token required')) {
         isAuthError = true;
         console.log('🚨 Auth error detected in API request:', url);
         
@@ -156,12 +158,19 @@ export async function apiRequest(
     if (isAuthError) {
       return null;
     }
+    
+    // Non-auth error: throw with cached error text
+    if (cachedErrorText) {
+      throw new Error(`${res.status}: ${cachedErrorText}`);
+    }
   } else if (res.ok) {
     // Reset error counter on successful request
     consecutiveAuthErrors = 0;
   }
   
-  await throwIfResNotOk(res);
+  if (!res.ok && !cachedErrorText) {
+    await throwIfResNotOk(res);
+  }
   
   // Handle 204 No Content responses (like DELETE operations)
   if (res.status === 204) {
@@ -213,11 +222,13 @@ export const getQueryFn: <T>(options: {
     }
 
     // 🔒 SECURITY: Handle token expiration in queries with auto-refresh
+    let cachedErrorText: string | null = null;
+    
     if (res.status === 403 || res.status === 401) {
       let isAuthError = false;
       try {
-        const errorText = await res.text();
-        if (errorText.includes('Invalid or expired token') || errorText.includes('Access token required')) {
+        cachedErrorText = await res.text();
+        if (cachedErrorText.includes('Invalid or expired token') || cachedErrorText.includes('Access token required')) {
           isAuthError = true;
           console.log('🚨 Auth error in query:', queryKey[0]);
           
@@ -297,12 +308,19 @@ export const getQueryFn: <T>(options: {
       if (isAuthError) {
         return null;
       }
+      
+      // Non-auth error: throw with cached error text
+      if (cachedErrorText) {
+        throw new Error(`${res.status}: ${cachedErrorText}`);
+      }
     } else if (res.ok) {
       // Reset error counter on successful query
       consecutiveAuthErrors = 0;
     }
 
-    await throwIfResNotOk(res);
+    if (!res.ok && !cachedErrorText) {
+      await throwIfResNotOk(res);
+    }
     return await res.json();
   };
 
