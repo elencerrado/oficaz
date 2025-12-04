@@ -41,7 +41,8 @@ import {
   Eye,
   Phone,
   MapPin,
-  Edit
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
@@ -469,8 +470,10 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
             <div className="flex items-center justify-between mb-1">
               <span className="text-pink-500 text-[6px] font-medium">Alta</span>
               <div className="flex items-center gap-1">
-                <Edit className="w-2 h-2 text-pink-400" />
-                <Users className="w-2 h-2 text-pink-400" />
+                <Bell className="w-2 h-2 text-gray-400" />
+                <Users className="w-2 h-2 text-gray-400" />
+                <Edit className="w-2 h-2 text-gray-400" />
+                <Trash2 className="w-2 h-2 text-gray-400" />
               </div>
             </div>
             <p className="text-gray-900 text-[7px] font-semibold">Renovar contrato proveedor</p>
@@ -495,7 +498,12 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
           <div className="bg-yellow-50 rounded-xl p-2 shadow-sm">
             <div className="flex items-center justify-between mb-1">
               <span className="text-yellow-600 text-[6px] font-medium">Media</span>
-              <Edit className="w-2 h-2 text-yellow-500" />
+              <div className="flex items-center gap-1">
+                <Bell className="w-2 h-2 text-gray-400" />
+                <Users className="w-2 h-2 text-gray-400" />
+                <Edit className="w-2 h-2 text-gray-400" />
+                <Trash2 className="w-2 h-2 text-gray-400" />
+              </div>
             </div>
             <p className="text-gray-900 text-[7px] font-semibold">Enviar nóminas noviembre</p>
             <div className="flex items-center gap-1 mt-1 text-yellow-500">
@@ -515,8 +523,10 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
             <div className="flex items-center justify-between mb-1">
               <span className="text-green-600 text-[6px] font-medium">Baja</span>
               <div className="flex items-center gap-1">
-                <Edit className="w-2 h-2 text-green-500" />
-                <Users className="w-2 h-2 text-green-500" />
+                <Bell className="w-2 h-2 text-gray-400" />
+                <Users className="w-2 h-2 text-gray-400" />
+                <Edit className="w-2 h-2 text-gray-400" />
+                <Trash2 className="w-2 h-2 text-gray-400" />
               </div>
             </div>
             <p className="text-gray-900 text-[7px] font-semibold">Revisión equipos oficina</p>
@@ -539,7 +549,12 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
           <div className="bg-yellow-50 rounded-xl p-2 shadow-sm">
             <div className="flex items-center justify-between mb-1">
               <span className="text-yellow-600 text-[6px] font-medium">Media</span>
-              <Edit className="w-2 h-2 text-yellow-500" />
+              <div className="flex items-center gap-1">
+                <Bell className="w-2 h-2 text-gray-400" />
+                <Users className="w-2 h-2 text-gray-400" />
+                <Edit className="w-2 h-2 text-gray-400" />
+                <Trash2 className="w-2 h-2 text-gray-400" />
+              </div>
             </div>
             <p className="text-gray-900 text-[7px] font-semibold">Llamar gestoría fiscal</p>
             <div className="flex items-center gap-1 mt-1 text-yellow-500">
@@ -1628,8 +1643,10 @@ export default function Landing() {
                               <div className="flex items-center justify-between mb-1">
                                 <span className="text-pink-500 text-[6px] font-medium">Alta</span>
                                 <div className="flex items-center gap-1">
-                                  <Edit className="w-2 h-2 text-pink-400" />
-                                  <Users className="w-2 h-2 text-pink-400" />
+                                  <Bell className="w-2 h-2 text-gray-400" />
+                                  <Users className="w-2 h-2 text-gray-400" />
+                                  <Edit className="w-2 h-2 text-gray-400" />
+                                  <Trash2 className="w-2 h-2 text-gray-400" />
                                 </div>
                               </div>
                               <p className="text-gray-900 text-[7px] font-semibold">Renovar contrato proveedor</p>
@@ -1654,7 +1671,12 @@ export default function Landing() {
                             <div className="bg-yellow-50 rounded-xl p-2 shadow-sm">
                               <div className="flex items-center justify-between mb-1">
                                 <span className="text-yellow-600 text-[6px] font-medium">Media</span>
-                                <Edit className="w-2 h-2 text-yellow-500" />
+                                <div className="flex items-center gap-1">
+                                  <Bell className="w-2 h-2 text-gray-400" />
+                                  <Users className="w-2 h-2 text-gray-400" />
+                                  <Edit className="w-2 h-2 text-gray-400" />
+                                  <Trash2 className="w-2 h-2 text-gray-400" />
+                                </div>
                               </div>
                               <p className="text-gray-900 text-[7px] font-semibold">Enviar nóminas noviembre</p>
                               <div className="flex items-center gap-1 mt-1 text-yellow-500">
@@ -1674,8 +1696,10 @@ export default function Landing() {
                               <div className="flex items-center justify-between mb-1">
                                 <span className="text-green-600 text-[6px] font-medium">Baja</span>
                                 <div className="flex items-center gap-1">
-                                  <Edit className="w-2 h-2 text-green-500" />
-                                  <Users className="w-2 h-2 text-green-500" />
+                                  <Bell className="w-2 h-2 text-gray-400" />
+                                  <Users className="w-2 h-2 text-gray-400" />
+                                  <Edit className="w-2 h-2 text-gray-400" />
+                                  <Trash2 className="w-2 h-2 text-gray-400" />
                                 </div>
                               </div>
                               <p className="text-gray-900 text-[7px] font-semibold">Revisión equipos oficina</p>
@@ -1698,7 +1722,12 @@ export default function Landing() {
                             <div className="bg-yellow-50 rounded-xl p-2 shadow-sm">
                               <div className="flex items-center justify-between mb-1">
                                 <span className="text-yellow-600 text-[6px] font-medium">Media</span>
-                                <Edit className="w-2 h-2 text-yellow-500" />
+                                <div className="flex items-center gap-1">
+                                  <Bell className="w-2 h-2 text-gray-400" />
+                                  <Users className="w-2 h-2 text-gray-400" />
+                                  <Edit className="w-2 h-2 text-gray-400" />
+                                  <Trash2 className="w-2 h-2 text-gray-400" />
+                                </div>
                               </div>
                               <p className="text-gray-900 text-[7px] font-semibold">Llamar gestoría fiscal</p>
                               <div className="flex items-center gap-1 mt-1 text-yellow-500">
