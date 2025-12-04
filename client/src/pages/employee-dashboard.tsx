@@ -9,7 +9,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
-import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard, AlarmClock, CalendarDays, Sun, Moon, Monitor, ClipboardList, X, PenTool, RotateCcw, CheckCircle } from 'lucide-react';
+import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard, AlarmClock, CalendarDays, Sun, Moon, Monitor, ClipboardList, X, PenTool, RotateCcw, CheckCircle, Shield } from 'lucide-react';
+import { useEmployeeViewMode } from '@/hooks/use-employee-view-mode';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -53,6 +54,7 @@ export default function EmployeeDashboard() {
   const { hasAccess } = useFeatureCheck();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
+  const { isEmployeeViewMode, disableEmployeeView } = useEmployeeViewMode();
   useWorkAlarms(); // Initialize PWA push notifications
   
   // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
@@ -1356,6 +1358,18 @@ export default function EmployeeDashboard() {
                   <User className="mr-2 h-4 w-4" />
                   Mi Perfil
                 </DropdownMenuItem>
+                
+                {isEmployeeViewMode && (
+                  <DropdownMenuItem 
+                    onClick={disableEmployeeView}
+                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/20 cursor-pointer"
+                    data-testid="return-to-manager-mode"
+                  >
+                    <Shield className="mr-2 h-4 w-4" />
+                    Volver a Modo {user?.role === 'admin' ? 'Admin' : 'Manager'}
+                  </DropdownMenuItem>
+                )}
+                
                 <DropdownMenuItem onClick={logout} className="text-gray-900 dark:text-white hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/20 cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   Cerrar sesión

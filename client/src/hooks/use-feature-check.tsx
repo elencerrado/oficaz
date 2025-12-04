@@ -1,6 +1,7 @@
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
 import { checkFeatureAccess, getRequiredPlanForFeature, type FeatureKey } from '@/lib/feature-restrictions';
+import { useEmployeeViewMode } from '@/hooks/use-employee-view-mode';
 
 const featureToAddonKey: Record<string, string> = {
   time_tracking: 'time_tracking',
@@ -17,6 +18,7 @@ const featureToAddonKey: Record<string, string> = {
 
 export function useFeatureCheck() {
   const { subscription, user } = useAuth();
+  const { isEmployeeViewMode } = useEmployeeViewMode();
 
   const { data: permissionsData } = useQuery<{ managerPermissions?: { visibleFeatures?: string[] | null } }>({
     queryKey: ['/api/settings/manager-permissions'],
@@ -27,6 +29,12 @@ export function useFeatureCheck() {
   const hasAccess = (feature: FeatureKey): boolean => {
     const subscriptionAccess = checkFeatureAccess(subscription, feature);
     if (!subscriptionAccess) return false;
+
+    // In Employee View Mode, show ALL company-contracted features
+    // (bypass manager visibility restrictions)
+    if (isEmployeeViewMode) {
+      return subscriptionAccess;
+    }
 
     if (user?.role === 'manager') {
       const visibleFeatures = permissionsData?.managerPermissions?.visibleFeatures;
