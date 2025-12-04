@@ -363,14 +363,12 @@ export default function AdminDashboard() {
   const documentRequests = dashboardData?.documentRequests || [];
   const customHolidays = dashboardData?.customHolidays || [];
 
-  // Calculate total pending items
+  // Calculate total pending items (respecting feature access)
   const totalPending = 
-    incompleteSessions.length + 
-    modificationRequests.length + 
-    pendingVacations.length + 
-    unsignedPayrollsCount + 
-    unreadMessagesCount +
-    documentRequests.length;
+    (hasAccess('time_tracking') ? incompleteSessions.length + modificationRequests.length : 0) + 
+    (hasAccess('vacation') ? pendingVacations.length : 0) + 
+    (hasAccess('documents') ? unsignedPayrollsCount + documentRequests.length : 0) + 
+    (hasAccess('messages') ? unreadMessagesCount : 0);
 
   // Track previous vacation requests to detect new ones for toast notifications
   const previousVacationRequestsRef = useRef<any[]>([]);
@@ -1007,7 +1005,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {incompleteSessions.length > 0 && (
+                  {hasAccess('time_tracking') && incompleteSessions.length > 0 && (
                     <button
                       onClick={() => setLocation('/test/fichajes?filter=incomplete')}
                       className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
@@ -1028,7 +1026,7 @@ export default function AdminDashboard() {
                     </button>
                   )}
 
-                  {modificationRequests.length > 0 && (
+                  {hasAccess('time_tracking') && modificationRequests.length > 0 && (
                     <button
                       onClick={() => setLocation('/test/fichajes')}
                       className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
@@ -1049,7 +1047,7 @@ export default function AdminDashboard() {
                     </button>
                   )}
 
-                  {pendingVacations.length > 0 && (
+                  {hasAccess('vacation') && pendingVacations.length > 0 && (
                     <button
                       onClick={() => setLocation('/test/vacaciones?filter=pending')}
                       className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
@@ -1240,41 +1238,43 @@ export default function AdminDashboard() {
           )}
 
           {/* Recent Clock-ins */}
-          <Card className={`cursor-pointer hover:shadow-md ${getCardAnimationClass(5)}`} onClick={() => setLocation('/test/fichajes')}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Fichajes Recientes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {recentSessions?.length > 0 ? (
-                  recentSessions.map((event: any) => (
-                    <div key={event.id} className="flex items-center gap-3 py-2 border-b border-border last:border-0">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        event.type === 'entry' ? 'bg-green-100' : 'bg-red-100'
-                      }`}>
-                        {event.type === 'entry' ? (
-                          <ArrowRight className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <ArrowLeft className="h-4 w-4 text-red-600" />
-                        )}
+          {hasAccess('time_tracking') && (
+            <Card className={`cursor-pointer hover:shadow-md ${getCardAnimationClass(5)}`} onClick={() => setLocation('/test/fichajes')}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Fichajes Recientes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {recentSessions?.length > 0 ? (
+                    recentSessions.map((event: any) => (
+                      <div key={event.id} className="flex items-center gap-3 py-2 border-b border-border last:border-0">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          event.type === 'entry' ? 'bg-green-100' : 'bg-red-100'
+                        }`}>
+                          {event.type === 'entry' ? (
+                            <ArrowRight className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <ArrowLeft className="h-4 w-4 text-red-600" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">{event.userName}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {event.type === 'entry' ? 'Entrada' : 'Salida'} - {formatDateTime(event.timestamp)}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground">{event.userName}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {event.type === 'entry' ? 'Entrada' : 'Salida'} - {formatDateTime(event.timestamp)}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground text-center py-4">No hay fichajes recientes</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground text-center py-4">No hay fichajes recientes</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Right Column - Calendar with Events */}
