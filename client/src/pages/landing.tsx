@@ -954,10 +954,8 @@ export default function Landing() {
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
                               <h3 className="text-2xl font-bold text-gray-900">{addon.name}</h3>
-                              {addon.isLocked ? (
+                              {addon.isLocked && (
                                 <span className="text-xs bg-green-500 text-white px-2.5 py-1 rounded-full font-semibold">Incluido</span>
-                              ) : (
-                                <span className="text-sm text-gray-400 font-medium">€{addon.price}/mes</span>
                               )}
                             </div>
                             <p className="text-gray-500 text-base leading-relaxed">{addon.description}</p>
