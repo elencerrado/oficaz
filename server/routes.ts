@@ -7091,6 +7091,9 @@ Responde directamente a este email para contactar con la persona.
         canBuyRemoveFeatures: Boolean(managerPermissions?.canBuyRemoveFeatures ?? false),
         canBuyRemoveUsers: Boolean(managerPermissions?.canBuyRemoveUsers ?? false),
         canEditCompanyData: Boolean(managerPermissions?.canEditCompanyData ?? false),
+        visibleFeatures: Array.isArray(managerPermissions?.visibleFeatures) 
+          ? managerPermissions.visibleFeatures.filter((f: unknown) => typeof f === 'string')
+          : [],
       };
 
       const updatedCompany = await storage.updateCompany(user.companyId, {
@@ -7133,10 +7136,17 @@ Responde directamente a este email para contactar con la persona.
         canBuyRemoveFeatures: false,
         canBuyRemoveUsers: false,
         canEditCompanyData: false,
+        visibleFeatures: [],
+      };
+
+      // Merge company permissions with defaults to ensure visibleFeatures is always present
+      const mergedPermissions = {
+        ...defaultPermissions,
+        ...(company.managerPermissions as object || {}),
       };
 
       res.json({ 
-        managerPermissions: company.managerPermissions || defaultPermissions
+        managerPermissions: mergedPermissions
       });
     } catch (error) {
       console.error('Error getting manager permissions:', error);
