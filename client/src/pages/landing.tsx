@@ -1102,11 +1102,10 @@ export default function Landing() {
                                     <span className="text-white text-[7px] font-medium">{entry.day} {entry.num}</span>
                                     <span className="text-gray-400 text-[7px]">{entry.hours}</span>
                                   </div>
-                                  {/* Progress bar with orange break indicator */}
-                                  <div className="relative h-1.5 bg-[#1a2942] rounded-full overflow-visible">
-                                    <div className="absolute left-0 top-0 h-full bg-[#007AFF] rounded-full" style={{ width: `${entry.breakPos}%` }}></div>
-                                    <div className="absolute top-1/2 -translate-y-1/2 w-2 h-2 bg-orange-400 rounded-full border border-[#0a1628]" style={{ left: `${entry.breakPos}%`, transform: 'translate(-50%, -50%)' }}></div>
-                                    <div className="absolute top-0 h-full bg-[#007AFF] rounded-full" style={{ left: `${entry.breakPos + 5}%`, width: `${95 - entry.breakPos}%` }}></div>
+                                  {/* Progress bar with orange break indicator on top */}
+                                  <div className="relative h-1.5 bg-[#1a2942] rounded-full">
+                                    <div className="h-full bg-[#007AFF] rounded-full" style={{ width: '95%' }}></div>
+                                    <div className="absolute top-1/2 w-2 h-2 bg-orange-400 rounded-full" style={{ left: `${entry.breakPos}%`, transform: 'translate(-50%, -50%)' }}></div>
                                   </div>
                                 </div>
                               ))}
