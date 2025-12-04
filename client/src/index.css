@@ -109,6 +109,14 @@
   z-index: 51 !important;
 }
 
+/* CRITICAL: Hide AI assistant button when welcome modal is open */
+body[data-welcome-modal-open] [data-testid="button-ai-assistant-toggle"],
+body[data-welcome-modal-open] [data-testid="container-ai-assistant-chat"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 /* Mobile specific toast positioning */
 @media (max-width: 768px) {
   [data-radix-toast-viewport] {
