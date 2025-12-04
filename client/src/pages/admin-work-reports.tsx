@@ -776,7 +776,7 @@ export default function AdminWorkReportsPage() {
               </div>
               <div className="flex flex-col space-y-2">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Período</label>
-                <div className="flex items-center gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {/* Botón Hoy */}
                   <Button
                     variant="outline"
@@ -792,7 +792,7 @@ export default function AdminWorkReportsPage() {
                       setEndDate('');
                     }}
                     className={cn(
-                      "h-10 text-xs font-normal flex-1",
+                      "h-10 text-xs font-normal",
                       dateFilter === 'today' 
                         ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
                         : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -808,7 +808,7 @@ export default function AdminWorkReportsPage() {
                         variant="outline"
                         size="sm"
                         className={cn(
-                          "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center",
+                          "h-10 text-xs font-normal whitespace-nowrap text-center",
                           dateFilter === 'month' 
                             ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
                             : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -871,7 +871,7 @@ export default function AdminWorkReportsPage() {
                       }
                     }}
                     className={cn(
-                      "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center",
+                      "h-10 text-xs font-normal whitespace-nowrap text-center",
                       dateFilter === 'custom' 
                         ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
                         : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -893,7 +893,7 @@ export default function AdminWorkReportsPage() {
                       setEndDate('');
                     }}
                     className={cn(
-                      "h-10 text-xs font-normal flex-1",
+                      "h-10 text-xs font-normal",
                       dateFilter === 'all' 
                         ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
                         : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -909,15 +909,15 @@ export default function AdminWorkReportsPage() {
 
         <CardContent className="p-0">
           {filteredReports.length === 0 ? (
-            <div className="py-12 text-center">
+            <div className="py-12 text-center px-4">
               <ClipboardList className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                 {searchTerm || employeeFilter !== 'all' || dateFilter !== 'all' ? 'No se encontraron partes' : 'Sin partes de trabajo'}
               </h3>
-              <p className="text-gray-500 dark:text-gray-400">
+              <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base max-w-xs sm:max-w-none mx-auto">
                 {searchTerm || employeeFilter !== 'all' || dateFilter !== 'all'
-                  ? 'Intenta con otros filtros de búsqueda' 
-                  : 'Los empleados aún no han registrado partes de trabajo'}
+                  ? 'Intenta con otros filtros' 
+                  : 'Aún no hay partes registrados'}
               </p>
             </div>
           ) : visibleReports.length > 0 ? (
