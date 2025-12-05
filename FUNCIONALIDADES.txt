@@ -1,0 +1,160 @@
+================================================================================
+                    OFICAZ - REFERENCIA DE FUNCIONALIDADES
+================================================================================
+
+Este documento describe todas las funcionalidades de la aplicación, organizadas
+por rol de usuario y vista. Sirve como referencia para desarrollo y testing.
+
+================================================================================
+                              ROLES DE USUARIO
+================================================================================
+
+- EMPLEADO: Acceso básico. Solo ve sus propios datos.
+- MANAGER: Acceso intermedio. Permisos configurables por funcionalidad.
+- ADMIN: Acceso completo a toda la empresa.
+- SUPER_ADMIN: Acceso a todas las empresas (panel especial).
+
+================================================================================
+                           VISTA EMPLEADO (/employee)
+================================================================================
+
+Un usuario con rol "employee" SIEMPRE carga la vista empleado.
+Admins y Managers pueden acceder en "modo empleado" para ver su propia vista.
+
+COMPONENTES DE LA VISTA:
+------------------------
+
+1. CABECERA
+   - Logo de empresa (si está habilitado y configurado)
+   - Botón de alarmas (campana)
+   - Avatar con menú desplegable:
+     * Nombre y rol del usuario
+     * Selector de tema (claro/oscuro/sistema)
+     * Opción "Volver a vista Admin" (solo si está en modo empleado)
+     * Botón cerrar sesión
+
+2. CAJÓN DE FICHAJE (drawer inferior)
+   - Muestra estado actual: "Trabajando", "En pausa", "Sin fichar"
+   - Botón principal de acción (Fichar entrada/salida, Pausar/Reanudar)
+   - Tiempo transcurrido en tiempo real
+   - Historial de pausas del día
+
+3. GRID DE ICONOS (estilo iPhone)
+   - Grid de 3x2 o 3x3 según funcionalidades contratadas
+   - Paginación con puntos indicadores
+   - Swipe horizontal para cambiar página
+   - Long-press para intercambiar posición de iconos
+   - Orden personalizado guardado en localStorage
+
+ICONOS Y SUS NOTIFICACIONES:
+----------------------------
+
+FICHAJES (Clock icon)
+- Ruta: /employee/time-tracking
+- Punto ROJO: Usuario tiene sesiones incompletas (fichó entrada pero no salida)
+- Sin punto: Todo correcto
+
+VACACIONES (Palmtree icon)
+- Ruta: /employee/vacations
+- Punto ROJO: Solicitud rechazada recientemente
+- Punto VERDE: Solicitud aprobada recientemente
+- Sin punto: No hay cambios recientes
+- Lógica: Se compara con última visita guardada en localStorage
+
+DOCUMENTOS (FileText icon)
+- Ruta: /employee/documents
+- Punto ROJO: Hay solicitudes de documentos pendientes (admin pidió documento)
+- Punto VERDE: Hay documentos nuevos subidos para el usuario
+- Sin punto: No hay novedades
+- Prioridad: ROJO > VERDE (si hay ambos, muestra rojo)
+
+RECORDATORIOS (Bell icon)
+- Ruta: /employee/reminders
+- Punto ROJO: Hay recordatorios vencidos sin completar
+- Punto AZUL: Hay recordatorios activos para hoy
+- Sin punto: No hay recordatorios pendientes
+- Prioridad: ROJO > AZUL
+
+MENSAJES (MessageSquare icon)
+- Ruta: /employee/messages
+- Punto VERDE: Hay mensajes no leídos
+- Sin punto: Todos los mensajes leídos
+
+HORARIOS (CalendarDays icon)
+- Ruta: /employee/my-schedule
+- Sin notificaciones (solo consulta)
+
+PARTES DE OBRA (ClipboardList icon)
+- Ruta: /employee/work-reports
+- Sin notificaciones (solo consulta)
+
+ACTUALIZACIÓN EN TIEMPO REAL:
+-----------------------------
+Todos los puntos de notificación se actualizan instantáneamente vía WebSocket.
+Eventos manejados:
+- message_received -> Actualiza badge de mensajes
+- work_session_* -> Actualiza badge de fichajes
+- vacation_request_* -> Actualiza badge de vacaciones
+- document_request_created, document_uploaded -> Actualiza badge de documentos
+- reminder_created, reminder_all_completed -> Actualiza badge de recordatorios
+
+================================================================================
+                           VISTA ADMIN (/admin)
+================================================================================
+
+Un usuario con rol "admin" carga la vista admin por defecto.
+Puede cambiar a "modo empleado" desde el menú del avatar.
+
+SIDEBAR DE NAVEGACIÓN:
+----------------------
+- Dashboard
+- Empleados
+- Control de Fichajes
+- Vacaciones
+- Cuadrante de Horarios
+- Mensajería
+- Recordatorios
+- Partes de Obra
+- Documentos
+- Tienda (addons)
+- Configuración
+
+[TODO: Expandir esta sección con detalles de cada página admin]
+
+================================================================================
+                           VISTA MANAGER (/admin)
+================================================================================
+
+Managers acceden a la misma vista que admins pero con permisos limitados.
+
+SISTEMA DE PERMISOS:
+--------------------
+Cada funcionalidad puede estar:
+- DESHABILITADA: Manager solo ve sus propios datos (como empleado)
+- HABILITADA: Manager tiene acceso completo (como admin)
+
+Excepciones (siempre habilitadas si la empresa las tiene contratadas):
+- Mensajería: Siempre acceso completo
+- Recordatorios: Siempre acceso completo
+
+[TODO: Detallar permisos por funcionalidad]
+
+================================================================================
+                              NOTAS TÉCNICAS
+================================================================================
+
+WEBSOCKET:
+- Conexión única centralizada en AuthProvider
+- Ruta: /ws/work-sessions
+- Reconexión automática (5 intentos, 5 segundos entre cada uno)
+- Invalida queries de React Query según tipo de evento
+
+POLLING ELIMINADO:
+- Mensajes, fichajes, vacaciones, documentos: Solo WebSocket
+- Recordatorios con hora específica: Poll cada 60s (eventos basados en tiempo)
+
+OPTIMISTIC UPDATES:
+- Drag & drop en cuadrante de horarios: Actualización inmediata de UI
+- API se ejecuta en background, revert automático si falla
+
+================================================================================
