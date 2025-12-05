@@ -154,6 +154,16 @@ export default function TimeTracking() {
   const [pendingExportType, setPendingExportType] = useState<'pdf' | 'excel' | null>(null);
   const [incompleteSessionsCount, setIncompleteSessionsCount] = useState(0);
   
+  // Close incomplete session dialog state
+  const [showCloseIncompleteDialog, setShowCloseIncompleteDialog] = useState(false);
+  const [closeIncompleteData, setCloseIncompleteData] = useState<{
+    sessions: any[];
+    userName: string;
+    clockIn: Date;
+    defaultCloseTime: string;
+    selectedCloseTime: string;
+  } | null>(null);
+  
   // Infinite scroll state
   const [displayedCount, setDisplayedCount] = useState(15);
   const ITEMS_PER_LOAD = 15;
@@ -489,16 +499,10 @@ export default function TimeTracking() {
     },
   });
   
-  // Close incomplete sessions mutation
+  // Close incomplete sessions mutation - accepts custom close time
   const closeIncompleteSessionsMutation = useMutation({
-    mutationFn: async (incompleteSessions: any[]) => {
-      // Close all incomplete sessions in the day
-      const promises = incompleteSessions.map(session => {
-        // Set clock out time to end of the day of clock in
-        const clockInDate = new Date(session.clockIn);
-        const clockOutTime = new Date(clockInDate);
-        clockOutTime.setHours(23, 59, 59, 999);
-        
+    mutationFn: async ({ sessions, clockOutTime }: { sessions: any[]; clockOutTime: Date }) => {
+      const promises = sessions.map(session => {
         return apiRequest('POST', '/api/work-sessions/clock-out-incomplete', {
           sessionId: session.id,
           clockOutTime: clockOutTime.toISOString()
@@ -513,6 +517,8 @@ export default function TimeTracking() {
         description: 'Las sesiones incompletas se han cerrado exitosamente.',
       });
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
+      setShowCloseIncompleteDialog(false);
+      setCloseIncompleteData(null);
     },
     onError: (error: any) => {
       toast({
@@ -522,6 +528,35 @@ export default function TimeTracking() {
       });
     },
   });
+  
+  // Open close incomplete dialog with calculated default time
+  const openCloseIncompleteDialog = useCallback((sessions: any[], userName: string) => {
+    const firstSession = sessions[0];
+    const clockIn = new Date(firstSession.clockIn);
+    const maxHours = (companySettings as any)?.workingHoursPerDay || 8;
+    
+    // Calculate default close time = clockIn + maxHours
+    const defaultCloseDate = new Date(clockIn);
+    defaultCloseDate.setHours(clockIn.getHours() + maxHours, clockIn.getMinutes(), 0, 0);
+    
+    // If default exceeds 23:59, cap it
+    const clockInDay = new Date(clockIn);
+    clockInDay.setHours(23, 59, 0, 0);
+    if (defaultCloseDate > clockInDay) {
+      defaultCloseDate.setHours(23, 59, 0, 0);
+    }
+    
+    const defaultTimeStr = format(defaultCloseDate, 'HH:mm');
+    
+    setCloseIncompleteData({
+      sessions,
+      userName,
+      clockIn,
+      defaultCloseTime: defaultTimeStr,
+      selectedCloseTime: defaultTimeStr
+    });
+    setShowCloseIncompleteDialog(true);
+  }, [companySettings]);
 
   // Quick filter functions for stats cards
   const handleResetFilters = useCallback(() => {
@@ -3452,13 +3487,13 @@ export default function TimeTracking() {
                             <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
                               {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
                             </div>
-                            {hasIncompleteSession && dayData.userId === user?.id && (
+                            {hasIncompleteSession && (
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => {
                                   const incompleteSessions = dayData.sessions.filter((s: any) => s.status === 'incomplete');
-                                  closeIncompleteSessionsMutation.mutate(incompleteSessions);
+                                  openCloseIncompleteDialog(incompleteSessions, dayData.userName || 'Usuario Desconocido');
                                 }}
                                 disabled={closeIncompleteSessionsMutation.isPending}
                                 className="h-6 px-2 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200"
@@ -3768,13 +3803,13 @@ export default function TimeTracking() {
                           </div>
                         </div>
                         
-                        {hasIncompleteSession && dayData.userId === user?.id && (
+                        {hasIncompleteSession && (
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => {
                               const incompleteSessions = dayData.sessions.filter((s: any) => s.status === 'incomplete');
-                              closeIncompleteSessionsMutation.mutate(incompleteSessions);
+                              openCloseIncompleteDialog(incompleteSessions, dayData.userName || 'Usuario Desconocido');
                             }}
                             disabled={closeIncompleteSessionsMutation.isPending}
                             className="h-6 px-2 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200"
@@ -4703,6 +4738,99 @@ export default function TimeTracking() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Close Incomplete Session Dialog - ask for close time */}
+      <Dialog open={showCloseIncompleteDialog} onOpenChange={(open) => {
+        if (!open) {
+          setShowCloseIncompleteDialog(false);
+          setCloseIncompleteData(null);
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              Cerrar Sesión Incompleta
+            </DialogTitle>
+          </DialogHeader>
+          {closeIncompleteData && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium">Empleado:</span> {closeIncompleteData.userName}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium">Fecha:</span> {format(closeIncompleteData.clockIn, 'dd/MM/yyyy', { locale: es })}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium">Entrada:</span> {format(closeIncompleteData.clockIn, 'HH:mm', { locale: es })}
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Hora de salida:</label>
+                <Input
+                  type="time"
+                  value={closeIncompleteData.selectedCloseTime}
+                  onChange={(e) => setCloseIncompleteData({
+                    ...closeIncompleteData,
+                    selectedCloseTime: e.target.value
+                  })}
+                  className="w-full"
+                  data-testid="input-close-time"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Por defecto: {closeIncompleteData.defaultCloseTime} (entrada + {(companySettings as any)?.workingHoursPerDay || 8}h de jornada)
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setShowCloseIncompleteDialog(false);
+                    setCloseIncompleteData(null);
+                  }}
+                  data-testid="button-cancel-close"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={() => {
+                    if (!closeIncompleteData) return;
+                    
+                    // Build the close time date
+                    const [hours, minutes] = closeIncompleteData.selectedCloseTime.split(':').map(Number);
+                    const clockOutTime = new Date(closeIncompleteData.clockIn);
+                    clockOutTime.setHours(hours, minutes, 0, 0);
+                    
+                    // Validate close time is after clock in
+                    if (clockOutTime <= closeIncompleteData.clockIn) {
+                      toast({
+                        title: 'Error',
+                        description: 'La hora de salida debe ser posterior a la hora de entrada.',
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+                    
+                    closeIncompleteSessionsMutation.mutate({
+                      sessions: closeIncompleteData.sessions,
+                      clockOutTime
+                    });
+                  }}
+                  disabled={closeIncompleteSessionsMutation.isPending}
+                  data-testid="button-confirm-close"
+                >
+                  {closeIncompleteSessionsMutation.isPending ? 'Cerrando...' : 'Cerrar Sesión'}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
