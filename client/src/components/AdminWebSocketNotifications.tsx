@@ -96,6 +96,22 @@ export function AdminWebSocketNotifications() {
           }
 
           if (message.type === 'modification_request_created' && message.data) {
+            const { employeeName, requestType, requestedDate } = message.data;
+            const dateFormatted = requestedDate 
+              ? new Date(requestedDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
+              : '';
+            const requestTypeText = requestType === 'forgotten_checkin' 
+              ? 'fichaje olvidado' 
+              : 'modificación de horario';
+            
+            toast({
+              title: "🕐 Nueva solicitud de fichaje",
+              description: employeeName 
+                ? `${employeeName} solicita ${requestTypeText}${dateFormatted ? ` del ${dateFormatted}` : ''}`
+                : "Se ha recibido una nueva solicitud de fichaje",
+              duration: 8000
+            });
+            
             queryClient.invalidateQueries({ queryKey: ['/api/admin/work-sessions/modification-requests'] });
             queryClient.invalidateQueries({ queryKey: ['/api/admin/dashboard/summary'] });
           }

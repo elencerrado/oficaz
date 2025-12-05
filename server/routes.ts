@@ -4516,13 +4516,19 @@ Responde directamente a este email para contactar con la persona.
 
       const request = await storage.createModificationRequest(requestData);
       
-      // Broadcast to company admins via WebSocket
+      // Broadcast to company admins via WebSocket with full details for toast
       const wsServer = getWebSocketServer();
       if (wsServer) {
         wsServer.broadcastToCompany(req.user!.companyId, {
           type: 'modification_request_created',
           companyId: req.user!.companyId,
-          data: { requestId: request.id, employeeId: req.user!.id }
+          data: { 
+            requestId: request.id, 
+            employeeId: req.user!.id,
+            employeeName: req.user!.fullName,
+            requestType, // 'forgotten_checkin' or 'modify_time'
+            requestedDate
+          }
         });
       }
       
