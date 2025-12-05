@@ -106,7 +106,6 @@ export default function AdminWorkReportsPage() {
   const featureCheck = useFeatureCheck();
   
   const workReportsAccessMode = featureCheck?.getWorkReportsAccessMode?.() || 'none';
-  const hasAccess = featureCheck?.hasAccess;
   const isSelfAccessOnly = workReportsAccessMode === 'self';
   const { setHeader, resetHeader } = usePageHeader();
   const { toast } = useToast();

@@ -35,8 +35,9 @@ export function useFeatureCheck() {
   const { isEmployeeViewMode } = useEmployeeViewMode();
   const [location] = useLocation();
   
-  // Detect if current route is an employee-facing page
-  const isEmployeePage = EMPLOYEE_ROUTES.some(route => location.endsWith(route));
+  // Detect if current route is an employee-facing page (guard against undefined location)
+  const currentPath = location ?? '';
+  const isEmployeePage = currentPath ? EMPLOYEE_ROUTES.some(route => currentPath.endsWith(route)) : false;
 
   const { data: permissionsData, isLoading: isLoadingPermissions } = useQuery<{ managerPermissions?: { visibleFeatures?: string[] | null } }>({
     queryKey: ['/api/settings/manager-permissions'],
