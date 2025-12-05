@@ -3977,8 +3977,8 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  // Clock out incomplete session with custom time (admin/manager can close any employee's session)
-  app.post('/api/work-sessions/clock-out-incomplete', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  // Clock out incomplete session with custom time (users can only close their OWN sessions)
+  app.post('/api/work-sessions/clock-out-incomplete', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const { sessionId, clockOutTime } = req.body;
       
@@ -3986,12 +3986,12 @@ Responde directamente a este email para contactar con la persona.
         return res.status(400).json({ message: 'Session ID and clock out time are required' });
       }
 
-      // Get all company sessions to find the specific one (admin/manager can close any employee's session)
-      const result = await storage.getWorkSessionsByCompany(req.user!.companyId!);
-      const session = result.sessions.find((s: any) => s.id === parseInt(sessionId));
+      // Get only the current user's sessions - users can ONLY close their own sessions
+      const sessions = await storage.getWorkSessionsByUser(req.user!.id);
+      const session = sessions.find(s => s.id === parseInt(sessionId));
       
       if (!session) {
-        return res.status(404).json({ message: 'Session not found or not in your company' });
+        return res.status(404).json({ message: 'Session not found or not yours' });
       }
 
       // Parse the provided clockOutTime (should be ISO string from frontend)

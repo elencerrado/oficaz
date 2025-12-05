@@ -3487,7 +3487,7 @@ export default function TimeTracking() {
                             <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
                               {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
                             </div>
-                            {hasIncompleteSession && (
+                            {hasIncompleteSession && dayData.userId === user?.id && (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -3803,7 +3803,7 @@ export default function TimeTracking() {
                           </div>
                         </div>
                         
-                        {hasIncompleteSession && (
+                        {hasIncompleteSession && dayData.userId === user?.id && (
                           <Button
                             size="sm"
                             variant="outline"
