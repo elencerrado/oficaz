@@ -439,10 +439,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
                 break;
               
-              // Messages - refresh all message-related queries
+              // Messages - refresh all message-related queries including unread count
               case 'message_received':
                 console.log('📬 New message received via WebSocket');
                 invalidateByPath('/api/messages');
+                // Also invalidate unread count for badge updates
+                queryClient.invalidateQueries({ 
+                  predicate: (query) => {
+                    const key = query.queryKey[0];
+                    return typeof key === 'string' && key.startsWith('/api/messages/unread');
+                  }
+                });
                 break;
               
               // Work sessions - refresh all time tracking and dashboard queries
