@@ -50,9 +50,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       managerPermissionsData?.managerPermissions?.canBuyRemoveUsers
     ));
 
+  // Features that are ALWAYS visible for managers (not configurable)
+  const alwaysVisibleForManagers = ['messages', 'reminders'];
+  
   const isFeatureVisibleForManager = (featureKey: string | undefined): boolean => {
     if (!featureKey || user?.role !== 'manager') return true;
     const addonKey = featureToAddonKey[featureKey] || featureKey;
+    
+    // Messages and reminders are ALWAYS visible for managers
+    if (alwaysVisibleForManagers.includes(addonKey)) return true;
+    
     const visibleFeatures = managerPermissionsData?.managerPermissions?.visibleFeatures;
     if (visibleFeatures === undefined || visibleFeatures === null) return true;
     if (visibleFeatures.length === 0) return false;
