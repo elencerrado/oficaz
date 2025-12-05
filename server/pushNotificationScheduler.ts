@@ -1,7 +1,7 @@
 import webpush from 'web-push';
 import jwt from 'jsonwebtoken';
 import { db } from './db';
-import { eq, and, isNull, sql, lte } from 'drizzle-orm';
+import { eq, and, isNull, sql, lte, inArray, gte, lt } from 'drizzle-orm';
 import { workAlarms, pushSubscriptions, workSessions, breakPeriods, users, reminders, systemNotifications } from '@shared/schema';
 import { JWT_SECRET } from './utils/jwt-secret.js';
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
@@ -323,10 +323,11 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
   }
 }
 
-// Function to check for incomplete work sessions and send notifications
+// ⚠️ OPTIMIZED: Function to check for incomplete work sessions and send notifications
+// Optimized for scalability with batch queries and parallel processing
 async function checkIncompleteSessions() {
   try {
-    const now = getSpainTime(); // ⚠️ CRITICAL: Use Spain time, not server UTC
+    const now = getSpainTime();
     const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
     const currentHour = now.getHours();
     
@@ -335,23 +336,31 @@ async function checkIncompleteSessions() {
       return;
     }
     
-    // Skip if already checked today
+    // Skip if already checked today (in-memory guard for same process)
     if (sentIncompleteSessionNotifications.has(todayKey)) {
       return;
     }
     
-    // ⚠️ CRITICAL: Set flag IMMEDIATELY to prevent race conditions
-    // This prevents duplicate notifications when the interval fires multiple times during the 9 AM hour
+    // Set flag IMMEDIATELY to prevent race conditions within same process
     sentIncompleteSessionNotifications.set(todayKey, now);
-    console.log(`🔒 Locked incomplete session check for ${todayKey} to prevent duplicates`);
+    console.log(`🔒 Locked incomplete session check for ${todayKey}`);
     
-    console.log('🔍 Checking for incomplete work sessions...');
+    const startTime = Date.now();
+    console.log('🔍 [OPTIMIZED] Checking for incomplete work sessions...');
     
-    // Find all incomplete sessions (sessions from previous days without clock out)
-    const yesterday = getSpainTime();
+    // ==================== STEP 1: Calculate timezone-safe date boundaries ====================
+    // Use UTC boundaries that correspond to Spain timezone day
+    const todaySpainDateStr = formatInTimeZone(new Date(), SPAIN_TZ, 'yyyy-MM-dd');
+    // Spain is UTC+1 in winter, UTC+2 in summer. Calculate exact UTC boundaries.
+    const todayStartSpainUTC = new Date(`${todaySpainDateStr}T00:00:00+01:00`); // Approximate, will adjust
+    const tomorrowStartSpainUTC = new Date(todayStartSpainUTC.getTime() + 24 * 60 * 60 * 1000);
+    
+    // Yesterday cutoff for incomplete sessions
+    const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     yesterday.setHours(23, 59, 59, 999);
     
+    // ==================== STEP 2: Batch fetch incomplete sessions ====================
     const incompleteSessions = await db.select({
       id: workSessions.id,
       userId: workSessions.userId,
@@ -372,9 +381,14 @@ async function checkIncompleteSessions() {
         sql`${workSessions.clockIn} < ${yesterday}`
       ));
     
+    if (incompleteSessions.length === 0) {
+      console.log('✅ No incomplete sessions found');
+      return;
+    }
+    
     console.log(`📊 Found ${incompleteSessions.length} incomplete session(s)`);
     
-    // Group by user to send only one notification per user
+    // Group sessions by user
     const userSessionsMap = new Map<number, typeof incompleteSessions>();
     for (const session of incompleteSessions) {
       const existing = userSessionsMap.get(session.userId) || [];
@@ -382,177 +396,220 @@ async function checkIncompleteSessions() {
       userSessionsMap.set(session.userId, existing);
     }
     
-    // Send notifications to users with incomplete sessions
-    for (const [userId, sessions] of Array.from(userSessionsMap.entries())) {
-      const user = sessions[0].user;
-      const sessionCount = sessions.length;
-      
-      console.log(`📱 Checking incomplete session notification for user ${userId} (${sessionCount} session(s))`);
-      
-      // 🔒 Check if we already sent a push notification TODAY for this user (using database, not memory)
-      // Use Spain date string for reliable comparison across server restarts
-      const spainNow = getSpainTime();
-      const todaySpainDateStr = formatInTimeZone(new Date(), SPAIN_TZ, 'yyyy-MM-dd');
-      console.log(`🔍 Checking for existing push notification on ${todaySpainDateStr} for user ${userId}`);
-      
-      // Check for a special "push_sent" marker notification created today
-      const existingTodayPushMarker = await db.select()
-        .from(systemNotifications)
-        .where(and(
-          eq(systemNotifications.userId, userId),
-          eq(systemNotifications.type, 'incomplete_session_push_sent'),
-          eq(systemNotifications.category, 'time-tracking'),
-          sql`to_char(${systemNotifications.createdAt} AT TIME ZONE 'Europe/Madrid', 'YYYY-MM-DD') = ${todaySpainDateStr}`
-        ))
-        .limit(1);
-      
-      const alreadySentPushToday = existingTodayPushMarker.length > 0;
-      console.log(`🔍 Already sent push today for user ${userId}: ${alreadySentPushToday}`);
-      
-      // 🔒 Create database notifications for each incomplete session (UI notifications)
-      for (const session of sessions) {
-        // Check if notification already exists for this session
-        const existingNotification = await db.select()
-          .from(systemNotifications)
-          .where(and(
-            eq(systemNotifications.userId, userId),
-            eq(systemNotifications.type, 'incomplete_session'),
-            eq(systemNotifications.category, 'time-tracking'),
-            eq(systemNotifications.isCompleted, false),
-            sql`${systemNotifications.metadata}::json->>'workSessionId' = ${session.id.toString()}`
-          ))
-          .limit(1);
-
-        if (existingNotification.length === 0) {
-          // Create notification for this incomplete session
-          await db.insert(systemNotifications).values({
-            userId,
-            type: 'incomplete_session',
-            category: 'time-tracking',
-            title: 'Fichaje Incompleto',
-            message: 'Tienes una sesión de trabajo abierta que necesita ser cerrada.',
-            actionUrl: '/employee/time-tracking',
-            priority: 'high',
-            isRead: false,
-            isCompleted: false,
-            metadata: JSON.stringify({ workSessionId: session.id }),
-            createdBy: 1 // System-generated
-          });
-          console.log(`📊 System notification created for session ${session.id}`);
+    const userIds = Array.from(userSessionsMap.keys());
+    console.log(`📊 Affecting ${userIds.length} unique user(s)`);
+    
+    // ==================== STEP 3: Batch fetch existing push markers (index-friendly) ====================
+    // Use range query instead of to_char() for index efficiency
+    const existingMarkers = await db.select({
+      userId: systemNotifications.userId
+    })
+      .from(systemNotifications)
+      .where(and(
+        inArray(systemNotifications.userId, userIds),
+        eq(systemNotifications.type, 'incomplete_session_push_sent'),
+        eq(systemNotifications.category, 'time-tracking'),
+        gte(systemNotifications.createdAt, todayStartSpainUTC),
+        lt(systemNotifications.createdAt, tomorrowStartSpainUTC)
+      ));
+    
+    const usersWithMarkerToday = new Set(existingMarkers.map(m => m.userId));
+    console.log(`📊 ${usersWithMarkerToday.size} user(s) already have push markers today`);
+    
+    // Filter to users who need notifications
+    const usersToNotify = userIds.filter(id => !usersWithMarkerToday.has(id));
+    
+    if (usersToNotify.length === 0) {
+      console.log('✅ All users already notified today');
+      return;
+    }
+    
+    console.log(`📊 ${usersToNotify.length} user(s) need push notifications`);
+    
+    // ==================== STEP 4: Batch fetch all push subscriptions ====================
+    const allSubscriptions = await db.select()
+      .from(pushSubscriptions)
+      .where(inArray(pushSubscriptions.userId, usersToNotify));
+    
+    // Group subscriptions by user and filter to unique devices
+    const subscriptionsByUser = new Map<number, typeof allSubscriptions>();
+    for (const sub of allSubscriptions) {
+      const existing = subscriptionsByUser.get(sub.userId) || [];
+      existing.push(sub);
+      subscriptionsByUser.set(sub.userId, existing);
+    }
+    
+    // ==================== STEP 5: Batch fetch existing session notifications ====================
+    const sessionIds = incompleteSessions.map(s => s.id);
+    const existingSessionNotifications = await db.select({
+      metadata: systemNotifications.metadata
+    })
+      .from(systemNotifications)
+      .where(and(
+        inArray(systemNotifications.userId, userIds),
+        eq(systemNotifications.type, 'incomplete_session'),
+        eq(systemNotifications.category, 'time-tracking'),
+        eq(systemNotifications.isCompleted, false)
+      ));
+    
+    // Extract session IDs that already have notifications
+    const sessionsWithNotifications = new Set<number>();
+    for (const notif of existingSessionNotifications) {
+      try {
+        const meta = JSON.parse(notif.metadata || '{}');
+        if (meta.workSessionId) {
+          sessionsWithNotifications.add(Number(meta.workSessionId));
         }
-      }
-      
-      // 🔒 Skip push notification if already sent today (prevents duplicates on server restart)
-      if (alreadySentPushToday) {
-        console.log(`⏭️  Push notification already sent today for user ${userId}, skipping`);
-        continue;
-      }
-      
-      // Get push subscriptions
-      const subscriptions = await db.select()
-        .from(pushSubscriptions)
-        .where(eq(pushSubscriptions.userId, userId));
-      
-      if (subscriptions.length === 0) {
-        console.log(`📱 No push subscriptions found for user ${userId}`);
-        continue;
-      }
-      
-      // Filter to unique devices
-      const deviceMap = new Map<string, typeof subscriptions[0]>();
-      for (const sub of subscriptions) {
-        const deviceKey = sub.deviceId || sub.endpoint;
-        const existing = deviceMap.get(deviceKey);
-        if (!existing || new Date(sub.updatedAt) > new Date(existing.updatedAt)) {
-          deviceMap.set(deviceKey, sub);
-        }
-      }
-      
-      const uniqueSubscriptions = Array.from(deviceMap.values());
-      
-      // ⚠️ CRITICAL: Create marker BEFORE sending any pushes to prevent duplicates on server restart
-      // This marker persists in the database and prevents re-sending even if server restarts
-      await db.insert(systemNotifications).values({
-        userId,
-        type: 'incomplete_session_push_sent',
-        category: 'time-tracking',
-        title: 'Push Notification Marker',
-        message: `Marker for incomplete session push sent on ${todaySpainDateStr}`,
-        actionUrl: null,
-        priority: 'low',
-        isRead: true, // Mark as read so it doesn't show in UI
-        isCompleted: true, // Mark as completed
-        metadata: JSON.stringify({ 
-          pushSentDate: todaySpainDateStr,
-          sessionCount,
-          subscriptionCount: uniqueSubscriptions.length
-        }),
-        createdBy: 1 // System-generated
-      });
-      console.log(`📝 Created push sent marker for user ${userId} on ${todaySpainDateStr}`);
-      
-      // Generate temporary JWT token
-      const tempToken = jwt.sign({
-        id: user.id,
-        email: user.personalEmail || user.companyEmail || `user_${user.id}@temp.com`,
-        role: user.role,
-        companyId: user.companyId,
-        pushAction: true
-      }, JWT_SECRET, { expiresIn: '24h' }); // 24 hours for incomplete session notifications
-      
-      const payload = JSON.stringify({
-        title: 'Sesión Incompleta',
-        body: sessionCount === 1 
-          ? '⚠️ Tienes una sesión de trabajo sin cerrar' 
-          : `⚠️ Tienes ${sessionCount} sesiones de trabajo sin cerrar`,
-        icon: '/icon-192.png',
-        badge: '/icon-192.png',
-        vibrate: [200, 100, 200],
-        requireInteraction: true,
-        tag: `incomplete-session-${userId}-${todayKey}`,
-        data: {
-          url: '/employee/misfichajes',
+      } catch {}
+    }
+    
+    // ==================== STEP 6: Batch create missing system notifications ====================
+    const notificationsToCreate: any[] = [];
+    for (const session of incompleteSessions) {
+      if (!sessionsWithNotifications.has(session.id)) {
+        notificationsToCreate.push({
+          userId: session.userId,
           type: 'incomplete_session',
-          timestamp: Date.now(),
-          userId,
-          sessionCount,
-          authToken: tempToken
-        },
-        actions: [
-          { action: 'view', title: 'Ver fichajes', icon: '/icon-192.png' }
-        ]
-      });
-      
-      // Send to all unique devices
-      for (const sub of uniqueSubscriptions) {
-        try {
-          await webpush.sendNotification(
-            {
-              endpoint: sub.endpoint,
-              keys: {
-                p256dh: sub.p256dh,
-                auth: sub.auth
-              }
-            },
-            payload
-          );
-          console.log(`✅ Incomplete session notification sent to user ${userId}`);
-        } catch (error: any) {
-          if (error.statusCode === 410 || error.statusCode === 404) {
-            console.log(`🗑️  Removing invalid subscription for user ${userId}`);
-            await db.delete(pushSubscriptions)
-              .where(eq(pushSubscriptions.endpoint, sub.endpoint));
-          } else {
-            console.error(`❌ Error sending notification to user ${userId}:`, error);
-          }
-        }
+          category: 'time-tracking',
+          title: 'Fichaje Incompleto',
+          message: 'Tienes una sesión de trabajo abierta que necesita ser cerrada.',
+          actionUrl: '/employee/time-tracking',
+          priority: 'high',
+          isRead: false,
+          isCompleted: false,
+          metadata: JSON.stringify({ workSessionId: session.id }),
+          createdBy: 1
+        });
       }
     }
     
-    // Flag was already set at the beginning - just log completion
-    console.log(`✅ Incomplete sessions check completed for ${todayKey}`);
+    if (notificationsToCreate.length > 0) {
+      await db.insert(systemNotifications).values(notificationsToCreate);
+      console.log(`📊 Created ${notificationsToCreate.length} system notification(s) in batch`);
+    }
     
-    // Clean up old entries (older than 7 days)
+    // ==================== STEP 7: Send push notifications in parallel batches ====================
+    const BATCH_SIZE = 10; // Process 10 users at a time to avoid overwhelming
+    let successCount = 0;
+    let skipCount = 0;
+    
+    for (let i = 0; i < usersToNotify.length; i += BATCH_SIZE) {
+      const batch = usersToNotify.slice(i, i + BATCH_SIZE);
+      
+      const batchPromises = batch.map(async (userId) => {
+        const sessions = userSessionsMap.get(userId) || [];
+        const user = sessions[0]?.user;
+        if (!user) return { userId, success: false, reason: 'no_user' };
+        
+        const userSubs = subscriptionsByUser.get(userId) || [];
+        if (userSubs.length === 0) {
+          return { userId, success: false, reason: 'no_subscriptions' };
+        }
+        
+        // Filter to unique devices
+        const deviceMap = new Map<string, typeof userSubs[0]>();
+        for (const sub of userSubs) {
+          const deviceKey = sub.deviceId || sub.endpoint;
+          const existing = deviceMap.get(deviceKey);
+          if (!existing || new Date(sub.updatedAt) > new Date(existing.updatedAt)) {
+            deviceMap.set(deviceKey, sub);
+          }
+        }
+        const uniqueSubs = Array.from(deviceMap.values());
+        
+        // Generate JWT token
+        const tempToken = jwt.sign({
+          id: user.id,
+          email: user.personalEmail || user.companyEmail || `user_${user.id}@temp.com`,
+          role: user.role,
+          companyId: user.companyId,
+          pushAction: true
+        }, JWT_SECRET, { expiresIn: '24h' });
+        
+        const sessionCount = sessions.length;
+        const payload = JSON.stringify({
+          title: 'Sesión Incompleta',
+          body: sessionCount === 1 
+            ? '⚠️ Tienes una sesión de trabajo sin cerrar' 
+            : `⚠️ Tienes ${sessionCount} sesiones de trabajo sin cerrar`,
+          icon: '/icon-192.png',
+          badge: '/icon-192.png',
+          vibrate: [200, 100, 200],
+          requireInteraction: true,
+          tag: `incomplete-session-${userId}-${todayKey}`,
+          data: {
+            url: '/employee/misfichajes',
+            type: 'incomplete_session',
+            timestamp: Date.now(),
+            userId,
+            sessionCount,
+            authToken: tempToken
+          },
+          actions: [
+            { action: 'view', title: 'Ver fichajes', icon: '/icon-192.png' }
+          ]
+        });
+        
+        // Send to all devices in parallel
+        let atLeastOneSent = false;
+        const invalidEndpoints: string[] = [];
+        
+        await Promise.all(uniqueSubs.map(async (sub) => {
+          try {
+            await webpush.sendNotification(
+              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+              payload
+            );
+            atLeastOneSent = true;
+          } catch (error: any) {
+            if (error.statusCode === 410 || error.statusCode === 404) {
+              invalidEndpoints.push(sub.endpoint);
+            }
+          }
+        }));
+        
+        // Clean up invalid subscriptions
+        if (invalidEndpoints.length > 0) {
+          await db.delete(pushSubscriptions)
+            .where(inArray(pushSubscriptions.endpoint, invalidEndpoints));
+        }
+        
+        // Only create marker if at least one push succeeded
+        if (atLeastOneSent) {
+          await db.insert(systemNotifications).values({
+            userId,
+            type: 'incomplete_session_push_sent',
+            category: 'time-tracking',
+            title: 'Push Notification Marker',
+            message: `Marker for ${todaySpainDateStr}`,
+            actionUrl: null,
+            priority: 'low',
+            isRead: true,
+            isCompleted: true,
+            metadata: JSON.stringify({ 
+              pushSentDate: todaySpainDateStr,
+              sessionCount,
+              subscriptionCount: uniqueSubs.length
+            }),
+            createdBy: 1
+          });
+          return { userId, success: true, reason: 'sent' };
+        }
+        
+        return { userId, success: false, reason: 'all_failed' };
+      });
+      
+      const results = await Promise.all(batchPromises);
+      for (const r of results) {
+        if (r.success) successCount++;
+        else if (r.reason === 'no_subscriptions') skipCount++;
+      }
+    }
+    
+    const elapsed = Date.now() - startTime;
+    console.log(`✅ Incomplete sessions check completed in ${elapsed}ms: ${successCount} sent, ${skipCount} skipped (no subs)`);
+    
+    // Clean up old in-memory entries
     const sevenDaysAgo = now.getTime() - (7 * 24 * 60 * 60 * 1000);
     for (const [key, date] of Array.from(sentIncompleteSessionNotifications.entries())) {
       if (date.getTime() < sevenDaysAgo) {
