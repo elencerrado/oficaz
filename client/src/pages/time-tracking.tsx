@@ -36,7 +36,8 @@ import {
   Bell,
   FileText,
   History,
-  ArrowDown
+  ArrowDown,
+  LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, startOfWeek, addDays, subDays, differenceInMinutes, startOfDay, endOfDay, endOfWeek, startOfMonth, endOfMonth, isToday } from 'date-fns';
@@ -3487,22 +3488,6 @@ export default function TimeTracking() {
                             <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
                               {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
                             </div>
-                            {hasIncompleteSession && dayData.userId === user?.id && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  const incompleteSessions = dayData.sessions.filter((s: any) => s.status === 'incomplete');
-                                  openCloseIncompleteDialog(incompleteSessions, dayData.userName || 'Usuario Desconocido');
-                                }}
-                                disabled={closeIncompleteSessionsMutation.isPending}
-                                className="h-6 px-2 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200"
-                                title="Cerrar día incompleto"
-                                data-testid={`button-close-incomplete-${dayData.date}`}
-                              >
-                                {closeIncompleteSessionsMutation.isPending ? 'Cerrando...' : 'Cerrar'}
-                              </Button>
-                            )}
                           </div>
                         </td>
                         <td className="py-2 px-4 text-center">
@@ -3512,8 +3497,29 @@ export default function TimeTracking() {
                             const activeSession = dayData.sessions.find((s: any) => !s.clockOut);
                             const session = incompleteSession || activeSession || dayData.sessions[0];
                             const hasAuditLogs = session.hasAuditLogs === true;
+                            const canCloseIncomplete = hasIncompleteSession && dayData.userId === user?.id;
                             
-                            // Show history button if there are audit logs (removed force complete button)
+                            // If user has incomplete session, show close button instead of history
+                            if (canCloseIncomplete) {
+                              return (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const incompleteSessions = dayData.sessions.filter((s: any) => s.status === 'incomplete');
+                                    openCloseIncompleteDialog(incompleteSessions, dayData.userName || 'Usuario Desconocido');
+                                  }}
+                                  disabled={closeIncompleteSessionsMutation.isPending}
+                                  className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200"
+                                  title="Cerrar sesión incompleta"
+                                  data-testid={`button-close-incomplete-${dayData.date}`}
+                                >
+                                  <LogOut className="w-4 h-4" />
+                                </Button>
+                              );
+                            }
+                            
+                            // Show history button if there are audit logs
                             return (
                               <Button
                                 size="sm"
@@ -3803,27 +3809,31 @@ export default function TimeTracking() {
                           </div>
                         </div>
                         
-                        {hasIncompleteSession && dayData.userId === user?.id && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              const incompleteSessions = dayData.sessions.filter((s: any) => s.status === 'incomplete');
-                              openCloseIncompleteDialog(incompleteSessions, dayData.userName || 'Usuario Desconocido');
-                            }}
-                            disabled={closeIncompleteSessionsMutation.isPending}
-                            className="h-6 px-2 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200"
-                            title="Cerrar día incompleto"
-                            data-testid={`button-close-incomplete-mobile-${dayData.date}`}
-                          >
-                            {closeIncompleteSessionsMutation.isPending ? 'Cerrando...' : 'Cerrar'}
-                          </Button>
-                        )}
-                        
                         {(() => {
                           const hasAuditLogs = session.hasAuditLogs === true;
+                          const canCloseIncomplete = hasIncompleteSession && dayData.userId === user?.id;
                           
-                          // Show history button if there are audit logs (removed force complete button)
+                          // If user has incomplete session, show close button instead of history
+                          if (canCloseIncomplete) {
+                            return (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  const incompleteSessions = dayData.sessions.filter((s: any) => s.status === 'incomplete');
+                                  openCloseIncompleteDialog(incompleteSessions, dayData.userName || 'Usuario Desconocido');
+                                }}
+                                disabled={closeIncompleteSessionsMutation.isPending}
+                                className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200"
+                                title="Cerrar sesión incompleta"
+                                data-testid={`button-close-incomplete-mobile-${dayData.date}`}
+                              >
+                                <LogOut className="w-4 h-4" />
+                              </Button>
+                            );
+                          }
+                          
+                          // Show history button if there are audit logs
                           return (
                             <Button
                               size="sm"
