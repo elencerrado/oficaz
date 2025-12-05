@@ -5009,7 +5009,10 @@ Responde directamente a este email para contactar con la persona.
         }).catch(err => console.error('Failed to load push notification module:', err));
         
         // 📡 WebSocket: Broadcast for real-time badge updates on employee dashboard
-        broadcastToCompany(req.user!.companyId, { type: 'vacation_request_updated', requestId: request.id, status });
+        const wsServer = getWebSocketServer();
+        if (wsServer) {
+          wsServer.broadcastToCompany(req.user!.companyId, { type: 'vacation_request_updated', companyId: req.user!.companyId });
+        }
       }
       
       res.json(request);
@@ -6302,7 +6305,10 @@ Responde directamente a este email para contactar con la persona.
       }
 
       // Broadcast to company for real-time badge updates on employee dashboard
-      broadcastToCompany(user.companyId, { type: 'document_uploaded', documentId: document.id });
+      const wsServer = getWebSocketServer();
+      if (wsServer) {
+        wsServer.broadcastToCompany(user.companyId, { type: 'document_uploaded', companyId: user.companyId });
+      }
 
       res.status(201).json(document);
     } catch (error) {
@@ -6371,7 +6377,10 @@ Responde directamente a este email para contactar con la persona.
       console.log(`CIRCULAR UPLOAD COMPLETE: Created ${documents.length} document records for file "${originalName}"`);
 
       // Broadcast to company for real-time badge updates on employee dashboard
-      broadcastToCompany(user.companyId, { type: 'document_uploaded', documentCount: documents.length });
+      const wsServer = getWebSocketServer();
+      if (wsServer) {
+        wsServer.broadcastToCompany(user.companyId, { type: 'document_uploaded', companyId: user.companyId });
+      }
 
       res.status(201).json({ 
         message: `Circular enviada a ${documents.length} empleados`,
@@ -6445,7 +6454,10 @@ Responde directamente a este email para contactar con la persona.
       }
 
       // Broadcast to company for real-time badge updates on employee dashboard
-      broadcastToCompany(req.user!.companyId, { type: 'document_request_created', notificationCount: notifications.length });
+      const wsServer = getWebSocketServer();
+      if (wsServer) {
+        wsServer.broadcastToCompany(req.user!.companyId, { type: 'document_request_created', companyId: req.user!.companyId });
+      }
 
       res.status(201).json({ 
         message: 'Document requests sent successfully',
@@ -8762,7 +8774,10 @@ Responde directamente a este email para contactar con la persona.
       }
       
       // Broadcast to company for real-time badge updates
-      broadcastToCompany(companyId, { type: 'reminder_created', reminderId: reminder.id });
+      const wsServer = getWebSocketServer();
+      if (wsServer) {
+        wsServer.broadcastToCompany(companyId, { type: 'reminder_created', companyId });
+      }
       
       res.json(reminder);
     } catch (error) {
