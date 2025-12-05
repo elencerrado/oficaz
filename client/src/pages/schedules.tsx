@@ -93,16 +93,7 @@ export default function Schedules() {
   
   const schedulesAccessMode = getSchedulesAccessMode();
   const isViewOnly = schedulesAccessMode === 'view';
-  
-  // No subscription access = no access at all
-  if (schedulesAccessMode === 'none') {
-    return (
-      <FeatureRestrictedPage 
-        featureName="Cuadrante de Horarios" 
-        description="Gestiona los horarios y turnos de todos tus empleados. Activa este addon desde la Tienda para comenzar a usarlo." 
-      />
-    );
-  }
+  const hasNoAccess = schedulesAccessMode === 'none';
 
   // Mutation para actualizar/expandir turno a múltiples días
   const updateShiftMutation = useMutation({
@@ -1645,6 +1636,16 @@ export default function Schedules() {
       </>
     );
   }, [workShifts, viewMode, getShiftsForEmployee, getGlobalTimelineBounds, assignShiftLanes, isViewOnly]);
+
+  // No subscription access = no access at all (moved after all hooks)
+  if (hasNoAccess) {
+    return (
+      <FeatureRestrictedPage 
+        featureName="Cuadrante de Horarios" 
+        description="Gestiona los horarios y turnos de todos tus empleados. Activa este addon desde la Tienda para comenzar a usarlo." 
+      />
+    );
+  }
 
   return (
     <DndContext
