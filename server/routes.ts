@@ -9098,8 +9098,25 @@ Responde directamente a este email para contactar con la persona.
     try {
       const reminderId = parseInt(req.params.id);
       const userId = req.user!.id;
+      const companyId = req.user!.companyId;
       
       const updatedReminder = await storage.completeReminderIndividually(reminderId, userId);
+      
+      // 📡 WebSocket: Notify company when user completes their part
+      const wsServer = getWebSocketServer();
+      if (wsServer) {
+        wsServer.broadcastToCompany(companyId, {
+          type: 'reminder_user_completed',
+          companyId: companyId,
+          data: { 
+            reminderId: reminderId,
+            userId: userId,
+            completed: true,
+            completedByUserIds: updatedReminder.completedByUserIds
+          }
+        });
+      }
+      
       res.json(updatedReminder);
     } catch (error) {
       console.error("Error completing reminder individually:", error);
