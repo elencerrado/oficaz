@@ -2890,9 +2890,9 @@ export default function TimeTracking() {
       {/* Tab Navigation */}
       <TabNavigation
         tabs={[
-          { id: 'sessions', label: 'Lista de Horas', icon: Users },
-          { id: 'summary', label: 'Resumen', icon: BarChart3 },
-          { id: 'requests', label: 'Solicitudes', icon: Bell, badge: pendingRequestsCount }
+          { id: 'sessions', label: 'Fichajes', icon: Users },
+          { id: 'requests', label: 'Solicitudes', icon: Bell, badge: pendingRequestsCount },
+          { id: 'summary', label: 'Resumen', icon: BarChart3 }
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
