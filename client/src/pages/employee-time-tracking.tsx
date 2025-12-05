@@ -103,7 +103,9 @@ export default function EmployeeTimeTracking() {
     date: '',
     clockIn: '',
     clockOut: '',
-    reason: ''
+    reason: '',
+    originalClockIn: '',
+    originalClockOut: ''
   });
   
   // Touch handling for mobile swipe
@@ -251,14 +253,18 @@ export default function EmployeeTimeTracking() {
     
     if (sessionOnDate) {
       // Modify existing session
+      const clockInTime = format(new Date(sessionOnDate.clockIn), 'HH:mm');
+      const clockOutTime = sessionOnDate.clockOut ? format(new Date(sessionOnDate.clockOut), 'HH:mm') : '';
       setExistingSession(sessionOnDate);
       setRequestData({
         requestType: 'modify_time',
         workSessionId: sessionOnDate.id,
         date: selectedDate,
-        clockIn: format(new Date(sessionOnDate.clockIn), 'HH:mm'),
-        clockOut: sessionOnDate.clockOut ? format(new Date(sessionOnDate.clockOut), 'HH:mm') : '',
-        reason: ''
+        clockIn: clockInTime,
+        clockOut: clockOutTime,
+        reason: '',
+        originalClockIn: clockInTime,
+        originalClockOut: clockOutTime
       });
     } else {
       // Add forgotten check-in
@@ -269,7 +275,9 @@ export default function EmployeeTimeTracking() {
         date: selectedDate,
         clockIn: '',
         clockOut: '',
-        reason: ''
+        reason: '',
+        originalClockIn: '',
+        originalClockOut: ''
       });
     }
     
@@ -318,7 +326,9 @@ export default function EmployeeTimeTracking() {
         date: '',
         clockIn: '',
         clockOut: '',
-        reason: ''
+        reason: '',
+        originalClockIn: '',
+        originalClockOut: ''
       });
     },
     onError: (error: any) => {
@@ -1289,7 +1299,7 @@ export default function EmployeeTimeTracking() {
                     📝 Modificar fichaje del {format(new Date(requestData.date), 'dd/MM/yyyy', { locale: es })}
                   </div>
                   <div className="text-xs text-blue-600 dark:text-blue-400">
-                    Horas actuales: {requestData.clockIn} {requestData.clockOut && `- ${requestData.clockOut}`}
+                    Horas actuales: {requestData.originalClockIn} {requestData.originalClockOut && `- ${requestData.originalClockOut}`}
                   </div>
                 </div>
               ) : (
