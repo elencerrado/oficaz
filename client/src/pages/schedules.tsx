@@ -606,19 +606,21 @@ export default function Schedules() {
   } | null>(null);
   
   // Configurar sensors para drag & drop con soporte móvil mejorado
+  // IMPORTANTE: Touch sensor con delay más largo para evitar conflicto con scroll
   const sensors = useSensors(
-    // Mouse/trackpad support
+    // Mouse/trackpad support - activación rápida con distancia mínima
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // 8px threshold to start dragging
+        distance: 10, // 10px threshold para evitar drags accidentales
       },
     }),
     
-    // Touch support for mobile devices
+    // Touch support for mobile/tablet devices
+    // Delay largo para distinguir entre scroll y drag (long press)
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 250, // 250ms long press to start dragging
-        tolerance: 8, // Allow 8px of movement during delay
+        delay: 400, // 400ms long press para iniciar drag (evita conflicto con scroll)
+        tolerance: 5, // Solo 5px de tolerancia durante el delay (más estricto)
       },
     }),
     
@@ -629,11 +631,15 @@ export default function Schedules() {
   );
 
   // Handlers para eventos de drag & drop
+  // IMPORTANTE: Deshabilitar scroll del body durante el drag para evitar conflictos en móvil
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     const shift = workShifts.find(s => s.id === Number(active.id));
     if (shift) {
       setActiveShift(shift);
+      // Deshabilitar scroll del body durante el drag (crítico para móvil/tablet)
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
     }
   };
 
@@ -642,11 +648,24 @@ export default function Schedules() {
     setDragOverCellId(over ? String(over.id) : null);
   };
 
+  // Handler para cancelación del drag (por ejemplo, al soltar fuera del área)
+  const handleDragCancel = () => {
+    setActiveShift(null);
+    setDragOverCellId(null);
+    // Restaurar scroll del body
+    document.body.style.overflow = '';
+    document.body.style.touchAction = '';
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
     setActiveShift(null);
     setDragOverCellId(null);
+    
+    // Restaurar scroll del body después del drag
+    document.body.style.overflow = '';
+    document.body.style.touchAction = '';
 
     if (!over || !activeShift) return;
 
@@ -1324,7 +1343,8 @@ export default function Schedules() {
     } : {};
 
     // Enhanced drag styling with better visual feedback
-    const getDragStyles = () => {
+    // IMPORTANTE: touch-action: none previene scroll durante drag en móvil/tablet
+    const getDragStyles = (): React.CSSProperties => {
       if (isDragging) {
         return {
           opacity: 0.8,
@@ -1334,12 +1354,14 @@ export default function Schedules() {
           transition: 'none', // Remove transitions during drag for smooth movement
           filter: 'brightness(1.1) saturate(1.2)', // Make colors more vibrant when dragging
           border: '2px solid rgba(255, 255, 255, 0.9)',
+          touchAction: 'none', // Previene scroll mientras arrastra
         };
       }
       return {
         ...dragStyle,
         transition: 'all 0.2s ease',
-        cursor: 'grab'
+        cursor: 'grab',
+        touchAction: 'none', // Previene que el navegador maneje gestos táctiles en el elemento
       };
     };
 
@@ -1667,6 +1689,7 @@ export default function Schedules() {
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
       {employees.length === 0 && !loadingEmployees ? (
         <div className="px-6 pt-4 pb-8 min-h-screen bg-background overflow-y-auto text-center py-8 text-muted-foreground" style={{ overflowX: 'clip' }}>
