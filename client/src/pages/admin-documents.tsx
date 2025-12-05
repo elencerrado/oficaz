@@ -1847,18 +1847,18 @@ export default function AdminDocuments() {
           }
           setShowUploadPreview(open);
         }}>
-          <DialogContent className="max-w-xl max-h-[90vh] overflow-hidden p-0">
-            {/* Clean Header */}
-            <div className="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-800">
-              <DialogTitle className="text-lg font-semibold text-foreground">
+          <DialogContent className="max-w-xl max-h-[85vh] overflow-hidden p-0 flex flex-col">
+            {/* Compact Header */}
+            <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+              <DialogTitle className="text-base font-semibold text-foreground flex items-center justify-between">
                 Subir Documento
+                <span className="text-xs font-normal text-muted-foreground">
+                  {uploadAnalysis.length} archivo{uploadAnalysis.length !== 1 ? 's' : ''}
+                </span>
               </DialogTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                {uploadAnalysis.length} archivo{uploadAnalysis.length !== 1 ? 's' : ''} seleccionado{uploadAnalysis.length !== 1 ? 's' : ''}
-              </p>
             </div>
             
-            <div className="px-6 py-4 space-y-5 overflow-y-auto max-h-[calc(90vh-180px)]">
+            <div className="px-5 py-4 space-y-4 overflow-y-auto flex-1 min-h-0">
               {/* Mode Toggle - Apple-style segmented control */}
               <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-1 flex">
                 <button
@@ -1898,11 +1898,11 @@ export default function AdminDocuments() {
               {/* File Cards - Compact */}
               <div className="space-y-2">
                 {uploadAnalysis.map((analysis, index) => (
-                  <div key={index} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
+                  <div key={index} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
                     {/* File info row */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-                        <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    <div className="flex items-center gap-2.5 mb-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                        <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{analysis.file.name}</p>
@@ -1911,7 +1911,7 @@ export default function AdminDocuments() {
                     </div>
                     
                     {/* Controls grid */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2">
                       {uploadMode === 'individual' && (
                         <div>
                           <label className="block text-xs font-medium text-muted-foreground mb-1.5">Empleado</label>
@@ -2034,19 +2034,16 @@ export default function AdminDocuments() {
               {/* Signature Toggle - Apple-style switch row */}
               <div 
                 onClick={() => setUploadRequiresSignature(!uploadRequiresSignature)}
-                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl cursor-pointer"
+                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl cursor-pointer"
                 data-testid="upload-requires-signature"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                    <FileSignature className="h-4.5 w-4.5 text-purple-600 dark:text-purple-400" />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                    <FileSignature className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Requiere firma</p>
-                    <p className="text-xs text-muted-foreground">Los empleados deberán firmar</p>
-                  </div>
+                  <span className="text-sm font-medium text-foreground">Requiere firma</span>
                 </div>
-                <div className={`w-12 h-7 rounded-full transition-colors flex items-center px-1 ${
+                <div className={`w-11 h-6 rounded-full transition-colors flex items-center px-0.5 ${
                   uploadRequiresSignature ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
                 }`}>
                   <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
@@ -2057,32 +2054,32 @@ export default function AdminDocuments() {
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="text-sm text-muted-foreground text-center sm:text-left">
+            <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 flex-shrink-0">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-xs text-muted-foreground">
                   {uploadMode === 'circular' 
                     ? `${uploadSelectedEmployees.length} destinatarios`
-                    : `${uploadAnalysis.filter(a => a.employee).length} de ${uploadAnalysis.length} asignados`
+                    : `${uploadAnalysis.filter(a => a.employee).length}/${uploadAnalysis.length}`
                   }
-                  {uploadRequiresSignature && ' · Firma requerida'}
-                </div>
-                <div className="flex gap-3 justify-center sm:justify-end">
+                  {uploadRequiresSignature && ' · Firma'}
+                </span>
+                <div className="flex gap-2">
                   <Button 
                     variant="ghost" 
+                    size="sm"
                     onClick={() => setShowUploadPreview(false)}
                     disabled={isUploading}
-                    className="text-muted-foreground flex-1 sm:flex-none"
                   >
                     Cancelar
                   </Button>
                   <Button 
+                    size="sm"
                     onClick={handleBatchUpload}
                     disabled={
                       isUploading || 
                       (uploadMode === 'individual' && uploadAnalysis.some(a => !a.employee)) ||
                       (uploadMode === 'circular' && uploadSelectedEmployees.length === 0)
                     }
-                    className="px-6 flex-1 sm:flex-none"
                   >
                     {isUploading ? 'Subiendo...' : 'Subir'}
                   </Button>
