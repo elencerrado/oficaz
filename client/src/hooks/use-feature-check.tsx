@@ -28,13 +28,13 @@ export function useFeatureCheck() {
 
   const isManagerPermissionsLoading = user?.role === 'manager' && isLoadingPermissions;
 
-  const hasAccess = (feature: FeatureKey): boolean => {
+  const hasAccess = (feature: FeatureKey, options?: { bypassManagerRestrictions?: boolean }): boolean => {
     const subscriptionAccess = checkFeatureAccess(subscription, feature);
     if (!subscriptionAccess) return false;
 
-    // In Employee View Mode, show ALL company-contracted features
-    // (bypass manager visibility restrictions)
-    if (isEmployeeViewMode) {
+    // In Employee View Mode OR when explicitly bypassing manager restrictions,
+    // show ALL company-contracted features
+    if (isEmployeeViewMode || options?.bypassManagerRestrictions) {
       return subscriptionAccess;
     }
 

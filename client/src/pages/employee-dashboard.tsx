@@ -1063,7 +1063,12 @@ export default function EmployeeDashboard() {
     ] : []),
   ];
 
-  const menuItems = allMenuItems.filter(item => hasAccess(item.feature));
+  // For managers in employee dashboard, bypass their admin visibility restrictions
+  // They should see all company-contracted features as an employee would
+  const isManagerInEmployeeDashboard = user?.role === 'manager' || user?.role === 'admin';
+  const menuItems = allMenuItems.filter(item => 
+    hasAccess(item.feature, { bypassManagerRestrictions: isManagerInEmployeeDashboard })
+  );
 
   // Aplicar orden personalizado a los items del menú
   const orderedMenuItems = useMemo(() => {
