@@ -1043,31 +1043,29 @@ export default function Landing() {
               La app de gestión empresarial en un clic
             </p>
 
-            {/* Difficulty Slider */}
-            {registrationSettings?.publicRegistrationEnabled && (
-              <div className="flex flex-col items-center gap-4 pt-4">
-                <p 
-                  className="text-white/70 text-sm font-medium transition-all duration-1000 ease-out"
-                  style={{
-                    opacity: isLoaded ? 1 : 0,
-                    transform: isLoaded ? 'translateY(0)' : 'translateY(30px)',
-                    transitionDelay: '450ms',
-                  }}
-                >
-                  Elige nivel de dificultad
-                </p>
-                <div
-                  className="transition-all duration-1000 ease-out"
-                  style={{
-                    opacity: isLoaded ? 1 : 0,
-                    transform: isLoaded ? 'translateY(0)' : 'translateY(30px)',
-                    transitionDelay: '600ms',
-                  }}
-                >
-                  <DifficultySlider />
-                </div>
+            {/* Difficulty Slider - Container always present to prevent layout shift */}
+            <div className="flex flex-col items-center gap-4 pt-4 min-h-[100px]">
+              <p 
+                className="text-white/70 text-sm font-medium transition-all duration-1000 ease-out"
+                style={{
+                  opacity: isLoaded && registrationSettings?.publicRegistrationEnabled ? 1 : 0,
+                  transform: isLoaded && registrationSettings?.publicRegistrationEnabled ? 'translateY(0)' : 'translateY(30px)',
+                  transitionDelay: '450ms',
+                }}
+              >
+                Elige nivel de dificultad
+              </p>
+              <div
+                className="transition-all duration-1000 ease-out"
+                style={{
+                  opacity: isLoaded && registrationSettings?.publicRegistrationEnabled ? 1 : 0,
+                  transform: isLoaded && registrationSettings?.publicRegistrationEnabled ? 'translateY(0)' : 'translateY(30px)',
+                  transitionDelay: '600ms',
+                }}
+              >
+                <DifficultySlider />
               </div>
-            )}
+            </div>
           </div>
         </div>
       </section>
