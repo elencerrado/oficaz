@@ -266,10 +266,7 @@ export default function Documents() {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
       setSignatureModalOpen(false);
       setDocumentToSign(null);
-      toast({
-        title: 'Documento firmado',
-        description: 'Tu firma se ha registrado correctamente.',
-      });
+      // No toast for employee - silent success as requested
     },
     onError: (error: any) => {
       toast({
