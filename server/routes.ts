@@ -3977,8 +3977,8 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  // Clock out incomplete session with custom time
-  app.post('/api/work-sessions/clock-out-incomplete', authenticateToken, async (req: AuthRequest, res) => {
+  // Clock out incomplete session with custom time (admin/manager can close any employee's session)
+  app.post('/api/work-sessions/clock-out-incomplete', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
       const { sessionId, clockOutTime } = req.body;
       
@@ -3986,12 +3986,12 @@ Responde directamente a este email para contactar con la persona.
         return res.status(400).json({ message: 'Session ID and clock out time are required' });
       }
 
-      // Get the specific session
-      const sessions = await storage.getWorkSessionsByUser(req.user!.id);
-      const session = sessions.find(s => s.id === parseInt(sessionId));
+      // Get all company sessions to find the specific one (admin/manager can close any employee's session)
+      const result = await storage.getWorkSessionsByCompany(req.user!.companyId!);
+      const session = result.sessions.find((s: any) => s.id === parseInt(sessionId));
       
       if (!session) {
-        return res.status(404).json({ message: 'Session not found' });
+        return res.status(404).json({ message: 'Session not found or not in your company' });
       }
 
       // Parse the provided clockOutTime (should be ISO string from frontend)
@@ -4037,7 +4037,7 @@ Responde directamente a este email para contactar con la persona.
         wsServer.broadcastToCompany(req.user!.companyId, {
           type: 'work_session_updated',
           companyId: req.user!.companyId,
-          data: { sessionId: session.id, userId: req.user!.id }
+          data: { sessionId: session.id, userId: session.userId }
         });
       }
 
