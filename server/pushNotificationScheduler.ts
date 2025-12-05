@@ -390,20 +390,24 @@ async function checkIncompleteSessions() {
       console.log(`📱 Checking incomplete session notification for user ${userId} (${sessionCount} session(s))`);
       
       // 🔒 Check if we already sent a push notification TODAY for this user (using database, not memory)
-      const todayStart = getSpainTime();
-      todayStart.setHours(0, 0, 0, 0);
+      // Use Spain date string for reliable comparison across server restarts
+      const spainNow = getSpainTime();
+      const todaySpainDateStr = formatInTimeZone(new Date(), SPAIN_TZ, 'yyyy-MM-dd');
+      console.log(`🔍 Checking for existing push notification on ${todaySpainDateStr} for user ${userId}`);
       
-      const existingTodayPushNotification = await db.select()
+      // Check for a special "push_sent" marker notification created today
+      const existingTodayPushMarker = await db.select()
         .from(systemNotifications)
         .where(and(
           eq(systemNotifications.userId, userId),
-          eq(systemNotifications.type, 'incomplete_session'),
+          eq(systemNotifications.type, 'incomplete_session_push_sent'),
           eq(systemNotifications.category, 'time-tracking'),
-          sql`${systemNotifications.createdAt} >= ${todayStart}`
+          sql`to_char(${systemNotifications.createdAt} AT TIME ZONE 'Europe/Madrid', 'YYYY-MM-DD') = ${todaySpainDateStr}`
         ))
         .limit(1);
       
-      const alreadySentPushToday = existingTodayPushNotification.length > 0;
+      const alreadySentPushToday = existingTodayPushMarker.length > 0;
+      console.log(`🔍 Already sent push today for user ${userId}: ${alreadySentPushToday}`);
       
       // 🔒 Create database notifications for each incomplete session (UI notifications)
       for (const session of sessions) {
@@ -465,6 +469,27 @@ async function checkIncompleteSessions() {
       }
       
       const uniqueSubscriptions = Array.from(deviceMap.values());
+      
+      // ⚠️ CRITICAL: Create marker BEFORE sending any pushes to prevent duplicates on server restart
+      // This marker persists in the database and prevents re-sending even if server restarts
+      await db.insert(systemNotifications).values({
+        userId,
+        type: 'incomplete_session_push_sent',
+        category: 'time-tracking',
+        title: 'Push Notification Marker',
+        message: `Marker for incomplete session push sent on ${todaySpainDateStr}`,
+        actionUrl: null,
+        priority: 'low',
+        isRead: true, // Mark as read so it doesn't show in UI
+        isCompleted: true, // Mark as completed
+        metadata: JSON.stringify({ 
+          pushSentDate: todaySpainDateStr,
+          sessionCount,
+          subscriptionCount: uniqueSubscriptions.length
+        }),
+        createdBy: 1 // System-generated
+      });
+      console.log(`📝 Created push sent marker for user ${userId} on ${todaySpainDateStr}`);
       
       // Generate temporary JWT token
       const tempToken = jwt.sign({
