@@ -155,29 +155,24 @@ export default function EmployeeTimeTracking() {
   const monthEnd = endOfMonth(currentMonth);
   const currentYear = new Date().getFullYear();
   
-  // Queries with optimized intervals for better performance
+  // Queries optimized with WebSocket real-time updates
+  // WebSocket handles work_session_* events - no polling needed!
   const { data: sessions = [], isLoading } = useQuery<WorkSession[]>({
     queryKey: ['/api/work-sessions'],
-    staleTime: 60000,
+    staleTime: 60000, // Cache for 1 min - WebSocket invalidates on changes
     gcTime: 120000,
-    refetchInterval: 15000, // Reduced from 3s to 15s
-    refetchIntervalInBackground: false,
   });
 
   const { data: breakPeriods = [] } = useQuery<BreakPeriod[]>({
     queryKey: ['/api/break-periods'],
-    staleTime: 60000,
+    staleTime: 60000, // Cache for 1 min - WebSocket invalidates on changes
     gcTime: 120000,
-    refetchInterval: 15000, // Reduced from 3s to 15s
-    refetchIntervalInBackground: false,
   });
 
   const { data: activeSession } = useQuery({
     queryKey: ['/api/work-sessions/active'],
-    staleTime: 30000,
+    staleTime: 30000, // Cache for 30s - WebSocket invalidates on changes
     gcTime: 60000,
-    refetchInterval: 10000, // Reduced from 3s to 10s for active session
-    refetchIntervalInBackground: false,
   });
 
   // Query for company work hours settings

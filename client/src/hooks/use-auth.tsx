@@ -387,8 +387,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => setTokenRefreshCallback(() => {});
   }, []);
 
-  // 🔄 ROLE CHANGE WEBSOCKET: Listen for real-time role changes via WebSocket
-  // This is much more efficient than polling - only reacts when admin actually changes the role
+  // 🔄 UNIFIED WEBSOCKET: Listen for all real-time events
+  // Handles: role changes, messages, work sessions, vacation requests, reminders, documents
+  // This eliminates polling for real-time data - much more efficient!
   useEffect(() => {
     if (!token || !user) return;
     
@@ -406,7 +407,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ws = new WebSocket(wsUrl);
         
         ws.onopen = () => {
-          console.log('🔌 WebSocket connected for role change detection');
+          console.log('🔌 WebSocket connected for real-time updates');
           reconnectAttempts = 0;
         };
         
@@ -414,18 +415,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             const data = JSON.parse(event.data);
             
-            // Handle role change notification
-            if (data.type === 'role_changed' && data.newToken) {
-              console.log(`🔄 ROLE CHANGE via WebSocket: ${data.previousRole} → ${data.newRole}`);
-              const currentAuthData = getAuthData();
-              const updatedAuthData = {
-                ...currentAuthData,
-                token: data.newToken,
-              };
-              localStorage.setItem('authData', JSON.stringify(updatedAuthData));
-              queryClient.clear();
-              // Reload page to show new dashboard
-              window.location.reload();
+            // Helper to invalidate all queries starting with a path
+            const invalidateByPath = (basePath: string) => {
+              queryClient.invalidateQueries({
+                predicate: (query) => {
+                  const key = query.queryKey[0];
+                  return typeof key === 'string' && key.startsWith(basePath);
+                }
+              });
+            };
+            
+            // Handle different event types
+            switch (data.type) {
+              // Role change - reload page with new token
+              case 'role_changed':
+                if (data.newToken) {
+                  console.log(`🔄 ROLE CHANGE: ${data.previousRole} → ${data.newRole}`);
+                  const currentAuthData = getAuthData();
+                  const updatedAuthData = { ...currentAuthData, token: data.newToken };
+                  localStorage.setItem('authData', JSON.stringify(updatedAuthData));
+                  queryClient.clear();
+                  window.location.reload();
+                }
+                break;
+              
+              // Messages - refresh all message-related queries
+              case 'message_received':
+                console.log('📬 New message received via WebSocket');
+                invalidateByPath('/api/messages');
+                break;
+              
+              // Work sessions - refresh all time tracking and dashboard queries
+              case 'work_session_created':
+              case 'work_session_updated':
+              case 'work_session_deleted':
+                console.log(`⏱️ Work session ${data.type.replace('work_session_', '')} via WebSocket`);
+                invalidateByPath('/api/work-sessions');
+                invalidateByPath('/api/break-periods');
+                invalidateByPath('/api/admin/dashboard');
+                invalidateByPath('/api/admin/work-sessions');
+                break;
+              
+              // Vacation requests - refresh all vacation-related queries
+              case 'vacation_request_created':
+              case 'vacation_request_updated':
+                console.log(`🏖️ Vacation request ${data.type.replace('vacation_request_', '')} via WebSocket`);
+                invalidateByPath('/api/vacation-requests');
+                invalidateByPath('/api/admin/dashboard');
+                break;
+              
+              // Time modification requests
+              case 'modification_request_created':
+              case 'modification_request_updated':
+                console.log(`✏️ Modification request ${data.type.replace('modification_request_', '')} via WebSocket`);
+                invalidateByPath('/api/admin/work-sessions/modification-requests');
+                break;
+              
+              // Documents - refresh all document-related queries
+              case 'document_request_created':
+              case 'document_uploaded':
+                console.log(`📄 Document event via WebSocket`);
+                invalidateByPath('/api/documents');
+                invalidateByPath('/api/document-notifications');
+                break;
+              
+              // Reminders - refresh all reminder queries
+              case 'reminder_all_completed':
+                console.log(`🔔 Reminders completed via WebSocket`);
+                invalidateByPath('/api/reminders');
+                break;
+              
+              // Work reports
+              case 'work_report_created':
+                console.log(`📝 Work report created via WebSocket`);
+                invalidateByPath('/api/admin/work-reports');
+                invalidateByPath('/api/work-reports');
+                break;
             }
           } catch (e) {
             // Ignore parse errors for non-JSON messages

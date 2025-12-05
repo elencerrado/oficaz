@@ -218,24 +218,22 @@ export default function AdminDashboard() {
   });
 
   // ⚠️ PROTECTED - DO NOT MODIFY - Queries identical to employee system
+  // WebSocket handles real-time work_session_* events - only use staleTime for cache
   const { data: activeSession } = useQuery({
     queryKey: ['/api/work-sessions/active'],
-    refetchInterval: 20000, // Reduced from 5s to 20s
-    refetchIntervalInBackground: false,
-    staleTime: 15000,
+    staleTime: 30000, // Cache for 30s - WebSocket invalidates on changes
   });
 
   // Query for active break period
   const { data: activeBreak } = useQuery({
     queryKey: ['/api/break-periods/active'],
-    refetchInterval: 10000, // Poll every 10 seconds (optimized from 3s)
-    refetchIntervalInBackground: false,
-    staleTime: 8000,
+    staleTime: 30000, // Cache for 30s - WebSocket handles updates
     enabled: !!activeSession, // Only run when there's an active session
   });
 
   // ✨ OPTIMIZED: Single consolidated query for all dashboard data
   // This replaces 10+ individual queries with one API call for faster loading
+  // WebSocket handles real-time updates via work_session_*, vacation_request_*, message_received events
   const { data: dashboardData, isLoading: isDashboardLoading } = useQuery<{
     employees: any[];
     recentSessions: any[];
@@ -252,8 +250,7 @@ export default function AdminDashboard() {
     customHolidays: any[];
   }>({
     queryKey: ['/api/admin/dashboard/summary'],
-    staleTime: 30000, // Cache for 30 seconds
-    refetchInterval: 60000, // Refetch every minute
+    staleTime: 60000, // Cache for 1 min - WebSocket invalidates on real-time events
     enabled: user?.role === 'admin' || user?.role === 'manager',
   });
 

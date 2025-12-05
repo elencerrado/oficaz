@@ -38,7 +38,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const { data: unreadCount } = useQuery({
     queryKey: ['/api/messages/unread-count'],
-    refetchInterval: 30000,
+    staleTime: 60000, // Cache for 1 minute - WebSocket handles real-time updates
   });
 
   const { data: managerPermissionsData } = useQuery<{ managerPermissions: { visibleFeatures?: string[]; canBuyRemoveFeatures?: boolean; canBuyRemoveUsers?: boolean } }>({

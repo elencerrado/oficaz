@@ -23,11 +23,10 @@ export function TrialManagerSimple() {
   const queryClient = useQueryClient();
   const { subscription } = useAuth();
 
-  // Fetch trial status
+  // Fetch trial status - trial rarely changes, use long cache
   const { data: trialStatus, isLoading: loadingTrial } = useQuery<TrialStatus>({
     queryKey: ['/api/account/trial-status'],
-    staleTime: 30 * 1000,
-    refetchInterval: 60 * 1000,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes - trial status rarely changes
   });
 
   // Fetch payment methods

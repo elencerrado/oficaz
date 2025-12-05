@@ -332,11 +332,11 @@ export default function TimeTracking() {
   const monthlyStatsMap = useMemo(() => new Map(monthlyStats.map(s => [s.employeeId, s])), [monthlyStats]);
   const weeklyStatsMap = useMemo(() => new Map(weeklyStats.map(s => [s.employeeId, s])), [weeklyStats]);
   
-  // Modification requests count
+  // Modification requests count - WebSocket handles real-time updates
   const { data: pendingRequestsData } = useQuery<{ count: number }>({
     queryKey: ['/api/admin/work-sessions/modification-requests/count'],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
-    refetchInterval: 30 * 1000, // Refresh every 30 seconds
+    staleTime: 60000, // Cache for 1 min - WebSocket invalidates on changes
   });
   const pendingRequestsCount = pendingRequestsData?.count || 0;
   

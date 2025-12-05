@@ -203,16 +203,15 @@ export default function AdminDocuments() {
     staleTime: 5 * 60 * 1000, // ⚡ Cache for 5 minutes
   });
 
-  // Fetch document notifications (sent requests) - optimized polling
+  // Fetch document notifications (sent requests)
+  // WebSocket handles document_* events - no polling needed!
   const { data: sentRequests = [], isLoading: loadingRequests } = useQuery<any[]>({
     queryKey: ['/api/document-notifications'],
-    refetchInterval: 60000, // Reduced from 3s to 60s
-    staleTime: 45000,
+    staleTime: 60000, // Cache for 1 min - WebSocket invalidates on changes
     gcTime: 120000,
-    refetchIntervalInBackground: false,
   });
 
-  // Fetch all documents with optimized refresh
+  // Fetch all documents - WebSocket handles real-time updates
   const { data: allDocuments = [], isLoading: loadingDocuments } = useQuery<any[]>({
     queryKey: ['/api/documents/all'],
     queryFn: async () => {
@@ -220,12 +219,9 @@ export default function AdminDocuments() {
       // Handle both old array format and new { documents, accessMode } format
       return Array.isArray(response) ? response : (response?.documents || []);
     },
-    refetchInterval: 60000, // Reduced from 3s to 60s for better performance
-    staleTime: 45000, // Cache for 45 seconds
-    refetchOnWindowFocus: false, // Disabled aggressive refresh
+    staleTime: 60000, // Cache for 1 min - WebSocket invalidates on changes
+    refetchOnWindowFocus: false,
     refetchOnMount: true,
-    refetchOnReconnect: false,
-    refetchIntervalInBackground: false,
   });
 
   // Auto-activate filter from URL parameters (dashboard navigation)

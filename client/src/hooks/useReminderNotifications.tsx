@@ -31,11 +31,11 @@ export function useReminderNotifications() {
     },
   });
   
-  // Check for due notifications every 30 seconds
+  // Check for due notifications - needs periodic check for time-based reminders
+  // This is one of the few places where polling is still necessary (time-based triggers)
   const { data: remindersDue = [] } = useQuery<ReminderNotification[]>({
     queryKey: ['/api/reminders/check-notifications'],
-    refetchInterval: 30000, // Check every 30 seconds
-    refetchIntervalInBackground: true, // Keep checking in background
+    refetchInterval: 60000, // Check every 60 seconds (was 30s)
     refetchOnWindowFocus: true, // Check when window gets focus
   });
 

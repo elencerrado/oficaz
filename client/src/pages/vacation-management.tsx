@@ -467,12 +467,10 @@ export default function VacationManagement() {
   // ⚠️ END PROTECTED TIMELINE FUNCTIONS ⚠️
 
   // Fetch vacation requests
-  // ⚡ OPTIMIZED: WebSocket provides real-time updates, polling is just a fallback
+  // ⚡ WebSocket provides real-time updates - no polling needed!
   const { data: vacationRequests = [], isLoading: loadingRequests } = useQuery({
     queryKey: ['/api/vacation-requests/company'],
-    staleTime: 60000, // ⚡ Cache for 60 seconds (WebSocket handles instant updates)
-    refetchInterval: 120000, // ⚡ Fallback polling every 2 minutes (WebSocket is primary)
-    refetchIntervalInBackground: false, // Stop background polling to save resources
+    staleTime: 60000, // Cache for 1 min - WebSocket invalidates on changes
     select: (data: any) => {
       // Handle both old array format and new { requests, accessMode } format
       const requests = Array.isArray(data) ? data : (data?.requests || []);

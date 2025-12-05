@@ -69,7 +69,7 @@ export function NotificationSystem() {
     }
   });
 
-  // Fetch unread count
+  // Fetch unread count - WebSocket handles real-time updates for most notifications
   const { data: unreadData } = useQuery({
     queryKey: ['/api/notifications/unread-count'],
     queryFn: async () => {
@@ -82,7 +82,7 @@ export function NotificationSystem() {
       if (!response.ok) throw new Error('Failed to fetch unread count');
       return response.json();
     },
-    refetchInterval: 30000 // Refresh every 30 seconds
+    staleTime: 60000, // Cache for 1 min - WebSocket invalidates on real events
   });
 
   // Mark as read mutation

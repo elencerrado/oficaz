@@ -34,10 +34,10 @@ export function TrialManager() {
   const queryClient = useQueryClient();
   const { subscription } = useAuth();
 
-  // Fetch trial status
+  // Fetch trial status - trial doesn't change often, long cache is fine
   const { data: trialStatus, isLoading: loadingTrial } = useQuery<TrialStatus>({
     queryKey: ['/api/account/trial-status'],
-    refetchInterval: 30000,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes - trial status rarely changes
   });
 
   // Obtener métodos de pago para el modal
