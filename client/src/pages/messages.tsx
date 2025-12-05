@@ -77,7 +77,6 @@ export default function Messages() {
       <FeatureRestrictedPage
         featureName="Mensajes"
         description="Comunicación interna entre empleados y administradores"
-        requiredPlan={getRequiredPlan('messages')}
         icon={MessageSquare}
       />
     );

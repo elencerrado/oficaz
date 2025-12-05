@@ -176,7 +176,6 @@ export default function Reminders() {
       <FeatureRestrictedPage
         featureName="Recordatorios"
         description="No tienes acceso a la funcionalidad de recordatorios. Activa este addon desde la Tienda para comenzar a usarlo."
-        requiredPlan="Addon"
       />
     );
   }
