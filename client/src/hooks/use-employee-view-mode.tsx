@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -12,12 +12,31 @@ interface EmployeeViewModeContextType {
 const EmployeeViewModeContext = createContext<EmployeeViewModeContextType | undefined>(undefined);
 
 export function EmployeeViewModeProvider({ children }: { children: ReactNode }) {
-  const [isEmployeeViewMode, setIsEmployeeViewMode] = useState(false);
-  const [previousAdminPath, setPreviousAdminPath] = useState<string | null>(null);
+  // Initialize from localStorage
+  const [isEmployeeViewMode, setIsEmployeeViewMode] = useState(() => {
+    const stored = localStorage.getItem('employeeViewMode');
+    return stored === 'true';
+  });
+  const [previousAdminPath, setPreviousAdminPath] = useState<string | null>(() => {
+    return localStorage.getItem('previousAdminPath');
+  });
   const [location, setLocation] = useLocation();
   const { company } = useAuth();
   
   const companyAlias = company?.companyAlias || 'test';
+
+  // Persist state to localStorage
+  useEffect(() => {
+    localStorage.setItem('employeeViewMode', isEmployeeViewMode.toString());
+  }, [isEmployeeViewMode]);
+
+  useEffect(() => {
+    if (previousAdminPath) {
+      localStorage.setItem('previousAdminPath', previousAdminPath);
+    } else {
+      localStorage.removeItem('previousAdminPath');
+    }
+  }, [previousAdminPath]);
 
   const enableEmployeeView = useCallback(() => {
     // Save current path before switching to employee mode
