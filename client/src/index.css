@@ -128,6 +128,43 @@ body[data-welcome-modal-open] [data-testid="container-ai-assistant-chat"] {
   }
 }
 
+/* iOS Safari fix for time inputs - prevent oversized inputs */
+input[type="time"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  font-size: 16px !important; /* Prevents iOS zoom on focus */
+  padding: 0.5rem 0.75rem !important;
+  height: auto !important;
+  min-height: 2.5rem !important;
+  box-sizing: border-box !important;
+}
+
+/* Ensure time input spinner/picker is properly sized on iOS */
+input[type="time"]::-webkit-date-and-time-value {
+  text-align: left;
+  min-width: 0;
+}
+
+input[type="time"]::-webkit-calendar-picker-indicator {
+  opacity: 0.6;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
+
+/* Mobile specific time input constraints */
+@media (max-width: 768px) {
+  input[type="time"] {
+    font-size: 16px !important; /* Critical: prevents iOS zoom */
+    padding: 0.375rem 0.5rem !important;
+    min-height: 2.25rem !important;
+  }
+}
+
 /* Personalizar colores del calendario de rango - Integrados con modo oscuro */
 .rdp-day_range_middle {
   @apply bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 !important;
