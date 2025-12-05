@@ -2219,102 +2219,58 @@ export default function Landing() {
           </ScrollReveal>
         </div>
       </section>
-      {/* Enhanced CTA Section */}
-      <section className="py-32 md:py-40 bg-gradient-to-br from-[#007AFF] via-blue-600 to-indigo-700 relative overflow-hidden">
+      {/* Final CTA Section - Memorable Close */}
+      <section className="py-32 md:py-44 lg:py-56 bg-gradient-to-br from-[#007AFF] via-blue-600 to-indigo-700 relative overflow-hidden">
         {/* Background Elements */}
         <div className="absolute inset-0">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl transform translate-x-32 -translate-y-32"></div>
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-cyan-400/10 rounded-full blur-3xl transform -translate-x-20 translate-y-20"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-cyan-400/10 rounded-full blur-3xl transform -translate-x-1/3 translate-y-1/3"></div>
         </div>
         
-        <div className="max-w-6xl mx-auto px-6 lg:px-8 text-center relative z-10">
+        <div className="max-w-5xl mx-auto px-6 lg:px-8 text-center relative z-10">
           <ScrollReveal>
-          {/* Header Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-8">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-white font-semibold">Únete Ahora</span>
-          </div>
-          
-          {/* Main Title */}
-          <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 tracking-tight">
-            Transforma tu empresa
-            <span className="bg-gradient-to-r from-cyan-200 via-white to-blue-200 bg-clip-text text-transparent"> en minutos</span>
-          </h2>
-          
-          {/* Description */}
-          <p className="text-xl md:text-2xl text-blue-100 mb-12 max-w-4xl mx-auto leading-relaxed">
-            No más horas perdidas enviando archivos, controlando horarios manualmente, 
-            calculando vacaciones o realizando tareas repetitivas que te roban tiempo. 
-            <br />
-            <span className="text-white font-semibold">Oficaz automatiza lo tedioso para que te enfoques en lo importante.</span>
-          </p>
-          
-          {/* Benefits Grid - Compact Visual Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-16 max-w-5xl mx-auto">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105">
-              <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center mb-3 mx-auto">
-                <CheckCircle className="w-5 h-5 text-green-400" />
-              </div>
-              <h3 className="text-white font-semibold mb-1 text-sm">Setup Rápido</h3>
-              <p className="text-blue-100 text-xs">5 minutos activo</p>
-            </div>
+            {/* The Big Question */}
+            <p className="text-xl md:text-2xl text-blue-200 font-medium mb-6">
+              Una pregunta honesta:
+            </p>
             
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105">
-              <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center mb-3 mx-auto">
-                <Users className="w-5 h-5 text-blue-400" />
-              </div>
-              <h3 className="text-white font-semibold mb-1 text-sm">Equipo Happy</h3>
-              <p className="text-blue-100 text-xs">Procesos claros</p>
-            </div>
+            {/* Main Statement - The Hook */}
+            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white mb-8 tracking-tight leading-[1.1]">
+              ¿Cuánto vale<br />
+              <span className="bg-gradient-to-r from-cyan-300 via-white to-blue-200 bg-clip-text text-transparent">tu hora?</span>
+            </h2>
             
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105">
-              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center mb-3 mx-auto">
-                <CalendarDays className="w-5 h-5 text-purple-400" />
-              </div>
-              <h3 className="text-white font-semibold mb-1 text-sm">Turnos Smart</h3>
-              <p className="text-blue-100 text-xs">Drag & drop visual</p>
-            </div>
+            {/* The Insight */}
+            <p className="text-2xl md:text-3xl lg:text-4xl text-white/90 font-semibold mb-6 max-w-4xl mx-auto leading-tight">
+              Más que unos euros al mes, seguro.
+            </p>
             
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105">
-              <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center mb-3 mx-auto">
-                <TrendingUp className="w-5 h-5 text-orange-400" />
+            {/* The Philosophy */}
+            <p className="text-lg md:text-xl text-blue-100 mb-16 max-w-3xl mx-auto leading-relaxed">
+              Cada minuto que pierdes en tareas administrativas es un minuto que no dedicas a lo que realmente importa: 
+              <span className="text-white font-semibold"> hacer crecer tu negocio, cuidar a tu equipo, vivir tu vida.</span>
+            </p>
+          </ScrollReveal>
+          
+          <ScrollReveal delay={0.2}>
+            {/* CTA Button - Massive */}
+            {registrationSettings?.publicRegistrationEnabled && (
+              <div className="mb-10">
+                <Link href="/request-code">
+                  <button className="group relative bg-white text-[#007AFF] hover:bg-gray-50 font-black text-xl md:text-2xl px-12 md:px-16 py-6 md:py-7 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] hover:shadow-[0_30px_80px_-15px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-all duration-300">
+                    <span className="relative z-10 flex items-center gap-4">
+                      Recupera tu tiempo
+                      <ArrowRight className="w-7 h-7 group-hover:translate-x-2 transition-transform duration-300" />
+                    </span>
+                  </button>
+                </Link>
               </div>
-              <h3 className="text-white font-semibold mb-1 text-sm">ROI Real</h3>
-              <p className="text-blue-100 text-xs">Tiempo para crecer</p>
-            </div>
-          </div>
-          
-          {/* CTA Button */}
-          {registrationSettings?.publicRegistrationEnabled && (
-            <div className="mb-12">
-              <Link href="/request-code">
-                <button className="group relative bg-white text-[#007AFF] hover:bg-gray-50 font-bold text-xl px-12 py-5 rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300">
-                  <span className="relative z-10 flex items-center gap-3">
-                    Empezar Gratis Ahora
-                    <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-white to-gray-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </button>
-              </Link>
-            </div>
-          )}
-          
-          {/* Trust Indicators */}
-          <div className="flex flex-col md:flex-row items-center justify-center gap-8 text-white/80">
-            <div className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-green-400" />
-              <span className="text-sm font-medium">Datos 100% seguros</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-blue-400" />
-              <span className="text-sm font-medium">14 días gratis</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-purple-400" />
-              <span className="text-sm font-medium">Sin tarjeta de crédito</span>
-            </div>
-          </div>
+            )}
+            
+            {/* Closing Line */}
+            <p className="text-blue-200/80 text-base md:text-lg font-medium">
+              7 días gratis. Sin tarjeta. Sin compromiso.
+            </p>
           </ScrollReveal>
         </div>
       </section>
