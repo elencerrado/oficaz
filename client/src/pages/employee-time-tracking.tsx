@@ -1306,155 +1306,155 @@ export default function EmployeeTimeTracking() {
               </div>
             </div>
           ) : (
-            // STEP 2: Fill details
+            // STEP 2: Fill details - Apple-style redesign
             <div className="space-y-4">
-              {requestData.requestType === 'modify_time' ? (
-                <div className="bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700/50 rounded-lg p-3">
-                  <div className="text-sm text-blue-700 dark:text-blue-300 font-medium mb-1">
-                    📝 Modificar fichaje del {format(new Date(requestData.date), 'dd/MM/yyyy', { locale: es })}
+              {/* Date badge */}
+              <div className="text-center">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${
+                  requestData.requestType === 'modify_time' 
+                    ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                    : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
+                }`}>
+                  {requestData.requestType === 'modify_time' ? '📝' : '➕'}
+                  {format(new Date(requestData.date), 'dd MMM yyyy', { locale: es })}
+                </span>
+              </div>
+
+              {/* Time columns - Visual layout */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* ENTRADA column */}
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 space-y-2">
+                  <div className="text-center">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Entrada</span>
                   </div>
-                  <div className="text-xs text-blue-600 dark:text-blue-400">
-                    Horas actuales: {requestData.originalClockIn} {requestData.originalClockOut && `- ${requestData.originalClockOut}`}
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700/50 rounded-lg p-3">
-                  <div className="text-sm text-amber-700 dark:text-amber-300 font-medium mb-1">
-                    ➕ Añadir fichaje del {format(new Date(requestData.date), 'dd/MM/yyyy', { locale: es })}
-                  </div>
-                  <div className="text-xs text-amber-600 dark:text-amber-400">
-                    No hay registro de fichaje en esta fecha
-                  </div>
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                {requestData.requestType === 'modify_time' ? (
-                  <div className="text-xs text-gray-600 dark:text-gray-400 text-center mb-2">
-                    Modifica solo los campos que necesites cambiar
-                  </div>
-                ) : (
-                  <div className="text-xs text-gray-600 dark:text-gray-400 text-center mb-2">
-                    Ambos campos son opcionales si no completaste el fichaje
-                  </div>
-                )}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Entrada {requestData.requestType === 'modify_time' && <span className="text-gray-500 text-xs">(opcional)</span>}
-                    </label>
+                  
+                  {/* Before time */}
+                  {requestData.requestType === 'modify_time' && requestData.originalClockIn && (
+                    <div className="text-center py-1">
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500 block">Antes</span>
+                      <span className="text-base font-mono text-gray-400 dark:text-gray-500 line-through">
+                        {requestData.originalClockIn}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* New time input */}
+                  <div className="text-center">
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 block mb-1">Nueva</span>
                     <Input
                       type="time"
                       value={requestData.clockIn}
                       onChange={(e) => {
                         setRequestData({...requestData, clockIn: e.target.value});
-                        // Auto-detect overnight shift when both times are present
                         if (requestData.clockOut && e.target.value) {
                           const [inHour, inMin] = e.target.value.split(':').map(Number);
                           const [outHour, outMin] = requestData.clockOut.split(':').map(Number);
-                          const inMinutes = inHour * 60 + inMin;
-                          const outMinutes = outHour * 60 + outMin;
-                          if (outMinutes <= inMinutes) {
-                            setCrossesMidnight(true);
-                          } else {
-                            setCrossesMidnight(false);
-                          }
+                          setCrossesMidnight((outHour * 60 + outMin) <= (inHour * 60 + inMin));
                         }
                       }}
                       data-testid="input-request-clockin"
-                      className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                      className="text-center font-mono bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Salida <span className="text-gray-500 text-xs">(opcional)</span>
-                    </label>
+                </div>
+
+                {/* SALIDA column */}
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 space-y-2">
+                  <div className="text-center">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Salida</span>
+                  </div>
+                  
+                  {/* Before time */}
+                  {requestData.requestType === 'modify_time' && requestData.originalClockOut && (
+                    <div className="text-center py-1">
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500 block">Antes</span>
+                      <span className="text-base font-mono text-gray-400 dark:text-gray-500 line-through">
+                        {requestData.originalClockOut}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* New time input */}
+                  <div className="text-center">
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 block mb-1">Nueva</span>
                     <Input
                       type="time"
                       value={requestData.clockOut}
                       onChange={(e) => {
                         setRequestData({...requestData, clockOut: e.target.value});
-                        // Auto-detect overnight shift when both times are present
                         if (requestData.clockIn && e.target.value) {
                           const [inHour, inMin] = requestData.clockIn.split(':').map(Number);
                           const [outHour, outMin] = e.target.value.split(':').map(Number);
-                          const inMinutes = inHour * 60 + inMin;
-                          const outMinutes = outHour * 60 + outMin;
-                          if (outMinutes <= inMinutes) {
-                            setCrossesMidnight(true);
-                          } else {
-                            setCrossesMidnight(false);
-                          }
+                          setCrossesMidnight((outHour * 60 + outMin) <= (inHour * 60 + inMin));
                         }
                       }}
                       data-testid="input-request-clockout"
-                      className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                      className="text-center font-mono bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
                     />
                   </div>
                 </div>
-                
-                {/* Overnight shift indicator/toggle */}
-                {requestData.clockIn && requestData.clockOut && (() => {
-                  const [inHour, inMin] = requestData.clockIn.split(':').map(Number);
-                  const [outHour, outMin] = requestData.clockOut.split(':').map(Number);
-                  const inMinutes = inHour * 60 + inMin;
-                  const outMinutes = outHour * 60 + outMin;
-                  return outMinutes <= inMinutes;
-                })() && (
-                  <div className="mt-3 p-3 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700/50 rounded-lg">
-                    <div className="flex items-start space-x-3">
-                      <Checkbox
-                        id="crosses-midnight"
-                        checked={crossesMidnight}
-                        onCheckedChange={(checked) => setCrossesMidnight(checked as boolean)}
-                        className="mt-0.5 border-yellow-600 data-[state=checked]:bg-yellow-600"
-                        data-testid="checkbox-crosses-midnight"
-                      />
-                      <div className="flex-1">
-                        <label
-                          htmlFor="crosses-midnight"
-                          className="text-sm font-medium text-yellow-700 dark:text-yellow-300 cursor-pointer"
-                        >
-                          🌙 La salida es al día siguiente
-                        </label>
-                        <p className="text-xs text-yellow-600 dark:text-yellow-400/80 mt-1">
-                          Marca esta casilla si el turno cruza medianoche (ej: entrada 20:00, salida 07:00 del día siguiente)
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
-              
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Motivo</label>
+
+              {/* Overnight toggle - iOS style switch */}
+              {requestData.clockIn && requestData.clockOut && (() => {
+                const [inHour, inMin] = requestData.clockIn.split(':').map(Number);
+                const [outHour, outMin] = requestData.clockOut.split(':').map(Number);
+                return (outHour * 60 + outMin) <= (inHour * 60 + inMin);
+              })() && (
+                <div 
+                  onClick={() => setCrossesMidnight(!crossesMidnight)}
+                  className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl cursor-pointer"
+                  data-testid="checkbox-crosses-midnight"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-800/40 flex items-center justify-center">
+                      <span className="text-base">🌙</span>
+                    </div>
+                    <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Turno nocturno</span>
+                  </div>
+                  <div className={`w-11 h-6 rounded-full transition-colors flex items-center px-0.5 ${
+                    crossesMidnight ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
+                  }`}>
+                    <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
+                      crossesMidnight ? 'translate-x-5' : 'translate-x-0'
+                    }`} />
+                  </div>
+                </div>
+              )}
+
+              {/* Reason input */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide">
+                  Motivo
+                </label>
                 <Input
                   value={requestData.reason}
                   onChange={(e) => setRequestData({...requestData, reason: e.target.value})}
-                  placeholder="Ej: Olvidé fichar, error en registro..."
+                  placeholder="Ej: Olvidé fichar..."
                   data-testid="input-request-reason"
-                  className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500"
+                  className="bg-gray-50 dark:bg-gray-800 border-0 text-gray-900 dark:text-white placeholder:text-gray-400"
                 />
               </div>
               
-              <div className="flex gap-3 pt-2">
+              {/* Buttons */}
+              <div className="flex gap-3 pt-1">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   onClick={() => setWizardStep('date')}
-                  className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  className="flex-1 text-gray-600 dark:text-gray-400"
                 >
                   Atrás
                 </Button>
                 <Button
                   onClick={() => requestModificationMutation.mutate(requestData)}
                   disabled={(!requestData.clockIn && !requestData.clockOut) || !requestData.reason || requestModificationMutation.isPending}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                   data-testid="button-submit-request"
                 >
                   {requestModificationMutation.isPending ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
                   ) : (
-                    'Enviar Solicitud'
+                    'Enviar'
                   )}
                 </Button>
               </div>
