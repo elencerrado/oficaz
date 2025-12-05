@@ -1061,6 +1061,30 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Focus Section - Apple Style */}
+      <section className="py-24 md:py-32 lg:py-40 bg-white relative overflow-hidden">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <ScrollReveal>
+            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-[1.1] tracking-tight mb-6">
+              Concentra tu energía<br />
+              <span className="bg-gradient-to-r from-[#007AFF] to-blue-600 bg-clip-text text-transparent">donde importa.</span>
+            </h2>
+          </ScrollReveal>
+          
+          <ScrollReveal delay={0.15}>
+            <p className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-600 mb-10 leading-tight">
+              Haz crecer tu empresa.<br className="hidden sm:block" /> Lo rutinario queda fuera de tu mesa.
+            </p>
+          </ScrollReveal>
+          
+          <ScrollReveal delay={0.3}>
+            <p className="text-lg md:text-xl text-gray-500 max-w-3xl mx-auto leading-relaxed">
+              Dirigir una empresa exige foco real, no perder horas en tareas que drenan atención y no aportan valor. Tú impulsa, decide y construye. Todo lo repetitivo, lo tedioso y lo administrativo queda en manos de Oficaz.
+            </p>
+          </ScrollReveal>
+        </div>
+      </section>
+
       {/* Features Section - Two Columns with Mobile Preview */}
       <section id="funciones" className="py-20 md:py-28 bg-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
