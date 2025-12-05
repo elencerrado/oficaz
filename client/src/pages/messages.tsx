@@ -152,6 +152,11 @@ export default function Messages() {
       localStorage.setItem('lastMessagesPageVisit', now);
       console.log('💬 Messages page visited at:', now);
     }
+    
+    // Cleanup: invalidate unread count when leaving messages page
+    return () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/messages/unread-count'] });
+    };
   }, [user]);
 
   // All mutations together

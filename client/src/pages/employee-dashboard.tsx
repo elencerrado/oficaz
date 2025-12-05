@@ -327,7 +327,7 @@ export default function EmployeeDashboard() {
     enabled: !!user,
     refetchInterval: 2 * 60 * 1000, // ⚡ Optimizado: mensajes cada 2 minutos
     refetchIntervalInBackground: false,
-    staleTime: 90 * 1000, // ⚡ Optimizado: cache mensajes por 90 segundos
+    staleTime: 0, // Always refetch when returning to dashboard for accurate badge
   });
 
 
