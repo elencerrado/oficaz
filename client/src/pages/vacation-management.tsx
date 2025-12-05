@@ -473,10 +473,11 @@ export default function VacationManagement() {
     staleTime: 60000, // ⚡ Cache for 60 seconds (WebSocket handles instant updates)
     refetchInterval: 120000, // ⚡ Fallback polling every 2 minutes (WebSocket is primary)
     refetchIntervalInBackground: false, // Stop background polling to save resources
-    select: (data) => {
-      // Ensure data consistency and handle missing fields
-      if (!data || !Array.isArray(data)) return [];
-      return data.map((request: any) => ({
+    select: (data: any) => {
+      // Handle both old array format and new { requests, accessMode } format
+      const requests = Array.isArray(data) ? data : (data?.requests || []);
+      if (!requests || !Array.isArray(requests)) return [];
+      return requests.map((request: any) => ({
         ...request,
         days: request.days || 0,
         requestDate: request.requestDate || request.createdAt || new Date().toISOString(),

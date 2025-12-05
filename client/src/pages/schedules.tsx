@@ -1082,7 +1082,11 @@ export default function Schedules() {
   // Query para obtener solicitudes de vacaciones aprobadas
   const { data: vacationRequests = [] } = useQuery<VacationRequest[]>({
     queryKey: ['/api/vacation-requests/company'],
-    select: (data: VacationRequest[]) => data?.filter(req => req.status === 'approved') || [],
+    select: (data: any) => {
+      // Handle both old array format and new { requests, accessMode } format
+      const requests = Array.isArray(data) ? data : (data?.requests || []);
+      return requests?.filter((req: VacationRequest) => req.status === 'approved') || [];
+    },
   });
 
   // Query para obtener días festivos
