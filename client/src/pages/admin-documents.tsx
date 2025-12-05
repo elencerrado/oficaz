@@ -216,7 +216,9 @@ export default function AdminDocuments() {
   const { data: allDocuments = [], isLoading: loadingDocuments } = useQuery<any[]>({
     queryKey: ['/api/documents/all'],
     queryFn: async () => {
-      return await apiRequest('GET', '/api/documents/all');
+      const response = await apiRequest('GET', '/api/documents/all');
+      // Handle both old array format and new { documents, accessMode } format
+      return Array.isArray(response) ? response : (response?.documents || []);
     },
     refetchInterval: 60000, // Reduced from 3s to 60s for better performance
     staleTime: 45000, // Cache for 45 seconds
