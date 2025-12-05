@@ -34,16 +34,6 @@ export function useFeatureCheck() {
   const hasAccess = (feature: FeatureKey, options?: { bypassManagerRestrictions?: boolean }): boolean => {
     const subscriptionAccess = checkFeatureAccess(subscription, feature);
     
-    // DEBUG: Log access check for managers
-    if (user?.role === 'manager' && (feature === 'messages' || feature === 'reminders')) {
-      console.log(`🔍 Manager access check for ${feature}:`, {
-        subscriptionAccess,
-        feature,
-        subscriptionFeatures: subscription?.features,
-        subscriptionStatus: subscription?.status
-      });
-    }
-    
     if (!subscriptionAccess) return false;
 
     // In Employee View Mode OR when explicitly bypassing manager restrictions,
