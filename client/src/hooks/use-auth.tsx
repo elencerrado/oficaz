@@ -488,6 +488,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               
               // Reminders - refresh all reminder queries
               case 'reminder_created':
+              case 'reminder_user_completed':
               case 'reminder_all_completed':
                 console.log(`🔔 Reminder event via WebSocket: ${data.type}`);
                 invalidateByPath('/api/reminders');

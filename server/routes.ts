@@ -8889,10 +8889,23 @@ Responde directamente a este email para contactar con la persona.
           updateData.isCompleted = newCompletedByUserIds.includes(creatorId);
         }
         
-        // 📡 WebSocket: Notify all admin/manager in company when ALL assigned users complete the reminder
-        if (updateData.isCompleted && !existingReminder.isCompleted && assignedUserIds.length > 0) {
-          const wsServer = getWebSocketServer();
-          if (wsServer) {
+        // 📡 WebSocket: Notify company when ANY user completes/uncompletes their part
+        // This allows avatars to update in real-time for all viewers
+        const wsServer = getWebSocketServer();
+        if (wsServer) {
+          wsServer.broadcastToCompany(req.user!.companyId, {
+            type: 'reminder_user_completed',
+            companyId: req.user!.companyId,
+            data: { 
+              reminderId: reminderId,
+              userId: userId,
+              completed: updateData.completedByUserIds?.includes(userId) || false,
+              completedByUserIds: updateData.completedByUserIds
+            }
+          });
+          
+          // Also notify when ALL assigned users complete the reminder
+          if (updateData.isCompleted && !existingReminder.isCompleted && assignedUserIds.length > 0) {
             wsServer.broadcastToCompany(req.user!.companyId, {
               type: 'reminder_all_completed',
               companyId: req.user!.companyId,
