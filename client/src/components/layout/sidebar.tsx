@@ -191,7 +191,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                    gap: 'clamp(0.3rem, 1.2vh, 0.8rem)'
                  }}>
               {navigation
-                .filter((item) => (!item.feature || hasAccess(item.feature)) && isFeatureVisibleForManager(item.feature))
+                .filter((item) => !item.feature || hasAccess(item.feature, { bypassManagerRestrictions: true }))
                 .map((item) => {
                 const isActive = location === item.href;
                 const Icon = item.icon;
