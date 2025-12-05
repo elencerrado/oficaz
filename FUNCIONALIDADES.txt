@@ -30,7 +30,7 @@ COMPONENTES DE LA VISTA:
    - Avatar con menú desplegable:
      * Nombre y rol del usuario
      * Selector de tema (claro/oscuro/sistema)
-     * Opción "Volver a vista Admin" (solo si está en modo empleado)
+     * Opción "Volver a vista Admin" (solo si su rol es manager y está en modo empleado)
      * Botón cerrar sesión
 
 2. CAJÓN DE FICHAJE (drawer inferior)
@@ -46,27 +46,28 @@ COMPONENTES DE LA VISTA:
    - Long-press para intercambiar posición de iconos
    - Orden personalizado guardado en localStorage
 
-ICONOS Y SUS NOTIFICACIONES:
+ICONOS Y SUS PUNTOS DE NOTIFICACIONES:
 ----------------------------
 
 FICHAJES (Clock icon)
 - Ruta: /employee/time-tracking
 - Punto ROJO: Usuario tiene sesiones incompletas (fichó entrada pero no salida)
-- Sin punto: Todo correcto
+- Sin punto: Todo correcto, no tiene sesiones incompletas.
 
 VACACIONES (Palmtree icon)
 - Ruta: /employee/vacations
 - Punto ROJO: Solicitud rechazada recientemente
 - Punto VERDE: Solicitud aprobada recientemente
-- Sin punto: No hay cambios recientes
+- Sin punto: ha entrado a la pagina de Vacaciones y ha comprobado los estados de sus solicitudes
 - Lógica: Se compara con última visita guardada en localStorage
 
 DOCUMENTOS (FileText icon)
 - Ruta: /employee/documents
-- Punto ROJO: Hay solicitudes de documentos pendientes (admin pidió documento)
-- Punto VERDE: Hay documentos nuevos subidos para el usuario
-- Sin punto: No hay novedades
-- Prioridad: ROJO > VERDE (si hay ambos, muestra rojo)
+- Punto ROJO: Hay solicitudes de documentos pendientes (admin/manager pidió documento)
+- Punto VERDE: Hay documentos nuevos subidos para el usuario sin ver.
+- Punto NARANJA: hay documentos sin firmar.
+- Sin punto: el usuario ha visto los ultimos documentos, no hay documentos para firmar, no hay documentos para subir (peticiones)
+- Prioridad: ROJO > NARANJA > VERDE (si hay ambos, muestra rojo)
 
 RECORDATORIOS (Bell icon)
 - Ruta: /employee/reminders

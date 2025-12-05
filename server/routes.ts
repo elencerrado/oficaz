@@ -5007,6 +5007,9 @@ Responde directamente a este email para contactar con la persona.
             console.error('Error sending vacation push notification:', error);
           });
         }).catch(err => console.error('Failed to load push notification module:', err));
+        
+        // 📡 WebSocket: Broadcast for real-time badge updates on employee dashboard
+        broadcastToCompany(req.user!.companyId, { type: 'vacation_request_updated', requestId: request.id, status });
       }
       
       res.json(request);
@@ -6298,6 +6301,9 @@ Responde directamente a este email para contactar con la persona.
         // Don't fail the request if push notification fails
       }
 
+      // Broadcast to company for real-time badge updates on employee dashboard
+      broadcastToCompany(user.companyId, { type: 'document_uploaded', documentId: document.id });
+
       res.status(201).json(document);
     } catch (error) {
       console.error("Error uploading admin document:", error);
@@ -6363,6 +6369,9 @@ Responde directamente a este email para contactar con la persona.
       }
 
       console.log(`CIRCULAR UPLOAD COMPLETE: Created ${documents.length} document records for file "${originalName}"`);
+
+      // Broadcast to company for real-time badge updates on employee dashboard
+      broadcastToCompany(user.companyId, { type: 'document_uploaded', documentCount: documents.length });
 
       res.status(201).json({ 
         message: `Circular enviada a ${documents.length} empleados`,
@@ -6434,6 +6443,9 @@ Responde directamente a este email para contactar con la persona.
           // Don't fail the request if push notification fails
         }
       }
+
+      // Broadcast to company for real-time badge updates on employee dashboard
+      broadcastToCompany(req.user!.companyId, { type: 'document_request_created', notificationCount: notifications.length });
 
       res.status(201).json({ 
         message: 'Document requests sent successfully',
@@ -6936,25 +6948,21 @@ Responde directamente a este email para contactar con la persona.
       const sender = await storage.getUser(req.user!.id);
       const senderName = sender?.fullName || 'Usuario';
       
-      // 📡 WebSocket: Notify admin/manager of new message from employee
-      if (req.user!.role === 'employee' && data.receiverId) {
-        const receiver = await storage.getUser(data.receiverId);
-        if (receiver && (receiver.role === 'admin' || receiver.role === 'manager')) {
-          const wsServer = getWebSocketServer();
-          if (wsServer) {
-            wsServer.broadcastToCompany(req.user!.companyId, {
-              type: 'message_received',
-              companyId: req.user!.companyId,
-              data: { 
-                messageId: message.id, 
-                senderId: req.user!.id,
-                senderName: senderName,
-                receiverId: data.receiverId,
-                subject: data.subject || 'Nuevo mensaje'
-              }
-            });
+      // 📡 WebSocket: Broadcast message to company for real-time badge updates
+      const wsServer = getWebSocketServer();
+      if (wsServer) {
+        wsServer.broadcastToCompany(req.user!.companyId, {
+          type: 'message_received',
+          companyId: req.user!.companyId,
+          data: { 
+            messageId: message.id, 
+            senderId: req.user!.id,
+            senderName: senderName,
+            receiverId: data.receiverId,
+            isToAllEmployees: data.isToAllEmployees,
+            subject: data.subject || 'Nuevo mensaje'
           }
-        }
+        });
       }
       
       // 📱 Send push notification to receiver(s) - ASYNC (no bloquea endpoint)
