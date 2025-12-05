@@ -7994,6 +7994,17 @@ Responde directamente a este email para contactar con la persona.
         updates
       });
 
+      // ⚠️ PROTECTED: ORIGINAL ADMIN ROLE PROTECTION - DO NOT MODIFY
+      // Original admins (createdBy is null) can NEVER have their role changed
+      // This is a critical security feature to prevent accidental or malicious role changes
+      if (updates.role && updates.role !== user.role && user.createdBy === null) {
+        console.log(`🚨 SECURITY BLOCK: Attempt to change role of original admin ${userId} (${user.fullName}) blocked`);
+        return res.status(403).json({ 
+          error: 'El administrador original de la empresa no puede cambiar de rol. Esta cuenta tiene protección permanente.' 
+        });
+      }
+      // ⚠️ END PROTECTED SECTION
+
       // 🔒 SUBSCRIPTION LIMIT CHECK: Verify role change doesn't exceed subscription limits
       if (updates.role && updates.role !== user.role) {
         const newRole = updates.role as 'admin' | 'manager' | 'employee';

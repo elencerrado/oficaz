@@ -1579,7 +1579,20 @@ export default function EmployeesSimple() {
 
                       <div>
                         <Label htmlFor="role" className="text-sm font-medium text-gray-700 dark:text-gray-300">Tipo de Usuario</Label>
-                        {user?.role === 'admin' ? (
+                        {/* ⚠️ PROTECTED: Original admin (createdBy === null) cannot have role changed */}
+                        {selectedEmployee?.createdBy === null ? (
+                          <div className="mt-1">
+                            <div className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md">
+                              <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Administrador Original</span>
+                              <Badge variant="secondary" className="bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300">
+                                Protegido
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                              El administrador original de la empresa no puede cambiar de rol
+                            </p>
+                          </div>
+                        ) : user?.role === 'admin' ? (
                           <Select 
                             value={editEmployee.role}
                             onValueChange={(value) => setEditEmployee({ ...editEmployee, role: value })}
@@ -1632,7 +1645,7 @@ export default function EmployeesSimple() {
                             </SelectContent>
                           </Select>
                         )}
-                        {user?.role === 'manager' && (
+                        {user?.role === 'manager' && selectedEmployee?.createdBy !== null && (
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             Como manager, no puedes asignar rol de administrador
                           </p>

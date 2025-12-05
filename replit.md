@@ -23,6 +23,7 @@ Preferred communication style: Simple, everyday language.
 - **Calendar Grid System**: Custom calendar grid layout (2.25rem fixed day columns, 1fr responsive connectors) is PROTECTED - critical for perfect worm effect alignment
 - **User Requirement**: "Blindfold" (protect/secure) critical functionality to prevent breaking changes
 - **Protection Pattern**: Wrap critical functions with warning comments and clear boundaries
+- **Original Admin Protection**: Admin original (createdBy === null) CANNOT have their role changed - enforced in both backend (server/routes.ts) and frontend (employees-simple.tsx)
 
 ### Security & Reliability Standards
 - **🚨 ZERO ERROR TOLERANCE**: User has ABSOLUTE ZERO tolerance for error screens in production
