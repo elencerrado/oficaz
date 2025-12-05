@@ -722,14 +722,20 @@ export async function sendVacationNotification(
     const startDateStr = formatDate(details.startDate);
     const endDateStr = formatDate(details.endDate);
     
+    // Check if it's a single day vacation
+    const isSingleDay = startDateStr === endDateStr;
+    const dateRangeText = isSingleDay 
+      ? `el día ${startDateStr}` 
+      : `del ${startDateStr} al ${endDateStr}`;
+    
     // Create notification content
     const title = status === 'approved' 
       ? '✅ Vacaciones Aprobadas' 
       : '❌ Vacaciones Rechazadas';
     
     const body = status === 'approved'
-      ? `Tu solicitud de vacaciones del ${startDateStr} al ${endDateStr} ha sido aprobada`
-      : `Tu solicitud de vacaciones del ${startDateStr} al ${endDateStr} ha sido rechazada${details.adminComment ? ': ' + details.adminComment : ''}`;
+      ? `Tu solicitud de vacaciones ${dateRangeText} ha sido aprobada`
+      : `Tu solicitud de vacaciones ${dateRangeText} ha sido rechazada${details.adminComment ? ': ' + details.adminComment : ''}`;
     
     const payload = JSON.stringify({
       title,
