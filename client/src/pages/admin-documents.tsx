@@ -1847,115 +1847,80 @@ export default function AdminDocuments() {
           }
           setShowUploadPreview(open);
         }}>
-          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center">
-                <Upload className="h-5 w-5 mr-2" />
-                {uploadMode === 'circular' 
-                  ? `Subir Circular / Documento para Todos (${uploadAnalysis.length} archivo${uploadAnalysis.length !== 1 ? 's' : ''})` 
-                  : `Subir Documento Individual (${uploadAnalysis.length} archivo${uploadAnalysis.length !== 1 ? 's' : ''})`}
+          <DialogContent className="max-w-xl max-h-[90vh] overflow-hidden p-0">
+            {/* Clean Header */}
+            <div className="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-800">
+              <DialogTitle className="text-lg font-semibold text-foreground">
+                Subir Documento
               </DialogTitle>
-            </DialogHeader>
+              <p className="text-sm text-muted-foreground mt-1">
+                {uploadAnalysis.length} archivo{uploadAnalysis.length !== 1 ? 's' : ''} seleccionado{uploadAnalysis.length !== 1 ? 's' : ''}
+              </p>
+            </div>
             
-            <div className="space-y-4">
-              {/* Mode Toggle: Individual vs Circular */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Tipo de Subida
-                </label>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={uploadMode === 'individual' ? 'default' : 'outline'}
-                    className="flex-1"
-                    onClick={() => {
-                      setUploadMode('individual');
-                      setUploadSelectedEmployees([]);
-                    }}
-                    data-testid="upload-mode-individual"
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Individual
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={uploadMode === 'circular' ? 'default' : 'outline'}
-                    className="flex-1"
-                    onClick={() => {
-                      setUploadMode('circular');
-                      setUploadSelectedEmployees(employees.map((e: Employee) => e.id));
-                    }}
-                    data-testid="upload-mode-circular"
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    Circular (Para Todos)
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {uploadMode === 'circular' 
-                    ? '📢 Se enviará el mismo documento a todos los empleados seleccionados. Puedes desmarcar los que no lo necesiten.'
-                    : '👤 Cada archivo se asigna a un empleado específico basándose en el nombre del archivo.'}
-                </p>
-                {uploadMode === 'circular' && uploadAnalysis.some(a => !a.employee) && (
-                  <div className="flex items-center mt-2 p-2 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded text-sm text-blue-800 dark:text-blue-200">
-                    <AlertTriangle className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <span>Se detectó automáticamente modo Circular porque el archivo no contiene nombre de empleado.</span>
-                  </div>
-                )}
+            <div className="px-6 py-4 space-y-5 overflow-y-auto max-h-[calc(90vh-180px)]">
+              {/* Mode Toggle - Apple-style segmented control */}
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-1 flex">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUploadMode('individual');
+                    setUploadSelectedEmployees([]);
+                  }}
+                  className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    uploadMode === 'individual'
+                      ? 'bg-white dark:bg-gray-700 text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  data-testid="upload-mode-individual"
+                >
+                  <User className="h-4 w-4" />
+                  Individual
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUploadMode('circular');
+                    setUploadSelectedEmployees(employees.map((e: Employee) => e.id));
+                  }}
+                  className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    uploadMode === 'circular'
+                      ? 'bg-white dark:bg-gray-700 text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  data-testid="upload-mode-circular"
+                >
+                  <Users className="h-4 w-4" />
+                  Para Todos
+                </button>
               </div>
 
-              {/* Files Preview Section */}
-              <div className="border rounded-lg p-3 bg-muted/30">
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Archivos a subir ({uploadAnalysis.length})
-                </label>
-                <div className="space-y-2 max-h-32 overflow-y-auto">
-                  {uploadAnalysis.map((analysis, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-card rounded border">
-                      <div className="flex items-center flex-1 min-w-0">
-                        <FileText className="h-4 w-4 mr-2 flex-shrink-0 text-muted-foreground" />
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{analysis.file.name}</p>
-                          <p className="text-xs text-muted-foreground">{formatFileSize(analysis.file.size)}</p>
-                        </div>
+              {/* File Cards - Compact */}
+              <div className="space-y-2">
+                {uploadAnalysis.map((analysis, index) => (
+                  <div key={index} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
+                    {/* File info row */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                        <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                       </div>
-                      <Badge variant={analysis.documentType !== 'otros' ? 'default' : 'secondary'} className="ml-2 flex-shrink-0">
-                        {documentTypes.find(t => t.id === analysis.documentType)?.name || 'Otros'}
-                      </Badge>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{analysis.file.name}</p>
+                        <p className="text-xs text-muted-foreground">{formatFileSize(analysis.file.size)}</p>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Conditional Content based on Mode */}
-              {uploadMode === 'individual' ? (
-                /* Individual Mode: Show employee selector per file */
-                <div className="space-y-3">
-                  <label className="block text-sm font-medium text-foreground">
-                    Asignar empleados a cada archivo
-                  </label>
-                  {uploadAnalysis.map((analysis, index) => (
-                    <div key={index} className="border rounded-lg p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-foreground truncate flex-1">{analysis.file.name}</span>
-                        <Badge variant={
-                          analysis.confidence === 'high' ? 'default' : 
-                          analysis.confidence === 'medium' ? 'secondary' : 'destructive'
-                        } className="ml-2">
-                          {analysis.confidence === 'high' ? 'Auto-detectado' :
-                           analysis.confidence === 'medium' ? 'Revisar' : 'Manual'}
-                        </Badge>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    
+                    {/* Controls grid */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {uploadMode === 'individual' && (
                         <div>
-                          <label className="block text-xs text-muted-foreground mb-1">Empleado</label>
+                          <label className="block text-xs font-medium text-muted-foreground mb-1.5">Empleado</label>
                           <Select 
                             value={analysis.employee?.id?.toString() || ''} 
                             onValueChange={(value) => updateAnalysisEmployee(index, parseInt(value))}
                           >
-                            <SelectTrigger className="h-9">
-                              <SelectValue placeholder="Seleccionar empleado" />
+                            <SelectTrigger className="h-10 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+                              <SelectValue placeholder="Seleccionar" />
                             </SelectTrigger>
                             <SelectContent>
                               {employees.map((employee: Employee) => (
@@ -1966,81 +1931,71 @@ export default function AdminDocuments() {
                             </SelectContent>
                           </Select>
                         </div>
-                        
-                        <div>
-                          <label className="block text-xs text-muted-foreground mb-1">Tipo</label>
-                          <Select 
-                            value={analysis.documentType} 
-                            onValueChange={(value) => updateAnalysisDocumentType(index, value)}
-                          >
-                            <SelectTrigger className="h-9">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {documentTypes.map((type) => (
-                                <SelectItem key={type.id} value={type.id}>
-                                  {type.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                      )}
+                      
+                      <div className={uploadMode === 'circular' ? 'col-span-2' : ''}>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1.5">Tipo de documento</label>
+                        <Select 
+                          value={analysis.documentType} 
+                          onValueChange={(value) => updateAnalysisDocumentType(index, value)}
+                        >
+                          <SelectTrigger className="h-10 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {documentTypes.map((type) => (
+                              <SelectItem key={type.id} value={type.id}>
+                                {type.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                      
-                      {analysis.suggestedName && (
-                        <div>
-                          <label className="block text-xs text-muted-foreground mb-1">Nombre sugerido</label>
-                          <input
-                            type="text"
-                            value={analysis.suggestedName}
-                            onChange={(e) => updateSuggestedName(index, e.target.value)}
-                            className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                      )}
-                      
-                      {!analysis.employee && (
-                        <div className="flex items-center p-2 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded text-xs text-yellow-800 dark:text-yellow-200">
-                          <AlertTriangle className="h-3 w-3 mr-1" />
-                          Selecciona un empleado manualmente
-                        </div>
-                      )}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                /* Circular Mode: Show searchable employee list with checkboxes */
+                    
+                    {/* Warning for individual mode without employee */}
+                    {uploadMode === 'individual' && !analysis.employee && (
+                      <div className="flex items-center gap-2 mt-3 text-amber-600 dark:text-amber-400 text-xs">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        Selecciona un empleado
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Circular Mode - Employee Selection */}
+              {uploadMode === 'circular' && (
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-foreground">
-                      Empleados destinatarios ({uploadSelectedEmployees.length} de {employees.length})
-                    </label>
-                    <Button
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-foreground">
+                      Destinatarios
+                    </span>
+                    <button
                       type="button"
-                      variant="ghost"
-                      size="sm"
                       onClick={() => setUploadSelectedEmployees(employees.map((e: Employee) => e.id))}
-                      className="text-xs h-7"
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                     >
                       Seleccionar todos
-                    </Button>
+                    </button>
                   </div>
                   
-                  {/* Search Input */}
-                  <div className="relative mb-2">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  {/* Search */}
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       value={uploadEmployeeSearch}
                       onChange={(e) => setUploadEmployeeSearch(e.target.value)}
-                      placeholder="Buscar empleado por nombre o email..."
-                      className="pl-9"
+                      placeholder="Buscar empleado..."
+                      className="pl-10 h-10 bg-gray-50 dark:bg-gray-800 border-0"
                       data-testid="upload-employee-search"
                     />
                   </div>
                   
-                  <div className="max-h-40 overflow-y-auto border rounded-lg p-2 space-y-1 bg-card">
+                  {/* Employee list */}
+                  <div className="max-h-36 overflow-y-auto space-y-1 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-2">
                     {filteredUploadEmployees.length === 0 ? (
-                      <div className="text-center py-3 text-muted-foreground text-sm">
+                      <div className="text-center py-4 text-muted-foreground text-sm">
                         No se encontraron empleados
                       </div>
                     ) : (
@@ -2048,105 +2003,90 @@ export default function AdminDocuments() {
                         <div
                           key={employee.id}
                           onClick={() => toggleUploadEmployee(employee.id)}
-                          className={`flex items-center p-2 rounded cursor-pointer transition-colors ${
+                          className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-colors ${
                             uploadSelectedEmployees.includes(employee.id)
-                              ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700'
-                              : 'hover:bg-muted border border-transparent'
+                              ? 'bg-blue-50 dark:bg-blue-900/20'
+                              : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'
                           }`}
                           data-testid={`upload-employee-${employee.id}`}
                         >
-                          <div className={`w-4 h-4 border rounded mr-3 flex items-center justify-center transition-colors ${
+                          <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-colors ${
                             uploadSelectedEmployees.includes(employee.id)
-                              ? 'bg-blue-600 border-blue-600'
-                              : 'border-gray-300 dark:border-gray-600'
+                              ? 'bg-blue-600'
+                              : 'border-2 border-gray-300 dark:border-gray-600'
                           }`}>
                             {uploadSelectedEmployees.includes(employee.id) && (
                               <Check className="h-3 w-3 text-white" />
                             )}
                           </div>
-                          <div className="flex-1">
-                            <div className="font-medium text-foreground text-sm">{employee.fullName}</div>
-                            <div className="text-xs text-muted-foreground">{employee.email}</div>
-                          </div>
+                          <span className="text-sm text-foreground">{employee.fullName}</span>
                         </div>
                       ))
                     )}
                   </div>
+                  
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {uploadSelectedEmployees.length} de {employees.length} empleados seleccionados
+                  </p>
                 </div>
               )}
 
-              {/* Requires Signature Checkbox */}
-              <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg border">
-                <div
-                  onClick={() => setUploadRequiresSignature(!uploadRequiresSignature)}
-                  className={`w-5 h-5 border-2 rounded flex items-center justify-center cursor-pointer transition-colors ${
-                    uploadRequiresSignature
-                      ? 'bg-blue-600 border-blue-600'
-                      : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'
-                  }`}
-                  data-testid="upload-requires-signature"
-                >
-                  {uploadRequiresSignature && (
-                    <Check className="h-3 w-3 text-white" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium text-foreground flex items-center text-sm">
-                    <FileSignature className="h-4 w-4 mr-2 text-blue-600" />
-                    Requiere Firma Digital
+              {/* Signature Toggle - Apple-style switch row */}
+              <div 
+                onClick={() => setUploadRequiresSignature(!uploadRequiresSignature)}
+                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl cursor-pointer"
+                data-testid="upload-requires-signature"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                    <FileSignature className="h-4.5 w-4.5 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Los empleados deberán firmar digitalmente el documento para confirmarlo
-                  </p>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Requiere firma</p>
+                    <p className="text-xs text-muted-foreground">Los empleados deberán firmar</p>
+                  </div>
+                </div>
+                <div className={`w-12 h-7 rounded-full transition-colors flex items-center px-1 ${
+                  uploadRequiresSignature ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                }`}>
+                  <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
+                    uploadRequiresSignature ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
                 </div>
               </div>
+            </div>
 
-              {/* Summary before uploading */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="text-sm text-blue-800 dark:text-blue-200">
-                  <strong>Resumen:</strong>{' '}
-                  {uploadMode === 'circular' ? (
-                    <>
-                      Se subirá{uploadAnalysis.length > 1 ? 'n' : ''} <span className="font-medium">{uploadAnalysis.length} archivo{uploadAnalysis.length !== 1 ? 's' : ''}</span>
-                      {' '}para <span className="font-medium">{uploadSelectedEmployees.length} empleado{uploadSelectedEmployees.length !== 1 ? 's' : ''}</span>
-                    </>
-                  ) : (
-                    <>
-                      Se subirá{uploadAnalysis.length > 1 ? 'n' : ''} <span className="font-medium">{uploadAnalysis.length} archivo{uploadAnalysis.length !== 1 ? 's' : ''}</span>
-                      {' '}a sus empleados asignados
-                    </>
-                  )}
-                  {uploadRequiresSignature && (
-                    <span className="ml-1">
-                      <FileSignature className="h-3 w-3 inline mr-1" />
-                      (requiere firma)
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex justify-end space-x-3 pt-4 border-t">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowUploadPreview(false)}
-                  disabled={isUploading}
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  onClick={handleBatchUpload}
-                  disabled={
-                    isUploading || 
-                    (uploadMode === 'individual' && uploadAnalysis.some(a => !a.employee)) ||
-                    (uploadMode === 'circular' && uploadSelectedEmployees.length === 0)
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  {uploadMode === 'circular' 
+                    ? `${uploadSelectedEmployees.length} destinatarios`
+                    : `${uploadAnalysis.filter(a => a.employee).length} de ${uploadAnalysis.length} asignados`
                   }
-                >
-                  {isUploading 
-                    ? 'Subiendo...' 
-                    : uploadMode === 'circular'
-                      ? `Subir Circular (${uploadSelectedEmployees.length} empleados)`
-                      : `Subir ${uploadAnalysis.length} Documento${uploadAnalysis.length !== 1 ? 's' : ''}`}
-                </Button>
+                  {uploadRequiresSignature && ' · Firma requerida'}
+                </div>
+                <div className="flex gap-3">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setShowUploadPreview(false)}
+                    disabled={isUploading}
+                    className="text-muted-foreground"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    onClick={handleBatchUpload}
+                    disabled={
+                      isUploading || 
+                      (uploadMode === 'individual' && uploadAnalysis.some(a => !a.employee)) ||
+                      (uploadMode === 'circular' && uploadSelectedEmployees.length === 0)
+                    }
+                    className="px-6"
+                  >
+                    {isUploading ? 'Subiendo...' : 'Subir'}
+                  </Button>
+                </div>
               </div>
             </div>
           </DialogContent>
