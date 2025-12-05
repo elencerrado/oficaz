@@ -254,13 +254,9 @@ export default function Documents() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
     },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: 'No se pudo marcar el documento como visto',
-        variant: 'destructive',
-      });
-    },
+    // No error toast - this is a "fire and forget" operation
+    // On iOS, navigating away can cancel the response but the server still processes it
+    // The document will open regardless, so we don't want to show false errors
   });
 
   const signDocumentMutation = useMutation({
