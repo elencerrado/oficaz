@@ -507,17 +507,25 @@ export default function VacationManagement() {
     let ws: WebSocket | null = null;
     
     try {
-      const { token } = JSON.parse(authData);
+      const parsed = JSON.parse(authData);
+      const token = parsed.token;
+      
+      if (!token) {
+        console.log('⚠️ Vacation WS: No token found in auth data');
+        return;
+      }
       
       // Build WebSocket URL dynamically from current window location
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
       const wsUrl = `${protocol}//${host}/ws/work-sessions?token=${token}`;
+      
+      console.log('🔔 Vacation WS: Connecting to', wsUrl.replace(/token=.*/, 'token=[HIDDEN]'));
 
       ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log('🔔 Vacation Management WebSocket connected');
+        console.log('✅ Vacation Management WebSocket CONNECTED - ready for real-time notifications');
       };
 
       ws.onmessage = (event) => {
@@ -558,11 +566,15 @@ export default function VacationManagement() {
         }
       };
 
-      ws.onerror = () => {
-        // Silent fail - will reconnect on next mount
+      ws.onerror = (error) => {
+        console.log('⚠️ Vacation WS error:', error);
       };
-    } catch {
-      // Silent fail for auth parsing errors
+      
+      ws.onclose = (event) => {
+        console.log('🔔 Vacation WS closed:', event.code, event.reason);
+      };
+    } catch (err) {
+      console.log('⚠️ Vacation WS setup error:', err);
     }
 
     // Cleanup on unmount

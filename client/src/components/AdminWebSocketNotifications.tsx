@@ -80,7 +80,16 @@ export function AdminWebSocketNotifications() {
           }
 
           if (message.type === 'vacation_request_created' && message.data) {
+            const { employeeName, startDate, endDate } = message.data;
+            toast({
+              title: "📋 Nueva solicitud de vacaciones",
+              description: employeeName 
+                ? `${employeeName} ha solicitado vacaciones${startDate && endDate ? ` del ${new Date(startDate).toLocaleDateString('es-ES')} al ${new Date(endDate).toLocaleDateString('es-ES')}` : ''}`
+                : "Se ha recibido una nueva solicitud de vacaciones",
+              duration: 8000
+            });
             queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
             queryClient.invalidateQueries({ queryKey: ['/api/admin/dashboard/summary'] });
           }
 
