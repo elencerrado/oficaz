@@ -1050,7 +1050,7 @@ export default function Landing() {
                 style={{
                   opacity: isLoaded ? 1 : 0,
                   transform: isLoaded ? 'translateY(0)' : 'translateY(30px)',
-                  transitionDelay: '450ms',
+                  transitionDelay: '800ms',
                 }}
               >
                 <p className="text-white/70 text-sm font-medium">Selecciona nivel de dificultad</p>
