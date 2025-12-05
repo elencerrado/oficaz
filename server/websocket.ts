@@ -15,14 +15,24 @@ interface WSMessage {
         'vacation_request_created' | 'vacation_request_updated' | 
         'modification_request_created' | 'modification_request_updated' |
         'document_request_created' | 'document_uploaded' |
-        'message_received' | 'work_report_created' | 'reminder_all_completed';
+        'message_received' | 'work_report_created' | 'reminder_all_completed' |
+        'role_changed';
   companyId: number;
   data?: any;
+}
+
+// Message specifically for role changes sent to individual users
+interface RoleChangeMessage {
+  type: 'role_changed';
+  previousRole: string;
+  newRole: string;
+  newToken: string;
 }
 
 class WorkSessionWebSocketServer {
   private wss: WebSocketServer;
   private clients: Map<number, Set<AuthenticatedWebSocket>> = new Map(); // companyId -> clients
+  private userClients: Map<number, Set<AuthenticatedWebSocket>> = new Map(); // userId -> clients (for targeted messages)
 
   constructor(server: Server) {
     this.wss = new WebSocketServer({ 
@@ -51,11 +61,8 @@ class WorkSessionWebSocketServer {
       ws.companyId = decoded.companyId;
       ws.role = decoded.role;
 
-      // Only allow admin and manager roles
-      if (!['admin', 'manager'].includes(ws.role || '')) {
-        ws.close(1008, 'Insufficient permissions');
-        return;
-      }
+      // Allow all authenticated roles (admin, manager, employee) for role change notifications
+      // Individual broadcast methods can still filter by role if needed
 
       // Add client to company's set
       if (!this.clients.has(ws.companyId!)) {
@@ -63,7 +70,13 @@ class WorkSessionWebSocketServer {
       }
       this.clients.get(ws.companyId!)!.add(ws);
 
-      console.log(`✓ WebSocket client connected: userId=${ws.userId}, companyId=${ws.companyId}`);
+      // Add client to user's set (for targeted messages like role changes)
+      if (!this.userClients.has(ws.userId!)) {
+        this.userClients.set(ws.userId!, new Set());
+      }
+      this.userClients.get(ws.userId!)!.add(ws);
+
+      console.log(`✓ WebSocket client connected: userId=${ws.userId}, companyId=${ws.companyId}, role=${ws.role}`);
 
       // Send welcome message
       ws.send(JSON.stringify({ type: 'connected', message: 'WebSocket connection established' }));
@@ -112,6 +125,16 @@ class WorkSessionWebSocketServer {
         this.clients.delete(ws.companyId);
       }
     }
+    
+    // Also remove from user clients map
+    if (ws.userId && this.userClients.has(ws.userId)) {
+      this.userClients.get(ws.userId)!.delete(ws);
+      
+      // Clean up empty user sets
+      if (this.userClients.get(ws.userId)!.size === 0) {
+        this.userClients.delete(ws.userId);
+      }
+    }
   }
 
   // Public method to broadcast updates to all clients in a company
@@ -138,6 +161,35 @@ class WorkSessionWebSocketServer {
   // Get connected clients count for a company
   public getCompanyClientCount(companyId: number): number {
     return this.clients.get(companyId)?.size || 0;
+  }
+
+  // Send message to a specific user (all their connected devices)
+  public sendToUser(userId: number, message: RoleChangeMessage | any): boolean {
+    const userSockets = this.userClients.get(userId);
+    
+    if (!userSockets || userSockets.size === 0) {
+      console.log(`📡 No WebSocket clients connected for user ${userId}`);
+      return false;
+    }
+
+    const messageStr = JSON.stringify(message);
+    let sentCount = 0;
+
+    userSockets.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(messageStr);
+        sentCount++;
+      }
+    });
+
+    console.log(`📡 Sent to user ${userId}: ${message.type} (${sentCount} devices)`);
+    return sentCount > 0;
+  }
+
+  // Check if a user has any connected WebSocket clients
+  public isUserConnected(userId: number): boolean {
+    const userSockets = this.userClients.get(userId);
+    return userSockets !== undefined && userSockets.size > 0;
   }
 }
 
