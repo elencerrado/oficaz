@@ -796,7 +796,7 @@ export default function WorkReportsPage() {
 
                     </div>
 
-                    {report.status === 'draft' && (
+                    {(report.status === 'draft' || report.status === 'submitted') && (
                       <div className="flex gap-2 md:flex-shrink-0 justify-end">
                         <Button 
                           variant="outline" 
@@ -807,24 +807,28 @@ export default function WorkReportsPage() {
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => openDeleteDialog(report)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          data-testid={`button-delete-${report.id}`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          onClick={() => updateMutation.mutate({ id: report.id, data: { status: 'submitted' } })}
-                          disabled={updateMutation.isPending}
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                          data-testid={`button-submit-${report.id}`}
-                        >
-                          <Send className="w-4 h-4" />
-                        </Button>
+                        {report.status === 'draft' && (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => openDeleteDialog(report)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                              data-testid={`button-delete-${report.id}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              onClick={() => updateMutation.mutate({ id: report.id, data: { status: 'submitted' } })}
+                              disabled={updateMutation.isPending}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              data-testid={`button-submit-${report.id}`}
+                            >
+                              <Send className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
