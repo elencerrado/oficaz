@@ -178,6 +178,7 @@ export default function Messages() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/messages/unread-count'] });
     },
   });
 
