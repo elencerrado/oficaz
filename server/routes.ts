@@ -8048,6 +8048,10 @@ Responde directamente a este email para contactar con la persona.
         });
       }
 
+      // Track if role is changing for WebSocket notification
+      const previousRole = user.role;
+      const roleIsChanging = allowedUpdates.role && allowedUpdates.role !== previousRole;
+
       const updatedUser = await storage.updateUser(userId, allowedUpdates);
 
       if (!updatedUser) {
@@ -8060,6 +8064,29 @@ Responde directamente a este email para contactar con la persona.
       }
 
       const finalUser = await storage.getUser(userId);
+
+      // 🔄 ROLE CHANGE: Send WebSocket notification to the affected user
+      if (roleIsChanging && finalUser) {
+        const wsServer = getWebSocketServer();
+        if (wsServer) {
+          // Generate new token with updated role for the affected user
+          const newToken = generateToken({
+            id: finalUser.id,
+            username: finalUser.companyEmail,
+            role: finalUser.role,
+            companyId: finalUser.companyId
+          });
+          
+          wsServer.sendToUser(userId, {
+            type: 'role_changed',
+            previousRole: previousRole,
+            newRole: finalUser.role,
+            newToken: newToken
+          });
+          console.log(`🔄 Role change notification sent to user ${userId}: ${previousRole} → ${finalUser.role}`);
+        }
+      }
+
       res.json({ 
         message: 'Usuario actualizado correctamente',
         user: finalUser 
