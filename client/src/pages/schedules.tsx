@@ -768,27 +768,46 @@ export default function Schedules() {
       return;
     }
 
-    // All validations passed - proceed with duplication
-    try {
-      await duplicateShift(activeShift, targetEmployeeId, targetDate);
-      
-    } catch (error: any) {
-    }
+    // All validations passed - proceed with INSTANT optimistic duplication
+    // (reusing newStart/newEnd already calculated above for conflict check)
+
+    // IMMEDIATELY add optimistic shift to UI (before API call)
+    const tempId = -Date.now();
+    const optimisticShift: WorkShift = {
+      id: tempId,
+      employeeId: targetEmployeeId,
+      startAt: newStart.toISOString(),
+      endAt: newEnd.toISOString(),
+      title: activeShift.title,
+      location: activeShift.location || '',
+      notes: activeShift.notes || '',
+      color: activeShift.color,
+    };
+
+    // Instantly update cache - shift appears immediately!
+    queryClient.setQueryData(['/api/work-shifts/company'], (oldData: any) => {
+      if (!oldData?.data) return oldData;
+      return {
+        ...oldData,
+        data: [...oldData.data, optimisticShift]
+      };
+    });
+
+    // Step 3: Fire API call in background (no await = non-blocking)
+    duplicateShiftAsync(activeShift, targetEmployeeId, targetDate, tempId);
   };
 
-  // Function to duplicate a shift with optimistic update for instant visual feedback
-  const duplicateShift = async (originalShift: WorkShift, newEmployeeId: number, newDate: Date) => {
+  // Async function that runs in background after optimistic update
+  const duplicateShiftAsync = async (originalShift: WorkShift, newEmployeeId: number, newDate: Date, tempId: number) => {
     const originalStart = parseISO(originalShift.startAt);
     const originalEnd = parseISO(originalShift.endAt);
     
-    // Create new dates with same time but different date
     const newStart = new Date(newDate);
     newStart.setHours(originalStart.getHours(), originalStart.getMinutes(), 0, 0);
     
     const newEnd = new Date(newDate);
     newEnd.setHours(originalEnd.getHours(), originalEnd.getMinutes(), 0, 0);
     
-    // Handle overnight shifts
     if (originalEnd < originalStart) {
       newEnd.setDate(newEnd.getDate() + 1);
     }
@@ -803,39 +822,24 @@ export default function Schedules() {
       color: originalShift.color
     };
 
-    // Optimistic update: Add shift to cache immediately for instant visual feedback
-    const tempId = -Date.now(); // Temporary negative ID
-    const optimisticShift: WorkShift = {
-      id: tempId,
-      employeeId: newEmployeeId,
-      startAt: duplicateData.startAt,
-      endAt: duplicateData.endAt,
-      title: duplicateData.title,
-      location: duplicateData.location,
-      notes: duplicateData.notes,
-      color: duplicateData.color,
-    };
-
-    // Instantly add to local state for immediate visual feedback
-    queryClient.setQueryData(['/api/work-shifts/company'], (oldData: any) => {
-      if (!oldData?.data) return oldData;
-      return {
-        ...oldData,
-        data: [...oldData.data, optimisticShift]
-      };
-    });
-
     try {
-      const response = await apiRequest('POST', '/api/work-shifts', duplicateData);
-      
-      // Replace optimistic shift with real one from server
+      await apiRequest('POST', '/api/work-shifts', duplicateData);
+      // Success - refresh to get real ID from server
       queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
-      
-      return response;
     } catch (error) {
-      // Revert optimistic update on error
-      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
-      throw error;
+      // Error - remove optimistic shift from cache
+      queryClient.setQueryData(['/api/work-shifts/company'], (oldData: any) => {
+        if (!oldData?.data) return oldData;
+        return {
+          ...oldData,
+          data: oldData.data.filter((s: WorkShift) => s.id !== tempId)
+        };
+      });
+      toast({
+        title: "Error al duplicar turno",
+        description: "No se pudo guardar el turno. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -940,9 +944,42 @@ export default function Schedules() {
       // Wait a moment for cache to update
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Then duplicate the original shift
-      await duplicateShift(conflictData.sourceShift, conflictData.targetEmployeeId, conflictData.targetDate);
+      // Then duplicate the original shift with instant optimistic update
+      const shift = conflictData.sourceShift;
+      const targetEmpId = conflictData.targetEmployeeId;
+      const targetDt = conflictData.targetDate;
       
+      // Calculate times for optimistic shift
+      const origStart = parseISO(shift.startAt);
+      const origEnd = parseISO(shift.endAt);
+      const optStart = new Date(targetDt);
+      optStart.setHours(origStart.getHours(), origStart.getMinutes(), 0, 0);
+      const optEnd = new Date(targetDt);
+      optEnd.setHours(origEnd.getHours(), origEnd.getMinutes(), 0, 0);
+      if (origEnd < origStart) {
+        optEnd.setDate(optEnd.getDate() + 1);
+      }
+      
+      // Optimistic update - show shift immediately
+      const tempId = -Date.now();
+      const optimisticShift: WorkShift = {
+        id: tempId,
+        employeeId: targetEmpId,
+        startAt: optStart.toISOString(),
+        endAt: optEnd.toISOString(),
+        title: shift.title,
+        location: shift.location || '',
+        notes: shift.notes || '',
+        color: shift.color,
+      };
+      
+      queryClient.setQueryData(['/api/work-shifts/company'], (oldData: any) => {
+        if (!oldData?.data) return oldData;
+        return { ...oldData, data: [...oldData.data, optimisticShift] };
+      });
+      
+      // Fire API call in background (non-blocking)
+      duplicateShiftAsync(shift, targetEmpId, targetDt, tempId);
       
       setShowConflictModal(false);
       setConflictData(null);
