@@ -4852,12 +4852,19 @@ Responde directamente a este email para contactar con la persona.
         console.log(`Request created pending approval for user ${req.user!.id}: ${request.id}`);
         
         // Broadcast to company admins via WebSocket (only for pending requests)
+        // Include employee name for immediate toast notification
         const wsServer = getWebSocketServer();
         if (wsServer) {
           wsServer.broadcastToCompany(req.user!.companyId, {
             type: 'vacation_request_created',
             companyId: req.user!.companyId,
-            data: { requestId: request.id, employeeId: req.user!.id }
+            data: { 
+              requestId: request.id, 
+              employeeId: req.user!.id,
+              employeeName: user.fullName,
+              startDate: request.startDate,
+              endDate: request.endDate
+            }
           });
         }
       }

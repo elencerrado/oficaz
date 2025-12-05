@@ -466,11 +466,12 @@ export default function VacationManagement() {
   // ⚠️ END PROTECTED TIMELINE FUNCTIONS ⚠️
 
   // Fetch vacation requests
+  // ⚡ OPTIMIZED: WebSocket provides real-time updates, polling is just a fallback
   const { data: vacationRequests = [], isLoading: loadingRequests } = useQuery({
     queryKey: ['/api/vacation-requests/company'],
-    staleTime: 30000, // ⚡ Optimized: cache for 30 seconds
-    refetchInterval: 45000, // ⚡ Optimized: reduced from 10s to 45s
-    refetchIntervalInBackground: false, // ⚡ Optimized: stop background polling to save DB credits
+    staleTime: 60000, // ⚡ Cache for 60 seconds (WebSocket handles instant updates)
+    refetchInterval: 120000, // ⚡ Fallback polling every 2 minutes (WebSocket is primary)
+    refetchIntervalInBackground: false, // Stop background polling to save resources
     select: (data) => {
       // Ensure data consistency and handle missing fields
       if (!data || !Array.isArray(data)) return [];
@@ -494,61 +495,87 @@ export default function VacationManagement() {
     }
   });
 
-  // Track previous vacation requests to detect new ones
+  // ⚡ REAL-TIME UPDATES: WebSocket listener for instant vacation request notifications
+  // This eliminates polling delays - updates appear immediately when employees submit requests
+  useEffect(() => {
+    if (!user || (user.role !== 'admin' && user.role !== 'manager')) return;
+
+    // Get auth token for WebSocket authentication
+    const authData = localStorage.getItem('auth');
+    if (!authData) return;
+
+    let ws: WebSocket | null = null;
+    
+    try {
+      const { token } = JSON.parse(authData);
+      
+      // Build WebSocket URL dynamically from current window location
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.host;
+      const wsUrl = `${protocol}//${host}/ws/work-sessions?token=${token}`;
+
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        console.log('🔔 Vacation Management WebSocket connected');
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          
+          // Handle new vacation request - show toast and refresh data immediately
+          if (message.type === 'vacation_request_created') {
+            const { employeeName, startDate, endDate } = message.data || {};
+            
+            // Show instant toast notification with employee name
+            if (employeeName) {
+              const startDateFormatted = startDate ? format(new Date(startDate), "d 'de' MMMM", { locale: es }) : '';
+              const endDateFormatted = endDate ? format(new Date(endDate), "d 'de' MMMM", { locale: es }) : '';
+              
+              toast({
+                title: "📋 Nueva solicitud de vacaciones",
+                description: `${employeeName} ha solicitado vacaciones${startDateFormatted && endDateFormatted ? ` del ${startDateFormatted} al ${endDateFormatted}` : ''}`,
+                duration: 8000,
+              });
+            }
+            
+            // Immediately invalidate and refetch vacation requests
+            queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
+          }
+          
+          // Also handle vacation request updates
+          if (message.type === 'vacation_request_updated') {
+            queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
+          }
+        } catch {
+          // Silent fail for malformed messages
+        }
+      };
+
+      ws.onerror = () => {
+        // Silent fail - will reconnect on next mount
+      };
+    } catch {
+      // Silent fail for auth parsing errors
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
+  }, [user, queryClient, toast]);
+
+  // Track previous vacation requests (for reference only - WebSocket handles toasts)
   const previousRequestsRef = useRef<VacationRequest[]>([]);
   
-  // Detect new vacation requests and show toast notification
+  // Keep reference in sync with current requests (WebSocket handles toast notifications)
   useEffect(() => {
-    console.log('🔔 Toast effect triggered:', { 
-      vacationRequestsLength: vacationRequests?.length,
-      previousLength: previousRequestsRef.current.length 
-    });
-    
-    if (!vacationRequests || vacationRequests.length === 0) {
-      console.log('🔔 No vacation requests, skipping...');
-      return;
-    }
-    
-    const previousRequests = previousRequestsRef.current;
-    const currentRequests = vacationRequests;
-    
-    // On first load, just store current requests without showing notifications
-    if (previousRequests.length === 0) {
-      console.log('🔔 First load, storing current requests:', currentRequests.length);
-      previousRequestsRef.current = [...currentRequests];
-      return;
-    }
-    
-    // Find new pending requests
-    const newPendingRequests = currentRequests.filter((current: VacationRequest) => 
-      current.status === 'pending' && 
-      !previousRequests.some((prev: VacationRequest) => prev.id === current.id)
-    );
-    
-    console.log('🔔 New pending requests found:', newPendingRequests.length, newPendingRequests);
-    
-    // Show notification for each new pending request
-    newPendingRequests.forEach((request: VacationRequest) => {
-      const employeeName = request.user?.fullName || 'Un empleado';
-      const startDateObj = startOfDay(parseISO(request.startDate));
-      const endDateObj = startOfDay(parseISO(request.endDate));
-      const days = differenceInCalendarDays(endDateObj, startDateObj) + 1;
-      
-      const startDate = format(startDateObj, 'd \'de\' MMMM', { locale: es });
-      const endDate = format(endDateObj, 'd \'de\' MMMM', { locale: es });
-      
-      console.log('🔔 Showing toast for request:', request.id, employeeName, 'Days:', days);
-      
-      toast({
-        title: "📋 Nueva solicitud de vacaciones",
-        description: `${employeeName} ha solicitado vacaciones del ${startDate} al ${endDate} (${days} ${days === 1 ? 'día' : 'días'})`,
-        duration: 8000, // Show for 8 seconds
-      });
-    });
-    
-    // Update the reference with current requests
-    previousRequestsRef.current = [...currentRequests];
-  }, [vacationRequests, toast]);
+    if (!vacationRequests || vacationRequests.length === 0) return;
+    previousRequestsRef.current = [...vacationRequests];
+  }, [vacationRequests]);
 
   // Update vacation request status
   const updateRequestMutation = useMutation({
