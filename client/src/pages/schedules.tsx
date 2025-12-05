@@ -88,9 +88,11 @@ const SHIFT_COLORS = [
 
 export default function Schedules() {
   // Core hooks - must be called unconditionally
+  console.log('[Schedules] Component mounting - v2025-12-05');
   usePageTitle('Horarios');
   const { company, user } = useAuth();
   const featureCheck = useFeatureCheck();
+  console.log('[Schedules] featureCheck:', featureCheck, 'user:', user?.role);
   const { setHeader, resetHeader } = usePageHeader();
   const { toast } = useToast();
   const queryClient = useQueryClient();
