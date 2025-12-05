@@ -23,6 +23,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { usePageHeader } from '@/components/layout/page-header';
 import { TabNavigation } from "@/components/ui/tab-navigation";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { formatVacationDatesShort, formatVacationPeriod } from "@/utils/dateUtils";
 
 interface VacationRequest {
   id: number;
@@ -540,13 +541,12 @@ export default function VacationManagement() {
             
             // Show instant toast notification with employee name
             if (employeeName) {
-              const startDateFormatted = startDate ? format(new Date(startDate), "d 'de' MMMM", { locale: es }) : '';
-              const endDateFormatted = endDate ? format(new Date(endDate), "d 'de' MMMM", { locale: es }) : '';
+              const periodText = startDate && endDate ? ` ${formatVacationPeriod(startDate, endDate)}` : '';
               
               console.log('🔔 Showing vacation toast for:', employeeName);
               toast({
                 title: "📋 Nueva solicitud de vacaciones",
-                description: `${employeeName} ha solicitado vacaciones${startDateFormatted && endDateFormatted ? ` del ${startDateFormatted} al ${endDateFormatted}` : ''}`,
+                description: `${employeeName} ha solicitado vacaciones${periodText}`,
                 duration: 8000,
               });
             } else {
@@ -1041,9 +1041,10 @@ export default function VacationManagement() {
                         </div>
                         <div className="text-sm text-muted-foreground space-y-1">
                           <p>
-                            <span className="font-medium">Fechas:</span>{" "}
-                            {request.startDate ? format(new Date(request.startDate), "dd/MM/yyyy", { locale: es }) : "N/A"} -{" "}
-                            {request.endDate ? format(new Date(request.endDate), "dd/MM/yyyy", { locale: es }) : "N/A"}
+                            <span className="font-medium">Fecha{request.startDate && request.endDate && new Date(request.startDate).toDateString() !== new Date(request.endDate).toDateString() ? 's' : ''}:</span>{" "}
+                            {request.startDate && request.endDate 
+                              ? formatVacationDatesShort(request.startDate, request.endDate)
+                              : "N/A"}
                           </p>
                           <p>
                             <span className="font-medium">Días:</span> {
@@ -1124,9 +1125,10 @@ export default function VacationManagement() {
                       
                       <div className="text-sm text-muted-foreground space-y-1">
                         <p>
-                          <span className="font-medium">Fechas:</span>{" "}
-                          {request.startDate ? format(new Date(request.startDate), "dd/MM/yyyy", { locale: es }) : "N/A"} -{" "}
-                          {request.endDate ? format(new Date(request.endDate), "dd/MM/yyyy", { locale: es }) : "N/A"}
+                          <span className="font-medium">Fecha{request.startDate && request.endDate && new Date(request.startDate).toDateString() !== new Date(request.endDate).toDateString() ? 's' : ''}:</span>{" "}
+                          {request.startDate && request.endDate 
+                            ? formatVacationDatesShort(request.startDate, request.endDate)
+                            : "N/A"}
                         </p>
                         <p>
                           <span className="font-medium">Días:</span> {

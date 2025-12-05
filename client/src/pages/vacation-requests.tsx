@@ -143,8 +143,15 @@ export default function VacationRequests() {
   };
 
   const formatDateRange = (start: string, end: string) => {
-    const startFormatted = format(parseISO(start), 'd MMM', { locale: es });
-    const endFormatted = format(parseISO(end), 'd MMM yyyy', { locale: es });
+    const startDate = parseISO(start);
+    const endDate = parseISO(end);
+    
+    if (startDate.toDateString() === endDate.toDateString()) {
+      return format(startDate, 'd MMM yyyy', { locale: es });
+    }
+    
+    const startFormatted = format(startDate, 'd MMM', { locale: es });
+    const endFormatted = format(endDate, 'd MMM yyyy', { locale: es });
     return `${startFormatted} - ${endFormatted}`;
   };
 

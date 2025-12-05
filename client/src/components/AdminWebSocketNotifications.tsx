@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { formatVacationPeriod } from "@/utils/dateUtils";
 
 export function AdminWebSocketNotifications() {
   const { user } = useAuth();
@@ -81,10 +82,11 @@ export function AdminWebSocketNotifications() {
 
           if (message.type === 'vacation_request_created' && message.data) {
             const { employeeName, startDate, endDate } = message.data;
+            const periodText = startDate && endDate ? ` ${formatVacationPeriod(startDate, endDate)}` : '';
             toast({
               title: "📋 Nueva solicitud de vacaciones",
               description: employeeName 
-                ? `${employeeName} ha solicitado vacaciones${startDate && endDate ? ` del ${new Date(startDate).toLocaleDateString('es-ES')} al ${new Date(endDate).toLocaleDateString('es-ES')}` : ''}`
+                ? `${employeeName} ha solicitado vacaciones${periodText}`
                 : "Se ha recibido una nueva solicitud de vacaciones",
               duration: 8000
             });
