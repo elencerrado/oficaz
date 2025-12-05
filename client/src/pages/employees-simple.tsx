@@ -1037,7 +1037,8 @@ export default function EmployeesSimple() {
           <CardContent>
             <div className="space-y-6">
               {/* Features Grid - Visible Features for Managers */}
-              {companyAddons && companyAddons.filter(ca => ca.status === 'active').length > 0 && (
+              {/* Note: messages and reminders are always enabled for managers, not configurable */}
+              {companyAddons && companyAddons.filter(ca => ca.status === 'active' && !['messages', 'reminders'].includes(ca.addon.key)).length > 0 && (
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6">
                   <div className="flex items-center gap-2 mb-3">
                     <Eye className="h-5 w-5 text-gray-600 dark:text-gray-400" />
@@ -1049,7 +1050,7 @@ export default function EmployeesSimple() {
                     Selecciona qué funcionalidades pueden ver los managers en el menú lateral
                   </p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
-                    {companyAddons.filter(ca => ca.status === 'active').map((ca) => {
+                    {companyAddons.filter(ca => ca.status === 'active' && !['messages', 'reminders'].includes(ca.addon.key)).map((ca) => {
                       const isVisible = hasConfiguredFeatures 
                         ? managerPermissions.visibleFeatures.includes(ca.addon.key)
                         : true;
