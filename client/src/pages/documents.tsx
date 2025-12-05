@@ -365,6 +365,9 @@ export default function Documents() {
     // Mark document as viewed first
     markViewedMutation.mutate(id);
     
+    // Update lastDocumentCheck in localStorage so badge clears
+    localStorage.setItem('lastDocumentCheck', new Date().toISOString());
+    
     // 🔒 SECURITY: Use signed URL instead of JWT token in query params
     const signedUrl = await generateSignedUrl(id);
     if (!signedUrl) return;
@@ -375,8 +378,22 @@ export default function Documents() {
     const url = new URL(signedUrl, window.location.origin);
     url.searchParams.set('view', 'true');
     
-    // Abrir documento en nueva pestaña para visualización
-    window.open(url.toString(), '_blank', 'noopener,noreferrer');
+    // iOS/PWA compatible: Use link click instead of window.open (which is often blocked)
+    const link = document.createElement('a');
+    link.href = url.toString();
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    
+    // For iOS: Try to download directly if it's a PDF or image
+    const ext = filename.toLowerCase().split('.').pop();
+    if (ext === 'pdf' || ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) {
+      // For PDF/images, open in new tab works better
+      link.click();
+    } else {
+      // For other files, trigger download
+      link.download = filename;
+      link.click();
+    }
   };
 
   const getFileIcon = (filename: string) => {

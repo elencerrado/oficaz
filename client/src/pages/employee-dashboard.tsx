@@ -468,52 +468,21 @@ export default function EmployeeDashboard() {
     const hasPendingRequests = pendingRequests.length > 0;
     setHasDocumentRequests(hasPendingRequests);
 
-    // 🟢 GREEN: New documents received
-    const lastDocumentCheck = localStorage.getItem('lastDocumentCheck');
-    const lastCheckDate = lastDocumentCheck ? new Date(lastDocumentCheck) : new Date(Date.now() - 24 * 60 * 60 * 1000);
-    
-    // Check for payroll documents that need signature
-    const unsignedPayrolls = (documents as any[]).filter((doc: any) => {
-      const isPayroll = doc.fileName.toLowerCase().includes('nomina') || 
-                       doc.fileName.toLowerCase().includes('nómina') ||
-                       doc.type === 'payroll';
-      const needsSignature = !doc.isSigned;
-      const isRecent = new Date(doc.createdAt) > lastCheckDate;
-      
-      return isPayroll && needsSignature && isRecent;
+    // 🟢 GREEN: New documents that user hasn't viewed yet
+    // Uses isViewed field from database - badge clears when user clicks "Ver" button
+    const unviewedDocuments = (documents as any[]).filter((doc: any) => {
+      // Document is new if user hasn't viewed it yet
+      return !doc.isViewed;
     });
 
-    // Check for other new documents (non-payroll)
-    const otherNewDocuments = (documents as any[]).filter((doc: any) => {
-      const isPayroll = doc.fileName.toLowerCase().includes('nomina') || 
-                       doc.fileName.toLowerCase().includes('nómina') ||
-                       doc.type === 'payroll';
-      const isRecent = new Date(doc.createdAt) > lastCheckDate;
-      
-      // For non-payroll docs, check if user has visited documents page
-      if (!isPayroll && isRecent) {
-        const lastPageVisit = localStorage.getItem('lastDocumentPageVisit');
-        if (lastPageVisit) {
-          const visitDate = new Date(lastPageVisit);
-          // Clear if visited after document creation
-          return new Date(doc.createdAt) > visitDate;
-        }
-        return true;
-      }
-      
-      return false;
-    });
-
-    const hasRecentDocuments = unsignedPayrolls.length > 0 || otherNewDocuments.length > 0;
-    setHasNewDocuments(hasRecentDocuments);
+    const hasUnviewedDocuments = unviewedDocuments.length > 0;
+    setHasNewDocuments(hasUnviewedDocuments);
 
     console.log('📋 Document notifications check:', {
       pendingRequests: pendingRequests.length,
-      unsignedPayrolls: unsignedPayrolls.length,
-      otherNewDocuments: otherNewDocuments.length,
-      lastCheck: lastCheckDate.toISOString(),
+      unviewedDocuments: unviewedDocuments.length,
       hasPendingRequests,
-      hasRecentDocuments
+      hasUnviewedDocuments
     });
 
   }, [documentNotifications, documents]);
