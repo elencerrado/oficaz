@@ -84,14 +84,16 @@ const SHIFT_COLORS = [
 ];
 
 export default function Schedules() {
+  // Core hooks - must be called unconditionally
   usePageTitle('Horarios');
   const { company, user } = useAuth();
-  const { getSchedulesAccessMode } = useFeatureCheck();
+  const featureCheck = useFeatureCheck();
   const { setHeader, resetHeader } = usePageHeader();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const schedulesAccessMode = getSchedulesAccessMode();
+  // Access mode - safe to call after featureCheck is initialized
+  const schedulesAccessMode = featureCheck?.getSchedulesAccessMode?.() || 'none';
   const isViewOnly = schedulesAccessMode === 'view';
   const hasNoAccess = schedulesAccessMode === 'none';
 
