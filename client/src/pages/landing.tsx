@@ -95,12 +95,13 @@ const addonExtendedDescriptions: Record<string, string> = {
   ai_assistant: "Tu asistente inteligente disponible 24/7. Dile 'crea el horario de esta semana' y lo hace. Pregúntale 'cuántas horas trabajó Ana en octubre' y te responde al instante. Gestión por voz o texto."
 };
 
-function DifficultySlider() {
+function DifficultySlider({ onSelect }: { onSelect?: (option: 'dificil' | 'normal' | 'oficaz') => void }) {
   const [selected, setSelected] = useState<'dificil' | 'normal' | 'oficaz'>('normal');
   const [, navigate] = useLocation();
   
   const handleSelect = (option: 'dificil' | 'normal' | 'oficaz') => {
     setSelected(option);
+    onSelect?.(option);
     if (option === 'oficaz') {
       setTimeout(() => {
         navigate('/request-code');
@@ -732,6 +733,7 @@ export default function Landing() {
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [previewAddon, setPreviewAddon] = useState<string>('time_tracking');
+  const [difficultyMode, setDifficultyMode] = useState<'dificil' | 'normal' | 'oficaz'>('normal');
 
   // Pricing calculator state - starts with 1 admin (required), employees (always included) and time_tracking selected
   const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set(['employees', 'time_tracking']));
@@ -1008,26 +1010,28 @@ export default function Landing() {
         {/* Content */}
         <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
           <div className="space-y-8 lg:space-y-10">
-            {/* Main Headline */}
+            {/* Main Headline - Dynamic based on difficulty */}
             <div className="space-y-3">
               <h1 
-                className="text-5xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white leading-[1.1] tracking-tight transition-all duration-1000 ease-out"
+                className="text-5xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white leading-[1.1] tracking-tight transition-all duration-500 ease-out"
                 style={{
                   opacity: isLoaded ? 1 : 0,
                   transform: isLoaded ? 'translateY(0)' : 'translateY(40px)',
                 }}
               >
-                Haz lo que te mueve.
+                {difficultyMode === 'dificil' ? 'Reto aceptado.' : 'Haz lo que te mueve.'}
               </h1>
               <p 
-                className="text-3xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#60B5FF] transition-all duration-1000 ease-out"
+                className={`text-3xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-all duration-500 ease-out ${
+                  difficultyMode === 'dificil' ? 'text-red-400' : 'text-[#60B5FF]'
+                }`}
                 style={{
                   opacity: isLoaded ? 1 : 0,
                   transform: isLoaded ? 'translateY(0)' : 'translateY(40px)',
                   transitionDelay: '150ms',
                 }}
               >
-                Déjanos la parte aburrida.
+                {difficultyMode === 'dificil' ? 'Una empresa en llamas nos motiva.' : 'Déjanos la parte aburrida.'}
               </p>
             </div>
 
@@ -1063,7 +1067,7 @@ export default function Landing() {
                   transitionDelay: '600ms',
                 }}
               >
-                <DifficultySlider />
+                <DifficultySlider onSelect={setDifficultyMode} />
               </div>
             </div>
           </div>
