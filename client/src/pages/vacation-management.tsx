@@ -966,7 +966,7 @@ export default function VacationManagement() {
       <TabNavigation
         tabs={[
           { id: 'employees', label: 'Timeline de Vacaciones', icon: Users },
-          { id: 'requests', label: 'Solicitudes', icon: Clock },
+          { id: 'requests', label: 'Solicitudes', icon: Clock, badge: pendingRequests.length },
           { id: 'holidays', label: 'Días Festivos', icon: CalendarDays }
         ]}
         activeTab={activeTab}
