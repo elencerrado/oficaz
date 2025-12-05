@@ -181,40 +181,9 @@ function ManagerFeatureGate({
   children: React.ReactNode; 
   feature: string;
 }) {
-  const { user, company, isLoading } = useAuth();
-  
-  const { data: managerPermissionsData, isLoading: permissionsLoading } = useQuery<{ 
-    managerPermissions: { visibleFeatures?: string[] | null } 
-  }>({
-    queryKey: ['/api/settings/manager-permissions'],
-    enabled: user?.role === 'manager',
-  });
-
-  if (isLoading || (user?.role === 'manager' && permissionsLoading)) {
-    return <PageLoading />;
-  }
-
-  if (user?.role !== 'manager') {
-    return <>{children}</>;
-  }
-
-  const addonKey = featureToAddonKey[feature] || feature;
-  const visibleFeatures = managerPermissionsData?.managerPermissions?.visibleFeatures;
-
-  if (visibleFeatures === undefined || visibleFeatures === null) {
-    return <>{children}</>;
-  }
-
-  if (visibleFeatures.length === 0) {
-    const companyAlias = company?.companyAlias || 'test';
-    return <Redirect to={`/${companyAlias}/inicio`} />;
-  }
-
-  if (!visibleFeatures.includes(addonKey)) {
-    const companyAlias = company?.companyAlias || 'test';
-    return <Redirect to={`/${companyAlias}/inicio`} />;
-  }
-  
+  // Managers can always access pages - the access level (full vs read-only) 
+  // is controlled within each page via useFeatureCheck hooks.
+  // This allows managers with "Solo lectura" permission to view pages with limited access.
   return <>{children}</>;
 }
 
