@@ -728,47 +728,51 @@ export default function AdminWorkReportsPage() {
             <span className="text-sm sm:text-lg font-medium">{filterTitle} ({filteredReports.length})</span>
             
             <div className="flex items-center gap-2">
-              {/* Create button */}
-              <Button 
-                size="sm" 
-                onClick={() => {
-                  setSelectedEmployeeId('');
-                  setCreateFormData({
-                    reportDate: format(new Date(), 'yyyy-MM-dd'),
-                    refCode: '',
-                    location: '',
-                    startTime: '09:00',
-                    endTime: '17:00',
-                    description: '',
-                    clientName: '',
-                    notes: ''
-                  });
-                  setCreateModalOpen(true);
-                }}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Plus className="w-4 h-4" />
-                Crear Parte
-              </Button>
-              {/* Config button */}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => {
-                  const modes: Record<number, string> = {};
-                  employees.forEach(emp => {
-                    let mode = emp.workReportMode || 'manual';
-                    if (mode === 'on_clockout') mode = 'both';
-                    modes[emp.id] = mode;
-                  });
-                  setEmployeeWorkModes(modes);
-                  setConfigModalOpen(true);
-                }}
-                className="flex items-center gap-2"
-              >
-                <Settings className="w-4 h-4" />
-                Configurar
-              </Button>
+              {/* Create button - hidden in self-access mode (read-only) */}
+              {!isSelfAccessOnly && (
+                <Button 
+                  size="sm" 
+                  onClick={() => {
+                    setSelectedEmployeeId('');
+                    setCreateFormData({
+                      reportDate: format(new Date(), 'yyyy-MM-dd'),
+                      refCode: '',
+                      location: '',
+                      startTime: '09:00',
+                      endTime: '17:00',
+                      description: '',
+                      clientName: '',
+                      notes: ''
+                    });
+                    setCreateModalOpen(true);
+                  }}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Plus className="w-4 h-4" />
+                  Crear Parte
+                </Button>
+              )}
+              {/* Config button - hidden in self-access mode */}
+              {!isSelfAccessOnly && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    const modes: Record<number, string> = {};
+                    employees.forEach(emp => {
+                      let mode = emp.workReportMode || 'manual';
+                      if (mode === 'on_clockout') mode = 'both';
+                      modes[emp.id] = mode;
+                    });
+                    setEmployeeWorkModes(modes);
+                    setConfigModalOpen(true);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Settings className="w-4 h-4" />
+                  Configurar
+                </Button>
+              )}
               {/* Filters button */}
               <Button 
                 variant="outline" 
@@ -986,14 +990,17 @@ export default function AdminWorkReportsPage() {
                           )}
                         </div>
                         <div className="flex items-center gap-1 sm:gap-2 self-end sm:self-auto">
-                          <button
-                            onClick={() => handleEditReport(report)}
-                            className="p-2 sm:p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
-                            title="Editar parte"
-                            data-testid={`button-edit-report-${report.id}`}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
+                          {/* Edit button - hidden in self-access mode (read-only) */}
+                          {!isSelfAccessOnly && (
+                            <button
+                              onClick={() => handleEditReport(report)}
+                              className="p-2 sm:p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
+                              title="Editar parte"
+                              data-testid={`button-edit-report-${report.id}`}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => handleViewReport(report)}
                             className="p-2 sm:p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"

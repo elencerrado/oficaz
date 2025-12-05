@@ -1043,11 +1043,11 @@ export default function EmployeesSimple() {
                   <div className="flex items-center gap-2 mb-3">
                     <Eye className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                     <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                      Funcionalidades Visibles
+                      Nivel de Acceso por Funcionalidad
                     </p>
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Selecciona qué funcionalidades pueden ver los managers en el menú lateral
+                    <strong>Completo</strong>: acceso total como administrador. <strong>Solo lectura</strong>: solo pueden ver (sin editar).
                   </p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
                     {companyAddons.filter(ca => ca.status === 'active' && !['messages', 'reminders'].includes(ca.addon.key)).map((ca) => {
@@ -1113,14 +1113,16 @@ export default function EmployeesSimple() {
                             updatePermissionsMutation.mutate(newPermissions);
                           }}
                           className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-200 border-2 ${getFeatureColor(ca.addon.key, isVisible)} ${isVisible ? 'ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-gray-900' : 'opacity-60 hover:opacity-80'}`}
-                          title={isVisible ? `Ocultar ${getFeatureName(ca.addon.key)} del menú` : `Mostrar ${getFeatureName(ca.addon.key)} en el menú`}
+                          title={isVisible 
+                            ? `Restringir ${getFeatureName(ca.addon.key)} a solo lectura con datos propios` 
+                            : `Dar acceso completo a ${getFeatureName(ca.addon.key)}`}
                         >
                           {getFeatureIcon(ca.addon.key)}
                           <span className="text-xs font-medium mt-2 truncate w-full text-center">
                             {getFeatureName(ca.addon.key)}
                           </span>
                           <span className="text-[10px] mt-1 opacity-70">
-                            {isVisible ? 'Visible' : 'Oculto'}
+                            {isVisible ? 'Completo' : 'Solo lectura'}
                           </span>
                         </button>
                       );
