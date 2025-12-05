@@ -28,6 +28,9 @@ export function useFeatureCheck() {
 
   const isManagerPermissionsLoading = user?.role === 'manager' && isLoadingPermissions;
 
+  // Features that are ALWAYS enabled for managers (not configurable)
+  const alwaysEnabledForManagers = ['messages', 'reminders'];
+
   const hasAccess = (feature: FeatureKey, options?: { bypassManagerRestrictions?: boolean }): boolean => {
     const subscriptionAccess = checkFeatureAccess(subscription, feature);
     if (!subscriptionAccess) return false;
@@ -39,6 +42,13 @@ export function useFeatureCheck() {
     }
 
     if (user?.role === 'manager') {
+      const addonKey = featureToAddonKey[feature] || feature;
+      
+      // Messages and reminders are ALWAYS enabled for managers
+      if (alwaysEnabledForManagers.includes(addonKey)) {
+        return subscriptionAccess;
+      }
+      
       // While permissions are loading, deny access to prevent flicker
       if (isLoadingPermissions) {
         return false;
@@ -54,7 +64,6 @@ export function useFeatureCheck() {
         return false;
       }
 
-      const addonKey = featureToAddonKey[feature] || feature;
       return visibleFeatures.includes(addonKey);
     }
 
