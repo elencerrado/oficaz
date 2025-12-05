@@ -1045,16 +1045,27 @@ export default function Landing() {
 
             {/* Difficulty Slider */}
             {registrationSettings?.publicRegistrationEnabled && (
-              <div 
-                className="flex flex-col items-center gap-4 pt-4 transition-all duration-1000 ease-out"
-                style={{
-                  opacity: isLoaded ? 1 : 0,
-                  transform: isLoaded ? 'translateY(0)' : 'translateY(30px)',
-                  transitionDelay: '1400ms',
-                }}
-              >
-                <p className="text-white/70 text-sm font-medium">Selecciona nivel de dificultad</p>
-                <DifficultySlider />
+              <div className="flex flex-col items-center gap-4 pt-4">
+                <p 
+                  className="text-white/70 text-sm font-medium transition-all duration-1000 ease-out"
+                  style={{
+                    opacity: isLoaded ? 1 : 0,
+                    transform: isLoaded ? 'translateY(0)' : 'translateY(30px)',
+                    transitionDelay: '450ms',
+                  }}
+                >
+                  Elige nivel de dificultad
+                </p>
+                <div
+                  className="transition-all duration-1000 ease-out"
+                  style={{
+                    opacity: isLoaded ? 1 : 0,
+                    transform: isLoaded ? 'translateY(0)' : 'translateY(30px)',
+                    transitionDelay: '600ms',
+                  }}
+                >
+                  <DifficultySlider />
+                </div>
               </div>
             )}
           </div>
