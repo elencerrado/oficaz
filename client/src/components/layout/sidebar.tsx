@@ -56,20 +56,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const alwaysVisibleForManagers = ['messages', 'reminders'];
   
   const isFeatureVisibleForManager = (featureKey: string | undefined): boolean => {
-    if (!featureKey || user?.role !== 'manager') return true;
-    
-    // In Employee View Mode, bypass all manager visibility restrictions
-    if (isEmployeeViewMode) return true;
-    
-    const addonKey = featureToAddonKey[featureKey] || featureKey;
-    
-    // Messages and reminders are ALWAYS visible for managers
-    if (alwaysVisibleForManagers.includes(addonKey)) return true;
-    
-    const visibleFeatures = managerPermissionsData?.managerPermissions?.visibleFeatures;
-    if (visibleFeatures === undefined || visibleFeatures === null) return true;
-    if (visibleFeatures.length === 0) return false;
-    return visibleFeatures.includes(addonKey);
+    // Managers can always see sidebar items - access level is controlled within each page
+    // This allows managers with "Solo lectura" (read-only) access to see pages
+    // The actual permission checking happens in the page components via useFeatureCheck hooks
+    return true;
   };
 
   const companyAlias = company?.companyAlias || 'test';
