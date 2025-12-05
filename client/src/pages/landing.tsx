@@ -1062,7 +1062,7 @@ export default function Landing() {
       </section>
 
       {/* Focus Section - Apple Style */}
-      <section className="py-24 md:py-32 lg:py-40 bg-white relative overflow-hidden">
+      <section className="py-24 md:py-32 lg:py-40 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <ScrollReveal>
             <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-[1.1] tracking-tight mb-6">
@@ -1117,8 +1117,8 @@ export default function Landing() {
                   {addons.map((addon, index) => (
                     <CarouselItem key={addon.key} className="pl-2 basis-[80%] sm:basis-[65%]">
                       <div className="flex flex-col items-center">
-                        {/* Phone Preview - Taller for mobile */}
-                        <div className="relative bg-gray-900 rounded-[2.5rem] p-2 shadow-2xl shadow-gray-400/30">
+                        {/* Phone Preview - Taller for mobile with enhanced shadow */}
+                        <div className="relative bg-gray-900 rounded-[2.5rem] p-2 shadow-[0_25px_80px_-12px_rgba(0,0,0,0.4),0_12px_40px_-8px_rgba(0,0,0,0.3)]">
                           <div className="relative bg-[#0a1628] rounded-[2rem] overflow-hidden" style={{ width: '200px', aspectRatio: '9/19.5' }}>
                             <div className="absolute top-0 left-0 right-0 h-7 bg-[#0a1628] z-10 flex items-center justify-between px-3 pt-1">
                               <span className="text-[10px] font-semibold text-white">17:00</span>
@@ -1284,8 +1284,8 @@ export default function Landing() {
               {/* Right: Mobile Preview Mockup */}
               <div className="flex justify-center">
               <div className="relative">
-                {/* Phone Frame - Narrower iPhone style */}
-                <div className="relative bg-gray-900 rounded-[2.5rem] p-2 shadow-2xl shadow-gray-400/30">
+                {/* Phone Frame - Narrower iPhone style with enhanced shadow */}
+                <div className="relative bg-gray-900 rounded-[2.5rem] p-2 shadow-[0_25px_80px_-12px_rgba(0,0,0,0.4),0_12px_40px_-8px_rgba(0,0,0,0.3)]">
                   {/* Screen - Dark theme like real app */}
                   <div className="relative bg-[#0a1628] rounded-[2rem] overflow-hidden" style={{ width: '200px', aspectRatio: '9/19' }}>
                     {/* Status Bar */}
