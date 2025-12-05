@@ -88,11 +88,9 @@ const SHIFT_COLORS = [
 
 export default function Schedules() {
   // Core hooks - must be called unconditionally
-  console.log('[Schedules] Component mounting - v2025-12-05');
   usePageTitle('Horarios');
   const { company, user } = useAuth();
   const featureCheck = useFeatureCheck();
-  console.log('[Schedules] featureCheck:', featureCheck, 'user:', user?.role);
   const { setHeader, resetHeader } = usePageHeader();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -1084,6 +1082,10 @@ export default function Schedules() {
   const { data: workShifts = [], isLoading: loadingShifts, refetch: refetchShifts } = useQuery<WorkShift[]>({
     queryKey: ['/api/work-shifts/company', format(weekRange.start, 'yyyy-MM-dd'), format(weekRange.end, 'yyyy-MM-dd')],
     enabled: !!weekRange.start && !!weekRange.end,
+    select: (data: any) => {
+      // Handle both old array format and new { shifts, accessMode } format
+      return Array.isArray(data) ? data : (data?.shifts || []);
+    },
   });
 
   // Query para obtener solicitudes de vacaciones aprobadas

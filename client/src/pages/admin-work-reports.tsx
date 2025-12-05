@@ -267,7 +267,9 @@ export default function AdminWorkReportsPage() {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to fetch reports');
-      return response.json();
+      const data = await response.json();
+      // Handle both old array format and new { reports, accessMode } format
+      return Array.isArray(data) ? data : (data?.reports || []);
     },
     enabled: isAuthenticated && !authLoading,
     staleTime: 30000,
