@@ -103,9 +103,10 @@ interface EditFormData {
 export default function AdminWorkReportsPage() {
   usePageTitle('Partes de Trabajo - Admin');
   const { user, isAuthenticated, isLoading: authLoading, subscription } = useAuth();
-  const { hasAccess, getWorkReportsAccessMode } = useFeatureCheck();
+  const featureCheck = useFeatureCheck();
   
-  const workReportsAccessMode = getWorkReportsAccessMode();
+  const workReportsAccessMode = featureCheck?.getWorkReportsAccessMode?.() || 'none';
+  const hasAccess = featureCheck?.hasAccess;
   const isSelfAccessOnly = workReportsAccessMode === 'self';
   const { setHeader, resetHeader } = usePageHeader();
   const { toast } = useToast();

@@ -1,3 +1,6 @@
+// Schedules Component - Work Shift Management
+// Last updated: 2025-12-05 - Fixed access mode initialization
+
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePageTitle } from '@/hooks/use-page-title';
