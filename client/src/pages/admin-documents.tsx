@@ -1860,14 +1860,14 @@ export default function AdminDocuments() {
             
             <div className="px-5 py-4 space-y-4 overflow-y-auto flex-1 min-h-0">
               {/* Mode Toggle - Apple-style segmented control */}
-              <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-1 flex">
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 flex">
                 <button
                   type="button"
                   onClick={() => {
                     setUploadMode('individual');
                     setUploadSelectedEmployees([]);
                   }}
-                  className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
                     uploadMode === 'individual'
                       ? 'bg-white dark:bg-gray-700 text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
@@ -1883,7 +1883,7 @@ export default function AdminDocuments() {
                     setUploadMode('circular');
                     setUploadSelectedEmployees(employees.map((e: Employee) => e.id));
                   }}
-                  className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
                     uploadMode === 'circular'
                       ? 'bg-white dark:bg-gray-700 text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
