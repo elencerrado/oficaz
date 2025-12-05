@@ -1277,7 +1277,22 @@ export default function EmployeeTimeTracking() {
                   locale={es}
                   initialFocus
                   className="rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  modifiers={{
+                    hasSession: sessions.map((s: WorkSession) => new Date(s.clockIn))
+                  }}
+                  modifiersStyles={{
+                    hasSession: {
+                      backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                      borderRadius: '50%',
+                      color: 'rgb(22, 163, 74)'
+                    }
+                  }}
                 />
+              </div>
+              
+              <div className="flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                <span className="w-3 h-3 rounded-full bg-green-500/30 border border-green-500/50"></span>
+                <span>Días con fichaje</span>
               </div>
               
               <div className="flex gap-3 pt-2">
