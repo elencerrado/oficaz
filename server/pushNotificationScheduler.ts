@@ -340,6 +340,11 @@ async function checkIncompleteSessions() {
       return;
     }
     
+    // ⚠️ CRITICAL: Set flag IMMEDIATELY to prevent race conditions
+    // This prevents duplicate notifications when the interval fires multiple times during the 9 AM hour
+    sentIncompleteSessionNotifications.set(todayKey, now);
+    console.log(`🔒 Locked incomplete session check for ${todayKey} to prevent duplicates`);
+    
     console.log('🔍 Checking for incomplete work sessions...');
     
     // Find all incomplete sessions (sessions from previous days without clock out)
@@ -519,9 +524,8 @@ async function checkIncompleteSessions() {
       }
     }
     
-    // Mark as checked for today
-    sentIncompleteSessionNotifications.set(todayKey, now);
-    console.log(`✅ Incomplete sessions checked for ${todayKey}`);
+    // Flag was already set at the beginning - just log completion
+    console.log(`✅ Incomplete sessions check completed for ${todayKey}`);
     
     // Clean up old entries (older than 7 days)
     const sevenDaysAgo = now.getTime() - (7 * 24 * 60 * 60 * 1000);
