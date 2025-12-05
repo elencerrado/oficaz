@@ -665,7 +665,21 @@ export default function AdminDocuments() {
     setUploadAnalysis(prev => prev.map((item, i) => 
       i === index ? { ...item, suggestedName: newName } : item
     ));
-  };;
+  };
+
+  const updateAnalysisDocumentType = (index: number, documentTypeId: string) => {
+    setUploadAnalysis(prev => prev.map((item, i) => {
+      if (i === index) {
+        return { 
+          ...item, 
+          documentType: documentTypeId,
+          documentTypeName: documentTypes.find(t => t.id === documentTypeId)?.name || 'Otros',
+          suggestedName: item.employee ? generateCleanFileName(item.file.name, item.employee, documentTypeId) : item.suggestedName
+        };
+      }
+      return item;
+    }));
+  };
 
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
@@ -1955,7 +1969,10 @@ export default function AdminDocuments() {
                         
                         <div>
                           <label className="block text-xs text-muted-foreground mb-1">Tipo</label>
-                          <Select value={analysis.documentType} disabled>
+                          <Select 
+                            value={analysis.documentType} 
+                            onValueChange={(value) => updateAnalysisDocumentType(index, value)}
+                          >
                             <SelectTrigger className="h-9">
                               <SelectValue />
                             </SelectTrigger>
