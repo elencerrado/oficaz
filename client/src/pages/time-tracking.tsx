@@ -4154,151 +4154,136 @@ export default function TimeTracking() {
                 modificationRequests.map((request: any) => (
                   <div 
                     key={request.id} 
-                    className={`border rounded-lg p-4 ${
+                    className={`border rounded-lg p-3 ${
                       request.requestType === 'forgotten_checkin' 
                         ? 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800' 
                         : 'bg-orange-50/50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800'
                     }`}
                   >
-                    <div className="grid grid-cols-1 lg:grid-cols-[auto,1fr,auto] gap-4 items-start">
-                      {/* Left: Avatar y nombre */}
-                      <div className="flex items-center gap-3 lg:min-w-[200px]">
+                    {/* Header: Avatar, nombre, fecha y badge */}
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
                         <UserAvatar
                           fullName={request.employeeName}
                           profilePicture={request.employeeProfilePicture}
                           size="sm"
                         />
-                        <div>
-                          <div className="font-medium text-sm">{request.employeeName}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {format(new Date(request.requestedDate), 'dd/MM/yyyy', { locale: es })}
-                          </div>
-                          <div className={`text-xs font-medium mt-0.5 ${
-                            request.requestType === 'forgotten_checkin'
-                              ? 'text-blue-600 dark:text-blue-400'
-                              : 'text-orange-600 dark:text-orange-400'
-                          }`}>
-                            {request.requestType === 'forgotten_checkin' ? 'Fichaje olvidado' : 'Modificar horario'}
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-sm truncate">{request.employeeName}</div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(request.requestedDate), 'dd/MM/yyyy', { locale: es })}
+                            </span>
+                            <span className={`text-xs font-medium ${
+                              request.requestType === 'forgotten_checkin'
+                                ? 'text-blue-600 dark:text-blue-400'
+                                : 'text-orange-600 dark:text-orange-400'
+                            }`}>
+                              {request.requestType === 'forgotten_checkin' ? 'Fichaje olvidado' : 'Modificar horario'}
+                            </span>
                           </div>
                         </div>
                       </div>
-
-                      {/* Center: Detalles del horario */}
-                      <div className="flex-1">
-                        {request.requestType === 'forgotten_checkin' ? (
-                          <div className="flex items-center gap-6 text-sm">
-                            <div>
-                              <span className="text-muted-foreground text-xs">Entrada:</span>
-                              <div className="font-medium">{format(new Date(request.requestedClockIn), 'HH:mm')}</div>
-                            </div>
-                            {request.requestedClockOut && (
-                              <>
-                                <div>
-                                  <span className="text-muted-foreground text-xs">Salida:</span>
-                                  <div className="font-medium">{format(new Date(request.requestedClockOut), 'HH:mm')}</div>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground text-xs">Total:</span>
-                                  <div className="font-semibold text-blue-600 dark:text-blue-400">
-                                    {(() => {
-                                      const totalMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
-                                      const hours = Math.floor(totalMs / (1000 * 60 * 60));
-                                      const minutes = Math.floor((totalMs % (1000 * 60 * 60)) / (1000 * 60));
-                                      return `${hours}h ${minutes}min`;
-                                    })()}
-                                  </div>
-                                </div>
-                              </>
-                            )}
-                            <div className="flex-1">
-                              <span className="text-muted-foreground text-xs">Motivo:</span>
-                              <div className="italic text-sm">{request.reason}</div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-6 text-sm">
-                            <div>
-                              <span className="text-muted-foreground text-xs">Entrada:</span>
-                              <div className="flex items-center gap-1.5">
-                                <span className="line-through text-gray-400 text-xs">{request.currentClockIn ? format(new Date(request.currentClockIn), 'HH:mm') : '—'}</span>
-                                <ArrowDown className="w-3 h-3 text-blue-500 rotate-[-90deg]" />
-                                <span className="font-medium text-blue-600 dark:text-blue-400">{format(new Date(request.requestedClockIn), 'HH:mm')}</span>
-                              </div>
-                            </div>
-                            {request.requestedClockOut && (
-                              <>
-                                <div>
-                                  <span className="text-muted-foreground text-xs">Salida:</span>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="line-through text-gray-400 text-xs">{request.currentClockOut ? format(new Date(request.currentClockOut), 'HH:mm') : '—'}</span>
-                                    <ArrowDown className="w-3 h-3 text-blue-500 rotate-[-90deg]" />
-                                    <span className="font-medium text-blue-600 dark:text-blue-400">{format(new Date(request.requestedClockOut), 'HH:mm')}</span>
-                                  </div>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground text-xs">Total:</span>
-                                  <div className="flex items-center gap-1.5">
-                                    {request.currentClockIn && request.currentClockOut && (
-                                      <>
-                                        <span className="line-through text-gray-400 text-xs">
-                                          {(() => {
-                                            const currentMs = new Date(request.currentClockOut).getTime() - new Date(request.currentClockIn).getTime();
-                                            const currentHours = Math.floor(currentMs / (1000 * 60 * 60));
-                                            const currentMinutes = Math.floor((currentMs % (1000 * 60 * 60)) / (1000 * 60));
-                                            return `${currentHours}h ${currentMinutes}min`;
-                                          })()}
-                                        </span>
-                                        <ArrowDown className="w-3 h-3 text-blue-500 rotate-[-90deg]" />
-                                      </>
-                                    )}
-                                    <span className="font-semibold text-blue-600 dark:text-blue-400">
-                                      {(() => {
-                                        const requestedMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
-                                        const requestedHours = Math.floor(requestedMs / (1000 * 60 * 60));
-                                        const requestedMinutes = Math.floor((requestedMs % (1000 * 60 * 60)) / (1000 * 60));
-                                        return `${requestedHours}h ${requestedMinutes}min`;
-                                      })()}
-                                    </span>
-                                  </div>
-                                </div>
-                              </>
-                            )}
-                            <div className="flex-1">
-                              <span className="text-muted-foreground text-xs">Motivo:</span>
-                              <div className="italic text-sm">{request.reason}</div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right: Badge y botones */}
-                      <div className="flex flex-col items-end gap-3 lg:min-w-[180px]">
-                        <Badge variant={request.status === 'pending' ? 'default' : request.status === 'approved' ? 'default' : 'destructive'}>
-                          {request.status === 'pending' ? 'Pendiente' : request.status === 'approved' ? 'Aprobada' : 'Rechazada'}
-                        </Badge>
-                        {request.status === 'pending' && (
-                          <div className="flex gap-2 w-full">
-                            <Button
-                              size="sm"
-                              onClick={() => processRequestMutation.mutate({ id: request.id, status: 'approved' })}
-                              className="flex-1"
-                              data-testid={`button-approve-${request.id}`}
-                            >
-                              <Check className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => processRequestMutation.mutate({ id: request.id, status: 'rejected' })}
-                              className="flex-1"
-                              data-testid={`button-reject-${request.id}`}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
+                      <Badge variant={request.status === 'pending' ? 'default' : request.status === 'approved' ? 'default' : 'destructive'} className="flex-shrink-0 text-xs">
+                        {request.status === 'pending' ? 'Pendiente' : request.status === 'approved' ? 'Aprobada' : 'Rechazada'}
+                      </Badge>
                     </div>
+
+                    {/* Detalles del horario - layout compacto en grid 3 columnas */}
+                    <div className={`rounded-md p-2 mb-2 ${
+                      request.requestType === 'forgotten_checkin'
+                        ? 'bg-blue-100/50 dark:bg-blue-900/30'
+                        : 'bg-orange-100/50 dark:bg-orange-900/30'
+                    }`}>
+                      {request.requestType === 'forgotten_checkin' ? (
+                        <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                          <div>
+                            <div className="text-muted-foreground">Entrada</div>
+                            <div className="font-semibold">{format(new Date(request.requestedClockIn), 'HH:mm')}</div>
+                          </div>
+                          <div>
+                            <div className="text-muted-foreground">Salida</div>
+                            <div className="font-semibold">{request.requestedClockOut ? format(new Date(request.requestedClockOut), 'HH:mm') : '—'}</div>
+                          </div>
+                          <div>
+                            <div className="text-muted-foreground">Total</div>
+                            <div className="font-semibold text-blue-600 dark:text-blue-400">
+                              {request.requestedClockOut ? (() => {
+                                const totalMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
+                                const hours = Math.floor(totalMs / (1000 * 60 * 60));
+                                const minutes = Math.floor((totalMs % (1000 * 60 * 60)) / (1000 * 60));
+                                return `${hours}h ${minutes}m`;
+                              })() : '—'}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                          <div>
+                            <div className="text-muted-foreground">Entrada</div>
+                            <div className="line-through text-gray-400 text-[10px]">{request.currentClockIn ? format(new Date(request.currentClockIn), 'HH:mm') : '—'}</div>
+                            <div className="font-semibold text-blue-600 dark:text-blue-400">{format(new Date(request.requestedClockIn), 'HH:mm')}</div>
+                          </div>
+                          <div>
+                            <div className="text-muted-foreground">Salida</div>
+                            <div className="line-through text-gray-400 text-[10px]">{request.currentClockOut ? format(new Date(request.currentClockOut), 'HH:mm') : '—'}</div>
+                            <div className="font-semibold text-blue-600 dark:text-blue-400">{request.requestedClockOut ? format(new Date(request.requestedClockOut), 'HH:mm') : '—'}</div>
+                          </div>
+                          <div>
+                            <div className="text-muted-foreground">Total</div>
+                            {request.currentClockIn && request.currentClockOut && (
+                              <div className="line-through text-gray-400 text-[10px]">
+                                {(() => {
+                                  const currentMs = new Date(request.currentClockOut).getTime() - new Date(request.currentClockIn).getTime();
+                                  const currentHours = Math.floor(currentMs / (1000 * 60 * 60));
+                                  const currentMinutes = Math.floor((currentMs % (1000 * 60 * 60)) / (1000 * 60));
+                                  return `${currentHours}h ${currentMinutes}m`;
+                                })()}
+                              </div>
+                            )}
+                            <div className="font-semibold text-blue-600 dark:text-blue-400">
+                              {request.requestedClockOut ? (() => {
+                                const requestedMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
+                                const requestedHours = Math.floor(requestedMs / (1000 * 60 * 60));
+                                const requestedMinutes = Math.floor((requestedMs % (1000 * 60 * 60)) / (1000 * 60));
+                                return `${requestedHours}h ${requestedMinutes}m`;
+                              })() : '—'}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Motivo */}
+                    <div className="text-xs mb-2">
+                      <span className="text-muted-foreground">Motivo:</span>{' '}
+                      <span className="italic">{request.reason}</span>
+                    </div>
+
+                    {/* Botones de acción */}
+                    {request.status === 'pending' && (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => processRequestMutation.mutate({ id: request.id, status: 'approved' })}
+                          className="flex-1 h-8"
+                          data-testid={`button-approve-${request.id}`}
+                        >
+                          <Check className="w-4 h-4 mr-1" />
+                          Aprobar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => processRequestMutation.mutate({ id: request.id, status: 'rejected' })}
+                          className="flex-1 h-8"
+                          data-testid={`button-reject-${request.id}`}
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          Rechazar
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ))
               )}
