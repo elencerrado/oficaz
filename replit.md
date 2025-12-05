@@ -65,7 +65,18 @@ Preferred communication style: Simple, everyday language.
 - **Data Integrity**: Break periods associated with current work session; orphaned documents removed.
 - **Email Marketing System (SuperAdmin)**: Campaign management, prospect database, user segmentation, SendGrid integration, HTML content, audience targeting, tracking, Zod validation, marketing consent, unsubscribe system, contact tracking. Uses static logo URL and relative image paths.
 - **PWA System**: Full PWA implementation for locked-phone notifications with interactive action buttons via Web Push API. Server-side scheduler for alarms and incomplete session monitoring. Supports iOS PWA installation and provides instant push notifications for various events. Includes notification deduplication, alarm tags, and asynchronous, parallel batch sending.
-- **Performance Optimizations**: Reduced re-renders, efficient calculations, generic hooks, reduced polling, optimized query caching, memoization, and timeout cleanup.
+- **Performance Optimizations**: Reduced re-renders, efficient calculations, generic hooks, optimized query caching, memoization, and timeout cleanup.
+- **WebSocket Real-Time Updates (Centralized)**: Single unified WebSocket connection in AuthProvider handles ALL real-time events:
+  - `message_received`: Invalidates all `/api/messages*` queries
+  - `work_session_*`: Invalidates `/api/work-sessions*`, `/api/break-periods*`, `/api/admin/dashboard*`
+  - `vacation_request_*`: Invalidates `/api/vacation-requests*`
+  - `document_*`: Invalidates `/api/documents*`, `/api/document-notifications*`
+  - `reminder_all_completed`: Invalidates `/api/reminders*`
+  - `work_report_created`: Invalidates `/api/admin/work-reports*`
+  - `role_changed`: Clears all cache and reloads page with new token
+  - Uses predicate-based invalidation: `query.queryKey[0].startsWith(basePath)` to catch ALL query variants
+  - **No Polling Required**: Polling completely eliminated for messages, work sessions, vacation requests, documents (WebSocket handles all updates)
+  - **Only Exception**: Reminder time-based notifications still poll every 60s (time-triggered, not event-triggered)
 
 ### Deployment Strategy
 - **Development Environment**: Node.js 20, PostgreSQL 16 (Replit managed), Vite dev server.
