@@ -2058,20 +2058,20 @@ export default function AdminDocuments() {
 
             {/* Footer */}
             <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="text-sm text-muted-foreground text-center sm:text-left">
                   {uploadMode === 'circular' 
                     ? `${uploadSelectedEmployees.length} destinatarios`
                     : `${uploadAnalysis.filter(a => a.employee).length} de ${uploadAnalysis.length} asignados`
                   }
                   {uploadRequiresSignature && ' · Firma requerida'}
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-3 justify-center sm:justify-end">
                   <Button 
                     variant="ghost" 
                     onClick={() => setShowUploadPreview(false)}
                     disabled={isUploading}
-                    className="text-muted-foreground"
+                    className="text-muted-foreground flex-1 sm:flex-none"
                   >
                     Cancelar
                   </Button>
@@ -2082,7 +2082,7 @@ export default function AdminDocuments() {
                       (uploadMode === 'individual' && uploadAnalysis.some(a => !a.employee)) ||
                       (uploadMode === 'circular' && uploadSelectedEmployees.length === 0)
                     }
-                    className="px-6"
+                    className="px-6 flex-1 sm:flex-none"
                   >
                     {isUploading ? 'Subiendo...' : 'Subir'}
                   </Button>
