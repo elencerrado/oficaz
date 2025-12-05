@@ -445,21 +445,9 @@ export default function EmployeeDashboard() {
   // Check for active reminders (not completed, not archived)
   const [hasActiveReminders, setHasActiveReminders] = useState(false); // BLUE: recordatorios activos
 
-  // Clear document notifications when returning to dashboard (after visiting documents page)
-  useEffect(() => {
-    const lastDocumentPageVisit = localStorage.getItem('lastDocumentPageVisit');
-    if (lastDocumentPageVisit && hasNewDocuments) {
-      const timer = setTimeout(() => {
-        console.log('Dashboard: clearing non-payroll document notifications after visiting documents');
-        // This will trigger a re-evaluation of document notifications
-        // Non-payroll documents will be filtered out in the next useEffect cycle
-        setHasNewDocuments(false);
-        localStorage.setItem('lastDocumentCheck', new Date().toISOString());
-      }, 2000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [hasNewDocuments]);
+  // NOTE: Document notification badges are cleared ONLY when user navigates to documents page
+  // The lastDocumentCheck is updated when user visits /employee/documents
+  // Badge should persist until user actually views the documents
 
   // Check if user is currently on vacation
   const today = new Date().toISOString().split('T')[0];
