@@ -361,39 +361,59 @@ export default function Documents() {
     document.body.removeChild(a);
   };
 
-  const handleViewDocument = async (id: number, filename: string) => {
-    // Mark document as viewed first
+  // State for pending document view (used for iOS compatibility)
+  const [pendingViewId, setPendingViewId] = useState<number | null>(null);
+  
+  // Effect to handle document viewing after getting signed URL
+  useEffect(() => {
+    if (pendingViewId === null) return;
+    
+    const viewDocument = async () => {
+      const signedUrl = await generateSignedUrl(pendingViewId);
+      setPendingViewId(null);
+      
+      if (!signedUrl) return;
+      
+      const url = new URL(signedUrl, window.location.origin);
+      url.searchParams.set('view', 'true');
+      
+      // For iOS/PWA: Navigate in same tab (only reliable method)
+      window.location.href = url.toString();
+    };
+    
+    viewDocument();
+  }, [pendingViewId]);
+  
+  const handleViewDocument = (id: number, filename: string) => {
+    // Mark document as viewed
     markViewedMutation.mutate(id);
     
-    // Update lastDocumentCheck in localStorage so badge clears
-    localStorage.setItem('lastDocumentCheck', new Date().toISOString());
+    console.log('[SECURITY] Preparing to view document', id);
     
-    // 🔒 SECURITY: Use signed URL instead of JWT token in query params
-    const signedUrl = await generateSignedUrl(id);
-    if (!signedUrl) return;
+    // For desktop: Try window.open immediately (before any async operations)
+    // This works because we're still in the direct click event context
+    const isDesktop = !(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
     
-    console.log('[SECURITY] Using signed URL for view');
-    
-    // Properly append view parameter to URL
-    const url = new URL(signedUrl, window.location.origin);
-    url.searchParams.set('view', 'true');
-    
-    // iOS/PWA compatible: Use link click instead of window.open (which is often blocked)
-    const link = document.createElement('a');
-    link.href = url.toString();
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    
-    // For iOS: Try to download directly if it's a PDF or image
-    const ext = filename.toLowerCase().split('.').pop();
-    if (ext === 'pdf' || ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) {
-      // For PDF/images, open in new tab works better
-      link.click();
-    } else {
-      // For other files, trigger download
-      link.download = filename;
-      link.click();
+    if (isDesktop) {
+      // Desktop: Open window first, then load URL
+      const newWindow = window.open('about:blank', '_blank');
+      if (newWindow) {
+        // Get signed URL and update the window location
+        generateSignedUrl(id).then(signedUrl => {
+          if (signedUrl) {
+            const url = new URL(signedUrl, window.location.origin);
+            url.searchParams.set('view', 'true');
+            newWindow.location.href = url.toString();
+          } else {
+            newWindow.close();
+          }
+        });
+        return;
+      }
     }
+    
+    // iOS/PWA: Use state-based navigation (will trigger useEffect)
+    setPendingViewId(id);
   };
 
   const getFileIcon = (filename: string) => {

@@ -472,7 +472,9 @@ export default function EmployeeDashboard() {
     // Uses isViewed field from database - badge clears when user clicks "Ver" button
     const unviewedDocuments = (documents as any[]).filter((doc: any) => {
       // Document is new if user hasn't viewed it yet
-      return !doc.isViewed;
+      // Check both camelCase (from Drizzle) and snake_case (raw SQL)
+      const isViewed = doc.isViewed ?? doc.is_viewed ?? false;
+      return !isViewed;
     });
 
     const hasUnviewedDocuments = unviewedDocuments.length > 0;
@@ -482,7 +484,8 @@ export default function EmployeeDashboard() {
       pendingRequests: pendingRequests.length,
       unviewedDocuments: unviewedDocuments.length,
       hasPendingRequests,
-      hasUnviewedDocuments
+      hasUnviewedDocuments,
+      documents: (documents as any[]).map((d: any) => ({ id: d.id, isViewed: d.isViewed, is_viewed: d.is_viewed }))
     });
 
   }, [documentNotifications, documents]);
