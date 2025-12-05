@@ -46,7 +46,8 @@ class WorkSessionWebSocketServer {
     // Verify JWT token
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as any;
-      ws.userId = decoded.userId;
+      // JWT access token uses 'id' not 'userId'
+      ws.userId = decoded.id || decoded.userId;
       ws.companyId = decoded.companyId;
       ws.role = decoded.role;
 

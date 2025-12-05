@@ -523,9 +523,11 @@ export default function VacationManagement() {
       ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
+          console.log('📡 Vacation WS received:', message.type, message);
           
           // Handle new vacation request - show toast and refresh data immediately
           if (message.type === 'vacation_request_created') {
+            console.log('🎯 Processing vacation_request_created:', message.data);
             const { employeeName, startDate, endDate } = message.data || {};
             
             // Show instant toast notification with employee name
@@ -533,11 +535,14 @@ export default function VacationManagement() {
               const startDateFormatted = startDate ? format(new Date(startDate), "d 'de' MMMM", { locale: es }) : '';
               const endDateFormatted = endDate ? format(new Date(endDate), "d 'de' MMMM", { locale: es }) : '';
               
+              console.log('🔔 Showing vacation toast for:', employeeName);
               toast({
                 title: "📋 Nueva solicitud de vacaciones",
                 description: `${employeeName} ha solicitado vacaciones${startDateFormatted && endDateFormatted ? ` del ${startDateFormatted} al ${endDateFormatted}` : ''}`,
                 duration: 8000,
               });
+            } else {
+              console.log('⚠️ No employeeName in message.data');
             }
             
             // Immediately invalidate and refetch vacation requests
@@ -548,8 +553,8 @@ export default function VacationManagement() {
           if (message.type === 'vacation_request_updated') {
             queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
           }
-        } catch {
-          // Silent fail for malformed messages
+        } catch (err) {
+          console.log('⚠️ Vacation WS parse error:', err);
         }
       };
 

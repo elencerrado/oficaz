@@ -4854,8 +4854,9 @@ Responde directamente a este email para contactar con la persona.
         // Broadcast to company admins via WebSocket (only for pending requests)
         // Include employee name for immediate toast notification
         const wsServer = getWebSocketServer();
+        console.log(`📢 WebSocket broadcast attempt: wsServer=${!!wsServer}, companyId=${req.user!.companyId}`);
         if (wsServer) {
-          wsServer.broadcastToCompany(req.user!.companyId, {
+          const broadcastMessage = {
             type: 'vacation_request_created',
             companyId: req.user!.companyId,
             data: { 
@@ -4865,7 +4866,12 @@ Responde directamente a este email para contactar con la persona.
               startDate: request.startDate,
               endDate: request.endDate
             }
-          });
+          };
+          console.log(`📢 Broadcasting vacation request:`, JSON.stringify(broadcastMessage));
+          wsServer.broadcastToCompany(req.user!.companyId, broadcastMessage);
+          console.log(`📢 Broadcast sent to company ${req.user!.companyId}`);
+        } else {
+          console.log(`⚠️ WebSocket server not available for broadcast`);
         }
       }
       
