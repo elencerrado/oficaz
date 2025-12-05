@@ -1328,12 +1328,12 @@ export default function EmployeeTimeTracking() {
                     <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Entrada</span>
                   </div>
                   
-                  {/* Before time */}
-                  {requestData.requestType === 'modify_time' && requestData.originalClockIn && (
+                  {/* Before time - always show for modify_time to keep alignment */}
+                  {requestData.requestType === 'modify_time' && (
                     <div className="text-center py-1">
                       <span className="text-[10px] text-gray-400 dark:text-gray-500 block">Antes</span>
-                      <span className="text-base font-mono text-gray-400 dark:text-gray-500 line-through">
-                        {requestData.originalClockIn}
+                      <span className={`text-base font-mono ${requestData.originalClockIn ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-300 dark:text-gray-600'}`}>
+                        {requestData.originalClockIn || '—'}
                       </span>
                     </div>
                   )}
@@ -1364,12 +1364,12 @@ export default function EmployeeTimeTracking() {
                     <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Salida</span>
                   </div>
                   
-                  {/* Before time */}
-                  {requestData.requestType === 'modify_time' && requestData.originalClockOut && (
+                  {/* Before time - always show for modify_time to keep alignment */}
+                  {requestData.requestType === 'modify_time' && (
                     <div className="text-center py-1">
                       <span className="text-[10px] text-gray-400 dark:text-gray-500 block">Antes</span>
-                      <span className="text-base font-mono text-gray-400 dark:text-gray-500 line-through">
-                        {requestData.originalClockOut}
+                      <span className={`text-base font-mono ${requestData.originalClockOut ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-300 dark:text-gray-600'}`}>
+                        {requestData.originalClockOut || '—'}
                       </span>
                     </div>
                   )}
