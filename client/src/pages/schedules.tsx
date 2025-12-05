@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader as DialogHeaderComponent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarClock, Users, Plus, ChevronLeft, ChevronRight, Clock, Edit, Copy, Trash2, MapPin } from "lucide-react";
 import { format, differenceInDays, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, addWeeks, subWeeks, getDay } from "date-fns";
@@ -605,6 +606,11 @@ export default function Schedules() {
     existingShifts: WorkShift[];
   } | null>(null);
   
+  // Estados para diálogos de confirmación de acciones de semana
+  const [showDeleteWeekConfirm, setShowDeleteWeekConfirm] = useState(false);
+  const [showDuplicateWeekConfirm, setShowDuplicateWeekConfirm] = useState(false);
+  const [weekActionEmployee, setWeekActionEmployee] = useState<Employee | null>(null);
+  
   // Configurar sensors para drag & drop con soporte móvil mejorado
   // IMPORTANTE: Touch sensor con delay más largo para evitar conflicto con scroll
   const sensors = useSensors(
@@ -770,7 +776,7 @@ export default function Schedules() {
     }
   };
 
-  // Function to duplicate a shift
+  // Function to duplicate a shift with optimistic update for instant visual feedback
   const duplicateShift = async (originalShift: WorkShift, newEmployeeId: number, newDate: Date) => {
     const originalStart = parseISO(originalShift.startAt);
     const originalEnd = parseISO(originalShift.endAt);
@@ -797,12 +803,40 @@ export default function Schedules() {
       color: originalShift.color
     };
 
-    const response = await apiRequest('POST', '/api/work-shifts', duplicateData);
-    
-    // Invalidate and refetch shifts data
-    queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
-    
-    return response;
+    // Optimistic update: Add shift to cache immediately for instant visual feedback
+    const tempId = -Date.now(); // Temporary negative ID
+    const optimisticShift: WorkShift = {
+      id: tempId,
+      employeeId: newEmployeeId,
+      startAt: duplicateData.startAt,
+      endAt: duplicateData.endAt,
+      title: duplicateData.title,
+      location: duplicateData.location,
+      notes: duplicateData.notes,
+      color: duplicateData.color,
+    };
+
+    // Instantly add to local state for immediate visual feedback
+    queryClient.setQueryData(['/api/work-shifts/company'], (oldData: any) => {
+      if (!oldData?.data) return oldData;
+      return {
+        ...oldData,
+        data: [...oldData.data, optimisticShift]
+      };
+    });
+
+    try {
+      const response = await apiRequest('POST', '/api/work-shifts', duplicateData);
+      
+      // Replace optimistic shift with real one from server
+      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+      
+      return response;
+    } catch (error) {
+      // Revert optimistic update on error
+      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+      throw error;
+    }
   };
 
   // Funciones para autocompletado de direcciones con Photon API (via backend proxy)
@@ -1930,14 +1964,12 @@ export default function Schedules() {
                         {/* Iconos de acciones de semana - solo visibles en modo semana y NO en view-only */}
                         {!isViewOnly && (viewMode === 'week' || viewMode === 'workweek') && (
                           <div className="absolute right-0 top-0 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {/* Botón eliminar todos los turnos de la semana */}
+                            {/* Botón eliminar todos los turnos de la semana - abre confirmación */}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deleteWeekShiftsMutation.mutate({
-                                  employeeId: employee.id,
-                                  weekStart: weekRange.start
-                                });
+                                setWeekActionEmployee(employee);
+                                setShowDeleteWeekConfirm(true);
                               }}
                               className="w-5 h-5 bg-red-500 hover:bg-red-600 rounded flex items-center justify-center shadow-md border border-white/30 transition-colors"
                               title="Eliminar todos los turnos de esta semana"
@@ -1946,14 +1978,12 @@ export default function Schedules() {
                               <Trash2 className="w-3 h-3 text-white" />
                             </button>
                             
-                            {/* Botón duplicar semana actual a la siguiente */}
+                            {/* Botón duplicar semana actual a la siguiente - abre confirmación */}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                duplicateWeekMutation.mutate({
-                                  employeeId: employee.id,
-                                  currentWeekStart: weekRange.start
-                                });
+                                setWeekActionEmployee(employee);
+                                setShowDuplicateWeekConfirm(true);
                               }}
                               className="w-5 h-5 bg-blue-500 hover:bg-blue-600 rounded flex items-center justify-center shadow-md border border-white/30 transition-colors"
                               title="Duplicar esta semana a la siguiente (sobreescribe todo)"
@@ -2617,6 +2647,84 @@ export default function Schedules() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Diálogo de confirmación para eliminar turnos de la semana */}
+      <AlertDialog open={showDeleteWeekConfirm} onOpenChange={setShowDeleteWeekConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-red-500" />
+              Eliminar turnos de la semana
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que quieres eliminar <strong>todos los turnos</strong> de{' '}
+              <strong>{weekActionEmployee?.fullName}</strong> de esta semana?
+              <br /><br />
+              <span className="text-red-500">Esta acción no se puede deshacer.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setWeekActionEmployee(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-500 hover:bg-red-600"
+              onClick={() => {
+                if (weekActionEmployee) {
+                  deleteWeekShiftsMutation.mutate({
+                    employeeId: weekActionEmployee.id,
+                    weekStart: weekRange.start
+                  });
+                }
+                setShowDeleteWeekConfirm(false);
+                setWeekActionEmployee(null);
+              }}
+            >
+              {deleteWeekShiftsMutation.isPending ? 'Eliminando...' : 'Eliminar turnos'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Diálogo de confirmación para duplicar semana */}
+      <AlertDialog open={showDuplicateWeekConfirm} onOpenChange={setShowDuplicateWeekConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Copy className="w-5 h-5 text-blue-500" />
+              Duplicar semana
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Quieres copiar los turnos de <strong>{weekActionEmployee?.fullName}</strong> de esta semana 
+              a la <strong>semana siguiente</strong>?
+              <br /><br />
+              <span className="text-amber-600">
+                Nota: Los turnos existentes en la semana siguiente serán reemplazados.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setWeekActionEmployee(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-blue-500 hover:bg-blue-600"
+              onClick={() => {
+                if (weekActionEmployee) {
+                  duplicateWeekMutation.mutate({
+                    employeeId: weekActionEmployee.id,
+                    currentWeekStart: weekRange.start
+                  });
+                }
+                setShowDuplicateWeekConfirm(false);
+                setWeekActionEmployee(null);
+              }}
+            >
+              {duplicateWeekMutation.isPending ? 'Duplicando...' : 'Duplicar semana'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DndContext>
   );
 }
