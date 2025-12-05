@@ -387,47 +387,77 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => setTokenRefreshCallback(() => {});
   }, []);
 
-  // 🔄 ROLE CHANGE POLLING: Check for role changes every 30 seconds
-  // This ensures users see their new dashboard when an admin changes their role
+  // 🔄 ROLE CHANGE WEBSOCKET: Listen for real-time role changes via WebSocket
+  // This is much more efficient than polling - only reacts when admin actually changes the role
   useEffect(() => {
     if (!token || !user) return;
     
-    const ROLE_CHECK_INTERVAL = 30000; // 30 seconds
+    // Build WebSocket URL using current host
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/work-sessions?token=${token}`;
     
-    const checkRoleChange = async () => {
+    let ws: WebSocket | null = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    const reconnectDelay = 5000; // 5 seconds
+    
+    const connect = () => {
       try {
-        const response = await fetch('/api/auth/me', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        ws = new WebSocket(wsUrl);
         
-        if (response.ok) {
-          const data = await response.json();
-          
-          // If server detected role change, update and reload
-          if (data.roleChanged && data.newToken) {
-            console.log(`🔄 ROLE CHANGE DETECTED (polling): ${data.previousRole} → ${data.user.role}`);
-            const currentAuthData = getAuthData();
-            const updatedAuthData = {
-              ...currentAuthData,
-              token: data.newToken,
-              user: data.user,
-              company: data.company,
-              subscription: data.subscription
-            };
-            localStorage.setItem('authData', JSON.stringify(updatedAuthData));
-            queryClient.clear();
-            window.location.reload();
+        ws.onopen = () => {
+          console.log('🔌 WebSocket connected for role change detection');
+          reconnectAttempts = 0;
+        };
+        
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            
+            // Handle role change notification
+            if (data.type === 'role_changed' && data.newToken) {
+              console.log(`🔄 ROLE CHANGE via WebSocket: ${data.previousRole} → ${data.newRole}`);
+              const currentAuthData = getAuthData();
+              const updatedAuthData = {
+                ...currentAuthData,
+                token: data.newToken,
+              };
+              localStorage.setItem('authData', JSON.stringify(updatedAuthData));
+              queryClient.clear();
+              // Reload page to show new dashboard
+              window.location.reload();
+            }
+          } catch (e) {
+            // Ignore parse errors for non-JSON messages
           }
-        }
+        };
+        
+        ws.onclose = () => {
+          console.log('🔌 WebSocket disconnected');
+          // Attempt to reconnect if not at max attempts
+          if (reconnectAttempts < maxReconnectAttempts) {
+            reconnectAttempts++;
+            setTimeout(connect, reconnectDelay);
+          }
+        };
+        
+        ws.onerror = () => {
+          // Silent error - connection will close and attempt reconnect
+        };
       } catch (error) {
-        // Silent fail - don't interrupt user experience for polling errors
+        console.error('WebSocket connection error:', error);
       }
     };
     
-    const intervalId = setInterval(checkRoleChange, ROLE_CHECK_INTERVAL);
+    connect();
     
-    return () => clearInterval(intervalId);
-  }, [token, user]);
+    // Cleanup on unmount
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, [token, user?.id]);
 
   console.log('AuthProvider rendering with:', {
     user: user?.fullName,
