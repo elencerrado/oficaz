@@ -5,6 +5,7 @@ interface Tab {
   id: string;
   label: string;
   icon: LucideIcon;
+  badge?: number;
 }
 
 interface TabNavigationProps {
@@ -41,8 +42,13 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className = "" }: 
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              <tab.icon className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
-              <span className="truncate">
+              <div className="relative">
+                <tab.icon className="h-4 w-4 flex-shrink-0" />
+                {tab.badge !== undefined && tab.badge > 0 && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                )}
+              </div>
+              <span className="truncate ml-1 sm:ml-2">
                 <span className="hidden sm:inline">{tab.label}</span>
                 <span className="sm:hidden">
                   {tab.label === 'Timeline de Vacaciones' ? 'Timeline' :

@@ -2892,7 +2892,7 @@ export default function TimeTracking() {
         tabs={[
           { id: 'sessions', label: 'Lista de Horas', icon: Users },
           { id: 'summary', label: 'Resumen', icon: BarChart3 },
-          { id: 'requests', label: 'Solicitudes', icon: Bell }
+          { id: 'requests', label: 'Solicitudes', icon: Bell, badge: pendingRequestsCount }
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
