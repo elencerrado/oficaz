@@ -15,7 +15,8 @@ interface WSMessage {
         'vacation_request_created' | 'vacation_request_updated' | 
         'modification_request_created' | 'modification_request_updated' |
         'document_request_created' | 'document_uploaded' |
-        'message_received' | 'work_report_created' | 'reminder_all_completed' |
+        'message_received' | 'work_report_created' | 
+        'reminder_created' | 'reminder_all_completed' |
         'role_changed';
   companyId: number;
   data?: any;

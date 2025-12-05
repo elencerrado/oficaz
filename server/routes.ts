@@ -8753,6 +8753,9 @@ Responde directamente a este email para contactar con la persona.
         }).catch(err => console.error('Failed to load push notification module:', err));
       }
       
+      // Broadcast to company for real-time badge updates
+      broadcastToCompany(companyId, { type: 'reminder_created', reminderId: reminder.id });
+      
       res.json(reminder);
     } catch (error) {
       console.error("Error creating reminder:", error);

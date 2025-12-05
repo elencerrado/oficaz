@@ -487,8 +487,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 break;
               
               // Reminders - refresh all reminder queries
+              case 'reminder_created':
               case 'reminder_all_completed':
-                console.log(`🔔 Reminders completed via WebSocket`);
+                console.log(`🔔 Reminder event via WebSocket: ${data.type}`);
                 invalidateByPath('/api/reminders');
                 break;
               
