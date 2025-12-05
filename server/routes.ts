@@ -223,8 +223,9 @@ const superAdminAccessLimiter = rateLimit({
 
 // ⚠️ PROTECTED - DO NOT MODIFY
 // Demo data generation for new companies
-async function generateDemoData(companyId: number) {
-  console.log('🎭 [DEMO DATA] Starting generation for company:', companyId);
+// @param forceRegenerate - If true, bypasses hasDemoData check (used by force regeneration endpoint)
+async function generateDemoData(companyId: number, forceRegenerate: boolean = false) {
+  console.log('🎭 [DEMO DATA] Starting generation for company:', companyId, forceRegenerate ? '(FORCE MODE)' : '');
   
   let demoDataStarted = false;
   
@@ -236,10 +237,17 @@ async function generateDemoData(companyId: number) {
       return;
     }
     
+    // ⚠️ CRITICAL: Check if demo data already exists - prevent duplicate generation
+    // Skip this check if forceRegenerate is true (used by force endpoint)
+    if (!forceRegenerate && company[0].hasDemoData === true) {
+      console.log('🎭 [DEMO DATA] SKIPPING - Company already has demo data, ID:', companyId);
+      return;
+    }
+    
     const registrationDate = new Date(company[0].createdAt);
     console.log('🎭 [DEMO DATA] Company registered on:', registrationDate.toISOString());
     
-    // Mark company as having demo data BEFORE starting
+    // Mark company as having demo data BEFORE starting (atomic flag to prevent race conditions)
     await db.update(companies)
       .set({ hasDemoData: true })
       .where(eq(companies.id, companyId));
@@ -379,8 +387,8 @@ async function generateDemoData(companyId: number) {
     }
 
     // Generate comprehensive demo data based on registration date
-    console.log('🎭 [DEMO DATA] Starting comprehensive data generation for', createdEmployees.length, 'employees...');
-    await generateComprehensiveDemoData(companyId, createdEmployees, registrationDate);
+    console.log('🎭 [DEMO DATA] Starting comprehensive data generation for', createdEmployees.length, 'employees...', forceRegenerate ? '(FORCE MODE)' : '');
+    await generateComprehensiveDemoData(companyId, createdEmployees, registrationDate, forceRegenerate);
     
     console.log('✅ [DEMO DATA] Complete! Generated demo data for company:', companyId);
     
@@ -405,8 +413,9 @@ async function generateDemoData(companyId: number) {
 }
 
 // Generate comprehensive demo data based on company registration date
-async function generateComprehensiveDemoData(companyId: number, employees: any[], registrationDate: Date) {
-  console.log('📊 [DEMO DATA] Generating comprehensive data for', employees.length, 'employees...');
+// @param forceRegenerate - If true, bypasses duplicate checks in sub-functions (passed from force regeneration)
+async function generateComprehensiveDemoData(companyId: number, employees: any[], registrationDate: Date, forceRegenerate: boolean = false) {
+  console.log('📊 [DEMO DATA] Generating comprehensive data for', employees.length, 'employees...', forceRegenerate ? '(FORCE MODE)' : '');
   
   if (employees.length === 0) {
     console.warn('⚠️ [DEMO DATA] No employees provided, skipping comprehensive data generation');
@@ -433,22 +442,22 @@ async function generateComprehensiveDemoData(companyId: number, employees: any[]
   await generateCurrentDayActivity(employees, now);
   
   // Generate vacation requests (approved and pending)
-  await generateRealisticVacationRequests(companyId, employees, registrationDate);
+  await generateRealisticVacationRequests(companyId, employees, registrationDate, forceRegenerate);
   
   // Generate bidirectional messages (employee-admin communication)
-  await generateBidirectionalMessages(companyId, employees);
+  await generateBidirectionalMessages(companyId, employees, forceRegenerate);
   
   // Generate reminders for employees
-  await generateDemoReminders(companyId, employees);
+  await generateDemoReminders(companyId, employees, forceRegenerate);
   
   // Generate incomplete sessions for demonstration
   await generateIncompleteSessions(employees, companyId);
   
   // Generate work shifts for current week + 3 next weeks
-  await generateDemoWorkShifts(companyId, employees, registrationDate);
+  await generateDemoWorkShifts(companyId, employees, registrationDate, forceRegenerate);
   
   // Generate pending document requests
-  await generateDemoDocumentRequests(companyId, employees);
+  await generateDemoDocumentRequests(companyId, employees, forceRegenerate);
   
   console.log('✅ Generated comprehensive demo data for', employees.length, 'employees');
 }
@@ -841,7 +850,27 @@ async function generateIncompleteSessions(employees: any[], companyId: number) {
 }
 
 // Generate demo document requests (pending and completed)
-async function generateDemoDocumentRequests(companyId: number, employees: any[]) {
+async function generateDemoDocumentRequests(companyId: number, employees: any[], forceRegenerate: boolean = false) {
+  console.log('📋 Generating demo document requests...', forceRegenerate ? '(FORCE MODE)' : '');
+  
+  // ⚠️ CHECK FOR EXISTING DEMO DOCUMENT NOTIFICATIONS - prevent duplicates (skip in force mode)
+  if (!forceRegenerate) {
+    const employeeIds = employees.map(e => e.id);
+    if (employeeIds.length > 0) {
+      const existingNotifications = await db.select({ count: count() })
+        .from(schema.systemNotifications)
+        .where(and(
+          inArray(schema.systemNotifications.userId, employeeIds),
+          eq(schema.systemNotifications.type, 'document_request')
+        ));
+      
+      if (existingNotifications[0]?.count && Number(existingNotifications[0].count) > 0) {
+        console.log(`📋 Skipping demo document requests - ${existingNotifications[0].count} already exist`);
+        return;
+      }
+    }
+  }
+  
   // Get admin user for creating document requests
   const adminUsers = await db.select()
     .from(users)
@@ -932,8 +961,21 @@ async function generateDemoDocumentRequests(companyId: number, employees: any[])
 }
 
 // Generate demo work shifts for current week + 3 next weeks
-async function generateDemoWorkShifts(companyId: number, employees: any[], registrationDate: Date) {
-  console.log('📅 Generating demo work shifts for current week + 3 upcoming weeks...');
+// @param forceRegenerate - If true, bypasses duplicate check (passed from force regeneration)
+async function generateDemoWorkShifts(companyId: number, employees: any[], registrationDate: Date, forceRegenerate: boolean = false) {
+  console.log('📅 Generating demo work shifts for current week + 3 upcoming weeks...', forceRegenerate ? '(FORCE MODE)' : '');
+  
+  // ⚠️ CHECK FOR EXISTING DEMO WORK SHIFTS - prevent duplicates (skip in force mode)
+  if (!forceRegenerate) {
+    const existingShifts = await db.select({ count: count() })
+      .from(schema.workShifts)
+      .where(eq(schema.workShifts.companyId, companyId));
+    
+    if (existingShifts[0]?.count && Number(existingShifts[0].count) > 0) {
+      console.log(`📅 Skipping demo work shifts - ${existingShifts[0].count} shifts already exist for company ${companyId}`);
+      return;
+    }
+  }
   
   // Find admin user to be the creator of shifts - check both admin and manager roles
   let adminEmployee = employees.find(emp => emp.role === 'admin');
@@ -1162,12 +1204,30 @@ async function generateDemoWorkShifts(companyId: number, employees: any[], regis
 
 // Generate demo vacation requests
 // Generate realistic vacation requests with different statuses
-async function generateRealisticVacationRequests(companyId: number, employees: any[], registrationDate: Date) {
+// @param forceRegenerate - If true, bypasses duplicate check (passed from force regeneration)
+async function generateRealisticVacationRequests(companyId: number, employees: any[], registrationDate: Date, forceRegenerate: boolean = false) {
+  console.log('🏖️ Generating demo vacation requests...', forceRegenerate ? '(FORCE MODE)' : '');
+  
+  // ⚠️ CHECK FOR EXISTING DEMO VACATION REQUESTS - prevent duplicates (skip in force mode)
+  if (!forceRegenerate) {
+    const employeeIds = employees.map(e => e.id);
+    if (employeeIds.length > 0) {
+      const existingVacations = await db.select({ count: count() })
+        .from(schema.vacationRequests)
+        .where(inArray(schema.vacationRequests.userId, employeeIds));
+      
+      if (existingVacations[0]?.count && Number(existingVacations[0].count) > 0) {
+        console.log(`🏖️ Skipping demo vacation requests - ${existingVacations[0].count} already exist`);
+        return;
+      }
+    }
+  }
+  
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
   
-  const vacationRequests = [
+  const demoVacationRequests = [
     // 1. APPROVED - Previous month vacation (María García)
     {
       employee: employees[0], // María García López
@@ -1219,7 +1279,7 @@ async function generateRealisticVacationRequests(companyId: number, employees: a
     }
   ];
   
-  for (const request of vacationRequests) {
+  for (const request of demoVacationRequests) {
     // Create vacation request with realistic creation date
     const vacationRequest = await storage.createVacationRequest({
       userId: request.employee.id,
@@ -1239,12 +1299,29 @@ async function generateRealisticVacationRequests(companyId: number, employees: a
     }
   }
   
-  console.log('🏖️ Generated', vacationRequests.length, 'realistic vacation requests (approved & pending)');
+  console.log('🏖️ Generated', demoVacationRequests.length, 'realistic vacation requests (approved & pending)');
 }
 
 // Generate demo messages
 // Generate bidirectional messages between employees and admin
-async function generateBidirectionalMessages(companyId: number, employees: any[]) {
+async function generateBidirectionalMessages(companyId: number, employees: any[], forceRegenerate: boolean = false) {
+  console.log('💬 Generating demo messages...', forceRegenerate ? '(FORCE MODE)' : '');
+  
+  // ⚠️ CHECK FOR EXISTING DEMO MESSAGES - prevent duplicates (skip in force mode)
+  if (!forceRegenerate) {
+    const employeeIds = employees.map(e => e.id);
+    if (employeeIds.length > 0) {
+      const existingMessages = await db.select({ count: count() })
+        .from(messages)
+        .where(inArray(messages.senderId, employeeIds));
+      
+      if (existingMessages[0]?.count && Number(existingMessages[0].count) > 0) {
+        console.log(`💬 Skipping demo messages - ${existingMessages[0].count} messages already exist`);
+        return;
+      }
+    }
+  }
+  
   const now = new Date();
   
   // Get admin user for the company (the user who just registered)
@@ -1355,7 +1432,21 @@ async function generateBidirectionalMessages(companyId: number, employees: any[]
 }
 
 // Generate demo reminders with varied assignments
-async function generateDemoReminders(companyId: number, employees: any[]) {
+async function generateDemoReminders(companyId: number, employees: any[], forceRegenerate: boolean = false) {
+  console.log('⏰ Generating demo reminders...', forceRegenerate ? '(FORCE MODE)' : '');
+  
+  // ⚠️ CHECK FOR EXISTING DEMO REMINDERS - prevent duplicates (skip in force mode)
+  if (!forceRegenerate) {
+    const existingReminders = await db.select({ count: count() })
+      .from(reminders)
+      .where(eq(reminders.companyId, companyId));
+    
+    if (existingReminders[0]?.count && Number(existingReminders[0].count) > 0) {
+      console.log(`⏰ Skipping demo reminders - ${existingReminders[0].count} reminders already exist for company ${companyId}`);
+      return;
+    }
+  }
+  
   // Get admin user for creating company-wide reminders
   const adminUsers = await db.select()
     .from(users)
@@ -14074,6 +14165,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
   });
 
   // Temporary endpoint to force regenerate demo data with improvements
+  // This endpoint clears existing demo data first, then regenerates fresh data
   app.post('/api/demo-data/force-regenerate', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
     try {
       const userId = req.user!.id;
@@ -14085,8 +14177,43 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
 
       console.log('🔄 Force regenerating demo data with improvements for company:', company.id);
 
-      // Generate comprehensive demo data (ignoring hasDemoData flag)
-      await generateDemoData(company.id);
+      // Step 1: Reset hasDemoData flag to allow fresh generation
+      await db.update(companies)
+        .set({ hasDemoData: false })
+        .where(eq(companies.id, company.id));
+      console.log('📊 Reset hasDemoData flag to false');
+
+      // Step 2: Delete existing demo employees (non-admin users) and their data
+      const demoEmployees = await db.select()
+        .from(users)
+        .where(and(
+          eq(users.companyId, company.id),
+          not(eq(users.id, userId)) // Exclude admin
+        ));
+      
+      const demoEmployeeIds = demoEmployees.map(emp => emp.id);
+      
+      if (demoEmployeeIds.length > 0) {
+        console.log('🗑️ Clearing existing demo employees and their data...');
+        
+        // Delete in proper cascade order
+        await db.delete(breakPeriods).where(inArray(breakPeriods.userId, demoEmployeeIds));
+        await db.delete(workSessions).where(inArray(workSessions.userId, demoEmployeeIds));
+        await db.delete(vacationRequests).where(inArray(vacationRequests.userId, demoEmployeeIds));
+        await db.delete(messages).where(inArray(messages.senderId, demoEmployeeIds));
+        await db.delete(reminders).where(eq(reminders.companyId, company.id));
+        await db.delete(schema.workShifts).where(inArray(schema.workShifts.employeeId, demoEmployeeIds));
+        await db.delete(documents).where(inArray(documents.userId, demoEmployeeIds));
+        await db.delete(schema.systemNotifications).where(inArray(schema.systemNotifications.userId, demoEmployeeIds));
+        await db.delete(users).where(and(
+          eq(users.companyId, company.id),
+          not(eq(users.id, userId))
+        ));
+        console.log('✅ Cleared existing demo data');
+      }
+
+      // Step 3: Generate fresh demo data
+      await generateDemoData(company.id, true);
       
       res.json({ 
         success: true, 
@@ -14167,28 +14294,41 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         console.log('✅ Deleted messages');
         
         // Step 5: Delete ALL reminders for the entire company (demo data includes admin reminders)
-        let reminderDeleteAttempts = 0;
-        let remainingReminders = 0;
-        do {
-          reminderDeleteAttempts++;
-          const result = await db.delete(reminders)
-            .where(eq(reminders.companyId, company.id));
-          
-          // Check if any reminders remain for this company
-          const reminderCheck = await db.select({ count: count() })
+        // ⚠️ CRITICAL: This is the step that was causing issues - now properly handling
+        try {
+          // First, get count before deletion
+          const beforeDelete = await db.select({ count: count() })
             .from(reminders)
             .where(eq(reminders.companyId, company.id));
-          remainingReminders = reminderCheck[0]?.count || 0;
+          const reminderCountBefore = Number(beforeDelete[0]?.count) || 0;
+          console.log(`🔍 Found ${reminderCountBefore} reminders to delete for company ${company.id}`);
           
-          console.log(`🔄 Reminder deletion attempt ${reminderDeleteAttempts}, remaining: ${remainingReminders}`);
-          
-          if (remainingReminders > 0 && reminderDeleteAttempts < 3) {
-            // Wait a brief moment before retry
-            await new Promise(resolve => setTimeout(resolve, 100));
+          // Delete all reminders for this company
+          if (reminderCountBefore > 0) {
+            await db.delete(reminders)
+              .where(eq(reminders.companyId, company.id));
+            
+            // Verify deletion
+            const afterDelete = await db.select({ count: count() })
+              .from(reminders)
+              .where(eq(reminders.companyId, company.id));
+            const reminderCountAfter = Number(afterDelete[0]?.count) || 0;
+            
+            if (reminderCountAfter > 0) {
+              console.warn(`⚠️ Warning: ${reminderCountAfter} reminders still remain after deletion`);
+              // Try one more time
+              await db.delete(reminders)
+                .where(eq(reminders.companyId, company.id));
+            }
+            
+            console.log(`✅ Deleted ${reminderCountBefore - reminderCountAfter} reminders`);
+          } else {
+            console.log('✅ No reminders to delete');
           }
-        } while (remainingReminders > 0 && reminderDeleteAttempts < 3);
-        
-        console.log('✅ Deleted all company reminders');
+        } catch (reminderError) {
+          console.error('❌ Error deleting reminders:', reminderError);
+          // Continue with other deletions even if reminders fail
+        }
         
         // Step 6: Delete work shifts for demo employees
         await db.delete(schema.workShifts)
