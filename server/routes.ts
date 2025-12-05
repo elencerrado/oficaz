@@ -3784,6 +3784,24 @@ Responde directamente a este email para contactar con la persona.
       
       const subscription = await storage.getSubscriptionByCompanyId(user.companyId);
 
+      // 🔄 ROLE CHANGE DETECTION: Compare token role vs database role
+      const tokenRole = req.user!.role;
+      const currentRole = user.role;
+      let newToken = undefined;
+      let roleChanged = false;
+      
+      if (tokenRole !== currentRole) {
+        console.log(`🔄 ROLE CHANGE DETECTED for user ${user.id}: ${tokenRole} → ${currentRole}`);
+        // Generate new token with updated role
+        newToken = generateToken({
+          id: user.id,
+          username: user.companyEmail,
+          role: currentRole,
+          companyId: user.companyId
+        });
+        roleChanged = true;
+      }
+
       res.json({
         user: { ...user, password: undefined },
         company: company ? {
@@ -3795,7 +3813,13 @@ Responde directamente a este email para contactar con la persona.
           // Explicitly include logoUrl to ensure it's returned
           logoUrl: company.logoUrl || null
         } : null,
-        subscription
+        subscription,
+        // Include role change info if detected
+        ...(roleChanged && { 
+          roleChanged: true, 
+          previousRole: tokenRole,
+          newToken 
+        })
       });
     } catch (error: any) {
       res.status(500).json({ message: error.message });

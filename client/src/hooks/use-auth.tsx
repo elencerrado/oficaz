@@ -60,6 +60,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               return;
             }
 
+            // 🔄 ROLE CHANGE DETECTION: If server detected role change, update token and reload
+            if (data.roleChanged && data.newToken) {
+              console.log(`🔄 ROLE CHANGE DETECTED: ${data.previousRole} → ${data.user.role} - Updating and reloading...`);
+              // Update token in storage with new role
+              const updatedAuthData = {
+                ...authData,
+                token: data.newToken,
+                user: data.user
+              };
+              localStorage.setItem('authData', JSON.stringify(updatedAuthData));
+              // Clear all cached data to prevent stale permissions
+              queryClient.clear();
+              // Reload page to show new dashboard with correct permissions
+              window.location.reload();
+              return;
+            }
+
             // CRITICAL SECURITY FIX: Detect company changes and clear cache to prevent data leakage
             const previousCompanyId = company?.id;
             const newCompanyId = data.company?.id;
@@ -307,6 +324,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (response.ok) {
         const data = await response.json();
+        
+        // 🔄 ROLE CHANGE DETECTION: If server detected role change, update token and reload
+        if (data.roleChanged && data.newToken) {
+          console.log(`🔄 ROLE CHANGE DETECTED: ${data.previousRole} → ${data.user.role} - Updating and reloading...`);
+          // Update token in storage with new role
+          const currentAuthData = getAuthData();
+          const updatedAuthData = {
+            ...currentAuthData,
+            token: data.newToken,
+            user: data.user,
+            company: data.company,
+            subscription: data.subscription
+          };
+          localStorage.setItem('authData', JSON.stringify(updatedAuthData));
+          // Clear all cached data to prevent stale permissions
+          queryClient.clear();
+          // Reload page to show new dashboard with correct permissions
+          window.location.reload();
+          return;
+        }
+        
         setUser(data.user);
         setCompany(data.company);
         // Include subscription data in authData
@@ -348,6 +386,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setTokenRefreshCallback(updateToken);
     return () => setTokenRefreshCallback(() => {});
   }, []);
+
+  // 🔄 ROLE CHANGE POLLING: Check for role changes every 30 seconds
+  // This ensures users see their new dashboard when an admin changes their role
+  useEffect(() => {
+    if (!token || !user) return;
+    
+    const ROLE_CHECK_INTERVAL = 30000; // 30 seconds
+    
+    const checkRoleChange = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // If server detected role change, update and reload
+          if (data.roleChanged && data.newToken) {
+            console.log(`🔄 ROLE CHANGE DETECTED (polling): ${data.previousRole} → ${data.user.role}`);
+            const currentAuthData = getAuthData();
+            const updatedAuthData = {
+              ...currentAuthData,
+              token: data.newToken,
+              user: data.user,
+              company: data.company,
+              subscription: data.subscription
+            };
+            localStorage.setItem('authData', JSON.stringify(updatedAuthData));
+            queryClient.clear();
+            window.location.reload();
+          }
+        }
+      } catch (error) {
+        // Silent fail - don't interrupt user experience for polling errors
+      }
+    };
+    
+    const intervalId = setInterval(checkRoleChange, ROLE_CHECK_INTERVAL);
+    
+    return () => clearInterval(intervalId);
+  }, [token, user]);
 
   console.log('AuthProvider rendering with:', {
     user: user?.fullName,
