@@ -103,23 +103,27 @@ const getTypeBadgeColor = (type: string) => {
 export default function AdminDocuments() {
   usePageTitle('Gestión de Documentos');
   const { user, company } = useAuth();
-  const { hasAccess, getRequiredPlan } = useFeatureCheck();
+  const { hasAccess, getRequiredPlan, getDocumentAccessMode } = useFeatureCheck();
   const { setHeader, resetHeader } = usePageHeader();
+  
+  // Get document access mode: 'full', 'self', or 'none'
+  const documentAccessMode = getDocumentAccessMode();
+  const isSelfAccessOnly = documentAccessMode === 'self';
 
-  // Set page header
+  // Set page header based on access mode
   useEffect(() => {
     setHeader({
-      title: 'Gestión de Documentos',
-      subtitle: 'Gestiona documentos de empleados y envía solicitudes'
+      title: isSelfAccessOnly ? 'Mis Documentos' : 'Gestión de Documentos',
+      subtitle: isSelfAccessOnly ? 'Visualiza tus documentos personales' : 'Gestiona documentos de empleados y envía solicitudes'
     });
     return resetHeader;
-  }, []);
+  }, [isSelfAccessOnly]);
   
-  console.log('Admin Documents page: checking access...');
+  console.log('Admin Documents page: checking access...', { documentAccessMode });
   
-  // Check if user has access to documents feature
-  if (!hasAccess('documents')) {
-    console.log('Admin Documents: Access denied');
+  // Only block if no access at all (subscription not active)
+  if (documentAccessMode === 'none') {
+    console.log('Admin Documents: Access denied - no subscription');
     return (
       <FeatureRestrictedPage
         featureName="Documentos"
@@ -130,7 +134,7 @@ export default function AdminDocuments() {
     );
   }
   
-  console.log('Admin Documents: Access granted');
+  console.log('Admin Documents: Access granted', { mode: documentAccessMode });
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const search = useSearch();
@@ -145,7 +149,8 @@ export default function AdminDocuments() {
   const [dragOver, setDragOver] = useState(false);
   const [uploadAnalysis, setUploadAnalysis] = useState<any[]>([]);
   const [showUploadPreview, setShowUploadPreview] = useState(false);
-  const [activeTab, setActiveTab] = useState('upload'); // 'upload', 'explorer', 'requests'
+  // For self-access only mode, start on explorer tab (their own files)
+  const [activeTab, setActiveTab] = useState(isSelfAccessOnly ? 'explorer' : 'upload'); // 'upload', 'explorer', 'requests'
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; docId: number | null; docName: string }>({
@@ -799,7 +804,12 @@ export default function AdminDocuments() {
     return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   };
 
-  const filteredDocuments = allDocuments.filter((doc: Document) => {
+  // For self-access mode, only show user's own documents
+  const documentsSource = isSelfAccessOnly 
+    ? allDocuments.filter((doc: Document) => doc.userId === user?.id)
+    : allDocuments;
+    
+  const filteredDocuments = documentsSource.filter((doc: Document) => {
     const normalizedFileName = normalizeText(doc.originalName || '');
     const normalizedEmployeeName = normalizeText(doc.user?.fullName || '');
     const combinedText = `${normalizedFileName} ${normalizedEmployeeName}`;
@@ -809,7 +819,8 @@ export default function AdminDocuments() {
     const matchesSearch = searchWords.length === 0 || 
                          searchWords.every(word => combinedText.includes(word));
     
-    const matchesEmployee = selectedEmployee === 'all' || doc.userId.toString() === selectedEmployee;
+    // In self-access mode, don't filter by employee (already filtered to self)
+    const matchesEmployee = isSelfAccessOnly || selectedEmployee === 'all' || doc.userId.toString() === selectedEmployee;
     
     // Filter by pending signature (unsigned payrolls OR documents with requiresSignature flag)
     let matchesPendingSignature = true;
@@ -983,89 +994,139 @@ export default function AdminDocuments() {
     });
   };
 
+  // Use documentsSource for self-access mode (defined above with filteredDocuments)
+
   return (
     <PageWrapper>
       <div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">
-          <StatsCard
-            title="Total Documentos"
-            subtitle="En sistema"
-            value={loadingDocuments ? '-' : (allDocuments || []).length}
-            color="blue"
-            icon={FileText}
-            onClick={() => {
-              setActiveTab('explorer');
-              setFilterPendingSignature(false);
+        {/* Stats Cards - Simplified for self-access mode */}
+        {isSelfAccessOnly ? (
+          <div className="grid grid-cols-2 gap-2 md:gap-6 mb-3">
+            <StatsCard
+              title="Mis Documentos"
+              subtitle="Total"
+              value={loadingDocuments ? '-' : (documentsSource || []).length}
+              color="blue"
+              icon={FileText}
+              onClick={() => {
+                setActiveTab('explorer');
+                setFilterPendingSignature(false);
+              }}
+              isLoading={loadingDocuments}
+              index={0}
+            />
+
+            <StatsCard
+              title="Pendientes Firma"
+              subtitle="Documentos sin firmar"
+              value={loadingDocuments ? '-' : (documentsSource || []).filter(doc => {
+                const fileName = doc.originalName || doc.fileName || '';
+                const analysis = analyzeFileName(fileName, employees);
+                const isPayroll = analysis.documentType === 'Nómina';
+                const requiresSignature = doc.requiresSignature === true;
+                return (isPayroll || requiresSignature) && !doc.isAccepted;
+              }).length}
+              color="orange"
+              icon={FileSignature}
+              onClick={() => {
+                setActiveTab('explorer');
+                setFilterPendingSignature(true);
+              }}
+              isLoading={loadingDocuments}
+              index={1}
+            />
+          </div>
+        ) : (
+          <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">
+            <StatsCard
+              title="Total Documentos"
+              subtitle="En sistema"
+              value={loadingDocuments ? '-' : (allDocuments || []).length}
+              color="blue"
+              icon={FileText}
+              onClick={() => {
+                setActiveTab('explorer');
+                setFilterPendingSignature(false);
+              }}
+              isLoading={loadingDocuments}
+              index={0}
+            />
+
+            <StatsCard
+              title="Pendientes Firma"
+              subtitle="Documentos sin firmar"
+              value={loadingDocuments ? '-' : (allDocuments || []).filter(doc => {
+                const fileName = doc.originalName || doc.fileName || '';
+                const analysis = analyzeFileName(fileName, employees);
+                const isPayroll = analysis.documentType === 'Nómina';
+                const requiresSignature = doc.requiresSignature === true;
+                return (isPayroll || requiresSignature) && !doc.isAccepted;
+              }).length}
+              color="orange"
+              icon={FileSignature}
+              onClick={() => {
+                setActiveTab('explorer');
+                setFilterPendingSignature(true);
+                setSearchTerm('');
+                setSelectedEmployee('all');
+              }}
+              isLoading={loadingDocuments}
+              index={1}
+            />
+
+            <StatsCard
+              title="Solicitudes"
+              subtitle="Pendientes"
+              value={loadingRequests ? '-' : (sentRequests || []).filter(req => !req.isCompleted).length}
+              color="yellow"
+              icon={Send}
+              onClick={() => setActiveTab('requests')}
+              isLoading={loadingRequests}
+              index={2}
+            />
+
+            <StatsCard
+              title="Empleados"
+              subtitle="Total activos"
+              value={loadingEmployees ? '-' : (employees || []).length}
+              color="purple"
+              icon={Users}
+              onClick={() => {
+                setActiveTab('explorer');
+                setFilterPendingSignature(false);
+              }}
+              isLoading={loadingEmployees}
+              index={3}
+            />
+          </div>
+        )}
+
+        {/* Tabs Navigation - Only show explorer tab for self-access mode */}
+        {isSelfAccessOnly ? (
+          <TabNavigation
+            tabs={[
+              { id: 'explorer', label: 'Mis Archivos', icon: Folder }
+            ]}
+            activeTab={activeTab}
+            onTabChange={(tab) => setActiveTab(tab)}
+          />
+        ) : (
+          <TabNavigation
+            tabs={[
+              { id: 'upload', label: 'Subir Documentos', icon: Upload },
+              { id: 'explorer', label: 'Archivos', icon: Folder },
+              { id: 'requests', label: 'Pedir Documentos', icon: Download }
+            ]}
+            activeTab={activeTab}
+            onTabChange={(tab) => {
+              setActiveTab(tab);
+              if (tab !== 'explorer') {
+                setFilterPendingSignature(false);
+              }
             }}
-            isLoading={loadingDocuments}
-            index={0}
           />
-
-          <StatsCard
-            title="Pendientes Firma"
-            subtitle="Documentos sin firmar"
-            value={loadingDocuments ? '-' : (allDocuments || []).filter(doc => {
-              const fileName = doc.originalName || doc.fileName || '';
-              const analysis = analyzeFileName(fileName, employees);
-              const isPayroll = analysis.documentType === 'Nómina';
-              const requiresSignature = doc.requiresSignature === true;
-              return (isPayroll || requiresSignature) && !doc.isAccepted;
-            }).length}
-            color="orange"
-            icon={FileSignature}
-            onClick={() => {
-              setActiveTab('explorer');
-              setFilterPendingSignature(true);
-              setSearchTerm('');
-              setSelectedEmployee('all');
-            }}
-            isLoading={loadingDocuments}
-            index={1}
-          />
-
-          <StatsCard
-            title="Solicitudes"
-            subtitle="Pendientes"
-            value={loadingRequests ? '-' : (sentRequests || []).filter(req => !req.isCompleted).length}
-            color="yellow"
-            icon={Send}
-            onClick={() => setActiveTab('requests')}
-            isLoading={loadingRequests}
-            index={2}
-          />
-
-          <StatsCard
-            title="Empleados"
-            subtitle="Total activos"
-            value={loadingEmployees ? '-' : (employees || []).length}
-            color="purple"
-            icon={Users}
-            onClick={() => {
-              setActiveTab('explorer');
-              setFilterPendingSignature(false);
-            }}
-            isLoading={loadingEmployees}
-            index={3}
-          />
-        </div>
-
-        {/* Tabs Navigation */}
-        <TabNavigation
-          tabs={[
-            { id: 'upload', label: 'Subir Documentos', icon: Upload },
-            { id: 'explorer', label: 'Archivos', icon: Folder },
-            { id: 'requests', label: 'Pedir Documentos', icon: Download }
-          ]}
-          activeTab={activeTab}
-          onTabChange={(tab) => {
-            setActiveTab(tab);
-            if (tab !== 'explorer') {
-              setFilterPendingSignature(false);
-            }
-          }}
-        />
+        )}
 
         {/* Tab Content */}
         {activeTab === 'upload' && (
@@ -1252,20 +1313,22 @@ export default function AdminDocuments() {
                   </div>
                 </div>
                 
-                {/* 2. Employee Filter */}
-                <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                  <SelectTrigger className="w-full md:w-64">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los empleados</SelectItem>
-                    {employees.map((employee: Employee) => (
-                      <SelectItem key={employee.id} value={employee.id.toString()}>
-                        {employee.fullName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {/* 2. Employee Filter - Hidden in self-access mode */}
+                {!isSelfAccessOnly && (
+                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                    <SelectTrigger className="w-full md:w-64">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los empleados</SelectItem>
+                      {employees.map((employee: Employee) => (
+                        <SelectItem key={employee.id} value={employee.id.toString()}>
+                          {employee.fullName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
                 
                 {/* 3. View Mode Toggle Buttons */}
                 <div className="flex bg-muted rounded-lg p-1">

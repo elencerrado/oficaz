@@ -97,10 +97,80 @@ export function useFeatureCheck() {
     return !hasAccess(feature);
   };
 
+  // Special access mode for documents: managers can always see their own files
+  // but can only manage others' files if they have the feature enabled
+  const getDocumentAccessMode = (): 'full' | 'self' | 'none' => {
+    const subscriptionAccess = checkFeatureAccess(subscription, 'documents');
+    
+    // No subscription access = no access at all
+    if (!subscriptionAccess) return 'none';
+    
+    // Admins always have full access
+    if (user?.role === 'admin') return 'full';
+    
+    // Employees always have self access only
+    if (user?.role === 'employee') return 'self';
+    
+    // For managers: check if documents is in their visible features
+    if (user?.role === 'manager') {
+      const visibleFeatures = permissionsData?.managerPermissions?.visibleFeatures;
+      
+      // If permissions not loaded yet, assume self access
+      if (isLoadingPermissions) return 'self';
+      
+      // If visibleFeatures is null/undefined, manager has full access (no restrictions)
+      if (visibleFeatures === null || visibleFeatures === undefined) return 'full';
+      
+      // If documents is in the list, full access
+      if (visibleFeatures.includes('documents')) return 'full';
+      
+      // Otherwise, self access only (can see own documents)
+      return 'self';
+    }
+    
+    return 'none';
+  };
+
+  // Special access mode for work reports: managers can always see their own reports
+  // but can only manage others' reports if they have the feature enabled
+  const getWorkReportsAccessMode = (): 'full' | 'self' | 'none' => {
+    const subscriptionAccess = checkFeatureAccess(subscription, 'work_reports');
+    
+    // No subscription access = no access at all
+    if (!subscriptionAccess) return 'none';
+    
+    // Admins always have full access
+    if (user?.role === 'admin') return 'full';
+    
+    // Employees always have self access only
+    if (user?.role === 'employee') return 'self';
+    
+    // For managers: check if work_reports is in their visible features
+    if (user?.role === 'manager') {
+      const visibleFeatures = permissionsData?.managerPermissions?.visibleFeatures;
+      
+      // If permissions not loaded yet, assume self access
+      if (isLoadingPermissions) return 'self';
+      
+      // If visibleFeatures is null/undefined, manager has full access (no restrictions)
+      if (visibleFeatures === null || visibleFeatures === undefined) return 'full';
+      
+      // If work_reports is in the list, full access
+      if (visibleFeatures.includes('work_reports')) return 'full';
+      
+      // Otherwise, self access only (can see own reports)
+      return 'self';
+    }
+    
+    return 'none';
+  };
+
   return {
     hasAccess,
     getRequiredPlan,
     isFeatureRestricted,
+    getDocumentAccessMode,
+    getWorkReportsAccessMode,
     subscription,
     isManagerPermissionsLoading
   };

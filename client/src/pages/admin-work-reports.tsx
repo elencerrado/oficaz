@@ -103,7 +103,10 @@ interface EditFormData {
 export default function AdminWorkReportsPage() {
   usePageTitle('Partes de Trabajo - Admin');
   const { user, isAuthenticated, isLoading: authLoading, subscription } = useAuth();
-  const { hasAccess } = useFeatureCheck();
+  const { hasAccess, getWorkReportsAccessMode } = useFeatureCheck();
+  
+  const workReportsAccessMode = getWorkReportsAccessMode();
+  const isSelfAccessOnly = workReportsAccessMode === 'self';
   const { setHeader, resetHeader } = usePageHeader();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -282,9 +285,17 @@ export default function AdminWorkReportsPage() {
     return Array.from(monthsSet).sort((a, b) => b.localeCompare(a));
   }, [reports]);
 
+  // Source reports - filter to user's own reports in self-access mode
+  const reportsSource = useMemo(() => {
+    if (isSelfAccessOnly && user?.id) {
+      return reports.filter(r => r.employeeId === user.id);
+    }
+    return reports;
+  }, [reports, isSelfAccessOnly, user?.id]);
+  
   const filteredReports = useMemo(() => {
     const searchLower = searchTerm.toLowerCase();
-    return reports.filter(report => {
+    return reportsSource.filter(report => {
       // Filtro por proyecto (refCode)
       if (projectFilter !== 'all' && report.refCode !== projectFilter) {
         return false;
@@ -305,7 +316,7 @@ export default function AdminWorkReportsPage() {
         shortDate.includes(searchLower)
       );
     });
-  }, [reports, searchTerm, projectFilter]);
+  }, [reportsSource, searchTerm, projectFilter]);
 
   // Reportes visibles para infinite scroll
   const visibleReports = useMemo(() => {
@@ -337,36 +348,36 @@ export default function AdminWorkReportsPage() {
     return () => observer.disconnect();
   }, [hasMoreToDisplay, filteredReports.length]);
 
-  // Lista de empleados únicos que han enviado partes
+  // Lista de empleados únicos que han enviado partes (uses reportsSource for self-access mode)
   const uniqueEmployeesList = useMemo(() => {
     const employeeMap = new Map<number, string>();
-    reports.forEach(r => {
+    reportsSource.forEach(r => {
       if (!employeeMap.has(r.employeeId)) {
         employeeMap.set(r.employeeId, r.employeeName);
       }
     });
     return Array.from(employeeMap.entries()).map(([id, name]) => ({ id, name }));
-  }, [reports]);
+  }, [reportsSource]);
 
-  // Lista de proyectos únicos (refCodes)
+  // Lista de proyectos únicos (refCodes) - uses reportsSource for self-access mode
   const uniqueProjectsList = useMemo(() => {
     const projects = new Set<string>();
-    reports.forEach(r => {
+    reportsSource.forEach(r => {
       if (r.refCode) projects.add(r.refCode);
     });
     return Array.from(projects).sort();
-  }, [reports]);
+  }, [reportsSource]);
 
-  // Partes de este mes
+  // Partes de este mes - uses reportsSource for self-access mode
   const thisMonthReports = useMemo(() => {
     const today = new Date();
     const monthStart = startOfMonth(today);
     const monthEnd = endOfMonth(today);
-    return reports.filter(r => {
+    return reportsSource.filter(r => {
       const reportDate = parseISO(r.reportDate);
       return reportDate >= monthStart && reportDate <= monthEnd;
     });
-  }, [reports]);
+  }, [reportsSource]);
 
   // Handler Card 1: Todos los partes
   const handleAllReportsFilter = useCallback(() => {
@@ -569,7 +580,7 @@ export default function AdminWorkReportsPage() {
   }, [editingReport, editFormData, updateReportMutation]);
 
   const stats = useMemo(() => {
-    const totalReports = reports.length;
+    const totalReports = reportsSource.length;
     const thisMonthCount = thisMonthReports.length;
     const uniqueEmployeesCount = uniqueEmployeesList.length;
     const uniqueProjectsCount = uniqueProjectsList.length;
@@ -579,7 +590,7 @@ export default function AdminWorkReportsPage() {
       uniqueEmployeesCount, 
       uniqueProjectsCount 
     };
-  }, [reports, thisMonthReports, uniqueEmployeesList, uniqueProjectsList]);
+  }, [reportsSource, thisMonthReports, uniqueEmployeesList, uniqueProjectsList]);
 
   const filterTitle = useMemo(() => {
     switch (dateFilter) {
@@ -606,79 +617,109 @@ export default function AdminWorkReportsPage() {
     );
   }
 
-  const hasWorkReportsAccess = hasAccess('reports') || hasAccess('work_reports');
-  if (!hasWorkReportsAccess) {
+  // Dual-access model: allow self-access for managers even when feature is disabled
+  // 'none' = no subscription access, 'self' = manager sees own reports only, 'full' = full access
+  if (workReportsAccessMode === 'none') {
     return (
       <FeatureRestrictedPage 
         featureName="Partes de Trabajo" 
         description="Visualiza y exporta los partes de trabajo de todos tus empleados. Activa este addon desde la Tienda para comenzar a usarlo." 
-        requiredPlan="Addon" 
       />
     );
   }
 
   return (
     <div className={`transition-opacity duration-300 ${reportsLoading ? 'opacity-60' : 'opacity-100'}`}>
-      {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">
-        {/* Card 1: Total de partes */}
-        <StatsCard
-          title="Total Partes"
-          subtitle="Todos"
-          value={stats.totalReports}
-          color="blue"
-          icon={ClipboardList}
-          onClick={handleAllReportsFilter}
-          isActive={activeStatsFilter === 'all'}
-          isLoading={reportsLoading}
-          index={0}
-        />
-        
-        {/* Card 2: Partes este mes */}
-        <StatsCard
-          title="Este Mes"
-          subtitle="Partes"
-          value={stats.thisMonthCount}
-          color="green"
-          icon={CalendarIcon}
-          onClick={handleThisMonthFilter}
-          isActive={activeStatsFilter === 'month'}
-          isLoading={reportsLoading}
-          index={1}
-        />
-        
-        {/* Card 3: Empleados - click rota, doble click todos */}
-        <StatsCard
-          title={employeeRotationIndex >= 0 && uniqueEmployeesList[employeeRotationIndex] 
-            ? uniqueEmployeesList[employeeRotationIndex].name.split(' ')[0] 
-            : "Empleados"}
-          subtitle={employeeRotationIndex >= 0 ? `${employeeRotationIndex + 1}/${stats.uniqueEmployeesCount}` : "Con partes"}
-          value={stats.uniqueEmployeesCount}
-          color="purple"
-          icon={Users}
-          onClick={handleEmployeeRotation}
-          onDoubleClick={handleEmployeeShowAll}
-          isActive={activeStatsFilter === 'employee'}
-          isLoading={reportsLoading}
-          index={2}
-        />
-        
-        {/* Card 4: Proyectos - click rota, doble click todos */}
-        <StatsCard
-          title={projectRotationIndex >= 0 && uniqueProjectsList[projectRotationIndex] 
-            ? uniqueProjectsList[projectRotationIndex] 
-            : "Proyectos"}
-          subtitle={projectRotationIndex >= 0 ? `${projectRotationIndex + 1}/${stats.uniqueProjectsCount}` : "Cod. Ref"}
-          value={stats.uniqueProjectsCount}
-          color="orange"
-          icon={FolderKanban}
-          onClick={handleProjectRotation}
-          onDoubleClick={handleProjectShowAll}
-          isActive={activeStatsFilter === 'project'}
-          isLoading={reportsLoading}
-          index={3}
-        />
-      </div>
+      {/* Stats Cards - Simplified for self-access mode */}
+      {isSelfAccessOnly ? (
+        <div className="grid grid-cols-2 gap-2 md:gap-6 mb-3">
+          {/* Card 1: Mis Partes */}
+          <StatsCard
+            title="Mis Partes"
+            subtitle="Total"
+            value={stats.totalReports}
+            color="blue"
+            icon={ClipboardList}
+            onClick={handleAllReportsFilter}
+            isActive={activeStatsFilter === 'all'}
+            isLoading={reportsLoading}
+            index={0}
+          />
+          
+          {/* Card 2: Este Mes */}
+          <StatsCard
+            title="Este Mes"
+            subtitle="Partes"
+            value={stats.thisMonthCount}
+            color="green"
+            icon={CalendarIcon}
+            onClick={handleThisMonthFilter}
+            isActive={activeStatsFilter === 'month'}
+            isLoading={reportsLoading}
+            index={1}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">
+          {/* Card 1: Total de partes */}
+          <StatsCard
+            title="Total Partes"
+            subtitle="Todos"
+            value={stats.totalReports}
+            color="blue"
+            icon={ClipboardList}
+            onClick={handleAllReportsFilter}
+            isActive={activeStatsFilter === 'all'}
+            isLoading={reportsLoading}
+            index={0}
+          />
+          
+          {/* Card 2: Partes este mes */}
+          <StatsCard
+            title="Este Mes"
+            subtitle="Partes"
+            value={stats.thisMonthCount}
+            color="green"
+            icon={CalendarIcon}
+            onClick={handleThisMonthFilter}
+            isActive={activeStatsFilter === 'month'}
+            isLoading={reportsLoading}
+            index={1}
+          />
+          
+          {/* Card 3: Empleados - click rota, doble click todos */}
+          <StatsCard
+            title={employeeRotationIndex >= 0 && uniqueEmployeesList[employeeRotationIndex] 
+              ? uniqueEmployeesList[employeeRotationIndex].name.split(' ')[0] 
+              : "Empleados"}
+            subtitle={employeeRotationIndex >= 0 ? `${employeeRotationIndex + 1}/${stats.uniqueEmployeesCount}` : "Con partes"}
+            value={stats.uniqueEmployeesCount}
+            color="purple"
+            icon={Users}
+            onClick={handleEmployeeRotation}
+            onDoubleClick={handleEmployeeShowAll}
+            isActive={activeStatsFilter === 'employee'}
+            isLoading={reportsLoading}
+            index={2}
+          />
+          
+          {/* Card 4: Proyectos - click rota, doble click todos */}
+          <StatsCard
+            title={projectRotationIndex >= 0 && uniqueProjectsList[projectRotationIndex] 
+              ? uniqueProjectsList[projectRotationIndex] 
+              : "Proyectos"}
+            subtitle={projectRotationIndex >= 0 ? `${projectRotationIndex + 1}/${stats.uniqueProjectsCount}` : "Cod. Ref"}
+            value={stats.uniqueProjectsCount}
+            color="orange"
+            icon={FolderKanban}
+            onClick={handleProjectRotation}
+            onDoubleClick={handleProjectShowAll}
+            isActive={activeStatsFilter === 'project'}
+            isLoading={reportsLoading}
+            index={3}
+          />
+        </div>
+      )}
 
       {/* Filters & List Card */}
       <Card>
@@ -759,21 +800,24 @@ export default function AdminWorkReportsPage() {
                   />
                 </div>
               </div>
-              <div className="flex flex-col space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Empleado</label>
-                <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
-                  <SelectTrigger className="h-10" data-testid="select-employee-filter">
-                    <Users className="w-4 h-4 mr-2 text-gray-500" />
-                    <SelectValue placeholder="Filtrar por empleado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los empleados</SelectItem>
-                    {employees.map((emp) => (
-                      <SelectItem key={emp.id} value={emp.id.toString()}>{emp.fullName}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Employee filter - hidden in self-access mode */}
+              {!isSelfAccessOnly && (
+                <div className="flex flex-col space-y-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Empleado</label>
+                  <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
+                    <SelectTrigger className="h-10" data-testid="select-employee-filter">
+                      <Users className="w-4 h-4 mr-2 text-gray-500" />
+                      <SelectValue placeholder="Filtrar por empleado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los empleados</SelectItem>
+                      {employees.map((emp) => (
+                        <SelectItem key={emp.id} value={emp.id.toString()}>{emp.fullName}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="flex flex-col space-y-2">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Período</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -1364,19 +1408,29 @@ export default function AdminWorkReportsPage() {
           </DialogHeader>
           
           <div className="py-4 space-y-4">
-            <div className="space-y-2">
-              <Label>Empleado *</Label>
-              <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
-                <SelectTrigger className="bg-white dark:bg-gray-800">
-                  <SelectValue placeholder="Seleccionar empleado" />
-                </SelectTrigger>
-                <SelectContent>
-                  {employees.filter(emp => emp.role !== 'admin').map((emp) => (
-                    <SelectItem key={emp.id} value={emp.id.toString()}>{emp.fullName}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Employee selector - hidden in self-access mode */}
+            {isSelfAccessOnly ? (
+              <div className="space-y-2">
+                <Label>Empleado</Label>
+                <div className="p-2 bg-muted rounded-md text-sm">
+                  {user?.fullName || 'Usuario'}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Empleado *</Label>
+                <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
+                  <SelectTrigger className="bg-white dark:bg-gray-800">
+                    <SelectValue placeholder="Seleccionar empleado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {employees.filter(emp => emp.role !== 'admin').map((emp) => (
+                      <SelectItem key={emp.id} value={emp.id.toString()}>{emp.fullName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -1560,7 +1614,10 @@ export default function AdminWorkReportsPage() {
               </Button>
               <Button
                 onClick={async () => {
-                  if (!selectedEmployeeId) {
+                  // In self-access mode, use current user's ID
+                  const employeeIdToUse = isSelfAccessOnly ? user?.id?.toString() : selectedEmployeeId;
+                  
+                  if (!employeeIdToUse) {
                     toast({ title: 'Error', description: 'Selecciona un empleado', variant: 'destructive' });
                     return;
                   }
@@ -1574,7 +1631,7 @@ export default function AdminWorkReportsPage() {
                     const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
                     
                     await apiRequest('POST', '/api/admin/work-reports', {
-                      employeeId: parseInt(selectedEmployeeId),
+                      employeeId: parseInt(employeeIdToUse),
                       reportDate: createFormData.reportDate,
                       refCode: createFormData.refCode || null,
                       location: createFormData.location,
