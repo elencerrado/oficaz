@@ -773,10 +773,16 @@ export class DrizzleStorage implements IStorage {
   async getWorkSessionsStats(
     companyId: number,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    userId?: number // Optional: filter to specific user for self-access mode
   ): Promise<{ employeeId: number; totalHours: number; totalBreakHours: number; sessionCount: number }[]> {
     // Build conditions
     const conditions = [eq(schema.users.companyId, companyId)];
+    
+    // Filter to specific user if provided (self-access mode)
+    if (userId) {
+      conditions.push(eq(schema.workSessions.userId, userId));
+    }
     
     if (startDate) {
       conditions.push(gte(schema.workSessions.clockIn, startDate));

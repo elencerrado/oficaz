@@ -4159,6 +4159,8 @@ Responde directamente a este email para contactar con la persona.
 
   app.get('/api/work-sessions/company', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('time_tracking', () => storage), async (req: AuthRequest, res) => {
     try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
       // Pagination parameters - default 50 per page for fast loading
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
@@ -4171,7 +4173,10 @@ Responde directamente a este email para contactar con la persona.
         status?: 'active' | 'completed' | 'incomplete';
       } = {};
       
-      if (req.query.employeeId) {
+      // In self-access mode, force filter to only user's own data
+      if (accessMode === 'self') {
+        filters.employeeId = req.user!.id;
+      } else if (req.query.employeeId) {
         filters.employeeId = parseInt(req.query.employeeId as string);
       }
       
@@ -4194,21 +4199,25 @@ Responde directamente a este email para contactar con la persona.
       }
       
       // Mark old sessions as incomplete for all employees before retrieving
-      // Get all employees from the company
-      const employees = await storage.getEmployeesByCompany(req.user!.companyId);
-      
-      // Mark incomplete sessions for each employee
-      await Promise.all(
-        employees.map(employee => storage.markOldSessionsAsIncomplete(employee.id))
-      );
+      // Get all employees from the company (or just current user in self mode)
+      if (accessMode === 'self') {
+        await storage.markOldSessionsAsIncomplete(req.user!.id);
+      } else {
+        const employees = await storage.getEmployeesByCompany(req.user!.companyId);
+        await Promise.all(
+          employees.map(employee => storage.markOldSessionsAsIncomplete(employee.id))
+        );
+      }
       
       const result = await storage.getWorkSessionsByCompany(req.user!.companyId, limit, offset, filters);
       
       // Return paginated response with total count for infinite scroll
+      // Include accessMode so frontend knows how to render
       res.json({
         sessions: result.sessions,
         totalCount: result.totalCount,
-        hasMore: offset + result.sessions.length < result.totalCount
+        hasMore: offset + result.sessions.length < result.totalCount,
+        accessMode: accessMode
       });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -4218,6 +4227,7 @@ Responde directamente a este email para contactar con la persona.
   // Optimized endpoint for Summary tab - returns aggregated stats per employee (no individual sessions)
   app.get('/api/work-sessions/summary-stats', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('time_tracking', () => storage), async (req: AuthRequest, res) => {
     try {
+      const accessMode = (req as any).managerAccessMode || 'full';
       const companyId = req.user!.companyId;
       
       // Parse date range
@@ -4235,9 +4245,10 @@ Responde directamente a este email para contactar con la persona.
       }
       
       // Get aggregated stats using optimized SQL query
-      const stats = await storage.getWorkSessionsStats(companyId, startDate, endDate);
+      // In self-access mode, only get stats for the current user
+      const stats = await storage.getWorkSessionsStats(companyId, startDate, endDate, accessMode === 'self' ? req.user!.id : undefined);
       
-      res.json(stats);
+      res.json({ ...stats, accessMode });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

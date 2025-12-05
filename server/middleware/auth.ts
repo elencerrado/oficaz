@@ -96,17 +96,26 @@ const featureToAddonKey: Record<string, string> = {
 };
 
 // Middleware to check if a manager has visibility to a feature
+// Instead of blocking, this now sets req.managerAccessMode to 'full' or 'self'
+// 'full' = full access like admin, 'self' = can only access own data (read-only)
 export function requireVisibleFeature(featureKey: string, getStorage: () => any) {
   return async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    // Admins and employees bypass this check
-    if (req.user.role !== 'manager') {
+    // Admins get full access, employees get self access
+    if (req.user.role === 'admin') {
+      (req as any).managerAccessMode = 'full';
+      return next();
+    }
+    
+    if (req.user.role === 'employee') {
+      (req as any).managerAccessMode = 'self';
       return next();
     }
 
+    // For managers, check their permissions
     try {
       const storage = getStorage();
       const company = await storage.getCompany(req.user.companyId);
@@ -118,20 +127,20 @@ export function requireVisibleFeature(featureKey: string, getStorage: () => any)
       const managerPermissions = company.managerPermissions as { visibleFeatures?: string[] | null } | null;
       const visibleFeatures = managerPermissions?.visibleFeatures;
 
-      // If visibleFeatures is null/undefined, all features are visible (never configured)
+      // If visibleFeatures is null/undefined, all features are visible (full access)
       if (visibleFeatures === null || visibleFeatures === undefined) {
+        (req as any).managerAccessMode = 'full';
         return next();
-      }
-
-      // If visibleFeatures is empty array, no features are visible
-      if (visibleFeatures.length === 0) {
-        return res.status(403).json({ message: 'Access to this feature has been restricted' });
       }
 
       // Check if the feature is in the visible list
       const addonKey = featureToAddonKey[featureKey] || featureKey;
-      if (!visibleFeatures.includes(addonKey)) {
-        return res.status(403).json({ message: 'Access to this feature has been restricted' });
+      if (visibleFeatures.includes(addonKey)) {
+        // Manager has full access to this feature
+        (req as any).managerAccessMode = 'full';
+      } else {
+        // Manager has self-access only (read-only, own data)
+        (req as any).managerAccessMode = 'self';
       }
 
       next();
