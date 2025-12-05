@@ -2,6 +2,7 @@ import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useDemoBanner } from '@/hooks/use-demo-banner';
+import { useEmployeeViewMode } from '@/hooks/use-employee-view-mode';
 import { LayoutDashboard, Clock, Calendar, CalendarClock, FileText, Mail, Bell, Users, Settings, LogOut, ClipboardList, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -31,6 +32,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, company, subscription, logout } = useAuth();
   const { hasAccess } = useFeatureCheck();
   const { showBanner, bannerHeight } = useDemoBanner();
+  const { isEmployeeViewMode } = useEmployeeViewMode();
   
   const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
 
@@ -55,6 +57,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   
   const isFeatureVisibleForManager = (featureKey: string | undefined): boolean => {
     if (!featureKey || user?.role !== 'manager') return true;
+    
+    // In Employee View Mode, bypass all manager visibility restrictions
+    if (isEmployeeViewMode) return true;
+    
     const addonKey = featureToAddonKey[featureKey] || featureKey;
     
     // Messages and reminders are ALWAYS visible for managers

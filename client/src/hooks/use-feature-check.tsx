@@ -1,5 +1,6 @@
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { checkFeatureAccess, getRequiredPlanForFeature, type FeatureKey } from '@/lib/feature-restrictions';
 import { useEmployeeViewMode } from '@/hooks/use-employee-view-mode';
 
@@ -16,9 +17,26 @@ const featureToAddonKey: Record<string, string> = {
   ai_assistant: 'ai_assistant',
 };
 
+// Employee-specific routes where managers should have full access to company features
+const EMPLOYEE_ROUTES = [
+  '/inicio',
+  '/misfichajes', 
+  '/documentos',
+  '/recordatorios',
+  '/mensajes',
+  '/cuadrante',
+  '/vacaciones',
+  '/horas',
+  '/partes-trabajo'
+];
+
 export function useFeatureCheck() {
   const { subscription, user } = useAuth();
   const { isEmployeeViewMode } = useEmployeeViewMode();
+  const [location] = useLocation();
+  
+  // Detect if current route is an employee-facing page
+  const isEmployeePage = EMPLOYEE_ROUTES.some(route => location.endsWith(route));
 
   const { data: permissionsData, isLoading: isLoadingPermissions } = useQuery<{ managerPermissions?: { visibleFeatures?: string[] | null } }>({
     queryKey: ['/api/settings/manager-permissions'],
@@ -36,9 +54,9 @@ export function useFeatureCheck() {
     
     if (!subscriptionAccess) return false;
 
-    // In Employee View Mode OR when explicitly bypassing manager restrictions,
-    // show ALL company-contracted features
-    if (isEmployeeViewMode || options?.bypassManagerRestrictions) {
+    // In Employee View Mode, on employee pages, OR when explicitly bypassing manager restrictions,
+    // show ALL company-contracted features (bypass admin visibility restrictions)
+    if (isEmployeeViewMode || isEmployeePage || options?.bypassManagerRestrictions) {
       return subscriptionAccess;
     }
 
