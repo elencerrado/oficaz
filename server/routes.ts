@@ -4908,9 +4908,17 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.get('/api/vacation-requests/company', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.get('/api/vacation-requests/company', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('vacation', () => storage), async (req: AuthRequest, res) => {
     try {
-      const requests = await storage.getVacationRequestsByCompany(req.user!.companyId);
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      let requests;
+      if (accessMode === 'self') {
+        // In self mode, only get manager's own vacation requests
+        requests = await storage.getVacationRequestsByUser(req.user!.id);
+      } else {
+        requests = await storage.getVacationRequestsByCompany(req.user!.companyId);
+      }
       
       // Add user names to vacation requests
       const requestsWithNames = await Promise.all(requests.map(async (request: any) => {
@@ -4921,14 +4929,21 @@ Responde directamente a este email para contactar con la persona.
         };
       }));
       
-      res.json(requestsWithNames);
+      res.json({ requests: requestsWithNames, accessMode });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
 
-  app.patch('/api/vacation-requests/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.patch('/api/vacation-requests/:id', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('vacation', () => storage), async (req: AuthRequest, res) => {
     try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      // In self mode, managers cannot approve/deny vacation requests
+      if (accessMode === 'self') {
+        return res.status(403).json({ message: 'No tienes permisos para gestionar solicitudes de vacaciones' });
+      }
+      
       const id = parseInt(req.params.id);
       const { status, startDate, endDate, adminComment } = req.body;
 
@@ -4978,8 +4993,15 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Work Shifts routes (Cuadrante)
-  app.post('/api/work-shifts', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.post('/api/work-shifts', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('schedules', () => storage), async (req: AuthRequest, res) => {
     try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      // In self/view mode, managers cannot create work shifts
+      if (accessMode === 'self' || accessMode === 'view') {
+        return res.status(403).json({ message: 'No tienes permisos para crear turnos' });
+      }
+      
       console.log('Work shift creation body:', req.body);
 
       const data = insertWorkShiftSchema.parse({
@@ -5017,10 +5039,12 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.get('/api/work-shifts/company', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.get('/api/work-shifts/company', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('schedules', () => storage), async (req: AuthRequest, res) => {
     try {
+      const accessMode = (req as any).managerAccessMode || 'full';
       const { startDate, endDate } = req.query;
       
+      // Schedules always show all company shifts (view mode allows seeing all, just not editing)
       const shifts = await storage.getWorkShiftsByCompany(
         req.user!.companyId, 
         startDate as string, 
@@ -5036,7 +5060,7 @@ Responde directamente a este email para contactar con la persona.
         };
       }));
       
-      res.json(shiftsWithEmployeeNames);
+      res.json({ shifts: shiftsWithEmployeeNames, accessMode });
     } catch (error: any) {
       console.error('Error fetching company work shifts:', error);
       res.status(500).json({ message: error.message });
@@ -5085,8 +5109,15 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.patch('/api/work-shifts/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.patch('/api/work-shifts/:id', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('schedules', () => storage), async (req: AuthRequest, res) => {
     try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      // In self/view mode, managers cannot edit work shifts
+      if (accessMode === 'self' || accessMode === 'view') {
+        return res.status(403).json({ message: 'No tienes permisos para editar turnos' });
+      }
+      
       const id = parseInt(req.params.id);
       const { startAt, endAt, title, location, notes, color, employeeId } = req.body;
 
@@ -5147,8 +5178,15 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.delete('/api/work-shifts/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.delete('/api/work-shifts/:id', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('schedules', () => storage), async (req: AuthRequest, res) => {
     try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      // In self/view mode, managers cannot delete work shifts
+      if (accessMode === 'self' || accessMode === 'view') {
+        return res.status(403).json({ message: 'No tienes permisos para eliminar turnos' });
+      }
+      
       const id = parseInt(req.params.id);
       
       const success = await storage.deleteWorkShift(id);
@@ -5164,8 +5202,15 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.post('/api/work-shifts/replicate-week', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.post('/api/work-shifts/replicate-week', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('schedules', () => storage), async (req: AuthRequest, res) => {
     try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      // In self/view mode, managers cannot replicate weeks
+      if (accessMode === 'self' || accessMode === 'view') {
+        return res.status(403).json({ message: 'No tienes permisos para replicar semanas' });
+      }
+      
       const { weekStart, offsetWeeks = 1, employeeIds } = req.body;
 
       console.log('Replicating work shifts:', { weekStart, offsetWeeks, employeeIds });
@@ -5435,8 +5480,10 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Admin/Manager: Get all company work reports with filters
-  app.get('/api/admin/work-reports', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.get('/api/admin/work-reports', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('work_reports', () => storage), async (req: AuthRequest, res) => {
     try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
       // Check if company has work_reports addon
       const hasWorkReportsAddon = await storage.hasActiveAddon(req.user!.companyId, 'work_reports');
       if (!hasWorkReportsAddon) {
@@ -5445,13 +5492,22 @@ Responde directamente a este email para contactar con la persona.
 
       const { employeeId, startDate, endDate } = req.query;
       
-      const reports = await storage.getWorkReportsByCompany(req.user!.companyId, {
-        employeeId: employeeId ? parseInt(employeeId as string) : undefined,
-        startDate: startDate as string | undefined,
-        endDate: endDate as string | undefined,
-      });
+      let reports;
+      if (accessMode === 'self') {
+        // In self mode, only get manager's own work reports
+        reports = await storage.getWorkReportsByUser(req.user!.id, {
+          startDate: startDate as string | undefined,
+          endDate: endDate as string | undefined,
+        });
+      } else {
+        reports = await storage.getWorkReportsByCompany(req.user!.companyId, {
+          employeeId: employeeId ? parseInt(employeeId as string) : undefined,
+          startDate: startDate as string | undefined,
+          endDate: endDate as string | undefined,
+        });
+      }
 
-      res.json(reports);
+      res.json({ reports, accessMode });
     } catch (error: any) {
       console.error('Admin work reports fetch error:', error);
       res.status(500).json({ message: error.message });
@@ -5459,8 +5515,15 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Admin/Manager: Update any work report
-  app.patch('/api/admin/work-reports/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.patch('/api/admin/work-reports/:id', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('work_reports', () => storage), async (req: AuthRequest, res) => {
     try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      // In self mode, managers cannot edit others' work reports
+      if (accessMode === 'self') {
+        return res.status(403).json({ message: 'No tienes permisos para editar partes de otros empleados' });
+      }
+      
       const id = parseInt(req.params.id);
       
       // Check if company has work_reports addon
@@ -5512,8 +5575,15 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Admin/Manager: Create work report on behalf of an employee
-  app.post('/api/admin/work-reports', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.post('/api/admin/work-reports', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('work_reports', () => storage), async (req: AuthRequest, res) => {
     try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      // In self mode, managers cannot create work reports for others
+      if (accessMode === 'self') {
+        return res.status(403).json({ message: 'No tienes permisos para crear partes para otros empleados' });
+      }
+      
       // Check if company has work_reports addon
       const hasWorkReportsAddon = await storage.hasActiveAddon(req.user!.companyId, 'work_reports');
       if (!hasWorkReportsAddon) {
@@ -5555,9 +5625,16 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Admin/Manager: Get unique locations from all company work reports
-  app.get('/api/admin/work-reports/locations', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.get('/api/admin/work-reports/locations', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('work_reports', () => storage), async (req: AuthRequest, res) => {
     try {
-      const locations = await storage.getCompanyWorkReportLocations(req.user!.companyId);
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      let locations;
+      if (accessMode === 'self') {
+        locations = await storage.getWorkReportLocations(req.user!.id);
+      } else {
+        locations = await storage.getCompanyWorkReportLocations(req.user!.companyId);
+      }
       res.json(locations);
     } catch (error: any) {
       console.error('Admin locations fetch error:', error);
@@ -5566,9 +5643,16 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Admin/Manager: Get unique clients from all company work reports
-  app.get('/api/admin/work-reports/clients', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.get('/api/admin/work-reports/clients', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('work_reports', () => storage), async (req: AuthRequest, res) => {
     try {
-      const clients = await storage.getCompanyWorkReportClients(req.user!.companyId);
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      let clients;
+      if (accessMode === 'self') {
+        clients = await storage.getWorkReportClients(req.user!.id);
+      } else {
+        clients = await storage.getCompanyWorkReportClients(req.user!.companyId);
+      }
       res.json(clients);
     } catch (error: any) {
       console.error('Admin clients fetch error:', error);
@@ -5577,9 +5661,16 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Admin/Manager: Get unique refCodes from all company work reports
-  app.get('/api/admin/work-reports/ref-codes', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.get('/api/admin/work-reports/ref-codes', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('work_reports', () => storage), async (req: AuthRequest, res) => {
     try {
-      const refCodes = await storage.getCompanyWorkReportRefCodes(req.user!.companyId);
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      let refCodes;
+      if (accessMode === 'self') {
+        refCodes = await storage.getWorkReportRefCodes(req.user!.id);
+      } else {
+        refCodes = await storage.getCompanyWorkReportRefCodes(req.user!.companyId);
+      }
       res.json(refCodes);
     } catch (error: any) {
       console.error('Admin ref-codes fetch error:', error);
@@ -5588,8 +5679,15 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Admin/Manager: Export work reports to PDF
-  app.get('/api/admin/work-reports/export/pdf', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.get('/api/admin/work-reports/export/pdf', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('work_reports', () => storage), async (req: AuthRequest, res) => {
     try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      // In self mode, managers cannot export all reports
+      if (accessMode === 'self') {
+        return res.status(403).json({ message: 'No tienes permisos para exportar partes de todos los empleados' });
+      }
+      
       const { employeeId, startDate, endDate } = req.query;
       
       const reports = await storage.getWorkReportsByCompany(req.user!.companyId, {
@@ -5654,8 +5752,15 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Admin/Manager: Export work reports to Excel
-  app.get('/api/admin/work-reports/export/excel', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.get('/api/admin/work-reports/export/excel', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('work_reports', () => storage), async (req: AuthRequest, res) => {
     try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      // In self mode, managers cannot export all reports
+      if (accessMode === 'self') {
+        return res.status(403).json({ message: 'No tienes permisos para exportar partes de todos los empleados' });
+      }
+      
       const { employeeId, startDate, endDate } = req.query;
       
       const reports = await storage.getWorkReportsByCompany(req.user!.companyId, {
@@ -6074,15 +6179,23 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Get all documents for admin/manager view
-  app.get('/api/documents/all', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.get('/api/documents/all', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('documents', () => storage), async (req: AuthRequest, res) => {
     try {
-      const allDocuments = await storage.getDocumentsByCompany(req.user!.companyId);
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      let allDocuments;
+      if (accessMode === 'self') {
+        // In self mode, managers can only see their own documents
+        allDocuments = await storage.getDocumentsByUser(req.user!.id);
+      } else {
+        allDocuments = await storage.getDocumentsByCompany(req.user!.companyId);
+      }
       
       // ⚠️ REMOVED ORPHAN CLEANUP - Was incorrectly deleting documents stored in Object Storage
       // Documents are stored in cloud Object Storage, not local filesystem
       // The old code checked local fs.existsSync which always failed for cloud-stored files
       
-      res.json(allDocuments);
+      res.json({ documents: allDocuments, accessMode });
     } catch (error) {
       console.error("Error fetching all documents:", error);
       res.status(500).json({ message: "Failed to fetch documents" });
@@ -6090,8 +6203,15 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Admin upload documents (can specify target employee)
-  app.post('/api/documents/upload-admin', authenticateToken, requireRole(['admin', 'manager']), upload.single('file'), async (req: AuthRequest, res) => {
+  app.post('/api/documents/upload-admin', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('documents', () => storage), upload.single('file'), async (req: AuthRequest, res) => {
     try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      // In self mode, managers cannot upload documents to other employees
+      if (accessMode === 'self') {
+        return res.status(403).json({ message: 'No tienes permisos para subir documentos a otros empleados' });
+      }
+      
       if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
       }
@@ -6162,8 +6282,15 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Circular document upload - one file, multiple recipients sharing the same physical file
-  app.post('/api/documents/upload-circular', authenticateToken, requireRole(['admin', 'manager']), upload.single('file'), async (req: AuthRequest, res) => {
+  app.post('/api/documents/upload-circular', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('documents', () => storage), upload.single('file'), async (req: AuthRequest, res) => {
     try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      // In self mode, managers cannot upload circular documents
+      if (accessMode === 'self') {
+        return res.status(403).json({ message: 'No tienes permisos para enviar documentos circulares' });
+      }
+      
       if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
       }
@@ -6229,8 +6356,15 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Send document request to employees
-  app.post('/api/documents/request', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+  app.post('/api/documents/request', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('documents', () => storage), async (req: AuthRequest, res) => {
     try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      // In self mode, managers cannot send document requests
+      if (accessMode === 'self') {
+        return res.status(403).json({ message: 'No tienes permisos para solicitar documentos a empleados' });
+      }
+      
       const { employeeIds, documentType, message, dueDate } = req.body;
 
       if (!employeeIds || !Array.isArray(employeeIds) || employeeIds.length === 0) {
