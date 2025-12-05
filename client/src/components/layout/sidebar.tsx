@@ -118,7 +118,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       icon: Bell,
       feature: 'reminders' as const
     },
-    ...((hasAccess('reports') || hasAccess('work_reports')) && 
+    ...((hasAccess('reports', { bypassManagerRestrictions: true }) || hasAccess('work_reports', { bypassManagerRestrictions: true })) && 
        (user?.role === 'admin' || user?.role === 'manager' || 
         user?.workReportMode === 'manual' || user?.workReportMode === 'both') ? [
       { 
