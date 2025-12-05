@@ -435,6 +435,7 @@ export default function EmployeeDashboard() {
   // Check for document notifications with intelligent state tracking
   const [hasDocumentRequests, setHasDocumentRequests] = useState(false); // RED: solicitudes pendientes
   const [hasNewDocuments, setHasNewDocuments] = useState(false); // GREEN: archivos nuevos
+  const [hasUnsignedDocuments, setHasUnsignedDocuments] = useState(false); // ORANGE: documentos sin firmar
 
   // Check for overdue reminders 
   const [hasOverdueReminders, setHasOverdueReminders] = useState(false); // RED: recordatorios vencidos
@@ -480,12 +481,30 @@ export default function EmployeeDashboard() {
     const hasUnviewedDocuments = unviewedDocuments.length > 0;
     setHasNewDocuments(hasUnviewedDocuments);
 
+    // 🟠 ORANGE: Documents that require signature but haven't been signed yet
+    // Only show if user has already viewed the document (isViewed = true)
+    const unsignedDocuments = (documents as any[]).filter((doc: any) => {
+      const isViewed = doc.isViewed ?? doc.is_viewed ?? false;
+      const requiresSignature = doc.requiresSignature ?? doc.requires_signature ?? false;
+      const isAccepted = doc.isAccepted ?? doc.is_accepted ?? false;
+      // Also check for payroll documents (nóminas) which always require signature
+      const fileName = (doc.originalName || doc.original_name || doc.fileName || '').toLowerCase();
+      const isPayroll = fileName.includes('nomina') || fileName.includes('nómina');
+      
+      // Show orange badge if: document is viewed AND (requires signature OR is payroll) AND not yet signed
+      return isViewed && (requiresSignature || isPayroll) && !isAccepted;
+    });
+
+    const hasUnsigned = unsignedDocuments.length > 0;
+    setHasUnsignedDocuments(hasUnsigned);
+
     console.log('📋 Document notifications check:', {
       pendingRequests: pendingRequests.length,
       unviewedDocuments: unviewedDocuments.length,
+      unsignedDocuments: unsignedDocuments.length,
       hasPendingRequests,
       hasUnviewedDocuments,
-      documents: (documents as any[]).map((d: any) => ({ id: d.id, isViewed: d.isViewed, is_viewed: d.is_viewed }))
+      hasUnsigned
     });
 
   }, [documentNotifications, documents]);
@@ -991,8 +1010,9 @@ export default function EmployeeDashboard() {
       icon: FileText, 
       title: 'Documentos', 
       route: `/${companyAlias}/documentos`,
-      notification: hasDocumentRequests || hasNewDocuments,
-      notificationType: hasDocumentRequests ? 'red' : 'green',
+      notification: hasDocumentRequests || hasUnsignedDocuments || hasNewDocuments,
+      // Priority: RED (pending requests) > ORANGE (unsigned) > GREEN (new documents)
+      notificationType: hasDocumentRequests ? 'red' : (hasUnsignedDocuments ? 'orange' : 'green'),
       feature: 'documents' as const
     },
     { 
@@ -1199,10 +1219,11 @@ export default function EmployeeDashboard() {
       hasVacationUpdates,
       hasDocumentRequests,
       hasNewDocuments,
+      hasUnsignedDocuments,
       unreadMessages: unreadCount?.count || 0,
       timestamp: new Date().toISOString()
     });
-  }, [hasVacationUpdates, hasDocumentRequests, hasNewDocuments, unreadCount]);
+  }, [hasVacationUpdates, hasDocumentRequests, hasNewDocuments, hasUnsignedDocuments, unreadCount]);
 
   // Log feature access for debugging
   useEffect(() => {
@@ -1509,7 +1530,9 @@ export default function EmployeeDashboard() {
                             {item.notification && (
                               <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full border-2 border-white dark:border-gray-900 shadow-lg animate-bounce ${
                                 (item as any).notificationType === 'red' ? 'bg-gradient-to-r from-red-500 to-pink-500' : 
-                                (item as any).notificationType === 'green' ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-red-500 to-pink-500'
+                                (item as any).notificationType === 'orange' ? 'bg-gradient-to-r from-orange-400 to-amber-500' :
+                                (item as any).notificationType === 'green' ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 
+                                (item as any).notificationType === 'blue' ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 'bg-gradient-to-r from-red-500 to-pink-500'
                               }`}>
                                 <div className="w-full h-full rounded-full animate-ping opacity-75 bg-white/30"></div>
                               </div>
