@@ -13,6 +13,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useAuth } from "@/hooks/use-auth";
+import { useFeatureCheck } from "@/hooks/use-feature-check";
+import { FeatureRestrictedPage } from "@/components/feature-restricted-page";
 import { usePageHeader } from '@/components/layout/page-header';
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { 
@@ -84,9 +86,23 @@ const SHIFT_COLORS = [
 export default function Schedules() {
   usePageTitle('Horarios');
   const { company, user } = useAuth();
+  const { getSchedulesAccessMode } = useFeatureCheck();
   const { setHeader, resetHeader } = usePageHeader();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  const schedulesAccessMode = getSchedulesAccessMode();
+  const isViewOnly = schedulesAccessMode === 'view';
+  
+  // No subscription access = no access at all
+  if (schedulesAccessMode === 'none') {
+    return (
+      <FeatureRestrictedPage 
+        featureName="Cuadrante de Horarios" 
+        description="Gestiona los horarios y turnos de todos tus empleados. Activa este addon desde la Tienda para comenzar a usarlo." 
+      />
+    );
+  }
 
   // Mutation para actualizar/expandir turno a múltiples días
   const updateShiftMutation = useMutation({
@@ -1276,7 +1292,8 @@ export default function Schedules() {
     onClick, 
     title, 
     className,
-    onDelete
+    onDelete,
+    disabled = false
   }: {
     shift: WorkShift;
     shiftHours: string;
@@ -1285,6 +1302,7 @@ export default function Schedules() {
     title: string;
     className?: string;
     onDelete?: (shiftId: number) => void;
+    disabled?: boolean;
   }) {
     const {
       attributes,
@@ -1294,6 +1312,7 @@ export default function Schedules() {
       isDragging,
     } = useDraggable({
       id: shift.id,
+      disabled: disabled,
     });
 
     const dragStyle = transform ? {
@@ -1529,7 +1548,8 @@ export default function Schedules() {
                 setShowShiftModal(true);
               }}
               title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
-              onDelete={(shiftId) => deleteShiftMutation.mutate(shiftId)}
+              onDelete={isViewOnly ? undefined : (shiftId) => deleteShiftMutation.mutate(shiftId)}
+              disabled={isViewOnly}
             />
           ))}
         </>
@@ -1571,7 +1591,8 @@ export default function Schedules() {
                   setShowShiftModal(true);
                 }}
                 title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
-                onDelete={(shiftId) => deleteShiftMutation.mutate(shiftId)}
+                onDelete={isViewOnly ? undefined : (shiftId) => deleteShiftMutation.mutate(shiftId)}
+                disabled={isViewOnly}
               />
             );
           })}
@@ -1616,13 +1637,14 @@ export default function Schedules() {
                 setShowShiftModal(true);
               }}
               title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
-              onDelete={(shiftId) => deleteShiftMutation.mutate(shiftId)}
+              onDelete={isViewOnly ? undefined : (shiftId) => deleteShiftMutation.mutate(shiftId)}
+              disabled={isViewOnly}
             />
           );
         })}
       </>
     );
-  }, [workShifts, viewMode, getShiftsForEmployee, getGlobalTimelineBounds, assignShiftLanes]);
+  }, [workShifts, viewMode, getShiftsForEmployee, getGlobalTimelineBounds, assignShiftLanes, isViewOnly]);
 
   return (
     <DndContext
@@ -1823,27 +1845,29 @@ export default function Schedules() {
                                   {renderShiftBar(employee, day)}
                                 </div>
                                 
-                                {/* Botón "+" simple al final */}
-                                <div className="h-4 bg-gray-100 dark:bg-gray-700/50 border-t border-gray-300 dark:border-gray-600 rounded-b flex items-center justify-center group hover:bg-gray-200 dark:hover:bg-gray-600/70 transition-colors">
-                                  <button
-                                    className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center justify-center w-full h-full"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (!isDisabled) {
-                                        setSelectedCell({
-                                          employeeId: employee.id,
-                                          date: day,
-                                          employeeName: employee.fullName
-                                        });
-                                        setShowNewShiftModal(true);
-                                      }
-                                    }}
-                                    title="Añadir turno"
-                                    data-testid={`button-add-shift-${employee.id}-${format(day, 'yyyy-MM-dd')}`}
-                                  >
-                                    <span className="text-[10px]">+</span>
-                                  </button>
-                                </div>
+                                {/* Botón "+" simple al final - Hidden in view-only mode */}
+                                {!isViewOnly && (
+                                  <div className="h-4 bg-gray-100 dark:bg-gray-700/50 border-t border-gray-300 dark:border-gray-600 rounded-b flex items-center justify-center group hover:bg-gray-200 dark:hover:bg-gray-600/70 transition-colors">
+                                    <button
+                                      className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center justify-center w-full h-full"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (!isDisabled) {
+                                          setSelectedCell({
+                                            employeeId: employee.id,
+                                            date: day,
+                                            employeeName: employee.fullName
+                                          });
+                                          setShowNewShiftModal(true);
+                                        }
+                                      }}
+                                      title="Añadir turno"
+                                      data-testid={`button-add-shift-${employee.id}-${format(day, 'yyyy-MM-dd')}`}
+                                    >
+                                      <span className="text-[10px]">+</span>
+                                    </button>
+                                  </div>
+                                )}
                               </DroppableCell>
                             );
                           })}
@@ -1866,8 +1890,8 @@ export default function Schedules() {
                           {employee.fullName}
                         </div>
                         
-                        {/* Iconos de acciones de semana - solo visibles en modo semana */}
-                        {(viewMode === 'week' || viewMode === 'workweek') && (
+                        {/* Iconos de acciones de semana - solo visibles en modo semana y NO en view-only */}
+                        {!isViewOnly && (viewMode === 'week' || viewMode === 'workweek') && (
                           <div className="absolute right-0 top-0 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             {/* Botón eliminar todos los turnos de la semana */}
                             <button
@@ -1954,50 +1978,53 @@ export default function Schedules() {
                               {renderShiftBar(employee, day)}
                             </div>
                             
-                            {viewMode === 'day' ? (
-                              /* MODO DÍA: Barra lateral derecha con botón "+" */
-                              <div className="w-6 bg-gray-100 dark:bg-gray-700/50 border-l border-gray-300 dark:border-gray-600 rounded-r flex items-center justify-center group hover:bg-gray-200 dark:hover:bg-gray-600/70 transition-colors">
-                                <button
-                                  className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center justify-center w-full h-full"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (!isDisabled) {
-                                      setSelectedCell({
-                                        employeeId: employee.id,
-                                        date: day,
-                                        employeeName: employee.fullName
-                                      });
-                                      setShowNewShiftModal(true);
-                                    }
-                                  }}
-                                  title="Añadir turno"
-                                  data-testid={`button-add-shift-${employee.id}-${format(day, 'yyyy-MM-dd')}`}
-                                >
-                                  <span className="text-[10px]">+</span>
-                                </button>
-                              </div>
-                            ) : (
-                              /* MODO SEMANA: Footer abajo con botón "+" */
-                              <div className="absolute bottom-0 left-0 right-0 h-4 bg-gray-100 dark:bg-gray-700/50 border-t border-gray-300 dark:border-gray-600 rounded-b flex items-center justify-center group hover:bg-gray-200 dark:hover:bg-gray-600/70 transition-colors z-10">
-                                <button
-                                  className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center gap-1 px-2 py-1"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (!isDisabled) {
-                                      setSelectedCell({
-                                        employeeId: employee.id,
-                                        date: day,
-                                        employeeName: employee.fullName
-                                      });
-                                      setShowNewShiftModal(true);
-                                    }
-                                  }}
-                                  title="Añadir turno"
-                                  data-testid={`button-add-shift-${employee.id}-${format(day, 'yyyy-MM-dd')}`}
-                                >
-                                  <span className="text-[10px]">+</span>
-                                </button>
-                              </div>
+                            {/* Add shift buttons - hidden in view-only mode */}
+                            {!isViewOnly && (
+                              viewMode === 'day' ? (
+                                /* MODO DÍA: Barra lateral derecha con botón "+" */
+                                <div className="w-6 bg-gray-100 dark:bg-gray-700/50 border-l border-gray-300 dark:border-gray-600 rounded-r flex items-center justify-center group hover:bg-gray-200 dark:hover:bg-gray-600/70 transition-colors">
+                                  <button
+                                    className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center justify-center w-full h-full"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (!isDisabled) {
+                                        setSelectedCell({
+                                          employeeId: employee.id,
+                                          date: day,
+                                          employeeName: employee.fullName
+                                        });
+                                        setShowNewShiftModal(true);
+                                      }
+                                    }}
+                                    title="Añadir turno"
+                                    data-testid={`button-add-shift-${employee.id}-${format(day, 'yyyy-MM-dd')}`}
+                                  >
+                                    <span className="text-[10px]">+</span>
+                                  </button>
+                                </div>
+                              ) : (
+                                /* MODO SEMANA: Footer abajo con botón "+" */
+                                <div className="absolute bottom-0 left-0 right-0 h-4 bg-gray-100 dark:bg-gray-700/50 border-t border-gray-300 dark:border-gray-600 rounded-b flex items-center justify-center group hover:bg-gray-200 dark:hover:bg-gray-600/70 transition-colors z-10">
+                                  <button
+                                    className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center gap-1 px-2 py-1"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (!isDisabled) {
+                                        setSelectedCell({
+                                          employeeId: employee.id,
+                                          date: day,
+                                          employeeName: employee.fullName
+                                        });
+                                        setShowNewShiftModal(true);
+                                      }
+                                    }}
+                                    title="Añadir turno"
+                                    data-testid={`button-add-shift-${employee.id}-${format(day, 'yyyy-MM-dd')}`}
+                                  >
+                                    <span className="text-[10px]">+</span>
+                                  </button>
+                                </div>
+                              )
                             )}
                           </DroppableCell>
                         );
@@ -2254,22 +2281,24 @@ export default function Schedules() {
           </div>
 
           <div className="flex">
-            {/* Panel izquierdo - Colores verticales */}
-            <div className="w-16 bg-muted/30 p-2 flex flex-col gap-1">
-              {SHIFT_COLORS.map((color, index) => (
-                <button
-                  key={color}
-                  onClick={() => setEditShift(prev => ({ ...prev, color }))}
-                  className={`w-12 h-8 rounded border-2 transition-all hover:scale-105 ${
-                    editShift.color === color 
-                      ? 'border-gray-800 dark:border-gray-200 scale-105 shadow-md' 
-                      : 'border-gray-300 dark:border-gray-600'
-                  }`}
-                  style={{ backgroundColor: color }}
-                  title={`Color ${index + 1}`}
-                />
-              ))}
-            </div>
+            {/* Panel izquierdo - Colores verticales (hidden in view-only mode) */}
+            {!isViewOnly && (
+              <div className="w-16 bg-muted/30 p-2 flex flex-col gap-1">
+                {SHIFT_COLORS.map((color, index) => (
+                  <button
+                    key={color}
+                    onClick={() => setEditShift(prev => ({ ...prev, color }))}
+                    className={`w-12 h-8 rounded border-2 transition-all hover:scale-105 ${
+                      editShift.color === color 
+                        ? 'border-gray-800 dark:border-gray-200 scale-105 shadow-md' 
+                        : 'border-gray-300 dark:border-gray-600'
+                    }`}
+                    style={{ backgroundColor: color }}
+                    title={`Color ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
 
             {/* Panel derecho - Formulario compacto */}
             <div className="flex-1 p-4 space-y-3">
@@ -2279,7 +2308,8 @@ export default function Schedules() {
                 value={editShift.title}
                 onChange={(e) => setEditShift(prev => ({ ...prev, title: e.target.value }))}
                 placeholder="Título del turno (ej: Mañana, Tarde, Noche)"
-                className="w-full px-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-70 disabled:cursor-not-allowed"
+                disabled={isViewOnly}
               />
               
               {/* Horas */}
@@ -2288,53 +2318,57 @@ export default function Schedules() {
                   type="time"
                   value={editShift.startTime}
                   onChange={(e) => setEditShift(prev => ({ ...prev, startTime: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={isViewOnly}
                 />
                 <input
                   type="time"
                   value={editShift.endTime}
                   onChange={(e) => setEditShift(prev => ({ ...prev, endTime: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={isViewOnly}
                 />
               </div>
               
-              {/* Días de la semana */}
-              <div className="flex gap-1 justify-center">
-                {dayNames.map((dayName, index) => {
-                  const dayNumber = index + 1;
-                  const isSelected = selectedDays.has(dayNumber);
-                  
-                  return (
-                    <label
-                      key={dayNumber}
-                      className="cursor-pointer select-none"
-                      data-testid={`edit-checkbox-day-${dayNumber}`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={(e) => {
-                          const newSelectedDays = new Set(selectedDays);
-                          if (e.target.checked) {
-                            newSelectedDays.add(dayNumber);
-                          } else {
-                            newSelectedDays.delete(dayNumber);
-                          }
-                          setSelectedDays(newSelectedDays);
-                        }}
-                        className="sr-only"
-                      />
-                      <div className={`w-6 h-6 rounded text-xs font-medium flex items-center justify-center transition-colors ${
-                        isSelected 
-                          ? 'bg-blue-500 text-white' 
-                          : 'bg-muted/50 text-muted-foreground hover:bg-muted'
-                      }`}>
-                        {dayName.charAt(0)}
-                      </div>
-                    </label>
-                  );
-                })}
-              </div>
+              {/* Días de la semana - hidden in view-only mode */}
+              {!isViewOnly && (
+                <div className="flex gap-1 justify-center">
+                  {dayNames.map((dayName, index) => {
+                    const dayNumber = index + 1;
+                    const isSelected = selectedDays.has(dayNumber);
+                    
+                    return (
+                      <label
+                        key={dayNumber}
+                        className="cursor-pointer select-none"
+                        data-testid={`edit-checkbox-day-${dayNumber}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            const newSelectedDays = new Set(selectedDays);
+                            if (e.target.checked) {
+                              newSelectedDays.add(dayNumber);
+                            } else {
+                              newSelectedDays.delete(dayNumber);
+                            }
+                            setSelectedDays(newSelectedDays);
+                          }}
+                          className="sr-only"
+                        />
+                        <div className={`w-6 h-6 rounded text-xs font-medium flex items-center justify-center transition-colors ${
+                          isSelected 
+                            ? 'bg-blue-500 text-white' 
+                            : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                        }`}>
+                          {dayName.charAt(0)}
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
               
               {/* Ubicación con autocompletado */}
               <div className="relative">
@@ -2350,7 +2384,8 @@ export default function Schedules() {
                   onFocus={() => editShift.location && searchLocation(editShift.location)}
                   onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
                   placeholder="Dirección o ubicación (ej: Calle Gran Vía 1, Madrid)"
-                  className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={isViewOnly}
                 />
                 
                 {/* Sugerencias de autocompletado */}
@@ -2393,23 +2428,29 @@ export default function Schedules() {
                 onChange={(e) => setEditShift(prev => ({ ...prev, notes: e.target.value }))}
                 placeholder="Notas (opcional)"
                 rows={2}
-                className="w-full px-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                className="w-full px-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none disabled:opacity-70 disabled:cursor-not-allowed"
+                disabled={isViewOnly}
               />
               
               {/* Botones */}
               <div className="flex justify-between items-center pt-2">
-                <Button 
-                  variant="destructive" 
-                  size="sm"
-                  onClick={() => {
-                    if (selectedShift) {
-                      deleteShiftMutation.mutate(selectedShift.id);
-                    }
-                  }}
-                  disabled={deleteShiftMutation.isPending}
-                >
-                  {deleteShiftMutation.isPending ? 'Eliminando...' : 'Eliminar'}
-                </Button>
+                {/* Delete button - hidden in view-only mode */}
+                {!isViewOnly ? (
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={() => {
+                      if (selectedShift) {
+                        deleteShiftMutation.mutate(selectedShift.id);
+                      }
+                    }}
+                    disabled={deleteShiftMutation.isPending}
+                  >
+                    {deleteShiftMutation.isPending ? 'Eliminando...' : 'Eliminar'}
+                  </Button>
+                ) : (
+                  <div />
+                )}
                 
                 <div className="flex gap-2">
                   <Button 
@@ -2420,27 +2461,30 @@ export default function Schedules() {
                       setSelectedShift(null);
                     }}
                   >
-                    Cancelar
+                    {isViewOnly ? 'Cerrar' : 'Cancelar'}
                   </Button>
-                  <Button 
-                    size="sm"
-                    onClick={() => {
-                      if (selectedShift && editShift.title && editShift.startTime && editShift.endTime) {
-                        updateShiftMutation.mutate({
-                          id: selectedShift.id,
-                          startTime: editShift.startTime,
-                          endTime: editShift.endTime,
-                          title: editShift.title,
-                          location: editShift.location,
-                          notes: editShift.notes,
-                          color: editShift.color
-                        });
-                      }
-                    }}
-                    disabled={!editShift.title || !editShift.startTime || !editShift.endTime || updateShiftMutation.isPending}
-                  >
-                    {updateShiftMutation.isPending ? 'Guardando...' : 'Guardar'}
-                  </Button>
+                  {/* Save button - hidden in view-only mode */}
+                  {!isViewOnly && (
+                    <Button 
+                      size="sm"
+                      onClick={() => {
+                        if (selectedShift && editShift.title && editShift.startTime && editShift.endTime) {
+                          updateShiftMutation.mutate({
+                            id: selectedShift.id,
+                            startTime: editShift.startTime,
+                            endTime: editShift.endTime,
+                            title: editShift.title,
+                            location: editShift.location,
+                            notes: editShift.notes,
+                            color: editShift.color
+                          });
+                        }
+                      }}
+                      disabled={!editShift.title || !editShift.startTime || !editShift.endTime || updateShiftMutation.isPending}
+                    >
+                      {updateShiftMutation.isPending ? 'Guardando...' : 'Guardar'}
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

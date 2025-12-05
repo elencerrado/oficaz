@@ -165,12 +165,82 @@ export function useFeatureCheck() {
     return 'none';
   };
 
+  // Special access mode for time tracking: managers can always see their own hours
+  // but can only manage others' hours if they have the feature enabled
+  const getTimeTrackingAccessMode = (): 'full' | 'self' | 'none' => {
+    const subscriptionAccess = checkFeatureAccess(subscription, 'time_tracking');
+    
+    // No subscription access = no access at all
+    if (!subscriptionAccess) return 'none';
+    
+    // Admins always have full access
+    if (user?.role === 'admin') return 'full';
+    
+    // Employees always have self access only
+    if (user?.role === 'employee') return 'self';
+    
+    // For managers: check if time_tracking is in their visible features
+    if (user?.role === 'manager') {
+      const visibleFeatures = permissionsData?.managerPermissions?.visibleFeatures;
+      
+      // If permissions not loaded yet, assume self access
+      if (isLoadingPermissions) return 'self';
+      
+      // If visibleFeatures is null/undefined, manager has full access (no restrictions)
+      if (visibleFeatures === null || visibleFeatures === undefined) return 'full';
+      
+      // If time_tracking is in the list, full access
+      if (visibleFeatures.includes('time_tracking')) return 'full';
+      
+      // Otherwise, self access only (can see own hours)
+      return 'self';
+    }
+    
+    return 'none';
+  };
+
+  // Special access mode for schedules: managers can always view schedules
+  // but can only edit if they have the feature enabled
+  const getSchedulesAccessMode = (): 'full' | 'view' | 'none' => {
+    const subscriptionAccess = checkFeatureAccess(subscription, 'schedules');
+    
+    // No subscription access = no access at all
+    if (!subscriptionAccess) return 'none';
+    
+    // Admins always have full access
+    if (user?.role === 'admin') return 'full';
+    
+    // Employees always have view-only access
+    if (user?.role === 'employee') return 'view';
+    
+    // For managers: check if schedules is in their visible features
+    if (user?.role === 'manager') {
+      const visibleFeatures = permissionsData?.managerPermissions?.visibleFeatures;
+      
+      // If permissions not loaded yet, assume view only
+      if (isLoadingPermissions) return 'view';
+      
+      // If visibleFeatures is null/undefined, manager has full access (no restrictions)
+      if (visibleFeatures === null || visibleFeatures === undefined) return 'full';
+      
+      // If schedules is in the list, full access
+      if (visibleFeatures.includes('schedules')) return 'full';
+      
+      // Otherwise, view only (can see schedules but not edit)
+      return 'view';
+    }
+    
+    return 'none';
+  };
+
   return {
     hasAccess,
     getRequiredPlan,
     isFeatureRestricted,
     getDocumentAccessMode,
     getWorkReportsAccessMode,
+    getTimeTrackingAccessMode,
+    getSchedulesAccessMode,
     subscription,
     isManagerPermissionsLoading
   };

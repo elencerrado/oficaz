@@ -50,17 +50,20 @@ import * as XLSX from 'xlsx';
 export default function TimeTracking() {
   usePageTitle('Gestión de Fichajes');
   const { user, company } = useAuth();
-  const { hasAccess } = useFeatureCheck();
+  const { hasAccess, getTimeTrackingAccessMode } = useFeatureCheck();
   const { setHeader, resetHeader } = usePageHeader();
+  
+  const timeTrackingAccessMode = getTimeTrackingAccessMode();
+  const isSelfAccessOnly = timeTrackingAccessMode === 'self';
 
-  // Set page header
+  // Set page header - adjust for self-access mode
   useEffect(() => {
     setHeader({
-      title: 'Gestión de Fichajes',
-      subtitle: 'Administra todos los fichajes de empleados y genera reportes'
+      title: isSelfAccessOnly ? 'Mis Fichajes' : 'Gestión de Fichajes',
+      subtitle: isSelfAccessOnly ? 'Consulta tus registros de horas' : 'Administra todos los fichajes de empleados y genera reportes'
     });
     return resetHeader;
-  }, []);
+  }, [isSelfAccessOnly]);
 
   // State for auto-export trigger from AI
   const [pendingAutoExport, setPendingAutoExport] = useState<'pdf' | 'excel' | null>(null);
@@ -104,7 +107,7 @@ export default function TimeTracking() {
   }, []);
   
   // Check if user has access to time tracking feature
-  if (!hasAccess('timeTracking')) {
+  if (timeTrackingAccessMode === 'none') {
     return (
       <FeatureRestrictedPage
         featureName="Fichajes"
@@ -119,7 +122,10 @@ export default function TimeTracking() {
   
   // All useState hooks first
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedEmployee, setSelectedEmployee] = useState('all');
+  // In self-access mode, auto-select current user
+  const [selectedEmployee, setSelectedEmployee] = useState(() => 
+    isSelfAccessOnly && user?.id ? user.id.toString() : 'all'
+  );
   const [dateFilter, setDateFilter] = useState('all');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -2887,13 +2893,16 @@ export default function TimeTracking() {
         />
       </div>
 
-      {/* Tab Navigation */}
+      {/* Tab Navigation - Simplified for self-access mode */}
       <TabNavigation
-        tabs={[
-          { id: 'sessions', label: 'Fichajes', icon: Users },
-          { id: 'requests', label: 'Solicitudes', icon: Bell, badge: pendingRequestsCount },
-          { id: 'summary', label: 'Resumen', icon: BarChart3 }
-        ]}
+        tabs={isSelfAccessOnly 
+          ? [{ id: 'sessions', label: 'Mis Fichajes', icon: Users }]
+          : [
+              { id: 'sessions', label: 'Fichajes', icon: Users },
+              { id: 'requests', label: 'Solicitudes', icon: Bell, badge: pendingRequestsCount },
+              { id: 'summary', label: 'Resumen', icon: BarChart3 }
+            ]
+        }
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
@@ -2968,42 +2977,44 @@ export default function TimeTracking() {
         {/* Filters Section - Integrated between header and table */}
         {showFilters && (
           <div className="px-6 py-4 border-b bg-muted">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
-              {/* Left side - Employee Filter */}
-              <div className="flex flex-col space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Empleado</label>
-                <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                  <SelectTrigger className="h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
-                    <SelectValue placeholder="Seleccionar empleado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <div className="p-2">
-                      <div className="relative mb-2">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <Input
-                          placeholder="Buscar empleado..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10 h-8"
-                        />
+            <div className={cn("grid gap-4 items-end", isSelfAccessOnly ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-3")}>
+              {/* Left side - Employee Filter - Hidden in self-access mode */}
+              {!isSelfAccessOnly && (
+                <div className="flex flex-col space-y-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Empleado</label>
+                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                    <SelectTrigger className="h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+                      <SelectValue placeholder="Seleccionar empleado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <div className="p-2">
+                        <div className="relative mb-2">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <Input
+                            placeholder="Buscar empleado..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10 h-8"
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <SelectItem value="all">Todos los empleados</SelectItem>
-                    {(employeesList || [])
-                      .filter((employee: any) => 
-                        employee.fullName.toLowerCase().includes(searchTerm.toLowerCase())
-                      )
-                      .map((employee: any) => (
-                      <SelectItem key={employee.id} value={employee.id.toString()}>
-                        {employee.fullName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                      <SelectItem value="all">Todos los empleados</SelectItem>
+                      {(employeesList || [])
+                        .filter((employee: any) => 
+                          employee.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .map((employee: any) => (
+                        <SelectItem key={employee.id} value={employee.id.toString()}>
+                          {employee.fullName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {/* Right side - Date Filters */}
-              <div className="flex flex-col space-y-2 lg:col-span-2">
+              <div className={cn("flex flex-col space-y-2", !isSelfAccessOnly && "lg:col-span-2")}>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Período de tiempo</label>
                 
                 {/* Desktop Layout: All buttons in one row */}
