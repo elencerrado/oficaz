@@ -187,8 +187,8 @@ export default function Inventory() {
 
 function DashboardTab({ stats, isLoading }: { stats: DashboardStats | undefined; isLoading: boolean }) {
   const movementTypeLabels: Record<string, string> = {
-    'in': 'Entrada',
-    'out': 'Salida',
+    'in': 'Compra',
+    'out': 'Venta',
     'transfer': 'Transferencia',
     'adjustment': 'Ajuste',
     'loan': 'Préstamo',
@@ -1312,8 +1312,8 @@ function MovementsTab() {
   };
 
   const typeLabels: Record<string, string> = {
-    'in': 'Entrada',
-    'out': 'Salida',
+    'in': 'Compra',
+    'out': 'Venta',
     'transfer': 'Transferencia',
     'adjustment': 'Ajuste',
     'loan': 'Préstamo',
@@ -1344,8 +1344,8 @@ function MovementsTab() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos los tipos</SelectItem>
-              <SelectItem value="in">Entrada</SelectItem>
-              <SelectItem value="out">Salida</SelectItem>
+              <SelectItem value="in">Compra</SelectItem>
+              <SelectItem value="out">Venta</SelectItem>
               <SelectItem value="transfer">Transferencia</SelectItem>
               <SelectItem value="adjustment">Ajuste</SelectItem>
               <SelectItem value="loan">Préstamo</SelectItem>
@@ -1471,8 +1471,8 @@ function MovementsTab() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="in">Entrada</SelectItem>
-                    <SelectItem value="out">Salida</SelectItem>
+                    <SelectItem value="in">Compra</SelectItem>
+                    <SelectItem value="out">Venta</SelectItem>
                     <SelectItem value="transfer">Transferencia</SelectItem>
                     <SelectItem value="adjustment">Ajuste</SelectItem>
                     <SelectItem value="loan">Préstamo</SelectItem>
