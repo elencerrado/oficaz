@@ -15,6 +15,7 @@ const featureToAddonKey: Record<string, string> = {
   work_reports: 'work_reports',
   reports: 'work_reports',
   ai_assistant: 'ai_assistant',
+  inventory: 'inventory',
 };
 
 // Employee-specific routes where managers should have full access to company features

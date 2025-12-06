@@ -25,6 +25,48 @@ Preferred communication style: Simple, everyday language.
 - **Protection Pattern**: Wrap critical functions with warning comments and clear boundaries
 - **Original Admin Protection**: Admin original (createdBy === null) CANNOT have their role changed - enforced in both backend (server/routes.ts) and frontend (employees-simple.tsx)
 
+### 🔧 Patrón Estándar para Añadir Nuevas Funcionalidades (Add-ons)
+
+Cuando se añade un nuevo add-on al sistema, se deben modificar TODOS estos archivos:
+
+1. **Base de datos** - Insertar el addon en la tabla `addons`:
+   ```sql
+   INSERT INTO addons (key, name, description, short_description, monthly_price, icon, category, feature_key, is_active, sort_order, is_free_feature, requires_subscription)
+   VALUES ('new_feature', 'Nombre', 'Descripción larga', 'Descripción corta', 10.00, 'icon-name', 'productivity', 'new_feature', true, 10, false, true);
+   ```
+
+2. **client/src/lib/feature-restrictions.ts**:
+   - Añadir a `CANONICAL_ADDON_KEYS`: `'new_feature'`
+   - Añadir a `SubscriptionFeatures`: `new_feature: boolean;`
+   - Añadir a `FEATURE_NAMES`: `new_feature: 'Nombre en español',`
+
+3. **client/src/hooks/use-feature-check.tsx**:
+   - Añadir a `featureToAddonKey`: `new_feature: 'new_feature',`
+
+4. **client/src/components/RouterView.tsx**:
+   - Añadir a `featureToAddonKey`: `new_feature: 'new_feature',`
+   - Añadir ruta con `FeatureProtectedRoute`:
+     ```tsx
+     <Route path="/:companyAlias/nueva-ruta">
+       <ProtectedRoute>
+         <FeatureProtectedRoute feature="new_feature">
+           <AppLayout><NewFeaturePage /></AppLayout>
+         </FeatureProtectedRoute>
+       </ProtectedRoute>
+     </Route>
+     ```
+
+5. **client/src/components/layout/sidebar.tsx**:
+   - Añadir a `featureToAddonKey`: `new_feature: 'new_feature',`
+   - Añadir entrada en `navigation` o `footerItems` con `hasAccess('new_feature', { bypassManagerRestrictions: true })`
+
+6. **client/src/pages/addon-store.tsx**:
+   - Importar icono correspondiente de lucide-react
+   - Añadir caso en `getAddonIcon()`: `case 'new_feature': return <Icon className="h-6 w-6" />;`
+   - Añadir caso en `getAddonColor()`: `case 'new_feature': return 'bg-color-100 text-color-700 dark:bg-color-900/30 dark:text-color-400';`
+
+7. **Backend (server/routes.ts)**: Añadir rutas protegidas con `requireFeature('new_feature')` si es necesario
+
 ### Security & Reliability Standards
 - **🚨 ZERO ERROR TOLERANCE**: User has ABSOLUTE ZERO tolerance for error screens in production
   - **Global Error Suppression**: Inline script in `client/index.html` (first script, executes before everything) suppresses Vite HMR WebSocket errors and network errors during navigation. Prevents unhandled rejection popups.
@@ -57,7 +99,7 @@ Preferred communication style: Simple, everyday language.
   - **Trial Period**: 7 days with full access to all features
   - **PÁGINAS BASE** (siempre disponibles, NO son add-ons): Panel de Control, Configuración, Empleados, Tienda
   - **MARKETING ONLY**: "Gestión de Empleados" se menciona como gratis SOLO en landing/wizard, no en tienda ni Stripe
-  - **Add-ons (TODOS DE PAGO)**: Control de Fichajes (€3), Gestión de Vacaciones (€3), Cuadrante de Horarios (€3), Mensajería (€5), Recordatorios (€5), Partes de Trabajo (€8), Documentos (€10), OficazIA (€15)
+  - **Add-ons (TODOS DE PAGO)**: Control de Fichajes (€3), Gestión de Vacaciones (€3), Cuadrante de Horarios (€3), Mensajería (€5), Recordatorios (€5), Partes de Trabajo (€8), Documentos (€10), Inventario (€12), OficazIA (€15)
   - **Usuarios adicionales**: Empleados +€2, Managers +€4, Admins +€6
   - **Stripe Integration**: Full proration support, each addon = separate subscription item, automatic billing
 - **AI Assistant System**: GPT-5 Nano assistant for admin/manager roles, providing administrative task automation with conversational context. Includes comprehensive work schedule management (create, delete, modify, copy, swap, bulk operations), smart reminder creation with natural language interpretation, employee data management, and time tracking report generation. Employs a "Consultar→Decidir→Actuar" methodology for error prevention and consistent timezone handling.
