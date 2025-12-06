@@ -1875,24 +1875,30 @@ function MovementsTab() {
                       <CommandList>
                         <CommandEmpty>No se encontraron productos.</CommandEmpty>
                         <CommandGroup>
-                          {products.filter(p => p.isActive).map(p => (
-                            <CommandItem
-                              key={p.id}
-                              value={`${p.name} ${p.sku}`}
-                              onSelect={() => {
-                                setSelectedProductId(p.id.toString());
-                                setProductSearchOpen(false);
-                              }}
-                            >
-                              <Check
-                                className={`mr-2 h-4 w-4 ${selectedProductId === p.id.toString() ? "opacity-100" : "opacity-0"}`}
-                              />
-                              <div className="flex flex-col">
-                                <span>{p.name}</span>
-                                <span className="text-xs text-gray-500">{p.sku}</span>
-                              </div>
-                            </CommandItem>
-                          ))}
+                          {products.filter(p => p.isActive).map(p => {
+                            const stockInWarehouse = getProductStock(p.id, warehouseId ? parseInt(warehouseId) : undefined);
+                            return (
+                              <CommandItem
+                                key={p.id}
+                                value={`${p.name} ${p.sku}`}
+                                onSelect={() => {
+                                  setSelectedProductId(p.id.toString());
+                                  setProductSearchOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={`mr-2 h-4 w-4 ${selectedProductId === p.id.toString() ? "opacity-100" : "opacity-0"}`}
+                                />
+                                <div className="flex flex-col flex-1">
+                                  <span>{p.name}</span>
+                                  <span className="text-xs text-gray-500">{p.sku}</span>
+                                </div>
+                                <Badge variant="outline" className={`ml-2 ${stockInWarehouse > 0 ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
+                                  {stockInWarehouse} uds
+                                </Badge>
+                              </CommandItem>
+                            );
+                          })}
                         </CommandGroup>
                       </CommandList>
                     </Command>
@@ -1916,27 +1922,39 @@ function MovementsTab() {
                 <div className="mt-4 space-y-2">
                   {lines.map((line, index) => {
                     // Check if this line exceeds stock for outgoing movements
-                    const isOutgoing = ['out', 'transfer', 'loan'].includes(movementType);
+                    const isOutgoing = ['out', 'loan'].includes(movementType) || (movementType === 'internal' && internalReason === 'transfer');
                     const currentStock = getProductStock(line.productId, warehouseId ? parseInt(warehouseId) : undefined);
                     const totalForProduct = lines.filter(l => l.productId === line.productId).reduce((sum, l) => sum + l.quantity, 0);
                     const exceedsStock = isOutgoing && totalForProduct > currentStock;
                     
                     return (
                       <div key={index} className={`flex items-center justify-between p-3 rounded ${exceedsStock ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800' : 'bg-gray-50 dark:bg-gray-900'}`}>
-                        <div className="flex items-center gap-2">
-                          {exceedsStock && <AlertTriangle className="h-4 w-4 text-red-500" />}
-                          <div>
+                        <div className="flex items-center gap-3 flex-1">
+                          {exceedsStock && <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />}
+                          <div className="flex-1">
                             <span className={`font-medium ${exceedsStock ? 'text-red-700 dark:text-red-400' : 'dark:text-white'}`}>{line.productName}</span>
-                            <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
-                              x{line.quantity} @ €{parseFloat(line.unitPrice).toFixed(2)}
+                            <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                              (Stock: {currentStock})
                             </span>
-                            {exceedsStock && (
-                              <span className="text-xs text-red-500 ml-2">(Stock: {currentStock})</span>
-                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              min="1"
+                              value={line.quantity}
+                              onChange={(e) => {
+                                const newQty = parseInt(e.target.value) || 1;
+                                setLines(prev => prev.map((l, i) => i === index ? { ...l, quantity: newQty } : l));
+                              }}
+                              className="w-16 h-8 text-center dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                            />
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                              @ €{parseFloat(line.unitPrice).toFixed(2)}
+                            </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium dark:text-white">
+                        <div className="flex items-center gap-2 ml-3">
+                          <span className="font-medium dark:text-white min-w-[70px] text-right">
                             €{(line.quantity * parseFloat(line.unitPrice)).toFixed(2)}
                           </span>
                           <Button variant="ghost" size="icon" onClick={() => handleRemoveLine(index)}>
