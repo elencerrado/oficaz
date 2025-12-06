@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
+import { getAuthHeaders } from '@/lib/auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { 
   Package, 
@@ -1180,7 +1181,7 @@ function MovementsTab() {
   const downloadPdf = async (movementId: number, movementNumber: string) => {
     try {
       const response = await fetch(`/api/inventory/movements/${movementId}/pdf`, {
-        credentials: 'include',
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Error downloading PDF');
       const blob = await response.blob();
