@@ -129,6 +129,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         feature: 'work_reports' as const
       }
     ] : []),
+    ...((user?.role === 'admin' || user?.role === 'manager') && hasAccess('inventory', { bypassManagerRestrictions: true }) ? [
+      { 
+        name: 'Inventario', 
+        href: `/${companyAlias}/inventario`, 
+        icon: Package,
+        feature: 'inventory' as const
+      }
+    ] : []),
   ];
 
   const footerItems = [
@@ -137,14 +145,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         name: 'Empleados', 
         href: `/${companyAlias}/empleados`, 
         icon: Users
-      }
-    ] : []),
-    ...((user?.role === 'admin' || user?.role === 'manager') && hasAccess('inventory', { bypassManagerRestrictions: true }) ? [
-      { 
-        name: 'Inventario', 
-        href: `/${companyAlias}/inventario`, 
-        icon: Package,
-        feature: 'inventory' as const
       }
     ] : []),
     { 
