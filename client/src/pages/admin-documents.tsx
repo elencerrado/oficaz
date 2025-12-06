@@ -1168,11 +1168,17 @@ export default function AdminDocuments() {
                   }`}
                 >
                   <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-lg font-medium text-foreground mb-2">
+                <p className="text-lg font-medium text-foreground mb-2 hidden md:block">
                   Arrastra documentos aquí
                 </p>
-                <p className="text-muted-foreground mb-2">
+                <p className="text-lg font-medium text-foreground mb-2 md:hidden">
+                  Sube documentos
+                </p>
+                <p className="text-muted-foreground mb-2 hidden md:block">
                   o haz click para seleccionar archivos
+                </p>
+                <p className="text-muted-foreground mb-2 md:hidden">
+                  Pulsa para seleccionar archivos
                 </p>
                 <p className="text-xs text-blue-600 mb-4">
                   🤖 Detección inteligente: Los archivos se asignarán automáticamente al empleado correcto
