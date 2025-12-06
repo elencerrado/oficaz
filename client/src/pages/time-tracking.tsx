@@ -37,7 +37,8 @@ import {
   FileText,
   History,
   ArrowDown,
-  LogOut
+  LogOut,
+  MapPin
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, startOfWeek, addDays, subDays, differenceInMinutes, startOfDay, endOfDay, endOfWeek, startOfMonth, endOfMonth, isToday } from 'date-fns';
@@ -3295,6 +3296,7 @@ export default function TimeTracking() {
                   <th className="text-left py-3 px-4 font-medium text-foreground">Fecha</th>
                   <th className="text-left py-3 px-4 font-medium text-foreground min-w-[300px]">Jornada de Trabajo</th>
                   <th className="text-left py-3 px-4 font-medium text-foreground">Total</th>
+                  <th className="text-center py-3 px-4 font-medium text-foreground w-[60px]">Ubicación</th>
                   <th className="text-center py-3 px-4 font-medium text-foreground w-[80px]">Historial</th>
                 </tr>
               </thead>
@@ -3411,7 +3413,7 @@ export default function TimeTracking() {
                       
                       result.push(
                         <tr key={`month-${previousMonth}`} className="bg-blue-50 dark:bg-blue-900/30 border-y-2 border-blue-200 dark:border-blue-700 h-10">
-                          <td colSpan={5} className="py-1 px-4 text-center">
+                          <td colSpan={6} className="py-1 px-4 text-center">
                             <div className="font-semibold text-blue-800 dark:text-blue-200 capitalize text-sm">
                               Total {monthName}: {monthTotal.toFixed(1)}h
                             </div>
@@ -3427,7 +3429,7 @@ export default function TimeTracking() {
                         const weekTotal = calculateWeekTotal(previousWeekStart);
                         result.push(
                           <tr key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 dark:bg-gray-700/50 border-y-2 border-gray-400 dark:border-gray-500 h-10">
-                            <td colSpan={5} className="py-1 px-4 text-center">
+                            <td colSpan={6} className="py-1 px-4 text-center">
                               <div className="font-medium text-gray-700 dark:text-gray-300 text-sm">
                                 Total semana: {weekTotal.toFixed(1)}h
                               </div>
@@ -3438,7 +3440,7 @@ export default function TimeTracking() {
                         // Show just a separator line when showing all employees
                         result.push(
                           <tr key={`week-separator-${previousWeekStart.getTime()}`} className="border-t-2 border-gray-400 dark:border-gray-500 h-0">
-                            <td colSpan={5} className="p-0"></td>
+                            <td colSpan={6} className="p-0"></td>
                           </tr>
                         );
                       }
@@ -3503,6 +3505,34 @@ export default function TimeTracking() {
                         </td>
                         <td className="py-2 px-4 text-center">
                           {(() => {
+                            // Check if any session has geolocation data (check against null/undefined, not truthiness)
+                            const sessionWithLocation = dayData.sessions.find((s: any) => 
+                              s.clockInLatitude != null || s.clockOutLatitude != null
+                            );
+                            if (sessionWithLocation) {
+                              const hasClockIn = sessionWithLocation.clockInLatitude != null && sessionWithLocation.clockInLongitude != null;
+                              const hasClockOut = sessionWithLocation.clockOutLatitude != null && sessionWithLocation.clockOutLongitude != null;
+                              const tooltipParts = [];
+                              if (hasClockIn) {
+                                tooltipParts.push(`Entrada: ${parseFloat(sessionWithLocation.clockInLatitude).toFixed(4)}, ${parseFloat(sessionWithLocation.clockInLongitude).toFixed(4)}`);
+                              }
+                              if (hasClockOut) {
+                                tooltipParts.push(`Salida: ${parseFloat(sessionWithLocation.clockOutLatitude).toFixed(4)}, ${parseFloat(sessionWithLocation.clockOutLongitude).toFixed(4)}`);
+                              }
+                              return (
+                                <div 
+                                  className="flex items-center justify-center cursor-pointer group"
+                                  title={tooltipParts.join('\n')}
+                                >
+                                  <MapPin className="w-4 h-4 text-green-500 group-hover:text-green-600" />
+                                </div>
+                              );
+                            }
+                            return <span className="text-gray-300">-</span>;
+                          })()}
+                        </td>
+                        <td className="py-2 px-4 text-center">
+                          {(() => {
                             // When there are multiple sessions in a day, prioritize incomplete session, then active, then first
                             const incompleteSession = dayData.sessions.find((s: any) => s.status === 'incomplete');
                             const activeSession = dayData.sessions.find((s: any) => !s.clockOut);
@@ -3564,7 +3594,7 @@ export default function TimeTracking() {
                       const weekTotal = calculateWeekTotal(previousWeekStart);
                       result.push(
                         <tr key={`week-final`} className="bg-gray-100 dark:bg-gray-700/50 border-y-2 border-gray-400 dark:border-gray-500">
-                          <td colSpan={5} className="py-2 px-4 text-center">
+                          <td colSpan={6} className="py-2 px-4 text-center">
                             <div className="font-medium text-gray-700 dark:text-gray-300">
                               Total semana: {weekTotal.toFixed(1)}h
                             </div>
@@ -3580,7 +3610,7 @@ export default function TimeTracking() {
                       
                       result.push(
                         <tr key={`month-final`} className="bg-blue-50 dark:bg-blue-900/30 border-y-2 border-blue-200 dark:border-blue-700">
-                          <td colSpan={5} className="py-3 px-4 text-center">
+                          <td colSpan={6} className="py-3 px-4 text-center">
                             <div className="font-semibold text-blue-800 dark:text-blue-200 capitalize">
                               Total {monthName}: {monthTotal.toFixed(1)}h
                             </div>
@@ -3593,7 +3623,7 @@ export default function TimeTracking() {
                   // Elemento observador para infinite scroll + indicador visual
                   result.push(
                     <tr key="load-more-observer" className="h-12">
-                      <td colSpan={5} className="py-3 text-center">
+                      <td colSpan={6} className="py-3 text-center">
                         <div ref={loadMoreDesktopRef} className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
                           {hasMoreToDisplay ? (
                             <>
@@ -3619,7 +3649,7 @@ export default function TimeTracking() {
                 
                 {filteredSessions.length === 0 && (
                   <tr className="h-32">
-                    <td colSpan={5} className="py-8 text-center">
+                    <td colSpan={6} className="py-8 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
                         <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
                           <Users className="w-5 h-5 text-gray-400 dark:text-gray-500" />
