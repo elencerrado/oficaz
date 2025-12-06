@@ -8,6 +8,7 @@ import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatsCard from '@/components/StatsCard';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { TabNavigation } from '@/components/ui/tab-navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -3858,7 +3859,7 @@ export default function TimeTracking() {
                       <div className="flex flex-col items-center justify-center space-y-2">
                         <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
                           {isLoading ? (
-                            <Clock className="w-5 h-5 text-gray-400 dark:text-gray-500 animate-spin" />
+                            <LoadingSpinner size="sm" />
                           ) : (
                             <Users className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                           )}
@@ -4293,7 +4294,7 @@ export default function TimeTracking() {
                 <div className="flex flex-col items-center justify-center space-y-3">
                   <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
                     {isLoading ? (
-                      <Clock className="w-6 h-6 text-muted-foreground animate-spin" />
+                      <LoadingSpinner size="sm" />
                     ) : (
                       <Users className="w-6 h-6 text-muted-foreground" />
                     )}
