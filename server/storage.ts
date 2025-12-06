@@ -322,6 +322,59 @@ export interface IStorage {
   updateCompanyAddon(id: number, updates: Partial<schema.InsertCompanyAddon>): Promise<schema.CompanyAddon | undefined>;
   cancelCompanyAddon(companyId: number, addonId: number, effectiveDate: Date): Promise<schema.CompanyAddon | undefined>;
   hasActiveAddon(companyId: number, addonKey: string): Promise<boolean>;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INVENTORY MANAGEMENT
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  // Product Categories
+  getProductCategories(companyId: number): Promise<schema.ProductCategory[]>;
+  getProductCategory(id: number): Promise<schema.ProductCategory | undefined>;
+  createProductCategory(category: schema.InsertProductCategory): Promise<schema.ProductCategory>;
+  updateProductCategory(id: number, updates: Partial<schema.InsertProductCategory>): Promise<schema.ProductCategory | undefined>;
+  deleteProductCategory(id: number): Promise<boolean>;
+  
+  // Warehouses
+  getWarehouses(companyId: number): Promise<schema.Warehouse[]>;
+  getWarehouse(id: number): Promise<schema.Warehouse | undefined>;
+  createWarehouse(warehouse: schema.InsertWarehouse): Promise<schema.Warehouse>;
+  updateWarehouse(id: number, updates: Partial<schema.InsertWarehouse>): Promise<schema.Warehouse | undefined>;
+  deleteWarehouse(id: number): Promise<boolean>;
+  
+  // Products
+  getProducts(companyId: number, filters?: { categoryId?: number; isActive?: boolean; isReturnable?: boolean; search?: string }): Promise<schema.Product[]>;
+  getProduct(id: number): Promise<schema.Product | undefined>;
+  createProduct(product: schema.InsertProduct): Promise<schema.Product>;
+  updateProduct(id: number, updates: Partial<schema.InsertProduct>): Promise<schema.Product | undefined>;
+  deleteProduct(id: number): Promise<boolean>;
+  
+  // Warehouse Stock
+  getWarehouseStock(companyId: number, warehouseId?: number): Promise<(schema.WarehouseStock & { product: schema.Product; warehouse: schema.Warehouse })[]>;
+  getProductStock(productId: number): Promise<(schema.WarehouseStock & { warehouse: schema.Warehouse })[]>;
+  updateWarehouseStock(warehouseId: number, productId: number, quantity: number, companyId: number): Promise<schema.WarehouseStock>;
+  getLowStockProducts(companyId: number): Promise<(schema.Product & { totalStock: number })[]>;
+  
+  // Inventory Movements
+  getInventoryMovements(companyId: number, filters?: { type?: string; status?: string; startDate?: Date; endDate?: Date; warehouseId?: number }): Promise<(schema.InventoryMovement & { createdBy: { fullName: string }; lines: schema.InventoryMovementLine[] })[]>;
+  getInventoryMovement(id: number): Promise<(schema.InventoryMovement & { createdBy: { fullName: string }; lines: (schema.InventoryMovementLine & { product: schema.Product })[] }) | undefined>;
+  createInventoryMovement(movement: schema.InsertInventoryMovement): Promise<schema.InventoryMovement>;
+  updateInventoryMovement(id: number, updates: Partial<schema.InsertInventoryMovement>): Promise<schema.InventoryMovement | undefined>;
+  deleteInventoryMovement(id: number): Promise<boolean>;
+  
+  // Movement Lines
+  createInventoryMovementLine(line: schema.InsertInventoryMovementLine): Promise<schema.InventoryMovementLine>;
+  updateInventoryMovementLine(id: number, updates: Partial<schema.InsertInventoryMovementLine>): Promise<schema.InventoryMovementLine | undefined>;
+  deleteInventoryMovementLine(id: number): Promise<boolean>;
+  
+  // Movement Sequences (for sequential numbering)
+  getNextMovementNumber(companyId: number): Promise<string>;
+  
+  // Tool Loans
+  getToolLoans(companyId: number, filters?: { status?: string; assignedToId?: number; productId?: number }): Promise<(schema.ToolLoan & { product: schema.Product; assignedTo?: { fullName: string } })[]>;
+  getToolLoan(id: number): Promise<schema.ToolLoan | undefined>;
+  createToolLoan(loan: schema.InsertToolLoan): Promise<schema.ToolLoan>;
+  updateToolLoan(id: number, updates: Partial<schema.InsertToolLoan>): Promise<schema.ToolLoan | undefined>;
+  getOverdueToolLoans(companyId: number): Promise<(schema.ToolLoan & { product: schema.Product })[]>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -4424,6 +4477,448 @@ export class DrizzleStorage implements IStorage {
         updatedAt: new Date(),
       })
       .where(eq(schema.subscriptions.companyId, companyId));
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INVENTORY MANAGEMENT IMPLEMENTATIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Product Categories
+  async getProductCategories(companyId: number): Promise<schema.ProductCategory[]> {
+    return await db.select().from(schema.productCategories)
+      .where(eq(schema.productCategories.companyId, companyId))
+      .orderBy(asc(schema.productCategories.sortOrder), asc(schema.productCategories.name));
+  }
+
+  async getProductCategory(id: number): Promise<schema.ProductCategory | undefined> {
+    const [category] = await db.select().from(schema.productCategories)
+      .where(eq(schema.productCategories.id, id));
+    return category;
+  }
+
+  async createProductCategory(category: schema.InsertProductCategory): Promise<schema.ProductCategory> {
+    const [result] = await db.insert(schema.productCategories).values(category).returning();
+    return result;
+  }
+
+  async updateProductCategory(id: number, updates: Partial<schema.InsertProductCategory>): Promise<schema.ProductCategory | undefined> {
+    const [result] = await db.update(schema.productCategories)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.productCategories.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteProductCategory(id: number): Promise<boolean> {
+    const result = await db.delete(schema.productCategories)
+      .where(eq(schema.productCategories.id, id));
+    return true;
+  }
+
+  // Warehouses
+  async getWarehouses(companyId: number): Promise<schema.Warehouse[]> {
+    return await db.select().from(schema.warehouses)
+      .where(eq(schema.warehouses.companyId, companyId))
+      .orderBy(desc(schema.warehouses.isDefault), asc(schema.warehouses.name));
+  }
+
+  async getWarehouse(id: number): Promise<schema.Warehouse | undefined> {
+    const [warehouse] = await db.select().from(schema.warehouses)
+      .where(eq(schema.warehouses.id, id));
+    return warehouse;
+  }
+
+  async createWarehouse(warehouse: schema.InsertWarehouse): Promise<schema.Warehouse> {
+    const [result] = await db.insert(schema.warehouses).values(warehouse).returning();
+    return result;
+  }
+
+  async updateWarehouse(id: number, updates: Partial<schema.InsertWarehouse>): Promise<schema.Warehouse | undefined> {
+    const [result] = await db.update(schema.warehouses)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.warehouses.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteWarehouse(id: number): Promise<boolean> {
+    await db.delete(schema.warehouses).where(eq(schema.warehouses.id, id));
+    return true;
+  }
+
+  // Products
+  async getProducts(companyId: number, filters?: { categoryId?: number; isActive?: boolean; isReturnable?: boolean; search?: string }): Promise<schema.Product[]> {
+    let query = db.select().from(schema.products)
+      .where(eq(schema.products.companyId, companyId))
+      .$dynamic();
+    
+    const conditions = [eq(schema.products.companyId, companyId)];
+    
+    if (filters?.categoryId) {
+      conditions.push(eq(schema.products.categoryId, filters.categoryId));
+    }
+    if (filters?.isActive !== undefined) {
+      conditions.push(eq(schema.products.isActive, filters.isActive));
+    }
+    if (filters?.isReturnable !== undefined) {
+      conditions.push(eq(schema.products.isReturnable, filters.isReturnable));
+    }
+    if (filters?.search) {
+      conditions.push(
+        or(
+          sql`${schema.products.name} ILIKE ${'%' + filters.search + '%'}`,
+          sql`${schema.products.sku} ILIKE ${'%' + filters.search + '%'}`,
+          sql`${schema.products.barcode} ILIKE ${'%' + filters.search + '%'}`
+        )!
+      );
+    }
+
+    return await db.select().from(schema.products)
+      .where(and(...conditions))
+      .orderBy(asc(schema.products.name));
+  }
+
+  async getProduct(id: number): Promise<schema.Product | undefined> {
+    const [product] = await db.select().from(schema.products)
+      .where(eq(schema.products.id, id));
+    return product;
+  }
+
+  async createProduct(product: schema.InsertProduct): Promise<schema.Product> {
+    const [result] = await db.insert(schema.products).values(product).returning();
+    return result;
+  }
+
+  async updateProduct(id: number, updates: Partial<schema.InsertProduct>): Promise<schema.Product | undefined> {
+    const [result] = await db.update(schema.products)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.products.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteProduct(id: number): Promise<boolean> {
+    await db.delete(schema.products).where(eq(schema.products.id, id));
+    return true;
+  }
+
+  // Warehouse Stock
+  async getWarehouseStock(companyId: number, warehouseId?: number): Promise<(schema.WarehouseStock & { product: schema.Product; warehouse: schema.Warehouse })[]> {
+    const conditions = [eq(schema.warehouseStock.companyId, companyId)];
+    if (warehouseId) {
+      conditions.push(eq(schema.warehouseStock.warehouseId, warehouseId));
+    }
+
+    const results = await db.select({
+      stock: schema.warehouseStock,
+      product: schema.products,
+      warehouse: schema.warehouses,
+    })
+      .from(schema.warehouseStock)
+      .innerJoin(schema.products, eq(schema.warehouseStock.productId, schema.products.id))
+      .innerJoin(schema.warehouses, eq(schema.warehouseStock.warehouseId, schema.warehouses.id))
+      .where(and(...conditions));
+
+    return results.map(r => ({
+      ...r.stock,
+      product: r.product,
+      warehouse: r.warehouse,
+    }));
+  }
+
+  async getProductStock(productId: number): Promise<(schema.WarehouseStock & { warehouse: schema.Warehouse })[]> {
+    const results = await db.select({
+      stock: schema.warehouseStock,
+      warehouse: schema.warehouses,
+    })
+      .from(schema.warehouseStock)
+      .innerJoin(schema.warehouses, eq(schema.warehouseStock.warehouseId, schema.warehouses.id))
+      .where(eq(schema.warehouseStock.productId, productId));
+
+    return results.map(r => ({
+      ...r.stock,
+      warehouse: r.warehouse,
+    }));
+  }
+
+  async updateWarehouseStock(warehouseId: number, productId: number, quantity: number, companyId: number): Promise<schema.WarehouseStock> {
+    // Upsert: create if not exists, update if exists
+    const existing = await db.select().from(schema.warehouseStock)
+      .where(and(
+        eq(schema.warehouseStock.warehouseId, warehouseId),
+        eq(schema.warehouseStock.productId, productId)
+      ));
+
+    if (existing.length > 0) {
+      const [result] = await db.update(schema.warehouseStock)
+        .set({ 
+          quantity: String(quantity), 
+          availableQuantity: String(quantity),
+          updatedAt: new Date() 
+        })
+        .where(and(
+          eq(schema.warehouseStock.warehouseId, warehouseId),
+          eq(schema.warehouseStock.productId, productId)
+        ))
+        .returning();
+      return result;
+    } else {
+      const [result] = await db.insert(schema.warehouseStock)
+        .values({
+          companyId,
+          warehouseId,
+          productId,
+          quantity: String(quantity),
+          availableQuantity: String(quantity),
+          reservedQuantity: '0',
+        })
+        .returning();
+      return result;
+    }
+  }
+
+  async getLowStockProducts(companyId: number): Promise<(schema.Product & { totalStock: number })[]> {
+    // Get products where total stock across all warehouses is below minStock
+    const results = await db.select({
+      product: schema.products,
+      totalStock: sql<number>`COALESCE(SUM(${schema.warehouseStock.quantity}::numeric), 0)::int`,
+    })
+      .from(schema.products)
+      .leftJoin(schema.warehouseStock, eq(schema.products.id, schema.warehouseStock.productId))
+      .where(and(
+        eq(schema.products.companyId, companyId),
+        eq(schema.products.isActive, true),
+        eq(schema.products.isService, false)
+      ))
+      .groupBy(schema.products.id)
+      .having(sql`COALESCE(SUM(${schema.warehouseStock.quantity}::numeric), 0) < ${schema.products.minStock}`);
+
+    return results.map(r => ({
+      ...r.product,
+      totalStock: r.totalStock,
+    }));
+  }
+
+  // Inventory Movements
+  async getInventoryMovements(companyId: number, filters?: { type?: string; status?: string; startDate?: Date; endDate?: Date; warehouseId?: number }): Promise<(schema.InventoryMovement & { createdBy: { fullName: string }; lines: schema.InventoryMovementLine[] })[]> {
+    const conditions = [eq(schema.inventoryMovements.companyId, companyId)];
+    
+    if (filters?.type) {
+      conditions.push(eq(schema.inventoryMovements.movementType, filters.type));
+    }
+    if (filters?.status) {
+      conditions.push(eq(schema.inventoryMovements.status, filters.status));
+    }
+    if (filters?.startDate) {
+      conditions.push(gte(schema.inventoryMovements.movementDate, filters.startDate));
+    }
+    if (filters?.endDate) {
+      conditions.push(lte(schema.inventoryMovements.movementDate, filters.endDate));
+    }
+    if (filters?.warehouseId) {
+      conditions.push(
+        or(
+          eq(schema.inventoryMovements.sourceWarehouseId, filters.warehouseId),
+          eq(schema.inventoryMovements.destinationWarehouseId, filters.warehouseId)
+        )!
+      );
+    }
+
+    const movements = await db.select({
+      movement: schema.inventoryMovements,
+      createdByName: schema.users.fullName,
+    })
+      .from(schema.inventoryMovements)
+      .innerJoin(schema.users, eq(schema.inventoryMovements.createdById, schema.users.id))
+      .where(and(...conditions))
+      .orderBy(desc(schema.inventoryMovements.movementDate));
+
+    // Get lines for each movement
+    const movementIds = movements.map(m => m.movement.id);
+    const allLines = movementIds.length > 0 
+      ? await db.select().from(schema.inventoryMovementLines)
+          .where(inArray(schema.inventoryMovementLines.movementId, movementIds))
+      : [];
+
+    return movements.map(m => ({
+      ...m.movement,
+      createdBy: { fullName: m.createdByName },
+      lines: allLines.filter(l => l.movementId === m.movement.id),
+    }));
+  }
+
+  async getInventoryMovement(id: number): Promise<(schema.InventoryMovement & { createdBy: { fullName: string }; lines: (schema.InventoryMovementLine & { product: schema.Product })[] }) | undefined> {
+    const [result] = await db.select({
+      movement: schema.inventoryMovements,
+      createdByName: schema.users.fullName,
+    })
+      .from(schema.inventoryMovements)
+      .innerJoin(schema.users, eq(schema.inventoryMovements.createdById, schema.users.id))
+      .where(eq(schema.inventoryMovements.id, id));
+
+    if (!result) return undefined;
+
+    const lines = await db.select({
+      line: schema.inventoryMovementLines,
+      product: schema.products,
+    })
+      .from(schema.inventoryMovementLines)
+      .innerJoin(schema.products, eq(schema.inventoryMovementLines.productId, schema.products.id))
+      .where(eq(schema.inventoryMovementLines.movementId, id))
+      .orderBy(asc(schema.inventoryMovementLines.sortOrder));
+
+    return {
+      ...result.movement,
+      createdBy: { fullName: result.createdByName },
+      lines: lines.map(l => ({ ...l.line, product: l.product })),
+    };
+  }
+
+  async createInventoryMovement(movement: schema.InsertInventoryMovement): Promise<schema.InventoryMovement> {
+    const [result] = await db.insert(schema.inventoryMovements).values(movement).returning();
+    return result;
+  }
+
+  async updateInventoryMovement(id: number, updates: Partial<schema.InsertInventoryMovement>): Promise<schema.InventoryMovement | undefined> {
+    const [result] = await db.update(schema.inventoryMovements)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.inventoryMovements.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteInventoryMovement(id: number): Promise<boolean> {
+    await db.delete(schema.inventoryMovements).where(eq(schema.inventoryMovements.id, id));
+    return true;
+  }
+
+  // Movement Lines
+  async createInventoryMovementLine(line: schema.InsertInventoryMovementLine): Promise<schema.InventoryMovementLine> {
+    const [result] = await db.insert(schema.inventoryMovementLines).values(line).returning();
+    return result;
+  }
+
+  async updateInventoryMovementLine(id: number, updates: Partial<schema.InsertInventoryMovementLine>): Promise<schema.InventoryMovementLine | undefined> {
+    const [result] = await db.update(schema.inventoryMovementLines)
+      .set(updates)
+      .where(eq(schema.inventoryMovementLines.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteInventoryMovementLine(id: number): Promise<boolean> {
+    await db.delete(schema.inventoryMovementLines).where(eq(schema.inventoryMovementLines.id, id));
+    return true;
+  }
+
+  // Movement Sequences
+  async getNextMovementNumber(companyId: number): Promise<string> {
+    const currentYear = new Date().getFullYear();
+    
+    // Get or create sequence
+    let [sequence] = await db.select().from(schema.movementSequences)
+      .where(eq(schema.movementSequences.companyId, companyId));
+    
+    if (!sequence) {
+      // Create new sequence
+      [sequence] = await db.insert(schema.movementSequences)
+        .values({
+          companyId,
+          prefix: 'ALB',
+          currentYear,
+          lastNumber: 0,
+        })
+        .returning();
+    }
+    
+    // Reset counter if year changed
+    if (sequence.currentYear !== currentYear) {
+      await db.update(schema.movementSequences)
+        .set({ currentYear, lastNumber: 0, updatedAt: new Date() })
+        .where(eq(schema.movementSequences.companyId, companyId));
+      sequence.lastNumber = 0;
+    }
+    
+    // Increment and return
+    const nextNumber = sequence.lastNumber + 1;
+    await db.update(schema.movementSequences)
+      .set({ lastNumber: nextNumber, updatedAt: new Date() })
+      .where(eq(schema.movementSequences.companyId, companyId));
+    
+    return `${sequence.prefix}-${currentYear}-${String(nextNumber).padStart(5, '0')}`;
+  }
+
+  // Tool Loans
+  async getToolLoans(companyId: number, filters?: { status?: string; assignedToId?: number; productId?: number }): Promise<(schema.ToolLoan & { product: schema.Product; assignedTo?: { fullName: string } })[]> {
+    const conditions = [eq(schema.toolLoans.companyId, companyId)];
+    
+    if (filters?.status) {
+      conditions.push(eq(schema.toolLoans.status, filters.status));
+    }
+    if (filters?.assignedToId) {
+      conditions.push(eq(schema.toolLoans.assignedToId, filters.assignedToId));
+    }
+    if (filters?.productId) {
+      conditions.push(eq(schema.toolLoans.productId, filters.productId));
+    }
+
+    const results = await db.select({
+      loan: schema.toolLoans,
+      product: schema.products,
+      assignedToName: schema.users.fullName,
+    })
+      .from(schema.toolLoans)
+      .innerJoin(schema.products, eq(schema.toolLoans.productId, schema.products.id))
+      .leftJoin(schema.users, eq(schema.toolLoans.assignedToId, schema.users.id))
+      .where(and(...conditions))
+      .orderBy(desc(schema.toolLoans.loanDate));
+
+    return results.map(r => ({
+      ...r.loan,
+      product: r.product,
+      assignedTo: r.assignedToName ? { fullName: r.assignedToName } : undefined,
+    }));
+  }
+
+  async getToolLoan(id: number): Promise<schema.ToolLoan | undefined> {
+    const [loan] = await db.select().from(schema.toolLoans)
+      .where(eq(schema.toolLoans.id, id));
+    return loan;
+  }
+
+  async createToolLoan(loan: schema.InsertToolLoan): Promise<schema.ToolLoan> {
+    const [result] = await db.insert(schema.toolLoans).values(loan).returning();
+    return result;
+  }
+
+  async updateToolLoan(id: number, updates: Partial<schema.InsertToolLoan>): Promise<schema.ToolLoan | undefined> {
+    const [result] = await db.update(schema.toolLoans)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.toolLoans.id, id))
+      .returning();
+    return result;
+  }
+
+  async getOverdueToolLoans(companyId: number): Promise<(schema.ToolLoan & { product: schema.Product })[]> {
+    const now = new Date();
+    
+    const results = await db.select({
+      loan: schema.toolLoans,
+      product: schema.products,
+    })
+      .from(schema.toolLoans)
+      .innerJoin(schema.products, eq(schema.toolLoans.productId, schema.products.id))
+      .where(and(
+        eq(schema.toolLoans.companyId, companyId),
+        eq(schema.toolLoans.status, 'active'),
+        isNotNull(schema.toolLoans.expectedReturnDate),
+        lt(schema.toolLoans.expectedReturnDate, now)
+      ));
+
+    return results.map(r => ({
+      ...r.loan,
+      product: r.product,
+    }));
   }
 }
 
