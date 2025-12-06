@@ -1029,6 +1029,8 @@ function MovementsTab() {
   const [lines, setLines] = useState<MovementLine[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [lineQuantity, setLineQuantity] = useState('1');
+  const [revertConfirm, setRevertConfirm] = useState<{ open: boolean; movement: Movement | null }>({ open: false, movement: null });
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; movement: Movement | null }>({ open: false, movement: null });
   const { toast } = useToast();
 
   const { data: movements = [], isLoading } = useQuery<Movement[]>({
@@ -1303,11 +1305,7 @@ function MovementsTab() {
                         <Button 
                           variant="ghost" 
                           size="icon"
-                          onClick={() => {
-                            if (confirm('¿Revertir a borrador? El stock será restaurado al estado anterior.')) {
-                              revertToDraftMutation.mutate(movement.id);
-                            }
-                          }}
+                          onClick={() => setRevertConfirm({ open: true, movement })}
                           disabled={revertToDraftMutation.isPending}
                           title="Revertir a borrador"
                           data-testid={`button-revert-movement-${movement.id}`}
@@ -1328,14 +1326,7 @@ function MovementsTab() {
                         variant="ghost" 
                         size="icon"
                         className="text-red-500 hover:text-red-700"
-                        onClick={() => {
-                          const msg = movement.status === 'posted' 
-                            ? '¿Eliminar este albarán confirmado? El stock será restaurado.'
-                            : '¿Eliminar este borrador?';
-                          if (confirm(msg)) {
-                            deleteMutation.mutate(movement.id);
-                          }
-                        }}
+                        onClick={() => setDeleteConfirm({ open: true, movement })}
                         disabled={deleteMutation.isPending}
                         title="Eliminar"
                         data-testid={`button-delete-movement-${movement.id}`}
@@ -1509,6 +1500,70 @@ function MovementsTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Revert to Draft Confirmation */}
+      <AlertDialog open={revertConfirm.open} onOpenChange={(open) => setRevertConfirm({ open, movement: open ? revertConfirm.movement : null })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Revertir a borrador?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {revertConfirm.movement && (
+                <>
+                  El movimiento <strong>{revertConfirm.movement.movementNumber}</strong> será revertido a borrador.
+                  El stock será restaurado al estado anterior a la confirmación.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-orange-600 hover:bg-orange-700"
+              onClick={() => {
+                if (revertConfirm.movement) {
+                  revertToDraftMutation.mutate(revertConfirm.movement.id);
+                  setRevertConfirm({ open: false, movement: null });
+                }
+              }}
+            >
+              Revertir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Movement Confirmation */}
+      <AlertDialog open={deleteConfirm.open} onOpenChange={(open) => setDeleteConfirm({ open, movement: open ? deleteConfirm.movement : null })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar movimiento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirm.movement && (
+                <>
+                  Vas a eliminar <strong>{deleteConfirm.movement.movementNumber}</strong>.
+                  {deleteConfirm.movement.status === 'posted' 
+                    ? ' El stock será restaurado al estado anterior.'
+                    : ' Esta acción no se puede deshacer.'}
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (deleteConfirm.movement) {
+                  deleteMutation.mutate(deleteConfirm.movement.id);
+                  setDeleteConfirm({ open: false, movement: null });
+                }
+              }}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -1518,6 +1573,8 @@ function SettingsTab() {
   const [warehouseDialogOpen, setWarehouseDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editingWarehouse, setEditingWarehouse] = useState<WarehouseType | null>(null);
+  const [deleteCategoryConfirm, setDeleteCategoryConfirm] = useState<{ open: boolean; category: Category | null }>({ open: false, category: null });
+  const [deleteWarehouseConfirm, setDeleteWarehouseConfirm] = useState<{ open: boolean; warehouse: WarehouseType | null }>({ open: false, warehouse: null });
   const { toast } = useToast();
 
   const { data: categories = [], isLoading: loadingCategories } = useQuery<Category[]>({
@@ -1665,7 +1722,7 @@ function SettingsTab() {
                       variant="ghost" 
                       size="icon" 
                       className="text-red-500"
-                      onClick={() => confirm('¿Eliminar esta categoría?') && deleteCategoryMutation.mutate(cat.id)}
+                      onClick={() => setDeleteCategoryConfirm({ open: true, category: cat })}
                       data-testid={`button-delete-category-${cat.id}`}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -1719,7 +1776,7 @@ function SettingsTab() {
                       variant="ghost" 
                       size="icon" 
                       className="text-red-500"
-                      onClick={() => confirm('¿Eliminar este almacén?') && deleteWarehouseMutation.mutate(wh.id)}
+                      onClick={() => setDeleteWarehouseConfirm({ open: true, warehouse: wh })}
                       data-testid={`button-delete-warehouse-${wh.id}`}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -1789,6 +1846,68 @@ function SettingsTab() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Category Confirmation */}
+      <AlertDialog open={deleteCategoryConfirm.open} onOpenChange={(open) => setDeleteCategoryConfirm({ open, category: open ? deleteCategoryConfirm.category : null })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar categoría?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteCategoryConfirm.category && (
+                <>
+                  Vas a eliminar la categoría <strong>{deleteCategoryConfirm.category.name}</strong>.
+                  Esta acción no se puede deshacer.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (deleteCategoryConfirm.category) {
+                  deleteCategoryMutation.mutate(deleteCategoryConfirm.category.id);
+                  setDeleteCategoryConfirm({ open: false, category: null });
+                }
+              }}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Warehouse Confirmation */}
+      <AlertDialog open={deleteWarehouseConfirm.open} onOpenChange={(open) => setDeleteWarehouseConfirm({ open, warehouse: open ? deleteWarehouseConfirm.warehouse : null })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar almacén?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteWarehouseConfirm.warehouse && (
+                <>
+                  Vas a eliminar el almacén <strong>{deleteWarehouseConfirm.warehouse.name}</strong>.
+                  Esta acción no se puede deshacer.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (deleteWarehouseConfirm.warehouse) {
+                  deleteWarehouseMutation.mutate(deleteWarehouseConfirm.warehouse.id);
+                  setDeleteWarehouseConfirm({ open: false, warehouse: null });
+                }
+              }}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
