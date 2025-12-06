@@ -2876,11 +2876,11 @@ export default function TimeTracking() {
                     title={`Entrada: ${label.text}`}
                   />
                 ) : (
-                  // Sin colisión: punto + hora visible (+ si hay consolidación y es primera entrada)
+                  // Sin colisión: punto + hora visible (+ verde si hay consolidación)
                   <div key={key} className="absolute flex items-center" style={{ left: `${label.position}%`, top: '0px' }}>
                     <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
                     <span className="text-xs font-medium text-green-700 whitespace-nowrap">
-                      {label.text}{wasConsolidated && label.sessionIndex === 0 && <span className="text-purple-600 font-bold">+</span>}
+                      {label.text}{wasConsolidated && label.sessionIndex === 0 && <span className="text-green-600 font-bold">+</span>}
                     </span>
                   </div>
                 );
@@ -2900,9 +2900,11 @@ export default function TimeTracking() {
                     title={`Salida: ${label.text}`}
                   />
                 ) : (
-                  // Sin colisión: punto + hora visible
+                  // Sin colisión: punto + hora visible (+ rojo a la izquierda si hay consolidación)
                   <div key={key} className="absolute flex items-center" style={{ left: `${label.position}%`, top: '0px', transform: 'translateX(-100%)' }}>
-                    <span className="text-xs font-medium text-red-700 whitespace-nowrap mr-1">{label.text}</span>
+                    <span className="text-xs font-medium text-red-700 whitespace-nowrap mr-1">
+                      {wasConsolidated && label.sessionIndex === consolidatedSessions.length - 1 && <span className="text-red-600 font-bold">+</span>}{label.text}
+                    </span>
                     <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                   </div>
                 );
