@@ -3951,11 +3951,36 @@ export default function TimeTracking() {
                 const session = incompleteSession || activeSession || dayData.sessions[0];
                 const sessionIsIncomplete = isSessionIncomplete(session);
                 
+                const mobileRowKey = `mobile-day-${dayData.date}-${dayData.userId}`;
+                const isMobileExpanded = expandedRows.has(mobileRowKey);
+                const toggleMobileExpand = () => {
+                  setExpandedRows(prev => {
+                    const next = new Set(prev);
+                    if (next.has(mobileRowKey)) {
+                      next.delete(mobileRowKey);
+                    } else {
+                      next.add(mobileRowKey);
+                    }
+                    return next;
+                  });
+                };
+                
                 result.push(
-                  <div key={`day-${dayData.date}-${dayData.userId}`} className={`bg-background border border-border rounded-lg mx-4 mb-3 px-3 py-3 shadow-sm row-wave-loading row-wave-${index % 15}`}>
+                  <div 
+                    key={mobileRowKey} 
+                    className={cn(
+                      `bg-background border border-border rounded-lg mx-4 mb-3 shadow-sm row-wave-loading row-wave-${index % 15} cursor-pointer select-none transition-all`,
+                      isMobileExpanded && "ring-1 ring-blue-200 dark:ring-blue-800"
+                    )}
+                    onClick={toggleMobileExpand}
+                  >
                     {/* Header with employee and date */}
-                    <div className="flex items-center justify-between mb-1 min-w-0">
+                    <div className="flex items-center justify-between px-3 py-3 min-w-0">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <ChevronDown className={cn(
+                          "w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0",
+                          isMobileExpanded && "transform rotate-180"
+                        )} />
                         <UserAvatar 
                           fullName={dayData.userName || 'Usuario Desconocido'} 
                           size="sm"
@@ -3978,8 +4003,8 @@ export default function TimeTracking() {
                       </div>
                       
                       {/* Action button */}
-                      <div className="flex items-center gap-1 min-w-0 flex-shrink-0">
-                        <div className="text-right">
+                      <div className="flex items-center gap-1 min-w-0 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <div className="text-right mr-1">
                           <div className="font-medium text-foreground text-sm">
                             {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
                           </div>
@@ -4035,14 +4060,102 @@ export default function TimeTracking() {
                       </div>
                     </div>
                     
-                    {/* Timeline */}
-                    <div>
-                      <div className="min-h-[40px] flex items-center">
-                        <div className="bg-muted rounded-lg p-2 w-full">
-                          <DailyTimelineBar dayData={dayData} />
-                        </div>
+                    {/* Timeline - always visible */}
+                    <div className="px-3 pb-2">
+                      <div className="bg-muted rounded-lg p-2 w-full">
+                        <DailyTimelineBar dayData={dayData} />
                       </div>
                     </div>
+                    
+                    {/* Expanded details */}
+                    {isMobileExpanded && (
+                      <div className="px-3 pb-3 space-y-2 border-t border-border pt-3">
+                        {dayData.sessions.map((sess: any, sessIndex: number) => {
+                          const clockIn = new Date(sess.clockIn);
+                          const clockOut = sess.clockOut ? new Date(sess.clockOut) : null;
+                          const hasInLoc = sess.clockInLatitude != null && sess.clockInLongitude != null;
+                          const hasOutLoc = sess.clockOutLatitude != null && sess.clockOutLongitude != null;
+                          
+                          return (
+                            <div key={sess.id} className="bg-muted/50 rounded-lg p-3 space-y-2">
+                              {dayData.sessions.length > 1 && (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-medium text-muted-foreground">
+                                    Sesión {sessIndex + 1}
+                                  </span>
+                                  {sess.status === 'incomplete' && (
+                                    <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">Incompleta</span>
+                                  )}
+                                </div>
+                              )}
+                              
+                              {/* Entry/Exit grid */}
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <div className="text-xs text-muted-foreground mb-1">Entrada</div>
+                                  <div className="flex items-center gap-1.5">
+                                    <Clock className="w-3.5 h-3.5 text-green-500" />
+                                    <span className="text-sm font-medium">{format(clockIn, 'HH:mm')}</span>
+                                  </div>
+                                  {hasInLoc && (
+                                    <a
+                                      href={`https://www.google.com/maps?q=${sess.clockInLatitude},${sess.clockInLongitude}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-1 text-xs text-blue-600 hover:underline mt-1"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <MapPin className="w-3 h-3" />
+                                      {parseFloat(sess.clockInLatitude).toFixed(4)}, {parseFloat(sess.clockInLongitude).toFixed(4)}
+                                    </a>
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="text-xs text-muted-foreground mb-1">Salida</div>
+                                  {clockOut ? (
+                                    <>
+                                      <div className="flex items-center gap-1.5">
+                                        <Clock className="w-3.5 h-3.5 text-red-500" />
+                                        <span className="text-sm font-medium">{format(clockOut, 'HH:mm')}</span>
+                                      </div>
+                                      {hasOutLoc && (
+                                        <a
+                                          href={`https://www.google.com/maps?q=${sess.clockOutLatitude},${sess.clockOutLongitude}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="flex items-center gap-1 text-xs text-blue-600 hover:underline mt-1"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <MapPin className="w-3 h-3" />
+                                          {parseFloat(sess.clockOutLatitude).toFixed(4)}, {parseFloat(sess.clockOutLongitude).toFixed(4)}
+                                        </a>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <span className="text-sm text-muted-foreground">En curso...</span>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {/* Breaks */}
+                              {sess.breakPeriods && sess.breakPeriods.length > 0 && (
+                                <div>
+                                  <div className="text-xs text-muted-foreground mb-1">Descansos</div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {sess.breakPeriods.map((bp: any, bpIdx: number) => (
+                                      <div key={bpIdx} className="flex items-center gap-1 text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 px-2 py-1 rounded">
+                                        <Coffee className="w-3 h-3" />
+                                        {format(new Date(bp.breakStart), 'HH:mm')} - {bp.breakEnd ? format(new Date(bp.breakEnd), 'HH:mm') : '...'}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 );
               });
