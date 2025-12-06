@@ -406,7 +406,7 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
   const handleDownloadTemplate = async () => {
     try {
       const response = await fetch('/api/inventory/products/template', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        credentials: 'include',
       });
       if (!response.ok) throw new Error('Error downloading template');
       const blob = await response.blob();
@@ -438,7 +438,7 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
       
       const response = await fetch('/api/inventory/products/bulk-validate', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        credentials: 'include',
         body: formData,
       });
       
