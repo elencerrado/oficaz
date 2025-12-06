@@ -355,6 +355,12 @@ export const workSessions = pgTable("work_sessions", {
   status: text("status").notNull().default("active"), // active, completed
   autoCompleted: boolean("auto_completed").notNull().default(false), // true if automatically closed due to missed clock out
   
+  // Geolocation fields for clock-in/clock-out verification
+  clockInLatitude: decimal("clock_in_latitude", { precision: 10, scale: 7 }),
+  clockInLongitude: decimal("clock_in_longitude", { precision: 10, scale: 7 }),
+  clockOutLatitude: decimal("clock_out_latitude", { precision: 10, scale: 7 }),
+  clockOutLongitude: decimal("clock_out_longitude", { precision: 10, scale: 7 }),
+  
   // Audit fields for legal compliance (RD-ley 8/2019)
   isManuallyCreated: boolean("is_manually_created").notNull().default(false), // true if created by admin (forgotten check-in)
   lastModifiedAt: timestamp("last_modified_at"), // timestamp of last modification
