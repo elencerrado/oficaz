@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabNavigation } from '@/components/ui/tab-navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,7 +28,8 @@ import {
   Tag,
   LayoutGrid,
   Clock,
-  ChevronRight
+  ChevronRight,
+  Settings
 } from 'lucide-react';
 
 type Product = {
@@ -103,42 +104,21 @@ export default function Inventory() {
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex mb-6">
-          <TabsTrigger value="dashboard" className="flex items-center gap-2" data-testid="tab-dashboard">
-            <LayoutGrid className="h-4 w-4" />
-            <span className="hidden sm:inline">Panel</span>
-          </TabsTrigger>
-          <TabsTrigger value="products" className="flex items-center gap-2" data-testid="tab-products">
-            <Package className="h-4 w-4" />
-            <span className="hidden sm:inline">Productos</span>
-          </TabsTrigger>
-          <TabsTrigger value="movements" className="flex items-center gap-2" data-testid="tab-movements">
-            <ArrowRightLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Movimientos</span>
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2" data-testid="tab-settings">
-            <Warehouse className="h-4 w-4" />
-            <span className="hidden sm:inline">Config.</span>
-          </TabsTrigger>
-        </TabsList>
+      <TabNavigation
+        tabs={[
+          { id: 'dashboard', label: 'Panel', icon: LayoutGrid },
+          { id: 'products', label: 'Productos', icon: Package },
+          { id: 'movements', label: 'Movimientos', icon: ArrowRightLeft },
+          { id: 'settings', label: 'Configuración', icon: Settings },
+        ]}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
-        <TabsContent value="dashboard" className="mt-0">
-          <DashboardTab />
-        </TabsContent>
-
-        <TabsContent value="products" className="mt-0">
-          <ProductsTab searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-        </TabsContent>
-
-        <TabsContent value="movements" className="mt-0">
-          <MovementsTab />
-        </TabsContent>
-
-        <TabsContent value="settings" className="mt-0">
-          <SettingsTab />
-        </TabsContent>
-      </Tabs>
+      {activeTab === 'dashboard' && <DashboardTab />}
+      {activeTab === 'products' && <ProductsTab searchTerm={searchTerm} setSearchTerm={setSearchTerm} />}
+      {activeTab === 'movements' && <MovementsTab />}
+      {activeTab === 'settings' && <SettingsTab />}
     </div>
   );
 }
