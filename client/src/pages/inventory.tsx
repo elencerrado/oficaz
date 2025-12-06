@@ -348,6 +348,8 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [selectedVatRate, setSelectedVatRate] = useState<string>('21');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const { toast } = useToast();
   
   // Bulk upload states
@@ -515,12 +517,12 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
       sku: formData.get('sku') as string,
       barcode: formData.get('barcode') as string || null,
       description: formData.get('description') as string || null,
-      categoryId: formData.get('categoryId') ? parseInt(formData.get('categoryId') as string) : null,
+      categoryId: selectedCategoryId ? parseInt(selectedCategoryId) : null,
       unitOfMeasure: formData.get('unitOfMeasure') as string || 'unidad',
       unitAbbreviation: formData.get('unitAbbreviation') as string || 'ud.',
       costPrice: formData.get('costPrice') as string || '0',
       salePrice: formData.get('salePrice') as string || '0',
-      vatRate: formData.get('vatRate') as string || '21',
+      vatRate: selectedVatRate,
       minStock: parseInt(formData.get('minStock') as string) || 0,
       maxStock: formData.get('maxStock') ? parseInt(formData.get('maxStock') as string) : null,
       isActive: formData.get('isActive') === 'on',
@@ -587,7 +589,12 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
             className="hidden"
             onChange={handleFileUpload}
           />
-          <Button onClick={() => { setEditingProduct(null); setIsDialogOpen(true); }} data-testid="button-add-product">
+          <Button onClick={() => { 
+              setEditingProduct(null); 
+              setSelectedVatRate('21'); 
+              setSelectedCategoryId(''); 
+              setIsDialogOpen(true); 
+            }} data-testid="button-add-product">
             <Plus className="h-4 w-4 mr-2" />
             Añadir Producto
           </Button>
@@ -601,7 +608,12 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
           <CardContent className="py-12 text-center">
             <Package className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
             <p className="text-gray-500 dark:text-gray-400">No hay productos todavía</p>
-            <Button variant="outline" className="mt-4" onClick={() => setIsDialogOpen(true)}>
+            <Button variant="outline" className="mt-4" onClick={() => { 
+              setEditingProduct(null); 
+              setSelectedVatRate('21'); 
+              setSelectedCategoryId(''); 
+              setIsDialogOpen(true); 
+            }}>
               <Plus className="h-4 w-4 mr-2" />
               Crear primer producto
             </Button>
@@ -646,7 +658,12 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => { setEditingProduct(product); setIsDialogOpen(true); }}
+                      onClick={() => { 
+                        setEditingProduct(product); 
+                        setSelectedVatRate(product.vatRate || '21'); 
+                        setSelectedCategoryId(product.categoryId?.toString() || ''); 
+                        setIsDialogOpen(true); 
+                      }}
                       data-testid={`button-edit-product-${product.id}`}
                     >
                       <Edit className="h-4 w-4" />
@@ -713,7 +730,7 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
               </div>
               <div className="space-y-2">
                 <Label htmlFor="categoryId">Categoría</Label>
-                <Select name="categoryId" defaultValue={editingProduct?.categoryId?.toString() || ''}>
+                <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
                   <SelectTrigger data-testid="select-product-category">
                     <SelectValue placeholder="Seleccionar categoría" />
                   </SelectTrigger>
@@ -762,7 +779,7 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
               </div>
               <div className="space-y-2">
                 <Label htmlFor="vatRate">IVA (%)</Label>
-                <Select name="vatRate" defaultValue={editingProduct?.vatRate || '21'}>
+                <Select value={selectedVatRate} onValueChange={setSelectedVatRate}>
                   <SelectTrigger data-testid="select-product-vat">
                     <SelectValue />
                   </SelectTrigger>
