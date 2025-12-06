@@ -19,7 +19,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
-import StatsCard from '@/components/StatsCard';
+import StatsCard, { StatsCardGrid } from '@/components/StatsCard';
 import { TabNavigation } from '@/components/ui/tab-navigation';
 import {
   Upload,
@@ -998,13 +998,11 @@ export default function AdminDocuments() {
     <PageWrapper>
       <div>
 
-        {/* Stats Cards - Simplified for self-access mode */}
         {isSelfAccessOnly ? (
-          <div className="grid grid-cols-2 gap-2 md:gap-6 mb-3">
+          <StatsCardGrid columns={2}>
             <StatsCard
-              title="Mis Documentos"
-              subtitle="Total"
-              value={loadingDocuments ? '-' : (documentsSource || []).length}
+              label="Mis Documentos"
+              value={(documentsSource || []).length}
               color="blue"
               icon={FileText}
               onClick={() => {
@@ -1013,12 +1011,11 @@ export default function AdminDocuments() {
               }}
               isLoading={loadingDocuments}
               index={0}
+              data-testid="stat-my-documents"
             />
-
             <StatsCard
-              title="Pendientes Firma"
-              subtitle="Documentos sin firmar"
-              value={loadingDocuments ? '-' : (documentsSource || []).filter(doc => {
+              label="Pendientes Firma"
+              value={(documentsSource || []).filter(doc => {
                 const fileName = doc.originalName || doc.fileName || '';
                 const analysis = analyzeFileName(fileName, employees);
                 const isPayroll = analysis.documentType === 'Nómina';
@@ -1033,14 +1030,14 @@ export default function AdminDocuments() {
               }}
               isLoading={loadingDocuments}
               index={1}
+              data-testid="stat-pending-signature"
             />
-          </div>
+          </StatsCardGrid>
         ) : (
-          <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">
+          <StatsCardGrid columns={4}>
             <StatsCard
-              title="Total Documentos"
-              subtitle="En sistema"
-              value={loadingDocuments ? '-' : (allDocuments || []).length}
+              label="Total Documentos"
+              value={(allDocuments || []).length}
               color="blue"
               icon={FileText}
               onClick={() => {
@@ -1049,12 +1046,11 @@ export default function AdminDocuments() {
               }}
               isLoading={loadingDocuments}
               index={0}
+              data-testid="stat-total-documents"
             />
-
             <StatsCard
-              title="Pendientes Firma"
-              subtitle="Documentos sin firmar"
-              value={loadingDocuments ? '-' : (allDocuments || []).filter(doc => {
+              label="Pendientes Firma"
+              value={(allDocuments || []).filter(doc => {
                 const fileName = doc.originalName || doc.fileName || '';
                 const analysis = analyzeFileName(fileName, employees);
                 const isPayroll = analysis.documentType === 'Nómina';
@@ -1071,23 +1067,21 @@ export default function AdminDocuments() {
               }}
               isLoading={loadingDocuments}
               index={1}
+              data-testid="stat-pending-signature"
             />
-
             <StatsCard
-              title="Solicitudes"
-              subtitle="Pendientes"
-              value={loadingRequests ? '-' : (sentRequests || []).filter(req => !req.isCompleted).length}
+              label="Solicitudes"
+              value={(sentRequests || []).filter(req => !req.isCompleted).length}
               color="yellow"
               icon={Send}
               onClick={() => setActiveTab('requests')}
               isLoading={loadingRequests}
               index={2}
+              data-testid="stat-requests"
             />
-
             <StatsCard
-              title="Empleados"
-              subtitle="Total activos"
-              value={loadingEmployees ? '-' : (employees || []).length}
+              label="Empleados"
+              value={(employees || []).length}
               color="purple"
               icon={Users}
               onClick={() => {
@@ -1096,8 +1090,9 @@ export default function AdminDocuments() {
               }}
               isLoading={loadingEmployees}
               index={3}
+              data-testid="stat-employees"
             />
-          </div>
+          </StatsCardGrid>
         )}
 
         {/* Tabs Navigation - Only show explorer tab for self-access mode */}

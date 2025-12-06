@@ -168,19 +168,19 @@ export default function StatsCard({
     <Card 
       className={`dark:bg-gray-800 cursor-pointer transition-all duration-200 hover:shadow-md ${
         isActive ? `border-2 ${config.activeBorder}` : ''
-      } ${className}`}
+      } ${isLoading ? `stats-wave-loading stats-wave-${index}` : ''} ${className}`}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
       data-testid={dataTestId}
     >
       <CardContent className="pt-4 pb-3 px-4">
         <div className="flex items-center gap-3">
-          <div className={`p-2 ${config.iconBg} rounded-lg`}>
+          <div className={`p-2 ${config.iconBg} rounded-lg ${isLoading ? 'opacity-50' : ''}`}>
             <Icon className={`h-5 w-5 ${config.iconText}`} />
           </div>
           <div>
-            <p className="text-2xl font-bold dark:text-white">{animatedValue}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{displayLabel}</p>
+            <p className={`text-2xl font-bold dark:text-white ${isLoading ? 'opacity-50' : ''}`}>{animatedValue}</p>
+            <p className={`text-xs text-gray-500 dark:text-gray-400 ${isLoading ? 'opacity-50' : ''}`}>{displayLabel}</p>
           </div>
         </div>
       </CardContent>
