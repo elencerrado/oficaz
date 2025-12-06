@@ -173,14 +173,23 @@ export default function StatsCard({
       onDoubleClick={onDoubleClick}
       data-testid={dataTestId}
     >
-      <CardContent className="pt-4 pb-3 px-4">
-        <div className="flex items-center gap-3">
+      <CardContent className="p-2 md:pt-4 md:pb-3 md:px-4">
+        {/* Mobile: vertical compact layout */}
+        <div className="flex flex-col items-center text-center md:hidden">
+          <div className={`p-1 ${config.iconBg} rounded-md mb-1 ${isLoading ? 'opacity-50' : ''}`}>
+            <Icon className={`h-3 w-3 ${config.iconText}`} />
+          </div>
+          <p className={`text-sm font-bold dark:text-white leading-tight ${isLoading ? 'opacity-50' : ''}`}>{animatedValue}</p>
+          <p className={`text-[8px] text-gray-500 dark:text-gray-400 leading-tight ${isLoading ? 'opacity-50' : ''}`}>{displayLabel}</p>
+        </div>
+        {/* Desktop: horizontal layout */}
+        <div className="hidden md:flex items-center gap-3">
           <div className={`p-2 ${config.iconBg} rounded-lg ${isLoading ? 'opacity-50' : ''}`}>
             <Icon className={`h-5 w-5 ${config.iconText}`} />
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <p className={`text-2xl font-bold dark:text-white ${isLoading ? 'opacity-50' : ''}`}>{animatedValue}</p>
-            <p className={`text-xs text-gray-500 dark:text-gray-400 ${isLoading ? 'opacity-50' : ''}`}>{displayLabel}</p>
+            <p className={`text-xs text-gray-500 dark:text-gray-400 truncate ${isLoading ? 'opacity-50' : ''}`}>{displayLabel}</p>
           </div>
         </div>
       </CardContent>
@@ -197,12 +206,12 @@ interface StatsCardGridProps {
 export function StatsCardGrid({ children, columns = 4, className = '' }: StatsCardGridProps) {
   const gridCols = {
     2: 'grid-cols-2',
-    3: 'grid-cols-2 md:grid-cols-3',
-    4: 'grid-cols-2 md:grid-cols-4',
+    3: 'grid-cols-3',
+    4: 'grid-cols-4',
   };
 
   return (
-    <div className={`grid ${gridCols[columns]} gap-2 md:gap-4 mb-3 ${className}`}>
+    <div className={`grid ${gridCols[columns]} gap-1 md:gap-4 mb-3 ${className}`}>
       {children}
     </div>
   );
