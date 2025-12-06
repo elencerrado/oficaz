@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -350,6 +351,8 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [selectedVatRate, setSelectedVatRate] = useState<string>('21');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const { toast } = useToast();
   
   // Bulk upload states
@@ -674,9 +677,8 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
                       size="icon"
                       className="text-red-500 hover:text-red-600"
                       onClick={() => {
-                        if (confirm('¿Eliminar este producto?')) {
-                          deleteMutation.mutate(product.id);
-                        }
+                        setProductToDelete(product);
+                        setDeleteConfirmOpen(true);
                       }}
                       data-testid={`button-delete-product-${product.id}`}
                     >
@@ -983,6 +985,38 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {productToDelete && (
+                <>
+                  Vas a eliminar <strong>{productToDelete.name}</strong> (SKU: {productToDelete.sku}).
+                  Esta acción no se puede deshacer.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (productToDelete) {
+                  deleteMutation.mutate(productToDelete.id);
+                  setDeleteConfirmOpen(false);
+                  setProductToDelete(null);
+                }
+              }}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
