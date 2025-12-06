@@ -3640,7 +3640,7 @@ export default function TimeTracking() {
                                             onClick={(e) => e.stopPropagation()}
                                           >
                                             <MapPin className="w-3 h-3" />
-                                            Ver en mapa
+                                            <span>{parseFloat(session.clockInLatitude).toFixed(5)}, {parseFloat(session.clockInLongitude).toFixed(5)}</span>
                                             <ExternalLink className="w-3 h-3" />
                                           </a>
                                         )}
@@ -3666,7 +3666,7 @@ export default function TimeTracking() {
                                                 onClick={(e) => e.stopPropagation()}
                                               >
                                                 <MapPin className="w-3 h-3" />
-                                                Ver en mapa
+                                                <span>{parseFloat(session.clockOutLatitude).toFixed(5)}, {parseFloat(session.clockOutLongitude).toFixed(5)}</span>
                                                 <ExternalLink className="w-3 h-3" />
                                               </a>
                                             )}
