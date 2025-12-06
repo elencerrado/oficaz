@@ -73,6 +73,7 @@ import NotificationDevices from "@/pages/notification-devices";
 import WorkReports from "@/pages/work-reports";
 import AdminWorkReports from "@/pages/admin-work-reports";
 import AddonStore from "@/pages/addon-store";
+import Inventory from "@/pages/inventory";
 
 // Super admin pages - lazy loaded (rarely accessed)
 const SuperAdminSecurity = lazy(() => import("@/pages/super-admin-security"));
@@ -716,6 +717,15 @@ function Router() {
               </AppLayout>
             </ManagerFeatureGate>
           </FeatureProtectedRoute>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/:companyAlias/inventario">
+        <ProtectedRoute>
+          <AppLayout>
+            {/* Inventory is admin/manager only - no employee view */}
+            <Inventory />
+          </AppLayout>
         </ProtectedRoute>
       </Route>
 

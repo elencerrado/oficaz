@@ -1,0 +1,1086 @@
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { 
+  Package, 
+  Warehouse, 
+  Plus, 
+  Search, 
+  Edit, 
+  Trash2, 
+  AlertTriangle, 
+  ArrowRightLeft,
+  FileText,
+  Download,
+  ClipboardList,
+  Tag,
+  LayoutGrid,
+  Clock,
+  ChevronRight
+} from 'lucide-react';
+
+type Product = {
+  id: number;
+  name: string;
+  sku: string;
+  barcode: string | null;
+  description: string | null;
+  categoryId: number | null;
+  unitOfMeasure: string;
+  unitAbbreviation: string;
+  costPrice: string;
+  salePrice: string;
+  vatRate: string;
+  minStock: number;
+  maxStock: number | null;
+  isActive: boolean;
+  isReturnable: boolean;
+  isService: boolean;
+};
+
+type Category = {
+  id: number;
+  name: string;
+  description: string | null;
+  color: string | null;
+};
+
+type WarehouseType = {
+  id: number;
+  name: string;
+  location: string | null;
+  isDefault: boolean;
+  isActive: boolean;
+};
+
+type Movement = {
+  id: number;
+  movementNumber: string;
+  movementType: string;
+  movementDate: string;
+  status: string;
+  total: string;
+  relatedPartyName: string | null;
+  createdBy: { fullName: string };
+  lines: any[];
+};
+
+type DashboardStats = {
+  totalProducts: number;
+  totalCategories: number;
+  totalWarehouses: number;
+  lowStockCount: number;
+  lowStockProducts: any[];
+  overdueLoansCount: number;
+  overdueLoans: any[];
+  activeLoansCount: number;
+  recentMovements: any[];
+};
+
+export default function Inventory() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [searchTerm, setSearchTerm] = useState('');
+  const { toast } = useToast();
+
+  return (
+    <div className="px-6 py-4 min-h-screen bg-gray-50 dark:bg-gray-900" style={{ overflowX: 'clip' }}>
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Inventario</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1">
+          Gestiona productos, almacenes y movimientos de stock
+        </p>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex mb-6">
+          <TabsTrigger value="dashboard" className="flex items-center gap-2" data-testid="tab-dashboard">
+            <LayoutGrid className="h-4 w-4" />
+            <span className="hidden sm:inline">Panel</span>
+          </TabsTrigger>
+          <TabsTrigger value="products" className="flex items-center gap-2" data-testid="tab-products">
+            <Package className="h-4 w-4" />
+            <span className="hidden sm:inline">Productos</span>
+          </TabsTrigger>
+          <TabsTrigger value="movements" className="flex items-center gap-2" data-testid="tab-movements">
+            <ArrowRightLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Movimientos</span>
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-2" data-testid="tab-settings">
+            <Warehouse className="h-4 w-4" />
+            <span className="hidden sm:inline">Config.</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard" className="mt-0">
+          <DashboardTab />
+        </TabsContent>
+
+        <TabsContent value="products" className="mt-0">
+          <ProductsTab searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        </TabsContent>
+
+        <TabsContent value="movements" className="mt-0">
+          <MovementsTab />
+        </TabsContent>
+
+        <TabsContent value="settings" className="mt-0">
+          <SettingsTab />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function DashboardTab() {
+  const { data: stats, isLoading } = useQuery<DashboardStats>({
+    queryKey: ['/api/inventory/dashboard'],
+  });
+
+  if (isLoading) {
+    return <div className="flex justify-center py-12"><LoadingSpinner /></div>;
+  }
+
+  const movementTypeLabels: Record<string, string> = {
+    'in': 'Entrada',
+    'out': 'Salida',
+    'transfer': 'Transferencia',
+    'adjustment': 'Ajuste',
+    'loan': 'Préstamo',
+    'return': 'Devolución',
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                <Package className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats?.totalProducts || 0}</p>
+                <p className="text-sm text-gray-500">Productos</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                <Warehouse className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats?.totalWarehouses || 0}</p>
+                <p className="text-sm text-gray-500">Almacenes</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-100 dark:bg-amber-900 rounded-lg">
+                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats?.lowStockCount || 0}</p>
+                <p className="text-sm text-gray-500">Stock bajo</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats?.activeLoansCount || 0}</p>
+                <p className="text-sm text-gray-500">Préstamos</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {stats?.lowStockCount ? (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-amber-600">
+                <AlertTriangle className="h-5 w-5" />
+                Alertas de Stock Bajo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {stats.lowStockProducts.map((product: any) => (
+                  <div key={product.id} className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                    <div>
+                      <p className="font-medium">{product.name}</p>
+                      <p className="text-sm text-gray-500">SKU: {product.sku}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-amber-600">{product.totalStock}</p>
+                      <p className="text-xs text-gray-500">Mín: {product.minStock}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-green-600">
+                <Package className="h-5 w-5" />
+                Stock Saludable
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-500 text-center py-6">No hay productos con stock bajo</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {stats?.overdueLoansCount ? (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-red-600">
+                <Clock className="h-5 w-5" />
+                Préstamos Vencidos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {stats.overdueLoans.map((loan: any) => (
+                  <div key={loan.id} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                    <div>
+                      <p className="font-medium">{loan.product.name}</p>
+                      <p className="text-sm text-gray-500">
+                        {loan.assignedToName || 'Sin asignar'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-red-600">Vencido</p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(loan.expectedReturnDate).toLocaleDateString('es-ES')}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2">
+                <ArrowRightLeft className="h-5 w-5" />
+                Últimos Movimientos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {stats?.recentMovements.length ? (
+                <div className="space-y-2">
+                  {stats.recentMovements.slice(0, 5).map((movement: any) => (
+                    <div key={movement.id} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline">{movementTypeLabels[movement.movementType] || movement.movementType}</Badge>
+                        <span className="text-sm">{movement.movementNumber}</span>
+                      </div>
+                      <span className="text-sm text-gray-500">
+                        {new Date(movement.movementDate).toLocaleDateString('es-ES')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-6">No hay movimientos recientes</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSearchTerm: (s: string) => void }) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const { toast } = useToast();
+
+  const { data: products = [], isLoading } = useQuery<Product[]>({
+    queryKey: ['/api/inventory/products', { search: searchTerm, categoryId: categoryFilter !== 'all' ? categoryFilter : undefined }],
+  });
+
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ['/api/inventory/categories'],
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: Partial<Product>) => apiRequest('POST', '/api/inventory/products', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/products'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/dashboard'] });
+      setIsDialogOpen(false);
+      setEditingProduct(null);
+      toast({ title: 'Producto creado correctamente' });
+    },
+    onError: () => toast({ title: 'Error al crear producto', variant: 'destructive' }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<Product> }) => 
+      apiRequest('PATCH', `/api/inventory/products/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/products'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/dashboard'] });
+      setIsDialogOpen(false);
+      setEditingProduct(null);
+      toast({ title: 'Producto actualizado correctamente' });
+    },
+    onError: () => toast({ title: 'Error al actualizar producto', variant: 'destructive' }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => apiRequest('DELETE', `/api/inventory/products/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/products'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/dashboard'] });
+      toast({ title: 'Producto eliminado' });
+    },
+    onError: () => toast({ title: 'Error al eliminar producto', variant: 'destructive' }),
+  });
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      name: formData.get('name') as string,
+      sku: formData.get('sku') as string,
+      barcode: formData.get('barcode') as string || null,
+      description: formData.get('description') as string || null,
+      categoryId: formData.get('categoryId') ? parseInt(formData.get('categoryId') as string) : null,
+      unitOfMeasure: formData.get('unitOfMeasure') as string || 'unidad',
+      unitAbbreviation: formData.get('unitAbbreviation') as string || 'ud.',
+      costPrice: formData.get('costPrice') as string || '0',
+      salePrice: formData.get('salePrice') as string || '0',
+      vatRate: formData.get('vatRate') as string || '21',
+      minStock: parseInt(formData.get('minStock') as string) || 0,
+      maxStock: formData.get('maxStock') ? parseInt(formData.get('maxStock') as string) : null,
+      isActive: formData.get('isActive') === 'on',
+      isReturnable: formData.get('isReturnable') === 'on',
+      isService: formData.get('isService') === 'on',
+    };
+
+    if (editingProduct) {
+      updateMutation.mutate({ id: editingProduct.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.sku.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row gap-3 justify-between">
+        <div className="flex gap-2 flex-1">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Buscar por nombre o SKU..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+              data-testid="input-search-products"
+            />
+          </div>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[180px]" data-testid="select-category-filter">
+              <SelectValue placeholder="Categoría" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las categorías</SelectItem>
+              {categories.map(cat => (
+                <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={() => { setEditingProduct(null); setIsDialogOpen(true); }} data-testid="button-add-product">
+          <Plus className="h-4 w-4 mr-2" />
+          Añadir Producto
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-12"><LoadingSpinner /></div>
+      ) : filteredProducts.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Package className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+            <p className="text-gray-500">No hay productos todavía</p>
+            <Button variant="outline" className="mt-4" onClick={() => setIsDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Crear primer producto
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredProducts.map(product => (
+            <Card key={product.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="pt-4">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="font-medium">{product.name}</h3>
+                    <p className="text-sm text-gray-500">SKU: {product.sku}</p>
+                  </div>
+                  <div className="flex gap-1">
+                    {product.isReturnable && (
+                      <Badge variant="secondary" className="text-xs">Retornable</Badge>
+                    )}
+                    {!product.isActive && (
+                      <Badge variant="destructive" className="text-xs">Inactivo</Badge>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                  <div>
+                    <span className="text-gray-500">Coste:</span>
+                    <span className="ml-1 font-medium">{parseFloat(product.costPrice).toFixed(2)} €</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Venta:</span>
+                    <span className="ml-1 font-medium">{parseFloat(product.salePrice).toFixed(2)} €</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-3 border-t">
+                  <span className="text-sm text-gray-500">
+                    Mín: {product.minStock} {product.unitAbbreviation}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => { setEditingProduct(product); setIsDialogOpen(true); }}
+                      data-testid={`button-edit-product-${product.id}`}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-red-500 hover:text-red-600"
+                      onClick={() => {
+                        if (confirm('¿Eliminar este producto?')) {
+                          deleteMutation.mutate(product.id);
+                        }
+                      }}
+                      data-testid={`button-delete-product-${product.id}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingProduct ? 'Editar Producto' : 'Nuevo Producto'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nombre *</Label>
+                <Input 
+                  id="name" 
+                  name="name" 
+                  defaultValue={editingProduct?.name} 
+                  required 
+                  data-testid="input-product-name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sku">SKU *</Label>
+                <Input 
+                  id="sku" 
+                  name="sku" 
+                  defaultValue={editingProduct?.sku} 
+                  required 
+                  data-testid="input-product-sku"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="barcode">Código de barras</Label>
+                <Input 
+                  id="barcode" 
+                  name="barcode" 
+                  defaultValue={editingProduct?.barcode || ''} 
+                  data-testid="input-product-barcode"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="categoryId">Categoría</Label>
+                <Select name="categoryId" defaultValue={editingProduct?.categoryId?.toString() || ''}>
+                  <SelectTrigger data-testid="select-product-category">
+                    <SelectValue placeholder="Seleccionar categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(cat => (
+                      <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Descripción</Label>
+              <Textarea 
+                id="description" 
+                name="description" 
+                defaultValue={editingProduct?.description || ''} 
+                rows={2}
+                data-testid="input-product-description"
+              />
+            </div>
+
+            <div className="grid grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="costPrice">Precio coste</Label>
+                <Input 
+                  id="costPrice" 
+                  name="costPrice" 
+                  type="number" 
+                  step="0.01" 
+                  defaultValue={editingProduct?.costPrice || '0'} 
+                  data-testid="input-product-cost"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="salePrice">Precio venta</Label>
+                <Input 
+                  id="salePrice" 
+                  name="salePrice" 
+                  type="number" 
+                  step="0.01" 
+                  defaultValue={editingProduct?.salePrice || '0'} 
+                  data-testid="input-product-sale"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="vatRate">IVA (%)</Label>
+                <Select name="vatRate" defaultValue={editingProduct?.vatRate || '21'}>
+                  <SelectTrigger data-testid="select-product-vat">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">0%</SelectItem>
+                    <SelectItem value="4">4%</SelectItem>
+                    <SelectItem value="10">10%</SelectItem>
+                    <SelectItem value="21">21%</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="minStock">Stock mín.</Label>
+                <Input 
+                  id="minStock" 
+                  name="minStock" 
+                  type="number" 
+                  defaultValue={editingProduct?.minStock || 0} 
+                  data-testid="input-product-minstock"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="unitOfMeasure">Unidad de medida</Label>
+                <Input 
+                  id="unitOfMeasure" 
+                  name="unitOfMeasure" 
+                  defaultValue={editingProduct?.unitOfMeasure || 'unidad'} 
+                  data-testid="input-product-unit"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="unitAbbreviation">Abreviatura</Label>
+                <Input 
+                  id="unitAbbreviation" 
+                  name="unitAbbreviation" 
+                  defaultValue={editingProduct?.unitAbbreviation || 'ud.'} 
+                  data-testid="input-product-unit-abbr"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-6 pt-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Switch name="isActive" defaultChecked={editingProduct?.isActive ?? true} />
+                <span className="text-sm">Activo</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Switch name="isReturnable" defaultChecked={editingProduct?.isReturnable ?? false} />
+                <span className="text-sm">Retornable (herramienta/equipo)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Switch name="isService" defaultChecked={editingProduct?.isService ?? false} />
+                <span className="text-sm">Es servicio</span>
+              </label>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending} data-testid="button-save-product">
+                {createMutation.isPending || updateMutation.isPending ? 'Guardando...' : 'Guardar'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function MovementsTab() {
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const { toast } = useToast();
+
+  const { data: movements = [], isLoading } = useQuery<Movement[]>({
+    queryKey: ['/api/inventory/movements', { type: typeFilter !== 'all' ? typeFilter : undefined }],
+  });
+
+  const downloadPdf = async (movementId: number, movementNumber: string) => {
+    try {
+      const response = await fetch(`/api/inventory/movements/${movementId}/pdf`, {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Error downloading PDF');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `albaran-${movementNumber}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      toast({ title: 'Error al descargar PDF', variant: 'destructive' });
+    }
+  };
+
+  const typeLabels: Record<string, string> = {
+    'in': 'Entrada',
+    'out': 'Salida',
+    'transfer': 'Transferencia',
+    'adjustment': 'Ajuste',
+    'loan': 'Préstamo',
+    'return': 'Devolución',
+  };
+
+  const statusLabels: Record<string, { label: string; color: string }> = {
+    'draft': { label: 'Borrador', color: 'bg-gray-100 text-gray-800' },
+    'posted': { label: 'Confirmado', color: 'bg-green-100 text-green-800' },
+    'cancelled': { label: 'Anulado', color: 'bg-red-100 text-red-800' },
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row gap-3 justify-between">
+        <div className="flex gap-2">
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-[180px]" data-testid="select-movement-type-filter">
+              <SelectValue placeholder="Tipo de movimiento" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los tipos</SelectItem>
+              <SelectItem value="in">Entrada</SelectItem>
+              <SelectItem value="out">Salida</SelectItem>
+              <SelectItem value="transfer">Transferencia</SelectItem>
+              <SelectItem value="adjustment">Ajuste</SelectItem>
+              <SelectItem value="loan">Préstamo</SelectItem>
+              <SelectItem value="return">Devolución</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button data-testid="button-new-movement">
+          <Plus className="h-4 w-4 mr-2" />
+          Nuevo Movimiento
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-12"><LoadingSpinner /></div>
+      ) : movements.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <ArrowRightLeft className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+            <p className="text-gray-500">No hay movimientos todavía</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {movements.map(movement => (
+            <Card key={movement.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col">
+                      <span className="font-mono text-sm font-medium">{movement.movementNumber}</span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(movement.movementDate).toLocaleDateString('es-ES')}
+                      </span>
+                    </div>
+                    <Badge variant="outline">{typeLabels[movement.movementType] || movement.movementType}</Badge>
+                    <span className={`px-2 py-1 rounded text-xs ${statusLabels[movement.status]?.color || 'bg-gray-100'}`}>
+                      {statusLabels[movement.status]?.label || movement.status}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    {movement.relatedPartyName && (
+                      <span className="text-sm text-gray-600">{movement.relatedPartyName}</span>
+                    )}
+                    <span className="font-medium">{parseFloat(movement.total).toFixed(2)} €</span>
+                    
+                    <div className="flex gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => downloadPdf(movement.id, movement.movementNumber)}
+                        data-testid={`button-download-pdf-${movement.id}`}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" data-testid={`button-view-movement-${movement.id}`}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SettingsTab() {
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [warehouseDialogOpen, setWarehouseDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingWarehouse, setEditingWarehouse] = useState<WarehouseType | null>(null);
+  const { toast } = useToast();
+
+  const { data: categories = [], isLoading: loadingCategories } = useQuery<Category[]>({
+    queryKey: ['/api/inventory/categories'],
+  });
+
+  const { data: warehouses = [], isLoading: loadingWarehouses } = useQuery<WarehouseType[]>({
+    queryKey: ['/api/inventory/warehouses'],
+  });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: (data: Partial<Category>) => apiRequest('POST', '/api/inventory/categories', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/categories'] });
+      setCategoryDialogOpen(false);
+      setEditingCategory(null);
+      toast({ title: 'Categoría creada' });
+    },
+  });
+
+  const updateCategoryMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<Category> }) => 
+      apiRequest('PATCH', `/api/inventory/categories/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/categories'] });
+      setCategoryDialogOpen(false);
+      setEditingCategory(null);
+      toast({ title: 'Categoría actualizada' });
+    },
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: (id: number) => apiRequest('DELETE', `/api/inventory/categories/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/categories'] });
+      toast({ title: 'Categoría eliminada' });
+    },
+  });
+
+  const createWarehouseMutation = useMutation({
+    mutationFn: (data: Partial<WarehouseType>) => apiRequest('POST', '/api/inventory/warehouses', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/warehouses'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/dashboard'] });
+      setWarehouseDialogOpen(false);
+      setEditingWarehouse(null);
+      toast({ title: 'Almacén creado' });
+    },
+  });
+
+  const updateWarehouseMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<WarehouseType> }) => 
+      apiRequest('PATCH', `/api/inventory/warehouses/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/warehouses'] });
+      setWarehouseDialogOpen(false);
+      setEditingWarehouse(null);
+      toast({ title: 'Almacén actualizado' });
+    },
+  });
+
+  const deleteWarehouseMutation = useMutation({
+    mutationFn: (id: number) => apiRequest('DELETE', `/api/inventory/warehouses/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/warehouses'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/dashboard'] });
+      toast({ title: 'Almacén eliminado' });
+    },
+  });
+
+  const handleCategorySubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      name: formData.get('name') as string,
+      description: formData.get('description') as string || null,
+      color: formData.get('color') as string || null,
+    };
+
+    if (editingCategory) {
+      updateCategoryMutation.mutate({ id: editingCategory.id, data });
+    } else {
+      createCategoryMutation.mutate(data);
+    }
+  };
+
+  const handleWarehouseSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      name: formData.get('name') as string,
+      location: formData.get('location') as string || null,
+      isDefault: formData.get('isDefault') === 'on',
+      isActive: formData.get('isActive') === 'on',
+    };
+
+    if (editingWarehouse) {
+      updateWarehouseMutation.mutate({ id: editingWarehouse.id, data });
+    } else {
+      createWarehouseMutation.mutate(data);
+    }
+  };
+
+  return (
+    <div className="grid md:grid-cols-2 gap-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Tag className="h-5 w-5" />
+            Categorías
+          </CardTitle>
+          <Button size="sm" onClick={() => { setEditingCategory(null); setCategoryDialogOpen(true); }} data-testid="button-add-category">
+            <Plus className="h-4 w-4 mr-1" />
+            Añadir
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {loadingCategories ? (
+            <div className="flex justify-center py-4"><LoadingSpinner /></div>
+          ) : categories.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">No hay categorías</p>
+          ) : (
+            <div className="space-y-2">
+              {categories.map(cat => (
+                <div key={cat.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    {cat.color && (
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
+                    )}
+                    <div>
+                      <p className="font-medium">{cat.name}</p>
+                      {cat.description && <p className="text-xs text-gray-500">{cat.description}</p>}
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => { setEditingCategory(cat); setCategoryDialogOpen(true); }}
+                      data-testid={`button-edit-category-${cat.id}`}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-red-500"
+                      onClick={() => confirm('¿Eliminar esta categoría?') && deleteCategoryMutation.mutate(cat.id)}
+                      data-testid={`button-delete-category-${cat.id}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Warehouse className="h-5 w-5" />
+            Almacenes
+          </CardTitle>
+          <Button size="sm" onClick={() => { setEditingWarehouse(null); setWarehouseDialogOpen(true); }} data-testid="button-add-warehouse">
+            <Plus className="h-4 w-4 mr-1" />
+            Añadir
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {loadingWarehouses ? (
+            <div className="flex justify-center py-4"><LoadingSpinner /></div>
+          ) : warehouses.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">No hay almacenes</p>
+          ) : (
+            <div className="space-y-2">
+              {warehouses.map(wh => (
+                <div key={wh.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{wh.name}</p>
+                      {wh.isDefault && <Badge variant="secondary" className="text-xs">Principal</Badge>}
+                      {!wh.isActive && <Badge variant="destructive" className="text-xs">Inactivo</Badge>}
+                    </div>
+                    {wh.location && <p className="text-xs text-gray-500">{wh.location}</p>}
+                  </div>
+                  <div className="flex gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => { setEditingWarehouse(wh); setWarehouseDialogOpen(true); }}
+                      data-testid={`button-edit-warehouse-${wh.id}`}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-red-500"
+                      onClick={() => confirm('¿Eliminar este almacén?') && deleteWarehouseMutation.mutate(wh.id)}
+                      data-testid={`button-delete-warehouse-${wh.id}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCategorySubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cat-name">Nombre *</Label>
+              <Input id="cat-name" name="name" defaultValue={editingCategory?.name} required data-testid="input-category-name" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cat-description">Descripción</Label>
+              <Textarea id="cat-description" name="description" defaultValue={editingCategory?.description || ''} rows={2} data-testid="input-category-description" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cat-color">Color</Label>
+              <Input id="cat-color" name="color" type="color" defaultValue={editingCategory?.color || '#007AFF'} className="h-10 w-20" data-testid="input-category-color" />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setCategoryDialogOpen(false)}>Cancelar</Button>
+              <Button type="submit" data-testid="button-save-category">Guardar</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={warehouseDialogOpen} onOpenChange={setWarehouseDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingWarehouse ? 'Editar Almacén' : 'Nuevo Almacén'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleWarehouseSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="wh-name">Nombre *</Label>
+              <Input id="wh-name" name="name" defaultValue={editingWarehouse?.name} required data-testid="input-warehouse-name" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="wh-location">Ubicación</Label>
+              <Input id="wh-location" name="location" defaultValue={editingWarehouse?.location || ''} data-testid="input-warehouse-location" />
+            </div>
+            <div className="flex gap-6 pt-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Switch name="isDefault" defaultChecked={editingWarehouse?.isDefault ?? false} />
+                <span className="text-sm">Almacén principal</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Switch name="isActive" defaultChecked={editingWarehouse?.isActive ?? true} />
+                <span className="text-sm">Activo</span>
+              </label>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setWarehouseDialogOpen(false)}>Cancelar</Button>
+              <Button type="submit" data-testid="button-save-warehouse">Guardar</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useDemoBanner } from '@/hooks/use-demo-banner';
 import { useEmployeeViewMode } from '@/hooks/use-employee-view-mode';
-import { LayoutDashboard, Clock, Calendar, CalendarClock, FileText, Mail, Bell, Users, Settings, LogOut, ClipboardList, Store } from 'lucide-react';
+import { LayoutDashboard, Clock, Calendar, CalendarClock, FileText, Mail, Bell, Users, Settings, LogOut, ClipboardList, Store, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -136,6 +136,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         name: 'Empleados', 
         href: `/${companyAlias}/empleados`, 
         icon: Users
+      },
+      { 
+        name: 'Inventario', 
+        href: `/${companyAlias}/inventario`, 
+        icon: Package
       }
     ] : []),
     { 
