@@ -1047,7 +1047,7 @@ function MovementsTab() {
     setLines(lines.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (status: 'draft' | 'posted') => {
     if (!warehouseId || lines.length === 0) {
       toast({ title: 'Selecciona un almacén y añade al menos un producto', variant: 'destructive' });
       return;
@@ -1057,10 +1057,14 @@ function MovementsTab() {
       return;
     }
 
+    const warehouseIdNum = parseInt(warehouseId);
+    const destWarehouseIdNum = movementType === 'transfer' ? parseInt(destinationWarehouseId) : null;
+
     createMutation.mutate({
       movementType,
-      warehouseId: parseInt(warehouseId),
-      destinationWarehouseId: movementType === 'transfer' ? parseInt(destinationWarehouseId) : null,
+      status,
+      sourceWarehouseId: ['out', 'transfer', 'loan'].includes(movementType) ? warehouseIdNum : null,
+      destinationWarehouseId: ['in', 'transfer', 'return'].includes(movementType) ? (destWarehouseIdNum || warehouseIdNum) : null,
       relatedPartyName: relatedPartyName || null,
       notes: notes || null,
       lines: lines.map(l => ({
@@ -1329,16 +1333,24 @@ function MovementsTab() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button type="button" variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }}>
               Cancelar
             </Button>
             <Button 
-              onClick={handleSubmit} 
+              variant="secondary"
+              onClick={() => handleSubmit('draft')} 
               disabled={createMutation.isPending || lines.length === 0}
-              data-testid="button-save-movement"
+              data-testid="button-save-draft"
             >
-              {createMutation.isPending ? 'Guardando...' : 'Crear Movimiento'}
+              {createMutation.isPending ? 'Guardando...' : 'Guardar borrador'}
+            </Button>
+            <Button 
+              onClick={() => handleSubmit('posted')} 
+              disabled={createMutation.isPending || lines.length === 0}
+              data-testid="button-confirm-movement"
+            >
+              {createMutation.isPending ? 'Confirmando...' : 'Confirmar y enviar'}
             </Button>
           </DialogFooter>
         </DialogContent>
