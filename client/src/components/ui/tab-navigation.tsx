@@ -19,7 +19,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className = "" }: 
   const activeIndex = tabs.findIndex(tab => tab.id === activeTab);
   
   return (
-    <div className={`mb-6 ${className}`}>
+    <div className={`mb-3 ${className}`}>
       <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 relative">
         {/* Sliding indicator */}
         <div 
