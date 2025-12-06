@@ -354,6 +354,7 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('default');
+  const [inStockOnly, setInStockOnly] = useState<boolean>(false);
   const [selectedVatRate, setSelectedVatRate] = useState<string>('21');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -564,10 +565,13 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
     }
   };
 
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.sku.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.sku.toLowerCase().includes(searchTerm.toLowerCase());
+    const stock = stockByProduct[p.id] || 0;
+    const matchesStock = !inStockOnly || stock > 0;
+    return matchesSearch && matchesStock;
+  });
 
   return (
     <div className="space-y-4">
@@ -606,6 +610,15 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
               ))}
             </SelectContent>
           </Select>
+          <Button
+            variant={inStockOnly ? "default" : "outline"}
+            onClick={() => setInStockOnly(!inStockOnly)}
+            className={inStockOnly ? "bg-green-600 hover:bg-green-700" : ""}
+            data-testid="button-in-stock-filter"
+          >
+            <Package className="h-4 w-4 mr-2" />
+            En stock
+          </Button>
         </div>
         <div className="flex gap-2 flex-wrap">
           <input
