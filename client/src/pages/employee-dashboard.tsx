@@ -624,10 +624,44 @@ export default function EmployeeDashboard() {
     });
   }, [recentSessions]);
 
+  // Helper function to get current geolocation
+  const getCurrentLocation = (): Promise<{ latitude: number; longitude: number } | null> => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        console.log('📍 Geolocation not supported');
+        resolve(null);
+        return;
+      }
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log('📍 Location obtained:', position.coords.latitude, position.coords.longitude);
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.log('📍 Geolocation error:', error.message);
+          resolve(null); // Don't block clock-in/out if location fails
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 60000
+        }
+      );
+    });
+  };
+
   // Clock in/out mutations
   const clockInMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('POST', '/api/work-sessions/clock-in');
+      const location = await getCurrentLocation();
+      return await apiRequest('POST', '/api/work-sessions/clock-in', {
+        latitude: location?.latitude,
+        longitude: location?.longitude
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/active'] });
@@ -660,7 +694,11 @@ export default function EmployeeDashboard() {
     mutationFn: async () => {
       // Guardar datos de la sesión antes de cerrarla
       const sessionClockIn = activeSession?.clockIn;
-      const result = await apiRequest('POST', '/api/work-sessions/clock-out');
+      const location = await getCurrentLocation();
+      const result = await apiRequest('POST', '/api/work-sessions/clock-out', {
+        latitude: location?.latitude,
+        longitude: location?.longitude
+      });
       return { ...result, sessionClockIn };
     },
     onSuccess: (data: any) => {
