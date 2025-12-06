@@ -171,8 +171,8 @@ function DashboardTab() {
                 <Package className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats?.totalProducts || 0}</p>
-                <p className="text-sm text-gray-500">Productos</p>
+                <p className="text-2xl font-bold dark:text-white">{stats?.totalProducts || 0}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Productos</p>
               </div>
             </div>
           </CardContent>
@@ -185,8 +185,8 @@ function DashboardTab() {
                 <Warehouse className="h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats?.totalWarehouses || 0}</p>
-                <p className="text-sm text-gray-500">Almacenes</p>
+                <p className="text-2xl font-bold dark:text-white">{stats?.totalWarehouses || 0}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Almacenes</p>
               </div>
             </div>
           </CardContent>
@@ -199,8 +199,8 @@ function DashboardTab() {
                 <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats?.lowStockCount || 0}</p>
-                <p className="text-sm text-gray-500">Stock bajo</p>
+                <p className="text-2xl font-bold dark:text-white">{stats?.lowStockCount || 0}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Stock bajo</p>
               </div>
             </div>
           </CardContent>
@@ -213,8 +213,8 @@ function DashboardTab() {
                 <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats?.activeLoansCount || 0}</p>
-                <p className="text-sm text-gray-500">Préstamos</p>
+                <p className="text-2xl font-bold dark:text-white">{stats?.activeLoansCount || 0}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Préstamos</p>
               </div>
             </div>
           </CardContent>
@@ -225,7 +225,7 @@ function DashboardTab() {
         {stats?.lowStockCount ? (
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-amber-600">
+              <CardTitle className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
                 <AlertTriangle className="h-5 w-5" />
                 Alertas de Stock Bajo
               </CardTitle>
@@ -235,12 +235,12 @@ function DashboardTab() {
                 {stats.lowStockProducts.map((product: any) => (
                   <div key={product.id} className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                     <div>
-                      <p className="font-medium">{product.name}</p>
-                      <p className="text-sm text-gray-500">SKU: {product.sku}</p>
+                      <p className="font-medium dark:text-white">{product.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">SKU: {product.sku}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold text-amber-600">{product.totalStock}</p>
-                      <p className="text-xs text-gray-500">Mín: {product.minStock}</p>
+                      <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{product.totalStock}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Mín: {product.minStock}</p>
                     </div>
                   </div>
                 ))}
@@ -250,13 +250,13 @@ function DashboardTab() {
         ) : (
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-green-600">
+              <CardTitle className="flex items-center gap-2 text-green-600 dark:text-green-400">
                 <Package className="h-5 w-5" />
                 Stock Saludable
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-500 text-center py-6">No hay productos con stock bajo</p>
+              <p className="text-gray-500 dark:text-gray-400 text-center py-6">No hay productos con stock bajo</p>
             </CardContent>
           </Card>
         )}
@@ -264,7 +264,7 @@ function DashboardTab() {
         {stats?.overdueLoansCount ? (
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-red-600">
+              <CardTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
                 <Clock className="h-5 w-5" />
                 Préstamos Vencidos
               </CardTitle>
@@ -274,14 +274,14 @@ function DashboardTab() {
                 {stats.overdueLoans.map((loan: any) => (
                   <div key={loan.id} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
                     <div>
-                      <p className="font-medium">{loan.product.name}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="font-medium dark:text-white">{loan.product.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {loan.assignedToName || 'Sin asignar'}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-red-600">Vencido</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-sm text-red-600 dark:text-red-400">Vencido</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {new Date(loan.expectedReturnDate).toLocaleDateString('es-ES')}
                       </p>
                     </div>
@@ -293,7 +293,7 @@ function DashboardTab() {
         ) : (
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 dark:text-white">
                 <ArrowRightLeft className="h-5 w-5" />
                 Últimos Movimientos
               </CardTitle>
@@ -304,17 +304,17 @@ function DashboardTab() {
                   {stats.recentMovements.slice(0, 5).map((movement: any) => (
                     <div key={movement.id} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
                       <div className="flex items-center gap-3">
-                        <Badge variant="outline">{movementTypeLabels[movement.movementType] || movement.movementType}</Badge>
-                        <span className="text-sm">{movement.movementNumber}</span>
+                        <Badge variant="outline" className="dark:border-gray-600 dark:text-gray-300">{movementTypeLabels[movement.movementType] || movement.movementType}</Badge>
+                        <span className="text-sm dark:text-white">{movement.movementNumber}</span>
                       </div>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
                         {new Date(movement.movementDate).toLocaleDateString('es-ES')}
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-6">No hay movimientos recientes</p>
+                <p className="text-gray-500 dark:text-gray-400 text-center py-6">No hay movimientos recientes</p>
               )}
             </CardContent>
           </Card>
@@ -443,8 +443,8 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
       ) : filteredProducts.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <Package className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">No hay productos todavía</p>
+            <Package className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No hay productos todavía</p>
             <Button variant="outline" className="mt-4" onClick={() => setIsDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Crear primer producto
@@ -454,12 +454,12 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredProducts.map(product => (
-            <Card key={product.id} className="hover:shadow-md transition-shadow">
+            <Card key={product.id} className="hover:shadow-md transition-shadow dark:bg-gray-800">
               <CardContent className="pt-4">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <h3 className="font-medium">{product.name}</h3>
-                    <p className="text-sm text-gray-500">SKU: {product.sku}</p>
+                    <h3 className="font-medium dark:text-white">{product.name}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">SKU: {product.sku}</p>
                   </div>
                   <div className="flex gap-1">
                     {product.isReturnable && (
@@ -473,17 +473,17 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
                 
                 <div className="grid grid-cols-2 gap-2 text-sm mb-3">
                   <div>
-                    <span className="text-gray-500">Coste:</span>
-                    <span className="ml-1 font-medium">{parseFloat(product.costPrice).toFixed(2)} €</span>
+                    <span className="text-gray-500 dark:text-gray-400">Coste:</span>
+                    <span className="ml-1 font-medium dark:text-white">{parseFloat(product.costPrice).toFixed(2)} €</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Venta:</span>
-                    <span className="ml-1 font-medium">{parseFloat(product.salePrice).toFixed(2)} €</span>
+                    <span className="text-gray-500 dark:text-gray-400">Venta:</span>
+                    <span className="ml-1 font-medium dark:text-white">{parseFloat(product.salePrice).toFixed(2)} €</span>
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center pt-3 border-t">
-                  <span className="text-sm text-gray-500">
+                <div className="flex justify-between items-center pt-3 border-t dark:border-gray-700">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
                     Mín: {product.minStock} {product.unitAbbreviation}
                   </span>
                   <div className="flex gap-2">
@@ -522,7 +522,7 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
             <DialogTitle>{editingProduct ? 'Editar Producto' : 'Nuevo Producto'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nombre *</Label>
                 <Input 
@@ -545,7 +545,7 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="barcode">Código de barras</Label>
                 <Input 
@@ -581,7 +581,7 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
               />
             </div>
 
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="costPrice">Precio coste</Label>
                 <Input 
@@ -630,7 +630,7 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="unitOfMeasure">Unidad de medida</Label>
                 <Input 
@@ -651,18 +651,18 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
               </div>
             </div>
 
-            <div className="flex gap-6 pt-2">
+            <div className="flex flex-wrap gap-4 pt-2">
               <label className="flex items-center gap-2 cursor-pointer">
                 <Switch name="isActive" defaultChecked={editingProduct?.isActive ?? true} />
-                <span className="text-sm">Activo</span>
+                <span className="text-sm dark:text-gray-300">Activo</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <Switch name="isReturnable" defaultChecked={editingProduct?.isReturnable ?? false} />
-                <span className="text-sm">Retornable (herramienta/equipo)</span>
+                <span className="text-sm dark:text-gray-300">Retornable</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <Switch name="isService" defaultChecked={editingProduct?.isService ?? false} />
-                <span className="text-sm">Es servicio</span>
+                <span className="text-sm dark:text-gray-300">Es servicio</span>
               </label>
             </div>
 
@@ -717,9 +717,9 @@ function MovementsTab() {
   };
 
   const statusLabels: Record<string, { label: string; color: string }> = {
-    'draft': { label: 'Borrador', color: 'bg-gray-100 text-gray-800' },
-    'posted': { label: 'Confirmado', color: 'bg-green-100 text-green-800' },
-    'cancelled': { label: 'Anulado', color: 'bg-red-100 text-red-800' },
+    'draft': { label: 'Borrador', color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' },
+    'posted': { label: 'Confirmado', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
+    'cancelled': { label: 'Anulado', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
   };
 
   return (
@@ -752,34 +752,34 @@ function MovementsTab() {
       ) : movements.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <ArrowRightLeft className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">No hay movimientos todavía</p>
+            <ArrowRightLeft className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No hay movimientos todavía</p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
           {movements.map(movement => (
-            <Card key={movement.id} className="hover:shadow-md transition-shadow">
+            <Card key={movement.id} className="hover:shadow-md transition-shadow dark:bg-gray-800">
               <CardContent className="py-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-4">
                     <div className="flex flex-col">
-                      <span className="font-mono text-sm font-medium">{movement.movementNumber}</span>
-                      <span className="text-xs text-gray-500">
+                      <span className="font-mono text-sm font-medium dark:text-white">{movement.movementNumber}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
                         {new Date(movement.movementDate).toLocaleDateString('es-ES')}
                       </span>
                     </div>
-                    <Badge variant="outline">{typeLabels[movement.movementType] || movement.movementType}</Badge>
-                    <span className={`px-2 py-1 rounded text-xs ${statusLabels[movement.status]?.color || 'bg-gray-100'}`}>
+                    <Badge variant="outline" className="dark:border-gray-600 dark:text-gray-300">{typeLabels[movement.movementType] || movement.movementType}</Badge>
+                    <span className={`px-2 py-1 rounded text-xs ${statusLabels[movement.status]?.color || 'bg-gray-100 dark:bg-gray-700 dark:text-gray-300'}`}>
                       {statusLabels[movement.status]?.label || movement.status}
                     </span>
                   </div>
                   
                   <div className="flex items-center gap-4">
                     {movement.relatedPartyName && (
-                      <span className="text-sm text-gray-600">{movement.relatedPartyName}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{movement.relatedPartyName}</span>
                     )}
-                    <span className="font-medium">{parseFloat(movement.total).toFixed(2)} €</span>
+                    <span className="font-medium dark:text-white">{parseFloat(movement.total).toFixed(2)} €</span>
                     
                     <div className="flex gap-1">
                       <Button 
@@ -914,10 +914,10 @@ function SettingsTab() {
   };
 
   return (
-    <div className="grid md:grid-cols-2 gap-6">
-      <Card>
+    <div className="grid gap-6 md:grid-cols-2">
+      <Card className="dark:bg-gray-800">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 dark:text-white">
             <Tag className="h-5 w-5" />
             Categorías
           </CardTitle>
@@ -930,18 +930,18 @@ function SettingsTab() {
           {loadingCategories ? (
             <div className="flex justify-center py-4"><LoadingSpinner /></div>
           ) : categories.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">No hay categorías</p>
+            <p className="text-gray-500 dark:text-gray-400 text-center py-4">No hay categorías</p>
           ) : (
             <div className="space-y-2">
               {categories.map(cat => (
-                <div key={cat.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={cat.id} className="flex items-center justify-between p-3 border dark:border-gray-700 rounded-lg">
                   <div className="flex items-center gap-3">
                     {cat.color && (
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
                     )}
                     <div>
-                      <p className="font-medium">{cat.name}</p>
-                      {cat.description && <p className="text-xs text-gray-500">{cat.description}</p>}
+                      <p className="font-medium dark:text-white">{cat.name}</p>
+                      {cat.description && <p className="text-xs text-gray-500 dark:text-gray-400">{cat.description}</p>}
                     </div>
                   </div>
                   <div className="flex gap-1">
@@ -970,9 +970,9 @@ function SettingsTab() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="dark:bg-gray-800">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 dark:text-white">
             <Warehouse className="h-5 w-5" />
             Almacenes
           </CardTitle>
@@ -985,18 +985,18 @@ function SettingsTab() {
           {loadingWarehouses ? (
             <div className="flex justify-center py-4"><LoadingSpinner /></div>
           ) : warehouses.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">No hay almacenes</p>
+            <p className="text-gray-500 dark:text-gray-400 text-center py-4">No hay almacenes</p>
           ) : (
             <div className="space-y-2">
               {warehouses.map(wh => (
-                <div key={wh.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={wh.id} className="flex items-center justify-between p-3 border dark:border-gray-700 rounded-lg">
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="font-medium">{wh.name}</p>
+                      <p className="font-medium dark:text-white">{wh.name}</p>
                       {wh.isDefault && <Badge variant="secondary" className="text-xs">Principal</Badge>}
                       {!wh.isActive && <Badge variant="destructive" className="text-xs">Inactivo</Badge>}
                     </div>
-                    {wh.location && <p className="text-xs text-gray-500">{wh.location}</p>}
+                    {wh.location && <p className="text-xs text-gray-500 dark:text-gray-400">{wh.location}</p>}
                   </div>
                   <div className="flex gap-1">
                     <Button 
@@ -1064,14 +1064,14 @@ function SettingsTab() {
               <Label htmlFor="wh-location">Ubicación</Label>
               <Input id="wh-location" name="location" defaultValue={editingWarehouse?.location || ''} data-testid="input-warehouse-location" />
             </div>
-            <div className="flex gap-6 pt-2">
+            <div className="flex flex-wrap gap-4 pt-2">
               <label className="flex items-center gap-2 cursor-pointer">
                 <Switch name="isDefault" defaultChecked={editingWarehouse?.isDefault ?? false} />
-                <span className="text-sm">Almacén principal</span>
+                <span className="text-sm dark:text-gray-300">Almacén principal</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <Switch name="isActive" defaultChecked={editingWarehouse?.isActive ?? true} />
-                <span className="text-sm">Activo</span>
+                <span className="text-sm dark:text-gray-300">Activo</span>
               </label>
             </div>
             <DialogFooter>
