@@ -17737,7 +17737,10 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
       // Create missing categories
       for (const categoryName of categoriesToCreate) {
         try {
-          const newCategory = await storage.createProductCategory(req.user!.companyId, { name: categoryName });
+          const newCategory = await storage.createProductCategory({ 
+            companyId: req.user!.companyId, 
+            name: categoryName 
+          });
           categoryMap.set(categoryName.toLowerCase(), newCategory.id);
           results.categoriesCreated++;
         } catch (err: any) {
@@ -17758,7 +17761,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
           if (product.isDuplicate) {
             if (resolution === 'replace' && product.existingProduct?.id) {
               // Update existing product
-              await storage.updateProduct(product.existingProduct.id, req.user!.companyId, {
+              await storage.updateProduct(product.existingProduct.id, {
                 name: product.name,
                 barcode: product.barcode,
                 description: product.description,
@@ -17780,7 +17783,8 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
             }
           } else {
             // Create new product
-            await storage.createProduct(req.user!.companyId, {
+            await storage.createProduct({
+              companyId: req.user!.companyId,
               name: product.name,
               sku: product.sku,
               barcode: product.barcode,
