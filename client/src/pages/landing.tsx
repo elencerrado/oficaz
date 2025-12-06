@@ -2220,7 +2220,7 @@ export default function Landing() {
         </div>
       </section>
       {/* Final CTA Section - Memorable Close */}
-      <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#007AFF] via-blue-600 to-indigo-700 relative overflow-hidden">
+      <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#007AFF] via-blue-600 to-indigo-700 relative overflow-hidden py-20 md:py-24">
         {/* Background Elements */}
         <div className="absolute inset-0">
           <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
