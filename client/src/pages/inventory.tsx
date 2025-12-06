@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { TabNavigation } from '@/components/ui/tab-navigation';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -936,19 +935,38 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
               </DialogFooter>
             </form>
           ) : (
-            <Tabs value={productModalTab} onValueChange={(v) => setProductModalTab(v as 'individual' | 'bulk')} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="individual" className="flex items-center gap-2">
+            <div className="space-y-4">
+              {/* Mode Toggle - Apple-style segmented control */}
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 flex">
+                <button
+                  type="button"
+                  onClick={() => setProductModalTab('individual')}
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    productModalTab === 'individual'
+                      ? 'bg-white dark:bg-gray-700 text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  data-testid="product-mode-individual"
+                >
                   <Package className="h-4 w-4" />
                   Individual
-                </TabsTrigger>
-                <TabsTrigger value="bulk" className="flex items-center gap-2">
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProductModalTab('bulk')}
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    productModalTab === 'bulk'
+                      ? 'bg-white dark:bg-gray-700 text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  data-testid="product-mode-bulk"
+                >
                   <FileSpreadsheet className="h-4 w-4" />
                   Carga masiva
-                </TabsTrigger>
-              </TabsList>
+                </button>
+              </div>
 
-              <TabsContent value="individual" className="mt-4">
+              {productModalTab === 'individual' && (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -1099,9 +1117,10 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
                     </Button>
                   </DialogFooter>
                 </form>
-              </TabsContent>
+              )}
 
-              <TabsContent value="bulk" className="mt-4">
+              {productModalTab === 'bulk' && (
+                <>
                 {!validationResult ? (
                   <div className="space-y-6">
                     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
@@ -1261,8 +1280,9 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
                     </DialogFooter>
                   </div>
                 )}
-              </TabsContent>
-            </Tabs>
+                </>
+              )}
+            </div>
           )}
         </DialogContent>
       </Dialog>
