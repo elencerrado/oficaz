@@ -361,6 +361,18 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
     queryKey: ['/api/inventory/categories'],
   });
 
+  // Stock data to show quantities
+  const { data: stockData = [] } = useQuery<{ productId: number; warehouseId: number; quantity: string; warehouseName: string }[]>({
+    queryKey: ['/api/inventory/stock'],
+  });
+
+  // Aggregate stock by product
+  const stockByProduct = stockData.reduce((acc, item) => {
+    if (!acc[item.productId]) acc[item.productId] = 0;
+    acc[item.productId] += parseFloat(item.quantity) || 0;
+    return acc;
+  }, {} as Record<number, number>);
+
   const createMutation = useMutation({
     mutationFn: (data: Partial<Product>) => apiRequest('POST', '/api/inventory/products', data),
     onSuccess: () => {
@@ -612,73 +624,152 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredProducts.map(product => (
-            <Card key={product.id} className="hover:shadow-md transition-shadow dark:bg-gray-800">
-              <CardContent className="pt-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-medium dark:text-white">{product.name}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">SKU: {product.sku}</p>
-                  </div>
-                  <div className="flex gap-1">
-                    {product.isReturnable && (
-                      <Badge variant="secondary" className="text-xs">Retornable</Badge>
-                    )}
-                    {!product.isActive && (
-                      <Badge variant="destructive" className="text-xs">Inactivo</Badge>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                  <div>
-                    <span className="text-gray-500 dark:text-gray-400">Coste:</span>
-                    <span className="ml-1 font-medium dark:text-white">{parseFloat(product.costPrice).toFixed(2)} €</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 dark:text-gray-400">Venta:</span>
-                    <span className="ml-1 font-medium dark:text-white">{parseFloat(product.salePrice).toFixed(2)} €</span>
-                  </div>
-                </div>
+        <Card className="dark:bg-gray-800 overflow-hidden">
+          <div className="overflow-x-auto">
+            {/* Desktop Table */}
+            <table className="w-full hidden md:table">
+              <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+                <tr>
+                  <th className="text-left py-4 px-5 font-medium text-gray-600 dark:text-gray-400 text-sm">Producto</th>
+                  <th className="text-left py-4 px-5 font-medium text-gray-600 dark:text-gray-400 text-sm">SKU</th>
+                  <th className="text-right py-4 px-5 font-medium text-gray-600 dark:text-gray-400 text-sm">Stock</th>
+                  <th className="text-right py-4 px-5 font-medium text-gray-600 dark:text-gray-400 text-sm">Mín.</th>
+                  <th className="text-right py-4 px-5 font-medium text-gray-600 dark:text-gray-400 text-sm">Coste</th>
+                  <th className="text-right py-4 px-5 font-medium text-gray-600 dark:text-gray-400 text-sm">Venta</th>
+                  <th className="text-center py-4 px-5 font-medium text-gray-600 dark:text-gray-400 text-sm w-[100px]">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                {filteredProducts.map(product => {
+                  const stock = stockByProduct[product.id] || 0;
+                  const isLowStock = stock < product.minStock;
+                  return (
+                    <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <td className="py-4 px-5">
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <p className="font-medium dark:text-white">{product.name}</p>
+                            <div className="flex gap-1 mt-1">
+                              {product.isReturnable && <Badge variant="secondary" className="text-[10px] py-0">Retornable</Badge>}
+                              {!product.isActive && <Badge variant="destructive" className="text-[10px] py-0">Inactivo</Badge>}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-5">
+                        <span className="font-mono text-sm text-gray-600 dark:text-gray-400">{product.sku}</span>
+                      </td>
+                      <td className="py-4 px-5 text-right">
+                        <span className={`font-semibold text-lg ${isLowStock ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
+                          {stock}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">{product.unitAbbreviation}</span>
+                        {isLowStock && <AlertTriangle className="h-4 w-4 inline-block ml-1 text-red-500" />}
+                      </td>
+                      <td className="py-4 px-5 text-right">
+                        <span className="text-gray-600 dark:text-gray-400">{product.minStock}</span>
+                      </td>
+                      <td className="py-4 px-5 text-right">
+                        <span className="text-gray-600 dark:text-gray-400">{parseFloat(product.costPrice).toFixed(2)} €</span>
+                      </td>
+                      <td className="py-4 px-5 text-right">
+                        <span className="font-medium dark:text-white">{parseFloat(product.salePrice).toFixed(2)} €</span>
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="flex justify-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => { 
+                              setEditingProduct(product); 
+                              const vatValue = product.vatRate ? String(parseInt(product.vatRate)) : '21';
+                              setSelectedVatRate(vatValue); 
+                              setSelectedCategoryId(product.categoryId?.toString() || ''); 
+                              setIsDialogOpen(true); 
+                            }}
+                            data-testid={`button-edit-product-${product.id}`}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-red-500 hover:text-red-600"
+                            onClick={() => {
+                              setProductToDelete(product);
+                              setDeleteConfirmOpen(true);
+                            }}
+                            data-testid={`button-delete-product-${product.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
 
-                <div className="flex justify-between items-center pt-3 border-t dark:border-gray-700">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    Mín: {product.minStock} {product.unitAbbreviation}
-                  </span>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => { 
-                        setEditingProduct(product); 
-                        const vatValue = product.vatRate ? String(parseInt(product.vatRate)) : '21';
-                        setSelectedVatRate(vatValue); 
-                        setSelectedCategoryId(product.categoryId?.toString() || ''); 
-                        setIsDialogOpen(true); 
-                      }}
-                      data-testid={`button-edit-product-${product.id}`}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-red-500 hover:text-red-600"
-                      onClick={() => {
-                        setProductToDelete(product);
-                        setDeleteConfirmOpen(true);
-                      }}
-                      data-testid={`button-delete-product-${product.id}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+            {/* Mobile List */}
+            <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
+              {filteredProducts.map(product => {
+                const stock = stockByProduct[product.id] || 0;
+                const isLowStock = stock < product.minStock;
+                return (
+                  <div key={product.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1">
+                        <p className="font-medium dark:text-white">{product.name}</p>
+                        <p className="text-sm font-mono text-gray-500 dark:text-gray-400">{product.sku}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-semibold text-lg ${isLowStock ? 'text-red-600' : 'dark:text-white'}`}>
+                          {stock} <span className="text-xs font-normal text-gray-500">{product.unitAbbreviation}</span>
+                          {isLowStock && <AlertTriangle className="h-4 w-4 inline-block ml-1 text-red-500" />}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex gap-3 text-sm text-gray-500 dark:text-gray-400">
+                        <span>Mín: {product.minStock}</span>
+                        <span>Venta: {parseFloat(product.salePrice).toFixed(2)} €</span>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => { 
+                            setEditingProduct(product); 
+                            const vatValue = product.vatRate ? String(parseInt(product.vatRate)) : '21';
+                            setSelectedVatRate(vatValue); 
+                            setSelectedCategoryId(product.categoryId?.toString() || ''); 
+                            setIsDialogOpen(true); 
+                          }}
+                          data-testid={`button-edit-product-${product.id}`}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-red-500 hover:text-red-600"
+                          onClick={() => {
+                            setProductToDelete(product);
+                            setDeleteConfirmOpen(true);
+                          }}
+                          data-testid={`button-delete-product-${product.id}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                );
+              })}
+            </div>
+          </div>
+        </Card>
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
