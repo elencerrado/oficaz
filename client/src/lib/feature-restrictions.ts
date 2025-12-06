@@ -30,7 +30,8 @@ export const CANONICAL_ADDON_KEYS = [
   'reminders',
   'documents',
   'ai_assistant',
-  'work_reports'
+  'work_reports',
+  'inventory'
 ] as const;
 
 export type CanonicalAddonKey = typeof CANONICAL_ADDON_KEYS[number];
@@ -57,6 +58,7 @@ export interface SubscriptionFeatures {
   documents: boolean;
   ai_assistant: boolean;
   work_reports: boolean;
+  inventory: boolean;
   // Company settings (not addon-based)
   logoUpload?: boolean;
   employee_time_edit?: boolean;
@@ -91,6 +93,7 @@ const FEATURE_NAMES: Record<FeatureKey, string> = {
   documents: 'Gestión Documental',
   ai_assistant: 'Asistente IA',
   work_reports: 'Partes de Trabajo',
+  inventory: 'Inventario',
   timeTracking: 'Fichajes',
   reports: 'Partes de Trabajo',
   analytics: 'Partes de Trabajo',

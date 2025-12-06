@@ -20,6 +20,7 @@ const featureToAddonKey: Record<string, string> = {
   work_reports: 'work_reports',
   reports: 'work_reports',
   ai_assistant: 'ai_assistant',
+  inventory: 'inventory',
 };
 
 interface SidebarProps {
@@ -136,11 +137,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         name: 'Empleados', 
         href: `/${companyAlias}/empleados`, 
         icon: Users
-      },
+      }
+    ] : []),
+    ...((user?.role === 'admin' || user?.role === 'manager') && hasAccess('inventory', { bypassManagerRestrictions: true }) ? [
       { 
         name: 'Inventario', 
         href: `/${companyAlias}/inventario`, 
-        icon: Package
+        icon: Package,
+        feature: 'inventory' as const
       }
     ] : []),
     { 

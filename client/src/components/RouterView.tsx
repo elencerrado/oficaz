@@ -30,6 +30,7 @@ const featureToAddonKey: Record<string, string> = {
   work_reports: 'work_reports',
   reports: 'work_reports',
   ai_assistant: 'ai_assistant',
+  inventory: 'inventory',
 };
 
 import { lazy, Suspense } from "react";
@@ -722,10 +723,12 @@ function Router() {
 
       <Route path="/:companyAlias/inventario">
         <ProtectedRoute>
-          <AppLayout>
-            {/* Inventory is admin/manager only - no employee view */}
-            <Inventory />
-          </AppLayout>
+          <FeatureProtectedRoute feature="inventory">
+            <AppLayout>
+              {/* Inventory is admin/manager only - no employee view */}
+              <Inventory />
+            </AppLayout>
+          </FeatureProtectedRoute>
         </ProtectedRoute>
       </Route>
 
