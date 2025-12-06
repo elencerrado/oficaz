@@ -1174,6 +1174,49 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
                       </div>
                     </div>
 
+                    {/* Lista de productos a importar */}
+                    {validationResult.products.length > 0 && (
+                      <div className="border dark:border-gray-700 rounded-lg overflow-hidden">
+                        <div className="bg-gray-50 dark:bg-gray-800 px-3 py-2 border-b dark:border-gray-700">
+                          <h4 className="font-medium text-sm dark:text-white">Productos a importar</h4>
+                        </div>
+                        <div className="max-h-48 overflow-y-auto">
+                          <table className="w-full text-sm">
+                            <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                              <tr className="text-left text-gray-500 dark:text-gray-400">
+                                <th className="px-3 py-2 font-medium">SKU</th>
+                                <th className="px-3 py-2 font-medium">Nombre</th>
+                                <th className="px-3 py-2 font-medium">Categoría</th>
+                                <th className="px-3 py-2 font-medium text-right">Precio</th>
+                                <th className="px-3 py-2 font-medium text-center">Estado</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y dark:divide-gray-700">
+                              {validationResult.products.map((product, idx) => (
+                                <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                  <td className="px-3 py-2 font-mono text-xs dark:text-gray-300">{product.sku}</td>
+                                  <td className="px-3 py-2 dark:text-white">{product.name}</td>
+                                  <td className="px-3 py-2 text-gray-500 dark:text-gray-400">{product.categoryName || '-'}</td>
+                                  <td className="px-3 py-2 text-right dark:text-gray-300">€{parseFloat(product.salePrice).toFixed(2)}</td>
+                                  <td className="px-3 py-2 text-center">
+                                    {product.isDuplicate ? (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                                        Duplicado
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                        Nuevo
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
                     {validationResult.errors.length > 0 && (
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
