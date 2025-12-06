@@ -3857,14 +3857,20 @@ export default function TimeTracking() {
                     <td colSpan={6} className="py-8 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
                         <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-                          <Users className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                          {isLoading ? (
+                            <Clock className="w-5 h-5 text-gray-400 dark:text-gray-500 animate-spin" />
+                          ) : (
+                            <Users className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                          )}
                         </div>
                         <div className="text-gray-500 dark:text-gray-400 font-medium text-sm">
-                          No hay fichajes en este período
+                          {isLoading ? 'Cargando fichajes...' : 'No hay fichajes en este período'}
                         </div>
-                        <div className="text-gray-400 dark:text-gray-500 text-xs">
-                          Prueba seleccionando un rango de fechas diferente
-                        </div>
+                        {!isLoading && (
+                          <div className="text-gray-400 dark:text-gray-500 text-xs">
+                            Prueba seleccionando un rango de fechas diferente
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -4286,14 +4292,20 @@ export default function TimeTracking() {
               <div className="py-12 text-center mx-4">
                 <div className="flex flex-col items-center justify-center space-y-3">
                   <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
-                    <Users className="w-6 h-6 text-muted-foreground" />
+                    {isLoading ? (
+                      <Clock className="w-6 h-6 text-muted-foreground animate-spin" />
+                    ) : (
+                      <Users className="w-6 h-6 text-muted-foreground" />
+                    )}
                   </div>
                   <div className="text-foreground font-medium">
-                    No hay fichajes en este período
+                    {isLoading ? 'Cargando fichajes...' : 'No hay fichajes en este período'}
                   </div>
-                  <div className="text-muted-foreground text-sm">
-                    Prueba seleccionando un rango de fechas diferente
-                  </div>
+                  {!isLoading && (
+                    <div className="text-muted-foreground text-sm">
+                      Prueba seleccionando un rango de fechas diferente
+                    </div>
+                  )}
                 </div>
               </div>
             )}
