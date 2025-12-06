@@ -353,6 +353,7 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [warehouseFilter, setWarehouseFilter] = useState<string>('default');
   const [selectedVatRate, setSelectedVatRate] = useState<string>('21');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -376,13 +377,31 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
     queryKey: ['/api/inventory/categories'],
   });
 
+  const { data: warehouses = [] } = useQuery<WarehouseType[]>({
+    queryKey: ['/api/inventory/warehouses'],
+  });
+
+  // Find default warehouse
+  const defaultWarehouse = warehouses.find(w => w.isDefault);
+
   // Stock data to show quantities
   const { data: stockData = [] } = useQuery<{ productId: number; warehouseId: number; quantity: string; warehouseName: string }[]>({
     queryKey: ['/api/inventory/stock'],
   });
 
-  // Aggregate stock by product
+  // Get the effective warehouse ID for filtering
+  const effectiveWarehouseId = warehouseFilter === 'default' 
+    ? defaultWarehouse?.id 
+    : warehouseFilter === 'all' 
+      ? null 
+      : parseInt(warehouseFilter);
+
+  // Aggregate stock by product (filtered by warehouse)
   const stockByProduct = stockData.reduce((acc, item) => {
+    // If filtering by a specific warehouse, only count that warehouse's stock
+    if (effectiveWarehouseId !== null && item.warehouseId !== effectiveWarehouseId) {
+      return acc;
+    }
     if (!acc[item.productId]) acc[item.productId] = 0;
     acc[item.productId] += parseFloat(item.quantity) || 0;
     return acc;
@@ -572,6 +591,18 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
               <SelectItem value="all">Todas las categorías</SelectItem>
               {categories.map(cat => (
                 <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={warehouseFilter} onValueChange={setWarehouseFilter}>
+            <SelectTrigger className="w-[200px]" data-testid="select-warehouse-filter">
+              <SelectValue placeholder="Almacén" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">{defaultWarehouse?.name || 'Almacén Principal'}</SelectItem>
+              <SelectItem value="all">Todos los almacenes</SelectItem>
+              {warehouses.filter(w => !w.isDefault).map(wh => (
+                <SelectItem key={wh.id} value={String(wh.id)}>{wh.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>

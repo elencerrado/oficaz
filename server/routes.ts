@@ -15598,6 +15598,20 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
 
       console.log(`🛒 Company ${user.companyId} purchased addon: ${addon.key} (${proratedDays} días prorrateados)`);
 
+      // If inventory addon is activated, create default warehouse if none exists
+      if (addon.key === 'inventory') {
+        const existingWarehouses = await storage.getInventoryWarehouses({ companyId: user.companyId });
+        if (existingWarehouses.length === 0) {
+          await storage.createInventoryWarehouse({
+            companyId: user.companyId,
+            name: 'Almacén Principal',
+            isDefault: true,
+            isActive: true,
+          });
+          console.log(`📦 Created default warehouse for company ${user.companyId}`);
+        }
+      }
+
       res.json({
         success: true,
         message: `Complemento "${addon.name}" activado correctamente`,
