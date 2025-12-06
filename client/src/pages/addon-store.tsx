@@ -27,7 +27,8 @@ import {
   Minus,
   UserPlus,
   Shield,
-  Briefcase
+  Briefcase,
+  Package
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -65,6 +66,8 @@ const getAddonIcon = (key: string) => {
       return <CalendarDays className="h-6 w-6" />;
     case 'schedules':
       return <LayoutGrid className="h-6 w-6" />;
+    case 'inventory':
+      return <Package className="h-6 w-6" />;
     default:
       return <Store className="h-6 w-6" />;
   }
@@ -93,6 +96,8 @@ const getAddonColor = (key: string, isFree: boolean = false) => {
       return 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400';
     case 'schedules':
       return 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400';
+    case 'inventory':
+      return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
     default:
       return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
   }
