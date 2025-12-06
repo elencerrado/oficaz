@@ -1095,8 +1095,7 @@ function MovementsTab() {
 
   const openEditDialog = async (movement: Movement) => {
     try {
-      const response = await fetch(`/api/inventory/movements/${movement.id}`, { credentials: 'include' });
-      const fullMovement = await response.json();
+      const fullMovement = await apiRequest('GET', `/api/inventory/movements/${movement.id}`) as any;
       
       setEditingMovement(fullMovement);
       setMovementType(fullMovement.movementType);
