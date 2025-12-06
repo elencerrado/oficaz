@@ -997,6 +997,7 @@ type MovementLine = {
 function MovementsTab() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingMovement, setEditingMovement] = useState<Movement | null>(null);
   const [movementType, setMovementType] = useState<string>('in');
   const [warehouseId, setWarehouseId] = useState<string>('');
   const [destinationWarehouseId, setDestinationWarehouseId] = useState<string>('');
@@ -1032,7 +1033,21 @@ function MovementsTab() {
     onError: () => toast({ title: 'Error al crear movimiento', variant: 'destructive' }),
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => apiRequest('PATCH', `/api/inventory/movements/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/movements'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/stock'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/dashboard'] });
+      setIsDialogOpen(false);
+      resetForm();
+      toast({ title: 'Movimiento actualizado correctamente' });
+    },
+    onError: () => toast({ title: 'Error al actualizar movimiento', variant: 'destructive' }),
+  });
+
   const resetForm = () => {
+    setEditingMovement(null);
     setMovementType('in');
     setWarehouseId('');
     setDestinationWarehouseId('');
@@ -1041,6 +1056,35 @@ function MovementsTab() {
     setLines([]);
     setSelectedProductId('');
     setLineQuantity('1');
+  };
+
+  const openEditDialog = async (movement: Movement) => {
+    try {
+      const response = await fetch(`/api/inventory/movements/${movement.id}`, { credentials: 'include' });
+      const fullMovement = await response.json();
+      
+      setEditingMovement(fullMovement);
+      setMovementType(fullMovement.movementType);
+      setWarehouseId((fullMovement.sourceWarehouseId || fullMovement.destinationWarehouseId || '').toString());
+      setDestinationWarehouseId((fullMovement.destinationWarehouseId || '').toString());
+      setRelatedPartyName(fullMovement.relatedPartyName || '');
+      setNotes(fullMovement.notes || '');
+      
+      if (fullMovement.lines && Array.isArray(fullMovement.lines)) {
+        const loadedLines: MovementLine[] = fullMovement.lines.map((line: any) => ({
+          productId: line.productId,
+          productName: line.product?.name || `Producto ${line.productId}`,
+          quantity: parseFloat(line.quantity),
+          unitPrice: line.unitPrice,
+          vatRate: line.vatRate,
+        }));
+        setLines(loadedLines);
+      }
+      
+      setIsDialogOpen(true);
+    } catch {
+      toast({ title: 'Error al cargar el movimiento', variant: 'destructive' });
+    }
   };
 
   const handleAddLine = () => {
@@ -1077,7 +1121,7 @@ function MovementsTab() {
     const warehouseIdNum = parseInt(warehouseId);
     const destWarehouseIdNum = movementType === 'transfer' ? parseInt(destinationWarehouseId) : null;
 
-    createMutation.mutate({
+    const movementData = {
       movementType,
       status,
       sourceWarehouseId: ['out', 'transfer', 'loan'].includes(movementType) ? warehouseIdNum : null,
@@ -1090,7 +1134,13 @@ function MovementsTab() {
         unitPrice: l.unitPrice,
         vatRate: l.vatRate,
       })),
-    });
+    };
+
+    if (editingMovement) {
+      updateMutation.mutate({ id: editingMovement.id, data: movementData });
+    } else {
+      createMutation.mutate(movementData);
+    }
   };
 
   const downloadPdf = async (movementId: number, movementNumber: string) => {
@@ -1153,7 +1203,7 @@ function MovementsTab() {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)} data-testid="button-new-movement">
+        <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} data-testid="button-new-movement">
           <Plus className="h-4 w-4 mr-2" />
           Nuevo Movimiento
         </Button>
@@ -1194,6 +1244,16 @@ function MovementsTab() {
                     <span className="font-medium dark:text-white">{parseFloat(movement.total).toFixed(2)} €</span>
                     
                     <div className="flex gap-1">
+                      {movement.status === 'draft' && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => openEditDialog(movement)}
+                          data-testid={`button-edit-movement-${movement.id}`}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button 
                         variant="ghost" 
                         size="icon"
@@ -1214,11 +1274,11 @@ function MovementsTab() {
         </div>
       )}
 
-      {/* New Movement Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      {/* New/Edit Movement Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setIsDialogOpen(open); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Nuevo Movimiento de Inventario</DialogTitle>
+            <DialogTitle>{editingMovement ? `Editar Borrador - ${editingMovement.movementNumber}` : 'Nuevo Movimiento de Inventario'}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
