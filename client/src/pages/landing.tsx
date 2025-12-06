@@ -1099,8 +1099,8 @@ export default function Landing() {
       </section>
 
       {/* Features Section - Two Columns with Mobile Preview */}
-      <section id="funciones" className="min-h-screen flex items-center bg-white relative overflow-hidden py-16">
-        <div className="max-w-7xl mx-auto px-6">
+      <section id="funciones" className="min-h-screen bg-white relative overflow-hidden py-16 lg:py-20">
+        <div className="max-w-7xl mx-auto px-6 h-full">
           {/* Header */}
           <ScrollReveal className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 tracking-tight">
