@@ -1075,8 +1075,8 @@ export default function Landing() {
       </section>
 
       {/* Focus Section - Apple Style */}
-      <section className="py-24 md:py-32 lg:py-40 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
-        <div className="max-w-4xl mx-auto px-6 text-center">
+      <section className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-100 to-gray-50 relative overflow-hidden">
+        <div className="max-w-4xl mx-auto px-6 text-center py-20">
           <ScrollReveal>
             <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-[1.1] tracking-tight mb-6">
               Concentra tu energía<br />
@@ -1099,7 +1099,7 @@ export default function Landing() {
       </section>
 
       {/* Features Section - Two Columns with Mobile Preview */}
-      <section id="funciones" className="py-20 md:py-28 bg-white relative overflow-hidden">
+      <section id="funciones" className="min-h-screen flex items-center bg-white relative overflow-hidden py-16">
         <div className="max-w-7xl mx-auto px-6">
           {/* Header */}
           <ScrollReveal className="text-center mb-12">
@@ -2015,7 +2015,7 @@ export default function Landing() {
         </div>
       </section>
       {/* Pricing Section - Compact, fits in viewport */}
-      <section id="precios" className="bg-gray-50 py-12 md:py-16 lg:py-20 flex items-center">
+      <section id="precios" className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-16 flex items-center">
         <div className="max-w-5xl mx-auto px-6 w-full">
           {/* Header */}
           <ScrollReveal className="text-center mb-10 lg:mb-12">
@@ -2220,7 +2220,7 @@ export default function Landing() {
         </div>
       </section>
       {/* Final CTA Section - Memorable Close */}
-      <section className="py-32 md:py-44 lg:py-56 bg-gradient-to-br from-[#007AFF] via-blue-600 to-indigo-700 relative overflow-hidden">
+      <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#007AFF] via-blue-600 to-indigo-700 relative overflow-hidden">
         {/* Background Elements */}
         <div className="absolute inset-0">
           <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
