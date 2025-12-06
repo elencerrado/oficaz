@@ -417,9 +417,15 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
   const handleDownloadTemplate = async () => {
     try {
       const response = await fetch('/api/inventory/products/template', {
+        method: 'GET',
+        credentials: 'include',
         headers: getAuthHeaders(),
       });
-      if (!response.ok) throw new Error('Error downloading template');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Template download error:', response.status, errorText);
+        throw new Error('Error downloading template');
+      }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -430,6 +436,7 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     } catch (error) {
+      console.error('Download template error:', error);
       toast({ title: 'Error al descargar plantilla', variant: 'destructive' });
     }
   };
@@ -578,19 +585,6 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
           </Select>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={handleDownloadTemplate} data-testid="button-download-template">
-            <Download className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Plantilla</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isValidating}
-            data-testid="button-upload-excel"
-          >
-            {isValidating ? <LoadingSpinner /> : <Upload className="h-4 w-4 mr-2" />}
-            <span className="hidden sm:inline">Carga masiva</span>
-          </Button>
           <input
             ref={fileInputRef}
             type="file"
