@@ -2616,11 +2616,8 @@ export default function TimeTracking() {
       );
     }
 
-    // Apply session consolidation for visual display
-    const { consolidated: consolidatedSessions, wasConsolidated } = consolidateSessions(dayData.sessions);
-    
     // Calcular el rango total del día (desde primera entrada hasta última salida) - solo sesiones completadas
-    const allTimes = consolidatedSessions.flatMap((session: any) => [
+    const allTimes = dayData.sessions.flatMap((session: any) => [
       new Date(session.clockIn),
       session.clockOut ? new Date(session.clockOut) : null
     ]).filter(Boolean);
@@ -2632,18 +2629,9 @@ export default function TimeTracking() {
 
     return (
       <div className="space-y-0">
-        {/* Consolidation indicator */}
-        {wasConsolidated && (
-          <div className="flex items-center gap-1 mb-1">
-            <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded">
-              {dayData.sessions.length} fichajes → {consolidatedSessions.length} consolidados
-            </span>
-          </div>
-        )}
-        
         {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
         <div className="relative h-4">
-          {consolidatedSessions.map((session: any, sessionIndex: number) => {
+          {dayData.sessions.map((session: any, sessionIndex: number) => {
             return (session.breakPeriods || []).map((breakPeriod: any, breakIndex: number) => {
               if (!breakPeriod.breakEnd) return null;
               
@@ -2683,7 +2671,7 @@ export default function TimeTracking() {
           <div className="h-5 bg-gray-200 rounded-sm relative overflow-hidden">
             
             {/* Segmentos de trabajo (barras azules minimalistas) con descansos slider */}
-            {consolidatedSessions.filter((session: any) => session.clockOut).map((session: any, sessionIndex: number) => {
+            {dayData.sessions.filter((session: any) => session.clockOut).map((session: any, sessionIndex: number) => {
               const sessionStart = new Date(session.clockIn);
               const sessionEnd = new Date(session.clockOut);
               
@@ -2746,7 +2734,7 @@ export default function TimeTracking() {
         <div className="relative h-4" style={{ zIndex: 10 }}>
           {(() => {
             // Preparar todas las etiquetas de tiempo con sus posiciones
-            const completedSessions = consolidatedSessions.filter((session: any) => session.clockOut);
+            const completedSessions = dayData.sessions.filter((session: any) => session.clockOut);
             const timeLabels: Array<{
               text: string;
               position: number;
