@@ -1309,3 +1309,338 @@ export const insertCompanyAddonSchema = createInsertSchema(companyAddons).omit({
 
 export type CompanyAddon = typeof companyAddons.$inferSelect;
 export type InsertCompanyAddon = z.infer<typeof insertCompanyAddonSchema>;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INVENTORY MANAGEMENT SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Product Categories - Organize products by type
+export const productCategories = pgTable("product_categories", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  color: varchar("color", { length: 7 }).default("#3B82F6"), // Hex color for UI
+  icon: varchar("icon", { length: 50 }).default("Package"), // Lucide icon name
+  parentId: integer("parent_id"), // For subcategories
+  isActive: boolean("is_active").default(true).notNull(),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyIdx: index("product_categories_company_idx").on(table.companyId),
+}));
+
+export const insertProductCategorySchema = createInsertSchema(productCategories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ProductCategory = typeof productCategories.$inferSelect;
+export type InsertProductCategory = z.infer<typeof insertProductCategorySchema>;
+
+// Warehouses - Multiple storage locations
+export const warehouses = pgTable("warehouses", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  name: varchar("name", { length: 100 }).notNull(),
+  code: varchar("code", { length: 20 }), // Short code like "ALM-01"
+  address: text("address"),
+  city: varchar("city", { length: 100 }),
+  province: varchar("province", { length: 100 }),
+  postalCode: varchar("postal_code", { length: 10 }),
+  phone: varchar("phone", { length: 20 }),
+  contactPerson: varchar("contact_person", { length: 100 }),
+  isDefault: boolean("is_default").default(false).notNull(), // Main warehouse
+  isActive: boolean("is_active").default(true).notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyIdx: index("warehouses_company_idx").on(table.companyId),
+}));
+
+export const insertWarehouseSchema = createInsertSchema(warehouses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type Warehouse = typeof warehouses.$inferSelect;
+export type InsertWarehouse = z.infer<typeof insertWarehouseSchema>;
+
+// Products - Product catalog with all professional fields
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  categoryId: integer("category_id").references(() => productCategories.id, { onDelete: 'set null' }),
+  
+  // Basic info
+  name: varchar("name", { length: 200 }).notNull(),
+  sku: varchar("sku", { length: 50 }), // Stock Keeping Unit - unique code
+  barcode: varchar("barcode", { length: 50 }), // EAN/UPC barcode
+  description: text("description"),
+  
+  // Units and measurement
+  unit: varchar("unit", { length: 20 }).default("unidad").notNull(), // unidad, kg, litro, metro, caja, etc.
+  unitAbbreviation: varchar("unit_abbreviation", { length: 10 }).default("ud.").notNull(),
+  
+  // Pricing
+  costPrice: decimal("cost_price", { precision: 10, scale: 2 }).default("0.00").notNull(), // Purchase/cost price
+  salePrice: decimal("sale_price", { precision: 10, scale: 2 }).default("0.00").notNull(), // Selling price
+  vatRate: decimal("vat_rate", { precision: 5, scale: 2 }).default("21.00").notNull(), // IVA percentage (21%, 10%, 4%, 0%)
+  
+  // Stock management
+  minStock: integer("min_stock").default(0).notNull(), // Alert when below this
+  maxStock: integer("max_stock"), // Optional max stock level
+  reorderPoint: integer("reorder_point").default(0), // When to reorder
+  reorderQuantity: integer("reorder_quantity"), // Suggested order quantity
+  
+  // Returnable/Loanable items (tools, equipment)
+  isReturnable: boolean("is_returnable").default(false).notNull(), // Can be loaned and returned
+  trackingMethod: varchar("tracking_method", { length: 20 }).default("quantity").notNull(), // quantity, serial, lot
+  
+  // Additional info
+  brand: varchar("brand", { length: 100 }),
+  model: varchar("model", { length: 100 }),
+  location: varchar("location", { length: 100 }), // Default storage location within warehouse
+  weight: decimal("weight", { precision: 10, scale: 3 }), // Weight in kg
+  dimensions: varchar("dimensions", { length: 50 }), // LxWxH in cm
+  
+  // Media
+  imageUrl: text("image_url"),
+  
+  // Status
+  isActive: boolean("is_active").default(true).notNull(),
+  isService: boolean("is_service").default(false).notNull(), // Service (no stock) vs physical product
+  
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyIdx: index("products_company_idx").on(table.companyId),
+  categoryIdx: index("products_category_idx").on(table.categoryId),
+  skuIdx: index("products_sku_idx").on(table.companyId, table.sku),
+}));
+
+export const insertProductSchema = createInsertSchema(products).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type Product = typeof products.$inferSelect;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
+
+// Warehouse Stock - Stock levels per product per warehouse
+export const warehouseStock = pgTable("warehouse_stock", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  warehouseId: integer("warehouse_id").notNull().references(() => warehouses.id, { onDelete: 'cascade' }),
+  productId: integer("product_id").notNull().references(() => products.id, { onDelete: 'cascade' }),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).default("0").notNull(), // Current stock
+  reservedQuantity: decimal("reserved_quantity", { precision: 10, scale: 2 }).default("0").notNull(), // Reserved for pending orders
+  availableQuantity: decimal("available_quantity", { precision: 10, scale: 2 }).default("0").notNull(), // quantity - reserved
+  lastCountDate: timestamp("last_count_date"), // Last physical inventory count
+  lastCountQuantity: decimal("last_count_quantity", { precision: 10, scale: 2 }), // Quantity at last count
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  warehouseProductIdx: index("warehouse_stock_warehouse_product_idx").on(table.warehouseId, table.productId),
+  productIdx: index("warehouse_stock_product_idx").on(table.productId),
+  companyIdx: index("warehouse_stock_company_idx").on(table.companyId),
+}));
+
+export const insertWarehouseStockSchema = createInsertSchema(warehouseStock).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export type WarehouseStock = typeof warehouseStock.$inferSelect;
+export type InsertWarehouseStock = z.infer<typeof insertWarehouseStockSchema>;
+
+// Inventory Movements - Header for all inventory transactions (delivery notes/albaranes)
+export const inventoryMovements = pgTable("inventory_movements", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  
+  // Movement identification
+  movementNumber: varchar("movement_number", { length: 30 }).notNull(), // Sequential: ALB-2024-00001
+  movementType: varchar("movement_type", { length: 20 }).notNull(), // in, out, transfer, adjustment, loan, return
+  
+  // Status flow: draft -> posted -> archived (or cancelled)
+  status: varchar("status", { length: 20 }).default("draft").notNull(),
+  
+  // Warehouses involved
+  sourceWarehouseId: integer("source_warehouse_id").references(() => warehouses.id), // From (for out/transfer/loan)
+  destinationWarehouseId: integer("destination_warehouse_id").references(() => warehouses.id), // To (for in/transfer/return)
+  
+  // Related party info (client, supplier, employee for loan)
+  relatedPartyType: varchar("related_party_type", { length: 20 }), // client, supplier, employee, project
+  relatedPartyId: integer("related_party_id"), // ID of client/supplier/employee
+  relatedPartyName: varchar("related_party_name", { length: 200 }), // Denormalized name
+  relatedPartyCif: varchar("related_party_cif", { length: 20 }), // CIF/NIF for delivery notes
+  relatedPartyAddress: text("related_party_address"), // Address for delivery notes
+  
+  // Project/Site reference (for construction companies)
+  projectReference: varchar("project_reference", { length: 100 }), // Obra reference
+  projectName: varchar("project_name", { length: 200 }),
+  projectAddress: text("project_address"),
+  
+  // Dates
+  movementDate: timestamp("movement_date").defaultNow().notNull(),
+  expectedReturnDate: timestamp("expected_return_date"), // For loans
+  actualReturnDate: timestamp("actual_return_date"), // When loaned items returned
+  
+  // Totals (calculated from lines)
+  subtotal: decimal("subtotal", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  vatAmount: decimal("vat_amount", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  total: decimal("total", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  
+  // User tracking
+  createdById: integer("created_by_id").notNull().references(() => users.id),
+  approvedById: integer("approved_by_id").references(() => users.id),
+  
+  // PDF document
+  pdfUrl: text("pdf_url"), // Generated delivery note PDF
+  pdfGeneratedAt: timestamp("pdf_generated_at"),
+  
+  // Signature
+  signedBy: varchar("signed_by", { length: 200 }), // Name of person who signed
+  signatureImage: text("signature_image"), // Base64 or URL of signature
+  signedAt: timestamp("signed_at"),
+  
+  notes: text("notes"),
+  internalNotes: text("internal_notes"), // Not shown on PDF
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyIdx: index("inventory_movements_company_idx").on(table.companyId),
+  movementNumberIdx: index("inventory_movements_number_idx").on(table.companyId, table.movementNumber),
+  dateIdx: index("inventory_movements_date_idx").on(table.companyId, table.movementDate),
+  typeIdx: index("inventory_movements_type_idx").on(table.companyId, table.movementType),
+}));
+
+export const insertInventoryMovementSchema = createInsertSchema(inventoryMovements).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InventoryMovement = typeof inventoryMovements.$inferSelect;
+export type InsertInventoryMovement = z.infer<typeof insertInventoryMovementSchema>;
+
+// Inventory Movement Lines - Individual product lines in a movement
+export const inventoryMovementLines = pgTable("inventory_movement_lines", {
+  id: serial("id").primaryKey(),
+  movementId: integer("movement_id").notNull().references(() => inventoryMovements.id, { onDelete: 'cascade' }),
+  productId: integer("product_id").notNull().references(() => products.id),
+  
+  // Quantities
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
+  returnedQuantity: decimal("returned_quantity", { precision: 10, scale: 2 }).default("0"), // For loans - how many returned
+  
+  // Pricing at time of movement (snapshot)
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(), // Price per unit
+  vatRate: decimal("vat_rate", { precision: 5, scale: 2 }).notNull(), // VAT % at time of movement
+  discount: decimal("discount", { precision: 5, scale: 2 }).default("0"), // Discount percentage
+  
+  // Line totals
+  subtotal: decimal("subtotal", { precision: 12, scale: 2 }).notNull(), // quantity * unitPrice - discount
+  vatAmount: decimal("vat_amount", { precision: 12, scale: 2 }).notNull(),
+  total: decimal("total", { precision: 12, scale: 2 }).notNull(),
+  
+  // Serial/Lot tracking (optional)
+  serialNumbers: text("serial_numbers"), // JSON array of serial numbers
+  lotNumber: varchar("lot_number", { length: 50 }),
+  expirationDate: date("expiration_date"),
+  
+  // Condition tracking (for returnable items)
+  conditionOut: varchar("condition_out", { length: 50 }), // new, good, fair, needs_repair
+  conditionIn: varchar("condition_in", { length: 50 }), // Condition when returned
+  conditionNotes: text("condition_notes"),
+  
+  notes: text("notes"),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  movementIdx: index("inventory_movement_lines_movement_idx").on(table.movementId),
+  productIdx: index("inventory_movement_lines_product_idx").on(table.productId),
+}));
+
+export const insertInventoryMovementLineSchema = createInsertSchema(inventoryMovementLines).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InventoryMovementLine = typeof inventoryMovementLines.$inferSelect;
+export type InsertInventoryMovementLine = z.infer<typeof insertInventoryMovementLineSchema>;
+
+// Tool Loans - Track returnable items that are out on loan
+export const toolLoans = pgTable("tool_loans", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  productId: integer("product_id").notNull().references(() => products.id),
+  movementId: integer("movement_id").notNull().references(() => inventoryMovements.id), // Original loan movement
+  returnMovementId: integer("return_movement_id").references(() => inventoryMovements.id), // Return movement when returned
+  
+  // Loan details
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
+  returnedQuantity: decimal("returned_quantity", { precision: 10, scale: 2 }).default("0").notNull(),
+  
+  // Who has the item
+  assignedToId: integer("assigned_to_id").references(() => users.id), // Employee who has the item
+  assignedToName: varchar("assigned_to_name", { length: 200 }), // Denormalized name
+  projectReference: varchar("project_reference", { length: 100 }), // Obra/project
+  projectName: varchar("project_name", { length: 200 }),
+  
+  // Dates
+  loanDate: timestamp("loan_date").notNull(),
+  expectedReturnDate: timestamp("expected_return_date"),
+  actualReturnDate: timestamp("actual_return_date"),
+  
+  // Status: active (out), partial_return (some returned), returned, overdue
+  status: varchar("status", { length: 20 }).default("active").notNull(),
+  
+  // Condition tracking
+  conditionOut: varchar("condition_out", { length: 50 }).default("good"),
+  conditionIn: varchar("condition_in", { length: 50 }),
+  damageNotes: text("damage_notes"),
+  
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyIdx: index("tool_loans_company_idx").on(table.companyId),
+  productIdx: index("tool_loans_product_idx").on(table.productId),
+  statusIdx: index("tool_loans_status_idx").on(table.companyId, table.status),
+  assignedIdx: index("tool_loans_assigned_idx").on(table.assignedToId),
+}));
+
+export const insertToolLoanSchema = createInsertSchema(toolLoans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ToolLoan = typeof toolLoans.$inferSelect;
+export type InsertToolLoan = z.infer<typeof insertToolLoanSchema>;
+
+// Movement Number Sequence - Track sequential numbering for delivery notes
+export const movementSequences = pgTable("movement_sequences", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }).unique(),
+  prefix: varchar("prefix", { length: 10 }).default("ALB").notNull(), // ALB for albarán
+  currentYear: integer("current_year").notNull(),
+  lastNumber: integer("last_number").default(0).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertMovementSequenceSchema = createInsertSchema(movementSequences).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export type MovementSequence = typeof movementSequences.$inferSelect;
+export type InsertMovementSequence = z.infer<typeof insertMovementSequenceSchema>;
