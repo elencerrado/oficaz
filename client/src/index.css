@@ -53,7 +53,7 @@
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 217 33% 17%;
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
@@ -933,7 +933,7 @@ html:not(.employee-mode) #root {
   --muted-foreground: hsl(215, 16%, 57%);
   --popover: hsl(224, 71%, 4%);
   --popover-foreground: hsl(213, 31%, 91%);
-  --card: hsl(224, 71%, 4%);
+  --card: hsl(217, 33%, 17%);
   --card-foreground: hsl(213, 31%, 91%);
   --border: hsl(216, 34%, 17%);
   --input: hsl(216, 34%, 17%);
