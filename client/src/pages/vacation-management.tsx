@@ -18,7 +18,7 @@ import { es } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import StatsCard from "@/components/StatsCard";
+import StatsCard, { StatsCardGrid } from "@/components/StatsCard";
 import { useAuth } from "@/hooks/use-auth";
 import { usePageHeader } from '@/components/layout/page-header';
 import { TabNavigation } from "@/components/ui/tab-navigation";
@@ -905,62 +905,56 @@ export default function VacationManagement() {
 
   return (
     <div>
-      {/* Stats Cards with Navigation - Unified Component */}
-      <div className="mb-3">
-        <div className="grid grid-cols-4 gap-2 md:gap-6">
-          <StatsCard
-            title="Solicitudes"
-            subtitle="Pendientes"
-            value={loadingRequests ? '-' : stats.pending}
-            color="yellow"
-            icon={Clock}
-            onClick={() => {
-              setActiveTab('requests');
-              setSelectedStatus('pending');
-              setSearchTerm('');
-            }}
-            isLoading={loadingRequests}
-            index={0}
-          />
-
-          <StatsCard
-            title="Solicitudes"
-            subtitle="Aprobadas"
-            value={loadingRequests ? '-' : stats.approved}
-            color="green"
-            icon={Check}
-            onClick={() => {
-              setActiveTab('requests');
-              setSelectedStatus('approved');
-              setSearchTerm('');
-            }}
-            isLoading={loadingRequests}
-            index={1}
-          />
-
-          <StatsCard
-            title="Empleados"
-            subtitle="De Vacaciones"
-            value={loadingRequests || loadingEmployees ? '-' : stats.onVacation}
-            color="blue"
-            icon={Plane}
-            onClick={() => setActiveTab('employees')}
-            isLoading={loadingRequests || loadingEmployees}
-            index={2}
-          />
-
-          <StatsCard
-            title="Días Festivos"
-            subtitle="2025"
-            value={spanishHolidays2025.length}
-            color="purple"
-            icon={CalendarDays}
-            onClick={() => setActiveTab('holidays')}
-            isLoading={false}
-            index={3}
-          />
-        </div>
-      </div>
+      <StatsCardGrid columns={4}>
+        <StatsCard
+          label="Pendientes"
+          value={stats.pending}
+          color="yellow"
+          icon={Clock}
+          onClick={() => {
+            setActiveTab('requests');
+            setSelectedStatus('pending');
+            setSearchTerm('');
+          }}
+          isLoading={loadingRequests}
+          index={0}
+          data-testid="stat-pending-requests"
+        />
+        <StatsCard
+          label="Aprobadas"
+          value={stats.approved}
+          color="green"
+          icon={Check}
+          onClick={() => {
+            setActiveTab('requests');
+            setSelectedStatus('approved');
+            setSearchTerm('');
+          }}
+          isLoading={loadingRequests}
+          index={1}
+          data-testid="stat-approved-requests"
+        />
+        <StatsCard
+          label="De Vacaciones"
+          value={stats.onVacation}
+          color="blue"
+          icon={Plane}
+          onClick={() => setActiveTab('employees')}
+          isLoading={loadingRequests || loadingEmployees}
+          index={2}
+          data-testid="stat-on-vacation"
+        />
+        <StatsCard
+          label="Días Festivos"
+          value={spanishHolidays2025.length}
+          color="purple"
+          icon={CalendarDays}
+          onClick={() => setActiveTab('holidays')}
+          isLoading={false}
+          index={3}
+          data-testid="stat-holidays"
+        />
+      </StatsCardGrid>
       {/* Tabs Navigation */}
       <TabNavigation
         tabs={[

@@ -1,56 +1,78 @@
 import { LucideIcon } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface StatsCardProps {
-  title: string;
-  subtitle: string;
+  label?: string;
+  title?: string;
+  subtitle?: string;
   value: number | string;
-  color: 'yellow' | 'green' | 'blue' | 'purple' | 'orange' | 'red';
-  icon?: LucideIcon;
+  color: 'yellow' | 'green' | 'blue' | 'purple' | 'orange' | 'red' | 'amber' | 'emerald' | 'cyan' | 'pink' | 'indigo';
+  icon: LucideIcon;
   onClick?: () => void;
   onDoubleClick?: () => void;
   className?: string;
   isActive?: boolean;
   isLoading?: boolean;
   index?: number;
+  'data-testid'?: string;
 }
 
 const colorConfig = {
   yellow: {
-    bg: 'bg-yellow-500',
-    hover: 'hover:border-yellow-200 dark:hover:border-yellow-400',
-    activeBorder: 'border-yellow-400 dark:border-yellow-300',
-    activeBg: 'bg-yellow-50 dark:bg-yellow-900/20'
+    iconBg: 'bg-yellow-100 dark:bg-yellow-900',
+    iconText: 'text-yellow-600 dark:text-yellow-400',
+    activeBorder: 'border-yellow-400 dark:border-yellow-500',
+  },
+  amber: {
+    iconBg: 'bg-amber-100 dark:bg-amber-900',
+    iconText: 'text-amber-600 dark:text-amber-400',
+    activeBorder: 'border-amber-400 dark:border-amber-500',
   },
   green: {
-    bg: 'bg-green-500',
-    hover: 'hover:border-green-200 dark:hover:border-green-400',
-    activeBorder: 'border-green-400 dark:border-green-300',
-    activeBg: 'bg-green-50 dark:bg-green-900/20'
+    iconBg: 'bg-green-100 dark:bg-green-900',
+    iconText: 'text-green-600 dark:text-green-400',
+    activeBorder: 'border-green-400 dark:border-green-500',
+  },
+  emerald: {
+    iconBg: 'bg-emerald-100 dark:bg-emerald-900',
+    iconText: 'text-emerald-600 dark:text-emerald-400',
+    activeBorder: 'border-emerald-400 dark:border-emerald-500',
   },
   blue: {
-    bg: 'bg-blue-500',
-    hover: 'hover:border-blue-200 dark:hover:border-blue-400',
-    activeBorder: 'border-blue-400 dark:border-blue-300',
-    activeBg: 'bg-blue-50 dark:bg-blue-900/20'
+    iconBg: 'bg-blue-100 dark:bg-blue-900',
+    iconText: 'text-blue-600 dark:text-blue-400',
+    activeBorder: 'border-blue-400 dark:border-blue-500',
+  },
+  cyan: {
+    iconBg: 'bg-cyan-100 dark:bg-cyan-900',
+    iconText: 'text-cyan-600 dark:text-cyan-400',
+    activeBorder: 'border-cyan-400 dark:border-cyan-500',
   },
   purple: {
-    bg: 'bg-purple-500',
-    hover: 'hover:border-purple-200 dark:hover:border-purple-400',
-    activeBorder: 'border-purple-400 dark:border-purple-300',
-    activeBg: 'bg-purple-50 dark:bg-purple-900/20'
+    iconBg: 'bg-purple-100 dark:bg-purple-900',
+    iconText: 'text-purple-600 dark:text-purple-400',
+    activeBorder: 'border-purple-400 dark:border-purple-500',
+  },
+  indigo: {
+    iconBg: 'bg-indigo-100 dark:bg-indigo-900',
+    iconText: 'text-indigo-600 dark:text-indigo-400',
+    activeBorder: 'border-indigo-400 dark:border-indigo-500',
+  },
+  pink: {
+    iconBg: 'bg-pink-100 dark:bg-pink-900',
+    iconText: 'text-pink-600 dark:text-pink-400',
+    activeBorder: 'border-pink-400 dark:border-pink-500',
   },
   orange: {
-    bg: 'bg-orange-500',
-    hover: 'hover:border-orange-200 dark:hover:border-orange-400',
-    activeBorder: 'border-orange-400 dark:border-orange-300',
-    activeBg: 'bg-orange-50 dark:bg-orange-900/20'
+    iconBg: 'bg-orange-100 dark:bg-orange-900',
+    iconText: 'text-orange-600 dark:text-orange-400',
+    activeBorder: 'border-orange-400 dark:border-orange-500',
   },
   red: {
-    bg: 'bg-red-500',
-    hover: 'hover:border-red-200 dark:hover:border-red-400',
-    activeBorder: 'border-red-400 dark:border-red-300',
-    activeBg: 'bg-red-50 dark:bg-red-900/20'
+    iconBg: 'bg-red-100 dark:bg-red-900',
+    iconText: 'text-red-600 dark:text-red-400',
+    activeBorder: 'border-red-400 dark:border-red-500',
   }
 };
 
@@ -117,15 +139,16 @@ function useCountAnimation(targetValue: number | string, isLoading: boolean, del
   }, [targetValue, isLoading, delay]);
 
   if (isLoading) {
-    return '0';
+    return '-';
   }
   
   return displayValue;
 }
 
 export default function StatsCard({ 
-  title, 
-  subtitle, 
+  label,
+  title,
+  subtitle,
   value, 
   color, 
   icon: Icon, 
@@ -134,74 +157,53 @@ export default function StatsCard({
   className = '',
   isActive = false,
   isLoading = false,
-  index = 0
+  index = 0,
+  'data-testid': dataTestId,
 }: StatsCardProps) {
   const config = colorConfig[color];
   const animatedValue = useCountAnimation(value, isLoading, index * 100);
-  
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (onClick) {
-      onClick();
-    }
-  };
+  const displayLabel = label || title || '';
 
-  const handleDoubleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (onDoubleClick) {
-      onDoubleClick();
-    }
+  return (
+    <Card 
+      className={`dark:bg-gray-800 cursor-pointer transition-all duration-200 hover:shadow-md ${
+        isActive ? `border-2 ${config.activeBorder}` : ''
+      } ${className}`}
+      onClick={onClick}
+      onDoubleClick={onDoubleClick}
+      data-testid={dataTestId}
+    >
+      <CardContent className="pt-4 pb-3 px-4">
+        <div className="flex items-center gap-3">
+          <div className={`p-2 ${config.iconBg} rounded-lg`}>
+            <Icon className={`h-5 w-5 ${config.iconText}`} />
+          </div>
+          <div>
+            <p className="text-2xl font-bold dark:text-white">{animatedValue}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{displayLabel}</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface StatsCardGridProps {
+  children: React.ReactNode;
+  columns?: 2 | 3 | 4;
+  className?: string;
+}
+
+export function StatsCardGrid({ children, columns = 4, className = '' }: StatsCardGridProps) {
+  const gridCols = {
+    2: 'grid-cols-2',
+    3: 'grid-cols-2 md:grid-cols-3',
+    4: 'grid-cols-2 md:grid-cols-4',
   };
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      className={`rounded-lg text-card-foreground cursor-pointer hover:shadow-lg transition-all duration-200 border-2 ${
-        isActive 
-          ? `${config.activeBorder} ${config.activeBg} shadow-md` 
-          : `${config.hover}`
-      } mb-4 ${className} bg-card shadow-sm ${isLoading ? `stats-wave-loading stats-wave-${index}` : ''}`}
-      onClick={handleClick}
-      onDoubleClick={handleDoubleClick}
-      onKeyPress={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          if (onClick) onClick();
-        }
-      }}
-    >
-      <div className="p-3 h-24 sm:h-20 flex flex-col items-center text-center overflow-hidden">
-        {/* Layout móvil: ícono arriba, número en medio, texto abajo */}
-        <div className="sm:hidden flex flex-col justify-between h-full py-1">
-          <div className="flex justify-center">
-            <div className={`w-5 h-5 ${config.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
-              {Icon && <Icon className="w-2.5 h-2.5 text-white" />}
-            </div>
-          </div>
-          <div className="flex justify-center">
-            <span className="text-lg font-bold text-foreground">{animatedValue}</span>
-          </div>
-          <div className="flex flex-col items-center justify-center">
-            <p className="text-[8px] font-medium text-muted-foreground leading-none">{title}</p>
-          </div>
-        </div>
-
-        {/* Layout desktop: ícono + número horizontal */}
-        <div className="hidden sm:flex items-center justify-center space-x-1.5 flex-grow">
-          <div className={`w-6 h-6 ${config.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
-            {Icon && <Icon className="w-3 h-3 text-white" />}
-          </div>
-          <span className="text-xl font-bold text-foreground">{animatedValue}</span>
-        </div>
-
-        <div className="hidden sm:flex flex-col items-center justify-center">
-          <p className="text-xs font-medium text-muted-foreground leading-none">{title}</p>
-          <p className="text-[10px] text-muted-foreground opacity-75 leading-none">{subtitle}</p>
-        </div>
-      </div>
+    <div className={`grid ${gridCols[columns]} gap-2 md:gap-4 mb-3 ${className}`}>
+      {children}
     </div>
   );
 }

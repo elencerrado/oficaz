@@ -6,7 +6,7 @@ import { usePageHeader } from '@/components/layout/page-header';
 import { usePageTitle } from '@/hooks/use-page-title';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import StatsCard from '@/components/StatsCard';
+import StatsCard, { StatsCardGrid } from '@/components/StatsCard';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { TabNavigation } from '@/components/ui/tab-navigation';
@@ -2920,56 +2920,52 @@ export default function TimeTracking() {
   return (
     <div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">
+      <StatsCardGrid columns={4}>
         <StatsCard
-          title="Incompletos"
-          subtitle="Sesiones"
-          value={isLoading ? '-' : `${incompleteSessions}`}
+          label="Incompletos"
+          value={incompleteSessions}
           color="red"
           icon={AlertCircle}
           onClick={handleIncompleteFilter}
           isActive={activeStatsFilter === 'incomplete'}
           isLoading={isLoading}
           index={0}
+          data-testid="stat-incomplete-sessions"
         />
-        
         <StatsCard
-          title="Media Diaria"
-          subtitle="Horas/día"
-          value={isLoading ? '-' : `${averageHoursPerEmployee.toFixed(1)}h`}
+          label="Media Diaria"
+          value={`${averageHoursPerEmployee.toFixed(1)}h`}
           color="orange"
           icon={TrendingUp}
           onClick={handleTodayFilter}
           isActive={activeStatsFilter === 'today'}
           isLoading={isLoading}
           index={1}
+          data-testid="stat-daily-average"
         />
-        
         <StatsCard
-          title="Media Semanal"
-          subtitle="Horas/sem"
-          value={isLoading ? '-' : `${averageHoursPerWeek.toFixed(1)}h`}
+          label="Media Semanal"
+          value={`${averageHoursPerWeek.toFixed(1)}h`}
           color="blue"
           icon={CalendarDays}
           onClick={handleThisWeekFilter}
           isActive={activeStatsFilter === 'week'}
           isLoading={isLoading}
           index={2}
+          data-testid="stat-weekly-average"
         />
-        
         <StatsCard
-          title="Media Mensual"
-          subtitle="Horas/mes"
-          value={isLoading ? '-' : `${averageHoursPerMonth.toFixed(1)}h`}
+          label="Media Mensual"
+          value={`${averageHoursPerMonth.toFixed(1)}h`}
           color="purple"
           icon={BarChart3}
           onClick={handleThisMonthFilter}
           isActive={activeStatsFilter === 'month'}
           isLoading={isLoading}
           index={3}
+          data-testid="stat-monthly-average"
         />
-      </div>
+      </StatsCardGrid>
 
       {/* Tab Navigation - Simplified for self-access mode */}
       <TabNavigation

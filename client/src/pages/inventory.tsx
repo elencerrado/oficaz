@@ -4,6 +4,7 @@ import { TabNavigation } from '@/components/ui/tab-navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import StatsCard, { StatsCardGrid } from '@/components/StatsCard';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -125,64 +126,44 @@ export default function Inventory() {
 
   return (
     <div>
-      {/* Stats Cards - Always visible */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-3">
-        <Card className="dark:bg-gray-800">
-          <CardContent className="pt-4 pb-3 px-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                <Package className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold dark:text-white">{statsLoading ? '-' : (stats?.totalProducts || 0)}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Productos</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="dark:bg-gray-800">
-          <CardContent className="pt-4 pb-3 px-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                <Warehouse className="h-5 w-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold dark:text-white">{statsLoading ? '-' : (stats?.totalWarehouses || 0)}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Almacenes</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="dark:bg-gray-800">
-          <CardContent className="pt-4 pb-3 px-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 dark:bg-amber-900 rounded-lg">
-                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold dark:text-white">{statsLoading ? '-' : (stats?.lowStockCount || 0)}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Stock bajo</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="dark:bg-gray-800">
-          <CardContent className="pt-4 pb-3 px-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold dark:text-white">{statsLoading ? '-' : (stats?.activeLoansCount || 0)}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Préstamos</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <StatsCardGrid columns={4}>
+        <StatsCard
+          icon={Package}
+          label="Productos"
+          value={stats?.totalProducts || 0}
+          color="blue"
+          isLoading={statsLoading}
+          index={0}
+          data-testid="stat-total-products"
+        />
+        <StatsCard
+          icon={Warehouse}
+          label="Almacenes"
+          value={stats?.totalWarehouses || 0}
+          color="green"
+          isLoading={statsLoading}
+          index={1}
+          data-testid="stat-total-warehouses"
+        />
+        <StatsCard
+          icon={AlertTriangle}
+          label="Stock bajo"
+          value={stats?.lowStockCount || 0}
+          color="amber"
+          isLoading={statsLoading}
+          index={2}
+          data-testid="stat-low-stock"
+        />
+        <StatsCard
+          icon={Clock}
+          label="Préstamos"
+          value={stats?.activeLoansCount || 0}
+          color="purple"
+          isLoading={statsLoading}
+          index={3}
+          data-testid="stat-active-loans"
+        />
+      </StatsCardGrid>
 
       <TabNavigation
         tabs={[
