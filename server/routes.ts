@@ -17223,6 +17223,276 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
     }
   });
 
+  // Download Excel template for bulk product upload
+  app.get('/api/inventory/products/template', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const categories = await storage.getProductCategories(req.user!.companyId);
+      const warehouses = await storage.getWarehouses(req.user!.companyId);
+      
+      // Create workbook with template
+      const wb = XLSX.utils.book_new();
+      
+      // Products sheet with headers and example row
+      const headers = [
+        'Nombre*', 'SKU*', 'Código de barras', 'Descripción', 'Categoría',
+        'Unidad de medida', 'Abreviatura', 'Precio coste', 'Precio venta',
+        'IVA (%)', 'Stock mínimo', 'Stock máximo', 'Activo', 'Retornable', 'Servicio'
+      ];
+      const exampleRow = [
+        'Producto Ejemplo', 'SKU-001', '1234567890123', 'Descripción del producto', 
+        categories[0]?.name || 'General', 'unidad', 'ud.', '10.00', '15.00',
+        '21', '5', '100', 'Sí', 'No', 'No'
+      ];
+      const productsData = [headers, exampleRow];
+      const wsProducts = XLSX.utils.aoa_to_sheet(productsData);
+      
+      // Set column widths
+      wsProducts['!cols'] = [
+        { wch: 25 }, { wch: 15 }, { wch: 18 }, { wch: 30 }, { wch: 15 },
+        { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
+        { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 8 }, { wch: 10 }, { wch: 10 }
+      ];
+      
+      XLSX.utils.book_append_sheet(wb, wsProducts, 'Productos');
+      
+      // Categories reference sheet
+      const categoriesData = [['Categorías disponibles'], ...categories.map(c => [c.name])];
+      const wsCategories = XLSX.utils.aoa_to_sheet(categoriesData);
+      XLSX.utils.book_append_sheet(wb, wsCategories, 'Categorías');
+      
+      // Warehouses reference sheet
+      const warehousesData = [['Almacenes disponibles'], ...warehouses.map(w => [w.name])];
+      const wsWarehouses = XLSX.utils.aoa_to_sheet(warehousesData);
+      XLSX.utils.book_append_sheet(wb, wsWarehouses, 'Almacenes');
+      
+      // Instructions sheet
+      const instructions = [
+        ['Instrucciones para carga masiva de productos'],
+        [''],
+        ['1. Rellene la hoja "Productos" con los datos de sus productos'],
+        ['2. Los campos marcados con * son obligatorios'],
+        ['3. Puede ver las categorías disponibles en la hoja "Categorías"'],
+        ['4. Para Activo/Retornable/Servicio use: Sí, No, 1, 0, true, false'],
+        ['5. El SKU debe ser único. Si ya existe, se detectará como duplicado'],
+        ['6. Los precios deben ser números (use punto como separador decimal)'],
+        ['7. Elimine la fila de ejemplo antes de subir el archivo'],
+      ];
+      const wsInstructions = XLSX.utils.aoa_to_sheet(instructions);
+      wsInstructions['!cols'] = [{ wch: 60 }];
+      XLSX.utils.book_append_sheet(wb, wsInstructions, 'Instrucciones');
+      
+      const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=plantilla-productos.xlsx');
+      res.send(buffer);
+    } catch (error: any) {
+      console.error('Error generating template:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Upload and validate Excel for bulk product import
+  app.post('/api/inventory/products/bulk-validate', authenticateToken, requireRole(['admin', 'manager']), upload.single('file'), async (req: AuthRequest, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No se ha subido ningún archivo' });
+      }
+      
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+      
+      if (data.length < 2) {
+        return res.status(400).json({ message: 'El archivo no contiene datos' });
+      }
+      
+      // Get existing products and categories
+      const existingProducts = await storage.getProducts(req.user!.companyId, {});
+      const categories = await storage.getProductCategories(req.user!.companyId);
+      
+      const categoryMap = new Map(categories.map(c => [c.name.toLowerCase(), c.id]));
+      const skuMap = new Map(existingProducts.map(p => [p.sku.toLowerCase(), p]));
+      const barcodeMap = new Map(existingProducts.filter(p => p.barcode).map(p => [p.barcode!.toLowerCase(), p]));
+      
+      const parseBoolean = (val: any): boolean => {
+        if (typeof val === 'boolean') return val;
+        if (typeof val === 'number') return val === 1;
+        if (typeof val === 'string') {
+          const lower = val.toLowerCase().trim();
+          return lower === 'sí' || lower === 'si' || lower === 'yes' || lower === 'true' || lower === '1';
+        }
+        return false;
+      };
+      
+      const products: any[] = [];
+      const errors: { row: number; message: string }[] = [];
+      
+      // Skip header row
+      for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        if (!row || row.length === 0 || !row[0]) continue; // Skip empty rows
+        
+        const name = String(row[0] || '').trim();
+        const sku = String(row[1] || '').trim();
+        
+        if (!name) {
+          errors.push({ row: i + 1, message: 'Nombre es obligatorio' });
+          continue;
+        }
+        if (!sku) {
+          errors.push({ row: i + 1, message: 'SKU es obligatorio' });
+          continue;
+        }
+        
+        const barcode = row[2] ? String(row[2]).trim() : null;
+        const categoryName = row[4] ? String(row[4]).trim().toLowerCase() : null;
+        const categoryId = categoryName ? categoryMap.get(categoryName) || null : null;
+        
+        const product = {
+          rowNumber: i + 1,
+          name,
+          sku,
+          barcode,
+          description: row[3] ? String(row[3]).trim() : null,
+          categoryId,
+          categoryName: row[4] ? String(row[4]).trim() : null,
+          unitOfMeasure: row[5] ? String(row[5]).trim() : 'unidad',
+          unitAbbreviation: row[6] ? String(row[6]).trim() : 'ud.',
+          costPrice: String(parseFloat(String(row[7] || '0').replace(',', '.')) || 0),
+          salePrice: String(parseFloat(String(row[8] || '0').replace(',', '.')) || 0),
+          vatRate: String(parseFloat(String(row[9] || '21').replace(',', '.')) || 21),
+          minStock: parseInt(String(row[10] || '0')) || 0,
+          maxStock: row[11] ? parseInt(String(row[11])) || null : null,
+          isActive: parseBoolean(row[12] ?? true),
+          isReturnable: parseBoolean(row[13] ?? false),
+          isService: parseBoolean(row[14] ?? false),
+          isDuplicate: false,
+          duplicateType: null as string | null,
+          existingProduct: null as any,
+        };
+        
+        // Check for duplicates
+        const existingBySku = skuMap.get(sku.toLowerCase());
+        const existingByBarcode = barcode ? barcodeMap.get(barcode.toLowerCase()) : null;
+        
+        if (existingBySku) {
+          product.isDuplicate = true;
+          product.duplicateType = 'sku';
+          product.existingProduct = {
+            id: existingBySku.id,
+            name: existingBySku.name,
+            sku: existingBySku.sku,
+          };
+        } else if (existingByBarcode) {
+          product.isDuplicate = true;
+          product.duplicateType = 'barcode';
+          product.existingProduct = {
+            id: existingByBarcode.id,
+            name: existingByBarcode.name,
+            sku: existingByBarcode.sku,
+            barcode: existingByBarcode.barcode,
+          };
+        }
+        
+        products.push(product);
+      }
+      
+      const duplicates = products.filter(p => p.isDuplicate);
+      const newProducts = products.filter(p => !p.isDuplicate);
+      
+      res.json({
+        totalRows: data.length - 1,
+        validProducts: products.length,
+        newProducts: newProducts.length,
+        duplicates: duplicates.length,
+        errors,
+        products, // Full list with duplicate info
+      });
+    } catch (error: any) {
+      console.error('Error validating bulk upload:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Process bulk product import with conflict resolution
+  app.post('/api/inventory/products/bulk-import', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const { products, resolutions } = req.body;
+      // resolutions: { [sku]: 'replace' | 'skip' }
+      
+      if (!products || !Array.isArray(products)) {
+        return res.status(400).json({ message: 'No hay productos para importar' });
+      }
+      
+      const results = {
+        created: 0,
+        updated: 0,
+        skipped: 0,
+        errors: [] as { sku: string; message: string }[],
+      };
+      
+      for (const product of products) {
+        try {
+          const resolution = resolutions?.[product.sku] || 'skip';
+          
+          if (product.isDuplicate) {
+            if (resolution === 'replace' && product.existingProduct?.id) {
+              // Update existing product
+              await storage.updateProduct(product.existingProduct.id, req.user!.companyId, {
+                name: product.name,
+                barcode: product.barcode,
+                description: product.description,
+                categoryId: product.categoryId,
+                unitOfMeasure: product.unitOfMeasure,
+                unitAbbreviation: product.unitAbbreviation,
+                costPrice: product.costPrice,
+                salePrice: product.salePrice,
+                vatRate: product.vatRate,
+                minStock: product.minStock,
+                maxStock: product.maxStock,
+                isActive: product.isActive,
+                isReturnable: product.isReturnable,
+                isService: product.isService,
+              });
+              results.updated++;
+            } else {
+              results.skipped++;
+            }
+          } else {
+            // Create new product
+            await storage.createProduct(req.user!.companyId, {
+              name: product.name,
+              sku: product.sku,
+              barcode: product.barcode,
+              description: product.description,
+              categoryId: product.categoryId,
+              unitOfMeasure: product.unitOfMeasure,
+              unitAbbreviation: product.unitAbbreviation,
+              costPrice: product.costPrice,
+              salePrice: product.salePrice,
+              vatRate: product.vatRate,
+              minStock: product.minStock,
+              maxStock: product.maxStock,
+              isActive: product.isActive,
+              isReturnable: product.isReturnable,
+              isService: product.isService,
+            });
+            results.created++;
+          }
+        } catch (err: any) {
+          results.errors.push({ sku: product.sku, message: err.message });
+        }
+      }
+      
+      res.json(results);
+    } catch (error: any) {
+      console.error('Error processing bulk import:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Geocoding proxy endpoint (Photon API)
   app.get('/api/geocoding/search', async (req, res) => {
     try {
