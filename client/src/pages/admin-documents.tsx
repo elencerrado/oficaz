@@ -1468,8 +1468,8 @@ export default function AdminDocuments() {
                             })()}
                           </div>
 
-                          {/* Actions section - responsive button layout */}
-                          <div className="flex items-center justify-end gap-1 flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
+                          {/* Actions section - fixed width for alignment */}
+                          <div className="flex items-center justify-end gap-1 flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50 sm:w-36">
                             <Button
                               variant="outline"
                               size="sm"
