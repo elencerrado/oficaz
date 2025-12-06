@@ -660,7 +660,8 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
                       size="icon"
                       onClick={() => { 
                         setEditingProduct(product); 
-                        setSelectedVatRate(product.vatRate || '21'); 
+                        const vatValue = product.vatRate ? String(parseInt(product.vatRate)) : '21';
+                        setSelectedVatRate(vatValue); 
                         setSelectedCategoryId(product.categoryId?.toString() || ''); 
                         setIsDialogOpen(true); 
                       }}
