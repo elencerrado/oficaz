@@ -71,6 +71,12 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
 });
 
+// Memory storage for Excel file uploads (need buffer access)
+const memoryUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+});
+
 // SECURE multer configuration for profile pictures with strict validation
 const profilePictureUpload = multer({
   dest: uploadDir,
@@ -17575,7 +17581,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
   });
 
   // Upload and validate Excel for bulk product import
-  app.post('/api/inventory/products/bulk-validate', authenticateToken, requireRole(['admin', 'manager']), upload.single('file'), async (req: AuthRequest, res) => {
+  app.post('/api/inventory/products/bulk-validate', authenticateToken, requireRole(['admin', 'manager']), memoryUpload.single('file'), async (req: AuthRequest, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: 'No se ha subido ningún archivo' });
