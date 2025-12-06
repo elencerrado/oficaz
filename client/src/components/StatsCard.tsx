@@ -166,7 +166,7 @@ export default function StatsCard({
 
   return (
     <Card 
-      className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+      className={`dark:bg-gray-800 cursor-pointer transition-all duration-200 hover:shadow-md ${
         isActive ? `border-2 ${config.activeBorder}` : ''
       } ${isLoading ? `stats-wave-loading stats-wave-${index}` : ''} ${className}`}
       onClick={onClick}
@@ -179,8 +179,8 @@ export default function StatsCard({
           <div className={`p-1 ${config.iconBg} rounded-md mb-1 ${isLoading ? 'opacity-50' : ''}`}>
             <Icon className={`h-3 w-3 ${config.iconText}`} />
           </div>
-          <p className={`text-sm font-bold text-foreground leading-tight ${isLoading ? 'opacity-50' : ''}`}>{animatedValue}</p>
-          <p className={`text-[8px] text-muted-foreground leading-tight ${isLoading ? 'opacity-50' : ''}`}>{displayLabel}</p>
+          <p className={`text-sm font-bold dark:text-white leading-tight ${isLoading ? 'opacity-50' : ''}`}>{animatedValue}</p>
+          <p className={`text-[8px] text-gray-500 dark:text-gray-400 leading-tight ${isLoading ? 'opacity-50' : ''}`}>{displayLabel}</p>
         </div>
         {/* Desktop: horizontal layout */}
         <div className="hidden md:flex items-center gap-3">
@@ -188,8 +188,8 @@ export default function StatsCard({
             <Icon className={`h-5 w-5 ${config.iconText}`} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className={`text-2xl font-bold text-foreground ${isLoading ? 'opacity-50' : ''}`}>{animatedValue}</p>
-            <p className={`text-xs text-muted-foreground truncate ${isLoading ? 'opacity-50' : ''}`}>{displayLabel}</p>
+            <p className={`text-2xl font-bold dark:text-white ${isLoading ? 'opacity-50' : ''}`}>{animatedValue}</p>
+            <p className={`text-xs text-gray-500 dark:text-gray-400 truncate ${isLoading ? 'opacity-50' : ''}`}>{displayLabel}</p>
           </div>
         </div>
       </CardContent>
