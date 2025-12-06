@@ -3977,6 +3977,8 @@ Responde directamente a este email para contactar con la persona.
   // Work session routes
   app.post('/api/work-sessions/clock-in', authenticateToken, async (req: AuthRequest, res) => {
     try {
+      const { latitude, longitude } = req.body || {};
+      
       // Execute clock-in with retry logic for high-concurrency scenarios (1000+ simultaneous users)
       const session = await withDatabaseRetry(async () => {
         // ⚠️ FIRST: Mark old sessions as incomplete (maxHours + 4 hours margin)
@@ -3996,6 +3998,8 @@ Responde directamente a este email para contactar con la persona.
           userId: req.user!.id,
           clockIn: new Date(),
           status: 'active',
+          clockInLatitude: latitude ? latitude.toString() : null,
+          clockInLongitude: longitude ? longitude.toString() : null,
         });
       });
 
@@ -4021,6 +4025,8 @@ Responde directamente a este email para contactar con la persona.
   // Regular clock out (current session)
   app.post('/api/work-sessions/clock-out', authenticateToken, async (req: AuthRequest, res) => {
     try {
+      const { latitude, longitude } = req.body || {};
+      
       // Execute clock-out with retry logic for high-concurrency scenarios
       const result = await withDatabaseRetry(async () => {
         const activeSession = await storage.getActiveWorkSession(req.user!.id);
@@ -4054,6 +4060,8 @@ Responde directamente a este email para contactar con la persona.
             clockOut,
             totalHours: maxWorkHours.toString(),
             status: 'completed',
+            clockOutLatitude: latitude ? latitude.toString() : null,
+            clockOutLongitude: longitude ? longitude.toString() : null,
           });
           
           return res.json(updatedSession);
@@ -4074,6 +4082,8 @@ Responde directamente a este email para contactar con la persona.
         clockOut,
         totalHours: safeTotalHours.toFixed(2),
         status: 'completed',
+        clockOutLatitude: latitude ? latitude.toString() : null,
+        clockOutLongitude: longitude ? longitude.toString() : null,
       });
 
       // WebSocket: Notify company admins of session update
