@@ -29,8 +29,16 @@ import {
   LayoutGrid,
   Clock,
   ChevronRight,
-  Settings
+  Settings,
+  Upload,
+  FileSpreadsheet,
+  AlertCircle,
+  CheckCircle,
+  SkipForward,
+  RefreshCw
 } from 'lucide-react';
+import { useRef } from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 type Product = {
   id: number;
@@ -304,11 +312,52 @@ function DashboardTab() {
   );
 }
 
+type BulkProduct = {
+  rowNumber: number;
+  name: string;
+  sku: string;
+  barcode: string | null;
+  description: string | null;
+  categoryId: number | null;
+  categoryName: string | null;
+  unitOfMeasure: string;
+  unitAbbreviation: string;
+  costPrice: string;
+  salePrice: string;
+  vatRate: string;
+  minStock: number;
+  maxStock: number | null;
+  isActive: boolean;
+  isReturnable: boolean;
+  isService: boolean;
+  isDuplicate: boolean;
+  duplicateType: string | null;
+  existingProduct: { id: number; name: string; sku: string; barcode?: string } | null;
+};
+
+type ValidationResult = {
+  totalRows: number;
+  validProducts: number;
+  newProducts: number;
+  duplicates: number;
+  errors: { row: number; message: string }[];
+  products: BulkProduct[];
+};
+
 function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSearchTerm: (s: string) => void }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const { toast } = useToast();
+  
+  // Bulk upload states
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
+  const [currentConflictIndex, setCurrentConflictIndex] = useState(0);
+  const [resolutions, setResolutions] = useState<Record<string, 'replace' | 'skip'>>({});
+  const [isImporting, setIsImporting] = useState(false);
+  const [showBulkDialog, setShowBulkDialog] = useState(false);
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ['/api/inventory/products', { search: searchTerm, categoryId: categoryFilter !== 'all' ? categoryFilter : undefined }],
@@ -352,6 +401,111 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
     },
     onError: () => toast({ title: 'Error al eliminar producto', variant: 'destructive' }),
   });
+
+  // Bulk upload functions
+  const handleDownloadTemplate = async () => {
+    try {
+      const response = await fetch('/api/inventory/products/template', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      if (!response.ok) throw new Error('Error downloading template');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'plantilla-productos.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast({ title: 'Error al descargar plantilla', variant: 'destructive' });
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setIsValidating(true);
+    setValidationResult(null);
+    setResolutions({});
+    setCurrentConflictIndex(0);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/inventory/products/bulk-validate', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || 'Error validating file');
+      }
+      
+      const result: ValidationResult = await response.json();
+      setValidationResult(result);
+      setShowBulkDialog(true);
+    } catch (error: any) {
+      toast({ title: error.message || 'Error al validar archivo', variant: 'destructive' });
+    } finally {
+      setIsValidating(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const duplicateProducts = validationResult?.products.filter(p => p.isDuplicate) || [];
+  const currentConflict = duplicateProducts[currentConflictIndex];
+
+  const handleResolveConflict = (action: 'replace' | 'skip') => {
+    if (!currentConflict) return;
+    setResolutions(prev => ({ ...prev, [currentConflict.sku]: action }));
+    if (currentConflictIndex < duplicateProducts.length - 1) {
+      setCurrentConflictIndex(prev => prev + 1);
+    }
+  };
+
+  const handleResolveAll = (action: 'replace' | 'skip') => {
+    const newResolutions: Record<string, 'replace' | 'skip'> = {};
+    duplicateProducts.forEach(p => { newResolutions[p.sku] = action; });
+    setResolutions(newResolutions);
+    setCurrentConflictIndex(duplicateProducts.length - 1);
+  };
+
+  const handleImport = async () => {
+    if (!validationResult) return;
+    setIsImporting(true);
+    
+    try {
+      const response = await apiRequest('POST', '/api/inventory/products/bulk-import', {
+        products: validationResult.products,
+        resolutions,
+      });
+      
+      const result = response as { created: number; updated: number; skipped: number; errors: any[] };
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/products'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/dashboard'] });
+      
+      toast({
+        title: 'Importación completada',
+        description: `${result.created} creados, ${result.updated} actualizados, ${result.skipped} omitidos`,
+      });
+      
+      setShowBulkDialog(false);
+      setValidationResult(null);
+    } catch (error: any) {
+      toast({ title: 'Error en la importación', variant: 'destructive' });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const allConflictsResolved = duplicateProducts.every(p => resolutions[p.sku]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -412,10 +566,32 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={() => { setEditingProduct(null); setIsDialogOpen(true); }} data-testid="button-add-product">
-          <Plus className="h-4 w-4 mr-2" />
-          Añadir Producto
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={handleDownloadTemplate} data-testid="button-download-template">
+            <Download className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Plantilla</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isValidating}
+            data-testid="button-upload-excel"
+          >
+            {isValidating ? <LoadingSpinner /> : <Upload className="h-4 w-4 mr-2" />}
+            <span className="hidden sm:inline">Carga masiva</span>
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+          <Button onClick={() => { setEditingProduct(null); setIsDialogOpen(true); }} data-testid="button-add-product">
+            <Plus className="h-4 w-4 mr-2" />
+            Añadir Producto
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -655,6 +831,138 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Import Dialog */}
+      <Dialog open={showBulkDialog} onOpenChange={setShowBulkDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5" />
+              Carga Masiva de Productos
+            </DialogTitle>
+          </DialogHeader>
+
+          {validationResult && (
+            <div className="space-y-4">
+              {/* Summary */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-center">
+                  <p className="text-2xl font-bold dark:text-white">{validationResult.validProducts}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Total válidos</p>
+                </div>
+                <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg text-center">
+                  <p className="text-2xl font-bold text-green-700 dark:text-green-400">{validationResult.newProducts}</p>
+                  <p className="text-xs text-green-600 dark:text-green-400">Nuevos</p>
+                </div>
+                <div className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-lg text-center">
+                  <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">{validationResult.duplicates}</p>
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400">Duplicados</p>
+                </div>
+                <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-lg text-center">
+                  <p className="text-2xl font-bold text-red-700 dark:text-red-400">{validationResult.errors.length}</p>
+                  <p className="text-xs text-red-600 dark:text-red-400">Errores</p>
+                </div>
+              </div>
+
+              {/* Errors */}
+              {validationResult.errors.length > 0 && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <p className="font-medium mb-1">Errores encontrados:</p>
+                    <ul className="text-sm list-disc pl-4">
+                      {validationResult.errors.slice(0, 5).map((err, i) => (
+                        <li key={i}>Fila {err.row}: {err.message}</li>
+                      ))}
+                      {validationResult.errors.length > 5 && (
+                        <li>...y {validationResult.errors.length - 5} más</li>
+                      )}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Conflict Resolution */}
+              {duplicateProducts.length > 0 && (
+                <div className="border dark:border-gray-700 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium dark:text-white">
+                      Resolver conflictos ({currentConflictIndex + 1}/{duplicateProducts.length})
+                    </h4>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleResolveAll('skip')}>
+                        <SkipForward className="h-3 w-3 mr-1" />
+                        Omitir todos
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => handleResolveAll('replace')}>
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        Reemplazar todos
+                      </Button>
+                    </div>
+                  </div>
+
+                  {currentConflict && !resolutions[currentConflict.sku] && (
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="font-medium text-yellow-800 dark:text-yellow-300">
+                            SKU duplicado: {currentConflict.sku}
+                          </p>
+                          <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p className="text-gray-500 dark:text-gray-400">Nuevo producto:</p>
+                              <p className="font-medium dark:text-white">{currentConflict.name}</p>
+                              <p className="text-xs text-gray-400">€{currentConflict.salePrice}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-500 dark:text-gray-400">Existente:</p>
+                              <p className="font-medium dark:text-white">{currentConflict.existingProduct?.name}</p>
+                              <p className="text-xs text-gray-400">SKU: {currentConflict.existingProduct?.sku}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-3">
+                            <Button size="sm" variant="outline" onClick={() => handleResolveConflict('skip')}>
+                              <SkipForward className="h-3 w-3 mr-1" />
+                              Omitir
+                            </Button>
+                            <Button size="sm" onClick={() => handleResolveConflict('replace')}>
+                              <RefreshCw className="h-3 w-3 mr-1" />
+                              Reemplazar
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {allConflictsResolved && (
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      <span className="text-green-800 dark:text-green-300">
+                        Todos los conflictos resueltos
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setShowBulkDialog(false); setValidationResult(null); }}>
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleImport} 
+                  disabled={isImporting || (duplicateProducts.length > 0 && !allConflictsResolved)}
+                  data-testid="button-confirm-import"
+                >
+                  {isImporting ? 'Importando...' : `Importar ${validationResult.validProducts} productos`}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
