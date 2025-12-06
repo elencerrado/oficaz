@@ -413,29 +413,13 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
   });
 
   // Bulk upload functions
-  const handleDownloadTemplate = async () => {
-    try {
-      const response = await fetch('/api/inventory/products/template', {
-        headers: getAuthHeaders(),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Error downloading template');
-      }
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'plantilla-productos.xlsx';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Download template error:', error);
-      toast({ title: 'Error al descargar plantilla', variant: 'destructive' });
-    }
+  const handleDownloadTemplate = () => {
+    const a = document.createElement('a');
+    a.href = '/templates/plantilla-productos.xlsx';
+    a.download = 'plantilla-productos.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
