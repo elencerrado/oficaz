@@ -689,6 +689,10 @@ export class DrizzleStorage implements IStorage {
       lastModifiedAt: schema.workSessions.lastModifiedAt,
       lastModifiedBy: schema.workSessions.lastModifiedBy,
       createdAt: schema.workSessions.createdAt,
+      clockInLatitude: schema.workSessions.clockInLatitude,
+      clockInLongitude: schema.workSessions.clockInLongitude,
+      clockOutLatitude: schema.workSessions.clockOutLatitude,
+      clockOutLongitude: schema.workSessions.clockOutLongitude,
       userName: schema.users.fullName,
       profilePicture: schema.users.profilePicture,
     }).from(schema.workSessions)
