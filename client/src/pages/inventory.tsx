@@ -437,7 +437,7 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
       
       const response = await fetch('/api/inventory/products/bulk-validate', {
         method: 'POST',
-        credentials: 'include',
+        headers: getAuthHeaders(),
         body: formData,
       });
       
