@@ -1341,134 +1341,67 @@ function MovementsTab() {
 
   return (
     <div className="space-y-4">
+      {/* Header con botones - cambia según si estamos editando o no */}
       <div className="flex flex-col sm:flex-row gap-3 justify-between">
-        <div className="flex gap-2">
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[180px]" data-testid="select-movement-type-filter">
-              <SelectValue placeholder="Tipo de movimiento" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los tipos</SelectItem>
-              <SelectItem value="in">Compra</SelectItem>
-              <SelectItem value="out">Venta</SelectItem>
-              <SelectItem value="transfer">Transferencia</SelectItem>
-              <SelectItem value="adjustment">Ajuste</SelectItem>
-              <SelectItem value="loan">Préstamo</SelectItem>
-              <SelectItem value="return">Devolución</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} data-testid="button-new-movement">
-          <Plus className="h-4 w-4 mr-2" />
-          Nuevo Movimiento
-        </Button>
+        {isDialogOpen ? (
+          <>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold dark:text-white">
+                {editingMovement ? `Editar Borrador - ${editingMovement.movementNumber}` : 'Nuevo Movimiento'}
+              </h3>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <Button type="button" variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }}>
+                Cancelar
+              </Button>
+              <Button 
+                variant="secondary"
+                onClick={() => handleSubmit('draft')} 
+                disabled={createMutation.isPending || updateMutation.isPending || lines.length === 0}
+                data-testid="button-save-draft"
+              >
+                {(createMutation.isPending || updateMutation.isPending) ? 'Guardando...' : 'Guardar borrador'}
+              </Button>
+              <Button 
+                onClick={() => handleSubmit('posted')} 
+                disabled={createMutation.isPending || updateMutation.isPending || lines.length === 0}
+                data-testid="button-confirm-movement"
+              >
+                {(createMutation.isPending || updateMutation.isPending) ? 'Confirmando...' : 'Confirmar y enviar'}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex gap-2">
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-[180px]" data-testid="select-movement-type-filter">
+                  <SelectValue placeholder="Tipo de movimiento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los tipos</SelectItem>
+                  <SelectItem value="in">Compra</SelectItem>
+                  <SelectItem value="out">Venta</SelectItem>
+                  <SelectItem value="transfer">Transferencia</SelectItem>
+                  <SelectItem value="adjustment">Ajuste</SelectItem>
+                  <SelectItem value="loan">Préstamo</SelectItem>
+                  <SelectItem value="return">Devolución</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} data-testid="button-new-movement">
+              <Plus className="h-4 w-4 mr-2" />
+              Nuevo Movimiento
+            </Button>
+          </>
+        )}
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center py-12"><LoadingSpinner /></div>
-      ) : movements.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <ArrowRightLeft className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">No hay movimientos todavía</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {movements.map(movement => (
-            <Card key={movement.id} className="hover:shadow-md transition-shadow dark:bg-gray-800">
-              <CardContent className="py-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-4">
-                    <div className="flex flex-col">
-                      <span className="font-mono text-sm font-medium dark:text-white">{movement.movementNumber}</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {new Date(movement.movementDate).toLocaleDateString('es-ES')}
-                      </span>
-                    </div>
-                    <Badge variant="outline" className="dark:border-gray-600 dark:text-gray-300">{typeLabels[movement.movementType] || movement.movementType}</Badge>
-                    <span className={`px-2 py-1 rounded text-xs ${statusLabels[movement.status]?.color || 'bg-gray-100 dark:bg-gray-700 dark:text-gray-300'}`}>
-                      {statusLabels[movement.status]?.label || movement.status}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    {movement.relatedPartyName && (
-                      <span className="text-sm text-gray-600 dark:text-gray-400">{movement.relatedPartyName}</span>
-                    )}
-                    <span className="font-medium dark:text-white">{parseFloat(movement.total).toFixed(2)} €</span>
-                    
-                    <div className="flex gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => openViewDialog(movement)}
-                        title="Ver detalles"
-                        data-testid={`button-view-movement-${movement.id}`}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {movement.status === 'draft' && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => openEditDialog(movement)}
-                          title="Editar borrador"
-                          data-testid={`button-edit-movement-${movement.id}`}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {movement.status === 'posted' && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => setRevertConfirm({ open: true, movement })}
-                          disabled={revertToDraftMutation.isPending}
-                          title="Revertir a borrador"
-                          data-testid={`button-revert-movement-${movement.id}`}
-                        >
-                          <RotateCcw className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => downloadPdf(movement.id, movement.movementNumber)}
-                        title="Descargar PDF"
-                        data-testid={`button-download-pdf-${movement.id}`}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="text-red-500 hover:text-red-700"
-                        onClick={() => setDeleteConfirm({ open: true, movement })}
-                        disabled={deleteMutation.isPending}
-                        title="Eliminar"
-                        data-testid={`button-delete-movement-${movement.id}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* New/Edit Movement Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setIsDialogOpen(open); }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingMovement ? `Editar Borrador - ${editingMovement.movementNumber}` : 'Nuevo Movimiento de Inventario'}</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+      {/* Contenido: Formulario inline o Lista de movimientos */}
+      {isDialogOpen ? (
+        <Card className="dark:bg-gray-800">
+          <CardContent className="pt-6 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label className="dark:text-gray-300">Tipo de movimiento *</Label>
                 <Select value={movementType} onValueChange={setMovementType}>
@@ -1592,7 +1525,7 @@ function MovementsTab() {
               {lines.length > 0 && (
                 <div className="mt-4 space-y-2">
                   {lines.map((line, index) => (
-                    <div key={index} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-2 rounded">
+                    <div key={index} className="flex items-center justify-between bg-gray-50 dark:bg-gray-900 p-3 rounded">
                       <div>
                         <span className="font-medium dark:text-white">{line.productName}</span>
                         <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
@@ -1610,7 +1543,7 @@ function MovementsTab() {
                     </div>
                   ))}
                   <div className="flex justify-end pt-2 border-t dark:border-gray-700">
-                    <span className="font-bold dark:text-white">Total: €{calculateTotal().toFixed(2)}</span>
+                    <span className="font-bold text-lg dark:text-white">Total: €{calculateTotal().toFixed(2)}</span>
                   </div>
                 </div>
               )}
@@ -1626,30 +1559,103 @@ function MovementsTab() {
                 data-testid="input-notes"
               />
             </div>
-          </div>
-
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button type="button" variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }}>
-              Cancelar
-            </Button>
-            <Button 
-              variant="secondary"
-              onClick={() => handleSubmit('draft')} 
-              disabled={createMutation.isPending || lines.length === 0}
-              data-testid="button-save-draft"
-            >
-              {createMutation.isPending ? 'Guardando...' : 'Guardar borrador'}
-            </Button>
-            <Button 
-              onClick={() => handleSubmit('posted')} 
-              disabled={createMutation.isPending || lines.length === 0}
-              data-testid="button-confirm-movement"
-            >
-              {createMutation.isPending ? 'Confirmando...' : 'Confirmar y enviar'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>
+      ) : isLoading ? (
+        <div className="flex justify-center py-12"><LoadingSpinner /></div>
+      ) : movements.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <ArrowRightLeft className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No hay movimientos todavía</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {movements.map(movement => (
+            <Card key={movement.id} className="hover:shadow-md transition-shadow dark:bg-gray-800">
+              <CardContent className="py-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col">
+                      <span className="font-mono text-sm font-medium dark:text-white">{movement.movementNumber}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(movement.movementDate).toLocaleDateString('es-ES')}
+                      </span>
+                    </div>
+                    <Badge variant="outline" className="dark:border-gray-600 dark:text-gray-300">{typeLabels[movement.movementType] || movement.movementType}</Badge>
+                    <span className={`px-2 py-1 rounded text-xs ${statusLabels[movement.status]?.color || 'bg-gray-100 dark:bg-gray-700 dark:text-gray-300'}`}>
+                      {statusLabels[movement.status]?.label || movement.status}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    {movement.relatedPartyName && (
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{movement.relatedPartyName}</span>
+                    )}
+                    <span className="font-medium dark:text-white">{parseFloat(movement.total).toFixed(2)} €</span>
+                    
+                    <div className="flex gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => openViewDialog(movement)}
+                        title="Ver detalles"
+                        data-testid={`button-view-movement-${movement.id}`}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      {movement.status === 'draft' && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => openEditDialog(movement)}
+                          title="Editar borrador"
+                          data-testid={`button-edit-movement-${movement.id}`}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {movement.status === 'posted' && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => setRevertConfirm({ open: true, movement })}
+                          disabled={revertToDraftMutation.isPending}
+                          title="Revertir a borrador"
+                          data-testid={`button-revert-movement-${movement.id}`}
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => downloadPdf(movement.id, movement.movementNumber)}
+                        title="Descargar PDF"
+                        data-testid={`button-download-pdf-${movement.id}`}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="text-red-500 hover:text-red-700"
+                        onClick={() => setDeleteConfirm({ open: true, movement })}
+                        disabled={deleteMutation.isPending}
+                        title="Eliminar"
+                        data-testid={`button-delete-movement-${movement.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* View Movement Dialog */}
       <Dialog open={viewDialog.open} onOpenChange={(open) => setViewDialog({ open, movement: open ? viewDialog.movement : null, loading: false })}>
