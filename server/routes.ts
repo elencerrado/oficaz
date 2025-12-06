@@ -29,7 +29,7 @@ import { initializeWebSocketServer, getWebSocketServer } from './websocket.js';
 import { JWT_SECRET } from './utils/jwt-secret.js';
 import Groq from 'groq-sdk';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { PDFDocument, rgb } from 'pdf-lib';
 import * as XLSX from 'xlsx';
 
@@ -5774,7 +5774,7 @@ Responde directamente a este email para contactar con la persona.
         r.description.substring(0, 50) + (r.description.length > 50 ? '...' : '')
       ]);
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: startDate || endDate ? 48 : 40,
         head: [['Fecha', 'Empleado', 'Ubicación', 'Horario', 'Duración', 'Cliente', 'Descripción']],
         body: tableData,
@@ -17196,7 +17196,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         `${parseFloat(line.total).toFixed(2)} €`,
       ]);
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: tableStartY,
         head: [['#', 'Ref.', 'Descripción', 'Cant.', 'Ud.', 'P. Unit.', 'IVA', 'Importe']],
         body: tableData,
