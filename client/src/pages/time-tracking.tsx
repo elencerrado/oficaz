@@ -2327,6 +2327,69 @@ export default function TimeTracking() {
     );
   };
 
+  // Helper function to consolidate sessions that are close together (within 15 minutes gap)
+  const consolidateSessions = (sessions: any[]) => {
+    if (!sessions || sessions.length <= 1) return { consolidated: sessions, wasConsolidated: false };
+    
+    const CONSOLIDATION_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes in milliseconds
+    
+    // Sort sessions by clockIn time
+    const sortedSessions = [...sessions].sort((a, b) => 
+      new Date(a.clockIn).getTime() - new Date(b.clockIn).getTime()
+    );
+    
+    const consolidatedGroups: any[][] = [];
+    let currentGroup: any[] = [sortedSessions[0]];
+    
+    for (let i = 1; i < sortedSessions.length; i++) {
+      const prevSession = currentGroup[currentGroup.length - 1];
+      const currSession = sortedSessions[i];
+      
+      // Only consolidate if both sessions have clockOut (completed sessions)
+      if (prevSession.clockOut && currSession.clockIn) {
+        const prevClockOut = new Date(prevSession.clockOut).getTime();
+        const currClockIn = new Date(currSession.clockIn).getTime();
+        const gap = currClockIn - prevClockOut;
+        
+        if (gap >= 0 && gap <= CONSOLIDATION_THRESHOLD_MS) {
+          // Sessions are close enough, add to current group
+          currentGroup.push(currSession);
+        } else {
+          // Gap too large, start new group
+          consolidatedGroups.push(currentGroup);
+          currentGroup = [currSession];
+        }
+      } else {
+        // Can't consolidate incomplete sessions
+        consolidatedGroups.push(currentGroup);
+        currentGroup = [currSession];
+      }
+    }
+    consolidatedGroups.push(currentGroup);
+    
+    // Create consolidated session objects
+    const consolidated = consolidatedGroups.map(group => {
+      if (group.length === 1) return group[0];
+      
+      // Merge all break periods from all sessions in the group
+      const allBreakPeriods = group.flatMap((s: any) => s.breakPeriods || []);
+      
+      return {
+        ...group[0],
+        id: `consolidated-${group[0].id}`,
+        clockIn: group[0].clockIn,
+        clockOut: group[group.length - 1].clockOut,
+        breakPeriods: allBreakPeriods,
+        isConsolidated: true,
+        originalSessions: group,
+        originalCount: group.length
+      };
+    });
+    
+    const wasConsolidated = consolidatedGroups.some(g => g.length > 1);
+    return { consolidated, wasConsolidated };
+  };
+
   // Daily Timeline Bar Component for displaying multiple sessions in a single day
   const DailyTimelineBar = ({ dayData }: { dayData: any }) => {
     if (!dayData.sessions || dayData.sessions.length === 0) {
@@ -2553,8 +2616,11 @@ export default function TimeTracking() {
       );
     }
 
+    // Apply session consolidation for visual display
+    const { consolidated: consolidatedSessions, wasConsolidated } = consolidateSessions(dayData.sessions);
+    
     // Calcular el rango total del día (desde primera entrada hasta última salida) - solo sesiones completadas
-    const allTimes = dayData.sessions.flatMap((session: any) => [
+    const allTimes = consolidatedSessions.flatMap((session: any) => [
       new Date(session.clockIn),
       session.clockOut ? new Date(session.clockOut) : null
     ]).filter(Boolean);
@@ -2566,9 +2632,18 @@ export default function TimeTracking() {
 
     return (
       <div className="space-y-0">
+        {/* Consolidation indicator */}
+        {wasConsolidated && (
+          <div className="flex items-center gap-1 mb-1">
+            <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded">
+              {dayData.sessions.length} fichajes → {consolidatedSessions.length} consolidados
+            </span>
+          </div>
+        )}
+        
         {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
         <div className="relative h-4">
-          {dayData.sessions.map((session: any, sessionIndex: number) => {
+          {consolidatedSessions.map((session: any, sessionIndex: number) => {
             return (session.breakPeriods || []).map((breakPeriod: any, breakIndex: number) => {
               if (!breakPeriod.breakEnd) return null;
               
@@ -2608,7 +2683,7 @@ export default function TimeTracking() {
           <div className="h-5 bg-gray-200 rounded-sm relative overflow-hidden">
             
             {/* Segmentos de trabajo (barras azules minimalistas) con descansos slider */}
-            {dayData.sessions.filter((session: any) => session.clockOut).map((session: any, sessionIndex: number) => {
+            {consolidatedSessions.filter((session: any) => session.clockOut).map((session: any, sessionIndex: number) => {
               const sessionStart = new Date(session.clockIn);
               const sessionEnd = new Date(session.clockOut);
               
@@ -2671,7 +2746,7 @@ export default function TimeTracking() {
         <div className="relative h-4" style={{ zIndex: 10 }}>
           {(() => {
             // Preparar todas las etiquetas de tiempo con sus posiciones
-            const completedSessions = dayData.sessions.filter((session: any) => session.clockOut);
+            const completedSessions = consolidatedSessions.filter((session: any) => session.clockOut);
             const timeLabels: Array<{
               text: string;
               position: number;
