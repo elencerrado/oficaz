@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/lib/auth';
@@ -42,7 +44,9 @@ import {
   SkipForward,
   RefreshCw,
   RotateCcw,
-  Eye
+  Eye,
+  Check,
+  ChevronsUpDown
 } from 'lucide-react';
 import { useRef } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -1120,6 +1124,7 @@ function MovementsTab() {
   const [notes, setNotes] = useState('');
   const [lines, setLines] = useState<MovementLine[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<string>('');
+  const [productSearchOpen, setProductSearchOpen] = useState(false);
   const [lineQuantity, setLineQuantity] = useState('1');
   const [revertConfirm, setRevertConfirm] = useState<{ open: boolean; movement: Movement | null }>({ open: false, movement: null });
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; movement: Movement | null }>({ open: false, movement: null });
@@ -1526,18 +1531,50 @@ function MovementsTab() {
             <div className="border dark:border-gray-700 rounded-lg p-4">
               <Label className="dark:text-gray-300 mb-2 block">Añadir productos</Label>
               <div className="flex gap-2">
-                <Select value={selectedProductId} onValueChange={setSelectedProductId}>
-                  <SelectTrigger className="flex-1" data-testid="select-product">
-                    <SelectValue placeholder="Seleccionar producto" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products.filter(p => p.isActive).map(p => (
-                      <SelectItem key={p.id} value={p.id.toString()}>
-                        {p.name} ({p.sku})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={productSearchOpen} onOpenChange={setProductSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={productSearchOpen}
+                      className="flex-1 justify-between dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                      data-testid="select-product"
+                    >
+                      {selectedProductId
+                        ? products.find(p => p.id.toString() === selectedProductId)?.name || "Seleccionar producto"
+                        : "Buscar producto..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Buscar producto por nombre o SKU..." />
+                      <CommandList>
+                        <CommandEmpty>No se encontraron productos.</CommandEmpty>
+                        <CommandGroup>
+                          {products.filter(p => p.isActive).map(p => (
+                            <CommandItem
+                              key={p.id}
+                              value={`${p.name} ${p.sku}`}
+                              onSelect={() => {
+                                setSelectedProductId(p.id.toString());
+                                setProductSearchOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={`mr-2 h-4 w-4 ${selectedProductId === p.id.toString() ? "opacity-100" : "opacity-0"}`}
+                              />
+                              <div className="flex flex-col">
+                                <span>{p.name}</span>
+                                <span className="text-xs text-gray-500">{p.sku}</span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <Input
                   type="number"
                   min="1"
