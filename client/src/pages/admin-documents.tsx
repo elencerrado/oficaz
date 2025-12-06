@@ -1408,20 +1408,47 @@ export default function AdminDocuments() {
                             </div>
                           </div>
 
-                          {/* Metadata section - organized for mobile */}
-                          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                            <span>{formatFileSize(document.fileSize)}</span>
-                            <span className="hidden sm:inline">•</span>
-                            <span>
+                          {/* Metadata section - fixed width columns for alignment */}
+                          <div className="hidden sm:flex items-center text-sm text-muted-foreground">
+                            <span className="w-20 text-right">{formatFileSize(document.fileSize)}</span>
+                            <span className="w-36 text-center">
                               {(() => {
-                                // La fecha del servidor está en UTC, convertir a hora local española
                                 const utcDate = new Date(document.createdAt);
-                                // Agregar 2 horas para convertir de UTC a hora española (GMT+2)
                                 const localDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
                                 return format(localDate, 'd MMM yyyy HH:mm', { locale: es });
                               })()}
                             </span>
-                            {/* Signature status for nóminas or documents requiring signature */}
+                            <span className="w-28 text-center">
+                              {(() => {
+                                const fileName = document.originalName || document.fileName || '';
+                                const analysis = analyzeFileName(fileName, employees);
+                                const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                return requiresSignatureBadge ? (
+                                  <Badge 
+                                    variant={document.isAccepted ? 'default' : 'outline'}
+                                    className={`text-xs ${
+                                      document.isAccepted 
+                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' 
+                                        : 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300'
+                                    }`}
+                                  >
+                                    {document.isAccepted ? '✓ Firmada' : 'Pendiente'}
+                                  </Badge>
+                                ) : null;
+                              })()}
+                            </span>
+                          </div>
+                          {/* Mobile: stacked layout */}
+                          <div className="sm:hidden flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                            <span>{formatFileSize(document.fileSize)}</span>
+                            <span>•</span>
+                            <span>
+                              {(() => {
+                                const utcDate = new Date(document.createdAt);
+                                const localDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
+                                return format(localDate, 'd MMM yyyy', { locale: es });
+                              })()}
+                            </span>
                             {(() => {
                               const fileName = document.originalName || document.fileName || '';
                               const analysis = analyzeFileName(fileName, employees);
@@ -1435,7 +1462,7 @@ export default function AdminDocuments() {
                                       : 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300'
                                   }`}
                                 >
-                                  {document.isAccepted ? '✓ Firmada' : 'Pendiente firma'}
+                                  {document.isAccepted ? '✓ Firmada' : 'Pendiente'}
                                 </Badge>
                               );
                             })()}
