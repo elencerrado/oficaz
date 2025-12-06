@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { TabNavigation } from '@/components/ui/tab-navigation';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -355,7 +356,7 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
   const [currentConflictIndex, setCurrentConflictIndex] = useState(0);
   const [resolutions, setResolutions] = useState<Record<string, 'replace' | 'skip'>>({});
   const [isImporting, setIsImporting] = useState(false);
-  const [showBulkDialog, setShowBulkDialog] = useState(false);
+  const [productModalTab, setProductModalTab] = useState<'individual' | 'bulk'>('individual');
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ['/api/inventory/products', { search: searchTerm, categoryId: categoryFilter !== 'all' ? categoryFilter : undefined }],
@@ -459,7 +460,6 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
       
       const result: ValidationResult = await response.json();
       setValidationResult(result);
-      setShowBulkDialog(true);
     } catch (error: any) {
       toast({ title: error.message || 'Error al validar archivo', variant: 'destructive' });
     } finally {
@@ -506,8 +506,9 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
         description: `${result.created} creados, ${result.updated} actualizados, ${result.skipped} omitidos`,
       });
       
-      setShowBulkDialog(false);
+      setIsDialogOpen(false);
       setValidationResult(null);
+      setProductModalTab('individual');
     } catch (error: any) {
       toast({ title: 'Error en la importación', variant: 'destructive' });
     } finally {
@@ -776,296 +777,501 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
         </Card>
       )}
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => { 
+        setIsDialogOpen(open); 
+        if (!open) {
+          setValidationResult(null);
+          setProductModalTab('individual');
+        }
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingProduct ? 'Editar Producto' : 'Nuevo Producto'}</DialogTitle>
+            <DialogTitle>{editingProduct ? 'Editar Producto' : 'Añadir Productos'}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nombre *</Label>
-                <Input 
-                  id="name" 
-                  name="name" 
-                  defaultValue={editingProduct?.name} 
-                  required 
-                  data-testid="input-product-name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="sku">SKU *</Label>
-                <Input 
-                  id="sku" 
-                  name="sku" 
-                  defaultValue={editingProduct?.sku} 
-                  required 
-                  data-testid="input-product-sku"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="barcode">Código de barras</Label>
-                <Input 
-                  id="barcode" 
-                  name="barcode" 
-                  defaultValue={editingProduct?.barcode || ''} 
-                  data-testid="input-product-barcode"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="categoryId">Categoría</Label>
-                <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                  <SelectTrigger data-testid="select-product-category">
-                    <SelectValue placeholder="Seleccionar categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map(cat => (
-                      <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Descripción</Label>
-              <Textarea 
-                id="description" 
-                name="description" 
-                defaultValue={editingProduct?.description || ''} 
-                rows={2}
-                data-testid="input-product-description"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="costPrice">Precio coste</Label>
-                <Input 
-                  id="costPrice" 
-                  name="costPrice" 
-                  type="number" 
-                  step="0.01" 
-                  defaultValue={editingProduct?.costPrice || '0'} 
-                  data-testid="input-product-cost"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="salePrice">Precio venta</Label>
-                <Input 
-                  id="salePrice" 
-                  name="salePrice" 
-                  type="number" 
-                  step="0.01" 
-                  defaultValue={editingProduct?.salePrice || '0'} 
-                  data-testid="input-product-sale"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="vatRate">IVA (%)</Label>
-                <Select value={selectedVatRate} onValueChange={setSelectedVatRate}>
-                  <SelectTrigger data-testid="select-product-vat">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">0%</SelectItem>
-                    <SelectItem value="4">4%</SelectItem>
-                    <SelectItem value="10">10%</SelectItem>
-                    <SelectItem value="21">21%</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="minStock">Stock mín.</Label>
-                <Input 
-                  id="minStock" 
-                  name="minStock" 
-                  type="number" 
-                  defaultValue={editingProduct?.minStock || 0} 
-                  data-testid="input-product-minstock"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="unitOfMeasure">Unidad de medida</Label>
-                <Input 
-                  id="unitOfMeasure" 
-                  name="unitOfMeasure" 
-                  defaultValue={editingProduct?.unitOfMeasure || 'unidad'} 
-                  data-testid="input-product-unit"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="unitAbbreviation">Abreviatura</Label>
-                <Input 
-                  id="unitAbbreviation" 
-                  name="unitAbbreviation" 
-                  defaultValue={editingProduct?.unitAbbreviation || 'ud.'} 
-                  data-testid="input-product-unit-abbr"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-4 pt-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <Switch name="isActive" defaultChecked={editingProduct?.isActive ?? true} />
-                <span className="text-sm dark:text-gray-300">Activo</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <Switch name="isReturnable" defaultChecked={editingProduct?.isReturnable ?? false} />
-                <span className="text-sm dark:text-gray-300">Retornable</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <Switch name="isService" defaultChecked={editingProduct?.isService ?? false} />
-                <span className="text-sm dark:text-gray-300">Es servicio</span>
-              </label>
-            </div>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending} data-testid="button-save-product">
-                {createMutation.isPending || updateMutation.isPending ? 'Guardando...' : 'Guardar'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Bulk Import Dialog */}
-      <Dialog open={showBulkDialog} onOpenChange={setShowBulkDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileSpreadsheet className="h-5 w-5" />
-              Carga Masiva de Productos
-            </DialogTitle>
-          </DialogHeader>
-
-          {validationResult && (
-            <div className="space-y-4">
-              {/* Summary */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-center">
-                  <p className="text-2xl font-bold dark:text-white">{validationResult.validProducts}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Total válidos</p>
+          
+          {editingProduct ? (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nombre *</Label>
+                  <Input 
+                    id="name" 
+                    name="name" 
+                    defaultValue={editingProduct?.name} 
+                    required 
+                    data-testid="input-product-name"
+                  />
                 </div>
-                <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg text-center">
-                  <p className="text-2xl font-bold text-green-700 dark:text-green-400">{validationResult.newProducts}</p>
-                  <p className="text-xs text-green-600 dark:text-green-400">Nuevos</p>
-                </div>
-                <div className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-lg text-center">
-                  <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">{validationResult.duplicates}</p>
-                  <p className="text-xs text-yellow-600 dark:text-yellow-400">Duplicados</p>
-                </div>
-                <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-lg text-center">
-                  <p className="text-2xl font-bold text-red-700 dark:text-red-400">{validationResult.errors.length}</p>
-                  <p className="text-xs text-red-600 dark:text-red-400">Errores</p>
+                <div className="space-y-2">
+                  <Label htmlFor="sku">SKU *</Label>
+                  <Input 
+                    id="sku" 
+                    name="sku" 
+                    defaultValue={editingProduct?.sku} 
+                    required 
+                    data-testid="input-product-sku"
+                  />
                 </div>
               </div>
 
-              {/* Errors */}
-              {validationResult.errors.length > 0 && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    <p className="font-medium mb-1">Errores encontrados:</p>
-                    <ul className="text-sm list-disc pl-4">
-                      {validationResult.errors.slice(0, 5).map((err, i) => (
-                        <li key={i}>Fila {err.row}: {err.message}</li>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="barcode">Código de barras</Label>
+                  <Input 
+                    id="barcode" 
+                    name="barcode" 
+                    defaultValue={editingProduct?.barcode || ''} 
+                    data-testid="input-product-barcode"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="categoryId">Categoría</Label>
+                  <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+                    <SelectTrigger data-testid="select-product-category">
+                      <SelectValue placeholder="Seleccionar categoría" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map(cat => (
+                        <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
                       ))}
-                      {validationResult.errors.length > 5 && (
-                        <li>...y {validationResult.errors.length - 5} más</li>
-                      )}
-                    </ul>
-                  </AlertDescription>
-                </Alert>
-              )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-              {/* Conflict Resolution */}
-              {duplicateProducts.length > 0 && (
-                <div className="border dark:border-gray-700 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium dark:text-white">
-                      Resolver conflictos ({currentConflictIndex + 1}/{duplicateProducts.length})
-                    </h4>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => handleResolveAll('skip')}>
-                        <SkipForward className="h-3 w-3 mr-1" />
-                        Omitir todos
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleResolveAll('replace')}>
-                        <RefreshCw className="h-3 w-3 mr-1" />
-                        Reemplazar todos
-                      </Button>
+              <div className="space-y-2">
+                <Label htmlFor="description">Descripción</Label>
+                <Textarea 
+                  id="description" 
+                  name="description" 
+                  defaultValue={editingProduct?.description || ''} 
+                  rows={2}
+                  data-testid="input-product-description"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="costPrice">Precio coste</Label>
+                  <Input 
+                    id="costPrice" 
+                    name="costPrice" 
+                    type="number" 
+                    step="0.01" 
+                    defaultValue={editingProduct?.costPrice || '0'} 
+                    data-testid="input-product-cost"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="salePrice">Precio venta</Label>
+                  <Input 
+                    id="salePrice" 
+                    name="salePrice" 
+                    type="number" 
+                    step="0.01" 
+                    defaultValue={editingProduct?.salePrice || '0'} 
+                    data-testid="input-product-sale"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="vatRate">IVA (%)</Label>
+                  <Select value={selectedVatRate} onValueChange={setSelectedVatRate}>
+                    <SelectTrigger data-testid="select-product-vat">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">0%</SelectItem>
+                      <SelectItem value="4">4%</SelectItem>
+                      <SelectItem value="10">10%</SelectItem>
+                      <SelectItem value="21">21%</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="minStock">Stock mín.</Label>
+                  <Input 
+                    id="minStock" 
+                    name="minStock" 
+                    type="number" 
+                    defaultValue={editingProduct?.minStock || 0} 
+                    data-testid="input-product-minstock"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="unitOfMeasure">Unidad de medida</Label>
+                  <Input 
+                    id="unitOfMeasure" 
+                    name="unitOfMeasure" 
+                    defaultValue={editingProduct?.unitOfMeasure || 'unidad'} 
+                    data-testid="input-product-unit"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="unitAbbreviation">Abreviatura</Label>
+                  <Input 
+                    id="unitAbbreviation" 
+                    name="unitAbbreviation" 
+                    defaultValue={editingProduct?.unitAbbreviation || 'ud.'} 
+                    data-testid="input-product-unit-abbr"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-4 pt-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Switch name="isActive" defaultChecked={editingProduct?.isActive ?? true} />
+                  <span className="text-sm dark:text-gray-300">Activo</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Switch name="isReturnable" defaultChecked={editingProduct?.isReturnable ?? false} />
+                  <span className="text-sm dark:text-gray-300">Retornable</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Switch name="isService" defaultChecked={editingProduct?.isService ?? false} />
+                  <span className="text-sm dark:text-gray-300">Es servicio</span>
+                </label>
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending} data-testid="button-save-product">
+                  {createMutation.isPending || updateMutation.isPending ? 'Guardando...' : 'Guardar'}
+                </Button>
+              </DialogFooter>
+            </form>
+          ) : (
+            <Tabs value={productModalTab} onValueChange={(v) => setProductModalTab(v as 'individual' | 'bulk')} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="individual" className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Individual
+                </TabsTrigger>
+                <TabsTrigger value="bulk" className="flex items-center gap-2">
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Carga masiva
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="individual" className="mt-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Nombre *</Label>
+                      <Input 
+                        id="name" 
+                        name="name" 
+                        required 
+                        data-testid="input-product-name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="sku">SKU *</Label>
+                      <Input 
+                        id="sku" 
+                        name="sku" 
+                        required 
+                        data-testid="input-product-sku"
+                      />
                     </div>
                   </div>
 
-                  {currentConflict && !resolutions[currentConflict.sku] && (
-                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                      <div className="flex items-start gap-3">
-                        <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
-                        <div className="flex-1">
-                          <p className="font-medium text-yellow-800 dark:text-yellow-300">
-                            SKU duplicado: {currentConflict.sku}
-                          </p>
-                          <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <p className="text-gray-500 dark:text-gray-400">Nuevo producto:</p>
-                              <p className="font-medium dark:text-white">{currentConflict.name}</p>
-                              <p className="text-xs text-gray-400">€{currentConflict.salePrice}</p>
-                            </div>
-                            <div>
-                              <p className="text-gray-500 dark:text-gray-400">Existente:</p>
-                              <p className="font-medium dark:text-white">{currentConflict.existingProduct?.name}</p>
-                              <p className="text-xs text-gray-400">SKU: {currentConflict.existingProduct?.sku}</p>
-                            </div>
-                          </div>
-                          <div className="flex gap-2 mt-3">
-                            <Button size="sm" variant="outline" onClick={() => handleResolveConflict('skip')}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="barcode">Código de barras</Label>
+                      <Input 
+                        id="barcode" 
+                        name="barcode" 
+                        data-testid="input-product-barcode"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="categoryId">Categoría</Label>
+                      <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+                        <SelectTrigger data-testid="select-product-category">
+                          <SelectValue placeholder="Seleccionar categoría" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map(cat => (
+                            <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Descripción</Label>
+                    <Textarea 
+                      id="description" 
+                      name="description" 
+                      rows={2}
+                      data-testid="input-product-description"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="costPrice">Precio coste</Label>
+                      <Input 
+                        id="costPrice" 
+                        name="costPrice" 
+                        type="number" 
+                        step="0.01" 
+                        defaultValue="0"
+                        data-testid="input-product-cost"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="salePrice">Precio venta</Label>
+                      <Input 
+                        id="salePrice" 
+                        name="salePrice" 
+                        type="number" 
+                        step="0.01" 
+                        defaultValue="0"
+                        data-testid="input-product-sale"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="vatRate">IVA (%)</Label>
+                      <Select value={selectedVatRate} onValueChange={setSelectedVatRate}>
+                        <SelectTrigger data-testid="select-product-vat">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">0%</SelectItem>
+                          <SelectItem value="4">4%</SelectItem>
+                          <SelectItem value="10">10%</SelectItem>
+                          <SelectItem value="21">21%</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="minStock">Stock mín.</Label>
+                      <Input 
+                        id="minStock" 
+                        name="minStock" 
+                        type="number" 
+                        defaultValue={0}
+                        data-testid="input-product-minstock"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="unitOfMeasure">Unidad de medida</Label>
+                      <Input 
+                        id="unitOfMeasure" 
+                        name="unitOfMeasure" 
+                        defaultValue="unidad"
+                        data-testid="input-product-unit"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="unitAbbreviation">Abreviatura</Label>
+                      <Input 
+                        id="unitAbbreviation" 
+                        name="unitAbbreviation" 
+                        defaultValue="ud."
+                        data-testid="input-product-unit-abbr"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-4 pt-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Switch name="isActive" defaultChecked={true} />
+                      <span className="text-sm dark:text-gray-300">Activo</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Switch name="isReturnable" defaultChecked={false} />
+                      <span className="text-sm dark:text-gray-300">Retornable</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Switch name="isService" defaultChecked={false} />
+                      <span className="text-sm dark:text-gray-300">Es servicio</span>
+                    </label>
+                  </div>
+
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={createMutation.isPending} data-testid="button-save-product">
+                      {createMutation.isPending ? 'Guardando...' : 'Guardar'}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="bulk" className="mt-4">
+                {!validationResult ? (
+                  <div className="space-y-6">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                      <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2 flex items-center gap-2">
+                        <FileSpreadsheet className="h-4 w-4" />
+                        ¿Cómo funciona?
+                      </h4>
+                      <ol className="text-sm text-blue-700 dark:text-blue-400 space-y-1 list-decimal pl-4">
+                        <li>Descarga la plantilla Excel con el formato correcto</li>
+                        <li>Rellena los productos en la hoja "Productos"</li>
+                        <li>Los campos Nombre y SKU son obligatorios</li>
+                        <li>Si pones una categoría que no existe, se creará automáticamente</li>
+                        <li>Sube el archivo para validar e importar</li>
+                      </ol>
+                    </div>
+
+                    <div className="flex flex-col gap-4">
+                      <div className="border-2 border-dashed dark:border-gray-700 rounded-lg p-8 text-center">
+                        <Upload className="h-10 w-10 mx-auto text-gray-400 mb-3" />
+                        <p className="text-gray-600 dark:text-gray-400 mb-3">
+                          Arrastra un archivo Excel o haz clic para seleccionar
+                        </p>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept=".xlsx,.xls"
+                          className="hidden"
+                          onChange={handleFileUpload}
+                        />
+                        <Button 
+                          variant="outline" 
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isValidating}
+                        >
+                          {isValidating ? <LoadingSpinner /> : <Upload className="h-4 w-4 mr-2" />}
+                          Seleccionar archivo
+                        </Button>
+                      </div>
+
+                      <div className="flex justify-center">
+                        <Button variant="link" onClick={handleDownloadTemplate} className="text-blue-600 dark:text-blue-400">
+                          <Download className="h-4 w-4 mr-2" />
+                          Descargar plantilla Excel
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-center">
+                        <p className="text-2xl font-bold dark:text-white">{validationResult.validProducts}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Total válidos</p>
+                      </div>
+                      <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg text-center">
+                        <p className="text-2xl font-bold text-green-700 dark:text-green-400">{validationResult.newProducts}</p>
+                        <p className="text-xs text-green-600 dark:text-green-400">Nuevos</p>
+                      </div>
+                      <div className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-lg text-center">
+                        <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">{validationResult.duplicates}</p>
+                        <p className="text-xs text-yellow-600 dark:text-yellow-400">Duplicados</p>
+                      </div>
+                      <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-lg text-center">
+                        <p className="text-2xl font-bold text-red-700 dark:text-red-400">{validationResult.errors.length}</p>
+                        <p className="text-xs text-red-600 dark:text-red-400">Errores</p>
+                      </div>
+                    </div>
+
+                    {validationResult.errors.length > 0 && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          <p className="font-medium mb-1">Errores encontrados:</p>
+                          <ul className="text-sm list-disc pl-4">
+                            {validationResult.errors.slice(0, 5).map((err, i) => (
+                              <li key={i}>Fila {err.row}: {err.message}</li>
+                            ))}
+                            {validationResult.errors.length > 5 && (
+                              <li>...y {validationResult.errors.length - 5} más</li>
+                            )}
+                          </ul>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {duplicateProducts.length > 0 && (
+                      <div className="border dark:border-gray-700 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-medium dark:text-white">
+                            Resolver conflictos ({currentConflictIndex + 1}/{duplicateProducts.length})
+                          </h4>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => handleResolveAll('skip')}>
                               <SkipForward className="h-3 w-3 mr-1" />
-                              Omitir
+                              Omitir todos
                             </Button>
-                            <Button size="sm" onClick={() => handleResolveConflict('replace')}>
+                            <Button size="sm" variant="outline" onClick={() => handleResolveAll('replace')}>
                               <RefreshCw className="h-3 w-3 mr-1" />
-                              Reemplazar
+                              Reemplazar todos
                             </Button>
                           </div>
                         </div>
+
+                        {currentConflict && !resolutions[currentConflict.sku] && (
+                          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                            <div className="flex items-start gap-3">
+                              <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                              <div className="flex-1">
+                                <p className="font-medium text-yellow-800 dark:text-yellow-300">
+                                  SKU duplicado: {currentConflict.sku}
+                                </p>
+                                <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+                                  <div>
+                                    <p className="text-gray-500 dark:text-gray-400">Nuevo:</p>
+                                    <p className="font-medium dark:text-white">{currentConflict.name}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-500 dark:text-gray-400">Existente:</p>
+                                    <p className="font-medium dark:text-white">{currentConflict.existingProduct?.name}</p>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2 mt-3">
+                                  <Button size="sm" variant="outline" onClick={() => handleResolveConflict('skip')}>
+                                    Omitir
+                                  </Button>
+                                  <Button size="sm" onClick={() => handleResolveConflict('replace')}>
+                                    Reemplazar
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {allConflictsResolved && (
+                          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center gap-2">
+                            <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            <span className="text-green-800 dark:text-green-300">
+                              Todos los conflictos resueltos
+                            </span>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {allConflictsResolved && (
-                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-                      <span className="text-green-800 dark:text-green-300">
-                        Todos los conflictos resueltos
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <DialogFooter>
-                <Button variant="outline" onClick={() => { setShowBulkDialog(false); setValidationResult(null); }}>
-                  Cancelar
-                </Button>
-                <Button 
-                  onClick={handleImport} 
-                  disabled={isImporting || (duplicateProducts.length > 0 && !allConflictsResolved)}
-                  data-testid="button-confirm-import"
-                >
-                  {isImporting ? 'Importando...' : `Importar ${validationResult.validProducts} productos`}
-                </Button>
-              </DialogFooter>
-            </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setValidationResult(null)}>
+                        Volver
+                      </Button>
+                      <Button 
+                        onClick={handleImport} 
+                        disabled={isImporting || (duplicateProducts.length > 0 && !allConflictsResolved)}
+                        data-testid="button-confirm-import"
+                      >
+                        {isImporting ? 'Importando...' : `Importar ${validationResult.validProducts} productos`}
+                      </Button>
+                    </DialogFooter>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           )}
         </DialogContent>
       </Dialog>
