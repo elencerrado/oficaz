@@ -2616,8 +2616,11 @@ export default function TimeTracking() {
       );
     }
 
+    // Apply session consolidation for visual display
+    const { consolidated: consolidatedSessions, wasConsolidated } = consolidateSessions(dayData.sessions);
+    
     // Calcular el rango total del día (desde primera entrada hasta última salida) - solo sesiones completadas
-    const allTimes = dayData.sessions.flatMap((session: any) => [
+    const allTimes = consolidatedSessions.flatMap((session: any) => [
       new Date(session.clockIn),
       session.clockOut ? new Date(session.clockOut) : null
     ]).filter(Boolean);
@@ -2629,9 +2632,18 @@ export default function TimeTracking() {
 
     return (
       <div className="space-y-0">
+        {/* Consolidation indicator */}
+        {wasConsolidated && (
+          <div className="flex items-center gap-1 mb-1">
+            <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded">
+              {dayData.sessions.length} fichajes → {consolidatedSessions.length} consolidados
+            </span>
+          </div>
+        )}
+        
         {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
         <div className="relative h-4">
-          {dayData.sessions.map((session: any, sessionIndex: number) => {
+          {consolidatedSessions.map((session: any, sessionIndex: number) => {
             return (session.breakPeriods || []).map((breakPeriod: any, breakIndex: number) => {
               if (!breakPeriod.breakEnd) return null;
               
@@ -2670,64 +2682,63 @@ export default function TimeTracking() {
           {/* Línea base gris minimalista */}
           <div className="h-5 bg-gray-200 rounded-sm relative overflow-hidden">
             
-            {/* Barra consolidada dividida en segmentos iguales por número de fichajes */}
-            {(() => {
-              const completedSessions = dayData.sessions.filter((s: any) => s.clockOut);
-              const sessionCount = completedSessions.length;
-              if (sessionCount === 0) return null;
+            {/* Segmentos de trabajo (barras azules minimalistas) con descansos slider */}
+            {consolidatedSessions.filter((session: any) => session.clockOut).map((session: any, sessionIndex: number) => {
+              const sessionStart = new Date(session.clockIn);
+              const sessionEnd = new Date(session.clockOut);
               
-              const gapPercentage = 0.5; // Pequeño gap entre segmentos
-              const totalGaps = sessionCount - 1;
-              const availableWidth = 100 - (totalGaps * gapPercentage);
-              const segmentWidth = availableWidth / sessionCount;
+              // Posición relativa dentro del día
+              const startOffset = (sessionStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
+              const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
               
-              return completedSessions.map((session: any, sessionIndex: number) => {
-                const leftPercentage = sessionIndex * (segmentWidth + gapPercentage);
-                
-                return (
-                  <div key={sessionIndex} className="relative">
-                    {/* Segmento azul */}
-                    <div
-                      className="absolute top-0 h-5 bg-blue-500 rounded-sm"
-                      style={{
-                        left: `${leftPercentage}%`,
-                        width: `${segmentWidth}%`
-                      }}
-                      title={`Fichaje ${sessionIndex + 1}: ${formatTime(new Date(session.clockIn))} - ${formatTime(new Date(session.clockOut))}`}
-                    />
+              const leftPercentage = (startOffset / totalDayDuration) * 100;
+              const widthPercentage = (sessionDuration / totalDayDuration) * 100;
+              
+              return (
+                <div key={sessionIndex} className="relative">
+                  {/* Barra azul minimalista */}
+                  <div
+                    className="absolute top-0 h-5 bg-blue-500 rounded-sm"
+                    style={{
+                      left: `${leftPercentage}%`,
+                      width: `${widthPercentage}%`
+                    }}
+                  />
+                  
+                  {/* Descansos como sliders dentro de la barra azul */}
+                  {(session.breakPeriods || []).map((breakPeriod: any, breakIndex: number) => {
+                    if (!breakPeriod.breakEnd) return null;
                     
-                    {/* Descansos distribuidos proporcionalmente dentro del segmento */}
-                    {(session.breakPeriods || []).map((breakPeriod: any, breakIndex: number) => {
-                      if (!breakPeriod.breakEnd) return null;
-                      
-                      const sessionStart = new Date(session.clockIn);
-                      const sessionEnd = new Date(session.clockOut);
-                      const breakStart = new Date(breakPeriod.breakStart);
-                      const breakEnd = new Date(breakPeriod.breakEnd);
-                      
-                      const sessionDuration = sessionEnd.getTime() - sessionStart.getTime();
-                      const breakStartOffset = (breakStart.getTime() - sessionStart.getTime()) / sessionDuration;
-                      const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / sessionDuration;
-                      
-                      const breakLeft = leftPercentage + (breakStartOffset * segmentWidth);
-                      const breakWidth = Math.max(0.5, breakDuration * segmentWidth);
-                      
-                      return (
-                        <div
-                          key={`${sessionIndex}-${breakIndex}`}
-                          className="absolute top-0.5 h-4 bg-orange-400 rounded-sm"
-                          style={{
-                            left: `${breakLeft}%`,
-                            width: `${breakWidth}%`
-                          }}
-                          title={`Descanso: ${formatTime(breakStart)} - ${formatTime(breakEnd)}`}
-                        />
-                      );
-                    })}
-                  </div>
-                );
-              });
-            })()}
+                    const breakStart = new Date(breakPeriod.breakStart);
+                    const breakEnd = new Date(breakPeriod.breakEnd);
+                    
+                    // Validar que el descanso esté dentro de la sesión
+                    const clampedBreakStart = new Date(Math.max(breakStart.getTime(), sessionStart.getTime()));
+                    const clampedBreakEnd = new Date(Math.min(breakEnd.getTime(), sessionEnd.getTime()));
+                    
+                    // Posición del descanso relativa al día
+                    const breakStartOffset = (clampedBreakStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
+                    const breakDurationHours = (clampedBreakEnd.getTime() - clampedBreakStart.getTime()) / (1000 * 60 * 60);
+                    
+                    // Calcular porcentajes con límites
+                    const breakLeftPercentage = Math.max(0, Math.min((breakStartOffset / totalDayDuration) * 100, 100));
+                    const breakWidthPercentage = Math.max(0.5, Math.min((breakDurationHours / totalDayDuration) * 100, 100 - breakLeftPercentage));
+                    
+                    return (
+                      <div
+                        key={`${sessionIndex}-${breakIndex}`}
+                        className="absolute top-0.5 h-4 bg-orange-400 rounded-sm"
+                        style={{
+                          left: `${breakLeftPercentage}%`,
+                          width: `${breakWidthPercentage}%`
+                        }}
+                        title={`Descanso: ${formatTime(breakStart)} - ${formatTime(breakEnd)}`}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -2735,7 +2746,7 @@ export default function TimeTracking() {
         <div className="relative h-4" style={{ zIndex: 10 }}>
           {(() => {
             // Preparar todas las etiquetas de tiempo con sus posiciones
-            const completedSessions = dayData.sessions.filter((session: any) => session.clockOut);
+            const completedSessions = consolidatedSessions.filter((session: any) => session.clockOut);
             const timeLabels: Array<{
               text: string;
               position: number;
