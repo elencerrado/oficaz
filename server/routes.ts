@@ -16575,6 +16575,654 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
     }
   });
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INVENTORY MANAGEMENT ROUTES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Product Categories
+  app.get('/api/inventory/categories', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const categories = await storage.getProductCategories(req.user!.companyId);
+      res.json(categories);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/inventory/categories', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const category = await storage.createProductCategory({
+        ...req.body,
+        companyId: req.user!.companyId,
+      });
+      res.status(201).json(category);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch('/api/inventory/categories/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const category = await storage.getProductCategory(id);
+      if (!category || category.companyId !== req.user!.companyId) {
+        return res.status(404).json({ message: 'Categoría no encontrada' });
+      }
+      const updated = await storage.updateProductCategory(id, req.body);
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete('/api/inventory/categories/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const category = await storage.getProductCategory(id);
+      if (!category || category.companyId !== req.user!.companyId) {
+        return res.status(404).json({ message: 'Categoría no encontrada' });
+      }
+      await storage.deleteProductCategory(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Warehouses
+  app.get('/api/inventory/warehouses', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const warehouses = await storage.getWarehouses(req.user!.companyId);
+      res.json(warehouses);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/inventory/warehouses', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      // If this is the first warehouse or marked as default, ensure only one default
+      if (req.body.isDefault) {
+        const existing = await storage.getWarehouses(req.user!.companyId);
+        for (const wh of existing) {
+          if (wh.isDefault) {
+            await storage.updateWarehouse(wh.id, { isDefault: false });
+          }
+        }
+      }
+      const warehouse = await storage.createWarehouse({
+        ...req.body,
+        companyId: req.user!.companyId,
+      });
+      res.status(201).json(warehouse);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch('/api/inventory/warehouses/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const warehouse = await storage.getWarehouse(id);
+      if (!warehouse || warehouse.companyId !== req.user!.companyId) {
+        return res.status(404).json({ message: 'Almacén no encontrado' });
+      }
+      // Handle default warehouse logic
+      if (req.body.isDefault) {
+        const existing = await storage.getWarehouses(req.user!.companyId);
+        for (const wh of existing) {
+          if (wh.isDefault && wh.id !== id) {
+            await storage.updateWarehouse(wh.id, { isDefault: false });
+          }
+        }
+      }
+      const updated = await storage.updateWarehouse(id, req.body);
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete('/api/inventory/warehouses/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const warehouse = await storage.getWarehouse(id);
+      if (!warehouse || warehouse.companyId !== req.user!.companyId) {
+        return res.status(404).json({ message: 'Almacén no encontrado' });
+      }
+      await storage.deleteWarehouse(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Products
+  app.get('/api/inventory/products', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const filters: any = {};
+      if (req.query.categoryId) filters.categoryId = parseInt(req.query.categoryId as string);
+      if (req.query.isActive !== undefined) filters.isActive = req.query.isActive === 'true';
+      if (req.query.isReturnable !== undefined) filters.isReturnable = req.query.isReturnable === 'true';
+      if (req.query.search) filters.search = req.query.search as string;
+
+      const products = await storage.getProducts(req.user!.companyId, filters);
+      res.json(products);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/inventory/products/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const product = await storage.getProduct(id);
+      if (!product || product.companyId !== req.user!.companyId) {
+        return res.status(404).json({ message: 'Producto no encontrado' });
+      }
+      // Get stock info
+      const stock = await storage.getProductStock(id);
+      res.json({ ...product, stock });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/inventory/products', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const product = await storage.createProduct({
+        ...req.body,
+        companyId: req.user!.companyId,
+      });
+      res.status(201).json(product);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch('/api/inventory/products/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const product = await storage.getProduct(id);
+      if (!product || product.companyId !== req.user!.companyId) {
+        return res.status(404).json({ message: 'Producto no encontrado' });
+      }
+      const updated = await storage.updateProduct(id, req.body);
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete('/api/inventory/products/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const product = await storage.getProduct(id);
+      if (!product || product.companyId !== req.user!.companyId) {
+        return res.status(404).json({ message: 'Producto no encontrado' });
+      }
+      await storage.deleteProduct(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Warehouse Stock
+  app.get('/api/inventory/stock', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const warehouseId = req.query.warehouseId ? parseInt(req.query.warehouseId as string) : undefined;
+      const stock = await storage.getWarehouseStock(req.user!.companyId, warehouseId);
+      res.json(stock);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/inventory/stock/low', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const lowStockProducts = await storage.getLowStockProducts(req.user!.companyId);
+      res.json(lowStockProducts);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/inventory/stock/adjust', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const { warehouseId, productId, quantity } = req.body;
+      
+      // Verify warehouse and product belong to company
+      const warehouse = await storage.getWarehouse(warehouseId);
+      const product = await storage.getProduct(productId);
+      
+      if (!warehouse || warehouse.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'Almacén no autorizado' });
+      }
+      if (!product || product.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'Producto no autorizado' });
+      }
+
+      const stock = await storage.updateWarehouseStock(warehouseId, productId, quantity, req.user!.companyId);
+      res.json(stock);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Inventory Movements
+  app.get('/api/inventory/movements', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const filters: any = {};
+      if (req.query.type) filters.type = req.query.type as string;
+      if (req.query.status) filters.status = req.query.status as string;
+      if (req.query.startDate) filters.startDate = new Date(req.query.startDate as string);
+      if (req.query.endDate) filters.endDate = new Date(req.query.endDate as string);
+      if (req.query.warehouseId) filters.warehouseId = parseInt(req.query.warehouseId as string);
+
+      const movements = await storage.getInventoryMovements(req.user!.companyId, filters);
+      res.json(movements);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/inventory/movements/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const movement = await storage.getInventoryMovement(id);
+      if (!movement || movement.companyId !== req.user!.companyId) {
+        return res.status(404).json({ message: 'Movimiento no encontrado' });
+      }
+      res.json(movement);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/inventory/movements', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const { lines, ...movementData } = req.body;
+      
+      // Generate movement number
+      const movementNumber = await storage.getNextMovementNumber(req.user!.companyId);
+      
+      // Create movement header
+      const movement = await storage.createInventoryMovement({
+        ...movementData,
+        companyId: req.user!.companyId,
+        createdById: req.user!.id,
+        movementNumber,
+      });
+
+      // Create movement lines
+      let subtotal = 0;
+      let vatAmount = 0;
+      
+      if (lines && Array.isArray(lines)) {
+        for (const line of lines) {
+          const product = await storage.getProduct(line.productId);
+          if (!product) continue;
+          
+          const unitPrice = parseFloat(line.unitPrice || product.salePrice);
+          const quantity = parseFloat(line.quantity);
+          const vatRate = parseFloat(line.vatRate || product.vatRate);
+          const discount = parseFloat(line.discount || '0');
+          
+          const lineSubtotal = unitPrice * quantity * (1 - discount / 100);
+          const lineVat = lineSubtotal * (vatRate / 100);
+          const lineTotal = lineSubtotal + lineVat;
+          
+          await storage.createInventoryMovementLine({
+            movementId: movement.id,
+            productId: line.productId,
+            quantity: String(quantity),
+            unitPrice: String(unitPrice),
+            vatRate: String(vatRate),
+            discount: String(discount),
+            subtotal: String(lineSubtotal),
+            vatAmount: String(lineVat),
+            total: String(lineTotal),
+            conditionOut: line.conditionOut,
+            notes: line.notes,
+            sortOrder: line.sortOrder || 0,
+          });
+          
+          subtotal += lineSubtotal;
+          vatAmount += lineVat;
+          
+          // Update stock if movement is posted
+          if (movementData.status === 'posted') {
+            const warehouseId = movementData.movementType === 'in' || movementData.movementType === 'return' 
+              ? movementData.destinationWarehouseId 
+              : movementData.sourceWarehouseId;
+            
+            if (warehouseId) {
+              const currentStock = await storage.getProductStock(line.productId);
+              const whStock = currentStock.find(s => s.warehouseId === warehouseId);
+              const currentQty = parseFloat(whStock?.quantity || '0');
+              
+              let newQty = currentQty;
+              if (movementData.movementType === 'in' || movementData.movementType === 'return') {
+                newQty += quantity;
+              } else if (movementData.movementType === 'out' || movementData.movementType === 'loan') {
+                newQty -= quantity;
+              }
+              
+              await storage.updateWarehouseStock(warehouseId, line.productId, newQty, req.user!.companyId);
+            }
+          }
+          
+          // Create tool loan record if movement is a loan
+          if (movementData.movementType === 'loan' && product.isReturnable) {
+            await storage.createToolLoan({
+              companyId: req.user!.companyId,
+              productId: line.productId,
+              movementId: movement.id,
+              quantity: String(quantity),
+              assignedToId: movementData.relatedPartyId,
+              assignedToName: movementData.relatedPartyName,
+              projectReference: movementData.projectReference,
+              projectName: movementData.projectName,
+              loanDate: new Date(movementData.movementDate),
+              expectedReturnDate: movementData.expectedReturnDate ? new Date(movementData.expectedReturnDate) : undefined,
+              conditionOut: line.conditionOut || 'good',
+            });
+          }
+        }
+      }
+
+      // Update movement totals
+      const total = subtotal + vatAmount;
+      await storage.updateInventoryMovement(movement.id, {
+        subtotal: String(subtotal),
+        vatAmount: String(vatAmount),
+        total: String(total),
+      });
+
+      const updatedMovement = await storage.getInventoryMovement(movement.id);
+      res.status(201).json(updatedMovement);
+    } catch (error: any) {
+      console.error('Error creating inventory movement:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch('/api/inventory/movements/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const movement = await storage.getInventoryMovement(id);
+      if (!movement || movement.companyId !== req.user!.companyId) {
+        return res.status(404).json({ message: 'Movimiento no encontrado' });
+      }
+      
+      // Don't allow editing posted movements
+      if (movement.status === 'posted' && req.body.status !== 'archived') {
+        return res.status(400).json({ message: 'No se puede editar un movimiento confirmado' });
+      }
+
+      const updated = await storage.updateInventoryMovement(id, req.body);
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete('/api/inventory/movements/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const movement = await storage.getInventoryMovement(id);
+      if (!movement || movement.companyId !== req.user!.companyId) {
+        return res.status(404).json({ message: 'Movimiento no encontrado' });
+      }
+      
+      // Don't allow deleting posted movements
+      if (movement.status === 'posted') {
+        return res.status(400).json({ message: 'No se puede eliminar un movimiento confirmado' });
+      }
+
+      await storage.deleteInventoryMovement(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Tool Loans
+  app.get('/api/inventory/loans', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const filters: any = {};
+      if (req.query.status) filters.status = req.query.status as string;
+      if (req.query.assignedToId) filters.assignedToId = parseInt(req.query.assignedToId as string);
+      if (req.query.productId) filters.productId = parseInt(req.query.productId as string);
+
+      const loans = await storage.getToolLoans(req.user!.companyId, filters);
+      res.json(loans);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/inventory/loans/overdue', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const overdueLoans = await storage.getOverdueToolLoans(req.user!.companyId);
+      res.json(overdueLoans);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch('/api/inventory/loans/:id/return', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const loan = await storage.getToolLoan(id);
+      if (!loan || loan.companyId !== req.user!.companyId) {
+        return res.status(404).json({ message: 'Préstamo no encontrado' });
+      }
+
+      const { returnedQuantity, conditionIn, damageNotes } = req.body;
+      const qty = parseFloat(returnedQuantity);
+      const currentReturned = parseFloat(loan.returnedQuantity);
+      const totalQty = parseFloat(loan.quantity);
+      
+      const newReturnedQty = currentReturned + qty;
+      const status = newReturnedQty >= totalQty ? 'returned' : 'partial_return';
+
+      const updated = await storage.updateToolLoan(id, {
+        returnedQuantity: String(newReturnedQty),
+        conditionIn,
+        damageNotes,
+        status,
+        actualReturnDate: newReturnedQty >= totalQty ? new Date() : undefined,
+      });
+
+      // Update warehouse stock
+      const movement = await storage.getInventoryMovement(loan.movementId);
+      if (movement?.sourceWarehouseId) {
+        const currentStock = await storage.getProductStock(loan.productId);
+        const whStock = currentStock.find(s => s.warehouseId === movement.sourceWarehouseId);
+        const currentQty = parseFloat(whStock?.quantity || '0');
+        await storage.updateWarehouseStock(movement.sourceWarehouseId!, loan.productId, currentQty + qty, req.user!.companyId);
+      }
+
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Movement PDF generation (Albarán)
+  app.get('/api/inventory/movements/:id/pdf', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const movement = await storage.getInventoryMovement(id);
+      if (!movement || movement.companyId !== req.user!.companyId) {
+        return res.status(404).json({ message: 'Movimiento no encontrado' });
+      }
+
+      const company = await storage.getCompany(req.user!.companyId);
+      const doc = new jsPDF();
+
+      // Header
+      doc.setFontSize(20);
+      doc.setTextColor(0, 122, 255);
+      doc.text('ALBARÁN', 14, 20);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      doc.text(movement.movementNumber, 14, 28);
+      
+      // Company info
+      doc.setFontSize(12);
+      doc.text(company?.name || 'Empresa', 140, 20);
+      doc.setFontSize(9);
+      doc.text(company?.cif || '', 140, 26);
+      if (company?.address) doc.text(company.address, 140, 32);
+      
+      // Movement type label
+      const typeLabels: Record<string, string> = {
+        'in': 'ENTRADA',
+        'out': 'SALIDA',
+        'transfer': 'TRANSFERENCIA',
+        'adjustment': 'AJUSTE',
+        'loan': 'PRÉSTAMO',
+        'return': 'DEVOLUCIÓN',
+      };
+      doc.setFontSize(11);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Tipo: ${typeLabels[movement.movementType] || movement.movementType.toUpperCase()}`, 14, 40);
+      
+      // Date
+      doc.text(`Fecha: ${new Date(movement.movementDate).toLocaleDateString('es-ES')}`, 14, 46);
+      
+      // Destination/Related party info
+      if (movement.relatedPartyName) {
+        doc.setFontSize(10);
+        doc.text('Destinatario:', 14, 56);
+        doc.setFontSize(11);
+        doc.text(movement.relatedPartyName, 14, 62);
+        if (movement.relatedPartyCif) doc.text(`CIF: ${movement.relatedPartyCif}`, 14, 68);
+        if (movement.relatedPartyAddress) {
+          const addressLines = doc.splitTextToSize(movement.relatedPartyAddress, 80);
+          doc.text(addressLines, 14, 74);
+        }
+      }
+      
+      // Project info if exists
+      if (movement.projectName || movement.projectReference) {
+        doc.setFontSize(10);
+        const projectY = movement.relatedPartyName ? 90 : 56;
+        doc.text('Proyecto/Obra:', 14, projectY);
+        doc.setFontSize(11);
+        if (movement.projectReference) doc.text(`Ref: ${movement.projectReference}`, 14, projectY + 6);
+        if (movement.projectName) doc.text(movement.projectName, 14, projectY + 12);
+      }
+      
+      // Lines table
+      const startY = 100;
+      const tableData = movement.lines.map((line, idx) => [
+        String(idx + 1),
+        line.product.name,
+        String(line.quantity),
+        line.product.unitAbbreviation || 'ud.',
+        `${parseFloat(line.unitPrice).toFixed(2)} €`,
+        `${parseFloat(line.vatRate).toFixed(0)}%`,
+        `${parseFloat(line.total).toFixed(2)} €`,
+      ]);
+
+      (doc as any).autoTable({
+        startY,
+        head: [['#', 'Producto', 'Cant.', 'Ud.', 'Precio', 'IVA', 'Total']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [0, 122, 255] },
+        columnStyles: {
+          0: { cellWidth: 10 },
+          1: { cellWidth: 60 },
+          2: { cellWidth: 15, halign: 'right' },
+          3: { cellWidth: 15 },
+          4: { cellWidth: 25, halign: 'right' },
+          5: { cellWidth: 15, halign: 'right' },
+          6: { cellWidth: 25, halign: 'right' },
+        },
+      });
+
+      const finalY = (doc as any).lastAutoTable.finalY + 10;
+      
+      // Totals
+      doc.setFontSize(10);
+      doc.text(`Subtotal: ${parseFloat(movement.subtotal).toFixed(2)} €`, 140, finalY);
+      doc.text(`IVA: ${parseFloat(movement.vatAmount).toFixed(2)} €`, 140, finalY + 6);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`TOTAL: ${parseFloat(movement.total).toFixed(2)} €`, 140, finalY + 14);
+      
+      // Notes
+      if (movement.notes) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.text('Observaciones:', 14, finalY);
+        const noteLines = doc.splitTextToSize(movement.notes, 120);
+        doc.text(noteLines, 14, finalY + 5);
+      }
+      
+      // Signature area
+      const sigY = finalY + 40;
+      doc.setFontSize(9);
+      doc.text('Recibí conforme:', 14, sigY);
+      doc.line(14, sigY + 20, 80, sigY + 20);
+      doc.text('Firma y sello', 14, sigY + 25);
+      
+      doc.text('Entregado por:', 120, sigY);
+      doc.line(120, sigY + 20, 186, sigY + 20);
+      doc.text('Firma', 120, sigY + 25);
+      
+      // Footer
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(`Generado el ${new Date().toLocaleString('es-ES')} - Oficaz`, 14, 285);
+
+      const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=albaran-${movement.movementNumber}.pdf`);
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error('Error generating movement PDF:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Dashboard stats
+  app.get('/api/inventory/dashboard', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const [products, categories, warehouses, lowStock, overdueLoans, recentMovements] = await Promise.all([
+        storage.getProducts(req.user!.companyId, { isActive: true }),
+        storage.getProductCategories(req.user!.companyId),
+        storage.getWarehouses(req.user!.companyId),
+        storage.getLowStockProducts(req.user!.companyId),
+        storage.getOverdueToolLoans(req.user!.companyId),
+        storage.getInventoryMovements(req.user!.companyId, {}),
+      ]);
+
+      const activeLoans = await storage.getToolLoans(req.user!.companyId, { status: 'active' });
+
+      res.json({
+        totalProducts: products.length,
+        totalCategories: categories.length,
+        totalWarehouses: warehouses.length,
+        lowStockCount: lowStock.length,
+        lowStockProducts: lowStock.slice(0, 5),
+        overdueLoansCount: overdueLoans.length,
+        overdueLoans: overdueLoans.slice(0, 5),
+        activeLoansCount: activeLoans.length,
+        recentMovements: recentMovements.slice(0, 10),
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Geocoding proxy endpoint (Photon API)
   app.get('/api/geocoding/search', async (req, res) => {
     try {
