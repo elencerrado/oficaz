@@ -136,6 +136,17 @@ const contactUpload = multer({
 const MONITOR_EMAIL = 'soy@oficaz.es';
 const isMonitorEmail = (email: string) => email.toLowerCase() === MONITOR_EMAIL.toLowerCase();
 
+// Helper function to fix UTF-8 encoding in filenames from multer
+// Multer decodes filenames as latin1, but browsers send them as UTF-8
+function fixFilenameEncoding(filename: string): string {
+  try {
+    // Convert from latin1 to UTF-8
+    return Buffer.from(filename, 'latin1').toString('utf8');
+  } catch {
+    return filename;
+  }
+}
+
 // Contact form rate limiter - strict limits to prevent abuse
 const contactLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -6150,15 +6161,16 @@ Responde directamente a este email para contactar con la persona.
         return res.status(400).json({ message: 'No file uploaded' });
       }
 
-      console.log('Upload request - User ID:', req.user!.id, 'File:', req.file.originalname);
+      const fixedOriginalName = fixFilenameEncoding(req.file.originalname);
+      console.log('Upload request - User ID:', req.user!.id, 'File:', fixedOriginalName);
       console.log('Request type:', req.body.requestType);
 
       // Si hay un tipo de solicitud, renombrar el archivo
-      let finalOriginalName = req.file.originalname;
+      let finalOriginalName = fixedOriginalName;
       if (req.body.requestType && req.user) {
         const user = await storage.getUser(req.user.id);
         if (user) {
-          const fileExtension = req.file.originalname.split('.').pop();
+          const fileExtension = fixedOriginalName.split('.').pop();
           finalOriginalName = `${req.body.requestType} - ${user.fullName}.${fileExtension}`;
           console.log('Renamed file to:', finalOriginalName);
         }
@@ -6275,8 +6287,8 @@ Responde directamente a este email para contactar con la persona.
       // Log admin document uploads for audit
       console.log(`ADMIN UPLOAD: User ${user.id} (${user.role}) uploaded document for employee ${targetEmployeeId} within company ${user.companyId}`);
 
-      // Use clean filename if provided, otherwise use original
-      const originalName = req.body.cleanFileName || req.file.originalname;
+      // Use clean filename if provided, otherwise use original (with encoding fix)
+      const originalName = req.body.cleanFileName || fixFilenameEncoding(req.file.originalname);
       
       // Check if document requires signature
       const requiresSignature = req.body.requiresSignature === 'true';
@@ -6347,7 +6359,7 @@ Responde directamente a este email para contactar con la persona.
       }
 
       const user = req.user!;
-      const originalName = req.file.originalname; // Keep original name for circulars
+      const originalName = fixFilenameEncoding(req.file.originalname); // Keep original name for circulars (with encoding fix)
       const requiresSignature = req.body.requiresSignature === 'true';
 
       // Verify all employees belong to same company
