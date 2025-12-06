@@ -1466,7 +1466,9 @@ export const inventoryMovements = pgTable("inventory_movements", {
   
   // Movement identification
   movementNumber: varchar("movement_number", { length: 30 }).notNull(), // Sequential: ALB-2024-00001
-  movementType: varchar("movement_type", { length: 20 }).notNull(), // in, out, transfer, adjustment, loan, return
+  movementType: varchar("movement_type", { length: 20 }).notNull(), // in, out, internal, loan, return
+  internalReason: varchar("internal_reason", { length: 30 }), // For 'internal' type: 'adjustment' (stock correction) or 'transfer' (warehouse move)
+  adjustmentDirection: varchar("adjustment_direction", { length: 10 }), // For adjustments: 'add' (increase stock) or 'remove' (decrease stock)
   
   // Status flow: draft -> posted -> archived (or cancelled)
   status: varchar("status", { length: 20 }).default("draft").notNull(),

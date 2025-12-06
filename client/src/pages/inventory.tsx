@@ -193,10 +193,21 @@ function DashboardTab({ stats, isLoading }: { stats: DashboardStats | undefined;
   const movementTypeLabels: Record<string, string> = {
     'in': 'Compra',
     'out': 'Venta',
-    'transfer': 'Transferencia',
-    'adjustment': 'Ajuste',
+    'internal': 'Interno',
     'loan': 'Préstamo',
     'return': 'Devolución',
+  };
+  
+  const getMovementLabel = (movement: Movement) => {
+    if (movement.movementType === 'internal') {
+      const reason = (movement as any).internalReason;
+      if (reason === 'transfer') {
+        return 'Transferencia';
+      }
+      const direction = (movement as any).adjustmentDirection;
+      return direction === 'remove' ? 'Ajuste (-)' : 'Ajuste (+)';
+    }
+    return movementTypeLabels[movement.movementType] || movement.movementType;
   };
 
   if (isLoading) {
@@ -287,7 +298,7 @@ function DashboardTab({ stats, isLoading }: { stats: DashboardStats | undefined;
                   {stats.recentMovements.slice(0, 5).map((movement: any) => (
                     <div key={movement.id} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
                       <div className="flex items-center gap-3">
-                        <Badge variant="outline" className="dark:border-gray-600 dark:text-gray-300">{movementTypeLabels[movement.movementType] || movement.movementType}</Badge>
+                        <Badge variant="outline" className="dark:border-gray-600 dark:text-gray-300">{getMovementLabel(movement)}</Badge>
                         <span className="text-sm dark:text-white">{movement.movementNumber}</span>
                       </div>
                       <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -1363,6 +1374,8 @@ function MovementsTab() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMovement, setEditingMovement] = useState<Movement | null>(null);
   const [movementType, setMovementType] = useState<string>('in');
+  const [internalReason, setInternalReason] = useState<string>('adjustment');
+  const [adjustmentDirection, setAdjustmentDirection] = useState<string>('add');
   const [warehouseId, setWarehouseId] = useState<string>('');
   const [destinationWarehouseId, setDestinationWarehouseId] = useState<string>('');
   const [relatedPartyName, setRelatedPartyName] = useState('');
@@ -1456,6 +1469,8 @@ function MovementsTab() {
   const resetForm = () => {
     setEditingMovement(null);
     setMovementType('in');
+    setInternalReason('adjustment');
+    setAdjustmentDirection('add');
     setWarehouseId('');
     setDestinationWarehouseId('');
     setRelatedPartyName('');
@@ -1471,6 +1486,8 @@ function MovementsTab() {
       
       setEditingMovement(fullMovement);
       setMovementType(fullMovement.movementType);
+      setInternalReason(fullMovement.internalReason || 'adjustment');
+      setAdjustmentDirection(fullMovement.adjustmentDirection || 'add');
       setWarehouseId((fullMovement.sourceWarehouseId || fullMovement.destinationWarehouseId || '').toString());
       setDestinationWarehouseId((fullMovement.destinationWarehouseId || '').toString());
       setRelatedPartyName(fullMovement.relatedPartyName || '');
@@ -1511,8 +1528,9 @@ function MovementsTab() {
     
     const qty = parseFloat(lineQuantity) || 1;
     
-    // Check stock for outgoing movements (out, transfer, loan)
-    if (['out', 'transfer', 'loan'].includes(movementType)) {
+    // Check stock for outgoing movements (out, internal transfer, loan)
+    const isOutgoing = movementType === 'out' || movementType === 'loan' || (movementType === 'internal' && internalReason === 'transfer');
+    if (isOutgoing) {
       const currentStock = getProductStock(product.id, warehouseId ? parseInt(warehouseId) : undefined);
       // Sum quantities already added for this product
       const alreadyAdded = lines.filter(l => l.productId === product.id).reduce((sum, l) => sum + l.quantity, 0);
@@ -1548,26 +1566,46 @@ function MovementsTab() {
       toast({ title: 'Selecciona un almacén y añade al menos un producto', variant: 'destructive' });
       return;
     }
-    if (movementType === 'transfer' && !destinationWarehouseId) {
+    if (movementType === 'internal' && internalReason === 'transfer' && !destinationWarehouseId) {
       toast({ title: 'Selecciona almacén de destino para transferencias', variant: 'destructive' });
       return;
     }
 
     const warehouseIdNum = parseInt(warehouseId);
-    const destWarehouseIdNum = movementType === 'transfer' ? parseInt(destinationWarehouseId) : null;
+    const destWarehouseIdNum = destinationWarehouseId ? parseInt(destinationWarehouseId) : null;
+
+    // Determine source/destination warehouses based on movement type
+    let sourceWarehouseId: number | null = null;
+    let destinationWarehouseId_: number | null = null;
+    
+    if (movementType === 'internal') {
+      if (internalReason === 'transfer') {
+        sourceWarehouseId = warehouseIdNum;
+        destinationWarehouseId_ = destWarehouseIdNum;
+      } else {
+        // Adjustment: only destination
+        destinationWarehouseId_ = warehouseIdNum;
+      }
+    } else if (['out', 'loan'].includes(movementType)) {
+      sourceWarehouseId = warehouseIdNum;
+    } else if (['in', 'return'].includes(movementType)) {
+      destinationWarehouseId_ = warehouseIdNum;
+    }
 
     const movementData = {
       movementType,
+      internalReason: movementType === 'internal' ? internalReason : null,
+      adjustmentDirection: (movementType === 'internal' && internalReason === 'adjustment') ? adjustmentDirection : null,
       status,
-      sourceWarehouseId: ['out', 'transfer', 'loan'].includes(movementType) ? warehouseIdNum : null,
-      destinationWarehouseId: ['in', 'transfer', 'return'].includes(movementType) ? (destWarehouseIdNum || warehouseIdNum) : null,
+      sourceWarehouseId,
+      destinationWarehouseId: destinationWarehouseId_,
       relatedPartyName: relatedPartyName || null,
       notes: notes || null,
       lines: lines.map(l => ({
         productId: l.productId,
         quantity: l.quantity,
-        unitPrice: l.unitPrice,
-        vatRate: l.vatRate,
+        unitPrice: movementType === 'internal' ? '0' : l.unitPrice,
+        vatRate: movementType === 'internal' ? '0' : l.vatRate,
       })),
     };
 
@@ -1599,10 +1637,21 @@ function MovementsTab() {
   const typeLabels: Record<string, string> = {
     'in': 'Compra',
     'out': 'Venta',
-    'transfer': 'Transferencia',
-    'adjustment': 'Ajuste',
+    'internal': 'Interno',
     'loan': 'Préstamo',
     'return': 'Devolución',
+  };
+  
+  const getMovementTypeLabel = (movement: Movement) => {
+    if (movement.movementType === 'internal') {
+      const reason = (movement as any).internalReason;
+      if (reason === 'transfer') {
+        return 'Transferencia';
+      }
+      const direction = (movement as any).adjustmentDirection;
+      return direction === 'remove' ? 'Ajuste (-)' : 'Ajuste (+)';
+    }
+    return typeLabels[movement.movementType] || movement.movementType;
   };
 
   const statusLabels: Record<string, { label: string; color: string }> = {
@@ -1662,8 +1711,7 @@ function MovementsTab() {
                   <SelectItem value="all">Todos los tipos</SelectItem>
                   <SelectItem value="in">Compra</SelectItem>
                   <SelectItem value="out">Venta</SelectItem>
-                  <SelectItem value="transfer">Transferencia</SelectItem>
-                  <SelectItem value="adjustment">Ajuste</SelectItem>
+                  <SelectItem value="internal">Interno</SelectItem>
                   <SelectItem value="loan">Préstamo</SelectItem>
                   <SelectItem value="return">Devolución</SelectItem>
                 </SelectContent>
@@ -1691,16 +1739,47 @@ function MovementsTab() {
                   <SelectContent>
                     <SelectItem value="in">Compra</SelectItem>
                     <SelectItem value="out">Venta</SelectItem>
-                    <SelectItem value="transfer">Transferencia</SelectItem>
-                    <SelectItem value="adjustment">Ajuste</SelectItem>
+                    <SelectItem value="internal">Interno (sin coste)</SelectItem>
                     <SelectItem value="loan">Préstamo</SelectItem>
                     <SelectItem value="return">Devolución</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
+              {movementType === 'internal' && (
+                <div>
+                  <Label className="dark:text-gray-300">Tipo de operación interna *</Label>
+                  <Select value={internalReason} onValueChange={setInternalReason}>
+                    <SelectTrigger data-testid="select-internal-reason">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="adjustment">Ajuste de inventario</SelectItem>
+                      <SelectItem value="transfer">Transferencia entre almacenes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+            
+            {(movementType === 'internal' && internalReason === 'adjustment') && (
               <div>
-                <Label className="dark:text-gray-300">{movementType === 'transfer' ? 'Almacén origen *' : 'Almacén *'}</Label>
+                <Label className="dark:text-gray-300">Dirección del ajuste *</Label>
+                <Select value={adjustmentDirection} onValueChange={setAdjustmentDirection}>
+                  <SelectTrigger data-testid="select-adjustment-direction">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="add">Añadir stock (encontré material)</SelectItem>
+                    <SelectItem value="remove">Quitar stock (material perdido/dañado)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label className="dark:text-gray-300">{(movementType === 'internal' && internalReason === 'transfer') ? 'Almacén origen *' : 'Almacén *'}</Label>
                 <Select value={warehouseId} onValueChange={setWarehouseId}>
                   <SelectTrigger data-testid="select-warehouse">
                     <SelectValue placeholder="Seleccionar almacén" />
@@ -1714,7 +1793,7 @@ function MovementsTab() {
               </div>
             </div>
 
-            {movementType === 'transfer' && (
+            {(movementType === 'internal' && internalReason === 'transfer') && (
               <div>
                 <Label className="dark:text-gray-300">Almacén destino *</Label>
                 <Select value={destinationWarehouseId} onValueChange={setDestinationWarehouseId}>
@@ -1877,7 +1956,7 @@ function MovementsTab() {
                         {new Date(movement.movementDate).toLocaleDateString('es-ES')}
                       </span>
                     </div>
-                    <Badge variant="outline" className="dark:border-gray-600 dark:text-gray-300">{typeLabels[movement.movementType] || movement.movementType}</Badge>
+                    <Badge variant="outline" className="dark:border-gray-600 dark:text-gray-300">{getMovementTypeLabel(movement)}</Badge>
                     <span className={`px-2 py-1 rounded text-xs ${statusLabels[movement.status]?.color || 'bg-gray-100 dark:bg-gray-700 dark:text-gray-300'}`}>
                       {statusLabels[movement.status]?.label || movement.status}
                     </span>

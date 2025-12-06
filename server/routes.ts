@@ -16865,14 +16865,18 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
       let subtotal = 0;
       let vatAmount = 0;
       
+      // Internal movements (adjustment, transfer) have no cost impact
+      const isInternalMovement = movementData.movementType === 'internal';
+      
       if (lines && Array.isArray(lines)) {
         for (const line of lines) {
           const product = await storage.getProduct(line.productId);
           if (!product) continue;
           
-          const unitPrice = parseFloat(line.unitPrice || product.salePrice);
+          // For internal movements, force price to 0 (no cost impact)
+          const unitPrice = isInternalMovement ? 0 : parseFloat(line.unitPrice || product.salePrice || '0');
           const quantity = parseFloat(line.quantity);
-          const vatRate = parseFloat(line.vatRate || product.vatRate);
+          const vatRate = isInternalMovement ? 0 : parseFloat(line.vatRate || product.vatRate || '0');
           const discount = parseFloat(line.discount || '0');
           
           const lineSubtotal = unitPrice * quantity * (1 - discount / 100);
@@ -16899,23 +16903,55 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
           
           // Update stock if movement is posted
           if (movementData.status === 'posted') {
-            const warehouseId = movementData.movementType === 'in' || movementData.movementType === 'return' 
-              ? movementData.destinationWarehouseId 
-              : movementData.sourceWarehouseId;
-            
-            if (warehouseId) {
-              const currentStock = await storage.getProductStock(line.productId);
-              const whStock = currentStock.find(s => s.warehouseId === warehouseId);
-              const currentQty = parseFloat(whStock?.quantity || '0');
+            // Handle internal movements (transfers and adjustments)
+            if (isInternalMovement) {
+              const internalReason = movementData.internalReason || 'adjustment';
               
-              let newQty = currentQty;
-              if (movementData.movementType === 'in' || movementData.movementType === 'return') {
-                newQty += quantity;
-              } else if (movementData.movementType === 'out' || movementData.movementType === 'loan') {
-                newQty -= quantity;
+              if (internalReason === 'transfer') {
+                // Transfer: remove from source, add to destination
+                if (movementData.sourceWarehouseId) {
+                  const sourceStock = await storage.getProductStock(line.productId);
+                  const sourceWh = sourceStock.find(s => s.warehouseId === movementData.sourceWarehouseId);
+                  const sourceQty = parseFloat(sourceWh?.quantity || '0');
+                  await storage.updateWarehouseStock(movementData.sourceWarehouseId, line.productId, sourceQty - quantity, req.user!.companyId);
+                }
+                if (movementData.destinationWarehouseId) {
+                  const destStock = await storage.getProductStock(line.productId);
+                  const destWh = destStock.find(s => s.warehouseId === movementData.destinationWarehouseId);
+                  const destQty = parseFloat(destWh?.quantity || '0');
+                  await storage.updateWarehouseStock(movementData.destinationWarehouseId, line.productId, destQty + quantity, req.user!.companyId);
+                }
+              } else {
+                // Adjustment: add or remove from warehouse based on direction
+                const direction = movementData.adjustmentDirection || 'add';
+                if (movementData.destinationWarehouseId) {
+                  const destStock = await storage.getProductStock(line.productId);
+                  const destWh = destStock.find(s => s.warehouseId === movementData.destinationWarehouseId);
+                  const destQty = parseFloat(destWh?.quantity || '0');
+                  const newQty = direction === 'add' ? destQty + quantity : destQty - quantity;
+                  await storage.updateWarehouseStock(movementData.destinationWarehouseId, line.productId, newQty, req.user!.companyId);
+                }
               }
+            } else {
+              // Regular movements (in, out, loan, return)
+              const warehouseId = movementData.movementType === 'in' || movementData.movementType === 'return' 
+                ? movementData.destinationWarehouseId 
+                : movementData.sourceWarehouseId;
               
-              await storage.updateWarehouseStock(warehouseId, line.productId, newQty, req.user!.companyId);
+              if (warehouseId) {
+                const currentStock = await storage.getProductStock(line.productId);
+                const whStock = currentStock.find(s => s.warehouseId === warehouseId);
+                const currentQty = parseFloat(whStock?.quantity || '0');
+                
+                let newQty = currentQty;
+                if (movementData.movementType === 'in' || movementData.movementType === 'return') {
+                  newQty += quantity;
+                } else if (movementData.movementType === 'out' || movementData.movementType === 'loan') {
+                  newQty -= quantity;
+                }
+                
+                await storage.updateWarehouseStock(warehouseId, line.productId, newQty, req.user!.companyId);
+              }
             }
           }
           
@@ -16988,23 +17024,43 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
               const currentQty = parseFloat(warehouseStock?.quantity || '0');
               await storage.updateWarehouseStock(movement.sourceWarehouseId, line.productId, currentQty + quantity, req.user!.companyId);
             }
-          } else if (movement.movementType === 'transfer') {
-            // Was transfer: remove from destination, add back to source
-            if (movement.destinationWarehouseId) {
-              const destStock = await storage.getProductStock(line.productId);
-              const destWarehouseStock = destStock.find(s => s.warehouseId === movement.destinationWarehouseId);
-              const destQty = parseFloat(destWarehouseStock?.quantity || '0');
-              const newDestQty = destQty - quantity;
-              if (newDestQty < 0) {
-                return res.status(400).json({ message: `No hay suficiente stock en almacén destino para revertir` });
+          } else if (movement.movementType === 'internal') {
+            // Internal movements: handle transfer and adjustment
+            const internalReason = (movement as any).internalReason || 'adjustment';
+            const adjustmentDirection = (movement as any).adjustmentDirection || 'add';
+            
+            if (internalReason === 'transfer') {
+              // Was transfer: remove from destination, add back to source
+              if (movement.destinationWarehouseId) {
+                const destStock = await storage.getProductStock(line.productId);
+                const destWarehouseStock = destStock.find(s => s.warehouseId === movement.destinationWarehouseId);
+                const destQty = parseFloat(destWarehouseStock?.quantity || '0');
+                const newDestQty = destQty - quantity;
+                if (newDestQty < 0) {
+                  return res.status(400).json({ message: `No hay suficiente stock en almacén destino para revertir` });
+                }
+                await storage.updateWarehouseStock(movement.destinationWarehouseId, line.productId, newDestQty, req.user!.companyId);
               }
-              await storage.updateWarehouseStock(movement.destinationWarehouseId, line.productId, newDestQty, req.user!.companyId);
-            }
-            if (movement.sourceWarehouseId) {
-              const sourceStock = await storage.getProductStock(line.productId);
-              const sourceWarehouseStock = sourceStock.find(s => s.warehouseId === movement.sourceWarehouseId);
-              const sourceQty = parseFloat(sourceWarehouseStock?.quantity || '0');
-              await storage.updateWarehouseStock(movement.sourceWarehouseId, line.productId, sourceQty + quantity, req.user!.companyId);
+              if (movement.sourceWarehouseId) {
+                const sourceStock = await storage.getProductStock(line.productId);
+                const sourceWarehouseStock = sourceStock.find(s => s.warehouseId === movement.sourceWarehouseId);
+                const sourceQty = parseFloat(sourceWarehouseStock?.quantity || '0');
+                await storage.updateWarehouseStock(movement.sourceWarehouseId, line.productId, sourceQty + quantity, req.user!.companyId);
+              }
+            } else {
+              // Adjustment: reverse based on original direction
+              const warehouseId = movement.destinationWarehouseId;
+              if (warehouseId) {
+                const currentStock = await storage.getProductStock(line.productId);
+                const warehouseStock = currentStock.find(s => s.warehouseId === warehouseId);
+                const currentQty = parseFloat(warehouseStock?.quantity || '0');
+                // Reverse: if was 'add', now subtract. If was 'remove', now add back
+                const newQty = adjustmentDirection === 'add' ? currentQty - quantity : currentQty + quantity;
+                if (newQty < 0) {
+                  return res.status(400).json({ message: `No hay suficiente stock para revertir el ajuste` });
+                }
+                await storage.updateWarehouseStock(warehouseId, line.productId, newQty, req.user!.companyId);
+              }
             }
           } else if (movement.movementType === 'return') {
             // Was return to source warehouse, so remove the stock that was returned
@@ -17017,20 +17073,6 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
                 return res.status(400).json({ message: `No hay suficiente stock para revertir la devolución` });
               }
               await storage.updateWarehouseStock(movement.sourceWarehouseId, line.productId, newQty, req.user!.companyId);
-            }
-          } else if (movement.movementType === 'adjustment') {
-            // Adjustment: reverse the adjustment direction
-            const warehouseId = movement.sourceWarehouseId || movement.destinationWarehouseId;
-            if (warehouseId) {
-              const currentStock = await storage.getProductStock(line.productId);
-              const warehouseStock = currentStock.find(s => s.warehouseId === warehouseId);
-              const currentQty = parseFloat(warehouseStock?.quantity || '0');
-              // Adjustments can be positive or negative, just reverse the quantity
-              const newQty = currentQty - quantity;
-              if (newQty < 0) {
-                return res.status(400).json({ message: `No hay suficiente stock para revertir el ajuste` });
-              }
-              await storage.updateWarehouseStock(warehouseId, line.productId, newQty, req.user!.companyId);
             }
           }
         }
@@ -17086,23 +17128,43 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
               const currentQty = parseFloat(warehouseStock?.quantity || '0');
               await storage.updateWarehouseStock(movement.sourceWarehouseId, line.productId, currentQty + quantity, req.user!.companyId);
             }
-          } else if (movement.movementType === 'transfer') {
-            // Was transfer: remove from destination, add back to source
-            if (movement.destinationWarehouseId) {
-              const destStock = await storage.getProductStock(line.productId);
-              const destWarehouseStock = destStock.find(s => s.warehouseId === movement.destinationWarehouseId);
-              const destQty = parseFloat(destWarehouseStock?.quantity || '0');
-              const newDestQty = destQty - quantity;
-              if (newDestQty < 0) {
-                return res.status(400).json({ message: `No hay suficiente stock en almacén destino para eliminar` });
+          } else if (movement.movementType === 'internal') {
+            // Internal movements: handle transfer and adjustment
+            const internalReason = (movement as any).internalReason || 'adjustment';
+            const adjustmentDirection = (movement as any).adjustmentDirection || 'add';
+            
+            if (internalReason === 'transfer') {
+              // Was transfer: remove from destination, add back to source
+              if (movement.destinationWarehouseId) {
+                const destStock = await storage.getProductStock(line.productId);
+                const destWarehouseStock = destStock.find(s => s.warehouseId === movement.destinationWarehouseId);
+                const destQty = parseFloat(destWarehouseStock?.quantity || '0');
+                const newDestQty = destQty - quantity;
+                if (newDestQty < 0) {
+                  return res.status(400).json({ message: `No hay suficiente stock en almacén destino para eliminar` });
+                }
+                await storage.updateWarehouseStock(movement.destinationWarehouseId, line.productId, newDestQty, req.user!.companyId);
               }
-              await storage.updateWarehouseStock(movement.destinationWarehouseId, line.productId, newDestQty, req.user!.companyId);
-            }
-            if (movement.sourceWarehouseId) {
-              const sourceStock = await storage.getProductStock(line.productId);
-              const sourceWarehouseStock = sourceStock.find(s => s.warehouseId === movement.sourceWarehouseId);
-              const sourceQty = parseFloat(sourceWarehouseStock?.quantity || '0');
-              await storage.updateWarehouseStock(movement.sourceWarehouseId, line.productId, sourceQty + quantity, req.user!.companyId);
+              if (movement.sourceWarehouseId) {
+                const sourceStock = await storage.getProductStock(line.productId);
+                const sourceWarehouseStock = sourceStock.find(s => s.warehouseId === movement.sourceWarehouseId);
+                const sourceQty = parseFloat(sourceWarehouseStock?.quantity || '0');
+                await storage.updateWarehouseStock(movement.sourceWarehouseId, line.productId, sourceQty + quantity, req.user!.companyId);
+              }
+            } else {
+              // Adjustment: reverse based on original direction
+              const warehouseId = movement.destinationWarehouseId;
+              if (warehouseId) {
+                const currentStock = await storage.getProductStock(line.productId);
+                const warehouseStock = currentStock.find(s => s.warehouseId === warehouseId);
+                const currentQty = parseFloat(warehouseStock?.quantity || '0');
+                // Reverse: if was 'add', now subtract. If was 'remove', now add back
+                const newQty = adjustmentDirection === 'add' ? currentQty - quantity : currentQty + quantity;
+                if (newQty < 0) {
+                  return res.status(400).json({ message: `No hay suficiente stock para eliminar el ajuste` });
+                }
+                await storage.updateWarehouseStock(warehouseId, line.productId, newQty, req.user!.companyId);
+              }
             }
           } else if (movement.movementType === 'return') {
             // Was return to source warehouse, remove the returned stock
@@ -17115,19 +17177,6 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
                 return res.status(400).json({ message: `No hay suficiente stock para eliminar la devolución` });
               }
               await storage.updateWarehouseStock(movement.sourceWarehouseId, line.productId, newQty, req.user!.companyId);
-            }
-          } else if (movement.movementType === 'adjustment') {
-            // Adjustment: reverse the adjustment
-            const warehouseId = movement.sourceWarehouseId || movement.destinationWarehouseId;
-            if (warehouseId) {
-              const currentStock = await storage.getProductStock(line.productId);
-              const warehouseStock = currentStock.find(s => s.warehouseId === warehouseId);
-              const currentQty = parseFloat(warehouseStock?.quantity || '0');
-              const newQty = currentQty - quantity;
-              if (newQty < 0) {
-                return res.status(400).json({ message: `No hay suficiente stock para eliminar el ajuste` });
-              }
-              await storage.updateWarehouseStock(warehouseId, line.productId, newQty, req.user!.companyId);
             }
           }
         }
@@ -17735,7 +17784,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
       }
       
       // Create missing categories
-      for (const categoryName of categoriesToCreate) {
+      for (const categoryName of Array.from(categoriesToCreate)) {
         try {
           const newCategory = await storage.createProductCategory({ 
             companyId: req.user!.companyId, 
@@ -17766,8 +17815,8 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
                 barcode: product.barcode,
                 description: product.description,
                 categoryId: resolvedCategoryId,
-                unitOfMeasure: product.unitOfMeasure,
-                unitAbbreviation: product.unitAbbreviation,
+                unit: product.unit || product.unitOfMeasure || 'unidad',
+                unitAbbreviation: product.unitAbbreviation || 'ud.',
                 costPrice: product.costPrice,
                 salePrice: product.salePrice,
                 vatRate: product.vatRate,
@@ -17790,8 +17839,8 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
               barcode: product.barcode,
               description: product.description,
               categoryId: resolvedCategoryId,
-              unitOfMeasure: product.unitOfMeasure,
-              unitAbbreviation: product.unitAbbreviation,
+              unit: product.unit || product.unitOfMeasure || 'unidad',
+              unitAbbreviation: product.unitAbbreviation || 'ud.',
               costPrice: product.costPrice,
               salePrice: product.salePrice,
               vatRate: product.vatRate,
