@@ -969,13 +969,108 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
   );
 }
 
+type MovementLine = {
+  productId: number;
+  productName: string;
+  quantity: number;
+  unitPrice: string;
+  vatRate: string;
+};
+
 function MovementsTab() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [movementType, setMovementType] = useState<string>('in');
+  const [warehouseId, setWarehouseId] = useState<string>('');
+  const [destinationWarehouseId, setDestinationWarehouseId] = useState<string>('');
+  const [relatedPartyName, setRelatedPartyName] = useState('');
+  const [notes, setNotes] = useState('');
+  const [lines, setLines] = useState<MovementLine[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState<string>('');
+  const [lineQuantity, setLineQuantity] = useState('1');
   const { toast } = useToast();
 
   const { data: movements = [], isLoading } = useQuery<Movement[]>({
     queryKey: ['/api/inventory/movements', { type: typeFilter !== 'all' ? typeFilter : undefined }],
   });
+
+  const { data: products = [] } = useQuery<Product[]>({
+    queryKey: ['/api/inventory/products'],
+  });
+
+  const { data: warehouses = [] } = useQuery<WarehouseType[]>({
+    queryKey: ['/api/inventory/warehouses'],
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('POST', '/api/inventory/movements', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/movements'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/stock'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/dashboard'] });
+      setIsDialogOpen(false);
+      resetForm();
+      toast({ title: 'Movimiento creado correctamente' });
+    },
+    onError: () => toast({ title: 'Error al crear movimiento', variant: 'destructive' }),
+  });
+
+  const resetForm = () => {
+    setMovementType('in');
+    setWarehouseId('');
+    setDestinationWarehouseId('');
+    setRelatedPartyName('');
+    setNotes('');
+    setLines([]);
+    setSelectedProductId('');
+    setLineQuantity('1');
+  };
+
+  const handleAddLine = () => {
+    if (!selectedProductId) return;
+    const product = products.find(p => p.id === parseInt(selectedProductId));
+    if (!product) return;
+    
+    const qty = parseFloat(lineQuantity) || 1;
+    setLines([...lines, {
+      productId: product.id,
+      productName: product.name,
+      quantity: qty,
+      unitPrice: product.salePrice,
+      vatRate: product.vatRate,
+    }]);
+    setSelectedProductId('');
+    setLineQuantity('1');
+  };
+
+  const handleRemoveLine = (index: number) => {
+    setLines(lines.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = () => {
+    if (!warehouseId || lines.length === 0) {
+      toast({ title: 'Selecciona un almacén y añade al menos un producto', variant: 'destructive' });
+      return;
+    }
+    if (movementType === 'transfer' && !destinationWarehouseId) {
+      toast({ title: 'Selecciona almacén de destino para transferencias', variant: 'destructive' });
+      return;
+    }
+
+    createMutation.mutate({
+      movementType,
+      warehouseId: parseInt(warehouseId),
+      destinationWarehouseId: movementType === 'transfer' ? parseInt(destinationWarehouseId) : null,
+      relatedPartyName: relatedPartyName || null,
+      notes: notes || null,
+      lines: lines.map(l => ({
+        productId: l.productId,
+        quantity: l.quantity,
+        unitPrice: l.unitPrice,
+        vatRate: l.vatRate,
+      })),
+    });
+  };
 
   const downloadPdf = async (movementId: number, movementNumber: string) => {
     try {
@@ -1010,6 +1105,14 @@ function MovementsTab() {
     'cancelled': { label: 'Anulado', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
   };
 
+  const calculateTotal = () => {
+    return lines.reduce((sum, line) => {
+      const subtotal = line.quantity * parseFloat(line.unitPrice);
+      const vat = subtotal * (parseFloat(line.vatRate) / 100);
+      return sum + subtotal + vat;
+    }, 0);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3 justify-between">
@@ -1029,7 +1132,7 @@ function MovementsTab() {
             </SelectContent>
           </Select>
         </div>
-        <Button data-testid="button-new-movement">
+        <Button onClick={() => setIsDialogOpen(true)} data-testid="button-new-movement">
           <Plus className="h-4 w-4 mr-2" />
           Nuevo Movimiento
         </Button>
@@ -1089,6 +1192,157 @@ function MovementsTab() {
           ))}
         </div>
       )}
+
+      {/* New Movement Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nuevo Movimiento de Inventario</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="dark:text-gray-300">Tipo de movimiento *</Label>
+                <Select value={movementType} onValueChange={setMovementType}>
+                  <SelectTrigger data-testid="select-movement-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="in">Entrada</SelectItem>
+                    <SelectItem value="out">Salida</SelectItem>
+                    <SelectItem value="transfer">Transferencia</SelectItem>
+                    <SelectItem value="adjustment">Ajuste</SelectItem>
+                    <SelectItem value="loan">Préstamo</SelectItem>
+                    <SelectItem value="return">Devolución</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="dark:text-gray-300">{movementType === 'transfer' ? 'Almacén origen *' : 'Almacén *'}</Label>
+                <Select value={warehouseId} onValueChange={setWarehouseId}>
+                  <SelectTrigger data-testid="select-warehouse">
+                    <SelectValue placeholder="Seleccionar almacén" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {warehouses.filter(w => w.isActive).map(w => (
+                      <SelectItem key={w.id} value={w.id.toString()}>{w.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {movementType === 'transfer' && (
+              <div>
+                <Label className="dark:text-gray-300">Almacén destino *</Label>
+                <Select value={destinationWarehouseId} onValueChange={setDestinationWarehouseId}>
+                  <SelectTrigger data-testid="select-destination-warehouse">
+                    <SelectValue placeholder="Seleccionar almacén destino" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {warehouses.filter(w => w.isActive && w.id.toString() !== warehouseId).map(w => (
+                      <SelectItem key={w.id} value={w.id.toString()}>{w.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div>
+              <Label className="dark:text-gray-300">Cliente/Proveedor (opcional)</Label>
+              <Input
+                value={relatedPartyName}
+                onChange={(e) => setRelatedPartyName(e.target.value)}
+                placeholder="Nombre del cliente o proveedor"
+                className="dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                data-testid="input-related-party"
+              />
+            </div>
+
+            <div className="border dark:border-gray-700 rounded-lg p-4">
+              <Label className="dark:text-gray-300 mb-2 block">Añadir productos</Label>
+              <div className="flex gap-2">
+                <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+                  <SelectTrigger className="flex-1" data-testid="select-product">
+                    <SelectValue placeholder="Seleccionar producto" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products.filter(p => p.isActive).map(p => (
+                      <SelectItem key={p.id} value={p.id.toString()}>
+                        {p.name} ({p.sku})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  min="1"
+                  value={lineQuantity}
+                  onChange={(e) => setLineQuantity(e.target.value)}
+                  className="w-20 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                  placeholder="Cant."
+                  data-testid="input-line-quantity"
+                />
+                <Button type="button" onClick={handleAddLine} disabled={!selectedProductId} data-testid="button-add-line">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {lines.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {lines.map((line, index) => (
+                    <div key={index} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-2 rounded">
+                      <div>
+                        <span className="font-medium dark:text-white">{line.productName}</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
+                          x{line.quantity} @ €{parseFloat(line.unitPrice).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium dark:text-white">
+                          €{(line.quantity * parseFloat(line.unitPrice)).toFixed(2)}
+                        </span>
+                        <Button variant="ghost" size="icon" onClick={() => handleRemoveLine(index)}>
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="flex justify-end pt-2 border-t dark:border-gray-700">
+                    <span className="font-bold dark:text-white">Total: €{calculateTotal().toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <Label className="dark:text-gray-300">Notas (opcional)</Label>
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Observaciones adicionales..."
+                className="dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                data-testid="input-notes"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSubmit} 
+              disabled={createMutation.isPending || lines.length === 0}
+              data-testid="button-save-movement"
+            >
+              {createMutation.isPending ? 'Guardando...' : 'Crear Movimiento'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
