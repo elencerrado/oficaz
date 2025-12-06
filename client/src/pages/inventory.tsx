@@ -415,8 +415,14 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
   // Bulk upload functions
   const handleDownloadTemplate = async () => {
     try {
+      const authData = localStorage.getItem('authData');
+      const token = authData ? JSON.parse(authData).token : null;
+      
       const response = await fetch('/api/inventory/products/template', {
         credentials: 'include',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
       });
       if (!response.ok) throw new Error('Error downloading template');
       const blob = await response.blob();
