@@ -16956,9 +16956,88 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         return res.status(404).json({ message: 'Movimiento no encontrado' });
       }
       
-      // Don't allow editing posted movements
-      if (movement.status === 'posted' && req.body.status !== 'archived') {
-        return res.status(400).json({ message: 'No se puede editar un movimiento confirmado' });
+      // Handle reverting posted movement back to draft
+      if (movement.status === 'posted' && req.body.status === 'draft') {
+        // Reverse stock changes for each line based on movement type
+        for (const line of movement.lines) {
+          const quantity = parseFloat(line.quantity);
+          
+          if (movement.movementType === 'in') {
+            // Was entry to destination warehouse, so remove the stock that was added
+            if (movement.destinationWarehouseId) {
+              const currentStock = await storage.getProductStock(line.productId);
+              const warehouseStock = currentStock.find(s => s.warehouseId === movement.destinationWarehouseId);
+              const currentQty = parseFloat(warehouseStock?.quantity || '0');
+              const newQty = currentQty - quantity;
+              if (newQty < 0) {
+                return res.status(400).json({ message: `No hay suficiente stock de ${line.product?.name || 'producto'} para revertir` });
+              }
+              await storage.updateWarehouseStock(movement.destinationWarehouseId, line.productId, newQty, req.user!.companyId);
+            }
+          } else if (movement.movementType === 'out' || movement.movementType === 'loan') {
+            // Was exit/loan from source warehouse, so add back the stock that was removed
+            if (movement.sourceWarehouseId) {
+              const currentStock = await storage.getProductStock(line.productId);
+              const warehouseStock = currentStock.find(s => s.warehouseId === movement.sourceWarehouseId);
+              const currentQty = parseFloat(warehouseStock?.quantity || '0');
+              await storage.updateWarehouseStock(movement.sourceWarehouseId, line.productId, currentQty + quantity, req.user!.companyId);
+            }
+          } else if (movement.movementType === 'transfer') {
+            // Was transfer: remove from destination, add back to source
+            if (movement.destinationWarehouseId) {
+              const destStock = await storage.getProductStock(line.productId);
+              const destWarehouseStock = destStock.find(s => s.warehouseId === movement.destinationWarehouseId);
+              const destQty = parseFloat(destWarehouseStock?.quantity || '0');
+              const newDestQty = destQty - quantity;
+              if (newDestQty < 0) {
+                return res.status(400).json({ message: `No hay suficiente stock en almacén destino para revertir` });
+              }
+              await storage.updateWarehouseStock(movement.destinationWarehouseId, line.productId, newDestQty, req.user!.companyId);
+            }
+            if (movement.sourceWarehouseId) {
+              const sourceStock = await storage.getProductStock(line.productId);
+              const sourceWarehouseStock = sourceStock.find(s => s.warehouseId === movement.sourceWarehouseId);
+              const sourceQty = parseFloat(sourceWarehouseStock?.quantity || '0');
+              await storage.updateWarehouseStock(movement.sourceWarehouseId, line.productId, sourceQty + quantity, req.user!.companyId);
+            }
+          } else if (movement.movementType === 'return') {
+            // Was return to source warehouse, so remove the stock that was returned
+            if (movement.sourceWarehouseId) {
+              const currentStock = await storage.getProductStock(line.productId);
+              const warehouseStock = currentStock.find(s => s.warehouseId === movement.sourceWarehouseId);
+              const currentQty = parseFloat(warehouseStock?.quantity || '0');
+              const newQty = currentQty - quantity;
+              if (newQty < 0) {
+                return res.status(400).json({ message: `No hay suficiente stock para revertir la devolución` });
+              }
+              await storage.updateWarehouseStock(movement.sourceWarehouseId, line.productId, newQty, req.user!.companyId);
+            }
+          } else if (movement.movementType === 'adjustment') {
+            // Adjustment: reverse the adjustment direction
+            const warehouseId = movement.sourceWarehouseId || movement.destinationWarehouseId;
+            if (warehouseId) {
+              const currentStock = await storage.getProductStock(line.productId);
+              const warehouseStock = currentStock.find(s => s.warehouseId === warehouseId);
+              const currentQty = parseFloat(warehouseStock?.quantity || '0');
+              // Adjustments can be positive or negative, just reverse the quantity
+              const newQty = currentQty - quantity;
+              if (newQty < 0) {
+                return res.status(400).json({ message: `No hay suficiente stock para revertir el ajuste` });
+              }
+              await storage.updateWarehouseStock(warehouseId, line.productId, newQty, req.user!.companyId);
+            }
+          }
+        }
+        
+        // Update status to draft
+        const updated = await storage.updateInventoryMovement(id, { status: 'draft' });
+        const fullMovement = await storage.getInventoryMovement(id);
+        return res.json(fullMovement);
+      }
+
+      // Regular update (for draft movements or archiving)
+      if (movement.status === 'posted' && req.body.status !== 'archived' && req.body.status !== 'draft') {
+        return res.status(400).json({ message: 'Solo se puede archivar o revertir a borrador un movimiento confirmado' });
       }
 
       const updated = await storage.updateInventoryMovement(id, req.body);
@@ -16976,9 +17055,76 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         return res.status(404).json({ message: 'Movimiento no encontrado' });
       }
       
-      // Don't allow deleting posted movements
+      // If movement was posted, reverse stock changes first
       if (movement.status === 'posted') {
-        return res.status(400).json({ message: 'No se puede eliminar un movimiento confirmado' });
+        for (const line of movement.lines) {
+          const quantity = parseFloat(line.quantity);
+          
+          if (movement.movementType === 'in') {
+            // Was entry to destination warehouse, remove the stock
+            if (movement.destinationWarehouseId) {
+              const currentStock = await storage.getProductStock(line.productId);
+              const warehouseStock = currentStock.find(s => s.warehouseId === movement.destinationWarehouseId);
+              const currentQty = parseFloat(warehouseStock?.quantity || '0');
+              const newQty = currentQty - quantity;
+              if (newQty < 0) {
+                return res.status(400).json({ message: `No hay suficiente stock para eliminar este movimiento` });
+              }
+              await storage.updateWarehouseStock(movement.destinationWarehouseId, line.productId, newQty, req.user!.companyId);
+            }
+          } else if (movement.movementType === 'out' || movement.movementType === 'loan') {
+            // Was exit/loan from source warehouse, add back the stock
+            if (movement.sourceWarehouseId) {
+              const currentStock = await storage.getProductStock(line.productId);
+              const warehouseStock = currentStock.find(s => s.warehouseId === movement.sourceWarehouseId);
+              const currentQty = parseFloat(warehouseStock?.quantity || '0');
+              await storage.updateWarehouseStock(movement.sourceWarehouseId, line.productId, currentQty + quantity, req.user!.companyId);
+            }
+          } else if (movement.movementType === 'transfer') {
+            // Was transfer: remove from destination, add back to source
+            if (movement.destinationWarehouseId) {
+              const destStock = await storage.getProductStock(line.productId);
+              const destWarehouseStock = destStock.find(s => s.warehouseId === movement.destinationWarehouseId);
+              const destQty = parseFloat(destWarehouseStock?.quantity || '0');
+              const newDestQty = destQty - quantity;
+              if (newDestQty < 0) {
+                return res.status(400).json({ message: `No hay suficiente stock en almacén destino para eliminar` });
+              }
+              await storage.updateWarehouseStock(movement.destinationWarehouseId, line.productId, newDestQty, req.user!.companyId);
+            }
+            if (movement.sourceWarehouseId) {
+              const sourceStock = await storage.getProductStock(line.productId);
+              const sourceWarehouseStock = sourceStock.find(s => s.warehouseId === movement.sourceWarehouseId);
+              const sourceQty = parseFloat(sourceWarehouseStock?.quantity || '0');
+              await storage.updateWarehouseStock(movement.sourceWarehouseId, line.productId, sourceQty + quantity, req.user!.companyId);
+            }
+          } else if (movement.movementType === 'return') {
+            // Was return to source warehouse, remove the returned stock
+            if (movement.sourceWarehouseId) {
+              const currentStock = await storage.getProductStock(line.productId);
+              const warehouseStock = currentStock.find(s => s.warehouseId === movement.sourceWarehouseId);
+              const currentQty = parseFloat(warehouseStock?.quantity || '0');
+              const newQty = currentQty - quantity;
+              if (newQty < 0) {
+                return res.status(400).json({ message: `No hay suficiente stock para eliminar la devolución` });
+              }
+              await storage.updateWarehouseStock(movement.sourceWarehouseId, line.productId, newQty, req.user!.companyId);
+            }
+          } else if (movement.movementType === 'adjustment') {
+            // Adjustment: reverse the adjustment
+            const warehouseId = movement.sourceWarehouseId || movement.destinationWarehouseId;
+            if (warehouseId) {
+              const currentStock = await storage.getProductStock(line.productId);
+              const warehouseStock = currentStock.find(s => s.warehouseId === warehouseId);
+              const currentQty = parseFloat(warehouseStock?.quantity || '0');
+              const newQty = currentQty - quantity;
+              if (newQty < 0) {
+                return res.status(400).json({ message: `No hay suficiente stock para eliminar el ajuste` });
+              }
+              await storage.updateWarehouseStock(warehouseId, line.productId, newQty, req.user!.companyId);
+            }
+          }
+        }
       }
 
       await storage.deleteInventoryMovement(id);

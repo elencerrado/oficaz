@@ -37,7 +37,8 @@ import {
   AlertCircle,
   CheckCircle,
   SkipForward,
-  RefreshCw
+  RefreshCw,
+  RotateCcw
 } from 'lucide-react';
 import { useRef } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -1082,6 +1083,28 @@ function MovementsTab() {
     onError: () => toast({ title: 'Error al actualizar movimiento', variant: 'destructive' }),
   });
 
+  const revertToDraftMutation = useMutation({
+    mutationFn: (id: number) => apiRequest('PATCH', `/api/inventory/movements/${id}`, { status: 'draft' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/movements'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/stock'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/dashboard'] });
+      toast({ title: 'Movimiento revertido a borrador. El stock ha sido restaurado.' });
+    },
+    onError: () => toast({ title: 'Error al revertir movimiento', variant: 'destructive' }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => apiRequest('DELETE', `/api/inventory/movements/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/movements'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/stock'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/dashboard'] });
+      toast({ title: 'Movimiento eliminado correctamente' });
+    },
+    onError: () => toast({ title: 'Error al eliminar movimiento', variant: 'destructive' }),
+  });
+
   const resetForm = () => {
     setEditingMovement(null);
     setMovementType('in');
@@ -1284,21 +1307,54 @@ function MovementsTab() {
                           variant="ghost" 
                           size="icon"
                           onClick={() => openEditDialog(movement)}
+                          title="Editar borrador"
                           data-testid={`button-edit-movement-${movement.id}`}
                         >
                           <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {movement.status === 'posted' && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => {
+                            if (confirm('¿Revertir a borrador? El stock será restaurado al estado anterior.')) {
+                              revertToDraftMutation.mutate(movement.id);
+                            }
+                          }}
+                          disabled={revertToDraftMutation.isPending}
+                          title="Revertir a borrador"
+                          data-testid={`button-revert-movement-${movement.id}`}
+                        >
+                          <RotateCcw className="h-4 w-4" />
                         </Button>
                       )}
                       <Button 
                         variant="ghost" 
                         size="icon"
                         onClick={() => downloadPdf(movement.id, movement.movementNumber)}
+                        title="Descargar PDF"
                         data-testid={`button-download-pdf-${movement.id}`}
                       >
                         <Download className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" data-testid={`button-view-movement-${movement.id}`}>
-                        <ChevronRight className="h-4 w-4" />
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="text-red-500 hover:text-red-700"
+                        onClick={() => {
+                          const msg = movement.status === 'posted' 
+                            ? '¿Eliminar este albarán confirmado? El stock será restaurado.'
+                            : '¿Eliminar este borrador?';
+                          if (confirm(msg)) {
+                            deleteMutation.mutate(movement.id);
+                          }
+                        }}
+                        disabled={deleteMutation.isPending}
+                        title="Eliminar"
+                        data-testid={`button-delete-movement-${movement.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
