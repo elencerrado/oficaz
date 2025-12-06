@@ -17051,7 +17051,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
     }
   });
 
-  // Movement PDF generation (Albarán)
+  // Movement PDF generation (Albarán Profesional)
   app.get('/api/inventory/movements/:id/pdf', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -17061,69 +17061,135 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
       }
 
       const company = await storage.getCompany(req.user!.companyId);
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+      
       const doc = new jsPDF();
-
-      // Header
-      doc.setFontSize(20);
-      doc.setTextColor(0, 122, 255);
-      doc.text('ALBARÁN', 14, 20);
+      const pageWidth = doc.internal.pageSize.getWidth();
       
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
-      doc.text(movement.movementNumber, 14, 28);
-      
-      // Company info
-      doc.setFontSize(12);
-      doc.text(company?.name || 'Empresa', 140, 20);
-      doc.setFontSize(9);
-      doc.text(company?.cif || '', 140, 26);
-      if (company?.address) doc.text(company.address, 140, 32);
-      
-      // Movement type label
+      // Movement type labels
       const typeLabels: Record<string, string> = {
         'in': 'ENTRADA',
-        'out': 'SALIDA',
+        'out': 'SALIDA / ALBARÁN DE ENTREGA',
         'transfer': 'TRANSFERENCIA',
-        'adjustment': 'AJUSTE',
-        'loan': 'PRÉSTAMO',
+        'adjustment': 'AJUSTE DE INVENTARIO',
+        'loan': 'PRÉSTAMO DE MATERIAL',
         'return': 'DEVOLUCIÓN',
       };
+      
+      // ===== HEADER SECTION =====
+      // Blue header bar
+      doc.setFillColor(0, 102, 204);
+      doc.rect(0, 0, pageWidth, 45, 'F');
+      
+      // Company name (white, bold)
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(22);
+      doc.setFont('helvetica', 'bold');
+      doc.text(company.name, 14, 18);
+      
+      // Company details (white)
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      let companyY = 26;
+      if (company.cif) {
+        doc.text(`CIF: ${company.cif}`, 14, companyY);
+        companyY += 5;
+      }
+      if (company.address) {
+        const addressText = company.province ? `${company.address}, ${company.province}` : company.address;
+        doc.text(addressText, 14, companyY);
+        companyY += 5;
+      }
+      const contactLine = [company.phone, company.email].filter(Boolean).join(' | ');
+      if (contactLine) {
+        doc.text(contactLine, 14, companyY);
+      }
+      
+      // Document type and number (right side, white)
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('ALBARÁN', pageWidth - 14, 18, { align: 'right' });
       doc.setFontSize(11);
-      doc.setTextColor(100, 100, 100);
-      doc.text(`Tipo: ${typeLabels[movement.movementType] || movement.movementType.toUpperCase()}`, 14, 40);
+      doc.setFont('helvetica', 'normal');
+      doc.text(movement.movementNumber, pageWidth - 14, 26, { align: 'right' });
+      doc.setFontSize(9);
+      doc.text(`Fecha: ${new Date(movement.movementDate).toLocaleDateString('es-ES')}`, pageWidth - 14, 33, { align: 'right' });
+      doc.text(typeLabels[movement.movementType] || movement.movementType.toUpperCase(), pageWidth - 14, 40, { align: 'right' });
       
-      // Date
-      doc.text(`Fecha: ${new Date(movement.movementDate).toLocaleDateString('es-ES')}`, 14, 46);
+      // ===== CLIENT/DESTINATION SECTION =====
+      let currentY = 55;
       
-      // Destination/Related party info
       if (movement.relatedPartyName) {
-        doc.setFontSize(10);
-        doc.text('Destinatario:', 14, 56);
+        // Client box
+        doc.setDrawColor(220, 220, 220);
+        doc.setFillColor(250, 250, 250);
+        doc.roundedRect(14, currentY, 90, 35, 2, 2, 'FD');
+        
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(8);
+        doc.text('DESTINATARIO / CLIENTE', 18, currentY + 6);
+        
+        doc.setTextColor(0, 0, 0);
         doc.setFontSize(11);
-        doc.text(movement.relatedPartyName, 14, 62);
-        if (movement.relatedPartyCif) doc.text(`CIF: ${movement.relatedPartyCif}`, 14, 68);
-        if (movement.relatedPartyAddress) {
-          const addressLines = doc.splitTextToSize(movement.relatedPartyAddress, 80);
-          doc.text(addressLines, 14, 74);
+        doc.setFont('helvetica', 'bold');
+        doc.text(movement.relatedPartyName, 18, currentY + 14);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        
+        let clientY = currentY + 20;
+        if (movement.relatedPartyCif) {
+          doc.text(`CIF: ${movement.relatedPartyCif}`, 18, clientY);
+          clientY += 5;
         }
+        if (movement.relatedPartyAddress) {
+          const addressLines = doc.splitTextToSize(movement.relatedPartyAddress, 82);
+          doc.text(addressLines, 18, clientY);
+        }
+        
+        currentY += 42;
       }
       
-      // Project info if exists
+      // Project info box (if exists)
       if (movement.projectName || movement.projectReference) {
-        doc.setFontSize(10);
-        const projectY = movement.relatedPartyName ? 90 : 56;
-        doc.text('Proyecto/Obra:', 14, projectY);
-        doc.setFontSize(11);
-        if (movement.projectReference) doc.text(`Ref: ${movement.projectReference}`, 14, projectY + 6);
-        if (movement.projectName) doc.text(movement.projectName, 14, projectY + 12);
+        doc.setDrawColor(220, 220, 220);
+        doc.setFillColor(255, 248, 230);
+        doc.roundedRect(110, 55, 85, 35, 2, 2, 'FD');
+        
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(8);
+        doc.text('PROYECTO / OBRA', 114, 61);
+        
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(9);
+        let projY = 68;
+        if (movement.projectReference) {
+          doc.setFont('helvetica', 'bold');
+          doc.text(`Ref: ${movement.projectReference}`, 114, projY);
+          doc.setFont('helvetica', 'normal');
+          projY += 6;
+        }
+        if (movement.projectName) {
+          const projLines = doc.splitTextToSize(movement.projectName, 77);
+          doc.text(projLines, 114, projY);
+        }
+        
+        if (!movement.relatedPartyName) currentY = 97;
       }
       
-      // Lines table
-      const startY = 100;
+      if (!movement.relatedPartyName && !movement.projectName && !movement.projectReference) {
+        currentY = 55;
+      }
+      
+      // ===== PRODUCTS TABLE =====
+      const tableStartY = currentY + 5;
+      
       const tableData = movement.lines.map((line, idx) => [
         String(idx + 1),
+        line.product.sku || '-',
         line.product.name,
-        String(line.quantity),
+        String(parseFloat(line.quantity).toFixed(2)),
         line.product.unitAbbreviation || 'ud.',
         `${parseFloat(line.unitPrice).toFixed(2)} €`,
         `${parseFloat(line.vatRate).toFixed(0)}%`,
@@ -17131,56 +17197,116 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
       ]);
 
       (doc as any).autoTable({
-        startY,
-        head: [['#', 'Producto', 'Cant.', 'Ud.', 'Precio', 'IVA', 'Total']],
+        startY: tableStartY,
+        head: [['#', 'Ref.', 'Descripción', 'Cant.', 'Ud.', 'P. Unit.', 'IVA', 'Importe']],
         body: tableData,
-        theme: 'striped',
-        headStyles: { fillColor: [0, 122, 255] },
-        columnStyles: {
-          0: { cellWidth: 10 },
-          1: { cellWidth: 60 },
-          2: { cellWidth: 15, halign: 'right' },
-          3: { cellWidth: 15 },
-          4: { cellWidth: 25, halign: 'right' },
-          5: { cellWidth: 15, halign: 'right' },
-          6: { cellWidth: 25, halign: 'right' },
+        theme: 'grid',
+        headStyles: { 
+          fillColor: [0, 102, 204], 
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 9,
+          halign: 'center',
         },
+        bodyStyles: {
+          fontSize: 9,
+          cellPadding: 3,
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252],
+        },
+        columnStyles: {
+          0: { cellWidth: 10, halign: 'center' },
+          1: { cellWidth: 22 },
+          2: { cellWidth: 55 },
+          3: { cellWidth: 18, halign: 'right' },
+          4: { cellWidth: 15, halign: 'center' },
+          5: { cellWidth: 22, halign: 'right' },
+          6: { cellWidth: 15, halign: 'center' },
+          7: { cellWidth: 25, halign: 'right' },
+        },
+        margin: { left: 14, right: 14 },
       });
 
-      const finalY = (doc as any).lastAutoTable.finalY + 10;
+      const finalY = (doc as any).lastAutoTable.finalY + 8;
       
-      // Totals
+      // ===== TOTALS SECTION =====
+      const totalsX = pageWidth - 80;
+      
+      // Totals box
+      doc.setDrawColor(220, 220, 220);
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(totalsX - 5, finalY - 3, 75, 32, 2, 2, 'FD');
+      
+      doc.setTextColor(80, 80, 80);
       doc.setFontSize(10);
-      doc.text(`Subtotal: ${parseFloat(movement.subtotal).toFixed(2)} €`, 140, finalY);
-      doc.text(`IVA: ${parseFloat(movement.vatAmount).toFixed(2)} €`, 140, finalY + 6);
+      doc.text('Base Imponible:', totalsX, finalY + 5);
+      doc.text(`${parseFloat(movement.subtotal).toFixed(2)} €`, pageWidth - 18, finalY + 5, { align: 'right' });
+      
+      doc.text('IVA:', totalsX, finalY + 12);
+      doc.text(`${parseFloat(movement.vatAmount).toFixed(2)} €`, pageWidth - 18, finalY + 12, { align: 'right' });
+      
+      doc.setDrawColor(0, 102, 204);
+      doc.line(totalsX, finalY + 17, pageWidth - 18, finalY + 17);
+      
+      doc.setTextColor(0, 0, 0);
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text(`TOTAL: ${parseFloat(movement.total).toFixed(2)} €`, 140, finalY + 14);
+      doc.text('TOTAL:', totalsX, finalY + 25);
+      doc.text(`${parseFloat(movement.total).toFixed(2)} €`, pageWidth - 18, finalY + 25, { align: 'right' });
       
-      // Notes
+      // ===== NOTES SECTION =====
+      let notesEndY = finalY + 35;
       if (movement.notes) {
         doc.setFont('helvetica', 'normal');
+        doc.setTextColor(80, 80, 80);
+        doc.setFontSize(8);
+        doc.text('OBSERVACIONES:', 14, finalY + 5);
+        doc.setTextColor(0, 0, 0);
         doc.setFontSize(9);
-        doc.text('Observaciones:', 14, finalY);
-        const noteLines = doc.splitTextToSize(movement.notes, 120);
-        doc.text(noteLines, 14, finalY + 5);
+        const noteLines = doc.splitTextToSize(movement.notes, 90);
+        doc.text(noteLines, 14, finalY + 11);
+        notesEndY = finalY + 11 + (noteLines.length * 4);
       }
       
-      // Signature area
-      const sigY = finalY + 40;
-      doc.setFontSize(9);
-      doc.text('Recibí conforme:', 14, sigY);
-      doc.line(14, sigY + 20, 80, sigY + 20);
-      doc.text('Firma y sello', 14, sigY + 25);
+      // ===== SIGNATURE SECTION =====
+      const sigY = Math.max(notesEndY + 15, finalY + 45);
       
-      doc.text('Entregado por:', 120, sigY);
-      doc.line(120, sigY + 20, 186, sigY + 20);
-      doc.text('Firma', 120, sigY + 25);
+      // Only show signatures if there's enough space
+      if (sigY < 250) {
+        doc.setDrawColor(200, 200, 200);
+        doc.setTextColor(80, 80, 80);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        
+        // Received by
+        doc.text('Recibí conforme:', 14, sigY);
+        doc.setDrawColor(180, 180, 180);
+        doc.line(14, sigY + 25, 85, sigY + 25);
+        doc.setFontSize(8);
+        doc.text('Firma y sello del destinatario', 14, sigY + 30);
+        doc.text(`Fecha: ___/___/_______`, 14, sigY + 36);
+        
+        // Delivered by
+        doc.setFontSize(9);
+        doc.text('Entregado por:', 115, sigY);
+        doc.line(115, sigY + 25, 195, sigY + 25);
+        doc.setFontSize(8);
+        doc.text('Firma del transportista', 115, sigY + 30);
+      }
       
-      // Footer
-      doc.setFontSize(8);
-      doc.setTextColor(128, 128, 128);
-      doc.text(`Generado el ${new Date().toLocaleString('es-ES')} - Oficaz`, 14, 285);
+      // ===== FOOTER =====
+      const footerY = 285;
+      doc.setDrawColor(0, 102, 204);
+      doc.line(14, footerY - 8, pageWidth - 14, footerY - 8);
+      
+      doc.setFontSize(7);
+      doc.setTextColor(120, 120, 120);
+      doc.text(company.name, 14, footerY - 3);
+      doc.text(`CIF: ${company.cif || '-'} | ${company.phone || ''} | ${company.email || ''}`, 14, footerY + 1);
+      
+      doc.setFontSize(7);
+      doc.text(`Documento generado el ${new Date().toLocaleString('es-ES')}`, pageWidth - 14, footerY - 1, { align: 'right' });
 
       const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
       
