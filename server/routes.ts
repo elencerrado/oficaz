@@ -17498,8 +17498,13 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
   // Download Excel template for bulk product upload
   app.get('/api/inventory/products/template', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
-      const categories = await storage.getProductCategories(req.user!.companyId);
-      const warehouses = await storage.getWarehouses(req.user!.companyId);
+      const companyId = req.user?.companyId;
+      if (!companyId || isNaN(companyId)) {
+        console.error('Invalid companyId for template download:', req.user);
+        return res.status(401).json({ message: 'Sesión no válida' });
+      }
+      const categories = await storage.getProductCategories(companyId);
+      const warehouses = await storage.getWarehouses(companyId);
       
       // Create workbook with template
       const wb = XLSX.utils.book_new();

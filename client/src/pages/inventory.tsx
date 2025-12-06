@@ -416,25 +416,22 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
   // Bulk upload functions
   const handleDownloadTemplate = async () => {
     try {
-      const response = await fetch('/api/inventory/products/template', {
-        method: 'GET',
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Template download error:', response.status, errorText);
-        throw new Error('Error downloading template');
+      // Get token from auth data for URL parameter
+      const authData = localStorage.getItem('authData') || sessionStorage.getItem('authData');
+      const token = authData ? JSON.parse(authData).token : null;
+      if (!token) {
+        toast({ title: 'Sesión no válida. Por favor, vuelve a iniciar sesión.', variant: 'destructive' });
+        return;
       }
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      
+      // Use direct URL with token in query param (supported by backend)
+      const downloadUrl = `/api/inventory/products/template?token=${encodeURIComponent(token)}`;
       const a = document.createElement('a');
-      a.href = url;
+      a.href = downloadUrl;
       a.download = 'plantilla-productos.xlsx';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Download template error:', error);
       toast({ title: 'Error al descargar plantilla', variant: 'destructive' });
