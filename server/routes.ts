@@ -17202,7 +17202,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         storage.getWarehouses(req.user!.companyId),
         storage.getLowStockProducts(req.user!.companyId),
         storage.getOverdueToolLoans(req.user!.companyId),
-        storage.getInventoryMovements(req.user!.companyId, {}),
+        storage.getInventoryMovements(req.user!.companyId, { status: 'posted' }),
       ]);
 
       const activeLoans = await storage.getToolLoans(req.user!.companyId, { status: 'active' });
