@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { TabNavigation } from '@/components/ui/tab-navigation';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,8 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/lib/auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { usePageHeader } from '@/components/layout/page-header';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { 
   Package, 
   Warehouse, 
@@ -102,17 +104,84 @@ type DashboardStats = {
 };
 
 export default function Inventory() {
+  usePageTitle('Inventario');
+  const { setHeader, resetHeader } = usePageHeader();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
+  // Set page header
+  useEffect(() => {
+    setHeader({
+      title: 'Inventario',
+      subtitle: 'Gestiona productos, almacenes y movimientos de stock'
+    });
+    return resetHeader;
+  }, []);
+
+  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
+    queryKey: ['/api/inventory/dashboard'],
+  });
+
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50 dark:bg-gray-900" style={{ overflowX: 'clip' }}>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Inventario</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">
-          Gestiona productos, almacenes y movimientos de stock
-        </p>
+    <div>
+      {/* Stats Cards - Always visible */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-3">
+        <Card className="dark:bg-gray-800">
+          <CardContent className="pt-4 pb-3 px-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                <Package className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold dark:text-white">{statsLoading ? '-' : (stats?.totalProducts || 0)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Productos</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="dark:bg-gray-800">
+          <CardContent className="pt-4 pb-3 px-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                <Warehouse className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold dark:text-white">{statsLoading ? '-' : (stats?.totalWarehouses || 0)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Almacenes</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="dark:bg-gray-800">
+          <CardContent className="pt-4 pb-3 px-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-100 dark:bg-amber-900 rounded-lg">
+                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold dark:text-white">{statsLoading ? '-' : (stats?.lowStockCount || 0)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Stock bajo</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="dark:bg-gray-800">
+          <CardContent className="pt-4 pb-3 px-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold dark:text-white">{statsLoading ? '-' : (stats?.activeLoansCount || 0)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Préstamos</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <TabNavigation
@@ -126,7 +195,7 @@ export default function Inventory() {
         onTabChange={setActiveTab}
       />
 
-      {activeTab === 'dashboard' && <DashboardTab />}
+      {activeTab === 'dashboard' && <DashboardTab stats={stats} isLoading={statsLoading} />}
       {activeTab === 'products' && <ProductsTab searchTerm={searchTerm} setSearchTerm={setSearchTerm} />}
       {activeTab === 'movements' && <MovementsTab />}
       {activeTab === 'settings' && <SettingsTab />}
@@ -134,15 +203,7 @@ export default function Inventory() {
   );
 }
 
-function DashboardTab() {
-  const { data: stats, isLoading } = useQuery<DashboardStats>({
-    queryKey: ['/api/inventory/dashboard'],
-  });
-
-  if (isLoading) {
-    return <div className="flex justify-center py-12"><LoadingSpinner /></div>;
-  }
-
+function DashboardTab({ stats, isLoading }: { stats: DashboardStats | undefined; isLoading: boolean }) {
   const movementTypeLabels: Record<string, string> = {
     'in': 'Entrada',
     'out': 'Salida',
@@ -152,67 +213,12 @@ function DashboardTab() {
     'return': 'Devolución',
   };
 
+  if (isLoading) {
+    return <div className="flex justify-center py-12"><LoadingSpinner /></div>;
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                <Package className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold dark:text-white">{stats?.totalProducts || 0}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Productos</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                <Warehouse className="h-5 w-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold dark:text-white">{stats?.totalWarehouses || 0}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Almacenes</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 dark:bg-amber-900 rounded-lg">
-                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold dark:text-white">{stats?.lowStockCount || 0}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Stock bajo</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold dark:text-white">{stats?.activeLoansCount || 0}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Préstamos</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
+    <div className="grid md:grid-cols-2 gap-6">
         {stats?.lowStockCount ? (
           <Card>
             <CardHeader className="pb-3">
@@ -310,7 +316,6 @@ function DashboardTab() {
             </CardContent>
           </Card>
         )}
-      </div>
     </div>
   );
 }
