@@ -27,6 +27,7 @@ import {
   CalendarDays,
   BarChart3,
   ChevronRight,
+  ChevronDown,
   Check,
   X,
   Clock,
@@ -38,7 +39,9 @@ import {
   History,
   ArrowDown,
   LogOut,
-  MapPin
+  MapPin,
+  Coffee,
+  ExternalLink
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, startOfWeek, addDays, subDays, differenceInMinutes, startOfDay, endOfDay, endOfWeek, startOfMonth, endOfMonth, isToday } from 'date-fns';
@@ -175,6 +178,9 @@ export default function TimeTracking() {
   // Infinite scroll state
   const [displayedCount, setDisplayedCount] = useState(15);
   const ITEMS_PER_LOAD = 15;
+  
+  // Expandable rows state
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const loadMoreDesktopRef = useRef<HTMLDivElement>(null);
   const loadMoreMobileRef = useRef<HTMLDivElement>(null);
   const [manualEntryData, setManualEntryData] = useState({
@@ -3292,12 +3298,12 @@ export default function TimeTracking() {
             <table className="w-full">
               <thead className="bg-muted border-b border-border">
                 <tr>
+                  <th className="text-left py-3 px-4 font-medium text-foreground w-[40px]"></th>
                   <th className="text-left py-3 px-4 font-medium text-foreground">Empleado</th>
                   <th className="text-left py-3 px-4 font-medium text-foreground">Fecha</th>
                   <th className="text-left py-3 px-4 font-medium text-foreground min-w-[300px]">Jornada de Trabajo</th>
                   <th className="text-left py-3 px-4 font-medium text-foreground">Total</th>
-                  <th className="text-center py-3 px-4 font-medium text-foreground w-[60px]">Ubicación</th>
-                  <th className="text-center py-3 px-4 font-medium text-foreground w-[80px]">Historial</th>
+                  <th className="text-center py-3 px-4 font-medium text-foreground w-[80px]">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -3466,8 +3472,36 @@ export default function TimeTracking() {
                       return total + Math.max(0, sessionHours - breakHours);
                     }, 0);
                     
+                    const rowKey = `day-${dayData.date}-${dayData.userId}`;
+                    const isExpanded = expandedRows.has(rowKey);
+                    const toggleExpand = () => {
+                      setExpandedRows(prev => {
+                        const next = new Set(prev);
+                        if (next.has(rowKey)) {
+                          next.delete(rowKey);
+                        } else {
+                          next.add(rowKey);
+                        }
+                        return next;
+                      });
+                    };
+                    
+                    // Main row
                     result.push(
-                      <tr key={`day-${dayData.date}-${dayData.userId}`} className={`hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-700 h-12 row-wave-loading row-wave-${index % 15}`}>
+                      <tr 
+                        key={rowKey} 
+                        className={cn(
+                          `hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-700 h-12 row-wave-loading row-wave-${index % 15} cursor-pointer select-none`,
+                          isExpanded && "bg-gray-50 dark:bg-gray-800"
+                        )}
+                        onClick={toggleExpand}
+                      >
+                        <td className="py-2 px-4 w-[40px]">
+                          <ChevronDown className={cn(
+                            "w-4 h-4 text-gray-400 transition-transform duration-200",
+                            isExpanded && "transform rotate-180"
+                          )} />
+                        </td>
                         <td className="py-2 px-4">
                           <div className="flex items-center gap-2">
                             <UserAvatar 
@@ -3503,35 +3537,7 @@ export default function TimeTracking() {
                             </div>
                           </div>
                         </td>
-                        <td className="py-2 px-4 text-center">
-                          {(() => {
-                            // Check if any session has geolocation data (check against null/undefined, not truthiness)
-                            const sessionWithLocation = dayData.sessions.find((s: any) => 
-                              s.clockInLatitude != null || s.clockOutLatitude != null
-                            );
-                            if (sessionWithLocation) {
-                              const hasClockIn = sessionWithLocation.clockInLatitude != null && sessionWithLocation.clockInLongitude != null;
-                              const hasClockOut = sessionWithLocation.clockOutLatitude != null && sessionWithLocation.clockOutLongitude != null;
-                              const tooltipParts = [];
-                              if (hasClockIn) {
-                                tooltipParts.push(`Entrada: ${parseFloat(sessionWithLocation.clockInLatitude).toFixed(4)}, ${parseFloat(sessionWithLocation.clockInLongitude).toFixed(4)}`);
-                              }
-                              if (hasClockOut) {
-                                tooltipParts.push(`Salida: ${parseFloat(sessionWithLocation.clockOutLatitude).toFixed(4)}, ${parseFloat(sessionWithLocation.clockOutLongitude).toFixed(4)}`);
-                              }
-                              return (
-                                <div 
-                                  className="flex items-center justify-center cursor-pointer group"
-                                  title={tooltipParts.join('\n')}
-                                >
-                                  <MapPin className="w-4 h-4 text-green-500 group-hover:text-green-600" />
-                                </div>
-                              );
-                            }
-                            return <span className="text-gray-300">-</span>;
-                          })()}
-                        </td>
-                        <td className="py-2 px-4 text-center">
+                        <td className="py-2 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                           {(() => {
                             // When there are multiple sessions in a day, prioritize incomplete session, then active, then first
                             const incompleteSession = dayData.sessions.find((s: any) => s.status === 'incomplete');
@@ -3586,6 +3592,135 @@ export default function TimeTracking() {
                         </td>
                       </tr>
                     );
+                    
+                    // Expanded details row
+                    if (isExpanded) {
+                      result.push(
+                        <tr key={`${rowKey}-details`} className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+                          <td colSpan={6} className="py-4 px-6">
+                            <div className="space-y-3">
+                              {dayData.sessions.map((session: any, sessionIndex: number) => {
+                                const clockInTime = new Date(session.clockIn);
+                                const clockOutTime = session.clockOut ? new Date(session.clockOut) : null;
+                                const hasClockInLocation = session.clockInLatitude != null && session.clockInLongitude != null;
+                                const hasClockOutLocation = session.clockOutLatitude != null && session.clockOutLongitude != null;
+                                
+                                return (
+                                  <div key={session.id} className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                                    <div className="flex items-center justify-between mb-3">
+                                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                        Sesión {sessionIndex + 1} de {dayData.sessions.length}
+                                      </span>
+                                      {session.status === 'incomplete' && (
+                                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">Incompleta</span>
+                                      )}
+                                      {session.autoCompleted && (
+                                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded flex items-center gap-1">
+                                          <AlertTriangle className="w-3 h-3" /> Auto-cerrada
+                                        </span>
+                                      )}
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                      {/* Entrada */}
+                                      <div className="space-y-1">
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">Entrada</div>
+                                        <div className="flex items-center gap-2">
+                                          <Clock className="w-4 h-4 text-green-500" />
+                                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                            {format(clockInTime, 'HH:mm')}
+                                          </span>
+                                        </div>
+                                        {hasClockInLocation && (
+                                          <a
+                                            href={`https://www.google.com/maps?q=${session.clockInLatitude},${session.clockInLongitude}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 hover:underline"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            <MapPin className="w-3 h-3" />
+                                            Ver en mapa
+                                            <ExternalLink className="w-3 h-3" />
+                                          </a>
+                                        )}
+                                      </div>
+                                      
+                                      {/* Salida */}
+                                      <div className="space-y-1">
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">Salida</div>
+                                        {clockOutTime ? (
+                                          <>
+                                            <div className="flex items-center gap-2">
+                                              <Clock className="w-4 h-4 text-red-500" />
+                                              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                {format(clockOutTime, 'HH:mm')}
+                                              </span>
+                                            </div>
+                                            {hasClockOutLocation && (
+                                              <a
+                                                href={`https://www.google.com/maps?q=${session.clockOutLatitude},${session.clockOutLongitude}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 hover:underline"
+                                                onClick={(e) => e.stopPropagation()}
+                                              >
+                                                <MapPin className="w-3 h-3" />
+                                                Ver en mapa
+                                                <ExternalLink className="w-3 h-3" />
+                                              </a>
+                                            )}
+                                          </>
+                                        ) : (
+                                          <span className="text-sm text-gray-400">En curso...</span>
+                                        )}
+                                      </div>
+                                      
+                                      {/* Descansos */}
+                                      <div className="space-y-1">
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">Descansos</div>
+                                        {session.breakPeriods && session.breakPeriods.length > 0 ? (
+                                          <div className="space-y-1">
+                                            {session.breakPeriods.map((bp: any, bpIndex: number) => (
+                                              <div key={bpIndex} className="flex items-center gap-2 text-sm">
+                                                <Coffee className="w-3 h-3 text-orange-500" />
+                                                <span className="text-gray-700 dark:text-gray-300">
+                                                  {format(new Date(bp.breakStart), 'HH:mm')} - {bp.breakEnd ? format(new Date(bp.breakEnd), 'HH:mm') : 'En curso'}
+                                                </span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <span className="text-sm text-gray-400">Sin descansos</span>
+                                        )}
+                                      </div>
+                                      
+                                      {/* Duración */}
+                                      <div className="space-y-1">
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">Duración</div>
+                                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                          {(() => {
+                                            let hours = calculateHours(session.clockIn, session.clockOut);
+                                            if (hours > 24) hours = 24;
+                                            const breakHours = session.breakPeriods 
+                                              ? session.breakPeriods.reduce((total: number, bp: any) => {
+                                                  return total + calculateHours(bp.breakStart, bp.breakEnd);
+                                                }, 0) 
+                                              : 0;
+                                            const netHours = Math.max(0, hours - breakHours);
+                                            return netHours > 0 ? `${netHours.toFixed(1)}h` : '-';
+                                          })()}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    }
                   });
                   
                   // Add final summaries for the last entries
