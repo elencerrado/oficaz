@@ -2632,15 +2632,6 @@ export default function TimeTracking() {
 
     return (
       <div className="space-y-0">
-        {/* Consolidation indicator */}
-        {wasConsolidated && (
-          <div className="flex items-center gap-1 mb-1">
-            <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded">
-              {dayData.sessions.length} fichajes → {consolidatedSessions.length} consolidados
-            </span>
-          </div>
-        )}
-        
         {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
         <div className="relative h-4">
           {consolidatedSessions.map((session: any, sessionIndex: number) => {
@@ -2885,10 +2876,12 @@ export default function TimeTracking() {
                     title={`Entrada: ${label.text}`}
                   />
                 ) : (
-                  // Sin colisión: punto + hora visible
+                  // Sin colisión: punto + hora visible (+ si hay consolidación y es primera entrada)
                   <div key={key} className="absolute flex items-center" style={{ left: `${label.position}%`, top: '0px' }}>
                     <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                    <span className="text-xs font-medium text-green-700 whitespace-nowrap">{label.text}</span>
+                    <span className="text-xs font-medium text-green-700 whitespace-nowrap">
+                      {label.text}{wasConsolidated && label.sessionIndex === 0 && <span className="text-purple-600 font-bold">+</span>}
+                    </span>
                   </div>
                 );
               } else {
