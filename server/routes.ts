@@ -17718,12 +17718,42 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         created: 0,
         updated: 0,
         skipped: 0,
+        categoriesCreated: 0,
         errors: [] as { sku: string; message: string }[],
       };
       
+      // Step 1: Auto-create missing categories
+      const existingCategories = await storage.getProductCategories(req.user!.companyId);
+      const categoryMap = new Map(existingCategories.map(c => [c.name.toLowerCase(), c.id]));
+      
+      // Find unique category names that need to be created
+      const categoriesToCreate = new Set<string>();
+      for (const product of products) {
+        if (product.categoryName && !categoryMap.has(product.categoryName.toLowerCase())) {
+          categoriesToCreate.add(product.categoryName);
+        }
+      }
+      
+      // Create missing categories
+      for (const categoryName of categoriesToCreate) {
+        try {
+          const newCategory = await storage.createProductCategory(req.user!.companyId, { name: categoryName });
+          categoryMap.set(categoryName.toLowerCase(), newCategory.id);
+          results.categoriesCreated++;
+        } catch (err: any) {
+          console.error(`Error creating category "${categoryName}":`, err.message);
+        }
+      }
+      
+      // Step 2: Process products with resolved category IDs
       for (const product of products) {
         try {
           const resolution = resolutions?.[product.sku] || 'skip';
+          
+          // Resolve categoryId from map (handles both existing and newly created categories)
+          const resolvedCategoryId = product.categoryName 
+            ? categoryMap.get(product.categoryName.toLowerCase()) || null
+            : product.categoryId || null;
           
           if (product.isDuplicate) {
             if (resolution === 'replace' && product.existingProduct?.id) {
@@ -17732,7 +17762,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
                 name: product.name,
                 barcode: product.barcode,
                 description: product.description,
-                categoryId: product.categoryId,
+                categoryId: resolvedCategoryId,
                 unitOfMeasure: product.unitOfMeasure,
                 unitAbbreviation: product.unitAbbreviation,
                 costPrice: product.costPrice,
@@ -17755,7 +17785,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
               sku: product.sku,
               barcode: product.barcode,
               description: product.description,
-              categoryId: product.categoryId,
+              categoryId: resolvedCategoryId,
               unitOfMeasure: product.unitOfMeasure,
               unitAbbreviation: product.unitAbbreviation,
               costPrice: product.costPrice,
