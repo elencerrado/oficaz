@@ -41,7 +41,8 @@ import {
   CheckCircle,
   SkipForward,
   RefreshCw,
-  RotateCcw
+  RotateCcw,
+  Eye
 } from 'lucide-react';
 import { useRef } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -1031,6 +1032,7 @@ function MovementsTab() {
   const [lineQuantity, setLineQuantity] = useState('1');
   const [revertConfirm, setRevertConfirm] = useState<{ open: boolean; movement: Movement | null }>({ open: false, movement: null });
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; movement: Movement | null }>({ open: false, movement: null });
+  const [viewDialog, setViewDialog] = useState<{ open: boolean; movement: any | null; loading: boolean }>({ open: false, movement: null, loading: false });
   const { toast } = useToast();
 
   const { data: movements = [], isLoading } = useQuery<Movement[]>({
@@ -1130,6 +1132,17 @@ function MovementsTab() {
       setIsDialogOpen(true);
     } catch {
       toast({ title: 'Error al cargar el movimiento', variant: 'destructive' });
+    }
+  };
+
+  const openViewDialog = async (movement: Movement) => {
+    setViewDialog({ open: true, movement: null, loading: true });
+    try {
+      const fullMovement = await apiRequest('GET', `/api/inventory/movements/${movement.id}`) as any;
+      setViewDialog({ open: true, movement: fullMovement, loading: false });
+    } catch {
+      toast({ title: 'Error al cargar el movimiento', variant: 'destructive' });
+      setViewDialog({ open: false, movement: null, loading: false });
     }
   };
 
@@ -1290,6 +1303,15 @@ function MovementsTab() {
                     <span className="font-medium dark:text-white">{parseFloat(movement.total).toFixed(2)} €</span>
                     
                     <div className="flex gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => openViewDialog(movement)}
+                        title="Ver detalles"
+                        data-testid={`button-view-movement-${movement.id}`}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
                       {movement.status === 'draft' && (
                         <Button 
                           variant="ghost" 
@@ -1496,6 +1518,106 @@ function MovementsTab() {
               data-testid="button-confirm-movement"
             >
               {createMutation.isPending ? 'Confirmando...' : 'Confirmar y enviar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Movement Dialog */}
+      <Dialog open={viewDialog.open} onOpenChange={(open) => setViewDialog({ open, movement: open ? viewDialog.movement : null, loading: false })}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {viewDialog.movement?.movementNumber || 'Detalles del movimiento'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {viewDialog.loading ? (
+            <div className="flex justify-center py-8">
+              <LoadingSpinner />
+            </div>
+          ) : viewDialog.movement && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Tipo:</span>
+                  <p className="font-medium dark:text-white">{typeLabels[viewDialog.movement.movementType] || viewDialog.movement.movementType}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Estado:</span>
+                  <p className={`inline-block px-2 py-1 rounded text-xs ${statusLabels[viewDialog.movement.status]?.color || 'bg-gray-100 dark:bg-gray-700'}`}>
+                    {statusLabels[viewDialog.movement.status]?.label || viewDialog.movement.status}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Fecha:</span>
+                  <p className="font-medium dark:text-white">{new Date(viewDialog.movement.movementDate).toLocaleDateString('es-ES')}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Creado por:</span>
+                  <p className="font-medium dark:text-white">{viewDialog.movement.createdBy?.fullName || 'N/A'}</p>
+                </div>
+                {viewDialog.movement.relatedPartyName && (
+                  <div className="col-span-2">
+                    <span className="text-gray-500 dark:text-gray-400">Cliente/Proveedor:</span>
+                    <p className="font-medium dark:text-white">{viewDialog.movement.relatedPartyName}</p>
+                  </div>
+                )}
+                {viewDialog.movement.sourceWarehouse && (
+                  <div>
+                    <span className="text-gray-500 dark:text-gray-400">Almacén origen:</span>
+                    <p className="font-medium dark:text-white">{viewDialog.movement.sourceWarehouse.name}</p>
+                  </div>
+                )}
+                {viewDialog.movement.destinationWarehouse && (
+                  <div>
+                    <span className="text-gray-500 dark:text-gray-400">Almacén destino:</span>
+                    <p className="font-medium dark:text-white">{viewDialog.movement.destinationWarehouse.name}</p>
+                  </div>
+                )}
+              </div>
+
+              {viewDialog.movement.lines && viewDialog.movement.lines.length > 0 && (
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400 text-sm">Productos:</span>
+                  <div className="mt-2 border dark:border-gray-700 rounded-lg divide-y dark:divide-gray-700">
+                    {viewDialog.movement.lines.map((line: any, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between p-3 text-sm">
+                        <div>
+                          <p className="font-medium dark:text-white">{line.product?.name || `Producto ${line.productId}`}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {parseFloat(line.quantity)} x €{parseFloat(line.unitPrice).toFixed(2)}
+                          </p>
+                        </div>
+                        <span className="font-medium dark:text-white">
+                          €{(parseFloat(line.quantity) * parseFloat(line.unitPrice)).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between p-3 bg-gray-50 dark:bg-gray-900 font-medium">
+                      <span className="dark:text-gray-300">Total:</span>
+                      <span className="dark:text-white">€{parseFloat(viewDialog.movement.total).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {viewDialog.movement.notes && (
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400 text-sm">Notas:</span>
+                  <p className="mt-1 text-sm dark:text-gray-300">{viewDialog.movement.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewDialog({ open: false, movement: null, loading: false })}>
+              Cerrar
+            </Button>
+            <Button onClick={() => downloadPdf(viewDialog.movement?.id, viewDialog.movement?.movementNumber)} disabled={!viewDialog.movement}>
+              <Download className="h-4 w-4 mr-2" />
+              Descargar PDF
             </Button>
           </DialogFooter>
         </DialogContent>
