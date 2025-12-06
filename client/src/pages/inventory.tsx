@@ -1143,6 +1143,23 @@ function MovementsTab() {
     queryKey: ['/api/inventory/warehouses'],
   });
 
+  // Stock data para verificar disponibilidad
+  const { data: stockData = [] } = useQuery<{ productId: number; warehouseId: number; quantity: string; warehouseName: string }[]>({
+    queryKey: ['/api/inventory/stock'],
+  });
+
+  // Aggregate stock by product and warehouse
+  const getProductStock = (productId: number, warehouseId?: number) => {
+    if (warehouseId) {
+      const stock = stockData.find(s => s.productId === productId && s.warehouseId === warehouseId);
+      return stock ? parseFloat(stock.quantity) : 0;
+    }
+    // Total across all warehouses
+    return stockData
+      .filter(s => s.productId === productId)
+      .reduce((sum, s) => sum + parseFloat(s.quantity), 0);
+  };
+
   const createMutation = useMutation({
     mutationFn: (data: any) => apiRequest('POST', '/api/inventory/movements', data),
     onSuccess: () => {
@@ -1248,6 +1265,24 @@ function MovementsTab() {
     if (!product) return;
     
     const qty = parseFloat(lineQuantity) || 1;
+    
+    // Check stock for outgoing movements (out, transfer, loan)
+    if (['out', 'transfer', 'loan'].includes(movementType)) {
+      const currentStock = getProductStock(product.id, warehouseId ? parseInt(warehouseId) : undefined);
+      // Sum quantities already added for this product
+      const alreadyAdded = lines.filter(l => l.productId === product.id).reduce((sum, l) => sum + l.quantity, 0);
+      const totalRequested = alreadyAdded + qty;
+      
+      if (totalRequested > currentStock) {
+        toast({
+          title: '⚠️ Stock insuficiente',
+          description: `Solo hay ${currentStock} unidades de "${product.name}" disponibles. Estás añadiendo ${totalRequested}.`,
+          variant: 'destructive',
+          duration: 5000,
+        });
+      }
+    }
+    
     setLines([...lines, {
       productId: product.id,
       productName: product.name,
@@ -1524,24 +1559,38 @@ function MovementsTab() {
 
               {lines.length > 0 && (
                 <div className="mt-4 space-y-2">
-                  {lines.map((line, index) => (
-                    <div key={index} className="flex items-center justify-between bg-gray-50 dark:bg-gray-900 p-3 rounded">
-                      <div>
-                        <span className="font-medium dark:text-white">{line.productName}</span>
-                        <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
-                          x{line.quantity} @ €{parseFloat(line.unitPrice).toFixed(2)}
-                        </span>
+                  {lines.map((line, index) => {
+                    // Check if this line exceeds stock for outgoing movements
+                    const isOutgoing = ['out', 'transfer', 'loan'].includes(movementType);
+                    const currentStock = getProductStock(line.productId, warehouseId ? parseInt(warehouseId) : undefined);
+                    const totalForProduct = lines.filter(l => l.productId === line.productId).reduce((sum, l) => sum + l.quantity, 0);
+                    const exceedsStock = isOutgoing && totalForProduct > currentStock;
+                    
+                    return (
+                      <div key={index} className={`flex items-center justify-between p-3 rounded ${exceedsStock ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800' : 'bg-gray-50 dark:bg-gray-900'}`}>
+                        <div className="flex items-center gap-2">
+                          {exceedsStock && <AlertTriangle className="h-4 w-4 text-red-500" />}
+                          <div>
+                            <span className={`font-medium ${exceedsStock ? 'text-red-700 dark:text-red-400' : 'dark:text-white'}`}>{line.productName}</span>
+                            <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
+                              x{line.quantity} @ €{parseFloat(line.unitPrice).toFixed(2)}
+                            </span>
+                            {exceedsStock && (
+                              <span className="text-xs text-red-500 ml-2">(Stock: {currentStock})</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium dark:text-white">
+                            €{(line.quantity * parseFloat(line.unitPrice)).toFixed(2)}
+                          </span>
+                          <Button variant="ghost" size="icon" onClick={() => handleRemoveLine(index)}>
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium dark:text-white">
-                          €{(line.quantity * parseFloat(line.unitPrice)).toFixed(2)}
-                        </span>
-                        <Button variant="ghost" size="icon" onClick={() => handleRemoveLine(index)}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   <div className="flex justify-end pt-2 border-t dark:border-gray-700">
                     <span className="font-bold text-lg dark:text-white">Total: €{calculateTotal().toFixed(2)}</span>
                   </div>
