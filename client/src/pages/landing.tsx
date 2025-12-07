@@ -361,72 +361,98 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
   
   if (addonKey === 'schedules') {
     return (
-      <div className="p-3 h-full bg-[#0a1628]">
+      <div className="p-3 h-full bg-[#0a1628] flex flex-col">
         <h3 className="text-white font-bold text-sm mb-0.5">Cuadrante</h3>
         <p className="text-gray-400 text-[8px] mb-1.5">Consulta tus turnos asignados</p>
         
-        <div className="bg-[#1a2942] rounded-lg p-1 mb-1.5 flex items-center justify-between">
+        <div className="bg-[#1a2942] rounded-lg p-1.5 mb-2 flex items-center justify-between">
           <ChevronLeft className="w-2.5 h-2.5 text-gray-500" />
           <span className="text-white text-[7px] font-medium">Semana 29 - 5 oct</span>
           <ChevronRight className="w-2.5 h-2.5 text-gray-500" />
         </div>
         
-        <div className="bg-[#1a2942] rounded-xl p-1.5 mb-1.5">
-          <div className="flex justify-between items-center mb-1">
-            <p className="text-white text-[7px] font-semibold">Lunes <span className="text-gray-400 font-normal">29</span></p>
-            <p className="text-gray-500 text-[5px]">2 turnos</p>
-          </div>
-          <div className="space-y-1">
-            <div className="bg-red-500 rounded-md px-1.5 py-1">
-              <div className="flex items-center justify-between">
-                <span className="text-white text-[6px] font-medium">Mañana</span>
-                <span className="text-white/80 text-[5px]">09:00-14:00</span>
+        <div className="flex-1 space-y-2">
+          {/* Lunes - 2 turnos */}
+          <div className="bg-[#1a2942] rounded-xl p-2">
+            <div className="flex justify-between items-center mb-1.5">
+              <p className="text-white text-[8px] font-semibold">Lunes <span className="text-gray-400 font-normal">29 sep</span></p>
+              <p className="text-gray-500 text-[6px]">2 turnos</p>
+            </div>
+            <div className="space-y-1.5">
+              <div className="bg-red-500 rounded-md px-2 py-1.5">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-white text-[7px] font-medium">Mañana</span>
+                  <span className="text-white/80 text-[6px]">09:00-14:00</span>
+                </div>
+                <div className="flex items-center gap-1 text-white/90">
+                  <MapPin className="w-2 h-2" />
+                  <span className="text-[5px]">Oficina Central</span>
+                </div>
+              </div>
+              <div className="bg-green-500 rounded-md px-2 py-1.5">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-white text-[7px] font-medium">Tarde</span>
+                  <span className="text-white/80 text-[6px]">15:00-20:00</span>
+                </div>
+                <div className="flex items-center gap-1 text-white/90">
+                  <MapPin className="w-2 h-2" />
+                  <span className="text-[5px]">Cliente ABC S.L.</span>
+                </div>
               </div>
             </div>
-            <div className="bg-green-500 rounded-md px-1.5 py-1">
-              <div className="flex items-center justify-between">
-                <span className="text-white text-[6px] font-medium">Tarde</span>
-                <span className="text-white/80 text-[5px]">15:00-20:00</span>
+          </div>
+          
+          {/* Martes */}
+          <div className="bg-[#1a2942] rounded-xl p-2">
+            <div className="flex justify-between items-center mb-1.5">
+              <p className="text-white text-[8px] font-semibold">Martes <span className="text-gray-400 font-normal">30 sep</span></p>
+              <p className="text-gray-500 text-[6px]">1 turno</p>
+            </div>
+            <div className="bg-[#007AFF] rounded-md px-2 py-1.5">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-white text-[7px] font-medium">Completo</span>
+                <span className="text-white/80 text-[6px]">08:00-17:00</span>
+              </div>
+              <div className="flex items-center gap-1 text-white/90">
+                <MapPin className="w-2 h-2" />
+                <span className="text-[5px]">Almacén Norte</span>
               </div>
             </div>
           </div>
-        </div>
-        
-        <div className="bg-[#1a2942] rounded-xl p-1.5 mb-1.5">
-          <div className="flex justify-between items-center mb-1">
-            <p className="text-white text-[7px] font-semibold">Martes <span className="text-gray-400 font-normal">30</span></p>
-            <p className="text-gray-500 text-[5px]">1 turno</p>
-          </div>
-          <div className="bg-[#007AFF] rounded-md px-1.5 py-1">
-            <div className="flex items-center justify-between">
-              <span className="text-white text-[6px] font-medium">Completo</span>
-              <span className="text-white/80 text-[5px]">08:00-17:00</span>
+          
+          {/* Miércoles */}
+          <div className="bg-[#1a2942] rounded-xl p-2">
+            <div className="flex justify-between items-center mb-1.5">
+              <p className="text-white text-[8px] font-semibold">Miércoles <span className="text-gray-400 font-normal">1 oct</span></p>
+              <p className="text-gray-500 text-[6px]">1 turno</p>
+            </div>
+            <div className="bg-purple-500 rounded-md px-2 py-1.5">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-white text-[7px] font-medium">Noche</span>
+                <span className="text-white/80 text-[6px]">22:00-06:00</span>
+              </div>
+              <div className="flex items-center gap-1 text-white/90">
+                <MapPin className="w-2 h-2" />
+                <span className="text-[5px]">Fábrica Sur</span>
+              </div>
             </div>
           </div>
-        </div>
-        
-        <div className="bg-[#1a2942] rounded-xl p-1.5 mb-1.5">
-          <div className="flex justify-between items-center mb-1">
-            <p className="text-white text-[7px] font-semibold">Miércoles <span className="text-gray-400 font-normal">1</span></p>
-            <p className="text-gray-500 text-[5px]">1 turno</p>
-          </div>
-          <div className="bg-purple-500 rounded-md px-1.5 py-1">
-            <div className="flex items-center justify-between">
-              <span className="text-white text-[6px] font-medium">Mañana</span>
-              <span className="text-white/80 text-[5px]">08:00-14:00</span>
+          
+          {/* Jueves */}
+          <div className="bg-[#1a2942] rounded-xl p-2">
+            <div className="flex justify-between items-center mb-1.5">
+              <p className="text-white text-[8px] font-semibold">Jueves <span className="text-gray-400 font-normal">2 oct</span></p>
+              <p className="text-gray-500 text-[6px]">1 turno</p>
             </div>
-          </div>
-        </div>
-        
-        <div className="bg-[#1a2942] rounded-xl p-1.5">
-          <div className="flex justify-between items-center mb-1">
-            <p className="text-white text-[7px] font-semibold">Jueves <span className="text-gray-400 font-normal">2</span></p>
-            <p className="text-gray-500 text-[5px]">1 turno</p>
-          </div>
-          <div className="bg-orange-500 rounded-md px-1.5 py-1">
-            <div className="flex items-center justify-between">
-              <span className="text-white text-[6px] font-medium">Tarde</span>
-              <span className="text-white/80 text-[5px]">14:00-20:00</span>
+            <div className="bg-orange-500 rounded-md px-2 py-1.5">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-white text-[7px] font-medium">Mañana</span>
+                <span className="text-white/80 text-[6px]">07:00-15:00</span>
+              </div>
+              <div className="flex items-center gap-1 text-white/90">
+                <MapPin className="w-2 h-2" />
+                <span className="text-[5px]">Sede Principal</span>
+              </div>
             </div>
           </div>
         </div>
