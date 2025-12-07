@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DatePickerPeriod } from "@/components/ui/date-picker";
-import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare, RotateCcw, ChevronLeft, ChevronRight, Calendar, User } from "lucide-react";
+import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare, RotateCcw, ChevronLeft, ChevronRight, Calendar, User, Baby, Heart, Home, Briefcase, GraduationCap, Stethoscope, AlertCircle, FileText } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format, differenceInDays, parseISO, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval, startOfDay, differenceInCalendarDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
@@ -34,11 +35,52 @@ interface VacationRequest {
   reason?: string;
   status: 'pending' | 'approved' | 'denied';
   requestDate: string;
+  absenceType?: string;
+  createdAt?: string;
   user?: {
     fullName: string;
     email: string;
   };
 }
+
+const ABSENCE_TYPE_ICONS: Record<string, any> = {
+  vacation: Plane,
+  maternity_paternity: Baby,
+  marriage: Heart,
+  bereavement: Home,
+  moving: Home,
+  medical_appointment: Stethoscope,
+  public_duty: Briefcase,
+  training: GraduationCap,
+  temporary_disability: Stethoscope,
+  personal_leave: FileText,
+};
+
+const ABSENCE_TYPE_LABELS: Record<string, string> = {
+  vacation: 'Vacaciones',
+  maternity_paternity: 'Maternidad / Paternidad',
+  marriage: 'Matrimonio',
+  bereavement: 'Fallecimiento familiar',
+  moving: 'Mudanza',
+  medical_appointment: 'Cita médica',
+  public_duty: 'Deber público',
+  training: 'Formación',
+  temporary_disability: 'Baja médica',
+  personal_leave: 'Asuntos propios',
+};
+
+const ABSENCE_TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  vacation: { bg: 'bg-blue-50 dark:bg-blue-950/40', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-800' },
+  maternity_paternity: { bg: 'bg-pink-50 dark:bg-pink-950/40', text: 'text-pink-700 dark:text-pink-300', border: 'border-pink-200 dark:border-pink-800' },
+  marriage: { bg: 'bg-rose-50 dark:bg-rose-950/40', text: 'text-rose-700 dark:text-rose-300', border: 'border-rose-200 dark:border-rose-800' },
+  bereavement: { bg: 'bg-slate-50 dark:bg-slate-950/40', text: 'text-slate-700 dark:text-slate-300', border: 'border-slate-200 dark:border-slate-800' },
+  moving: { bg: 'bg-amber-50 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-200 dark:border-amber-800' },
+  medical_appointment: { bg: 'bg-teal-50 dark:bg-teal-950/40', text: 'text-teal-700 dark:text-teal-300', border: 'border-teal-200 dark:border-teal-800' },
+  public_duty: { bg: 'bg-indigo-50 dark:bg-indigo-950/40', text: 'text-indigo-700 dark:text-indigo-300', border: 'border-indigo-200 dark:border-indigo-800' },
+  training: { bg: 'bg-violet-50 dark:bg-violet-950/40', text: 'text-violet-700 dark:text-violet-300', border: 'border-violet-200 dark:border-violet-800' },
+  temporary_disability: { bg: 'bg-red-50 dark:bg-red-950/40', text: 'text-red-700 dark:text-red-300', border: 'border-red-200 dark:border-red-800' },
+  personal_leave: { bg: 'bg-gray-50 dark:bg-gray-950/40', text: 'text-gray-700 dark:text-gray-300', border: 'border-gray-200 dark:border-gray-800' },
+};
 
 interface Employee {
   id: number;
@@ -1014,183 +1056,196 @@ export default function VacationManagement() {
               </div>
             ) : (
               <div className="space-y-3">
-                {filteredRequests.map((request: VacationRequest) => (
-                  <div
-                    key={request.id}
-                    className={`p-4 border rounded-lg ${
-                      request.status === 'pending'
-                        ? 'bg-yellow-50 dark:bg-yellow-950/30 border-yellow-300 dark:border-yellow-700'
-                        : request.status === 'approved'
-                        ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700'
-                        : 'bg-rose-50 dark:bg-rose-950/30 border-rose-300 dark:border-rose-700'
-                    }`}
-                  >
-                    {/* Desktop: layout horizontal */}
-                    <div className="hidden md:flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-medium text-foreground">{request.user?.fullName}</h3>
-                          {getStatusBadge(request.status)}
-                        </div>
-                        <div className="text-sm text-muted-foreground space-y-1">
-                          <p>
-                            <span className="font-medium">Fecha{request.startDate && request.endDate && new Date(request.startDate).toDateString() !== new Date(request.endDate).toDateString() ? 's' : ''}:</span>{" "}
-                            {request.startDate && request.endDate 
-                              ? formatVacationDatesShort(request.startDate, request.endDate)
-                              : "N/A"}
-                          </p>
-                          <p>
-                            <span className="font-medium">Días:</span> {
-                              request.startDate && request.endDate 
-                                ? calculateDays(request.startDate, request.endDate)
-                                : request.days || "N/A"
-                            }
-                          </p>
-                          {request.reason && (
-                            <p>
-                              <span className="font-medium">Motivo:</span> {request.reason}
-                            </p>
-                          )}
-                          <p>
-                            <span className="font-medium">Solicitado:</span>{" "}
-                            {request.requestDate ? format(new Date(request.requestDate), "dd/MM/yyyy", { locale: es }) : 
-                             request.createdAt ? format(new Date(request.createdAt), "dd/MM/yyyy", { locale: es }) : "N/A"}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-1 ml-4">
-                        {request.status === 'pending' && canManageRequest(request) ? (
-                          <>
-                            <button
-                              onClick={() => openRequestModal(request, 'approve')}
-                              className="p-1.5 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-                              title="Aprobar solicitud"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => openRequestModal(request, 'edit')}
-                              className="p-1.5 rounded text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                              title="Modificar solicitud"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => openRequestModal(request, 'deny')}
-                              className="p-1.5 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                              title="Denegar solicitud"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </>
-                        ) : request.status === 'pending' ? (
-                          <Badge variant="outline" className="text-xs text-yellow-700 bg-yellow-50">
-                            {user?.role === 'manager' && request.userId === user?.id 
-                              ? 'No puedes gestionar tus propias solicitudes' 
-                              : 'Sin permisos para gestionar'}
-                          </Badge>
-                        ) : (
-                          <div className="flex gap-1 items-center">
-                            {(request.status === 'approved' || request.status === 'denied') && canManageRequest(request) && (
-                              <button
-                                onClick={() => openRequestModal(request, 'revert')}
-                                className="p-1.5 rounded text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
-                                title="Revertir a pendiente"
-                              >
-                                <RotateCcw className="w-4 h-4" />
-                              </button>
-                            )}
-                            <Badge variant="outline" className="text-xs">
-                              {request.status === 'approved' ? 'Aprobada' : 'Denegada'}
-                            </Badge>
+                {filteredRequests.map((request: VacationRequest) => {
+                  const absenceType = request.absenceType || 'vacation';
+                  const AbsenceIcon = ABSENCE_TYPE_ICONS[absenceType] || Plane;
+                  const absenceLabel = ABSENCE_TYPE_LABELS[absenceType] || 'Vacaciones';
+                  const absenceColors = ABSENCE_TYPE_COLORS[absenceType] || ABSENCE_TYPE_COLORS.vacation;
+                  const daysCount = request.startDate && request.endDate 
+                    ? calculateDays(request.startDate, request.endDate)
+                    : request.days || 0;
+                  
+                  return (
+                    <div
+                      key={request.id}
+                      className="bg-white dark:bg-slate-900/90 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden transition-all hover:shadow-md"
+                    >
+                      {/* Header con estado */}
+                      <div className={`px-4 py-2.5 flex items-center justify-between ${
+                        request.status === 'pending'
+                          ? 'bg-amber-50 dark:bg-amber-950/30 border-b border-amber-100 dark:border-amber-900/50'
+                          : request.status === 'approved'
+                          ? 'bg-emerald-50 dark:bg-emerald-950/30 border-b border-emerald-100 dark:border-emerald-900/50'
+                          : 'bg-rose-50 dark:bg-rose-950/30 border-b border-rose-100 dark:border-rose-900/50'
+                      }`}>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${absenceColors.bg} ${absenceColors.border} border`}>
+                            <AbsenceIcon className={`w-3.5 h-3.5 ${absenceColors.text}`} />
                           </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Mobile: layout vertical */}
-                    <div className="md:hidden space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-medium text-foreground">{request.user?.fullName}</h3>
+                          <span className={`text-sm font-medium ${absenceColors.text}`}>{absenceLabel}</span>
+                        </div>
                         {getStatusBadge(request.status)}
                       </div>
-                      
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        <p>
-                          <span className="font-medium">Fecha{request.startDate && request.endDate && new Date(request.startDate).toDateString() !== new Date(request.endDate).toDateString() ? 's' : ''}:</span>{" "}
-                          {request.startDate && request.endDate 
-                            ? formatVacationDatesShort(request.startDate, request.endDate)
-                            : "N/A"}
-                        </p>
-                        <p>
-                          <span className="font-medium">Días:</span> {
-                            request.startDate && request.endDate 
-                              ? calculateDays(request.startDate, request.endDate)
-                              : request.days || "N/A"
-                          }
-                        </p>
-                        {request.reason && (
-                          <p>
-                            <span className="font-medium">Motivo:</span> {request.reason}
-                          </p>
-                        )}
-                        <p>
-                          <span className="font-medium">Solicitado:</span>{" "}
-                          {request.requestDate ? format(new Date(request.requestDate), "dd/MM/yyyy", { locale: es }) : 
-                           request.createdAt ? format(new Date(request.createdAt), "dd/MM/yyyy", { locale: es }) : "N/A"}
-                        </p>
-                      </div>
 
-                      {/* Mobile action buttons */}
-                      {request.status === 'pending' && canManageRequest(request) ? (
-                        <div className="flex gap-1 justify-end">
-                          <button
-                            onClick={() => openRequestModal(request, 'approve')}
-                            className="p-2 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-                            title="Aprobar solicitud"
-                          >
-                            <Check className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => openRequestModal(request, 'edit')}
-                            className="p-2 rounded text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                            title="Editar solicitud"
-                          >
-                            <Edit className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => openRequestModal(request, 'deny')}
-                            className="p-2 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                            title="Denegar solicitud"
-                          >
-                            <X className="w-5 h-5" />
-                          </button>
+                      {/* Contenido principal */}
+                      <div className="p-4">
+                        {/* Desktop */}
+                        <div className="hidden md:flex items-center gap-6">
+                          {/* Info empleado */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                              {request.user?.fullName}
+                            </h3>
+                            <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
+                              <div className="flex items-center gap-1.5">
+                                <CalendarDays className="w-4 h-4" />
+                                <span>
+                                  {request.startDate && request.endDate 
+                                    ? formatVacationDatesShort(request.startDate, request.endDate)
+                                    : "N/A"}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-full">
+                                <span className="font-semibold text-gray-700 dark:text-gray-300">{daysCount}</span>
+                                <span className="text-gray-500 dark:text-gray-400">{daysCount === 1 ? 'día' : 'días'}</span>
+                              </div>
+                            </div>
+                            {request.reason && (
+                              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
+                                <span className="font-medium">Motivo:</span> {request.reason}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Meta + Acciones */}
+                          <div className="flex items-center gap-3 flex-shrink-0">
+                            <div className="text-right text-xs text-gray-400 dark:text-gray-500">
+                              <span>Solicitado</span>
+                              <div className="font-medium text-gray-600 dark:text-gray-400">
+                                {request.requestDate ? format(new Date(request.requestDate), "dd MMM", { locale: es }) : 
+                                 request.createdAt ? format(new Date(request.createdAt), "dd MMM", { locale: es }) : "N/A"}
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-1 pl-3 border-l border-gray-200 dark:border-gray-700">
+                              {request.status === 'pending' && canManageRequest(request) ? (
+                                <>
+                                  <button
+                                    onClick={() => openRequestModal(request, 'approve')}
+                                    className="p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
+                                    title="Aprobar"
+                                  >
+                                    <Check className="w-5 h-5" />
+                                  </button>
+                                  <button
+                                    onClick={() => openRequestModal(request, 'edit')}
+                                    className="p-2 rounded-xl text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                                    title="Editar"
+                                  >
+                                    <Edit className="w-5 h-5" />
+                                  </button>
+                                  <button
+                                    onClick={() => openRequestModal(request, 'deny')}
+                                    className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"
+                                    title="Denegar"
+                                  >
+                                    <X className="w-5 h-5" />
+                                  </button>
+                                </>
+                              ) : request.status === 'pending' ? (
+                                <span className="text-xs text-amber-600 dark:text-amber-400 px-2">
+                                  Sin permisos
+                                </span>
+                              ) : (
+                                canManageRequest(request) && (
+                                  <button
+                                    onClick={() => openRequestModal(request, 'revert')}
+                                    className="p-2 rounded-xl text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors"
+                                    title="Revertir"
+                                  >
+                                    <RotateCcw className="w-5 h-5" />
+                                  </button>
+                                )
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      ) : request.status === 'pending' ? (
-                        <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-center">
-                          <p className="text-xs text-yellow-700 dark:text-yellow-400">
-                            {user?.role === 'manager' && request.userId === user?.id 
-                              ? 'No puedes gestionar tus propias solicitudes' 
-                              : 'Sin permisos para gestionar esta solicitud'}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="flex justify-end">
-                          {(request.status === 'approved' || request.status === 'denied') && canManageRequest(request) && (
-                            <button
-                              onClick={() => openRequestModal(request, 'revert')}
-                              className="p-2 rounded text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
-                              title="Revertir a pendiente"
-                            >
-                              <RotateCcw className="w-5 h-5" />
-                            </button>
+
+                        {/* Mobile */}
+                        <div className="md:hidden space-y-3">
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                            {request.user?.fullName}
+                          </h3>
+                          
+                          <div className="flex flex-wrap items-center gap-2 text-sm">
+                            <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
+                              <CalendarDays className="w-4 h-4" />
+                              <span>
+                                {request.startDate && request.endDate 
+                                  ? formatVacationDatesShort(request.startDate, request.endDate)
+                                  : "N/A"}
+                              </span>
+                            </div>
+                            <div className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-xs font-medium text-gray-700 dark:text-gray-300">
+                              {daysCount} {daysCount === 1 ? 'día' : 'días'}
+                            </div>
+                          </div>
+
+                          {request.reason && (
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {request.reason}
+                            </p>
                           )}
+
+                          <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800">
+                            <span className="text-xs text-gray-400 dark:text-gray-500">
+                              Solicitado {request.requestDate ? format(new Date(request.requestDate), "dd MMM", { locale: es }) : 
+                               request.createdAt ? format(new Date(request.createdAt), "dd MMM", { locale: es }) : "N/A"}
+                            </span>
+                            
+                            <div className="flex items-center gap-1">
+                              {request.status === 'pending' && canManageRequest(request) ? (
+                                <>
+                                  <button
+                                    onClick={() => openRequestModal(request, 'approve')}
+                                    className="p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
+                                  >
+                                    <Check className="w-5 h-5" />
+                                  </button>
+                                  <button
+                                    onClick={() => openRequestModal(request, 'edit')}
+                                    className="p-2 rounded-xl text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                                  >
+                                    <Edit className="w-5 h-5" />
+                                  </button>
+                                  <button
+                                    onClick={() => openRequestModal(request, 'deny')}
+                                    className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"
+                                  >
+                                    <X className="w-5 h-5" />
+                                  </button>
+                                </>
+                              ) : request.status === 'pending' ? (
+                                <span className="text-xs text-amber-600 dark:text-amber-400">
+                                  Sin permisos
+                                </span>
+                              ) : (
+                                canManageRequest(request) && (
+                                  <button
+                                    onClick={() => openRequestModal(request, 'revert')}
+                                    className="p-2 rounded-xl text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors"
+                                  >
+                                    <RotateCcw className="w-5 h-5" />
+                                  </button>
+                                )
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
             </div>
