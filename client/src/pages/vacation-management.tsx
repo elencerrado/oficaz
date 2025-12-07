@@ -795,8 +795,8 @@ export default function VacationManagement() {
   // Track previous vacation requests (for reference only - WebSocket handles toasts)
   const previousRequestsRef = useRef<VacationRequest[]>([]);
   
-  // Track first load completion for wave animation (only show animation on initial load)
-  const requestsFirstLoadCompletedRef = useRef(false);
+  // Track if data has been shown at least once (for wave animation)
+  const [requestsHaveBeenShown, setRequestsHaveBeenShown] = useState(false);
   
   // Keep reference in sync with current requests (WebSocket handles toast notifications)
   useEffect(() => {
@@ -804,15 +804,16 @@ export default function VacationManagement() {
     previousRequestsRef.current = [...vacationRequests];
   }, [vacationRequests]);
   
-  // Track first load completion for wave animation
+  // Mark as shown when data is displayed for the first time
   useEffect(() => {
-    if (!loadingRequests && vacationRequests.length >= 0 && !requestsFirstLoadCompletedRef.current) {
-      requestsFirstLoadCompletedRef.current = true;
+    if (!loadingRequests && vacationRequests.length > 0 && !requestsHaveBeenShown) {
+      const timer = setTimeout(() => setRequestsHaveBeenShown(true), 1000);
+      return () => clearTimeout(timer);
     }
-  }, [loadingRequests, vacationRequests.length]);
+  }, [loadingRequests, vacationRequests.length, requestsHaveBeenShown]);
   
-  // Compute whether to show wave loading animation (only on first load)
-  const showWaveLoading = loadingRequests && !requestsFirstLoadCompletedRef.current;
+  // Show wave loading animation only on first display
+  const showWaveLoading = !requestsHaveBeenShown && vacationRequests.length > 0;
 
   // Update vacation request status
   const updateRequestMutation = useMutation({
@@ -1434,12 +1435,21 @@ export default function VacationManagement() {
                 </div>
               </div>
             ) : filteredRequests.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                {vacationRequests.length === 0 
-                  ? "No hay solicitudes de ausencias" 
-                  : "No se encontraron solicitudes con los filtros aplicados"}
-                <div className="text-xs text-muted-foreground/60 mt-2">
-                  Total de solicitudes: {vacationRequests.length}
+              <div className="text-center py-12">
+                <div className="flex flex-col items-center justify-center space-y-3">
+                  <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                    <Plane className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                  <div className="text-foreground font-medium">
+                    {vacationRequests.length === 0 
+                      ? "No hay solicitudes de ausencias" 
+                      : "No se encontraron solicitudes con los filtros aplicados"}
+                  </div>
+                  <div className="text-muted-foreground text-sm">
+                    {vacationRequests.length === 0 
+                      ? "Las solicitudes de ausencias aparecerán aquí"
+                      : `Total de solicitudes: ${vacationRequests.length}`}
+                  </div>
                 </div>
               </div>
             ) : (
@@ -1705,8 +1715,18 @@ export default function VacationManagement() {
             <div className="space-y-6">
               {/* Timeline de Vacaciones tipo Gantt */}
               {employees.length === 0 && !loadingEmployees ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No hay empleados registrados
+                <div className="text-center py-12">
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                      <Users className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <div className="text-foreground font-medium">
+                      No hay empleados registrados
+                    </div>
+                    <div className="text-muted-foreground text-sm">
+                      Añade empleados para ver el cuadrante
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">

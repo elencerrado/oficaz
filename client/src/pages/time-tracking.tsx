@@ -194,8 +194,6 @@ export default function TimeTracking() {
   const loadMoreMobileRef = useRef<HTMLDivElement>(null);
   
   // Track first load completion for wave animation (only show animation on initial load)
-  const sessionsFirstLoadCompletedRef = useRef(false);
-  const requestsFirstLoadCompletedRef = useRef(false);
   const [manualEntryData, setManualEntryData] = useState({
     employeeId: '',
     date: '',
@@ -370,22 +368,29 @@ export default function TimeTracking() {
     enabled: !!user && (user.role === 'admin' || user.role === 'manager') && (activeTab === 'requests' || showRequestsDialog),
   });
   
-  // Track first load completion for wave animations
+  // Track if data has been shown at least once (for wave animation)
+  const [sessionsHaveBeenShown, setSessionsHaveBeenShown] = useState(false);
+  const [requestsHaveBeenShown, setRequestsHaveBeenShown] = useState(false);
+  
+  // Mark as shown when data is displayed for the first time
   useEffect(() => {
-    if (!isLoading && allSessions.length > 0 && !sessionsFirstLoadCompletedRef.current) {
-      sessionsFirstLoadCompletedRef.current = true;
+    if (!isLoading && allSessions.length > 0 && !sessionsHaveBeenShown) {
+      // Small delay to allow wave animation to complete
+      const timer = setTimeout(() => setSessionsHaveBeenShown(true), 1000);
+      return () => clearTimeout(timer);
     }
-  }, [isLoading, allSessions.length]);
+  }, [isLoading, allSessions.length, sessionsHaveBeenShown]);
   
   useEffect(() => {
-    if (!isLoadingModificationRequests && !isFetchingModificationRequests && modificationRequests.length >= 0 && !requestsFirstLoadCompletedRef.current) {
-      requestsFirstLoadCompletedRef.current = true;
+    if (!isLoadingModificationRequests && modificationRequests.length > 0 && !requestsHaveBeenShown) {
+      const timer = setTimeout(() => setRequestsHaveBeenShown(true), 1000);
+      return () => clearTimeout(timer);
     }
-  }, [isLoadingModificationRequests, isFetchingModificationRequests, modificationRequests.length]);
+  }, [isLoadingModificationRequests, modificationRequests.length, requestsHaveBeenShown]);
   
-  // Compute whether to show wave loading animation (only on first load)
-  const showSessionsWaveLoading = isLoading && !sessionsFirstLoadCompletedRef.current;
-  const showRequestsWaveLoading = isLoadingModificationRequests && !requestsFirstLoadCompletedRef.current;
+  // Show wave loading animation only on first display
+  const showSessionsWaveLoading = !sessionsHaveBeenShown && allSessions.length > 0;
+  const showRequestsWaveLoading = !requestsHaveBeenShown && modificationRequests.length > 0;
   
   // WebSocket connection for real-time updates (Performance Optimization)
   useEffect(() => {
@@ -3864,20 +3869,20 @@ export default function TimeTracking() {
                 })()}
                 
                 {filteredSessions.length === 0 && (
-                  <div className="py-16">
-                    <div className="flex flex-col items-center justify-center space-y-2">
-                      <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                  <div className="text-center py-12">
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
                         {isLoading ? (
                           <LoadingSpinner size="sm" />
                         ) : (
-                          <Users className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                          <Users className="w-6 h-6 text-muted-foreground" />
                         )}
                       </div>
-                      <div className="text-gray-500 dark:text-gray-400 font-medium text-sm">
+                      <div className="text-foreground font-medium">
                         {isLoading ? 'Cargando fichajes...' : 'No hay fichajes en este período'}
                       </div>
                       {!isLoading && (
-                        <div className="text-gray-400 dark:text-gray-500 text-xs">
+                        <div className="text-muted-foreground text-sm">
                           Prueba seleccionando un rango de fechas diferente
                         </div>
                       )}
