@@ -799,16 +799,16 @@ export default function VacationRequests() {
                 </div>
               )}
               
-              {/* Reason textarea */}
+              {/* Description textarea */}
               <div>
                 <Label className="text-sm font-medium text-gray-600 dark:text-white/70 mb-2 block">
-                  Motivo (opcional)
+                  Descripción {selectedAbsenceType === 'deber_publico' ? '(obligatorio)' : '(opcional)'}
                 </Label>
                 <Textarea
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Describe el motivo de tu solicitud..."
-                  className="bg-white dark:bg-white/5 border-gray-300 dark:border-white/20 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-white/50 rounded-lg resize-none"
+                  className={`bg-white dark:bg-white/5 border-gray-300 dark:border-white/20 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-white/50 rounded-lg resize-none ${selectedAbsenceType === 'deber_publico' && !reason.trim() ? 'border-orange-400 dark:border-orange-500/50' : ''}`}
                   rows={3}
                 />
               </div>
@@ -892,7 +892,8 @@ export default function VacationRequests() {
                   !selectedStartDate || 
                   !selectedEndDate || 
                   (selectedAbsenceType === 'vacation' && exceedsAvailable) ||
-                  (requiresAttachment && !attachmentFile)
+                  (requiresAttachment && !attachmentFile) ||
+                  (selectedAbsenceType === 'deber_publico' && !reason.trim())
                 }
                 className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl h-12 disabled:opacity-50"
               >
