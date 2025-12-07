@@ -10,7 +10,7 @@
 //
 // ADD-ONS GRATUITOS (incluidos en todas las suscripciones):
 //    - time_tracking (Fichajes)
-//    - vacation (Vacaciones)
+//    - vacation (Ausencias)
 //    - schedules (Cuadrante de horarios)
 //
 // ADD-ONS DE PAGO (requieren compra):
@@ -86,7 +86,7 @@ const LEGACY_TO_CANONICAL: Record<LegacyFeatureKey, CanonicalAddonKey | 'logoUpl
 // Feature display names for UI
 const FEATURE_NAMES: Record<FeatureKey, string> = {
   time_tracking: 'Fichajes',
-  vacation: 'Vacaciones',
+  vacation: 'Ausencias',
   schedules: 'Cuadrante de horarios',
   messages: 'Mensajería Interna',
   reminders: 'Recordatorios',
