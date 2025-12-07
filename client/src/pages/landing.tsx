@@ -47,7 +47,12 @@ import {
   Search,
   PenLine,
   Plane,
-  Stethoscope
+  Stethoscope,
+  Baby,
+  Heart,
+  Briefcase,
+  GraduationCap,
+  Scale
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
@@ -265,38 +270,38 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
         {/* Request cards - new Apple style */}
         <div className="space-y-1.5">
           {[
-            { type: 'Vacaciones', period: '10 dic → 12 dic', days: '3', status: 'approved', icon: 'vacation' },
-            { type: 'Vacaciones', period: '1 ago → 15 ago', days: '15', status: 'approved', icon: 'vacation' },
-            { type: 'Baja médica', period: '5 de noviembre', days: '1', status: 'pending', icon: 'medical' },
-            { type: 'Vacaciones', period: '5 jul → 8 jul', days: '4', status: 'rejected', icon: 'vacation' },
-          ].map((req, i) => (
-            <div key={i} className="bg-white/5 rounded-lg overflow-hidden border border-white/10 flex">
-              <div className="flex-1 p-1.5 flex items-center gap-1.5">
-                <div className={`w-5 h-5 rounded-md flex items-center justify-center ${
-                  req.icon === 'vacation' ? 'bg-green-500/20' : 'bg-red-500/20'
+            { type: 'Vacaciones', period: '10 dic → 12 dic', days: '3', status: 'approved', icon: 'vacation', iconColor: 'bg-green-500/20', iconTextColor: 'text-green-400' },
+            { type: 'Permiso paternidad', period: '1 nov → 15 nov', days: '15', status: 'approved', icon: 'baby', iconColor: 'bg-pink-500/20', iconTextColor: 'text-pink-400' },
+            { type: 'Baja médica', period: '5 de noviembre', days: '1', status: 'pending', icon: 'medical', iconColor: 'bg-red-500/20', iconTextColor: 'text-red-400' },
+            { type: 'Asuntos propios', period: '20 de octubre', days: '1', status: 'approved', icon: 'briefcase', iconColor: 'bg-blue-500/20', iconTextColor: 'text-blue-400' },
+          ].map((req, i) => {
+            const IconComponent = req.icon === 'vacation' ? Plane : 
+                                  req.icon === 'medical' ? Stethoscope :
+                                  req.icon === 'baby' ? Baby :
+                                  Briefcase;
+            return (
+              <div key={i} className="bg-white/5 rounded-lg overflow-hidden border border-white/10 flex">
+                <div className="flex-1 p-1.5 flex items-center gap-1.5">
+                  <div className={`w-5 h-5 rounded-md flex items-center justify-center ${req.iconColor}`}>
+                    <IconComponent className={`w-2.5 h-2.5 ${req.iconTextColor}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-[7px] font-medium">{req.type}</p>
+                    <p className="text-gray-400 text-[5px]">{req.period} • {req.days} día{Number(req.days) > 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+                <div className={`w-8 flex flex-col items-center justify-center ${
+                  req.status === 'approved' ? 'bg-green-500/10' : 
+                  req.status === 'rejected' ? 'bg-red-500/10' : 
+                  'bg-amber-500/10'
                 }`}>
-                  {req.icon === 'vacation' ? (
-                    <Plane className="w-2.5 h-2.5 text-green-400" />
-                  ) : (
-                    <Stethoscope className="w-2.5 h-2.5 text-red-400" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-[7px] font-medium">{req.type}</p>
-                  <p className="text-gray-400 text-[5px]">{req.period} • {req.days} día{Number(req.days) > 1 ? 's' : ''}</p>
+                  {req.status === 'approved' && <CheckCircle className="w-2.5 h-2.5 text-green-400" />}
+                  {req.status === 'rejected' && <XCircle className="w-2.5 h-2.5 text-red-400" />}
+                  {req.status === 'pending' && <Clock className="w-2.5 h-2.5 text-amber-400" />}
                 </div>
               </div>
-              <div className={`w-8 flex flex-col items-center justify-center ${
-                req.status === 'approved' ? 'bg-green-500/10' : 
-                req.status === 'rejected' ? 'bg-red-500/10' : 
-                'bg-amber-500/10'
-              }`}>
-                {req.status === 'approved' && <CheckCircle className="w-2.5 h-2.5 text-green-400" />}
-                {req.status === 'rejected' && <XCircle className="w-2.5 h-2.5 text-red-400" />}
-                {req.status === 'pending' && <Clock className="w-2.5 h-2.5 text-amber-400" />}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
