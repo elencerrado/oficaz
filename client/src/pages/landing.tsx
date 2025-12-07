@@ -2169,12 +2169,11 @@ export default function Landing() {
                 
                 {/* Users - Horizontal layout */}
                 <div className="bg-white rounded-2xl p-5 shadow-xl border border-gray-100">
-                  <h3 className="font-semibold text-gray-900 mb-3 text-sm">Usuarios adicionales</h3>
+                  <h3 className="font-semibold text-gray-900 mb-3 text-sm">Usuarios</h3>
                   <div className="grid grid-cols-3 gap-4">
                     {/* Employees */}
                     <div className="text-center">
-                      <p className="font-medium text-gray-900 text-sm">Empleados</p>
-                      <p className="text-[10px] text-gray-500 mb-2">+€2/usuario</p>
+                      <p className="font-medium text-gray-900 text-sm mb-2">Empleados</p>
                       <div className="flex items-center justify-center gap-2">
                         <button 
                           onClick={() => setUserCounts(prev => ({ ...prev, employees: Math.max(0, prev.employees - 1) }))}
@@ -2194,8 +2193,7 @@ export default function Landing() {
                     
                     {/* Managers */}
                     <div className="text-center">
-                      <p className="font-medium text-gray-900 text-sm">Managers</p>
-                      <p className="text-[10px] text-gray-500 mb-2">+€4/usuario</p>
+                      <p className="font-medium text-gray-900 text-sm mb-2">Managers</p>
                       <div className="flex items-center justify-center gap-2">
                         <button 
                           onClick={() => setUserCounts(prev => ({ ...prev, managers: Math.max(0, prev.managers - 1) }))}
@@ -2215,8 +2213,7 @@ export default function Landing() {
                     
                     {/* Admins */}
                     <div className="text-center">
-                      <p className="font-medium text-gray-900 text-sm">Admins</p>
-                      <p className="text-[10px] text-gray-500 mb-2">+€6 (mín. 1)</p>
+                      <p className="font-medium text-gray-900 text-sm mb-2">Admins</p>
                       <div className="flex items-center justify-center gap-2">
                         <button 
                           onClick={() => setUserCounts(prev => ({ ...prev, admins: Math.max(1, prev.admins - 1) }))}
