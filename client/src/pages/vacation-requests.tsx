@@ -914,94 +914,101 @@ export default function VacationRequests() {
           </DialogContent>
         </Dialog>
       </div>
-      {/* Requests table */}
-      <div className="px-6 mb-6 flex-1">
-        <div className="bg-white dark:bg-white/10 rounded-lg overflow-hidden border border-gray-200 dark:border-white/20">
-          {/* Table Header */}
-          <div className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr] bg-gray-100 dark:bg-white/10 py-3 px-4">
-            <div className="text-sm font-semibold text-center text-gray-900 dark:text-white">Período</div>
-            <div className="text-sm font-semibold text-center text-gray-900 dark:text-white">Días</div>
-            <div className="text-sm font-semibold text-center text-gray-900 dark:text-white">Estado</div>
-            <div className="text-sm font-semibold text-center text-gray-900 dark:text-white">Fecha</div>
-          </div>
-
-          {/* Table Body - No scroll, fixed height */}
-          <div className="bg-gray-50 dark:bg-white/5">
-            {(requests as any[]).length > 0 ? (
-              (requests as any[])
-                .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                .map((request: any) => {
-                    const absenceType = request.absenceType || 'vacation';
-                    const AbsenceIcon = ABSENCE_TYPE_ICONS[absenceType] || Calendar;
-                    return (
-                    <div 
-                      key={request.id} 
-                      className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr] py-3 px-4 border-b border-gray-200 dark:border-white/20 items-center min-h-[48px] hover:bg-gray-100 dark:hover:bg-white/10"
-                    >
-                    <div className="text-sm text-center text-gray-900 dark:text-white flex items-center justify-center gap-2">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <AbsenceIcon className={`w-4 h-4 flex-shrink-0 ${absenceType === 'vacation' ? 'text-green-500' : 'text-blue-500'}`} />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{ABSENCE_TYPE_LABELS[absenceType] || 'Vacaciones'}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      {formatDateRange(request.startDate, request.endDate)}
+      {/* Requests list - Apple style cards */}
+      <div className="px-4 mb-6 flex-1 space-y-2">
+        {(requests as any[]).length > 0 ? (
+          (requests as any[])
+            .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .map((request: any) => {
+              const absenceType = request.absenceType || 'vacation';
+              const AbsenceIcon = ABSENCE_TYPE_ICONS[absenceType] || Calendar;
+              const days = calculateDays(request.startDate, request.endDate);
+              const startDate = parseISO(request.startDate);
+              const endDate = parseISO(request.endDate);
+              const isSingleDay = isSameDay(startDate, endDate);
+              
+              return (
+                <div 
+                  key={request.id} 
+                  className="bg-white dark:bg-white/5 rounded-xl p-3 border border-gray-100 dark:border-white/10 hover:shadow-sm transition-shadow"
+                >
+                  <div className="flex items-center gap-3">
+                    {/* Icon with colored background */}
+                    <div className={`
+                      w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
+                      ${absenceType === 'vacation' 
+                        ? 'bg-green-100 dark:bg-green-500/20' 
+                        : 'bg-blue-100 dark:bg-blue-500/20'
+                      }
+                    `}>
+                      <AbsenceIcon className={`w-5 h-5 ${absenceType === 'vacation' ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`} />
                     </div>
-                    <div className="text-sm text-center font-mono text-gray-900 dark:text-white flex items-center justify-center">
-                      {calculateDays(request.startDate, request.endDate)}
-                    </div>
-                    <div className="flex justify-center items-center px-2">
-                      {request.status !== 'pending' && request.adminComment ? (
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <div className="flex items-center gap-1 cursor-pointer">
-                              <Badge className={`${getStatusColor(request.status)} hover:opacity-80 flex-shrink-0 px-1.5 py-1 flex items-center gap-1`}>
-                                {getStatusIcon(request.status)}
-                                <span className="hidden sm:inline text-xs">{getStatusText(request.status)}</span>
-                              </Badge>
-                              <MessageCircle className="w-3 h-3 text-gray-600 dark:text-white/60 flex-shrink-0" />
-                            </div>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-72 max-w-[80vw] p-3 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" side="top" sideOffset={5} align="start" avoidCollisions={true}>
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <MessageCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Comentario del administrador</span>
+                    
+                    {/* Main content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {ABSENCE_TYPE_LABELS[absenceType] || 'Vacaciones'}
+                        </span>
+                        {/* Status badge */}
+                        {request.status !== 'pending' && request.adminComment ? (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <div className="flex items-center gap-1 cursor-pointer">
+                                <Badge className={`${getStatusColor(request.status)} hover:opacity-80 px-2 py-0.5 text-xs`}>
+                                  {getStatusIcon(request.status)}
+                                  <span className="ml-1">{getStatusText(request.status)}</span>
+                                </Badge>
+                                <MessageCircle className="w-3 h-3 text-gray-400 flex-shrink-0" />
                               </div>
-                              <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 p-2 rounded">
-                                {request.adminComment}
-                              </p>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      ) : (
-                        <Badge className={`${getStatusColor(request.status)} px-1.5 py-1 flex items-center gap-1`}>
-                          {getStatusIcon(request.status)}
-                          <span className="hidden sm:inline text-xs">{getStatusText(request.status)}</span>
-                        </Badge>
-                      )}
+                            </PopoverTrigger>
+                            <PopoverContent className="w-72 max-w-[80vw] p-3 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" side="top" sideOffset={5} align="end" avoidCollisions={true}>
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <MessageCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Respuesta</span>
+                                </div>
+                                <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
+                                  {request.adminComment}
+                                </p>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        ) : (
+                          <Badge className={`${getStatusColor(request.status)} px-2 py-0.5 text-xs`}>
+                            {getStatusIcon(request.status)}
+                            <span className="ml-1">{getStatusText(request.status)}</span>
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 mt-0.5">
+                        <span className="text-xs text-gray-500 dark:text-white/60">
+                          {isSingleDay 
+                            ? format(startDate, "d 'de' MMMM", { locale: es })
+                            : `${format(startDate, "d MMM", { locale: es })} → ${format(endDate, "d MMM", { locale: es })}`
+                          }
+                        </span>
+                        <span className="text-xs text-gray-400 dark:text-white/40">•</span>
+                        <span className="text-xs font-medium text-gray-600 dark:text-white/70">
+                          {days} día{Number(days) > 1 ? 's' : ''}
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-sm text-center text-gray-600 dark:text-white/70 flex items-center justify-center">
-                      {formatDate(request.createdAt)}
-                    </div>
-                    </div>
-                    );
-                })
-            ) : (
-              <div className="flex items-center justify-center py-12">
-                <div className="text-center text-gray-600 dark:text-white/70">
-                  <CalendarDays className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>No tienes solicitudes de ausencia</p>
-                  <p className="text-sm mt-1">Solicita tu primera ausencia o permiso</p>
+                  </div>
                 </div>
+              );
+            })
+        ) : (
+          <div className="flex items-center justify-center py-16">
+            <div className="text-center text-gray-500 dark:text-white/60">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-white/10 rounded-2xl flex items-center justify-center">
+                <CalendarDays className="h-8 w-8 opacity-50" />
               </div>
-            )}
+              <p className="font-medium">Sin solicitudes</p>
+              <p className="text-sm mt-1 opacity-70">Solicita tu primera ausencia</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
       {/* Copyright at bottom */}
       <div className="text-center pb-4 mt-auto">
