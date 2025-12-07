@@ -3667,21 +3667,27 @@ export default function TimeTracking() {
                                 
                                 return (
                                   <div key={session.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                                    <div className="flex items-center justify-between mb-3">
-                                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                        Sesión {sessionIndex + 1} de {dayData.sessions.length}
-                                      </span>
-                                      {session.status === 'incomplete' && (
-                                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">Incompleta</span>
+                                    <div className="flex gap-4">
+                                      {/* Session number indicator - only show if multiple sessions */}
+                                      {dayData.sessions.length > 1 && (
+                                        <div className="flex flex-col items-center justify-center flex-shrink-0">
+                                          <span className="text-3xl font-bold text-gray-300 dark:text-gray-600">{sessionIndex + 1}</span>
+                                          {(session.status === 'incomplete' || session.autoCompleted) && (
+                                            <div className="mt-1">
+                                              {session.status === 'incomplete' ? (
+                                                <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">Incompleta</span>
+                                              ) : session.autoCompleted ? (
+                                                <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                                                  <AlertTriangle className="w-2.5 h-2.5" /> Auto
+                                                </span>
+                                              ) : null}
+                                            </div>
+                                          )}
+                                        </div>
                                       )}
-                                      {session.autoCompleted && (
-                                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded flex items-center gap-1">
-                                          <AlertTriangle className="w-3 h-3" /> Auto-cerrada
-                                        </span>
-                                      )}
-                                    </div>
-                                    
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                      
+                                      {/* Details grid */}
+                                      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                       {/* Entrada */}
                                       <div className="space-y-1">
                                         <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">Entrada</div>
@@ -3771,6 +3777,7 @@ export default function TimeTracking() {
                                             return netHours > 0 ? `${netHours.toFixed(1)}h` : '-';
                                           })()}
                                         </div>
+                                      </div>
                                       </div>
                                     </div>
                                   </div>
