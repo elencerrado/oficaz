@@ -4928,6 +4928,35 @@ Responde directamente a este email para contactar con la persona.
       
       const request = await storage.createVacationRequest(data);
       
+      // If there's an attachment and the company has the documents addon, save it to Justificantes folder
+      if (req.body.attachmentPath && req.user!.companyId) {
+        try {
+          const hasDocumentsAddon = await storage.hasActiveAddon(req.user!.companyId, 'documents');
+          if (hasDocumentsAddon) {
+            // Extract filename from path
+            const attachmentPath = req.body.attachmentPath;
+            const pathParts = attachmentPath.split('/');
+            const originalName = pathParts[pathParts.length - 1] || `justificante_${request.id}.pdf`;
+            
+            // Create document in Justificantes folder for the employee
+            await storage.createDocument({
+              userId: req.user!.id,
+              fileName: `justificante_ausencia_${request.id}_${originalName}`,
+              originalName: originalName,
+              mimeType: 'application/octet-stream',
+              fileSize: 0, // Size unknown from URL
+              filePath: attachmentPath,
+              isViewed: false,
+              isAccepted: false,
+            });
+            console.log(`Justificante document created for vacation request ${request.id}`);
+          }
+        } catch (docError) {
+          // Don't fail the vacation request if document creation fails
+          console.error('Error creating justificante document:', docError);
+        }
+      }
+      
       // Log the automatic approval for admin users
       if (req.user!.role === 'admin') {
         console.log(`Admin request auto-approved for user ${req.user!.id}: ${request.id}`);

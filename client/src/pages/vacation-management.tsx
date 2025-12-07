@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DatePickerPeriod } from "@/components/ui/date-picker";
-import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare, RotateCcw, ChevronLeft, ChevronRight, Calendar, User, Baby, Heart, Home, Briefcase, GraduationCap, Stethoscope, AlertCircle, FileText } from "lucide-react";
+import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare, RotateCcw, ChevronLeft, ChevronRight, Calendar, User, Baby, Heart, Home, Briefcase, GraduationCap, Stethoscope, AlertCircle, FileText, Download } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format, differenceInDays, parseISO, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval, startOfDay, differenceInCalendarDays } from "date-fns";
 import { es } from "date-fns/locale";
@@ -36,6 +36,7 @@ interface VacationRequest {
   status: 'pending' | 'approved' | 'denied';
   requestDate: string;
   absenceType?: string;
+  attachmentPath?: string;
   createdAt?: string;
   user?: {
     fullName: string;
@@ -1135,6 +1136,30 @@ export default function VacationManagement() {
                                   </div>
                                 </PopoverContent>
                               </Popover>
+                            )}
+                          </div>
+                          
+                          {/* Icono de descarga si hay archivo adjunto - ancho fijo */}
+                          <div className="w-[32px] flex-shrink-0 flex justify-center">
+                            {request.attachmentPath && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <a 
+                                      href={request.attachmentPath}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="p-1 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <Download className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                                    </a>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">
+                                    <p className="text-sm">Descargar justificante</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             )}
                           </div>
                           
