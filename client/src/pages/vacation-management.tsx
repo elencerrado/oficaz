@@ -1174,8 +1174,8 @@ export default function VacationManagement() {
                             </span>
                           </div>
                           
-                          {/* Acciones */}
-                          <div className="flex items-center justify-center gap-1">
+                          {/* Acciones - ancho mínimo fijo para mantener armonía */}
+                          <div className="flex items-center justify-center gap-1 min-w-[100px]">
                             {request.status === 'pending' && canManageRequest(request) ? (
                               <>
                                 <button
