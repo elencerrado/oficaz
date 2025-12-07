@@ -3618,8 +3618,8 @@ export default function TimeTracking() {
                             </div>
                           </div>
                           
-                          {/* Col 3: Timeline Bar (flexible but capped) */}
-                          <div className="w-full max-w-[300px]">
+                          {/* Col 3: Timeline Bar (flexible) */}
+                          <div className="w-full">
                             <DailyTimelineBar dayData={dayData} />
                           </div>
                           
