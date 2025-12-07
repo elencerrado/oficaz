@@ -1068,7 +1068,7 @@ export default function VacationManagement() {
                   return (
                     <div
                       key={request.id}
-                      className="bg-white dark:bg-slate-900/90 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden transition-all hover:shadow-md"
+                      className="bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md"
                     >
                       {/* Header con estado */}
                       <div className={`px-4 py-2.5 flex items-center justify-between ${
