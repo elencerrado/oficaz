@@ -863,7 +863,27 @@ export default function TimeTracking() {
   // ⚠️ END PROTECTED SECTION
 
   // ⚠️ PROTECTED: PDF generation function - CRITICAL FOR REPORTING
-  const executeExportPDF = useCallback(() => {
+  const executeExportPDF = useCallback(async () => {
+    // First, load audit logs for sessions that have them
+    const sessionsWithAuditLogs = await Promise.all(
+      (filteredSessions || []).map(async (session: any) => {
+        if (session.hasAuditLogs && (!session.auditLogs || session.auditLogs.length === 0)) {
+          try {
+            const response = await fetch(`/api/admin/work-sessions/${session.id}/audit-log`, {
+              credentials: 'include',
+            });
+            if (response.ok) {
+              const auditLogs = await response.json();
+              return { ...session, auditLogs };
+            }
+          } catch (error) {
+            console.error('Error loading audit logs for session', session.id, error);
+          }
+        }
+        return session;
+      })
+    );
+    
     const doc = new jsPDF();
     
     // Get period text for reuse
@@ -1134,33 +1154,39 @@ export default function TimeTracking() {
             const approvedBy = log.modifiedByName || 'Admin';
             
             if (log.modificationType === 'created_manual') {
-              // Manual work session created from employee request
-              auditInfo.push(`Fichaje solicitado por: empleado`);
-              auditInfo.push(`Aprobado por: ${approvedBy}`);
+              auditInfo.push(`Solic: empleado`);
+              auditInfo.push(`Aprob: ${approvedBy}`);
             } else if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
-              // Modified work session
               if (isEmployeeRequest) {
-                auditInfo.push(`Cambio solicitado por: empleado`);
+                auditInfo.push(`Solic: empleado`);
+              } else {
+                auditInfo.push(`Modif: ${approvedBy}`);
               }
               
-              // Add entrada/salida anterior as separate items
               const oldVal = log.oldValue || {};
+              const newVal = log.newValue || {};
               
               if ((log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') && oldVal.clockIn) {
                 const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
-                auditInfo.push(`Entrada anterior: ${oldTime}`);
+                const newTime = newVal.clockIn ? format(new Date(newVal.clockIn), 'HH:mm') : format(new Date(session.clockIn), 'HH:mm');
+                auditInfo.push(`Ent: ${oldTime}→${newTime}`);
               }
               
               if ((log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') && oldVal.clockOut) {
                 const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
-                auditInfo.push(`Salida anterior: ${oldTime}`);
+                const newTime = newVal.clockOut ? format(new Date(newVal.clockOut), 'HH:mm') : (session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-');
+                auditInfo.push(`Sal: ${oldTime}→${newTime}`);
               }
               
-              auditInfo.push(`Aprobado por: ${approvedBy}`);
+              if (isEmployeeRequest) {
+                auditInfo.push(`Aprob: ${approvedBy}`);
+              }
             }
             
-            if (cleanReason) {
-              auditInfo.push(`Motivo: ${cleanReason}`);
+            if (cleanReason && cleanReason.length <= 25) {
+              auditInfo.push(`Mot: ${cleanReason}`);
+            } else if (cleanReason) {
+              auditInfo.push(`Mot: ${cleanReason.substring(0, 22)}...`);
             }
           });
           
@@ -1510,33 +1536,39 @@ export default function TimeTracking() {
             const approvedBy = log.modifiedByName || 'Admin';
             
             if (log.modificationType === 'created_manual') {
-              // Manual work session created from employee request
-              auditInfo.push(`Fichaje solicitado por: empleado`);
-              auditInfo.push(`Aprobado por: ${approvedBy}`);
+              auditInfo.push(`Solic: empleado`);
+              auditInfo.push(`Aprob: ${approvedBy}`);
             } else if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
-              // Modified work session
               if (isEmployeeRequest) {
-                auditInfo.push(`Cambio solicitado por: empleado`);
+                auditInfo.push(`Solic: empleado`);
+              } else {
+                auditInfo.push(`Modif: ${approvedBy}`);
               }
               
-              // Add entrada/salida anterior as separate items
               const oldVal = log.oldValue || {};
+              const newVal = log.newValue || {};
               
               if ((log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') && oldVal.clockIn) {
                 const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
-                auditInfo.push(`Entrada anterior: ${oldTime}`);
+                const newTime = newVal.clockIn ? format(new Date(newVal.clockIn), 'HH:mm') : format(new Date(session.clockIn), 'HH:mm');
+                auditInfo.push(`Ent: ${oldTime}→${newTime}`);
               }
               
               if ((log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') && oldVal.clockOut) {
                 const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
-                auditInfo.push(`Salida anterior: ${oldTime}`);
+                const newTime = newVal.clockOut ? format(new Date(newVal.clockOut), 'HH:mm') : (session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-');
+                auditInfo.push(`Sal: ${oldTime}→${newTime}`);
               }
               
-              auditInfo.push(`Aprobado por: ${approvedBy}`);
+              if (isEmployeeRequest) {
+                auditInfo.push(`Aprob: ${approvedBy}`);
+              }
             }
             
-            if (cleanReason) {
-              auditInfo.push(`Motivo: ${cleanReason}`);
+            if (cleanReason && cleanReason.length <= 25) {
+              auditInfo.push(`Mot: ${cleanReason}`);
+            } else if (cleanReason) {
+              auditInfo.push(`Mot: ${cleanReason.substring(0, 22)}...`);
             }
           });
           
@@ -1815,15 +1847,15 @@ export default function TimeTracking() {
     if (selectedEmployee !== 'all') {
       // Single employee PDF
       const employee = employeesList.find(emp => emp.id.toString() === selectedEmployee);
-      createEmployeePage(employee, filteredSessions, true);
+      createEmployeePage(employee, sessionsWithAuditLogs, true);
     } else {
       // Multiple employees - one page per employee
       const employeesWithSessions = (employeesList || []).filter(employee => 
-        (filteredSessions || []).some(session => session.userId === employee.id)
+        sessionsWithAuditLogs.some(session => session.userId === employee.id)
       );
       
       employeesWithSessions.forEach((employee, index) => {
-        const employeeSessions = (filteredSessions || []).filter(session => session.userId === employee.id);
+        const employeeSessions = sessionsWithAuditLogs.filter(session => session.userId === employee.id);
         createEmployeePage(employee, employeeSessions, index === 0);
       });
     }
@@ -2012,7 +2044,7 @@ export default function TimeTracking() {
   }, [filteredSessions, selectedEmployee, employeesList, dateFilter, currentDate, currentMonth, startDate, endDate, toast]);
 
   // Handlers for export that check for incomplete sessions first
-  const handleExportPDF = useCallback(() => {
+  const handleExportPDF = useCallback(async () => {
     setShowExportDialog(false);
     
     if (filteredSessions && filteredSessions.length > 0) {
@@ -2025,7 +2057,7 @@ export default function TimeTracking() {
       }
     }
     
-    executeExportPDF();
+    await executeExportPDF();
   }, [filteredSessions, executeExportPDF]);
 
   const handleExportExcel = useCallback(() => {
@@ -2044,11 +2076,11 @@ export default function TimeTracking() {
     executeExportExcel();
   }, [filteredSessions, executeExportExcel]);
 
-  const handleConfirmExport = useCallback(() => {
+  const handleConfirmExport = useCallback(async () => {
     setShowIncompleteWarningDialog(false);
     
     if (pendingExportType === 'pdf') {
-      executeExportPDF();
+      await executeExportPDF();
     } else if (pendingExportType === 'excel') {
       executeExportExcel();
     }
