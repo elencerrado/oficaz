@@ -1088,86 +1088,84 @@ export default function VacationManagement() {
                       </div>
 
                       {/* Contenido principal */}
-                      <div className="p-4">
-                        {/* Desktop */}
+                      <div className="px-4 py-3">
+                        {/* Desktop - una sola fila */}
                         <div className="hidden md:flex items-center gap-6">
-                          {/* Info empleado */}
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
-                              {request.user?.fullName}
-                            </h3>
-                            <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
-                              <div className="flex items-center gap-1.5">
-                                <CalendarDays className="w-4 h-4" />
-                                <span>
-                                  {request.startDate && request.endDate 
-                                    ? formatVacationDatesShort(request.startDate, request.endDate)
-                                    : "N/A"}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-full">
-                                <span className="font-semibold text-gray-700 dark:text-gray-300">{daysCount}</span>
-                                <span className="text-gray-500 dark:text-gray-400">{daysCount === 1 ? 'día' : 'días'}</span>
-                              </div>
-                            </div>
-                            {request.reason && (
-                              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
-                                <span className="font-medium">Motivo:</span> {request.reason}
-                              </p>
-                            )}
+                          {/* Nombre */}
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 min-w-[180px] truncate">
+                            {request.user?.fullName}
+                          </h3>
+                          
+                          {/* Fechas */}
+                          <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                            <CalendarDays className="w-4 h-4 flex-shrink-0" />
+                            <span className="whitespace-nowrap">
+                              {request.startDate && request.endDate 
+                                ? formatVacationDatesShort(request.startDate, request.endDate)
+                                : "N/A"}
+                            </span>
                           </div>
-
-                          {/* Meta + Acciones */}
-                          <div className="flex items-center gap-3 flex-shrink-0">
-                            <div className="text-right text-xs text-gray-400 dark:text-gray-500">
-                              <span>Solicitado</span>
-                              <div className="font-medium text-gray-600 dark:text-gray-400">
-                                {request.requestDate ? format(new Date(request.requestDate), "dd MMM", { locale: es }) : 
-                                 request.createdAt ? format(new Date(request.createdAt), "dd MMM", { locale: es }) : "N/A"}
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-1 pl-3 border-l border-gray-200 dark:border-gray-700">
-                              {request.status === 'pending' && canManageRequest(request) ? (
-                                <>
-                                  <button
-                                    onClick={() => openRequestModal(request, 'approve')}
-                                    className="p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
-                                    title="Aprobar"
-                                  >
-                                    <Check className="w-5 h-5" />
-                                  </button>
-                                  <button
-                                    onClick={() => openRequestModal(request, 'edit')}
-                                    className="p-2 rounded-xl text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
-                                    title="Editar"
-                                  >
-                                    <Edit className="w-5 h-5" />
-                                  </button>
-                                  <button
-                                    onClick={() => openRequestModal(request, 'deny')}
-                                    className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"
-                                    title="Denegar"
-                                  >
-                                    <X className="w-5 h-5" />
-                                  </button>
-                                </>
-                              ) : request.status === 'pending' ? (
-                                <span className="text-xs text-amber-600 dark:text-amber-400 px-2">
-                                  Sin permisos
-                                </span>
-                              ) : (
-                                canManageRequest(request) && (
-                                  <button
-                                    onClick={() => openRequestModal(request, 'revert')}
-                                    className="p-2 rounded-xl text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors"
-                                    title="Revertir"
-                                  >
-                                    <RotateCcw className="w-5 h-5" />
-                                  </button>
-                                )
-                              )}
-                            </div>
+                          
+                          {/* Días */}
+                          <div className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                            {daysCount} {daysCount === 1 ? 'día' : 'días'}
+                          </div>
+                          
+                          {/* Motivo (si existe) */}
+                          {request.reason && (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate flex-1 max-w-[200px]" title={request.reason}>
+                              {request.reason}
+                            </p>
+                          )}
+                          
+                          {/* Espaciador */}
+                          <div className="flex-1" />
+                          
+                          {/* Fecha solicitud */}
+                          <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                            {request.requestDate ? format(new Date(request.requestDate), "dd MMM", { locale: es }) : 
+                             request.createdAt ? format(new Date(request.createdAt), "dd MMM", { locale: es }) : ""}
+                          </span>
+                          
+                          {/* Acciones */}
+                          <div className="flex items-center gap-1">
+                            {request.status === 'pending' && canManageRequest(request) ? (
+                              <>
+                                <button
+                                  onClick={() => openRequestModal(request, 'approve')}
+                                  className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
+                                  title="Aprobar"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => openRequestModal(request, 'edit')}
+                                  className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                                  title="Editar"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => openRequestModal(request, 'deny')}
+                                  className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"
+                                  title="Denegar"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </>
+                            ) : request.status === 'pending' ? (
+                              <span className="text-xs text-amber-600 dark:text-amber-400">Sin permisos</span>
+                            ) : (
+                              canManageRequest(request) && (
+                                <button
+                                  onClick={() => openRequestModal(request, 'revert')}
+                                  className="p-1.5 rounded-lg text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors"
+                                  title="Revertir"
+                                >
+                                  <RotateCcw className="w-4 h-4" />
+                                </button>
+                              )
+                            )}
                           </div>
                         </div>
 
