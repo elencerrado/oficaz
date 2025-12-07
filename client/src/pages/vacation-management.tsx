@@ -1089,46 +1089,43 @@ export default function VacationManagement() {
 
                       {/* Contenido principal */}
                       <div className="px-4 py-3">
-                        {/* Desktop - una sola fila */}
-                        <div className="hidden md:flex items-center gap-6">
-                          {/* Nombre */}
-                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 min-w-[180px] truncate">
+                        {/* Desktop - fila con columnas fijas */}
+                        <div className="hidden md:flex items-center">
+                          {/* Nombre - ancho fijo */}
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 w-[200px] truncate flex-shrink-0">
                             {request.user?.fullName}
                           </h3>
                           
-                          {/* Fechas */}
-                          <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                          {/* Fechas - ancho fijo */}
+                          <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 w-[160px] flex-shrink-0">
                             <CalendarDays className="w-4 h-4 flex-shrink-0" />
-                            <span className="whitespace-nowrap">
+                            <span>
                               {request.startDate && request.endDate 
                                 ? formatVacationDatesShort(request.startDate, request.endDate)
                                 : "N/A"}
                             </span>
                           </div>
                           
-                          {/* Días */}
-                          <div className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                            {daysCount} {daysCount === 1 ? 'día' : 'días'}
+                          {/* Días - ancho fijo */}
+                          <div className="w-[80px] flex-shrink-0">
+                            <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {daysCount} {daysCount === 1 ? 'día' : 'días'}
+                            </span>
                           </div>
                           
-                          {/* Motivo (si existe) */}
-                          {request.reason && (
-                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate flex-1 max-w-[200px]" title={request.reason}>
-                              {request.reason}
-                            </p>
-                          )}
+                          {/* Motivo - flexible */}
+                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate flex-1 px-4" title={request.reason || ''}>
+                            {request.reason || '—'}
+                          </p>
                           
-                          {/* Espaciador */}
-                          <div className="flex-1" />
-                          
-                          {/* Fecha solicitud */}
-                          <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                          {/* Fecha solicitud - ancho fijo */}
+                          <span className="text-xs text-gray-400 dark:text-gray-500 w-[60px] text-right flex-shrink-0">
                             {request.requestDate ? format(new Date(request.requestDate), "dd MMM", { locale: es }) : 
                              request.createdAt ? format(new Date(request.createdAt), "dd MMM", { locale: es }) : ""}
                           </span>
                           
-                          {/* Acciones */}
-                          <div className="flex items-center gap-1">
+                          {/* Acciones - ancho fijo */}
+                          <div className="flex items-center gap-1 w-[100px] justify-end flex-shrink-0">
                             {request.status === 'pending' && canManageRequest(request) ? (
                               <>
                                 <button
