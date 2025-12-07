@@ -1088,100 +1088,99 @@ export default function VacationManagement() {
                       {/* Contenido principal */}
                       <div className="px-4 py-3">
                         {/* Desktop - fila única con columnas fijas */}
-                        <div className="hidden md:flex items-center">
-                          {/* Tipo ausencia - icono simple */}
-                          <div className="w-[40px] flex-shrink-0">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="hidden md:flex items-center cursor-default">
+                                {/* Tipo ausencia - icono simple */}
+                                <div className="w-[40px] flex-shrink-0">
                                   <AbsenceIcon className={`w-5 h-5 ${absenceColors.text}`} />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>{absenceLabel}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </div>
-                          
-                          {/* Nombre */}
-                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 w-[180px] truncate flex-shrink-0">
-                            {request.user?.fullName}
-                          </h3>
-                          
-                          {/* Fechas */}
-                          <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 w-[150px] flex-shrink-0">
-                            <CalendarDays className="w-4 h-4 flex-shrink-0" />
-                            <span>
-                              {request.startDate && request.endDate 
-                                ? formatVacationDatesShort(request.startDate, request.endDate)
-                                : "N/A"}
-                            </span>
-                          </div>
-                          
-                          {/* Días */}
-                          <div className="w-[70px] flex-shrink-0">
-                            <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300">
-                              {daysCount}d
-                            </span>
-                          </div>
-                          
-                          {/* Motivo */}
-                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate flex-1 px-3" title={request.reason || ''}>
-                            {request.reason || '—'}
-                          </p>
-                          
-                          {/* Fecha solicitud */}
-                          <span className="text-xs text-gray-400 dark:text-gray-500 w-[55px] text-right flex-shrink-0">
-                            {request.requestDate ? format(new Date(request.requestDate), "dd MMM", { locale: es }) : 
-                             request.createdAt ? format(new Date(request.createdAt), "dd MMM", { locale: es }) : ""}
-                          </span>
-                          
-                          {/* Acciones */}
-                          <div className="flex items-center gap-1 w-[90px] justify-center flex-shrink-0">
-                            {request.status === 'pending' && canManageRequest(request) ? (
-                              <>
-                                <button
-                                  onClick={() => openRequestModal(request, 'approve')}
-                                  className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
-                                  title="Aprobar"
-                                >
-                                  <Check className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => openRequestModal(request, 'edit')}
-                                  className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
-                                  title="Editar"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => openRequestModal(request, 'deny')}
-                                  className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"
-                                  title="Denegar"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </>
-                            ) : request.status === 'pending' ? (
-                              <span className="text-xs text-amber-600 dark:text-amber-400">Sin permisos</span>
-                            ) : (
-                              canManageRequest(request) && (
-                                <button
-                                  onClick={() => openRequestModal(request, 'revert')}
-                                  className="p-1.5 rounded-lg text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors"
-                                  title="Revertir"
-                                >
-                                  <RotateCcw className="w-4 h-4" />
-                                </button>
-                              )
-                            )}
-                          </div>
-                          
-                          {/* Badge estado - derecha */}
-                          <div className="w-[90px] flex justify-end flex-shrink-0">
-                            {getStatusBadge(request.status)}
-                          </div>
-                        </div>
+                                </div>
+                                
+                                {/* Nombre */}
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 w-[180px] truncate flex-shrink-0">
+                                  {request.user?.fullName}
+                                </h3>
+                                
+                                {/* Fechas */}
+                                <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 w-[150px] flex-shrink-0">
+                                  <CalendarDays className="w-4 h-4 flex-shrink-0" />
+                                  <span>
+                                    {request.startDate && request.endDate 
+                                      ? formatVacationDatesShort(request.startDate, request.endDate)
+                                      : "N/A"}
+                                  </span>
+                                </div>
+                                
+                                {/* Días */}
+                                <div className="w-[70px] flex-shrink-0">
+                                  <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    {daysCount}d
+                                  </span>
+                                </div>
+                                
+                                {/* Espaciador */}
+                                <div className="flex-1" />
+                                
+                                {/* Fecha solicitud */}
+                                <span className="text-xs text-gray-400 dark:text-gray-500 w-[55px] text-right flex-shrink-0">
+                                  {request.requestDate ? format(new Date(request.requestDate), "dd MMM", { locale: es }) : 
+                                   request.createdAt ? format(new Date(request.createdAt), "dd MMM", { locale: es }) : ""}
+                                </span>
+                                
+                                {/* Acciones */}
+                                <div className="flex items-center gap-1 w-[90px] justify-center flex-shrink-0">
+                                  {request.status === 'pending' && canManageRequest(request) ? (
+                                    <>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); openRequestModal(request, 'approve'); }}
+                                        className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
+                                        title="Aprobar"
+                                      >
+                                        <Check className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); openRequestModal(request, 'edit'); }}
+                                        className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                                        title="Editar"
+                                      >
+                                        <Edit className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); openRequestModal(request, 'deny'); }}
+                                        className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"
+                                        title="Denegar"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </>
+                                  ) : request.status === 'pending' ? (
+                                    <span className="text-xs text-amber-600 dark:text-amber-400">Sin permisos</span>
+                                  ) : (
+                                    canManageRequest(request) && (
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); openRequestModal(request, 'revert'); }}
+                                        className="p-1.5 rounded-lg text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors"
+                                        title="Revertir"
+                                      >
+                                        <RotateCcw className="w-4 h-4" />
+                                      </button>
+                                    )
+                                  )}
+                                </div>
+                                
+                                {/* Badge estado - derecha */}
+                                <div className="w-[90px] flex justify-end flex-shrink-0">
+                                  {getStatusBadge(request.status)}
+                                </div>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="max-w-xs">
+                              <p className="font-medium">{absenceLabel}</p>
+                              {request.reason && <p className="text-sm text-muted-foreground mt-1">{request.reason}</p>}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
 
                         {/* Mobile */}
                         <div className="md:hidden space-y-3">
