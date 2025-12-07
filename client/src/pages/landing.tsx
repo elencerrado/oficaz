@@ -2193,7 +2193,13 @@ export default function Landing() {
                           >
                             -
                           </button>
-                          <span className="w-6 text-center font-bold text-gray-900">{userCounts.employees}</span>
+                          <input 
+                            type="number"
+                            min="0"
+                            value={userCounts.employees}
+                            onChange={(e) => setUserCounts(prev => ({ ...prev, employees: Math.max(0, parseInt(e.target.value) || 0) }))}
+                            className="w-10 text-center font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:border-[#007AFF] focus:outline-none"
+                          />
                           <button 
                             onClick={() => setUserCounts(prev => ({ ...prev, employees: prev.employees + 1 }))}
                             className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
@@ -2221,7 +2227,13 @@ export default function Landing() {
                           >
                             -
                           </button>
-                          <span className="w-6 text-center font-bold text-gray-900">{userCounts.managers}</span>
+                          <input 
+                            type="number"
+                            min="0"
+                            value={userCounts.managers}
+                            onChange={(e) => setUserCounts(prev => ({ ...prev, managers: Math.max(0, parseInt(e.target.value) || 0) }))}
+                            className="w-10 text-center font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:border-[#007AFF] focus:outline-none"
+                          />
                           <button 
                             onClick={() => setUserCounts(prev => ({ ...prev, managers: prev.managers + 1 }))}
                             className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
@@ -2254,7 +2266,13 @@ export default function Landing() {
                           >
                             -
                           </button>
-                          <span className="w-6 text-center font-bold text-gray-900">{userCounts.admins}</span>
+                          <input 
+                            type="number"
+                            min="1"
+                            value={userCounts.admins}
+                            onChange={(e) => setUserCounts(prev => ({ ...prev, admins: Math.max(1, parseInt(e.target.value) || 1) }))}
+                            className="w-10 text-center font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:border-[#007AFF] focus:outline-none"
+                          />
                           <button 
                             onClick={() => setUserCounts(prev => ({ ...prev, admins: prev.admins + 1 }))}
                             className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
