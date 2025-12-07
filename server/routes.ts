@@ -4824,6 +4824,15 @@ Responde directamente a este email para contactar con la persona.
         status: 'active',
       });
 
+      // Broadcast real-time update to admins/managers
+      if (wsServer && req.user!.companyId) {
+        wsServer.broadcastToCompany(req.user!.companyId, {
+          type: 'work_session_updated',
+          companyId: req.user!.companyId,
+          data: { sessionId: activeSession.id, userId: req.user!.id, action: 'break_started' }
+        });
+      }
+
       res.status(201).json(breakPeriod);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -4848,6 +4857,15 @@ Responde directamente a este email para contactar con la persona.
 
       // Update the work session's total break time
       await storage.updateWorkSessionBreakTime(activeBreak.workSessionId);
+
+      // Broadcast real-time update to admins/managers
+      if (wsServer && req.user!.companyId) {
+        wsServer.broadcastToCompany(req.user!.companyId, {
+          type: 'work_session_updated',
+          companyId: req.user!.companyId,
+          data: { sessionId: activeBreak.workSessionId, userId: req.user!.id, action: 'break_ended' }
+        });
+      }
 
       res.json(updatedBreak);
     } catch (error: any) {
