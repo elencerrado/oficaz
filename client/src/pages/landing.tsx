@@ -2133,6 +2133,21 @@ export default function Landing() {
                   
                   {/* Selected summary */}
                   <div className="flex flex-wrap gap-1.5 mt-3">
+                    {/* User counts */}
+                    {userCounts.employees > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                        {userCounts.employees} Empleado{userCounts.employees !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {userCounts.managers > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                        {userCounts.managers} Manager{userCounts.managers !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                      {userCounts.admins} Admin{userCounts.admins !== 1 ? 's' : ''}
+                    </span>
+                    {/* Selected addons */}
                     {addons.filter(a => selectedAddons.has(a.key) || a.isLocked).map((addon) => {
                       const IconComponent = addon.icon;
                       return (
