@@ -764,23 +764,32 @@ export default function TimeTracking() {
     });
   }, [sessionsList, searchTerm, activeStatsFilter, companySettings]);
 
-  // Generate dynamic title based on filter
+  // Generate dynamic title based on filter - format: "XXX fichajes" + date info
   const getFilterTitle = () => {
+    const count = totalCount;
+    const fichajes = count === 1 ? 'fichaje' : 'fichajes';
+    
     switch (dateFilter) {
       case 'today':
-        return 'Fichajes de hoy';
+        return `${count} ${fichajes} de hoy`;
       case 'day':
-        return `Fichajes del ${format(currentDate, 'd MMMM yyyy', { locale: es })}`;
+        return `${count} ${fichajes} el ${format(currentDate, "d 'de' MMMM 'de' yyyy", { locale: es })}`;
       case 'month':
-        return `Fichajes de ${format(currentMonth, 'MMMM yyyy', { locale: es })}`;
+        return `${count} ${fichajes} en ${format(currentMonth, "MMMM 'de' yyyy", { locale: es })}`;
       case 'custom':
         if (startDate && endDate) {
-          return `Fichajes del ${format(new Date(startDate), 'd MMM', { locale: es })} al ${format(new Date(endDate), 'd MMM yyyy', { locale: es })}`;
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          // Check if same day
+          if (format(start, 'yyyy-MM-dd') === format(end, 'yyyy-MM-dd')) {
+            return `${count} ${fichajes} el ${format(start, "d 'de' MMMM 'de' yyyy", { locale: es })}`;
+          }
+          return `${count} ${fichajes} del ${format(start, "d", { locale: es })} al ${format(end, "d 'de' MMMM 'de' yyyy", { locale: es })}`;
         }
-        return 'Fichajes personalizados';
+        return `${count} ${fichajes}`;
       case 'all':
       default:
-        return 'Todos los fichajes';
+        return `${count} ${fichajes}`;
     }
   };
 
@@ -3019,7 +3028,7 @@ export default function TimeTracking() {
         <div className="space-y-4">
           {/* Filter Bar - UNIFIED HEIGHT with requests tab */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-h-[40px]">
-            <span className="text-sm sm:text-lg font-medium text-gray-900 dark:text-gray-100">{getFilterTitle()} ({totalCount})</span>
+            <span className="text-sm sm:text-lg font-medium text-gray-900 dark:text-gray-100">{getFilterTitle()}</span>
             
             {/* Desktop: buttons grouped together */}
             <div className="hidden sm:flex items-center gap-2">
