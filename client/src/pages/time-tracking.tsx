@@ -3585,10 +3585,10 @@ export default function TimeTracking() {
                             "grid items-center px-4 py-2.5 cursor-pointer select-none transition-colors gap-3",
                             isExpanded && "bg-gray-50 dark:bg-gray-900/50"
                           )}
-                          style={{ gridTemplateColumns: '200px 90px 1fr 60px 36px 20px' }}
+                          style={{ gridTemplateColumns: 'minmax(220px,280px) 90px minmax(120px,1fr) 60px 36px 20px' }}
                           onClick={toggleExpand}
                         >
-                          {/* Col 1: Avatar + Name (fixed width) */}
+                          {/* Col 1: Avatar + Name (flexible width) */}
                           <div className="flex items-center gap-2 min-w-0">
                             <UserAvatar 
                               fullName={dayData.userName || 'Usuario Desconocido'} 
@@ -3596,8 +3596,8 @@ export default function TimeTracking() {
                               userId={dayData.userId}
                               profilePicture={dayData.profilePicture}
                             />
-                            <div className="flex items-center gap-1 min-w-0">
-                              <span className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
+                            <div className="flex items-center gap-1 min-w-0 flex-1">
+                              <span className="font-medium text-gray-900 dark:text-gray-100 text-sm">
                                 {dayData.userName || 'Usuario Desconocido'}
                               </span>
                               {dayData.hasAutoCompleted && (
@@ -3608,13 +3608,18 @@ export default function TimeTracking() {
                             </div>
                           </div>
                           
-                          {/* Col 2: Date (fixed width) */}
-                          <div className="text-gray-600 dark:text-gray-400 text-sm">
-                            {format(new Date(dayData.date), 'dd/MM/yyyy')}
+                          {/* Col 2: Weekday + Date (fixed width, stacked) */}
+                          <div className="text-center">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                              {format(new Date(dayData.date), 'EEEE', { locale: es })}
+                            </div>
+                            <div className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                              {format(new Date(dayData.date), 'dd/MM/yyyy')}
+                            </div>
                           </div>
                           
-                          {/* Col 3: Timeline Bar (flexible) */}
-                          <div className="w-full">
+                          {/* Col 3: Timeline Bar (flexible but capped) */}
+                          <div className="w-full max-w-[300px]">
                             <DailyTimelineBar dayData={dayData} />
                           </div>
                           
