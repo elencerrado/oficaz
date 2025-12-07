@@ -3551,7 +3551,7 @@ export default function TimeTracking() {
                     result.push(
                       <div 
                         key={rowKey} 
-                        className="bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md"
+                        className={`bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md row-wave-loading row-wave-${index % 15}`}
                       >
                         {/* Card Header - clickable to expand */}
                         <div 
@@ -4682,7 +4682,7 @@ export default function TimeTracking() {
               </div>
             ) : (
               <div className="space-y-3">
-                {filteredModificationRequests.map((request: any) => {
+                {filteredModificationRequests.map((request: any, reqIndex: number) => {
               const isForgotten = request.requestType === 'forgotten_checkin';
               const requestedTotal = request.requestedClockOut ? (() => {
                 const ms = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
@@ -4700,7 +4700,7 @@ export default function TimeTracking() {
               return (
                 <div
                   key={request.id}
-                  className="bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md"
+                  className={`bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md row-wave-loading row-wave-${reqIndex % 15}`}
                 >
                   {/* Mobile: Header con estado */}
                   <div className={`lg:hidden px-4 py-2.5 flex items-center justify-between ${

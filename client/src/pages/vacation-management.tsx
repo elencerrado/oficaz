@@ -1420,7 +1420,7 @@ export default function VacationManagement() {
               </div>
             ) : (
               <div className="space-y-3">
-                {filteredRequests.map((request: VacationRequest) => {
+                {filteredRequests.map((request: VacationRequest, requestIndex: number) => {
                   const absenceType = request.absenceType || 'vacation';
                   const AbsenceIcon = ABSENCE_TYPE_ICONS[absenceType] || Plane;
                   const absenceLabel = ABSENCE_TYPE_LABELS[absenceType] || 'Vacaciones';
@@ -1432,7 +1432,7 @@ export default function VacationManagement() {
                   return (
                     <div
                       key={request.id}
-                      className="bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md"
+                      className={`bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md row-wave-loading row-wave-${requestIndex % 15}`}
                     >
                       {/* Header con estado - solo móvil */}
                       <div className={`md:hidden px-4 py-2.5 flex items-center justify-between ${
