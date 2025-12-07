@@ -3589,15 +3589,15 @@ export default function TimeTracking() {
                           )} />
                           
                           {/* Avatar + Name */}
-                          <div className="flex items-center gap-2 min-w-0 w-[180px]">
+                          <div className="flex items-center gap-2 flex-shrink-0">
                             <UserAvatar 
                               fullName={dayData.userName || 'Usuario Desconocido'} 
                               size="sm"
                               userId={dayData.userId}
                               profilePicture={dayData.profilePicture}
                             />
-                            <div className="flex items-center gap-1 min-w-0">
-                              <span className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
+                            <div className="flex items-center gap-1">
+                              <span className="font-medium text-gray-900 dark:text-gray-100 text-sm whitespace-nowrap">
                                 {dayData.userName || 'Usuario Desconocido'}
                               </span>
                               {dayData.hasAutoCompleted && (
@@ -3609,12 +3609,12 @@ export default function TimeTracking() {
                           </div>
                           
                           {/* Date */}
-                          <div className="text-gray-600 dark:text-gray-400 text-sm w-[90px] flex-shrink-0">
+                          <div className="text-gray-600 dark:text-gray-400 text-sm flex-shrink-0">
                             {format(new Date(dayData.date), 'dd/MM/yyyy')}
                           </div>
                           
-                          {/* Timeline Bar */}
-                          <div className="flex-1 min-w-[200px]">
+                          {/* Timeline Bar - flexible, sacrifices width */}
+                          <div className="flex-1 min-w-[100px]">
                             <DailyTimelineBar dayData={dayData} />
                           </div>
                           
