@@ -5166,36 +5166,47 @@ Responde directamente a este email para contactar con la persona.
         return res.status(400).json({ message: 'No se ha proporcionado ningún archivo' });
       }
 
-      // Upload to object storage
+      // Upload to object storage using the properly configured client
       const timestamp = Date.now();
       const sanitizedName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const fileName = `absence-attachments/${req.user!.companyId}/${req.user!.id}/${timestamp}_${sanitizedName}`;
+      const filename = `${timestamp}_${sanitizedName}`;
       
-      // Use the object storage bucket
-      const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
-      if (!bucketId) {
+      // Use objectStorageClient from objectStorageSimple (with correct Replit credentials)
+      const { objectStorageClient } = await import('./objectStorageSimple.js');
+      
+      // Get public path from environment
+      const publicPaths = process.env.PUBLIC_OBJECT_SEARCH_PATHS || '';
+      const publicPath = publicPaths.split(',')[0]?.trim();
+      
+      if (!publicPath) {
         return res.status(500).json({ message: 'Object storage not configured' });
       }
-
-      const { Storage } = await import('@google-cloud/storage');
-      const storage = new Storage();
-      const bucket = storage.bucket(bucketId);
-      const file = bucket.file(fileName);
+      
+      // Parse the path to get bucket name
+      const pathParts = publicPath.split('/').filter(p => p);
+      if (pathParts.length < 1) {
+        return res.status(500).json({ message: 'Invalid storage path configuration' });
+      }
+      
+      const bucketName = pathParts[0];
+      const objectName = `${pathParts.slice(1).join('/')}/absence-attachments/${req.user!.companyId}/${req.user!.id}/${filename}`;
+      
+      const bucket = objectStorageClient.bucket(bucketName);
+      const file = bucket.file(objectName);
       
       await file.save(req.file.buffer, {
+        contentType: req.file.mimetype,
         metadata: {
-          contentType: req.file.mimetype,
+          cacheControl: 'public, max-age=31536000',
         },
       });
 
-      // Make file publicly accessible
-      await file.makePublic();
-      
-      const publicUrl = `https://storage.googleapis.com/${bucketId}/${fileName}`;
+      // Return relative URL for serving through our endpoint
+      const relativeUrl = `/public-objects/absence-attachments/${req.user!.companyId}/${req.user!.id}/${filename}`;
       
       res.json({ 
-        path: fileName,
-        url: publicUrl,
+        path: objectName,
+        url: relativeUrl,
         originalName: req.file.originalname
       });
     } catch (error: any) {
