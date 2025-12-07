@@ -4825,6 +4825,7 @@ Responde directamente a este email para contactar con la persona.
       });
 
       // Broadcast real-time update to admins/managers
+      const wsServer = getWebSocketServer();
       if (wsServer && req.user!.companyId) {
         wsServer.broadcastToCompany(req.user!.companyId, {
           type: 'work_session_updated',
@@ -4859,6 +4860,7 @@ Responde directamente a este email para contactar con la persona.
       await storage.updateWorkSessionBreakTime(activeBreak.workSessionId);
 
       // Broadcast real-time update to admins/managers
+      const wsServer = getWebSocketServer();
       if (wsServer && req.user!.companyId) {
         wsServer.broadcastToCompany(req.user!.companyId, {
           type: 'work_session_updated',
