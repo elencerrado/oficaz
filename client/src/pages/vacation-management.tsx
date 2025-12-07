@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DatePickerPeriod } from "@/components/ui/date-picker";
-import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare, RotateCcw, ChevronLeft, ChevronRight, Calendar, User, Baby, Heart, Home, Briefcase, GraduationCap, Stethoscope, AlertCircle, FileText, Download } from "lucide-react";
+import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare, RotateCcw, ChevronLeft, ChevronRight, Calendar, User, Baby, Heart, Home, Briefcase, GraduationCap, Stethoscope, AlertCircle, FileText, Download, GanttChart } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format, differenceInDays, parseISO, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval, startOfDay, differenceInCalendarDays } from "date-fns";
 import { es } from "date-fns/locale";
@@ -1001,7 +1001,7 @@ export default function VacationManagement() {
       {/* Tabs Navigation */}
       <TabNavigation
         tabs={[
-          { id: 'employees', label: 'Timeline de Ausencias', icon: Users },
+          { id: 'employees', label: 'Calendario', icon: GanttChart },
           { id: 'requests', label: 'Solicitudes', icon: Clock, badge: pendingRequests.length },
           { id: 'holidays', label: 'Días Festivos', icon: CalendarDays }
         ]}
