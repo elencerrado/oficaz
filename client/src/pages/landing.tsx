@@ -1155,7 +1155,7 @@ export default function Landing() {
       <section id="funciones" className="min-h-screen bg-white relative overflow-hidden py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-6 h-full">
           {/* Header */}
-          <ScrollReveal className="text-center mb-12">
+          <ScrollReveal className="text-center mb-6 lg:mb-12">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 tracking-tight">
               Funciones modulares
             </h2>
@@ -1166,7 +1166,7 @@ export default function Landing() {
 
           {/* Mobile: Swipeable Carousel with Description Below */}
           <div className="lg:hidden">
-            <div className="-mx-6 py-8">
+            <div className="-mx-6 py-4">
               <Carousel 
                 className="w-full" 
                 opts={{ align: 'center', loop: true }}
