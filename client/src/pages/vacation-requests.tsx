@@ -13,6 +13,7 @@ import { ArrowLeft, CalendarPlus, Calendar, Check, X, Clock, CalendarDays, Chevr
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
+import { getAuthHeaders } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation, Link } from 'wouter';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -332,9 +333,7 @@ export default function VacationRequests() {
         
         const response = await fetch('/api/absence-attachments', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
+          headers: getAuthHeaders(),
           body: formData,
         });
 
