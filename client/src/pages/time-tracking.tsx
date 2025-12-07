@@ -1147,64 +1147,33 @@ export default function TimeTracking() {
           doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
           doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
           
-          // Build audit info for the modifications column - ONE LINE PER ITEM for clarity
+          // Build audit info for the modifications column - simple format
           let auditLines: string[] = [];
           
           // Check for modifications from audit logs
           const auditLogs = session.auditLogs || [];
           auditLogs.forEach((log: any, logIndex: number) => {
-            // Extract just the reason without prefix
-            let cleanReason = log.reason || '';
-            const isEmployeeRequest = /^Employee request approved:/i.test(log.reason || '');
-            cleanReason = cleanReason.replace(/^Employee request approved:\s*/i, '');
-            cleanReason = cleanReason.replace(/^Admin modification:\s*/i, '');
-            
-            const approvedBy = log.modifiedByName || 'Admin';
-            const modDate = log.modifiedAt ? format(new Date(log.modifiedAt), 'dd/MM HH:mm') : '';
-            
             // Add separator between multiple modifications
             if (logIndex > 0) {
-              auditLines.push('───────────');
+              auditLines.push('---');
             }
             
+            const oldVal = log.oldValue || {};
+            const newVal = log.newValue || {};
+            
             if (log.modificationType === 'created_manual') {
-              auditLines.push(`Registro manual creado`);
-              auditLines.push(`Aprobado por: ${approvedBy}`);
-              if (modDate) auditLines.push(`Fecha: ${modDate}`);
+              auditLines.push(`Registro manual`);
             } else if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
-              if (isEmployeeRequest) {
-                auditLines.push(`Solicitud del empleado`);
-              } else {
-                auditLines.push(`Modificado por: ${approvedBy}`);
-              }
-              
-              const oldVal = log.oldValue || {};
-              const newVal = log.newValue || {};
-              
               if ((log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') && oldVal.clockIn) {
                 const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
                 const newTime = newVal.clockIn ? format(new Date(newVal.clockIn), 'HH:mm') : format(new Date(session.clockIn), 'HH:mm');
-                auditLines.push(`Entrada: ${oldTime} → ${newTime}`);
+                auditLines.push(`hora entrada antes: ${oldTime} | actual: ${newTime}`);
               }
               
               if ((log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') && oldVal.clockOut) {
                 const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
                 const newTime = newVal.clockOut ? format(new Date(newVal.clockOut), 'HH:mm') : (session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-');
-                auditLines.push(`Salida: ${oldTime} → ${newTime}`);
-              }
-              
-              if (isEmployeeRequest) {
-                auditLines.push(`Aprobado por: ${approvedBy}`);
-              }
-              
-              if (modDate) auditLines.push(`Fecha modif.: ${modDate}`);
-            }
-            
-            if (cleanReason) {
-              if (cleanReason.length <= 40) {
-                auditLines.push(`Motivo: ${cleanReason}`);
-              } else {
-                auditLines.push(`Motivo: ${cleanReason.substring(0, 37)}...`);
+                auditLines.push(`hora salida antes: ${oldTime} | actual: ${newTime}`);
               }
             }
           });
@@ -1215,47 +1184,24 @@ export default function TimeTracking() {
             doc.text('Sin descansos', colPositions[3], currentY);
             doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
             
-            // Show audit info in modifications column - ONE LINE PER ITEM for clarity
+            // Show audit info in modifications column - simple text
             let auditHeight = 6; // Default height
             if (auditLines.length > 0) {
-              doc.setFontSize(7);
-              const lineHeight = 3.5;
+              doc.setFontSize(6.5);
+              doc.setTextColor(60, 60, 60);
+              doc.setFont('helvetica', 'normal');
+              const lineHeight = 3;
               let yOffset = currentY;
               
               auditLines.forEach((line) => {
-                // Check if it's a separator line
-                if (line === '───────────') {
-                  doc.setTextColor(180, 180, 180);
-                  doc.setFont('helvetica', 'normal');
-                  doc.text('─────────', colPositions[5], yOffset);
-                  yOffset += lineHeight;
+                if (line === '---') {
+                  yOffset += 1; // Small gap for separator
                   return;
                 }
-                
-                // Split on FIRST colon to handle times like "Entrada: 09:00 → 10:30"
-                const colonIndex = line.indexOf(':');
-                if (colonIndex !== -1) {
-                  const label = line.substring(0, colonIndex).trim();
-                  const value = line.substring(colonIndex + 1).trim();
-                  
-                  doc.setTextColor(100, 100, 100);
-                  doc.setFont('helvetica', 'normal');
-                  doc.text(label + ':', colPositions[5], yOffset);
-                  const labelWidth = doc.getTextWidth(label + ': ');
-                  
-                  doc.setTextColor(50, 50, 50);
-                  doc.setFont('helvetica', 'bold');
-                  doc.text(value, colPositions[5] + labelWidth, yOffset);
-                } else {
-                  doc.setTextColor(50, 50, 50);
-                  doc.setFont('helvetica', 'bold');
-                  doc.text(line, colPositions[5], yOffset);
-                }
-                
+                doc.text(line, colPositions[5], yOffset);
                 yOffset += lineHeight;
               });
               
-              // Calculate height based on actual lines drawn
               auditHeight = Math.max(6, auditLines.length * lineHeight + 2);
             }
             
@@ -1277,47 +1223,24 @@ export default function TimeTracking() {
             }
             doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
             
-            // Show audit info in modifications column - ONE LINE PER ITEM for clarity
+            // Show audit info in modifications column - simple text
             let auditHeight = 6; // Default height
             if (auditLines.length > 0) {
-              doc.setFontSize(7);
-              const lineHeight = 3.5;
+              doc.setFontSize(6.5);
+              doc.setTextColor(60, 60, 60);
+              doc.setFont('helvetica', 'normal');
+              const lineHeight = 3;
               let yOffset = currentY;
               
               auditLines.forEach((line) => {
-                // Check if it's a separator line
-                if (line === '───────────') {
-                  doc.setTextColor(180, 180, 180);
-                  doc.setFont('helvetica', 'normal');
-                  doc.text('─────────', colPositions[5], yOffset);
-                  yOffset += lineHeight;
+                if (line === '---') {
+                  yOffset += 1; // Small gap for separator
                   return;
                 }
-                
-                // Split on FIRST colon to handle times like "Entrada: 09:00 → 10:30"
-                const colonIndex = line.indexOf(':');
-                if (colonIndex !== -1) {
-                  const label = line.substring(0, colonIndex).trim();
-                  const value = line.substring(colonIndex + 1).trim();
-                  
-                  doc.setTextColor(100, 100, 100);
-                  doc.setFont('helvetica', 'normal');
-                  doc.text(label + ':', colPositions[5], yOffset);
-                  const labelWidth = doc.getTextWidth(label + ': ');
-                  
-                  doc.setTextColor(50, 50, 50);
-                  doc.setFont('helvetica', 'bold');
-                  doc.text(value, colPositions[5] + labelWidth, yOffset);
-                } else {
-                  doc.setTextColor(50, 50, 50);
-                  doc.setFont('helvetica', 'bold');
-                  doc.text(line, colPositions[5], yOffset);
-                }
-                
+                doc.text(line, colPositions[5], yOffset);
                 yOffset += lineHeight;
               });
               
-              // Calculate height based on actual lines drawn
               auditHeight = Math.max(6, auditLines.length * lineHeight + 2);
             }
             
@@ -1424,64 +1347,33 @@ export default function TimeTracking() {
           doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
           doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
           
-          // Build audit info for the modifications column - ONE LINE PER ITEM for clarity
+          // Build audit info for the modifications column - simple format
           let auditLines: string[] = [];
           
           // Check for modifications from audit logs
           const auditLogs = session.auditLogs || [];
           auditLogs.forEach((log: any, logIndex: number) => {
-            // Extract just the reason without prefix
-            let cleanReason = log.reason || '';
-            const isEmployeeRequest = /^Employee request approved:/i.test(log.reason || '');
-            cleanReason = cleanReason.replace(/^Employee request approved:\s*/i, '');
-            cleanReason = cleanReason.replace(/^Admin modification:\s*/i, '');
-            
-            const approvedBy = log.modifiedByName || 'Admin';
-            const modDate = log.modifiedAt ? format(new Date(log.modifiedAt), 'dd/MM HH:mm') : '';
-            
             // Add separator between multiple modifications
             if (logIndex > 0) {
-              auditLines.push('───────────');
+              auditLines.push('---');
             }
             
+            const oldVal = log.oldValue || {};
+            const newVal = log.newValue || {};
+            
             if (log.modificationType === 'created_manual') {
-              auditLines.push(`Registro manual creado`);
-              auditLines.push(`Aprobado por: ${approvedBy}`);
-              if (modDate) auditLines.push(`Fecha: ${modDate}`);
+              auditLines.push(`Registro manual`);
             } else if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
-              if (isEmployeeRequest) {
-                auditLines.push(`Solicitud del empleado`);
-              } else {
-                auditLines.push(`Modificado por: ${approvedBy}`);
-              }
-              
-              const oldVal = log.oldValue || {};
-              const newVal = log.newValue || {};
-              
               if ((log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') && oldVal.clockIn) {
                 const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
                 const newTime = newVal.clockIn ? format(new Date(newVal.clockIn), 'HH:mm') : format(new Date(session.clockIn), 'HH:mm');
-                auditLines.push(`Entrada: ${oldTime} → ${newTime}`);
+                auditLines.push(`hora entrada antes: ${oldTime} | actual: ${newTime}`);
               }
               
               if ((log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') && oldVal.clockOut) {
                 const oldTime = format(new Date(oldVal.clockOut), 'HH:mm');
                 const newTime = newVal.clockOut ? format(new Date(newVal.clockOut), 'HH:mm') : (session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-');
-                auditLines.push(`Salida: ${oldTime} → ${newTime}`);
-              }
-              
-              if (isEmployeeRequest) {
-                auditLines.push(`Aprobado por: ${approvedBy}`);
-              }
-              
-              if (modDate) auditLines.push(`Fecha modif.: ${modDate}`);
-            }
-            
-            if (cleanReason) {
-              if (cleanReason.length <= 40) {
-                auditLines.push(`Motivo: ${cleanReason}`);
-              } else {
-                auditLines.push(`Motivo: ${cleanReason.substring(0, 37)}...`);
+                auditLines.push(`hora salida antes: ${oldTime} | actual: ${newTime}`);
               }
             }
           });
@@ -1492,47 +1384,24 @@ export default function TimeTracking() {
             doc.text('Sin descansos', colPositions[3], currentY);
             doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
             
-            // Show audit info in modifications column - ONE LINE PER ITEM for clarity
+            // Show audit info in modifications column - simple text
             let auditHeight = 6; // Default height
             if (auditLines.length > 0) {
-              doc.setFontSize(7);
-              const lineHeight = 3.5;
+              doc.setFontSize(6.5);
+              doc.setTextColor(60, 60, 60);
+              doc.setFont('helvetica', 'normal');
+              const lineHeight = 3;
               let yOffset = currentY;
               
               auditLines.forEach((line) => {
-                // Check if it's a separator line
-                if (line === '───────────') {
-                  doc.setTextColor(180, 180, 180);
-                  doc.setFont('helvetica', 'normal');
-                  doc.text('─────────', colPositions[5], yOffset);
-                  yOffset += lineHeight;
+                if (line === '---') {
+                  yOffset += 1; // Small gap for separator
                   return;
                 }
-                
-                // Split on FIRST colon to handle times like "Entrada: 09:00 → 10:30"
-                const colonIndex = line.indexOf(':');
-                if (colonIndex !== -1) {
-                  const label = line.substring(0, colonIndex).trim();
-                  const value = line.substring(colonIndex + 1).trim();
-                  
-                  doc.setTextColor(100, 100, 100);
-                  doc.setFont('helvetica', 'normal');
-                  doc.text(label + ':', colPositions[5], yOffset);
-                  const labelWidth = doc.getTextWidth(label + ': ');
-                  
-                  doc.setTextColor(50, 50, 50);
-                  doc.setFont('helvetica', 'bold');
-                  doc.text(value, colPositions[5] + labelWidth, yOffset);
-                } else {
-                  doc.setTextColor(50, 50, 50);
-                  doc.setFont('helvetica', 'bold');
-                  doc.text(line, colPositions[5], yOffset);
-                }
-                
+                doc.text(line, colPositions[5], yOffset);
                 yOffset += lineHeight;
               });
               
-              // Calculate height based on actual lines drawn
               auditHeight = Math.max(6, auditLines.length * lineHeight + 2);
             }
             
@@ -1554,47 +1423,24 @@ export default function TimeTracking() {
             }
             doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
             
-            // Show audit info in modifications column - ONE LINE PER ITEM for clarity
+            // Show audit info in modifications column - simple text
             let auditHeight = 6; // Default height
             if (auditLines.length > 0) {
-              doc.setFontSize(7);
-              const lineHeight = 3.5;
+              doc.setFontSize(6.5);
+              doc.setTextColor(60, 60, 60);
+              doc.setFont('helvetica', 'normal');
+              const lineHeight = 3;
               let yOffset = currentY;
               
               auditLines.forEach((line) => {
-                // Check if it's a separator line
-                if (line === '───────────') {
-                  doc.setTextColor(180, 180, 180);
-                  doc.setFont('helvetica', 'normal');
-                  doc.text('─────────', colPositions[5], yOffset);
-                  yOffset += lineHeight;
+                if (line === '---') {
+                  yOffset += 1; // Small gap for separator
                   return;
                 }
-                
-                // Split on FIRST colon to handle times like "Entrada: 09:00 → 10:30"
-                const colonIndex = line.indexOf(':');
-                if (colonIndex !== -1) {
-                  const label = line.substring(0, colonIndex).trim();
-                  const value = line.substring(colonIndex + 1).trim();
-                  
-                  doc.setTextColor(100, 100, 100);
-                  doc.setFont('helvetica', 'normal');
-                  doc.text(label + ':', colPositions[5], yOffset);
-                  const labelWidth = doc.getTextWidth(label + ': ');
-                  
-                  doc.setTextColor(50, 50, 50);
-                  doc.setFont('helvetica', 'bold');
-                  doc.text(value, colPositions[5] + labelWidth, yOffset);
-                } else {
-                  doc.setTextColor(50, 50, 50);
-                  doc.setFont('helvetica', 'bold');
-                  doc.text(line, colPositions[5], yOffset);
-                }
-                
+                doc.text(line, colPositions[5], yOffset);
                 yOffset += lineHeight;
               });
               
-              // Calculate height based on actual lines drawn
               auditHeight = Math.max(6, auditLines.length * lineHeight + 2);
             }
             
