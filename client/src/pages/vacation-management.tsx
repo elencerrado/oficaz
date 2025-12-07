@@ -403,7 +403,7 @@ export default function VacationManagement() {
               
               <div 
                 data-vacation-tooltip
-                className="fixed bg-card border border-border rounded-lg shadow-xl mx-auto"
+                className="fixed bg-gray-50 dark:bg-gray-900 border border-border rounded-2xl shadow-xl mx-auto"
                 style={{ 
                   zIndex: 99999,
                   position: 'fixed',
@@ -416,51 +416,87 @@ export default function VacationManagement() {
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-              {/* Contenido con padding como las tarjetas de solicitudes */}
-              <div className="p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-medium text-foreground">{fullRequest?.user?.fullName}</h3>
-                  {getStatusBadge(period.status)}
+              {/* Contenido estilo iOS card */}
+              <div className="p-4 space-y-4">
+                {/* Header con icono tipo ausencia, nombre y badge */}
+                <div className="flex items-start gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    period.status === 'approved' 
+                      ? 'bg-green-100 dark:bg-green-900/30' 
+                      : period.status === 'pending'
+                      ? 'bg-yellow-100 dark:bg-yellow-900/30'
+                      : 'bg-red-100 dark:bg-red-900/30'
+                  }`}>
+                    <AbsenceIcon className={`w-5 h-5 ${
+                      period.status === 'approved' 
+                        ? 'text-green-600 dark:text-green-400' 
+                        : period.status === 'pending'
+                        ? 'text-yellow-600 dark:text-yellow-400'
+                        : 'text-red-600 dark:text-red-400'
+                    }`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="font-semibold text-foreground truncate">{fullRequest?.user?.fullName}</h3>
+                      {getStatusBadge(period.status)}
+                    </div>
+                    <p className="text-sm text-primary font-medium mt-0.5">
+                      {ABSENCE_TYPE_LABELS[absenceType as keyof typeof ABSENCE_TYPE_LABELS] || 'Vacaciones'}
+                    </p>
+                  </div>
                 </div>
                 
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <p>
-                    <span className="font-medium">Fechas:</span>{" "}
-                    {format(period.startDate, "dd/MM/yyyy", { locale: es })} -{" "}
-                    {format(period.endDate, "dd/MM/yyyy", { locale: es })}
-                  </p>
-                  <p>
-                    <span className="font-medium">Días:</span> {
-                      fullRequest?.startDate && fullRequest?.endDate 
+                {/* Info en formato iOS */}
+                <div className="bg-muted/50 rounded-xl p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Fechas</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {(() => {
+                        const startStr = format(period.startDate, "dd/MM/yyyy", { locale: es });
+                        const endStr = format(period.endDate, "dd/MM/yyyy", { locale: es });
+                        return startStr === endStr ? format(period.startDate, "d MMM yyyy", { locale: es }) : `${startStr} - ${endStr}`;
+                      })()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Días</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {fullRequest?.startDate && fullRequest?.endDate 
                         ? calculateDays(fullRequest.startDate, fullRequest.endDate)
-                        : fullRequest?.days || duration
-                    }
-                  </p>
+                        : fullRequest?.days || duration}
+                    </span>
+                  </div>
                   {fullRequest?.reason && (
-                    <p>
-                      <span className="font-medium">Motivo:</span> {fullRequest.reason}
-                    </p>
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-sm text-muted-foreground shrink-0">Motivo</span>
+                      <span className="text-sm text-foreground text-right">{fullRequest.reason}</span>
+                    </div>
                   )}
-                  <p>
-                    <span className="font-medium">Solicitado:</span>{" "}
-                    {fullRequest?.requestDate ? format(new Date(fullRequest.requestDate), "dd/MM/yyyy", { locale: es }) : 
-                     fullRequest?.createdAt ? format(new Date(fullRequest.createdAt), "dd/MM/yyyy", { locale: es }) : "N/A"}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Solicitado</span>
+                    <span className="text-sm text-foreground">
+                      {fullRequest?.requestDate ? format(new Date(fullRequest.requestDate), "d MMM yyyy", { locale: es }) : 
+                       fullRequest?.createdAt ? format(new Date(fullRequest.createdAt), "d MMM yyyy", { locale: es }) : "N/A"}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Botones de acción - Mismo estilo que las tarjetas móviles */}
+                {/* Botones de acción estilo iOS - iconos coloreados */}
                 {period.status === 'pending' && fullRequest && canManageRequest(fullRequest) ? (
-                  <div className="grid grid-cols-3 gap-2 w-full">
+                  <div className="flex items-center justify-center gap-6 pt-2">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveTooltip(null);
                         if (fullRequest) openRequestModal(fullRequest, 'approve');
                       }}
-                      className="bg-green-600 hover:bg-green-700 text-white h-9 w-full flex items-center justify-center rounded-lg transition-colors"
+                      className="flex flex-col items-center gap-1 group"
                       title="Aprobar solicitud"
                     >
-                      <Check className="w-4 h-4" />
+                      <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:bg-green-200 dark:group-hover:bg-green-800/40 transition-colors">
+                        <Check className="w-6 h-6 text-green-600 dark:text-green-400" />
+                      </div>
+                      <span className="text-xs text-muted-foreground">Aprobar</span>
                     </button>
                     <button
                       onClick={(e) => {
@@ -468,10 +504,13 @@ export default function VacationManagement() {
                         setActiveTooltip(null);
                         if (fullRequest) openRequestModal(fullRequest, 'edit');
                       }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white h-9 w-full flex items-center justify-center rounded-lg transition-colors"
+                      className="flex flex-col items-center gap-1 group"
                       title="Editar solicitud"
                     >
-                      <Edit className="w-4 h-4" />
+                      <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:bg-blue-200 dark:group-hover:bg-blue-800/40 transition-colors">
+                        <Edit className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <span className="text-xs text-muted-foreground">Editar</span>
                     </button>
                     <button
                       onClick={(e) => {
@@ -479,22 +518,25 @@ export default function VacationManagement() {
                         setActiveTooltip(null);
                         if (fullRequest) openRequestModal(fullRequest, 'deny');
                       }}
-                      className="bg-red-600 hover:bg-red-700 text-white h-9 w-full flex items-center justify-center rounded-lg transition-colors"
+                      className="flex flex-col items-center gap-1 group"
                       title="Denegar solicitud"
                     >
-                      <X className="w-4 h-4" />
+                      <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center group-hover:bg-red-200 dark:group-hover:bg-red-800/40 transition-colors">
+                        <X className="w-6 h-6 text-red-600 dark:text-red-400" />
+                      </div>
+                      <span className="text-xs text-muted-foreground">Denegar</span>
                     </button>
                   </div>
                 ) : period.status === 'pending' ? (
-                  <div className="p-2 bg-yellow-50 rounded-lg text-center">
-                    <p className="text-xs text-yellow-700">
+                  <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl text-center">
+                    <p className="text-xs text-yellow-700 dark:text-yellow-400">
                       {user?.role === 'manager' && fullRequest?.userId === user?.id 
                         ? 'No puedes gestionar tus propias solicitudes' 
                         : 'Sin permisos para gestionar esta solicitud'}
                     </p>
                   </div>
                 ) : (
-                  <div className="flex w-full">
+                  <div className="flex justify-center pt-2">
                     {(period.status === 'approved' || period.status === 'denied') && fullRequest && canManageRequest(fullRequest) && (
                       <button
                         onClick={(e) => {
@@ -502,10 +544,13 @@ export default function VacationManagement() {
                           setActiveTooltip(null);
                           if (fullRequest) openRequestModal(fullRequest, 'revert');
                         }}
-                        className="text-orange-600 border border-orange-300 hover:bg-orange-50 h-9 w-full flex items-center justify-center rounded-lg transition-colors"
+                        className="flex flex-col items-center gap-1 group"
                         title="Revertir a pendiente"
                       >
-                        <RotateCcw className="w-4 h-4" />
+                        <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center group-hover:bg-orange-200 dark:group-hover:bg-orange-800/40 transition-colors">
+                          <RotateCcw className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                        </div>
+                        <span className="text-xs text-muted-foreground">Revertir</span>
                       </button>
                     )}
                   </div>
