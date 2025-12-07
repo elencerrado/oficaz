@@ -771,32 +771,39 @@ export default function VacationRequests() {
               </div>
               
               {/* Selected range info */}
-              {canRequestDays > 0 && (
-                <div className={`
-                  text-sm p-3 rounded-lg text-center font-medium
-                  ${selectedAbsenceType === 'vacation' && exceedsAvailable 
-                    ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-500/30' 
+              <div className={`
+                text-sm p-3 rounded-lg text-center font-medium
+                ${selectedStartDate && selectedEndDate && selectedAbsenceType === 'vacation' && exceedsAvailable 
+                  ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-500/30' 
+                  : selectedStartDate && !selectedEndDate
+                    ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-500/30'
                     : 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-500/30'
-                  }
-                `}>
-                  {selectedStartDate && selectedEndDate ? (
-                    <>
-                      {format(selectedStartDate, 'd MMM', { locale: es })} - {format(selectedEndDate, 'd MMM', { locale: es })}
-                      {selectedAbsenceType === 'vacation' && (
-                        <>
-                          <br />
-                          {exceedsAvailable 
-                            ? `Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`
-                            : `${canRequestDays} días solicitados`
-                          }
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    'Selecciona fecha de inicio y fin'
-                  )}
-                </div>
-              )}
+                }
+              `}>
+                {selectedStartDate && selectedEndDate ? (
+                  <>
+                    {isSameDay(selectedStartDate, selectedEndDate) 
+                      ? format(selectedStartDate, 'd MMM', { locale: es })
+                      : `${format(selectedStartDate, 'd MMM', { locale: es })} - ${format(selectedEndDate, 'd MMM', { locale: es })}`
+                    }
+                    {selectedAbsenceType === 'vacation' && (
+                      <>
+                        <br />
+                        {exceedsAvailable 
+                          ? `Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`
+                          : `${canRequestDays} día${canRequestDays > 1 ? 's' : ''} solicitado${canRequestDays > 1 ? 's' : ''}`
+                        }
+                      </>
+                    )}
+                  </>
+                ) : selectedStartDate ? (
+                  <>
+                    {format(selectedStartDate, 'd MMM', { locale: es })} → Selecciona día final o el mismo
+                  </>
+                ) : (
+                  'Selecciona fecha de inicio'
+                )}
+              </div>
               
               {/* Description textarea */}
               <div>
