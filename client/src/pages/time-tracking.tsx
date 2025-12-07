@@ -3585,16 +3585,10 @@ export default function TimeTracking() {
                             "grid items-center px-4 py-2.5 cursor-pointer select-none transition-colors gap-3",
                             isExpanded && "bg-gray-50 dark:bg-gray-900/50"
                           )}
-                          style={{ gridTemplateColumns: '20px 200px 90px 1fr 60px 36px' }}
+                          style={{ gridTemplateColumns: '200px 90px 1fr 60px 36px 20px' }}
                           onClick={toggleExpand}
                         >
-                          {/* Col 1: Chevron */}
-                          <ChevronDown className={cn(
-                            "w-4 h-4 text-gray-400 transition-transform duration-200",
-                            isExpanded && "transform rotate-180"
-                          )} />
-                          
-                          {/* Col 2: Avatar + Name (fixed width) */}
+                          {/* Col 1: Avatar + Name (fixed width) */}
                           <div className="flex items-center gap-2 min-w-0">
                             <UserAvatar 
                               fullName={dayData.userName || 'Usuario Desconocido'} 
@@ -3614,22 +3608,22 @@ export default function TimeTracking() {
                             </div>
                           </div>
                           
-                          {/* Col 3: Date (fixed width) */}
+                          {/* Col 2: Date (fixed width) */}
                           <div className="text-gray-600 dark:text-gray-400 text-sm">
                             {format(new Date(dayData.date), 'dd/MM/yyyy')}
                           </div>
                           
-                          {/* Col 4: Timeline Bar (flexible) */}
+                          {/* Col 3: Timeline Bar (flexible) */}
                           <div className="w-full">
                             <DailyTimelineBar dayData={dayData} />
                           </div>
                           
-                          {/* Col 5: Total Hours (fixed width) */}
+                          {/* Col 4: Total Hours (fixed width) */}
                           <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm text-right">
                             {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
                           </div>
                           
-                          {/* Col 6: Action Button (fixed width) */}
+                          {/* Col 5: Action Button (fixed width) */}
                           <div className="justify-self-end" onClick={(e) => e.stopPropagation()}>
                             {(() => {
                               const incompleteSession = dayData.sessions.find((s: any) => s.status === 'incomplete');
@@ -3680,6 +3674,12 @@ export default function TimeTracking() {
                               );
                             })()}
                           </div>
+                          
+                          {/* Col 6: Chevron (fixed width, right side) */}
+                          <ChevronDown className={cn(
+                            "w-4 h-4 text-gray-400 transition-transform duration-200 justify-self-end",
+                            isExpanded && "transform rotate-180"
+                          )} />
                         </div>
                         
                         {/* Expanded details - inside the card */}
