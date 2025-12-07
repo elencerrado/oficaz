@@ -1147,7 +1147,7 @@ export default function TimeTracking() {
           doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
           doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
           
-          // Build audit info for the modifications column - simple format
+          // Build audit info for the modifications column
           let auditLines: string[] = [];
           
           // Check for modifications from audit logs
@@ -1160,10 +1160,20 @@ export default function TimeTracking() {
             
             const oldVal = log.oldValue || {};
             const newVal = log.newValue || {};
+            const isEmployeeRequest = /^Employee request approved:/i.test(log.reason || '');
+            const approvedBy = log.modifiedByName || 'Admin';
+            const modDate = log.modifiedAt ? format(new Date(log.modifiedAt), 'dd/MM HH:mm') : '';
             
             if (log.modificationType === 'created_manual') {
               auditLines.push(`Registro manual`);
+              auditLines.push(`Aprobado: ${approvedBy} (${modDate})`);
             } else if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
+              // Show who requested and who approved
+              if (isEmployeeRequest) {
+                auditLines.push(`Solicitado: empleado`);
+              }
+              auditLines.push(`Aprobado: ${approvedBy} (${modDate})`);
+              
               if ((log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') && oldVal.clockIn) {
                 const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
                 const newTime = newVal.clockIn ? format(new Date(newVal.clockIn), 'HH:mm') : format(new Date(session.clockIn), 'HH:mm');
@@ -1347,7 +1357,7 @@ export default function TimeTracking() {
           doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
           doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
           
-          // Build audit info for the modifications column - simple format
+          // Build audit info for the modifications column
           let auditLines: string[] = [];
           
           // Check for modifications from audit logs
@@ -1360,10 +1370,20 @@ export default function TimeTracking() {
             
             const oldVal = log.oldValue || {};
             const newVal = log.newValue || {};
+            const isEmployeeRequest = /^Employee request approved:/i.test(log.reason || '');
+            const approvedBy = log.modifiedByName || 'Admin';
+            const modDate = log.modifiedAt ? format(new Date(log.modifiedAt), 'dd/MM HH:mm') : '';
             
             if (log.modificationType === 'created_manual') {
               auditLines.push(`Registro manual`);
+              auditLines.push(`Aprobado: ${approvedBy} (${modDate})`);
             } else if (log.modificationType === 'modified_clockin' || log.modificationType === 'modified_clockout' || log.modificationType === 'modified_both') {
+              // Show who requested and who approved
+              if (isEmployeeRequest) {
+                auditLines.push(`Solicitado: empleado`);
+              }
+              auditLines.push(`Aprobado: ${approvedBy} (${modDate})`);
+              
               if ((log.modificationType === 'modified_clockin' || log.modificationType === 'modified_both') && oldVal.clockIn) {
                 const oldTime = format(new Date(oldVal.clockIn), 'HH:mm');
                 const newTime = newVal.clockIn ? format(new Date(newVal.clockIn), 'HH:mm') : format(new Date(session.clockIn), 'HH:mm');
