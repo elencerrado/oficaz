@@ -1095,9 +1095,9 @@ export default function VacationManagement() {
                       </div>
 
                       {/* Desktop - fila con grid proporcional */}
-                      <div className="hidden md:flex items-stretch">
+                      <div className="hidden md:flex items-stretch min-w-0">
                         {/* Contenido principal con grid proporcional - nunca corta textos */}
-                        <div className="flex-1 grid items-center px-4 py-3 gap-3" style={{ gridTemplateColumns: 'auto minmax(140px,2fr) minmax(180px,2fr) auto auto auto 1fr auto auto' }}>
+                        <div className="flex-1 grid items-center px-4 py-3 gap-2 lg:gap-3 min-w-0" style={{ gridTemplateColumns: 'auto minmax(100px,1.5fr) minmax(140px,1.5fr) auto auto auto 1fr auto auto' }}>
                           {/* Tipo ausencia - icono */}
                           <div className="flex-shrink-0">
                             <AbsenceIcon className={`w-5 h-5 ${absenceColors.text}`} />
