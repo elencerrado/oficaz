@@ -1097,16 +1097,17 @@ export default function VacationManagement() {
                       {/* Desktop - fila con grid proporcional */}
                       <div className="hidden md:flex items-stretch min-w-0">
                         {/* Contenido principal con grid proporcional - nunca corta textos */}
-                        <div className="flex-1 grid items-center px-4 py-3 gap-2 lg:gap-3 min-w-0" style={{ gridTemplateColumns: 'auto minmax(100px,1.5fr) minmax(140px,1.5fr) auto auto auto 1fr auto auto' }}>
-                          {/* Tipo ausencia - icono */}
-                          <div className="flex-shrink-0">
-                            <AbsenceIcon className={`w-5 h-5 ${absenceColors.text}`} />
+                        <div className="flex-1 grid items-center px-4 py-3 gap-2 lg:gap-3 min-w-0" style={{ gridTemplateColumns: 'minmax(120px,1.8fr) minmax(140px,1.5fr) auto auto auto 1fr auto auto' }}>
+                          {/* Nombre y tipo de ausencia en dos filas */}
+                          <div className="flex items-center gap-2 min-w-0">
+                            <AbsenceIcon className={`w-5 h-5 flex-shrink-0 ${absenceColors.text}`} />
+                            <div className="min-w-0">
+                              <span className={`text-[10px] font-medium ${absenceColors.text} block`}>{absenceLabel}</span>
+                              <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate text-sm leading-tight">
+                                {request.user?.fullName}
+                              </h3>
+                            </div>
                           </div>
-                          
-                          {/* Nombre - proporcional, trunca si es muy largo */}
-                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
-                            {request.user?.fullName}
-                          </h3>
                           
                           {/* Fechas - proporcional, nunca trunca */}
                           <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
