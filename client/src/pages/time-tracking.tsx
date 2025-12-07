@@ -4508,81 +4508,7 @@ export default function TimeTracking() {
       {/* Tab Content: Solicitudes de Modificación */}
       {activeTab === 'requests' && (
         <div className="space-y-4">
-          {/* Filtros */}
-          <div className="flex flex-wrap items-center gap-2 md:gap-3">
-            {/* Filtro Estado */}
-            <Select value={requestsStatus} onValueChange={setRequestsStatus}>
-              <SelectTrigger className="w-[120px] md:w-[130px]">
-                <SelectValue placeholder="Estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                <SelectItem value="pending">Pendientes</SelectItem>
-                <SelectItem value="approved">Aprobadas</SelectItem>
-                <SelectItem value="rejected">Rechazadas</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            {/* Filtro Empleado con buscador */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-[160px] md:w-[180px] justify-between font-normal">
-                  <span className="truncate">
-                    {requestsEmployeeId === "all" 
-                      ? "Todos los empleados" 
-                      : employees.find((e: any) => e.id === parseInt(requestsEmployeeId))?.fullName || "Empleado"}
-                  </span>
-                  <User className="w-4 h-4 ml-2 flex-shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[240px] p-0" align="start">
-                <div className="p-2 border-b">
-                  <Input
-                    placeholder="Buscar empleado..."
-                    value={requestsEmployeeSearchTerm}
-                    onChange={(e) => setRequestsEmployeeSearchTerm(e.target.value)}
-                    className="h-8"
-                  />
-                </div>
-                <div className="max-h-[200px] overflow-y-auto p-1">
-                  <button
-                    onClick={() => { setRequestsEmployeeId("all"); setRequestsEmployeeSearchTerm(""); }}
-                    className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors ${requestsEmployeeId === "all" ? "bg-muted font-medium" : ""}`}
-                  >
-                    Todos los empleados
-                  </button>
-                  {(employees || [])
-                    .filter((emp: any) => 
-                      requestsEmployeeSearchTerm === '' || 
-                      emp.fullName.toLowerCase().includes(requestsEmployeeSearchTerm.toLowerCase())
-                    )
-                    .map((emp: any) => (
-                      <button
-                        key={emp.id}
-                        onClick={() => { setRequestsEmployeeId(emp.id.toString()); setRequestsEmployeeSearchTerm(""); }}
-                        className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors truncate ${requestsEmployeeId === emp.id.toString() ? "bg-muted font-medium" : ""}`}
-                      >
-                        {emp.fullName}
-                      </button>
-                    ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-            
-            {/* Filtro Tipo de Solicitud */}
-            <Select value={requestsType} onValueChange={setRequestsType}>
-              <SelectTrigger className="w-[140px] md:w-[160px]">
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los tipos</SelectItem>
-                <SelectItem value="forgotten_checkin">Fichaje olvidado</SelectItem>
-                <SelectItem value="modification">Modificar horario</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Lista de solicitudes filtradas */}
+          {/* Calcular solicitudes filtradas una vez */}
           {(() => {
             const filteredModificationRequests = modificationRequests.filter((request: any) => {
               const matchesStatus = requestsStatus === "all" || request.status === requestsStatus;
@@ -4591,7 +4517,175 @@ export default function TimeTracking() {
               return matchesStatus && matchesEmployee && matchesType;
             });
             
-            return filteredModificationRequests.length === 0 ? (
+            return (
+              <>
+                {/* Filtros - Desktop */}
+                <div className="hidden md:flex items-center gap-3">
+                  {/* Contador de solicitudes */}
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
+                    <span className="text-sm font-medium text-foreground">{filteredModificationRequests.length}</span>
+                    <span className="text-sm text-muted-foreground">solicitudes</span>
+                  </div>
+                  
+                  {/* Filtro Empleado con buscador */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-[180px] justify-between font-normal">
+                        <span className="truncate">
+                          {requestsEmployeeId === "all" 
+                            ? "Todos los empleados" 
+                            : employees.find((e: any) => e.id === parseInt(requestsEmployeeId))?.fullName || "Empleado"}
+                        </span>
+                        <User className="w-4 h-4 ml-2 flex-shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[240px] p-0" align="start">
+                      <div className="p-2 border-b">
+                        <Input
+                          placeholder="Buscar empleado..."
+                          value={requestsEmployeeSearchTerm}
+                          onChange={(e) => setRequestsEmployeeSearchTerm(e.target.value)}
+                          className="h-8"
+                        />
+                      </div>
+                      <div className="max-h-[200px] overflow-y-auto p-1">
+                        <button
+                          onClick={() => { setRequestsEmployeeId("all"); setRequestsEmployeeSearchTerm(""); }}
+                          className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors ${requestsEmployeeId === "all" ? "bg-muted font-medium" : ""}`}
+                        >
+                          Todos los empleados
+                        </button>
+                        {(employees || [])
+                          .filter((emp: any) => 
+                            requestsEmployeeSearchTerm === '' || 
+                            emp.fullName.toLowerCase().includes(requestsEmployeeSearchTerm.toLowerCase())
+                          )
+                          .map((emp: any) => (
+                            <button
+                              key={emp.id}
+                              onClick={() => { setRequestsEmployeeId(emp.id.toString()); setRequestsEmployeeSearchTerm(""); }}
+                              className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors truncate ${requestsEmployeeId === emp.id.toString() ? "bg-muted font-medium" : ""}`}
+                            >
+                              {emp.fullName}
+                            </button>
+                          ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  
+                  {/* Filtro Tipo de Solicitud */}
+                  <Select value={requestsType} onValueChange={setRequestsType}>
+                    <SelectTrigger className="w-[160px]">
+                      <SelectValue placeholder="Tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los tipos</SelectItem>
+                      <SelectItem value="forgotten_checkin">Fichaje olvidado</SelectItem>
+                      <SelectItem value="modification">Modificar horario</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {/* Filtro Estado */}
+                  <Select value={requestsStatus} onValueChange={setRequestsStatus}>
+                    <SelectTrigger className="w-[130px]">
+                      <SelectValue placeholder="Estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas</SelectItem>
+                      <SelectItem value="pending">Pendientes</SelectItem>
+                      <SelectItem value="approved">Aprobadas</SelectItem>
+                      <SelectItem value="rejected">Rechazadas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {/* Filtros - Mobile */}
+                <div className="md:hidden space-y-3">
+                  {/* Primera fila: Contador */}
+                  <div className="flex items-center">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
+                      <span className="text-sm font-medium text-foreground">{filteredModificationRequests.length}</span>
+                      <span className="text-sm text-muted-foreground">solicitudes</span>
+                    </div>
+                  </div>
+                  
+                  {/* Segunda fila: Filtros en grid 2x2 */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Filtro Empleado */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-between font-normal text-xs h-9">
+                          <span className="truncate">
+                            {requestsEmployeeId === "all" 
+                              ? "Empleado" 
+                              : employees.find((e: any) => e.id === parseInt(requestsEmployeeId))?.fullName?.split(' ')[0] || "Empleado"}
+                          </span>
+                          <User className="w-3.5 h-3.5 ml-1 flex-shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[220px] p-0" align="start">
+                        <div className="p-2 border-b">
+                          <Input
+                            placeholder="Buscar..."
+                            value={requestsEmployeeSearchTerm}
+                            onChange={(e) => setRequestsEmployeeSearchTerm(e.target.value)}
+                            className="h-8"
+                          />
+                        </div>
+                        <div className="max-h-[180px] overflow-y-auto p-1">
+                          <button
+                            onClick={() => { setRequestsEmployeeId("all"); setRequestsEmployeeSearchTerm(""); }}
+                            className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted ${requestsEmployeeId === "all" ? "bg-muted font-medium" : ""}`}
+                          >
+                            Todos
+                          </button>
+                          {(employees || [])
+                            .filter((emp: any) => 
+                              requestsEmployeeSearchTerm === '' || 
+                              emp.fullName.toLowerCase().includes(requestsEmployeeSearchTerm.toLowerCase())
+                            )
+                            .map((emp: any) => (
+                              <button
+                                key={emp.id}
+                                onClick={() => { setRequestsEmployeeId(emp.id.toString()); setRequestsEmployeeSearchTerm(""); }}
+                                className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted truncate ${requestsEmployeeId === emp.id.toString() ? "bg-muted font-medium" : ""}`}
+                              >
+                                {emp.fullName}
+                              </button>
+                            ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    
+                    {/* Filtro Tipo */}
+                    <Select value={requestsType} onValueChange={setRequestsType}>
+                      <SelectTrigger className="h-9 text-xs">
+                        <SelectValue placeholder="Tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos los tipos</SelectItem>
+                        <SelectItem value="forgotten_checkin">Fichaje olvidado</SelectItem>
+                        <SelectItem value="modification">Modificar horario</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    {/* Filtro Estado - ocupa toda la fila */}
+                    <Select value={requestsStatus} onValueChange={setRequestsStatus}>
+                      <SelectTrigger className="col-span-2 h-9 text-xs">
+                        <SelectValue placeholder="Estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        <SelectItem value="pending">Pendientes</SelectItem>
+                        <SelectItem value="approved">Aprobadas</SelectItem>
+                        <SelectItem value="rejected">Rechazadas</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Lista de solicitudes */}
+                {filteredModificationRequests.length === 0 ? (
               <div className="text-center py-12">
                 <div className="flex flex-col items-center justify-center space-y-3">
                   <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
@@ -4791,6 +4885,8 @@ export default function TimeTracking() {
               );
             })}
               </div>
+            )}
+              </>
             );
           })()}
         </div>

@@ -1228,24 +1228,18 @@ export default function VacationManagement() {
       <div>
           {activeTab === 'requests' && (
             <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4">
-                {/* Filtro Estado */}
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger className="w-[120px] md:w-[130px]">
-                    <SelectValue placeholder="Estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    <SelectItem value="pending">Pendientes</SelectItem>
-                    <SelectItem value="approved">Aprobadas</SelectItem>
-                    <SelectItem value="denied">Denegadas</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Filtros - Desktop */}
+              <div className="hidden md:flex items-center gap-3">
+                {/* Contador de solicitudes */}
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
+                  <span className="text-sm font-medium text-foreground">{filteredRequests.length}</span>
+                  <span className="text-sm text-muted-foreground">solicitudes</span>
+                </div>
                 
                 {/* Filtro Empleado con buscador */}
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-[160px] md:w-[180px] justify-between font-normal">
+                    <Button variant="outline" className="w-[180px] justify-between font-normal">
                       <span className="truncate">
                         {selectedEmployeeId === "all" 
                           ? "Todos los empleados" 
@@ -1285,7 +1279,7 @@ export default function VacationManagement() {
                 
                 {/* Filtro Tipo de Ausencia */}
                 <Select value={selectedAbsenceType} onValueChange={setSelectedAbsenceType}>
-                  <SelectTrigger className="w-[140px] md:w-[160px]">
+                  <SelectTrigger className="w-[160px]">
                     <SelectValue placeholder="Tipo" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1293,6 +1287,19 @@ export default function VacationManagement() {
                     {Object.entries(ABSENCE_TYPE_LABELS).map(([key, label]) => (
                       <SelectItem key={key} value={key}>{label}</SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* Filtro Estado */}
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger className="w-[130px]">
+                    <SelectValue placeholder="Estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="pending">Pendientes</SelectItem>
+                    <SelectItem value="approved">Aprobadas</SelectItem>
+                    <SelectItem value="denied">Denegadas</SelectItem>
                   </SelectContent>
                 </Select>
                 
@@ -1307,10 +1314,100 @@ export default function VacationManagement() {
                     onClick={() => setShowNewRequestModal(true)}
                   >
                     <Plus className="w-4 h-4 mr-1" />
-                    <span className="hidden sm:inline">Nueva Solicitud</span>
-                    <span className="sm:hidden">Nueva</span>
+                    Nueva Solicitud
                   </Button>
                 )}
+              </div>
+              
+              {/* Filtros - Mobile */}
+              <div className="md:hidden space-y-3">
+                {/* Primera fila: Contador + Botón Nueva */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
+                    <span className="text-sm font-medium text-foreground">{filteredRequests.length}</span>
+                    <span className="text-sm text-muted-foreground">solicitudes</span>
+                  </div>
+                  {(user?.role === 'admin' || user?.role === 'manager') && (
+                    <Button 
+                      size="sm" 
+                      className="bg-[#007AFF] hover:bg-[#0056CC]"
+                      onClick={() => setShowNewRequestModal(true)}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Nueva
+                    </Button>
+                  )}
+                </div>
+                
+                {/* Segunda fila: Filtros en grid 2x2 */}
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Filtro Empleado */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between font-normal text-xs h-9">
+                        <span className="truncate">
+                          {selectedEmployeeId === "all" 
+                            ? "Empleado" 
+                            : employees.find((e: Employee) => e.id === parseInt(selectedEmployeeId))?.fullName?.split(' ')[0] || "Empleado"}
+                        </span>
+                        <User className="w-3.5 h-3.5 ml-1 flex-shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[220px] p-0" align="start">
+                      <div className="p-2 border-b">
+                        <Input
+                          placeholder="Buscar..."
+                          value={employeeSearchTerm}
+                          onChange={(e) => setEmployeeSearchTerm(e.target.value)}
+                          className="h-8"
+                        />
+                      </div>
+                      <div className="max-h-[180px] overflow-y-auto p-1">
+                        <button
+                          onClick={() => { setSelectedEmployeeId("all"); setEmployeeSearchTerm(""); }}
+                          className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted ${selectedEmployeeId === "all" ? "bg-muted font-medium" : ""}`}
+                        >
+                          Todos
+                        </button>
+                        {filteredEmployeesForSearch.map((emp: Employee) => (
+                          <button
+                            key={emp.id}
+                            onClick={() => { setSelectedEmployeeId(emp.id.toString()); setEmployeeSearchTerm(""); }}
+                            className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted truncate ${selectedEmployeeId === emp.id.toString() ? "bg-muted font-medium" : ""}`}
+                          >
+                            {emp.fullName}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  
+                  {/* Filtro Tipo */}
+                  <Select value={selectedAbsenceType} onValueChange={setSelectedAbsenceType}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue placeholder="Tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los tipos</SelectItem>
+                      {Object.entries(ABSENCE_TYPE_LABELS).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  {/* Filtro Estado - ocupa toda la fila */}
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger className="col-span-2 h-9 text-xs">
+                      <SelectValue placeholder="Estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas</SelectItem>
+                      <SelectItem value="pending">Pendientes</SelectItem>
+                      <SelectItem value="approved">Aprobadas</SelectItem>
+                      <SelectItem value="denied">Denegadas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             {filteredRequests.length === 0 && !loadingRequests ? (
               <div className="text-center py-8 text-muted-foreground">
