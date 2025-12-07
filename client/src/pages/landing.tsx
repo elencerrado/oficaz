@@ -2198,7 +2198,7 @@ export default function Landing() {
                             min="0"
                             value={userCounts.employees}
                             onChange={(e) => setUserCounts(prev => ({ ...prev, employees: Math.max(0, parseInt(e.target.value) || 0) }))}
-                            className="w-10 text-center font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:border-[#007AFF] focus:outline-none"
+                            className="w-10 text-center font-bold text-gray-900 bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <button 
                             onClick={() => setUserCounts(prev => ({ ...prev, employees: prev.employees + 1 }))}
@@ -2232,7 +2232,7 @@ export default function Landing() {
                             min="0"
                             value={userCounts.managers}
                             onChange={(e) => setUserCounts(prev => ({ ...prev, managers: Math.max(0, parseInt(e.target.value) || 0) }))}
-                            className="w-10 text-center font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:border-[#007AFF] focus:outline-none"
+                            className="w-10 text-center font-bold text-gray-900 bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <button 
                             onClick={() => setUserCounts(prev => ({ ...prev, managers: prev.managers + 1 }))}
@@ -2271,7 +2271,7 @@ export default function Landing() {
                             min="1"
                             value={userCounts.admins}
                             onChange={(e) => setUserCounts(prev => ({ ...prev, admins: Math.max(1, parseInt(e.target.value) || 1) }))}
-                            className="w-10 text-center font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:border-[#007AFF] focus:outline-none"
+                            className="w-10 text-center font-bold text-gray-900 bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <button 
                             onClick={() => setUserCounts(prev => ({ ...prev, admins: prev.admins + 1 }))}
