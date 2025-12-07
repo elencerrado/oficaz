@@ -119,15 +119,15 @@ const regions = [
 ];
 
 export default function VacationManagement() {
-  usePageTitle('Gestión de Vacaciones');
+  usePageTitle('Gestión de Ausencias');
   const { company, user } = useAuth();
   const { setHeader, resetHeader } = usePageHeader();
 
   // Set page header
   useEffect(() => {
     setHeader({
-      title: 'Gestión de Vacaciones',
-      subtitle: 'Gestiona solicitudes de vacaciones y empleados'
+      title: 'Gestión de Ausencias',
+      subtitle: 'Gestiona solicitudes de ausencias y empleados'
     });
     return resetHeader;
   }, []);
@@ -587,8 +587,8 @@ export default function VacationManagement() {
               
               console.log('🔔 Showing vacation toast for:', employeeName);
               toast({
-                title: "📋 Nueva solicitud de vacaciones",
-                description: `${employeeName} ha solicitado vacaciones${periodText}`,
+                title: "📋 Nueva solicitud de ausencia",
+                description: `${employeeName} ha solicitado ausencia${periodText}`,
                 duration: 8000,
               });
             } else {
@@ -698,8 +698,8 @@ export default function VacationManagement() {
       setNewRequestDates({ startDate: null, endDate: null });
       setNewRequestReason("");
       const message = user?.role === 'admin' 
-        ? "Tu solicitud de vacaciones ha sido aprobada automáticamente" 
-        : "Tu solicitud de vacaciones ha sido enviada y está pendiente de aprobación";
+        ? "Tu solicitud de ausencia ha sido aprobada automáticamente" 
+        : "Tu solicitud de ausencia ha sido enviada y está pendiente de aprobación";
       toast({ title: message });
     },
     onError: (error) => {
@@ -978,7 +978,7 @@ export default function VacationManagement() {
           data-testid="stat-approved-requests"
         />
         <StatsCard
-          label="De Vacaciones"
+          label="De Ausencia"
           value={stats.onVacation}
           color="blue"
           icon={Plane}
@@ -1001,7 +1001,7 @@ export default function VacationManagement() {
       {/* Tabs Navigation */}
       <TabNavigation
         tabs={[
-          { id: 'employees', label: 'Timeline de Vacaciones', icon: Users },
+          { id: 'employees', label: 'Timeline de Ausencias', icon: Users },
           { id: 'requests', label: 'Solicitudes', icon: Clock, badge: pendingRequests.length },
           { id: 'holidays', label: 'Días Festivos', icon: CalendarDays }
         ]}
@@ -1049,7 +1049,7 @@ export default function VacationManagement() {
             {filteredRequests.length === 0 && !loadingRequests ? (
               <div className="text-center py-8 text-muted-foreground">
                 {vacationRequests.length === 0 
-                  ? "No hay solicitudes de vacaciones" 
+                  ? "No hay solicitudes de ausencias" 
                   : "No se encontraron solicitudes con los filtros aplicados"}
                 <div className="text-xs text-muted-foreground/60 mt-2">
                   Total de solicitudes: {vacationRequests.length}
@@ -2003,7 +2003,7 @@ export default function VacationManagement() {
                 <div className="space-y-3">
                   <div>
                     <label className="text-sm font-medium text-foreground mb-1 block">
-                      Nuevo período de vacaciones
+                      Nuevo período de ausencia
                     </label>
                     <DatePickerPeriod
                       startDate={editDates.startDate || undefined}
@@ -2079,7 +2079,7 @@ export default function VacationManagement() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus className="w-5 h-5 text-[#007AFF]" />
-              Nueva Solicitud de Vacaciones
+              Nueva Solicitud de Ausencia
             </DialogTitle>
           </DialogHeader>
 
@@ -2106,7 +2106,7 @@ export default function VacationManagement() {
             <div className="space-y-3">
               <div>
                 <label className="text-sm font-medium text-foreground mb-1 block">
-                  Período de vacaciones
+                  Período de ausencia
                 </label>
                 <DatePickerPeriod
                   startDate={newRequestDates.startDate || undefined}

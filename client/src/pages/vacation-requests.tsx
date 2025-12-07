@@ -82,8 +82,8 @@ export default function VacationRequests() {
   if (!hasAccess('vacation')) {
     return (
       <FeatureRestrictedPage
-        featureName="Vacaciones"
-        description="Solicitud y gestión de días de vacaciones"
+        featureName="Ausencias"
+        description="Solicitud y gestión de días de ausencia"
         requiredPlan={getRequiredPlan('vacation')}
         icon={Calendar}
       />
@@ -132,7 +132,7 @@ export default function VacationRequests() {
       toast({
         title: '¡Solicitud enviada!',
         description: selectedAbsenceType === 'vacation' 
-          ? 'Tu solicitud de vacaciones ha sido enviada correctamente.'
+          ? 'Tu solicitud de ausencia ha sido enviada correctamente.'
           : 'Tu solicitud de ausencia ha sido enviada correctamente.',
       });
     },
@@ -473,7 +473,7 @@ export default function VacationRequests() {
       <div className="px-6 pb-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Ausencias</h1>
         <p className="text-gray-600 dark:text-white/70 text-sm">
-          Solicita y consulta el estado de tus vacaciones y permisos
+          Solicita y consulta el estado de tus ausencias y permisos
         </p>
       </div>
       {/* Compact Vacation Summary */}
@@ -502,7 +502,7 @@ export default function VacationRequests() {
                       <div className="space-y-4 text-sm leading-relaxed text-gray-900 dark:text-white">
                         <p>
                           En España te corresponden <span className="font-semibold text-blue-600 dark:text-blue-400">{daysPerMonth} días</span> de 
-                          vacaciones por cada mes trabajado desde tu fecha de incorporación.
+                          ausencia por cada mes trabajado desde tu fecha de incorporación.
                         </p>
                         <p>
                           Empezaste el <span className="font-semibold text-green-600 dark:text-green-500">
@@ -990,7 +990,7 @@ export default function VacationRequests() {
                 <div className="text-center text-gray-600 dark:text-white/70">
                   <CalendarDays className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p>No tienes solicitudes de ausencia</p>
-                  <p className="text-sm mt-1">Solicita tus primeras vacaciones o permisos</p>
+                  <p className="text-sm mt-1">Solicita tu primera ausencia o permiso</p>
                 </div>
               </div>
             )}
