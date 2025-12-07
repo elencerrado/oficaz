@@ -4512,155 +4512,179 @@ export default function TimeTracking() {
               </div>
             </div>
           ) : (
-            modificationRequests.map((request: any) => (
-              <div
-                key={request.id}
-                className="bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md flex"
-              >
-                {/* Contenido principal */}
-                <div className="flex-1 p-4 space-y-3">
-                  {/* Header: Avatar, nombre, fecha y tipo */}
-                  <div className="flex items-center gap-3">
-                    <UserAvatar
-                      fullName={request.employeeName}
-                      profilePicture={request.employeeProfilePicture}
-                      size="sm"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">{request.employeeName}</div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(request.requestedDate), 'dd/MM/yyyy', { locale: es })}
-                        </span>
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                          request.requestType === 'forgotten_checkin'
-                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                            : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
-                        }`}>
-                          {request.requestType === 'forgotten_checkin' ? 'Fichaje olvidado' : 'Modificar horario'}
-                        </span>
-                      </div>
+            modificationRequests.map((request: any) => {
+              const isForgotten = request.requestType === 'forgotten_checkin';
+              const requestedTotal = request.requestedClockOut ? (() => {
+                const ms = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
+                const h = Math.floor(ms / (1000 * 60 * 60));
+                const m = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+                return `${h}h ${m}m`;
+              })() : '—';
+              const currentTotal = request.currentClockIn && request.currentClockOut ? (() => {
+                const ms = new Date(request.currentClockOut).getTime() - new Date(request.currentClockIn).getTime();
+                const h = Math.floor(ms / (1000 * 60 * 60));
+                const m = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+                return `${h}h ${m}m`;
+              })() : null;
+              
+              return (
+                <div
+                  key={request.id}
+                  className="bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md"
+                >
+                  {/* Mobile: Header con estado */}
+                  <div className={`lg:hidden px-4 py-2.5 flex items-center justify-between ${
+                    request.status === 'pending'
+                      ? 'bg-amber-50 dark:bg-amber-950/30 border-b border-amber-100 dark:border-amber-900/50'
+                      : request.status === 'approved'
+                      ? 'bg-emerald-50 dark:bg-emerald-950/30 border-b border-emerald-100 dark:border-emerald-900/50'
+                      : 'bg-rose-50 dark:bg-rose-950/30 border-b border-rose-100 dark:border-rose-900/50'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      <Clock className={`w-4 h-4 ${isForgotten ? 'text-blue-600' : 'text-orange-600'}`} />
+                      <span className={`text-sm font-medium ${isForgotten ? 'text-blue-700 dark:text-blue-300' : 'text-orange-700 dark:text-orange-300'}`}>
+                        {isForgotten ? 'Fichaje olvidado' : 'Modificar horario'}
+                      </span>
                     </div>
+                    <Badge variant={request.status === 'pending' ? 'default' : request.status === 'approved' ? 'default' : 'destructive'} 
+                           className={`text-xs ${request.status === 'approved' ? 'bg-emerald-600' : ''}`}>
+                      {request.status === 'pending' ? 'Pendiente' : request.status === 'approved' ? 'Aprobada' : 'Rechazada'}
+                    </Badge>
                   </div>
 
-                  {/* Detalles del horario */}
-                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3 space-y-2">
-                    {request.requestType === 'forgotten_checkin' ? (
-                      <>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Entrada:</span>
-                          <span className="font-medium">{format(new Date(request.requestedClockIn), 'HH:mm')}</span>
+                  {/* Mobile: Contenido vertical */}
+                  <div className="lg:hidden p-4 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <UserAvatar fullName={request.employeeName} profilePicture={request.employeeProfilePicture} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">{request.employeeName}</div>
+                        <span className="text-xs text-muted-foreground">{format(new Date(request.requestedDate), 'dd/MM/yyyy', { locale: es })}</span>
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3 space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Entrada:</span>
+                        <div className="flex items-center gap-1">
+                          {!isForgotten && request.currentClockIn && (
+                            <span className="line-through text-gray-400 text-xs mr-1">{format(new Date(request.currentClockIn), 'HH:mm')}</span>
+                          )}
+                          <span className="font-medium text-blue-600 dark:text-blue-400">{format(new Date(request.requestedClockIn), 'HH:mm')}</span>
                         </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Salida:</span>
-                          <span className="font-medium">{request.requestedClockOut ? format(new Date(request.requestedClockOut), 'HH:mm') : '—'}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Salida:</span>
+                        <div className="flex items-center gap-1">
+                          {!isForgotten && request.currentClockOut && (
+                            <span className="line-through text-gray-400 text-xs mr-1">{format(new Date(request.currentClockOut), 'HH:mm')}</span>
+                          )}
+                          <span className="font-medium text-blue-600 dark:text-blue-400">{request.requestedClockOut ? format(new Date(request.requestedClockOut), 'HH:mm') : '—'}</span>
                         </div>
-                        {request.requestedClockOut && (
-                          <div className="flex items-center justify-between text-sm pt-1 border-t border-gray-200 dark:border-gray-700">
-                            <span className="text-muted-foreground">Total:</span>
-                            <span className="font-semibold text-blue-600 dark:text-blue-400">
-                              {(() => {
-                                const totalMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
-                                const hours = Math.floor(totalMs / (1000 * 60 * 60));
-                                const minutes = Math.floor((totalMs % (1000 * 60 * 60)) / (1000 * 60));
-                                return `${hours}h ${minutes}m`;
-                              })()}
-                            </span>
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Entrada:</span>
-                          <div className="flex items-center gap-2">
-                            <span className="line-through text-gray-400 text-xs">{request.currentClockIn ? format(new Date(request.currentClockIn), 'HH:mm') : '—'}</span>
-                            <ArrowRight className="w-3 h-3 text-blue-500" />
-                            <span className="font-medium text-blue-600 dark:text-blue-400">{format(new Date(request.requestedClockIn), 'HH:mm')}</span>
-                          </div>
+                      </div>
+                      <div className="flex items-center justify-between text-sm pt-1 border-t border-gray-200 dark:border-gray-700">
+                        <span className="text-muted-foreground">Total:</span>
+                        <div className="flex items-center gap-1">
+                          {!isForgotten && currentTotal && (
+                            <span className="line-through text-gray-400 text-xs mr-1">{currentTotal}</span>
+                          )}
+                          <span className="font-semibold text-blue-600 dark:text-blue-400">{requestedTotal}</span>
                         </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Salida:</span>
-                          <div className="flex items-center gap-2">
-                            <span className="line-through text-gray-400 text-xs">{request.currentClockOut ? format(new Date(request.currentClockOut), 'HH:mm') : '—'}</span>
-                            <ArrowRight className="w-3 h-3 text-blue-500" />
-                            <span className="font-medium text-blue-600 dark:text-blue-400">{request.requestedClockOut ? format(new Date(request.requestedClockOut), 'HH:mm') : '—'}</span>
-                          </div>
-                        </div>
-                        {request.requestedClockOut && (
-                          <div className="flex items-center justify-between text-sm pt-1 border-t border-gray-200 dark:border-gray-700">
-                            <span className="text-muted-foreground">Total:</span>
-                            <div className="flex items-center gap-2">
-                              {request.currentClockIn && request.currentClockOut && (
-                                <>
-                                  <span className="line-through text-gray-400 text-xs">
-                                    {(() => {
-                                      const currentMs = new Date(request.currentClockOut).getTime() - new Date(request.currentClockIn).getTime();
-                                      const currentHours = Math.floor(currentMs / (1000 * 60 * 60));
-                                      const currentMinutes = Math.floor((currentMs % (1000 * 60 * 60)) / (1000 * 60));
-                                      return `${currentHours}h ${currentMinutes}m`;
-                                    })()}
-                                  </span>
-                                  <ArrowRight className="w-3 h-3 text-blue-500" />
-                                </>
-                              )}
-                              <span className="font-semibold text-blue-600 dark:text-blue-400">
-                                {(() => {
-                                  const requestedMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
-                                  const requestedHours = Math.floor(requestedMs / (1000 * 60 * 60));
-                                  const requestedMinutes = Math.floor((requestedMs % (1000 * 60 * 60)) / (1000 * 60));
-                                  return `${requestedHours}h ${requestedMinutes}m`;
-                                })()}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                      </>
+                      </div>
+                    </div>
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">Motivo:</span>{' '}
+                      <span className="italic text-gray-700 dark:text-gray-300">{request.reason}</span>
+                    </div>
+                    {request.status === 'pending' && (
+                      <div className="flex gap-2 pt-1">
+                        <Button size="sm" onClick={() => processRequestMutation.mutate({ id: request.id, status: 'approved' })} className="flex-1 h-9 bg-emerald-600 hover:bg-emerald-700" data-testid={`button-approve-${request.id}`}>
+                          <Check className="w-4 h-4 mr-1" />Aprobar
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => processRequestMutation.mutate({ id: request.id, status: 'rejected' })} className="flex-1 h-9" data-testid={`button-reject-${request.id}`}>
+                          <X className="w-4 h-4 mr-1" />Rechazar
+                        </Button>
+                      </div>
                     )}
                   </div>
 
-                  {/* Motivo */}
-                  <div className="text-sm">
-                    <span className="text-muted-foreground">Motivo:</span>{' '}
-                    <span className="italic text-gray-700 dark:text-gray-300">{request.reason}</span>
-                  </div>
-
-                  {/* Botones de acción - solo si está pendiente */}
-                  {request.status === 'pending' && (
-                    <div className="flex gap-2 pt-1">
-                      <Button
-                        size="sm"
-                        onClick={() => processRequestMutation.mutate({ id: request.id, status: 'approved' })}
-                        className="flex-1 h-9 bg-emerald-600 hover:bg-emerald-700"
-                        data-testid={`button-approve-${request.id}`}
-                      >
-                        <Check className="w-4 h-4 mr-1" />
-                        Aprobar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => processRequestMutation.mutate({ id: request.id, status: 'rejected' })}
-                        className="flex-1 h-9"
-                        data-testid={`button-reject-${request.id}`}
-                      >
-                        <X className="w-4 h-4 mr-1" />
-                        Rechazar
-                      </Button>
+                  {/* Desktop: Fila horizontal con grid */}
+                  <div className="hidden lg:flex items-stretch min-w-0">
+                    <div className="flex-1 grid items-center px-4 py-3 gap-3" style={{ gridTemplateColumns: 'auto minmax(100px,1.2fr) 80px 60px 60px 70px minmax(100px,1.5fr) auto' }}>
+                      {/* Col 1: Avatar */}
+                      <UserAvatar fullName={request.employeeName} profilePicture={request.employeeProfilePicture} size="sm" />
+                      
+                      {/* Col 2: Tipo + Nombre */}
+                      <div className="min-w-0">
+                        <span className={`text-[10px] font-medium ${isForgotten ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'} block`}>
+                          {isForgotten ? 'Fichaje olvidado' : 'Modificar horario'}
+                        </span>
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate text-sm leading-tight">{request.employeeName}</h3>
+                      </div>
+                      
+                      {/* Col 3: Fecha */}
+                      <div className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                        {format(new Date(request.requestedDate), 'dd/MM/yy', { locale: es })}
+                      </div>
+                      
+                      {/* Col 4: Entrada */}
+                      <div className="text-center">
+                        {!isForgotten && request.currentClockIn && (
+                          <div className="line-through text-gray-400 text-[10px]">{format(new Date(request.currentClockIn), 'HH:mm')}</div>
+                        )}
+                        <div className="font-semibold text-sm text-blue-600 dark:text-blue-400">{format(new Date(request.requestedClockIn), 'HH:mm')}</div>
+                      </div>
+                      
+                      {/* Col 5: Salida */}
+                      <div className="text-center">
+                        {!isForgotten && request.currentClockOut && (
+                          <div className="line-through text-gray-400 text-[10px]">{format(new Date(request.currentClockOut), 'HH:mm')}</div>
+                        )}
+                        <div className="font-semibold text-sm text-blue-600 dark:text-blue-400">{request.requestedClockOut ? format(new Date(request.requestedClockOut), 'HH:mm') : '—'}</div>
+                      </div>
+                      
+                      {/* Col 6: Total */}
+                      <div className="text-center">
+                        {!isForgotten && currentTotal && (
+                          <div className="line-through text-gray-400 text-[10px]">{currentTotal}</div>
+                        )}
+                        <div className="font-semibold text-sm text-blue-600 dark:text-blue-400">{requestedTotal}</div>
+                      </div>
+                      
+                      {/* Col 7: Motivo */}
+                      <div className="text-xs text-gray-600 dark:text-gray-400 truncate italic" title={request.reason}>
+                        {request.reason}
+                      </div>
+                      
+                      {/* Col 8: Botones */}
+                      <div className="flex items-center gap-1">
+                        {request.status === 'pending' ? (
+                          <>
+                            <Button size="sm" onClick={() => processRequestMutation.mutate({ id: request.id, status: 'approved' })} className="h-7 px-2 bg-emerald-600 hover:bg-emerald-700" data-testid={`button-approve-desktop-${request.id}`}>
+                              <Check className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => processRequestMutation.mutate({ id: request.id, status: 'rejected' })} className="h-7 px-2" data-testid={`button-reject-desktop-${request.id}`}>
+                              <X className="w-3.5 h-3.5" />
+                            </Button>
+                          </>
+                        ) : (
+                          <Badge variant={request.status === 'approved' ? 'default' : 'destructive'} className={`text-xs ${request.status === 'approved' ? 'bg-emerald-600' : ''}`}>
+                            {request.status === 'approved' ? 'Aprobada' : 'Rechazada'}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                  )}
+                    
+                    {/* Barra de estado en el extremo derecho */}
+                    <div className={`w-2 flex-shrink-0 ${
+                      request.status === 'pending'
+                        ? 'bg-amber-400'
+                        : request.status === 'approved'
+                        ? 'bg-emerald-500'
+                        : 'bg-rose-500'
+                    }`} />
+                  </div>
                 </div>
-
-                {/* Barra de estado en el extremo derecho */}
-                <div className={`w-2 flex-shrink-0 ${
-                  request.status === 'pending'
-                    ? 'bg-amber-400'
-                    : request.status === 'approved'
-                    ? 'bg-emerald-500'
-                    : 'bg-rose-500'
-                }`} />
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       )}
