@@ -1440,39 +1440,46 @@ export default function Landing() {
                           {/* Solicitar button */}
                           <button className="w-full bg-[#007AFF] rounded-lg p-1.5 mb-2 flex items-center justify-center gap-1">
                             <Calendar className="w-3 h-3 text-white" />
-                            <span className="text-white text-[7px] font-medium">Solicitar días</span>
+                            <span className="text-white text-[7px] font-medium">Solicitar Ausencia</span>
                           </button>
                           
-                          {/* Requests table */}
-                          <div className="bg-[#1a2942] rounded-xl overflow-hidden">
-                            <div className="grid grid-cols-4 gap-1 p-1.5 border-b border-[#0a1628]">
-                              <p className="text-gray-500 text-[6px]">Periodo</p>
-                              <p className="text-gray-500 text-[6px] text-center">Días</p>
-                              <p className="text-gray-500 text-[6px] text-center">Estado</p>
-                              <p className="text-gray-500 text-[6px] text-center">Fecha</p>
-                            </div>
+                          {/* Request cards - Apple style */}
+                          <div className="space-y-1.5">
                             {[
-                              { period: '10-12 dic', days: '3', status: 'approved', date: '10 nov' },
-                              { period: '1-15 ago', days: '15', status: 'approved', date: '5 jun' },
-                              { period: '10-14 abr', days: '5', status: 'approved', date: '1 mar' },
-                              { period: '5-5 nov', days: '1', status: 'pending', date: '23 oct' },
-                              { period: '5-8 jul', days: '4', status: 'rejected', date: '20 may' },
-                            ].map((req, i) => (
-                              <div key={i} className="grid grid-cols-4 gap-1 p-2 border-b border-[#0a1628] last:border-0">
-                                <p className="text-white text-[6px]">{req.period}</p>
-                                <p className="text-white text-[6px] text-center">{req.days}</p>
-                                <div className="flex justify-center">
-                                  <div className={`w-3 h-3 rounded-full flex items-center justify-center ${
-                                    req.status === 'approved' ? 'bg-green-500/20 border border-green-500' : 
-                                    req.status === 'rejected' ? 'bg-red-500/20 border border-red-500' : 
-                                    'bg-yellow-500/20 border border-yellow-500'
+                              { type: 'Vacaciones', period: '10 dic → 12 dic', days: '3', status: 'approved', icon: 'vacation', iconColor: 'bg-green-500/20', iconTextColor: 'text-green-400' },
+                              { type: 'Permiso paternidad', period: '1 nov → 15 nov', days: '15', status: 'approved', icon: 'baby', iconColor: 'bg-pink-500/20', iconTextColor: 'text-pink-400' },
+                              { type: 'Baja médica', period: '5 de noviembre', days: '1', status: 'pending', icon: 'medical', iconColor: 'bg-red-500/20', iconTextColor: 'text-red-400' },
+                              { type: 'Asuntos propios', period: '20 de octubre', days: '1', status: 'approved', icon: 'briefcase', iconColor: 'bg-blue-500/20', iconTextColor: 'text-blue-400' },
+                              { type: 'Formación', period: '15 sep → 17 sep', days: '3', status: 'rejected', icon: 'graduation', iconColor: 'bg-purple-500/20', iconTextColor: 'text-purple-400' },
+                            ].map((req, i) => {
+                              const IconComponent = req.icon === 'vacation' ? Plane : 
+                                                    req.icon === 'medical' ? Stethoscope :
+                                                    req.icon === 'baby' ? Baby :
+                                                    req.icon === 'graduation' ? GraduationCap :
+                                                    Briefcase;
+                              return (
+                                <div key={i} className="bg-white/5 rounded-lg overflow-hidden border border-white/10 flex">
+                                  <div className="flex-1 p-1.5 flex items-center gap-1.5">
+                                    <div className={`w-5 h-5 rounded-md flex items-center justify-center ${req.iconColor}`}>
+                                      <IconComponent className={`w-2.5 h-2.5 ${req.iconTextColor}`} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-white text-[7px] font-medium">{req.type}</p>
+                                      <p className="text-gray-400 text-[5px]">{req.period} • {req.days} día{Number(req.days) > 1 ? 's' : ''}</p>
+                                    </div>
+                                  </div>
+                                  <div className={`w-8 flex flex-col items-center justify-center ${
+                                    req.status === 'approved' ? 'bg-green-500/10' : 
+                                    req.status === 'rejected' ? 'bg-red-500/10' : 
+                                    'bg-amber-500/10'
                                   }`}>
-                                    {req.status === 'approved' && <CheckCircle className="w-2 h-2 text-green-400" />}
+                                    {req.status === 'approved' && <CheckCircle className="w-2.5 h-2.5 text-green-400" />}
+                                    {req.status === 'rejected' && <XCircle className="w-2.5 h-2.5 text-red-400" />}
+                                    {req.status === 'pending' && <Clock className="w-2.5 h-2.5 text-amber-400" />}
                                   </div>
                                 </div>
-                                <p className="text-gray-400 text-[6px] text-center">{req.date}</p>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                         </motion.div>
