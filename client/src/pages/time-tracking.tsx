@@ -3371,21 +3371,9 @@ export default function TimeTracking() {
           </div>
         )}
 
-        <CardContent className={`p-0 transition-opacity duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'}`}>
-          {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-muted border-b border-border">
-                <tr>
-                  <th className="text-left py-3 px-4 font-medium text-foreground w-[40px]"></th>
-                  <th className="text-left py-3 px-4 font-medium text-foreground">Empleado</th>
-                  <th className="text-left py-3 px-4 font-medium text-foreground">Fecha</th>
-                  <th className="text-left py-3 px-4 font-medium text-foreground min-w-[300px]">Jornada de Trabajo</th>
-                  <th className="text-left py-3 px-4 font-medium text-foreground">Total</th>
-                  <th className="text-center py-3 px-4 font-medium text-foreground w-[80px]">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
+        <CardContent className={`p-4 transition-opacity duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'}`}>
+          {/* Desktop Card View */}
+          <div className="hidden md:block space-y-3">
                 {(() => {
                   const sortedSessions = filteredSessions
                     .sort((a: any, b: any) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
@@ -3497,13 +3485,11 @@ export default function TimeTracking() {
                       const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
                       
                       result.push(
-                        <tr key={`month-${previousMonth}`} className="bg-blue-50 dark:bg-blue-900/30 border-y-2 border-blue-200 dark:border-blue-700 h-10">
-                          <td colSpan={6} className="py-1 px-4 text-center">
-                            <div className="font-semibold text-blue-800 dark:text-blue-200 capitalize text-sm">
-                              Total {monthName}: {monthTotal.toFixed(1)}h
-                            </div>
-                          </td>
-                        </tr>
+                        <div key={`month-${previousMonth}`} className="bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-200 dark:border-blue-700 rounded-xl py-2 px-4 text-center">
+                          <div className="font-semibold text-blue-800 dark:text-blue-200 capitalize text-sm">
+                            Total {monthName}: {monthTotal.toFixed(1)}h
+                          </div>
+                        </div>
                       );
                     }
                     
@@ -3513,20 +3499,16 @@ export default function TimeTracking() {
                         // Show week total when filtering by specific employee
                         const weekTotal = calculateWeekTotal(previousWeekStart);
                         result.push(
-                          <tr key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 dark:bg-gray-700/50 border-y-2 border-gray-400 dark:border-gray-500 h-10">
-                            <td colSpan={6} className="py-1 px-4 text-center">
-                              <div className="font-medium text-gray-700 dark:text-gray-300 text-sm">
-                                Total semana: {weekTotal.toFixed(1)}h
-                              </div>
-                            </td>
-                          </tr>
+                          <div key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 dark:bg-gray-700/50 border-2 border-gray-300 dark:border-gray-500 rounded-xl py-2 px-4 text-center">
+                            <div className="font-medium text-gray-700 dark:text-gray-300 text-sm">
+                              Total semana: {weekTotal.toFixed(1)}h
+                            </div>
+                          </div>
                         );
                       } else {
                         // Show just a separator line when showing all employees
                         result.push(
-                          <tr key={`week-separator-${previousWeekStart.getTime()}`} className="border-t-2 border-gray-400 dark:border-gray-500 h-0">
-                            <td colSpan={6} className="p-0"></td>
-                          </tr>
+                          <div key={`week-separator-${previousWeekStart.getTime()}`} className="border-t-2 border-gray-300 dark:border-gray-600 my-2" />
                         );
                       }
                     }
@@ -3565,118 +3547,117 @@ export default function TimeTracking() {
                       });
                     };
                     
-                    // Main row
+                    // Main card
                     result.push(
-                      <tr 
+                      <div 
                         key={rowKey} 
-                        className={cn(
-                          `hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-700 h-12 row-wave-loading row-wave-${index % 15} cursor-pointer select-none`,
-                          isExpanded && "bg-gray-50 dark:bg-gray-800"
-                        )}
-                        onClick={toggleExpand}
+                        className="bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md"
                       >
-                        <td className="py-2 px-4 w-[40px]">
+                        {/* Card Header - clickable to expand */}
+                        <div 
+                          className={cn(
+                            "flex items-center gap-4 px-4 py-3 cursor-pointer select-none transition-colors",
+                            isExpanded && "bg-gray-50 dark:bg-gray-900/50"
+                          )}
+                          onClick={toggleExpand}
+                        >
+                          {/* Chevron */}
                           <ChevronDown className={cn(
-                            "w-4 h-4 text-gray-400 transition-transform duration-200",
+                            "w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0",
                             isExpanded && "transform rotate-180"
                           )} />
-                        </td>
-                        <td className="py-2 px-4">
-                          <div className="flex items-center gap-2">
+                          
+                          {/* Avatar + Name */}
+                          <div className="flex items-center gap-2 min-w-0 w-[180px]">
                             <UserAvatar 
                               fullName={dayData.userName || 'Usuario Desconocido'} 
                               size="sm"
                               userId={dayData.userId}
                               profilePicture={dayData.profilePicture}
                             />
-                            <div className="flex items-center gap-2">
-                              <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+                            <div className="flex items-center gap-1 min-w-0">
+                              <span className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
                                 {dayData.userName || 'Usuario Desconocido'}
-                              </div>
+                              </span>
                               {dayData.hasAutoCompleted && (
-                                <div className="flex items-center" title="Esta sesión fue cerrada automáticamente por el sistema">
-                                  <AlertTriangle className="w-3 h-3 text-amber-500" />
+                                <div title="Esta sesión fue cerrada automáticamente por el sistema">
+                                  <AlertTriangle className="w-3 h-3 text-amber-500 flex-shrink-0" />
                                 </div>
                               )}
                             </div>
                           </div>
-                        </td>
-                        <td className="py-2 px-4">
-                          <div className="text-gray-700 dark:text-gray-300 text-sm">
+                          
+                          {/* Date */}
+                          <div className="text-gray-600 dark:text-gray-400 text-sm w-[90px] flex-shrink-0">
                             {format(new Date(dayData.date), 'dd/MM/yyyy')}
                           </div>
-                        </td>
-                        <td className="py-2 px-4 min-w-[300px]">
-                          <DailyTimelineBar dayData={dayData} />
-                        </td>
-                        <td className="py-2 px-4">
-                          <div className="flex items-center gap-2">
-                            <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
-                              {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
-                            </div>
+                          
+                          {/* Timeline Bar */}
+                          <div className="flex-1 min-w-[200px]">
+                            <DailyTimelineBar dayData={dayData} />
                           </div>
-                        </td>
-                        <td className="py-2 px-4 text-center" onClick={(e) => e.stopPropagation()}>
-                          {(() => {
-                            // When there are multiple sessions in a day, prioritize incomplete session, then active, then first
-                            const incompleteSession = dayData.sessions.find((s: any) => s.status === 'incomplete');
-                            const activeSession = dayData.sessions.find((s: any) => !s.clockOut);
-                            const session = incompleteSession || activeSession || dayData.sessions[0];
-                            const hasAuditLogs = session.hasAuditLogs === true;
-                            const canCloseIncomplete = hasIncompleteSession && dayData.userId === user?.id;
-                            
-                            // If user has incomplete session, show close button instead of history
-                            if (canCloseIncomplete) {
+                          
+                          {/* Total Hours */}
+                          <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm w-[60px] text-right flex-shrink-0">
+                            {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
+                          </div>
+                          
+                          {/* Action Button */}
+                          <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                            {(() => {
+                              const incompleteSession = dayData.sessions.find((s: any) => s.status === 'incomplete');
+                              const activeSession = dayData.sessions.find((s: any) => !s.clockOut);
+                              const session = incompleteSession || activeSession || dayData.sessions[0];
+                              const hasAuditLogs = session.hasAuditLogs === true;
+                              const canCloseIncomplete = hasIncompleteSession && dayData.userId === user?.id;
+                              
+                              if (canCloseIncomplete) {
+                                return (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const incompleteSessions = dayData.sessions.filter((s: any) => s.status === 'incomplete');
+                                      openCloseIncompleteDialog(incompleteSessions, dayData.userName || 'Usuario Desconocido');
+                                    }}
+                                    disabled={closeIncompleteSessionsMutation.isPending}
+                                    className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200"
+                                    title="Cerrar sesión incompleta"
+                                    data-testid={`button-close-incomplete-${dayData.date}`}
+                                  >
+                                    <LogOut className="w-4 h-4" />
+                                  </Button>
+                                );
+                              }
+                              
                               return (
                                 <Button
                                   size="sm"
-                                  variant="outline"
+                                  variant={hasAuditLogs ? "outline" : "ghost"}
                                   onClick={() => {
-                                    const incompleteSessions = dayData.sessions.filter((s: any) => s.status === 'incomplete');
-                                    openCloseIncompleteDialog(incompleteSessions, dayData.userName || 'Usuario Desconocido');
+                                    if (hasAuditLogs) {
+                                      setSelectedSessionForAudit(session.id);
+                                      setShowAuditDialog(true);
+                                    }
                                   }}
-                                  disabled={closeIncompleteSessionsMutation.isPending}
-                                  className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200"
-                                  title="Cerrar sesión incompleta"
-                                  data-testid={`button-close-incomplete-${dayData.date}`}
+                                  disabled={!hasAuditLogs}
+                                  className={cn(
+                                    "h-8 w-8 p-0",
+                                    hasAuditLogs ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50" : "text-gray-400 cursor-default"
+                                  )}
+                                  title={hasAuditLogs ? "Ver historial de modificaciones" : "Sin modificaciones"}
+                                  data-testid={`button-history-${session.id}`}
                                 >
-                                  <LogOut className="w-4 h-4" />
+                                  <History className="w-4 h-4" />
                                 </Button>
                               );
-                            }
-                            
-                            // Show history button if there are audit logs
-                            return (
-                              <Button
-                                size="sm"
-                                variant={hasAuditLogs ? "outline" : "ghost"}
-                                onClick={() => {
-                                  if (hasAuditLogs) {
-                                    setSelectedSessionForAudit(session.id);
-                                    setShowAuditDialog(true);
-                                  }
-                                }}
-                                disabled={!hasAuditLogs}
-                                className={cn(
-                                  "h-8 w-8 p-0",
-                                  hasAuditLogs ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50" : "text-gray-400 cursor-default"
-                                )}
-                                title={hasAuditLogs ? "Ver historial de modificaciones" : "Sin modificaciones"}
-                                data-testid={`button-history-${session.id}`}
-                              >
-                                <History className="w-4 h-4" />
-                              </Button>
-                            );
-                          })()}
-                        </td>
-                      </tr>
-                    );
-                    
-                    // Expanded details row
-                    if (isExpanded) {
-                      result.push(
-                        <tr key={`${rowKey}-details`} className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                          <td colSpan={6} className="py-4 px-6">
+                            })()}
+                          </div>
+                        </div>
+                        
+                        {/* Expanded details - inside the card */}
+                        {isExpanded && (
+                          <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-4">
                             <div className="space-y-3">
                               {dayData.sessions.map((session: any, sessionIndex: number) => {
                                 const clockInTime = new Date(session.clockIn);
@@ -3685,7 +3666,7 @@ export default function TimeTracking() {
                                 const hasClockOutLocation = session.clockOutLatitude != null && session.clockOutLongitude != null;
                                 
                                 return (
-                                  <div key={session.id} className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                                  <div key={session.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
                                     <div className="flex items-center justify-between mb-3">
                                       <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                                         Sesión {sessionIndex + 1} de {dayData.sessions.length}
@@ -3796,10 +3777,10 @@ export default function TimeTracking() {
                                 );
                               })}
                             </div>
-                          </td>
-                        </tr>
-                      );
-                    }
+                          </div>
+                        )}
+                      </div>
+                    );
                   });
                   
                   // Add final summaries for the last entries
@@ -3807,85 +3788,74 @@ export default function TimeTracking() {
                     if (previousWeekStart) {
                       const weekTotal = calculateWeekTotal(previousWeekStart);
                       result.push(
-                        <tr key={`week-final`} className="bg-gray-100 dark:bg-gray-700/50 border-y-2 border-gray-400 dark:border-gray-500">
-                          <td colSpan={6} className="py-2 px-4 text-center">
-                            <div className="font-medium text-gray-700 dark:text-gray-300">
-                              Total semana: {weekTotal.toFixed(1)}h
-                            </div>
-                          </td>
-                        </tr>
+                        <div key={`week-final`} className="bg-gray-100 dark:bg-gray-700/50 border-2 border-gray-300 dark:border-gray-500 rounded-xl py-2 px-4 text-center">
+                          <div className="font-medium text-gray-700 dark:text-gray-300">
+                            Total semana: {weekTotal.toFixed(1)}h
+                          </div>
+                        </div>
                       );
                     }
                     
                     if (currentMonth) {
                       const monthTotal = calculateMonthTotal(currentMonth);
-                      // Use currentMonth directly as it's already a string from the monthKey
                       const monthName = format(new Date(currentMonth + '-01'), 'MMMM yyyy', { locale: es });
                       
                       result.push(
-                        <tr key={`month-final`} className="bg-blue-50 dark:bg-blue-900/30 border-y-2 border-blue-200 dark:border-blue-700">
-                          <td colSpan={6} className="py-3 px-4 text-center">
-                            <div className="font-semibold text-blue-800 dark:text-blue-200 capitalize">
-                              Total {monthName}: {monthTotal.toFixed(1)}h
-                            </div>
-                          </td>
-                        </tr>
+                        <div key={`month-final`} className="bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-200 dark:border-blue-700 rounded-xl py-3 px-4 text-center">
+                          <div className="font-semibold text-blue-800 dark:text-blue-200 capitalize">
+                            Total {monthName}: {monthTotal.toFixed(1)}h
+                          </div>
+                        </div>
                       );
                     }
                   }
                   
                   // Elemento observador para infinite scroll + indicador visual
                   result.push(
-                    <tr key="load-more-observer" className="h-12">
-                      <td colSpan={6} className="py-3 text-center">
-                        <div ref={loadMoreDesktopRef} className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
-                          {hasMoreToDisplay ? (
-                            <>
-                              {isFetchingNextPage ? (
-                                <span>Cargando más fichajes...</span>
-                              ) : (
-                                <>
-                                  <ArrowDown className="w-4 h-4 animate-bounce" />
-                                  <span>Desplaza para ver más ({totalCount - Math.min(displayedCount, allSessions.length)} restantes de {totalCount})</span>
-                                </>
-                              )}
-                            </>
-                          ) : (
-                            <span className="text-gray-300 dark:text-gray-600">Has visto todos los {totalCount} fichajes</span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
+                    <div key="load-more-observer" className="py-4">
+                      <div ref={loadMoreDesktopRef} className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
+                        {hasMoreToDisplay ? (
+                          <>
+                            {isFetchingNextPage ? (
+                              <span>Cargando más fichajes...</span>
+                            ) : (
+                              <>
+                                <ArrowDown className="w-4 h-4 animate-bounce" />
+                                <span>Desplaza para ver más ({totalCount - Math.min(displayedCount, allSessions.length)} restantes de {totalCount})</span>
+                              </>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-gray-300 dark:text-gray-600">Has visto todos los {totalCount} fichajes</span>
+                        )}
+                      </div>
+                    </div>
                   );
                   
                   return result;
                 })()}
                 
                 {filteredSessions.length === 0 && (
-                  <tr className="h-32">
-                    <td colSpan={6} className="py-8 text-center">
-                      <div className="flex flex-col items-center justify-center space-y-2">
-                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-                          {isLoading ? (
-                            <LoadingSpinner size="sm" />
-                          ) : (
-                            <Users className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-                          )}
-                        </div>
-                        <div className="text-gray-500 dark:text-gray-400 font-medium text-sm">
-                          {isLoading ? 'Cargando fichajes...' : 'No hay fichajes en este período'}
-                        </div>
-                        {!isLoading && (
-                          <div className="text-gray-400 dark:text-gray-500 text-xs">
-                            Prueba seleccionando un rango de fechas diferente
-                          </div>
+                  <div className="py-16">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                        {isLoading ? (
+                          <LoadingSpinner size="sm" />
+                        ) : (
+                          <Users className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                         )}
                       </div>
-                    </td>
-                  </tr>
+                      <div className="text-gray-500 dark:text-gray-400 font-medium text-sm">
+                        {isLoading ? 'Cargando fichajes...' : 'No hay fichajes en este período'}
+                      </div>
+                      {!isLoading && (
+                        <div className="text-gray-400 dark:text-gray-500 text-xs">
+                          Prueba seleccionando un rango de fechas diferente
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
-              </tbody>
-            </table>
           </div>
 
           {/* Mobile Card View */}
