@@ -436,13 +436,13 @@ export default function VacationManagement() {
                     }`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <h3 className="font-semibold text-foreground truncate">{fullRequest?.user?.fullName}</h3>
+                    <h3 className="font-semibold text-foreground">{fullRequest?.user?.fullName}</h3>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-sm text-primary font-medium">
+                        {ABSENCE_TYPE_LABELS[absenceType as keyof typeof ABSENCE_TYPE_LABELS] || 'Vacaciones'}
+                      </p>
                       {getStatusBadge(period.status)}
                     </div>
-                    <p className="text-sm text-primary font-medium mt-0.5">
-                      {ABSENCE_TYPE_LABELS[absenceType as keyof typeof ABSENCE_TYPE_LABELS] || 'Vacaciones'}
-                    </p>
                   </div>
                 </div>
                 
