@@ -92,6 +92,7 @@ function ScrollReveal({ children, className = "", delay = 0 }: { children: React
 
 // Extended addon descriptions for desktop carousel
 const addonExtendedDescriptions: Record<string, string> = {
+  employee_dashboard: "El panel de control personal de cada empleado. Fichar entrada y salida con un toque, gestionar descansos, y acceder a todas las funciones desde un menú intuitivo estilo iPhone. Todo en la palma de su mano.",
   employees: "Centraliza toda la información de tu equipo en un solo lugar. Alta y baja de empleados, gestión de datos personales, asignación de roles y permisos, histórico de cambios y acceso seguro para cada miembro según su nivel.",
   time_tracking: "Cumple con la normativa de registro horario de forma sencilla. Tus empleados fichan en dos toques desde el móvil, y tú obtienes informes detallados en PDF listos para inspección. Control total sin complicaciones.",
   vacation: "Olvídate del caos de las hojas de cálculo. Cada empleado ve sus días disponibles, solicita fechas con un clic, y tú apruebas o rechazas al instante. Calendario visual para evitar solapamientos.",
@@ -777,6 +778,71 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
     );
   }
   
+  if (addonKey === 'employee_dashboard') {
+    return (
+      <div className="p-3 h-full bg-[#0a1628] flex flex-col">
+        {/* Company name */}
+        <div className="text-center mb-2">
+          <p className="text-white text-[10px] font-medium">Mi Empresa S.L.</p>
+        </div>
+        
+        {/* User header with avatar */}
+        <div className="flex items-center justify-end gap-1.5 mb-2">
+          <span className="text-white text-[7px]">Carlos López</span>
+          <img 
+            src={avatarMan01} 
+            alt="Avatar"
+            className="w-5 h-5 rounded-full object-cover"
+          />
+        </div>
+        
+        {/* Icon grid - 3x2 like iPhone apps */}
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          {[
+            { icon: Clock, label: 'Fichajes', color: 'bg-[#007AFF]' },
+            { icon: Calendar, label: 'Ausencias', color: 'bg-[#007AFF]' },
+            { icon: CalendarDays, label: 'Cuadrante', color: 'bg-[#007AFF]' },
+            { icon: MessageSquare, label: 'Mensajes', color: 'bg-[#007AFF]' },
+            { icon: FileText, label: 'Documentos', color: 'bg-[#007AFF]' },
+            { icon: Bell, label: 'Recordatorios', color: 'bg-[#007AFF]' },
+          ].map((item, i) => (
+            <div key={i} className="flex flex-col items-center">
+              <div className={`w-10 h-10 ${item.color} rounded-xl flex items-center justify-center mb-1`}>
+                <item.icon className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-white/80 text-[6px] text-center">{item.label}</span>
+            </div>
+          ))}
+        </div>
+        
+        {/* Status card */}
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-2 mb-3">
+          <div className="flex items-center justify-center gap-1.5 mb-1">
+            <div className="w-2 h-2 rounded-full bg-green-400"></div>
+            <span className="text-green-400 text-[8px] font-medium">Trabajando...</span>
+          </div>
+          <p className="text-gray-400 text-[6px] text-center mb-0.5">Tu último fichaje</p>
+          <p className="text-white text-[8px] text-center font-medium">Hoy a las 09:00</p>
+        </div>
+        
+        {/* Two round buttons */}
+        <div className="flex justify-center gap-4">
+          <div className="flex flex-col items-center">
+            <div className="w-14 h-14 rounded-full bg-orange-500 flex items-center justify-center">
+              <span className="text-white text-[6px] font-bold text-center leading-tight">Tomar<br/>Descanso</span>
+            </div>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="w-14 h-14 rounded-full bg-[#007AFF] flex items-center justify-center relative">
+              <span className="text-white text-[10px] font-bold">SALIR</span>
+              <div className="absolute -inset-0.5 rounded-full border border-green-400 animate-ping opacity-50"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   return null;
 }
 
@@ -785,11 +851,11 @@ export default function Landing() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [previewAddon, setPreviewAddon] = useState<string>('time_tracking');
+  const [previewAddon, setPreviewAddon] = useState<string>('employee_dashboard');
   const [difficultyMode, setDifficultyMode] = useState<'dificil' | 'normal' | 'oficaz'>('normal');
 
   // Pricing calculator state - starts with 1 admin (required), employees (always included) and time_tracking selected
-  const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set(['employees', 'time_tracking']));
+  const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set(['employee_dashboard', 'employees', 'time_tracking']));
   const [userCounts, setUserCounts] = useState({ employees: 0, managers: 0, admins: 1 });
 
   // Defer API calls until after critical content renders
@@ -853,6 +919,7 @@ export default function Landing() {
 
   // Addon definitions for pricing calculator - employees is free and always included
   const addons = [
+    { key: 'employee_dashboard', name: 'Panel Empleado', price: 0, icon: Smartphone, isLocked: true, description: 'Ficha entrada/salida, descansos y accede a todo desde tu móvil.' },
     { key: 'employees', name: 'Empleados', price: 0, icon: Users, isLocked: true, description: 'Alta, baja, datos personales, roles y permisos. Todo centralizado.' },
     { key: 'time_tracking', name: 'Fichajes', price: 3, icon: Clock, isLocked: false, description: 'Registro horario obligatorio. Fichan en dos toques y exportas PDF.' },
     { key: 'vacation', name: 'Ausencias', price: 3, icon: Calendar, isLocked: false, description: 'Cada empleado ve sus días, solicita fechas, y tú apruebas.' },
@@ -870,8 +937,8 @@ export default function Landing() {
   const monthlyTotal = addonsTotal + usersTotal;
 
   const toggleAddon = (key: string) => {
-    // Employees is always included, cannot be removed
-    if (key === 'employees') return;
+    // Employees and employee_dashboard are always included, cannot be removed
+    if (key === 'employees' || key === 'employee_dashboard') return;
     
     const newSet = new Set(selectedAddons);
     if (newSet.has(key)) {
