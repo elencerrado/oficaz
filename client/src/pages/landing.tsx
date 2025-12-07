@@ -2169,73 +2169,99 @@ export default function Landing() {
                   <p className="text-center text-xs text-gray-400 mt-2">Sin compromiso • Cancela cuando quieras</p>
                 </div>
                 
-                {/* Users - Vertical layout (stacked) */}
+                {/* Users - Card style with descriptions */}
                 <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
-                  <h3 className="font-semibold text-gray-900 mb-4 text-center">Usuarios</h3>
+                  <h3 className="font-semibold text-gray-900 mb-2 text-center">¿Cuántos usuarios necesitas?</h3>
+                  <p className="text-gray-500 text-xs text-center mb-4">Añade usuarios según sus funciones en tu empresa</p>
+                  
                   <div className="space-y-4">
                     {/* Employees */}
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium text-gray-900">Empleados</p>
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => setUserCounts(prev => ({ ...prev, employees: Math.max(0, prev.employees - 1) }))}
-                          className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold"
-                        >
-                          -
-                        </button>
-                        <span className="w-8 text-center font-semibold text-gray-900 text-lg">{userCounts.employees}</span>
-                        <button 
-                          onClick={() => setUserCounts(prev => ({ ...prev, employees: prev.employees + 1 }))}
-                          className="w-8 h-8 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold"
-                        >
-                          +
-                        </button>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <Users className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <p className="font-semibold text-gray-900">Empleados</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => setUserCounts(prev => ({ ...prev, employees: Math.max(0, prev.employees - 1) }))}
+                            className="w-7 h-7 rounded-full bg-white border border-gray-200 hover:bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-sm"
+                          >
+                            -
+                          </button>
+                          <span className="w-6 text-center font-bold text-gray-900">{userCounts.employees}</span>
+                          <button 
+                            onClick={() => setUserCounts(prev => ({ ...prev, employees: prev.employees + 1 }))}
+                            className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
+                      <p className="text-xs text-gray-500">Fichan entrada/salida, solicitan vacaciones y reciben mensajes</p>
                     </div>
                     
                     {/* Managers */}
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium text-gray-900">Managers</p>
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => setUserCounts(prev => ({ ...prev, managers: Math.max(0, prev.managers - 1) }))}
-                          className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold"
-                        >
-                          -
-                        </button>
-                        <span className="w-8 text-center font-semibold text-gray-900 text-lg">{userCounts.managers}</span>
-                        <button 
-                          onClick={() => setUserCounts(prev => ({ ...prev, managers: prev.managers + 1 }))}
-                          className="w-8 h-8 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold"
-                        >
-                          +
-                        </button>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                            <Shield className="w-4 h-4 text-purple-600" />
+                          </div>
+                          <p className="font-semibold text-gray-900">Managers</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => setUserCounts(prev => ({ ...prev, managers: Math.max(0, prev.managers - 1) }))}
+                            className="w-7 h-7 rounded-full bg-white border border-gray-200 hover:bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-sm"
+                          >
+                            -
+                          </button>
+                          <span className="w-6 text-center font-bold text-gray-900">{userCounts.managers}</span>
+                          <button 
+                            onClick={() => setUserCounts(prev => ({ ...prev, managers: prev.managers + 1 }))}
+                            className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
+                      <p className="text-xs text-gray-500">Supervisan equipos, aprueban solicitudes y gestionan turnos</p>
                     </div>
                     
                     {/* Admins */}
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium text-gray-900">Admins</p>
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => setUserCounts(prev => ({ ...prev, admins: Math.max(1, prev.admins - 1) }))}
-                          disabled={userCounts.admins <= 1}
-                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                            userCounts.admins <= 1 
-                              ? 'bg-gray-50 text-gray-300 cursor-not-allowed' 
-                              : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
-                          }`}
-                        >
-                          -
-                        </button>
-                        <span className="w-8 text-center font-semibold text-gray-900 text-lg">{userCounts.admins}</span>
-                        <button 
-                          onClick={() => setUserCounts(prev => ({ ...prev, admins: prev.admins + 1 }))}
-                          className="w-8 h-8 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold"
-                        >
-                          +
-                        </button>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                            <Settings className="w-4 h-4 text-amber-600" />
+                          </div>
+                          <p className="font-semibold text-gray-900">Admins</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => setUserCounts(prev => ({ ...prev, admins: Math.max(1, prev.admins - 1) }))}
+                            disabled={userCounts.admins <= 1}
+                            className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm ${
+                              userCounts.admins <= 1 
+                                ? 'bg-gray-100 text-gray-300 cursor-not-allowed' 
+                                : 'bg-white border border-gray-200 hover:bg-gray-100 text-gray-600'
+                            }`}
+                          >
+                            -
+                          </button>
+                          <span className="w-6 text-center font-bold text-gray-900">{userCounts.admins}</span>
+                          <button 
+                            onClick={() => setUserCounts(prev => ({ ...prev, admins: prev.admins + 1 }))}
+                            className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
+                      <p className="text-xs text-gray-500">Control total: configuración, facturación y todos los permisos</p>
                     </div>
                   </div>
                 </div>
