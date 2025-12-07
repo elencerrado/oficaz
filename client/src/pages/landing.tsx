@@ -857,16 +857,15 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
         </div>
         
         {/* Two round buttons */}
-        <div className="flex justify-center gap-4">
+        <div className="flex justify-center gap-3">
           <div className="flex flex-col items-center">
-            <div className="w-14 h-14 rounded-full bg-orange-500 flex items-center justify-center">
-              <span className="text-white text-[6px] font-bold text-center leading-tight">Tomar<br/>Descanso</span>
+            <div className="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center">
+              <span className="text-white text-[7px] font-bold text-center leading-tight">Tomar<br/>Descanso</span>
             </div>
           </div>
           <div className="flex flex-col items-center">
-            <div className="w-14 h-14 rounded-full bg-[#007AFF] flex items-center justify-center relative">
-              <span className="text-white text-[10px] font-bold">SALIR</span>
-              <div className="absolute -inset-0.5 rounded-full border border-green-400 animate-ping opacity-50"></div>
+            <div className="w-16 h-16 rounded-full bg-[#007AFF] flex items-center justify-center">
+              <span className="text-white text-[11px] font-bold">SALIR</span>
             </div>
           </div>
         </div>
@@ -1512,16 +1511,15 @@ export default function Landing() {
                           </div>
                           
                           {/* Two round buttons */}
-                          <div className="flex justify-center gap-4">
+                          <div className="flex justify-center gap-3">
                             <div className="flex flex-col items-center">
-                              <div className="w-14 h-14 rounded-full bg-orange-500 flex items-center justify-center">
-                                <span className="text-white text-[6px] font-bold text-center leading-tight">Tomar<br/>Descanso</span>
+                              <div className="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center">
+                                <span className="text-white text-[7px] font-bold text-center leading-tight">Tomar<br/>Descanso</span>
                               </div>
                             </div>
                             <div className="flex flex-col items-center">
-                              <div className="w-14 h-14 rounded-full bg-[#007AFF] flex items-center justify-center relative">
-                                <span className="text-white text-[10px] font-bold">SALIR</span>
-                                <div className="absolute -inset-0.5 rounded-full border border-green-400 animate-ping opacity-50"></div>
+                              <div className="w-16 h-16 rounded-full bg-[#007AFF] flex items-center justify-center">
+                                <span className="text-white text-[11px] font-bold">SALIR</span>
                               </div>
                             </div>
                           </div>
