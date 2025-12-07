@@ -1249,7 +1249,7 @@ export default function Landing() {
 
           {/* Desktop: Two Column Carousel Layout - Apple Style */}
           <div className="hidden lg:block">
-            <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+            <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center max-w-5xl mx-auto">
               {/* Left: Feature Card with Extended Description */}
               <div className="relative">
                 <AnimatePresence mode="wait">
