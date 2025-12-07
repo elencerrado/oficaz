@@ -1085,25 +1085,23 @@ export default function VacationManagement() {
                         {getStatusBadge(request.status)}
                       </div>
 
-                      {/* Contenido principal */}
-                      <div className="px-4 py-3">
-                        {/* Desktop - fila única con columnas fijas */}
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="hidden md:flex items-center cursor-default">
+                      {/* Desktop - fila con sección de estado coloreada */}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="hidden md:flex items-stretch cursor-default">
+                              {/* Contenido principal */}
+                              <div className="flex-1 flex items-center px-4 py-3 gap-4">
                                 {/* Tipo ausencia - icono simple */}
-                                <div className="w-[40px] flex-shrink-0">
-                                  <AbsenceIcon className={`w-5 h-5 ${absenceColors.text}`} />
-                                </div>
+                                <AbsenceIcon className={`w-5 h-5 ${absenceColors.text} flex-shrink-0`} />
                                 
-                                {/* Nombre */}
-                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 w-[180px] truncate flex-shrink-0">
+                                {/* Nombre - más ancho */}
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 min-w-[220px] flex-shrink-0">
                                   {request.user?.fullName}
                                 </h3>
                                 
-                                {/* Fechas */}
-                                <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 w-[150px] flex-shrink-0">
+                                {/* Fechas - una línea */}
+                                <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
                                   <CalendarDays className="w-4 h-4 flex-shrink-0" />
                                   <span>
                                     {request.startDate && request.endDate 
@@ -1113,23 +1111,21 @@ export default function VacationManagement() {
                                 </div>
                                 
                                 {/* Días */}
-                                <div className="w-[70px] flex-shrink-0">
-                                  <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    {daysCount}d
-                                  </span>
-                                </div>
+                                <span className="px-2.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                                  {daysCount} {daysCount === 1 ? 'día' : 'días'}
+                                </span>
                                 
                                 {/* Espaciador */}
                                 <div className="flex-1" />
                                 
                                 {/* Fecha solicitud */}
-                                <span className="text-xs text-gray-400 dark:text-gray-500 w-[55px] text-right flex-shrink-0">
-                                  {request.requestDate ? format(new Date(request.requestDate), "dd MMM", { locale: es }) : 
-                                   request.createdAt ? format(new Date(request.createdAt), "dd MMM", { locale: es }) : ""}
+                                <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                                  {request.requestDate ? format(new Date(request.requestDate), "dd MMM yyyy", { locale: es }) : 
+                                   request.createdAt ? format(new Date(request.createdAt), "dd MMM yyyy", { locale: es }) : ""}
                                 </span>
                                 
                                 {/* Acciones */}
-                                <div className="flex items-center gap-1 w-[90px] justify-center flex-shrink-0">
+                                <div className="flex items-center gap-1">
                                   {request.status === 'pending' && canManageRequest(request) ? (
                                     <>
                                       <button
@@ -1168,22 +1164,37 @@ export default function VacationManagement() {
                                     )
                                   )}
                                 </div>
-                                
-                                {/* Badge estado - derecha */}
-                                <div className="w-[90px] flex justify-end flex-shrink-0">
-                                  {getStatusBadge(request.status)}
-                                </div>
                               </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="max-w-xs">
-                              <p className="font-medium">{absenceLabel}</p>
-                              {request.reason && <p className="text-sm text-muted-foreground mt-1">{request.reason}</p>}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                              
+                              {/* Sección coloreada de estado - punta derecha */}
+                              <div className={`w-24 flex items-center justify-center flex-shrink-0 ${
+                                request.status === 'pending'
+                                  ? 'bg-amber-100 dark:bg-amber-900/40'
+                                  : request.status === 'approved'
+                                  ? 'bg-emerald-100 dark:bg-emerald-900/40'
+                                  : 'bg-rose-100 dark:bg-rose-900/40'
+                              }`}>
+                                <span className={`text-xs font-semibold ${
+                                  request.status === 'pending'
+                                    ? 'text-amber-700 dark:text-amber-300'
+                                    : request.status === 'approved'
+                                    ? 'text-emerald-700 dark:text-emerald-300'
+                                    : 'text-rose-700 dark:text-rose-300'
+                                }`}>
+                                  {request.status === 'pending' ? 'Pendiente' : request.status === 'approved' ? 'Aprobada' : 'Denegada'}
+                                </span>
+                              </div>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-xs">
+                            <p className="font-medium">{absenceLabel}</p>
+                            {request.reason && <p className="text-sm text-muted-foreground mt-1">{request.reason}</p>}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
 
-                        {/* Mobile */}
-                        <div className="md:hidden space-y-3">
+                      {/* Contenido móvil */}
+                      <div className="md:hidden px-4 py-3 space-y-3">
                           <h3 className="font-semibold text-gray-900 dark:text-gray-100">
                             {request.user?.fullName}
                           </h3>
@@ -1252,7 +1263,6 @@ export default function VacationManagement() {
                               )}
                             </div>
                           </div>
-                        </div>
                       </div>
                     </div>
                   );
