@@ -1641,7 +1641,7 @@ export default function VacationManagement() {
                                 })()}
                                 
                                 {/* Contenedor específico para barras de vacaciones */}
-                                <div className="absolute inset-0 overflow-hidden">
+                                <div className="absolute inset-0">
                                   {renderVacationBar(employee, timelineRange)}
                                 </div>
                               </div>
@@ -1805,7 +1805,7 @@ export default function VacationManagement() {
                               })()}
                               
                               {/* Contenedor específico para barras de vacaciones */}
-                              <div className="absolute inset-0 overflow-hidden">
+                              <div className="absolute inset-0">
                                 {renderVacationBar(employee, timelineRange)}
                               </div>
                             </div>
