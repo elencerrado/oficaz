@@ -1319,9 +1319,6 @@ export default function Landing() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="text-lg font-semibold text-gray-900">{addon.name}</h3>
-                          {addon.isLocked && (
-                            <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded font-medium">Gratis</span>
-                          )}
                         </div>
                         <p className="text-sm text-gray-500 leading-relaxed">{addon.description}</p>
                       </div>
@@ -1377,9 +1374,6 @@ export default function Landing() {
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
                               <h3 className="text-2xl font-bold text-gray-900">{addon.name}</h3>
-                              {addon.isLocked && (
-                                <span className="text-xs bg-green-500 text-white px-2.5 py-1 rounded-full font-semibold">Incluido</span>
-                              )}
                             </div>
                             <p className="text-gray-500 text-base leading-relaxed">{addon.description}</p>
                           </div>
@@ -2525,11 +2519,9 @@ export default function Landing() {
                                 isLocked ? 'text-white' : isSelected ? 'text-white' : 'text-gray-600'
                               }`} />
                             </div>
-                            {isLocked ? (
-                              <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full font-medium">Gratis</span>
-                            ) : isSelected ? (
+                            {isSelected && !isLocked && (
                               <CheckCircle className="w-6 h-6 text-white" />
-                            ) : null}
+                            )}
                           </div>
                           
                           {/* Name */}
@@ -2550,7 +2542,7 @@ export default function Landing() {
                           <div className={`mt-3 text-xs font-medium ${
                             isLocked ? 'text-green-600' : isSelected ? 'text-white/80' : 'text-[#007AFF]'
                           }`}>
-                            {isLocked ? '✓ Incluido' : isSelected ? '✓ Seleccionado' : 'Toca para añadir'}
+                            {isLocked ? '✓ Siempre activo' : isSelected ? '✓ Seleccionado' : 'Toca para añadir'}
                           </div>
                         </button>
                       </CarouselItem>
