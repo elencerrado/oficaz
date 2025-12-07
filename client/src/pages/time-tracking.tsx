@@ -4341,29 +4341,27 @@ export default function TimeTracking() {
       {/* Tab Content: Resumen */}
       {activeTab === 'summary' && (
         <div className="space-y-4">
-          {/* Controles de filtrado */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Buscador de empleados */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Buscar empleado..."
-                  value={summarySearch}
-                  onChange={(e) => setSummarySearch(e.target.value)}
-                  className="pl-10"
-                  data-testid="input-summary-search"
-                />
-              </div>
+          {/* Controles de filtrado - UNIFIED with other tabs */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-h-[40px]">
+            {/* Buscador de empleados - left side */}
+            <div className="relative w-full sm:w-[280px]">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Buscar empleado..."
+                value={summarySearch}
+                onChange={(e) => setSummarySearch(e.target.value)}
+                className="pl-10 h-9"
+                data-testid="input-summary-search"
+              />
             </div>
 
-            {/* Selector de semana - same height as Input (h-10) */}
-            <div className="flex items-center gap-1 bg-white dark:bg-gray-800 border rounded-md h-10 px-1">
+            {/* Selector de semana - right side, same height as buttons */}
+            <div className="flex items-center gap-1 bg-white dark:bg-gray-800 border rounded-md h-9 px-1">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setSummaryWeek(addDays(summaryWeek, -7))}
-                className="h-8 w-8 p-0"
+                className="h-7 w-7 p-0"
                 data-testid="button-prev-week"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -4382,7 +4380,7 @@ export default function TimeTracking() {
                   }
                 }}
                 disabled={addDays(summaryWeek, 7) > startOfWeek(new Date(), { weekStartsOn: 1 })}
-                className="h-8 w-8 p-0"
+                className="h-7 w-7 p-0"
                 data-testid="button-next-week"
               >
                 <ChevronRight className="w-4 h-4" />
