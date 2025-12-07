@@ -2267,9 +2267,7 @@ export default function Landing() {
                               <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full font-medium">Gratis</span>
                             ) : isSelected ? (
                               <CheckCircle className="w-6 h-6 text-white" />
-                            ) : (
-                              <span className="text-sm font-bold text-[#007AFF]">€{addon.price}/mes</span>
-                            )}
+                            ) : null}
                           </div>
                           
                           {/* Name */}
