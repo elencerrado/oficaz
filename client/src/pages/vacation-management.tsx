@@ -1085,113 +1085,123 @@ export default function VacationManagement() {
                         {getStatusBadge(request.status)}
                       </div>
 
-                      {/* Desktop - fila con sección de estado coloreada */}
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="hidden md:flex items-stretch cursor-default">
-                              {/* Contenido principal */}
-                              <div className="flex-1 flex items-center px-4 py-3 gap-4">
-                                {/* Tipo ausencia - icono simple */}
-                                <AbsenceIcon className={`w-5 h-5 ${absenceColors.text} flex-shrink-0`} />
-                                
-                                {/* Nombre - más ancho */}
-                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 min-w-[220px] flex-shrink-0">
-                                  {request.user?.fullName}
-                                </h3>
-                                
-                                {/* Fechas - una línea */}
-                                <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                                  <CalendarDays className="w-4 h-4 flex-shrink-0" />
-                                  <span>
-                                    {request.startDate && request.endDate 
-                                      ? formatVacationDatesShort(request.startDate, request.endDate)
-                                      : "N/A"}
-                                  </span>
-                                </div>
-                                
-                                {/* Días */}
-                                <span className="px-2.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                                  {daysCount} {daysCount === 1 ? 'día' : 'días'}
-                                </span>
-                                
-                                {/* Espaciador */}
-                                <div className="flex-1" />
-                                
-                                {/* Fecha solicitud */}
-                                <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
-                                  {request.requestDate ? format(new Date(request.requestDate), "dd MMM yyyy", { locale: es }) : 
-                                   request.createdAt ? format(new Date(request.createdAt), "dd MMM yyyy", { locale: es }) : ""}
-                                </span>
-                                
-                                {/* Acciones */}
-                                <div className="flex items-center gap-1">
-                                  {request.status === 'pending' && canManageRequest(request) ? (
-                                    <>
-                                      <button
-                                        onClick={(e) => { e.stopPropagation(); openRequestModal(request, 'approve'); }}
-                                        className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
-                                        title="Aprobar"
-                                      >
-                                        <Check className="w-4 h-4" />
-                                      </button>
-                                      <button
-                                        onClick={(e) => { e.stopPropagation(); openRequestModal(request, 'edit'); }}
-                                        className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
-                                        title="Editar"
-                                      >
-                                        <Edit className="w-4 h-4" />
-                                      </button>
-                                      <button
-                                        onClick={(e) => { e.stopPropagation(); openRequestModal(request, 'deny'); }}
-                                        className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"
-                                        title="Denegar"
-                                      >
-                                        <X className="w-4 h-4" />
-                                      </button>
-                                    </>
-                                  ) : request.status === 'pending' ? (
-                                    <span className="text-xs text-amber-600 dark:text-amber-400">Sin permisos</span>
-                                  ) : (
-                                    canManageRequest(request) && (
-                                      <button
-                                        onClick={(e) => { e.stopPropagation(); openRequestModal(request, 'revert'); }}
-                                        className="p-1.5 rounded-lg text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors"
-                                        title="Revertir"
-                                      >
-                                        <RotateCcw className="w-4 h-4" />
-                                      </button>
-                                    )
-                                  )}
-                                </div>
-                              </div>
-                              
-                              {/* Sección coloreada de estado - punta derecha */}
-                              <div className={`w-24 flex items-center justify-center flex-shrink-0 ${
-                                request.status === 'pending'
-                                  ? 'bg-amber-100 dark:bg-amber-900/40'
-                                  : request.status === 'approved'
-                                  ? 'bg-emerald-100 dark:bg-emerald-900/40'
-                                  : 'bg-rose-100 dark:bg-rose-900/40'
-                              }`}>
-                                <span className={`text-xs font-semibold ${
-                                  request.status === 'pending'
-                                    ? 'text-amber-700 dark:text-amber-300'
-                                    : request.status === 'approved'
-                                    ? 'text-emerald-700 dark:text-emerald-300'
-                                    : 'text-rose-700 dark:text-rose-300'
-                                }`}>
-                                  {request.status === 'pending' ? 'Pendiente' : request.status === 'approved' ? 'Aprobada' : 'Denegada'}
-                                </span>
-                              </div>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom" className="max-w-xs">
-                            <p className="font-medium">{absenceLabel}</p>
-                            {request.reason && <p className="text-sm text-muted-foreground mt-1">{request.reason}</p>}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      {/* Desktop - fila con columnas fijas alineadas */}
+                      <div className="hidden md:flex items-stretch">
+                        {/* Contenido principal con columnas fijas */}
+                        <div className="flex-1 flex items-center px-4 py-3">
+                          {/* Tipo ausencia - icono */}
+                          <div className="w-[32px] flex-shrink-0">
+                            <AbsenceIcon className={`w-5 h-5 ${absenceColors.text}`} />
+                          </div>
+                          
+                          {/* Nombre - ancho fijo */}
+                          <h3 className="w-[200px] font-semibold text-gray-900 dark:text-gray-100 truncate flex-shrink-0">
+                            {request.user?.fullName}
+                          </h3>
+                          
+                          {/* Fechas - ancho fijo */}
+                          <div className="w-[140px] flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
+                            <CalendarDays className="w-4 h-4 flex-shrink-0" />
+                            <span className="truncate">
+                              {request.startDate && request.endDate 
+                                ? formatVacationDatesShort(request.startDate, request.endDate)
+                                : "N/A"}
+                            </span>
+                          </div>
+                          
+                          {/* Días - ancho fijo */}
+                          <div className="w-[70px] flex-shrink-0">
+                            <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {daysCount}d
+                            </span>
+                          </div>
+                          
+                          {/* Icono de notas si hay motivo - ancho fijo */}
+                          <div className="w-[32px] flex-shrink-0 flex justify-center">
+                            {request.reason && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <FileText className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-xs">
+                                    <p className="text-sm">{request.reason}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </div>
+                          
+                          {/* Espaciador flexible */}
+                          <div className="flex-1" />
+                          
+                          {/* Fecha solicitud - ancho fijo */}
+                          <div className="w-[90px] flex-shrink-0 text-right">
+                            <span className="text-xs text-gray-400 dark:text-gray-500">
+                              {request.requestDate ? format(new Date(request.requestDate), "dd MMM yyyy", { locale: es }) : 
+                               request.createdAt ? format(new Date(request.createdAt), "dd MMM yyyy", { locale: es }) : ""}
+                            </span>
+                          </div>
+                          
+                          {/* Acciones - ancho fijo siempre */}
+                          <div className="w-[100px] flex-shrink-0 flex items-center justify-center gap-1">
+                            {request.status === 'pending' && canManageRequest(request) ? (
+                              <>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); openRequestModal(request, 'approve'); }}
+                                  className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
+                                  title="Aprobar"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); openRequestModal(request, 'edit'); }}
+                                  className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                                  title="Editar"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); openRequestModal(request, 'deny'); }}
+                                  className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"
+                                  title="Denegar"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </>
+                            ) : request.status === 'pending' ? (
+                              <span className="text-xs text-amber-600 dark:text-amber-400">Sin permisos</span>
+                            ) : canManageRequest(request) ? (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); openRequestModal(request, 'revert'); }}
+                                className="p-1.5 rounded-lg text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors"
+                                title="Revertir"
+                              >
+                                <RotateCcw className="w-4 h-4" />
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                        
+                        {/* Sección coloreada de estado - punta derecha */}
+                        <div className={`w-[90px] flex items-center justify-center flex-shrink-0 ${
+                          request.status === 'pending'
+                            ? 'bg-amber-100 dark:bg-amber-900/40'
+                            : request.status === 'approved'
+                            ? 'bg-emerald-100 dark:bg-emerald-900/40'
+                            : 'bg-rose-100 dark:bg-rose-900/40'
+                        }`}>
+                          <span className={`text-xs font-semibold ${
+                            request.status === 'pending'
+                              ? 'text-amber-700 dark:text-amber-300'
+                              : request.status === 'approved'
+                              ? 'text-emerald-700 dark:text-emerald-300'
+                              : 'text-rose-700 dark:text-rose-300'
+                          }`}>
+                            {request.status === 'pending' ? 'Pendiente' : request.status === 'approved' ? 'Aprobada' : 'Denegada'}
+                          </span>
+                        </div>
+                      </div>
 
                       {/* Contenido móvil */}
                       <div className="md:hidden px-4 py-3 space-y-3">
