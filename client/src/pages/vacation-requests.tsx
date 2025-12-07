@@ -915,7 +915,7 @@ export default function VacationRequests() {
         </Dialog>
       </div>
       {/* Requests list - Apple style cards */}
-      <div className="px-4 mb-6 flex-1 space-y-2">
+      <div className="px-6 mb-6 flex-1 space-y-2">
         {(requests as any[]).length > 0 ? (
           (requests as any[])
             .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -927,61 +927,36 @@ export default function VacationRequests() {
               const endDate = parseISO(request.endDate);
               const isSingleDay = isSameDay(startDate, endDate);
               
+              const statusColors: Record<string, { bg: string, icon: string, text: string }> = {
+                pending: { bg: 'bg-amber-50 dark:bg-amber-500/10', icon: 'text-amber-500', text: 'Pendiente' },
+                approved: { bg: 'bg-green-50 dark:bg-green-500/10', icon: 'text-green-500', text: 'Aprobado' },
+                denied: { bg: 'bg-red-50 dark:bg-red-500/10', icon: 'text-red-500', text: 'Rechazado' },
+              };
+              const statusStyle = statusColors[request.status] || statusColors.pending;
+              
               return (
                 <div 
                   key={request.id} 
-                  className="bg-white dark:bg-white/5 rounded-xl p-3 border border-gray-100 dark:border-white/10 hover:shadow-sm transition-shadow"
+                  className="bg-white dark:bg-white/5 rounded-xl overflow-hidden border border-gray-100 dark:border-white/10 hover:shadow-sm transition-shadow flex"
                 >
-                  <div className="flex items-center gap-3">
+                  {/* Main content */}
+                  <div className="flex-1 p-3 flex items-center gap-3">
                     {/* Icon with colored background */}
                     <div className={`
-                      w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
+                      w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0
                       ${absenceType === 'vacation' 
                         ? 'bg-green-100 dark:bg-green-500/20' 
                         : 'bg-blue-100 dark:bg-blue-500/20'
                       }
                     `}>
-                      <AbsenceIcon className={`w-5 h-5 ${absenceType === 'vacation' ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`} />
+                      <AbsenceIcon className={`w-4 h-4 ${absenceType === 'vacation' ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`} />
                     </div>
                     
-                    {/* Main content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          {ABSENCE_TYPE_LABELS[absenceType] || 'Vacaciones'}
-                        </span>
-                        {/* Status badge */}
-                        {request.status !== 'pending' && request.adminComment ? (
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <div className="flex items-center gap-1 cursor-pointer">
-                                <Badge className={`${getStatusColor(request.status)} hover:opacity-80 px-2 py-0.5 text-xs`}>
-                                  {getStatusIcon(request.status)}
-                                  <span className="ml-1">{getStatusText(request.status)}</span>
-                                </Badge>
-                                <MessageCircle className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                              </div>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-72 max-w-[80vw] p-3 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" side="top" sideOffset={5} align="end" avoidCollisions={true}>
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                  <MessageCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Respuesta</span>
-                                </div>
-                                <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
-                                  {request.adminComment}
-                                </p>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        ) : (
-                          <Badge className={`${getStatusColor(request.status)} px-2 py-0.5 text-xs`}>
-                            {getStatusIcon(request.status)}
-                            <span className="ml-1">{getStatusText(request.status)}</span>
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 mt-0.5">
+                      <span className="text-sm font-medium text-gray-900 dark:text-white truncate block">
+                        {ABSENCE_TYPE_LABELS[absenceType] || 'Vacaciones'}
+                      </span>
+                      <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-xs text-gray-500 dark:text-white/60">
                           {isSingleDay 
                             ? format(startDate, "d 'de' MMMM", { locale: es })
@@ -995,6 +970,39 @@ export default function VacationRequests() {
                       </div>
                     </div>
                   </div>
+                  
+                  {/* Status indicator - colored right side */}
+                  {request.status !== 'pending' && request.adminComment ? (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <div className={`${statusStyle.bg} w-16 flex flex-col items-center justify-center cursor-pointer hover:opacity-80`}>
+                          <div className={statusStyle.icon}>
+                            {getStatusIcon(request.status)}
+                          </div>
+                          <span className={`text-[10px] mt-0.5 ${statusStyle.icon}`}>{statusStyle.text}</span>
+                          <MessageCircle className="w-2.5 h-2.5 text-gray-400 mt-0.5" />
+                        </div>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-72 max-w-[80vw] p-3 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" side="top" sideOffset={5} align="end" avoidCollisions={true}>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <MessageCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Respuesta</span>
+                          </div>
+                          <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
+                            {request.adminComment}
+                          </p>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  ) : (
+                    <div className={`${statusStyle.bg} w-16 flex flex-col items-center justify-center`}>
+                      <div className={statusStyle.icon}>
+                        {getStatusIcon(request.status)}
+                      </div>
+                      <span className={`text-[10px] mt-0.5 ${statusStyle.icon}`}>{statusStyle.text}</span>
+                    </div>
+                  )}
                 </div>
               );
             })
