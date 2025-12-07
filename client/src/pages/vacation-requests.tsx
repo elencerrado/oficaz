@@ -636,7 +636,13 @@ export default function VacationRequests() {
                   <SelectTrigger className="bg-white dark:bg-white/5 border-gray-300 dark:border-white/20 text-gray-900 dark:text-white">
                     <SelectValue placeholder="Selecciona el tipo de ausencia" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-gray-900 border-gray-300 dark:border-white/20">
+                  <SelectContent 
+                    className="bg-white dark:bg-gray-900 border-gray-300 dark:border-white/20 max-w-[calc(100vw-3rem)] max-h-[300px]"
+                    position="popper"
+                    side="bottom"
+                    align="start"
+                    sideOffset={4}
+                  >
                     <SelectGroup>
                       <SelectLabel className="text-gray-500 dark:text-white/50">Vacaciones</SelectLabel>
                       <SelectItem value="vacation" className="text-gray-900 dark:text-white">
