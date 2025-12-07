@@ -3022,8 +3022,8 @@ export default function TimeTracking() {
       {/* Tab Content: Lista de Horas */}
       {activeTab === 'sessions' && (
         <div className="space-y-4">
-          {/* Filter Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          {/* Filter Bar - UNIFIED HEIGHT with requests tab */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-h-[40px]">
             <span className="text-sm sm:text-lg font-medium text-gray-900 dark:text-gray-100">{getFilterTitle()} ({totalCount})</span>
             
             {/* Desktop: buttons grouped together */}
@@ -4523,8 +4523,8 @@ export default function TimeTracking() {
             
             return (
               <>
-                {/* Filtros - Desktop */}
-                <div className="hidden md:flex items-center gap-3">
+                {/* Filtros - Desktop - UNIFIED HEIGHT with sessions tab */}
+                <div className="hidden md:flex items-center gap-3 min-h-[40px]">
                   {/* Contador de solicitudes */}
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
                     <span className="text-sm font-medium text-foreground">{filteredModificationRequests.length}</span>
