@@ -226,7 +226,7 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
   if (addonKey === 'vacation') {
     return (
       <div className="p-3 h-full bg-[#0a1628]">
-        <h3 className="text-white font-bold text-sm mb-0.5">Vacaciones</h3>
+        <h3 className="text-white font-bold text-sm mb-0.5">Ausencias</h3>
         <p className="text-gray-400 text-[8px] mb-2">Solicita y consulta el estado</p>
         
         <div className="bg-[#1a2942] rounded-xl p-2 mb-2">
@@ -802,7 +802,7 @@ export default function Landing() {
   const addons = [
     { key: 'employees', name: 'Empleados', price: 0, icon: Users, isLocked: true, description: 'Alta, baja, datos personales, roles y permisos. Todo centralizado.' },
     { key: 'time_tracking', name: 'Fichajes', price: 3, icon: Clock, isLocked: false, description: 'Registro horario obligatorio. Fichan en dos toques y exportas PDF.' },
-    { key: 'vacation', name: 'Vacaciones', price: 3, icon: Calendar, isLocked: false, description: 'Cada empleado ve sus días, solicita fechas, y tú apruebas.' },
+    { key: 'vacation', name: 'Ausencias', price: 3, icon: Calendar, isLocked: false, description: 'Cada empleado ve sus días, solicita fechas, y tú apruebas.' },
     { key: 'schedules', name: 'Cuadrante', price: 3, icon: CalendarDays, isLocked: false, description: 'Arrastra turnos, duplica semanas. Con IA lo montas en segundos.' },
     { key: 'messages', name: 'Mensajes', price: 5, icon: MessageSquare, isLocked: false, description: 'Comunicación profesional sin mezclar con WhatsApp personal.' },
     { key: 'reminders', name: 'Recordatorios', price: 5, icon: Bell, isLocked: false, description: 'Alertas para ti o tu equipo con notificaciones push.' },
@@ -838,7 +838,7 @@ export default function Landing() {
     },
     {
       icon: Calendar,
-      title: "Gestión de vacaciones",
+      title: "Gestión de ausencias",
       description: "Solicitudes digitales con flujo de aprobación y calendario integrado"
     },
     {
@@ -1394,7 +1394,7 @@ export default function Landing() {
                           className="h-full"
                         >
                         <div className="p-3 h-full bg-[#0a1628]">
-                          <h3 className="text-white font-bold text-sm mb-0.5">Vacaciones</h3>
+                          <h3 className="text-white font-bold text-sm mb-0.5">Ausencias</h3>
                           <p className="text-gray-400 text-[8px] mb-2">Solicita y consulta el estado</p>
                           
                           {/* Stats row */}

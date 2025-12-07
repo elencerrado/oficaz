@@ -764,7 +764,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                         </div>
                         <div className="min-w-0">
                           <h3 className="font-semibold text-gray-900 text-lg">Empleados</h3>
-                          <p className="text-sm text-gray-500">Fichajes, vacaciones, nóminas</p>
+                          <p className="text-sm text-gray-500">Fichajes, ausencias, nóminas</p>
                           <span className="text-sm font-medium text-blue-600">€2/usuario/mes</span>
                         </div>
                       </div>
