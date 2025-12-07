@@ -1962,6 +1962,36 @@ export default function Settings() {
     staleTime: 60000, // Cache for 1 minute
   });
 
+  // Query para cargar políticas de ausencias retribuidas
+  const { data: absencePolicies = [], isLoading: absencePoliciesLoading } = useQuery<any[]>({
+    queryKey: ['/api/absence-policies'],
+    staleTime: 60000,
+  });
+
+  // Estado para editar políticas de ausencias
+  const [editingPolicies, setEditingPolicies] = useState<Record<number, number | null>>({});
+
+  // Mutación para actualizar política de ausencia
+  const updateAbsencePolicyMutation = useMutation({
+    mutationFn: async ({ id, maxDays }: { id: number; maxDays: number | null }) => {
+      return apiRequest('PATCH', `/api/absence-policies/${id}`, { maxDays });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/absence-policies'] });
+      toast({
+        title: 'Política actualizada',
+        description: 'Los días de ausencia se han actualizado correctamente.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'No se pudo actualizar la política.',
+        variant: 'destructive',
+      });
+    },
+  });
+
   // Initialize form data when company data loads
   useEffect(() => {
     if (companySettings) {
@@ -3060,6 +3090,115 @@ export default function Settings() {
                     </div>
                   </div>
 
+                </CardContent>
+              </Card>
+
+              {/* Ausencias Retribuidas Card */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center space-x-2">
+                        <FileText className="h-5 w-5" />
+                        <span>Ausencias Retribuidas</span>
+                      </CardTitle>
+                      <CardDescription>Días por defecto según convenio (no afectan vacaciones)</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {user?.role === 'manager' && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-4">
+                      <div className="flex items-center gap-2">
+                        <Info className="h-4 w-4 text-amber-600" />
+                        <p className="text-sm text-amber-700">
+                          <strong>Acceso de solo lectura:</strong> Como manager, puedes ver estas configuraciones pero solo los administradores pueden modificarlas.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/50 rounded-lg p-4 mb-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Info className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      <span className="font-medium text-purple-900 dark:text-purple-100">Permisos según ley</span>
+                    </div>
+                    <p className="text-sm text-purple-800 dark:text-purple-300">
+                      Los días de cada tipo de ausencia se calculan automáticamente según la normativa española. 
+                      Puedes ajustar los días si tu convenio colectivo es más favorable.
+                    </p>
+                  </div>
+
+                  {absencePoliciesLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <LoadingSpinner />
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {absencePolicies
+                        .filter((p: any) => p.absenceType !== 'vacation' && p.isActive)
+                        .map((policy: any) => (
+                          <div 
+                            key={policy.id} 
+                            className="flex items-center justify-between p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl"
+                          >
+                            <div className="flex-1">
+                              <div className="font-medium text-gray-900 dark:text-gray-100">
+                                {policy.name}
+                              </div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                                {policy.requiresAttachment ? 'Requiere justificante' : 'Sin justificante obligatorio'}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              {user?.role === 'admin' ? (
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    max="365"
+                                    placeholder="∞"
+                                    className="w-20 h-10 text-center font-medium"
+                                    value={editingPolicies[policy.id] !== undefined 
+                                      ? (editingPolicies[policy.id] ?? '') 
+                                      : (policy.maxDays ?? '')}
+                                    onChange={(e) => {
+                                      const value = e.target.value === '' ? null : parseInt(e.target.value);
+                                      setEditingPolicies(prev => ({ ...prev, [policy.id]: value }));
+                                    }}
+                                  />
+                                  <span className="text-gray-500 dark:text-gray-400 text-sm">días</span>
+                                  {editingPolicies[policy.id] !== undefined && 
+                                   editingPolicies[policy.id] !== policy.maxDays && (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        updateAbsencePolicyMutation.mutate({ 
+                                          id: policy.id, 
+                                          maxDays: editingPolicies[policy.id] 
+                                        });
+                                        setEditingPolicies(prev => {
+                                          const newState = { ...prev };
+                                          delete newState[policy.id];
+                                          return newState;
+                                        });
+                                      }}
+                                      disabled={updateAbsencePolicyMutation.isPending}
+                                    >
+                                      <Save className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                  {policy.maxDays ? `${policy.maxDays} días` : 'Sin límite'}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
