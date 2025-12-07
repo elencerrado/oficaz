@@ -349,6 +349,13 @@ export default function VacationManagement() {
       const tooltipId = `${employee.id}-${period.id}-${index}`;
       const isTooltipActive = activeTooltip === tooltipId;
 
+      // Obtener el icono del tipo de ausencia
+      const absenceType = fullRequest?.absenceType || 'vacation';
+      const AbsenceIcon = ABSENCE_TYPE_ICONS[absenceType] || Plane;
+      const daysCount = fullRequest?.startDate && fullRequest?.endDate 
+        ? calculateDays(fullRequest.startDate, fullRequest.endDate)
+        : fullRequest?.days || duration;
+
       return (
         <div
           key={tooltipId}
@@ -357,7 +364,7 @@ export default function VacationManagement() {
             period.status === 'approved' 
               ? 'bg-green-500 border-green-600 hover:bg-green-600' 
               : 'bg-yellow-400 border-yellow-500 hover:bg-yellow-500'
-          } border opacity-90 hover:opacity-100 flex items-center justify-center`}
+          } border opacity-90 hover:opacity-100 flex flex-col items-center justify-center py-0.5`}
           style={{
             left: `${leftPercent}%`,
             width: `${widthPercent}%`,
@@ -370,14 +377,15 @@ export default function VacationManagement() {
             setActiveTooltip(isTooltipActive ? null : tooltipId);
           }}
         >
-          {/* Número de días visible siempre */}
-          <div className={`text-xs md:text-sm font-bold select-none ${
+          {/* Icono del tipo de ausencia */}
+          <AbsenceIcon className={`w-3.5 h-3.5 md:w-4 md:h-4 ${
+            period.status === 'approved' ? 'text-white' : 'text-yellow-900 dark:text-yellow-950'
+          }`} />
+          {/* Número de días */}
+          <div className={`text-[10px] md:text-xs font-bold select-none leading-tight ${
             period.status === 'approved' ? 'text-white' : 'text-yellow-900 dark:text-yellow-950'
           }`}>
-            {fullRequest?.startDate && fullRequest?.endDate 
-              ? calculateDays(fullRequest.startDate, fullRequest.endDate)
-              : fullRequest?.days || duration
-            }
+            {daysCount}d
           </div>
 
           {/* Panel de información que aparece al hacer clic */}
@@ -1510,7 +1518,7 @@ export default function VacationManagement() {
                             {/* Timeline Horizontal */}
                             <div className="flex-1 relative">
                               {/* Fondo del timeline con marcas de días */}
-                              <div className="relative h-12 bg-muted/50 rounded border border-border">
+                              <div className="relative h-14 bg-muted/50 rounded border border-border">
                                 {/* Grid de días (solo mostrar algunos para no saturar) */}
                                 {timelineRange.days
                                   .filter((_, index) => index % (timelineViewMode === 'month' ? 3 : 7) === 0)
@@ -1670,7 +1678,7 @@ export default function VacationManagement() {
                           <div className="relative">
                             {/* Fondo del timeline con marcas de días */}
                             <div 
-                              className="relative h-10 bg-muted/50 rounded border border-border overflow-hidden touch-pan-y select-none"
+                              className="relative h-12 bg-muted/50 rounded border border-border overflow-hidden touch-pan-y select-none"
                               onTouchStart={handleTouchStart}
                               onTouchMove={handleTouchMove}
                               onTouchEnd={handleTouchEnd}
