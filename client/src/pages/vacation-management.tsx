@@ -13,7 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DatePickerPeriod } from "@/components/ui/date-picker";
-import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare, RotateCcw, ChevronLeft, ChevronRight, Calendar, User, Baby, Heart, Home, Briefcase, GraduationCap, Stethoscope, AlertCircle, FileText, Download, GanttChart } from "lucide-react";
+import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare, RotateCcw, ChevronLeft, ChevronRight, Calendar, User, Baby, Heart, Home, Briefcase, GraduationCap, Stethoscope, AlertCircle, FileText, Download, GanttChart, Upload, Paperclip, Thermometer } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { SelectGroup, SelectLabel, SelectSeparator } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format, differenceInDays, parseISO, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval, startOfDay, differenceInCalendarDays } from "date-fns";
 import { es } from "date-fns/locale";
@@ -100,6 +102,16 @@ interface Holiday {
   region?: string;
 }
 
+interface AbsencePolicy {
+  id: number;
+  companyId: number;
+  absenceType: string;
+  name: string;
+  maxDays: number | null;
+  requiresAttachment: boolean;
+  isActive: boolean;
+}
+
 const spanishHolidays2025: Holiday[] = [
   { name: "Año Nuevo", date: "2025-01-01", type: "national" },
   { name: "Día de Reyes", date: "2025-01-06", type: "national" },
@@ -150,6 +162,9 @@ export default function VacationManagement() {
   const [showNewRequestModal, setShowNewRequestModal] = useState(false);
   const [newRequestDates, setNewRequestDates] = useState({ startDate: null as Date | null, endDate: null as Date | null });
   const [newRequestReason, setNewRequestReason] = useState("");
+  const [newRequestAbsenceType, setNewRequestAbsenceType] = useState<string>('vacation');
+  const [newRequestAttachment, setNewRequestAttachment] = useState<File | null>(null);
+  const [uploadingNewRequestAttachment, setUploadingNewRequestAttachment] = useState(false);
   
   // Estados para el timeline de vacaciones (pestaña empleados)
   const [timelineViewDate, setTimelineViewDate] = useState(new Date());
@@ -595,6 +610,16 @@ export default function VacationManagement() {
     }
   });
 
+  // Fetch absence policies for the new request modal
+  const { data: absencePolicies = [] } = useQuery<AbsencePolicy[]>({
+    queryKey: ['/api/absence-policies'],
+    enabled: !!user,
+  });
+
+  // Calculate policy requirements for new request
+  const selectedNewRequestPolicy = absencePolicies.find(p => p.absenceType === newRequestAbsenceType);
+  const newRequestRequiresAttachment = selectedNewRequestPolicy?.requiresAttachment ?? false;
+
   // ⚡ REAL-TIME UPDATES: WebSocket listener for instant vacation request notifications
   // This eliminates polling delays - updates appear immediately when employees submit requests
   useEffect(() => {
@@ -731,18 +756,25 @@ export default function VacationManagement() {
 
   // Create new vacation request (for managers and admins)
   const createRequestMutation = useMutation({
-    mutationFn: async ({ startDate, endDate, reason }: { 
+    mutationFn: async ({ startDate, endDate, reason, absenceType, attachmentPath }: { 
       startDate: string; 
       endDate: string; 
       reason?: string;
+      absenceType?: string;
+      attachmentPath?: string;
     }) => {
-      const requestData = {
+      const requestData: any = {
         startDate,
         endDate,
         reason: reason || undefined,
+        absenceType: absenceType || 'vacation',
         // Admin requests are auto-approved, manager requests are pending
         status: user?.role === 'admin' ? 'approved' : 'pending'
       };
+      
+      if (attachmentPath) {
+        requestData.attachmentPath = attachmentPath;
+      }
       
       console.log('Creating vacation request:', requestData);
       
@@ -754,6 +786,8 @@ export default function VacationManagement() {
       setShowNewRequestModal(false);
       setNewRequestDates({ startDate: null, endDate: null });
       setNewRequestReason("");
+      setNewRequestAbsenceType('vacation');
+      setNewRequestAttachment(null);
       const message = user?.role === 'admin' 
         ? "Tu solicitud de ausencia ha sido aprobada automáticamente" 
         : "Tu solicitud de ausencia ha sido enviada y está pendiente de aprobación";
@@ -970,14 +1004,51 @@ export default function VacationManagement() {
     updateRequestMutation.mutate(updateData);
   };
 
-  // Handle new request creation
-  const handleCreateRequest = () => {
+  // Handle new request creation with file upload
+  const handleCreateRequest = async () => {
     if (!newRequestDates.startDate || !newRequestDates.endDate) return;
+
+    let attachmentPath: string | undefined;
+    
+    // Upload attachment if present
+    if (newRequestAttachment) {
+      setUploadingNewRequestAttachment(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', newRequestAttachment);
+        
+        const response = await fetch('/api/vacation-requests/upload-attachment', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Authorization': `Bearer ${JSON.parse(localStorage.getItem('auth') || '{}').token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Error al subir el archivo');
+        }
+        
+        const data = await response.json();
+        attachmentPath = data.path;
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'No se pudo subir el archivo adjunto',
+          variant: 'destructive'
+        });
+        setUploadingNewRequestAttachment(false);
+        return;
+      }
+      setUploadingNewRequestAttachment(false);
+    }
 
     createRequestMutation.mutate({
       startDate: newRequestDates.startDate.toISOString().split('T')[0],
       endDate: newRequestDates.endDate.toISOString().split('T')[0],
-      reason: newRequestReason.trim() || undefined
+      reason: newRequestReason.trim() || undefined,
+      absenceType: newRequestAbsenceType,
+      attachmentPath
     });
   };
 
@@ -2186,100 +2257,232 @@ export default function VacationManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* New Request Modal for Managers and Admins */}
-      <Dialog open={showNewRequestModal} onOpenChange={setShowNewRequestModal}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Plus className="w-5 h-5 text-[#007AFF]" />
-              Nueva Solicitud de Ausencia
+      {/* New Request Modal for Managers and Admins - Same components as employee form */}
+      <Dialog open={showNewRequestModal} onOpenChange={(open) => {
+        setShowNewRequestModal(open);
+        if (!open) {
+          setNewRequestDates({ startDate: null, endDate: null });
+          setNewRequestReason("");
+          setNewRequestAbsenceType('vacation');
+          setNewRequestAttachment(null);
+        }
+      }}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 rounded-2xl">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-xl font-semibold text-center text-foreground">
+              Solicitar Ausencia
             </DialogTitle>
+            <p className="text-sm text-muted-foreground text-center">
+              {user?.role === 'admin' 
+                ? '✓ Tu solicitud será aprobada automáticamente'
+                : '⏳ Tu solicitud será enviada al administrador'}
+            </p>
           </DialogHeader>
 
-          <div className="space-y-4">
-            {/* Información del solicitante */}
-            <div className="p-3 bg-muted/20 rounded-lg">
-              <h3 className="font-medium text-foreground mb-1">{user?.fullName}</h3>
-              <p className="text-sm text-muted-foreground">
-                {user?.role === 'admin' ? 'Administrador' : user?.role === 'manager' ? 'Manager' : 'Empleado'}
-              </p>
-              {user?.role === 'admin' && (
-                <p className="text-xs text-green-600 mt-1">
-                  ✓ Tu solicitud será aprobada automáticamente
-                </p>
-              )}
-              {user?.role === 'manager' && (
-                <p className="text-xs text-yellow-600 mt-1">
-                  ⏳ Tu solicitud será enviada al administrador para aprobación
-                </p>
-              )}
+          <div className="space-y-4 px-1">
+            {/* Absence Type Selector */}
+            <div>
+              <Label className="text-sm font-medium text-muted-foreground mb-2 block">
+                Tipo de Ausencia
+              </Label>
+              <Select 
+                value={newRequestAbsenceType} 
+                onValueChange={(value) => {
+                  setNewRequestAbsenceType(value);
+                  setNewRequestDates({ startDate: null, endDate: null });
+                  setNewRequestAttachment(null);
+                }}
+              >
+                <SelectTrigger className="bg-background border-border">
+                  <SelectValue placeholder="Selecciona el tipo de ausencia" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  <SelectGroup>
+                    <SelectLabel className="text-muted-foreground">Vacaciones</SelectLabel>
+                    <SelectItem value="vacation">
+                      <div className="flex items-center gap-2">
+                        <Plane className="w-4 h-4 flex-shrink-0 text-green-500" />
+                        <span>Vacaciones</span>
+                      </div>
+                    </SelectItem>
+                  </SelectGroup>
+                  <SelectSeparator />
+                  <SelectGroup>
+                    <SelectLabel className="text-muted-foreground">Permisos retribuidos</SelectLabel>
+                    {absencePolicies.filter(p => p.absenceType !== 'vacation' && p.absenceType !== 'temporary_disability' && p.isActive).map(policy => {
+                      const IconComponent = ABSENCE_TYPE_ICONS[policy.absenceType] || Calendar;
+                      return (
+                        <SelectItem 
+                          key={policy.absenceType} 
+                          value={policy.absenceType}
+                        >
+                          <div className="flex items-center gap-2">
+                            <IconComponent className="w-4 h-4 flex-shrink-0 text-blue-500" />
+                            <span>{policy.name}</span>
+                            {policy.maxDays && (
+                              <span className="text-xs text-muted-foreground">
+                                ({policy.maxDays}d)
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectGroup>
+                  <SelectSeparator />
+                  <SelectGroup>
+                    <SelectLabel className="text-muted-foreground">Baja médica</SelectLabel>
+                    {absencePolicies.filter(p => p.absenceType === 'temporary_disability' && p.isActive).map(policy => {
+                      const IconComponent = ABSENCE_TYPE_ICONS[policy.absenceType] || Thermometer;
+                      return (
+                        <SelectItem 
+                          key={policy.absenceType} 
+                          value={policy.absenceType}
+                        >
+                          <div className="flex items-center gap-2">
+                            <IconComponent className="w-4 h-4 flex-shrink-0 text-red-500" />
+                            <span>{policy.name}</span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Selector de fechas */}
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">
-                  Período de ausencia
-                </label>
-                <DatePickerPeriod
-                  startDate={newRequestDates.startDate || undefined}
-                  endDate={newRequestDates.endDate || undefined}
-                  onStartDateChange={(date) => setNewRequestDates(prev => ({ ...prev, startDate: date || null }))}
-                  onEndDateChange={(date) => setNewRequestDates(prev => ({ ...prev, endDate: date || null }))}
-                />
-              </div>
+            {/* Date Range Selector */}
+            <div>
+              <Label className="text-sm font-medium text-muted-foreground mb-2 block">
+                Período de ausencia
+              </Label>
+              <DatePickerPeriod
+                startDate={newRequestDates.startDate || undefined}
+                endDate={newRequestDates.endDate || undefined}
+                onStartDateChange={(date) => setNewRequestDates(prev => ({ ...prev, startDate: date || null }))}
+                onEndDateChange={(date) => setNewRequestDates(prev => ({ ...prev, endDate: date || null }))}
+              />
               
-              {/* Mostrar días calculados */}
+              {/* Days calculated */}
               {newRequestDates.startDate && newRequestDates.endDate && (
-                <div className="text-sm text-muted-foreground">
-                  <span className="font-medium">Días solicitados:</span> {
-                    calculateDays(
-                      newRequestDates.startDate.toISOString().split('T')[0],
-                      newRequestDates.endDate.toISOString().split('T')[0]
-                    )
-                  }
+                <div className="text-sm text-center mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300">
+                  {calculateDays(
+                    newRequestDates.startDate.toISOString().split('T')[0],
+                    newRequestDates.endDate.toISOString().split('T')[0]
+                  )} días solicitados
                 </div>
               )}
             </div>
 
-            {/* Motivo (opcional) */}
+            {/* Description textarea */}
             <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">
-                Motivo (opcional)
-              </label>
+              <Label className="text-sm font-medium text-muted-foreground mb-2 block">
+                Descripción {newRequestAbsenceType === 'public_duty' ? '(obligatorio)' : '(opcional)'}
+              </Label>
               <Textarea
                 value={newRequestReason}
                 onChange={(e) => setNewRequestReason(e.target.value)}
-                placeholder="Describe el motivo de tus vacaciones..."
+                placeholder="Describe el motivo de tu solicitud..."
+                className={`resize-none ${newRequestAbsenceType === 'public_duty' && !newRequestReason.trim() ? 'border-orange-400' : ''}`}
                 rows={3}
               />
             </div>
 
-            <div className="flex justify-center sm:justify-end gap-2 pt-4">
+            {/* File attachment (for non-vacation types) */}
+            {newRequestAbsenceType !== 'vacation' && (
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground mb-2 block flex items-center gap-2">
+                  <Paperclip className="w-4 h-4" />
+                  Justificante {newRequestRequiresAttachment ? '(obligatorio)' : '(opcional)'}
+                </Label>
+                <div className="relative">
+                  <input
+                    type="file"
+                    id="new-request-attachment"
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setNewRequestAttachment(file);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="new-request-attachment"
+                    className={`
+                      flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed cursor-pointer
+                      transition-all duration-200
+                      ${newRequestAttachment 
+                        ? 'border-green-400 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300' 
+                        : newRequestRequiresAttachment
+                          ? 'border-orange-300 bg-orange-50/50 dark:bg-orange-900/10 text-orange-600 dark:text-orange-300 hover:border-orange-400'
+                          : 'border-border text-muted-foreground hover:border-blue-400'
+                      }
+                    `}
+                  >
+                    {newRequestAttachment ? (
+                      <>
+                        <Check className="w-5 h-5" />
+                        <span className="text-sm truncate max-w-[200px]">{newRequestAttachment.name}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setNewRequestAttachment(null);
+                          }}
+                          className="ml-2 p-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-full transition-colors"
+                        >
+                          <X className="w-4 h-4 text-red-500" />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-5 h-5" />
+                        <span className="text-sm">Subir archivo</span>
+                      </>
+                    )}
+                  </label>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  PDF, imágenes o documentos (máx. 10MB)
+                </p>
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex gap-3 pt-4 border-t border-border">
               <Button
                 variant="outline"
                 onClick={() => {
                   setShowNewRequestModal(false);
                   setNewRequestDates({ startDate: null, endDate: null });
                   setNewRequestReason("");
+                  setNewRequestAbsenceType('vacation');
+                  setNewRequestAttachment(null);
                 }}
-                className="flex-1 sm:w-auto"
+                className="flex-1"
               >
                 Cancelar
               </Button>
               <Button
                 onClick={handleCreateRequest}
-                disabled={createRequestMutation.isPending || !newRequestDates.startDate || !newRequestDates.endDate}
-                className="bg-[#007AFF] hover:bg-[#0056CC] flex-1 sm:w-auto"
+                disabled={
+                  createRequestMutation.isPending || 
+                  uploadingNewRequestAttachment ||
+                  !newRequestDates.startDate || 
+                  !newRequestDates.endDate ||
+                  (newRequestRequiresAttachment && !newRequestAttachment) ||
+                  (newRequestAbsenceType === 'public_duty' && !newRequestReason.trim())
+                }
+                className="flex-1 bg-[#007AFF] hover:bg-[#0056CC]"
               >
-                {createRequestMutation.isPending ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4 mr-1" />
-                    {user?.role === 'admin' ? 'Aprobar Solicitud' : 'Enviar Solicitud'}
-                  </>
-                )}
+                {uploadingNewRequestAttachment 
+                  ? 'Subiendo archivo...' 
+                  : createRequestMutation.isPending 
+                    ? 'Solicitando...' 
+                    : user?.role === 'admin' ? 'Aprobar' : 'Solicitar'
+                }
               </Button>
             </div>
           </div>
