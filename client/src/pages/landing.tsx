@@ -18,6 +18,7 @@ import {
   Clock, 
   Users, 
   CheckCircle,
+  XCircle,
   ArrowRight,
   Play,
   ChevronLeft,
@@ -44,7 +45,9 @@ import {
   Edit,
   Trash2,
   Search,
-  PenLine
+  PenLine,
+  Plane,
+  Stethoscope
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
@@ -229,62 +232,69 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
         <h3 className="text-white font-bold text-sm mb-0.5">Ausencias</h3>
         <p className="text-gray-400 text-[8px] mb-2">Solicita y consulta el estado</p>
         
-        <div className="bg-[#1a2942] rounded-xl p-2 mb-2">
+        {/* Summary card */}
+        <div className="bg-white/5 rounded-xl p-2 mb-2 border border-white/10">
           <div className="grid grid-cols-3 gap-1 text-center mb-2">
             <div>
-              <p className="text-[#007AFF] font-bold text-sm">30</p>
-              <p className="text-gray-300 text-[6px]">TOTAL</p>
+              <p className="text-blue-400 font-light text-base">30</p>
+              <p className="text-gray-400 text-[6px] uppercase">Total</p>
             </div>
             <div>
-              <p className="text-green-400 font-bold text-sm">26</p>
-              <p className="text-gray-300 text-[6px]">APROBADOS</p>
+              <p className="text-orange-400 font-light text-base">26</p>
+              <p className="text-gray-400 text-[6px] uppercase">Usados</p>
             </div>
             <div>
-              <p className="text-[#007AFF] font-bold text-sm">4</p>
-              <p className="text-gray-300 text-[6px]">DISPONIBLES</p>
+              <p className="text-green-400 font-light text-base">4</p>
+              <p className="text-gray-400 text-[6px] uppercase">Disponibles</p>
             </div>
           </div>
           <div className="flex justify-between items-center mb-1">
             <p className="text-gray-400 text-[7px]">Progreso anual</p>
             <p className="text-gray-400 text-[7px]">86.7%</p>
           </div>
-          <div className="w-full bg-[#0a1628] rounded-full h-2">
-            <div className="bg-[#007AFF] h-2 rounded-full" style={{ width: '87%' }}></div>
+          <div className="w-full bg-white/10 rounded-full h-1.5">
+            <div className="bg-[#007AFF] h-1.5 rounded-full" style={{ width: '87%' }}></div>
           </div>
         </div>
         
-        <button className="w-full bg-[#007AFF] rounded-lg p-1.5 mb-2 flex items-center justify-center gap-1">
+        <button className="w-full bg-[#007AFF] rounded-xl p-1.5 mb-2 flex items-center justify-center gap-1">
           <Calendar className="w-3 h-3 text-white" />
-          <span className="text-white text-[7px] font-medium">Solicitar días</span>
+          <span className="text-white text-[7px] font-medium">Solicitar Ausencia</span>
         </button>
         
-        <div className="bg-[#1a2942] rounded-xl overflow-hidden">
-          <div className="grid grid-cols-4 gap-1 p-1.5 border-b border-[#0a1628]">
-            <p className="text-gray-500 text-[6px]">Periodo</p>
-            <p className="text-gray-500 text-[6px] text-center">Días</p>
-            <p className="text-gray-500 text-[6px] text-center">Estado</p>
-            <p className="text-gray-500 text-[6px] text-center">Fecha</p>
-          </div>
+        {/* Request cards - new Apple style */}
+        <div className="space-y-1.5">
           {[
-            { period: '10-12 dic', days: '3', status: 'approved', date: '10 nov' },
-            { period: '1-15 ago', days: '15', status: 'approved', date: '5 jun' },
-            { period: '10-14 abr', days: '5', status: 'approved', date: '1 mar' },
-            { period: '5-5 nov', days: '1', status: 'pending', date: '23 oct' },
-            { period: '5-8 jul', days: '4', status: 'rejected', date: '20 may' },
+            { type: 'Vacaciones', period: '10 dic → 12 dic', days: '3', status: 'approved', icon: 'vacation' },
+            { type: 'Vacaciones', period: '1 ago → 15 ago', days: '15', status: 'approved', icon: 'vacation' },
+            { type: 'Baja médica', period: '5 de noviembre', days: '1', status: 'pending', icon: 'medical' },
+            { type: 'Vacaciones', period: '5 jul → 8 jul', days: '4', status: 'rejected', icon: 'vacation' },
           ].map((req, i) => (
-            <div key={i} className="grid grid-cols-4 gap-1 p-2 border-b border-[#0a1628] last:border-0">
-              <p className="text-white text-[6px]">{req.period}</p>
-              <p className="text-white text-[6px] text-center">{req.days}</p>
-              <div className="flex justify-center">
-                <div className={`w-3 h-3 rounded-full flex items-center justify-center ${
-                  req.status === 'approved' ? 'bg-green-500/20 border border-green-500' : 
-                  req.status === 'rejected' ? 'bg-red-500/20 border border-red-500' : 
-                  'bg-yellow-500/20 border border-yellow-500'
+            <div key={i} className="bg-white/5 rounded-lg overflow-hidden border border-white/10 flex">
+              <div className="flex-1 p-1.5 flex items-center gap-1.5">
+                <div className={`w-5 h-5 rounded-md flex items-center justify-center ${
+                  req.icon === 'vacation' ? 'bg-green-500/20' : 'bg-red-500/20'
                 }`}>
-                  {req.status === 'approved' && <CheckCircle className="w-2 h-2 text-green-400" />}
+                  {req.icon === 'vacation' ? (
+                    <Plane className="w-2.5 h-2.5 text-green-400" />
+                  ) : (
+                    <Stethoscope className="w-2.5 h-2.5 text-red-400" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-[7px] font-medium">{req.type}</p>
+                  <p className="text-gray-400 text-[5px]">{req.period} • {req.days} día{Number(req.days) > 1 ? 's' : ''}</p>
                 </div>
               </div>
-              <p className="text-gray-400 text-[6px] text-center">{req.date}</p>
+              <div className={`w-8 flex flex-col items-center justify-center ${
+                req.status === 'approved' ? 'bg-green-500/10' : 
+                req.status === 'rejected' ? 'bg-red-500/10' : 
+                'bg-amber-500/10'
+              }`}>
+                {req.status === 'approved' && <CheckCircle className="w-2.5 h-2.5 text-green-400" />}
+                {req.status === 'rejected' && <XCircle className="w-2.5 h-2.5 text-red-400" />}
+                {req.status === 'pending' && <Clock className="w-2.5 h-2.5 text-amber-400" />}
+              </div>
             </div>
           ))}
         </div>
