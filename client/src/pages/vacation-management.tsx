@@ -1426,10 +1426,10 @@ export default function VacationManagement() {
               <div className="text-center py-12">
                 <div className="flex flex-col items-center justify-center space-y-3">
                   <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    <LoadingSpinner size="sm" />
                   </div>
                   <div className="text-foreground font-medium">
-                    Cargando solicitudes de ausencias...
+                    Cargando solicitudes...
                   </div>
                 </div>
               </div>
