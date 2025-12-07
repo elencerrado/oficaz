@@ -87,8 +87,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       }
     ]),
     { 
-      name: 'Vacaciones', 
-      href: `/${companyAlias}/vacaciones`, 
+      name: 'Ausencias', 
+      href: `/${companyAlias}/ausencias`, 
       icon: Calendar,
       feature: 'vacation' as const
     },
