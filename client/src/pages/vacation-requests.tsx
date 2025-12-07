@@ -982,7 +982,7 @@ export default function VacationRequests() {
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
                               <MessageCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Respuesta del admin</span>
+                              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Respuesta</span>
                             </div>
                             <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
                               {request.adminComment}
