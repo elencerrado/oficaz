@@ -3556,7 +3556,7 @@ export default function TimeTracking() {
                         {/* Card Header - clickable to expand */}
                         <div 
                           className={cn(
-                            "flex items-center gap-4 px-4 py-3 cursor-pointer select-none transition-colors",
+                            "flex items-center gap-4 px-4 py-2.5 cursor-pointer select-none transition-colors",
                             isExpanded && "bg-gray-50 dark:bg-gray-900/50"
                           )}
                           onClick={toggleExpand}
@@ -4736,7 +4736,7 @@ export default function TimeTracking() {
                   {/* Mobile: Contenido vertical */}
                   <div className="lg:hidden p-4 space-y-3">
                     <div className="flex items-center gap-3">
-                      <UserAvatar fullName={request.employeeName} profilePicture={request.employeeProfilePicture} size="sm" />
+                      <UserAvatar fullName={request.employeeName} profilePicture={request.employeeProfilePicture} size="sm" userId={request.employeeId} />
                       <div className="min-w-0 flex-1">
                         <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">{request.employeeName}</div>
                         <span className="text-xs text-muted-foreground">{format(new Date(request.requestedDate), 'dd/MM/yyyy', { locale: es })}</span>
@@ -4789,9 +4789,9 @@ export default function TimeTracking() {
 
                   {/* Desktop: Fila horizontal con grid */}
                   <div className="hidden lg:flex items-stretch min-w-0">
-                    <div className="flex-1 grid items-center px-4 py-3 gap-3" style={{ gridTemplateColumns: 'auto minmax(100px,1.2fr) 80px 60px 60px 70px minmax(100px,1.5fr) auto' }}>
+                    <div className="flex-1 grid items-center px-4 py-2.5 gap-3" style={{ gridTemplateColumns: 'auto minmax(100px,1.2fr) 80px 60px 60px 70px minmax(100px,1.5fr) auto' }}>
                       {/* Col 1: Avatar */}
-                      <UserAvatar fullName={request.employeeName} profilePicture={request.employeeProfilePicture} size="sm" />
+                      <UserAvatar fullName={request.employeeName} profilePicture={request.employeeProfilePicture} size="sm" userId={request.employeeId} />
                       
                       {/* Col 2: Tipo + Nombre */}
                       <div className="min-w-0">
