@@ -1409,7 +1409,18 @@ export default function VacationManagement() {
                   </Select>
                 </div>
               </div>
-            {filteredRequests.length === 0 && !loadingRequests ? (
+            {loadingRequests ? (
+              <div className="text-center py-12">
+                <div className="flex flex-col items-center justify-center space-y-3">
+                  <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                  </div>
+                  <div className="text-foreground font-medium">
+                    Cargando solicitudes de ausencias...
+                  </div>
+                </div>
+              </div>
+            ) : filteredRequests.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 {vacationRequests.length === 0 
                   ? "No hay solicitudes de ausencias" 

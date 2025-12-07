@@ -361,7 +361,7 @@ export default function TimeTracking() {
   const pendingRequestsCount = pendingRequestsData?.count || 0;
   
   // Modification requests (when tab is active or dialog is open)
-  const { data: modificationRequests = [] } = useQuery<any[]>({
+  const { data: modificationRequests = [], isLoading: isLoadingModificationRequests } = useQuery<any[]>({
     queryKey: ['/api/admin/work-sessions/modification-requests'],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager') && (activeTab === 'requests' || showRequestsDialog),
   });
@@ -4662,7 +4662,18 @@ export default function TimeTracking() {
                 </div>
 
                 {/* Lista de solicitudes */}
-                {filteredModificationRequests.length === 0 ? (
+                {isLoadingModificationRequests ? (
+                  <div className="text-center py-12">
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                        <LoadingSpinner size="sm" />
+                      </div>
+                      <div className="text-foreground font-medium">
+                        Cargando solicitudes...
+                      </div>
+                    </div>
+                  </div>
+                ) : filteredModificationRequests.length === 0 ? (
               <div className="text-center py-12">
                 <div className="flex flex-col items-center justify-center space-y-3">
                   <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
