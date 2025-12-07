@@ -15,7 +15,8 @@ import type {
   ImageProcessingJob, InsertImageProcessingJob,
   EmailCampaign, InsertEmailCampaign,
   EmailProspect, InsertEmailProspect,
-  EmailCampaignSend, InsertEmailCampaignSend
+  EmailCampaignSend, InsertEmailCampaignSend,
+  AbsencePolicy, InsertAbsencePolicy
 } from '@shared/schema';
 import Stripe from 'stripe';
 import { db } from './db';
@@ -100,11 +101,19 @@ export interface IStorage {
   updateBreakPeriod(id: number, updates: Partial<InsertBreakPeriod>): Promise<BreakPeriod | undefined>;
   updateWorkSessionBreakTime(workSessionId: number): Promise<void>;
 
-  // Vacation Requests
+  // Vacation/Absence Requests
   createVacationRequest(request: InsertVacationRequest): Promise<VacationRequest>;
   getVacationRequestsByUser(userId: number): Promise<VacationRequest[]>;
   getVacationRequestsByCompany(companyId: number): Promise<VacationRequest[]>;
   updateVacationRequest(id: number, updates: Partial<InsertVacationRequest>): Promise<VacationRequest | undefined>;
+
+  // Absence Policies
+  getAbsencePoliciesByCompany(companyId: number): Promise<AbsencePolicy[]>;
+  getAbsencePolicy(id: number): Promise<AbsencePolicy | undefined>;
+  createAbsencePolicy(policy: InsertAbsencePolicy): Promise<AbsencePolicy>;
+  updateAbsencePolicy(id: number, updates: Partial<InsertAbsencePolicy>): Promise<AbsencePolicy | undefined>;
+  deleteAbsencePolicy(id: number): Promise<boolean>;
+  initializeDefaultAbsencePolicies(companyId: number): Promise<void>;
 
   // Documents
   createDocument(document: InsertDocument): Promise<Document>;
@@ -1084,6 +1093,61 @@ export class DrizzleStorage implements IStorage {
   async updateVacationRequest(id: number, updates: Partial<InsertVacationRequest>): Promise<VacationRequest | undefined> {
     const [request] = await db.update(schema.vacationRequests).set(updates).where(eq(schema.vacationRequests.id, id)).returning();
     return request;
+  }
+
+  // Absence Policies
+  async getAbsencePoliciesByCompany(companyId: number): Promise<AbsencePolicy[]> {
+    return db.select().from(schema.absencePolicies)
+      .where(eq(schema.absencePolicies.companyId, companyId))
+      .orderBy(asc(schema.absencePolicies.id));
+  }
+
+  async getAbsencePolicy(id: number): Promise<AbsencePolicy | undefined> {
+    const [policy] = await db.select().from(schema.absencePolicies)
+      .where(eq(schema.absencePolicies.id, id));
+    return policy;
+  }
+
+  async createAbsencePolicy(policy: InsertAbsencePolicy): Promise<AbsencePolicy> {
+    const [result] = await db.insert(schema.absencePolicies).values(policy).returning();
+    return result;
+  }
+
+  async updateAbsencePolicy(id: number, updates: Partial<InsertAbsencePolicy>): Promise<AbsencePolicy | undefined> {
+    const [policy] = await db.update(schema.absencePolicies)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.absencePolicies.id, id))
+      .returning();
+    return policy;
+  }
+
+  async deleteAbsencePolicy(id: number): Promise<boolean> {
+    const result = await db.delete(schema.absencePolicies)
+      .where(eq(schema.absencePolicies.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Initialize default absence policies for a company (Spain labor law defaults)
+  async initializeDefaultAbsencePolicies(companyId: number): Promise<void> {
+    const defaultPolicies: InsertAbsencePolicy[] = [
+      { companyId, absenceType: 'maternity_paternity', name: 'Maternidad / Paternidad (Nacimiento)', maxDays: 112, requiresAttachment: false, isActive: true },
+      { companyId, absenceType: 'marriage', name: 'Matrimonio o registro de pareja de hecho', maxDays: 15, requiresAttachment: false, isActive: true },
+      { companyId, absenceType: 'family_death', name: 'Fallecimiento de familiar hasta 2º grado', maxDays: 2, requiresAttachment: false, isActive: true },
+      { companyId, absenceType: 'family_death_travel', name: 'Fallecimiento de familiar hasta 2º grado con desplazamiento', maxDays: 4, requiresAttachment: false, isActive: true },
+      { companyId, absenceType: 'family_illness', name: 'Enfermedad grave, accidente u hospitalización de familiar', maxDays: 2, requiresAttachment: false, isActive: true },
+      { companyId, absenceType: 'family_illness_travel', name: 'Enfermedad grave, accidente u hospitalización de familiar con desplazamiento', maxDays: 4, requiresAttachment: false, isActive: true },
+      { companyId, absenceType: 'home_relocation', name: 'Traslado de domicilio habitual', maxDays: 1, requiresAttachment: false, isActive: true },
+      { companyId, absenceType: 'public_duty', name: 'Deber público o personal inexcusable', maxDays: null, requiresAttachment: true, isActive: true },
+      { companyId, absenceType: 'temporary_disability', name: 'Incapacidad Temporal (baja médica)', maxDays: null, requiresAttachment: false, isActive: true },
+    ];
+
+    // Check if policies already exist
+    const existing = await this.getAbsencePoliciesByCompany(companyId);
+    if (existing.length === 0) {
+      for (const policy of defaultPolicies) {
+        await this.createAbsencePolicy(policy);
+      }
+    }
   }
 
   // Documents
