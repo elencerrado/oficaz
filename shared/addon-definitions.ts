@@ -29,7 +29,7 @@ export const ADDON_DEFINITIONS: AddonDefinition[] = [
   },
   {
     key: 'vacation',
-    name: 'Gestión de Vacaciones',
+    name: 'Gestión de Ausencias',
     description: '¿Cuántos días me quedan? Que no te lo pregunten más. Cada empleado ve sus días, solicita fechas, y tú apruebas en un calendario compartido.',
     shortDescription: '¿Cuántos días me quedan? Que te dejen de dar la brasa',
     isFreeFeature: false,

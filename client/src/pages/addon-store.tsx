@@ -553,7 +553,7 @@ export default function AddonStore() {
                     </div>
                   </div>
                   <CardDescription className="text-sm text-gray-500 dark:text-gray-400 mt-2 hidden sm:block">
-                    Tu equipo crece y necesitas más manos. Añade empleados sin límites y que todos fichen, pidan vacaciones y reciban mensajes.
+                    Tu equipo crece y necesitas más manos. Añade empleados sin límites y que todos fichen, pidan ausencias y reciban mensajes.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow flex flex-col justify-end pt-0 p-4 sm:p-6 sm:pt-0">
@@ -615,7 +615,7 @@ export default function AddonStore() {
                     </div>
                   </div>
                   <CardDescription className="text-sm text-gray-500 dark:text-gray-400 mt-2 hidden sm:block">
-                    ¿Necesitas ojos extra para supervisar? Los managers ven los fichajes, aprueban vacaciones y mantienen todo bajo control sin molestarte.
+                    ¿Necesitas ojos extra para supervisar? Los managers ven los fichajes, aprueban ausencias y mantienen todo bajo control sin molestarte.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow flex flex-col justify-end pt-0 p-4 sm:p-6 sm:pt-0">
