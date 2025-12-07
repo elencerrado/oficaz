@@ -1086,39 +1086,39 @@ export default function VacationManagement() {
                         {getStatusBadge(request.status)}
                       </div>
 
-                      {/* Desktop - fila con columnas fijas alineadas */}
+                      {/* Desktop - fila con grid proporcional */}
                       <div className="hidden md:flex items-stretch">
-                        {/* Contenido principal con columnas fijas */}
-                        <div className="flex-1 flex items-center px-4 py-3">
+                        {/* Contenido principal con grid proporcional - nunca corta textos */}
+                        <div className="flex-1 grid items-center px-4 py-3 gap-3" style={{ gridTemplateColumns: 'auto minmax(140px,2fr) minmax(180px,2fr) auto auto auto 1fr auto auto' }}>
                           {/* Tipo ausencia - icono */}
-                          <div className="w-[32px] flex-shrink-0">
+                          <div className="flex-shrink-0">
                             <AbsenceIcon className={`w-5 h-5 ${absenceColors.text}`} />
                           </div>
                           
-                          {/* Nombre - ancho fijo */}
-                          <h3 className="w-[200px] font-semibold text-gray-900 dark:text-gray-100 truncate flex-shrink-0">
+                          {/* Nombre - proporcional, trunca si es muy largo */}
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
                             {request.user?.fullName}
                           </h3>
                           
-                          {/* Fechas - ancho fijo */}
-                          <div className="w-[140px] flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
+                          {/* Fechas - proporcional, nunca trunca */}
+                          <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
                             <CalendarDays className="w-4 h-4 flex-shrink-0" />
-                            <span className="truncate">
+                            <span className="whitespace-nowrap">
                               {request.startDate && request.endDate 
                                 ? formatVacationDatesShort(request.startDate, request.endDate)
                                 : "N/A"}
                             </span>
                           </div>
                           
-                          {/* Días - ancho fijo */}
-                          <div className="w-[70px] flex-shrink-0">
-                            <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {/* Días */}
+                          <div>
+                            <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
                               {daysCount}d
                             </span>
                           </div>
                           
-                          {/* Icono de notas si hay motivo - ancho fijo */}
-                          <div className="w-[32px] flex-shrink-0 flex justify-center">
+                          {/* Icono de notas si hay motivo */}
+                          <div className="flex justify-center w-8">
                             {request.reason && (
                               <Popover>
                                 <PopoverTrigger asChild>
@@ -1139,8 +1139,8 @@ export default function VacationManagement() {
                             )}
                           </div>
                           
-                          {/* Icono de descarga si hay archivo adjunto - ancho fijo */}
-                          <div className="w-[32px] flex-shrink-0 flex justify-center">
+                          {/* Icono de descarga si hay archivo adjunto */}
+                          <div className="flex justify-center w-8">
                             {request.attachmentPath && (
                               <TooltipProvider>
                                 <Tooltip>
@@ -1164,18 +1164,18 @@ export default function VacationManagement() {
                           </div>
                           
                           {/* Espaciador flexible */}
-                          <div className="flex-1" />
+                          <div />
                           
-                          {/* Fecha solicitud - ancho fijo */}
-                          <div className="w-[90px] flex-shrink-0 text-right">
+                          {/* Fecha solicitud */}
+                          <div className="text-right whitespace-nowrap">
                             <span className="text-xs text-gray-400 dark:text-gray-500">
                               {request.requestDate ? format(new Date(request.requestDate), "dd MMM yyyy", { locale: es }) : 
                                request.createdAt ? format(new Date(request.createdAt), "dd MMM yyyy", { locale: es }) : ""}
                             </span>
                           </div>
                           
-                          {/* Acciones - ancho fijo siempre */}
-                          <div className="w-[100px] flex-shrink-0 flex items-center justify-center gap-1">
+                          {/* Acciones */}
+                          <div className="flex items-center justify-center gap-1">
                             {request.status === 'pending' && canManageRequest(request) ? (
                               <>
                                 <button
