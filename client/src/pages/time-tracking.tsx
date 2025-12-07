@@ -3582,7 +3582,7 @@ export default function TimeTracking() {
                         {/* Card Header - clickable to expand - GRID LAYOUT for column alignment */}
                         <div 
                           className={cn(
-                            "grid items-center px-4 py-2.5 cursor-pointer select-none transition-colors gap-3",
+                            "grid items-center px-4 py-3.5 cursor-pointer select-none transition-colors gap-3",
                             isExpanded && "bg-gray-50 dark:bg-gray-900/50"
                           )}
                           style={{ gridTemplateColumns: 'minmax(220px,280px) 90px minmax(120px,1fr) 60px 36px 20px' }}
