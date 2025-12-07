@@ -4357,8 +4357,8 @@ export default function TimeTracking() {
               </div>
             </div>
 
-            {/* Selector de semana */}
-            <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border rounded-lg px-3 py-2">
+            {/* Selector de semana - same height as Input (h-10) */}
+            <div className="flex items-center gap-1 bg-white dark:bg-gray-800 border rounded-md h-10 px-1">
               <Button
                 variant="ghost"
                 size="sm"
@@ -4368,7 +4368,7 @@ export default function TimeTracking() {
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <div className="text-sm font-medium min-w-[160px] text-center">
+              <div className="text-sm font-medium min-w-[150px] text-center">
                 {format(summaryWeek, 'd MMM', { locale: es })} - {format(addDays(summaryWeek, 6), 'd MMM yyyy', { locale: es })}
               </div>
               <Button
@@ -4534,17 +4534,19 @@ export default function TimeTracking() {
             return (
               <>
                 {/* Filtros - Desktop - UNIFIED HEIGHT with sessions tab */}
-                <div className="hidden md:flex items-center gap-3 min-h-[40px]">
-                  {/* Contador de solicitudes */}
+                <div className="hidden md:flex items-center justify-between gap-3 min-h-[40px]">
+                  {/* Contador de solicitudes - left side */}
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
                     <span className="text-sm font-medium text-foreground">{filteredModificationRequests.length}</span>
                     <span className="text-sm text-muted-foreground">solicitudes</span>
                   </div>
                   
+                  {/* Filtros - right side */}
+                  <div className="flex items-center gap-2">
                   {/* Filtro Empleado con buscador */}
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-[180px] justify-between font-normal">
+                      <Button variant="outline" size="sm" className="w-[180px] h-9 justify-between font-normal">
                         <span className="truncate">
                           {requestsEmployeeId === "all" 
                             ? "Todos los empleados" 
@@ -4589,7 +4591,7 @@ export default function TimeTracking() {
                   
                   {/* Filtro Tipo de Solicitud */}
                   <Select value={requestsType} onValueChange={setRequestsType}>
-                    <SelectTrigger className="w-[160px]">
+                    <SelectTrigger className="w-[160px] h-9">
                       <SelectValue placeholder="Tipo" />
                     </SelectTrigger>
                     <SelectContent>
@@ -4601,7 +4603,7 @@ export default function TimeTracking() {
                   
                   {/* Filtro Estado */}
                   <Select value={requestsStatus} onValueChange={setRequestsStatus}>
-                    <SelectTrigger className="w-[130px]">
+                    <SelectTrigger className="w-[130px] h-9">
                       <SelectValue placeholder="Estado" />
                     </SelectTrigger>
                     <SelectContent>
@@ -4611,6 +4613,7 @@ export default function TimeTracking() {
                       <SelectItem value="rejected">Rechazadas</SelectItem>
                     </SelectContent>
                   </Select>
+                  </div>
                 </div>
                 
                 {/* Filtros - Mobile */}
