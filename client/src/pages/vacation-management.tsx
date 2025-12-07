@@ -1119,16 +1119,22 @@ export default function VacationManagement() {
                           {/* Icono de notas si hay motivo - ancho fijo */}
                           <div className="w-[32px] flex-shrink-0 flex justify-center">
                             {request.reason && (
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button 
+                                    className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
                                     <FileText className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top" className="max-w-xs">
-                                    <p className="text-sm">{request.reason}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-72 p-4" side="top">
+                                  <div className="space-y-2">
+                                    <h4 className="font-medium text-sm text-gray-900 dark:text-gray-100">Observaciones</h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">{request.reason}</p>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
                             )}
                           </div>
                           
