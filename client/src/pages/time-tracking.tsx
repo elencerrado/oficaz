@@ -4658,29 +4658,35 @@ export default function TimeTracking() {
                       <div className="flex items-center gap-1">
                         {request.status === 'pending' ? (
                           <>
-                            <Button size="sm" onClick={() => processRequestMutation.mutate({ id: request.id, status: 'approved' })} className="h-7 px-2 bg-emerald-600 hover:bg-emerald-700" data-testid={`button-approve-desktop-${request.id}`}>
-                              <Check className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button size="sm" variant="destructive" onClick={() => processRequestMutation.mutate({ id: request.id, status: 'rejected' })} className="h-7 px-2" data-testid={`button-reject-desktop-${request.id}`}>
-                              <X className="w-3.5 h-3.5" />
-                            </Button>
+                            <button onClick={() => processRequestMutation.mutate({ id: request.id, status: 'approved' })} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors" title="Aprobar" data-testid={`button-approve-desktop-${request.id}`}>
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => processRequestMutation.mutate({ id: request.id, status: 'rejected' })} className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors" title="Rechazar" data-testid={`button-reject-desktop-${request.id}`}>
+                              <X className="w-4 h-4" />
+                            </button>
                           </>
-                        ) : (
-                          <Badge variant={request.status === 'approved' ? 'default' : 'destructive'} className={`text-xs ${request.status === 'approved' ? 'bg-emerald-600' : ''}`}>
-                            {request.status === 'approved' ? 'Aprobada' : 'Rechazada'}
-                          </Badge>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                     
-                    {/* Barra de estado en el extremo derecho */}
-                    <div className={`w-2 flex-shrink-0 ${
+                    {/* Sección coloreada de estado - punta derecha */}
+                    <div className={`w-[90px] flex items-center justify-center flex-shrink-0 ${
                       request.status === 'pending'
-                        ? 'bg-amber-400'
+                        ? 'bg-amber-100 dark:bg-amber-900/40'
                         : request.status === 'approved'
-                        ? 'bg-emerald-500'
-                        : 'bg-rose-500'
-                    }`} />
+                        ? 'bg-emerald-100 dark:bg-emerald-900/40'
+                        : 'bg-rose-100 dark:bg-rose-900/40'
+                    }`}>
+                      <span className={`text-xs font-semibold ${
+                        request.status === 'pending'
+                          ? 'text-amber-700 dark:text-amber-300'
+                          : request.status === 'approved'
+                          ? 'text-emerald-700 dark:text-emerald-300'
+                          : 'text-rose-700 dark:text-rose-300'
+                      }`}>
+                        {request.status === 'pending' ? 'Pendiente' : request.status === 'approved' ? 'Aprobada' : 'Rechazada'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
