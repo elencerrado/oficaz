@@ -2995,17 +2995,17 @@ export default function TimeTracking() {
 
       {/* Tab Content: Lista de Horas */}
       {activeTab === 'sessions' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-              <span className="text-sm sm:text-lg font-medium">{getFilterTitle()} ({totalCount})</span>
-              
-              {/* Desktop: buttons grouped together */}
-              <div className="hidden sm:flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setShowFilters(!showFilters)}
+        <div className="space-y-4">
+          {/* Filter Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <span className="text-sm sm:text-lg font-medium text-gray-900 dark:text-gray-100">{getFilterTitle()} ({totalCount})</span>
+            
+            {/* Desktop: buttons grouped together */}
+            <div className="hidden sm:flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowFilters(!showFilters)}
                 className="flex items-center gap-2"
               >
                 <Filter className="w-4 h-4" />
@@ -3057,12 +3057,11 @@ export default function TimeTracking() {
                 <span className="text-xs">Exportar</span>
               </Button>
             </div>
-          </CardTitle>
-        </CardHeader>
+          </div>
 
-        {/* Filters Section - Integrated between header and table */}
-        {showFilters && (
-          <div className="px-6 py-4 border-b bg-muted">
+          {/* Filters Section */}
+          {showFilters && (
+            <div className="p-4 bg-card dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
             <div className={cn("grid gap-4 items-end", isSelfAccessOnly ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-3")}>
               {/* Left side - Employee Filter - Hidden in self-access mode */}
               {!isSelfAccessOnly && (
@@ -3371,9 +3370,10 @@ export default function TimeTracking() {
           </div>
         )}
 
-        <CardContent className={`p-4 transition-opacity duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'}`}>
-          {/* Desktop Card View */}
-          <div className="hidden md:block space-y-3">
+          {/* Cards Container */}
+          <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'}`}>
+            {/* Desktop Card View */}
+            <div className="hidden md:block space-y-3">
                 {(() => {
                   const sortedSessions = filteredSessions
                     .sort((a: any, b: any) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
@@ -4289,8 +4289,8 @@ export default function TimeTracking() {
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+          </div>
+        </div>
       )}
 
       {/* Tab Content: Resumen */}
