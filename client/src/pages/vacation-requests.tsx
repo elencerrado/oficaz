@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PageLoading } from '@/components/ui/page-loading';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArrowLeft, CalendarPlus, Calendar, Check, X, Clock, CalendarDays, ChevronLeft, ChevronRight, HelpCircle, MessageCircle, FileText, Upload, Paperclip, Baby, Heart, Users, Home, Briefcase, Thermometer, Palmtree } from 'lucide-react';
+import { ArrowLeft, CalendarPlus, Calendar, Check, X, Clock, CalendarDays, ChevronLeft, ChevronRight, HelpCircle, MessageCircle, FileText, Upload, Paperclip, Baby, Heart, Users, Home, Briefcase, Thermometer, Plane } from 'lucide-react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
@@ -34,7 +34,7 @@ interface AbsencePolicy {
 }
 
 const ABSENCE_TYPE_ICONS: Record<string, any> = {
-  vacation: Palmtree,
+  vacation: Plane,
   maternity_paternity: Baby,
   marriage: Heart,
   family_death: Users,
@@ -647,7 +647,7 @@ export default function VacationRequests() {
                       <SelectLabel className="text-gray-500 dark:text-white/50">Vacaciones</SelectLabel>
                       <SelectItem value="vacation" className="text-gray-900 dark:text-white">
                         <div className="flex items-center gap-2">
-                          <Palmtree className="w-4 h-4 text-green-500" />
+                          <Plane className="w-4 h-4 flex-shrink-0 text-green-500" />
                           <span>Vacaciones</span>
                         </div>
                       </SelectItem>
@@ -664,7 +664,7 @@ export default function VacationRequests() {
                             className="text-gray-900 dark:text-white"
                           >
                             <div className="flex items-center gap-2">
-                              <IconComponent className="w-4 h-4 text-blue-500" />
+                              <IconComponent className="w-4 h-4 flex-shrink-0 text-blue-500" />
                               <span>{policy.name}</span>
                               {policy.maxDays && (
                                 <span className="text-xs text-gray-500 dark:text-white/50">
@@ -688,7 +688,7 @@ export default function VacationRequests() {
                             className="text-gray-900 dark:text-white"
                           >
                             <div className="flex items-center gap-2">
-                              <IconComponent className="w-4 h-4 text-red-500" />
+                              <IconComponent className="w-4 h-4 flex-shrink-0 text-red-500" />
                               <span>{policy.name}</span>
                             </div>
                           </SelectItem>
