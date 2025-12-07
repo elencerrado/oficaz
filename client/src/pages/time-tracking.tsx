@@ -4340,7 +4340,7 @@ export default function TimeTracking() {
       )}
       {/* Tab Content: Resumen */}
       {activeTab === 'summary' && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Controles de filtrado */}
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Buscador de empleados */}
@@ -4391,7 +4391,7 @@ export default function TimeTracking() {
           </div>
 
           {/* Grid de empleados */}
-          <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 transition-opacity duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'}`}>
+          <div className={`grid grid-cols-1 lg:grid-cols-2 gap-4 transition-opacity duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'}`}>
             {(Array.isArray(employees) ? employees : []).filter((emp: any) => 
               summarySearch === '' || 
               emp.fullName.toLowerCase().includes(summarySearch.toLowerCase())
@@ -4413,7 +4413,7 @@ export default function TimeTracking() {
               return (
                 <div 
                   key={employee.id} 
-                  className="group relative bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                  className="group relative bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-shadow duration-300"
                 >
                   {/* Header con Avatar */}
                   <div className="flex items-center gap-4 mb-6">
