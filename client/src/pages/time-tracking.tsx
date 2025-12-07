@@ -3572,7 +3572,7 @@ export default function TimeTracking() {
                     result.push(
                       <div 
                         key={rowKey} 
-                        className={`bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md${showSessionsWaveLoading ? ` row-wave-loading row-wave-${index % 15}` : ''}`}
+                        className={`bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600${showSessionsWaveLoading ? ` row-wave-loading row-wave-${index % 15}` : ''}`}
                       >
                         {/* Card Header - clickable to expand */}
                         <div 
@@ -4732,7 +4732,7 @@ export default function TimeTracking() {
               return (
                 <div
                   key={request.id}
-                  className={`bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md${showRequestsWaveLoading ? ` row-wave-loading row-wave-${reqIndex % 15}` : ''}`}
+                  className={`bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600${showRequestsWaveLoading ? ` row-wave-loading row-wave-${reqIndex % 15}` : ''}`}
                 >
                   {/* Mobile: Header con estado */}
                   <div className={`lg:hidden px-4 py-2.5 flex items-center justify-between ${

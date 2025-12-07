@@ -166,8 +166,8 @@ export default function StatsCard({
 
   return (
     <Card 
-      className={`dark:bg-gray-800 cursor-pointer transition-all duration-200 hover:shadow-md ${
-        isActive ? `border-2 ${config.activeBorder}` : ''
+      className={`dark:bg-gray-800 cursor-pointer transition-all duration-200 hover:shadow-md border ${
+        isActive ? config.activeBorder : 'border-gray-200 dark:border-gray-700'
       } ${isLoading ? `stats-wave-loading stats-wave-${index}` : ''} ${className}`}
       onClick={onClick}
       onDoubleClick={onDoubleClick}

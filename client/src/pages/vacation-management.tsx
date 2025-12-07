@@ -1456,7 +1456,7 @@ export default function VacationManagement() {
                   return (
                     <div
                       key={request.id}
-                      className={`bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md${showWaveLoading ? ` row-wave-loading row-wave-${requestIndex % 15}` : ''}`}
+                      className={`bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600${showWaveLoading ? ` row-wave-loading row-wave-${requestIndex % 15}` : ''}`}
                     >
                       {/* Header con estado - solo móvil */}
                       <div className={`md:hidden px-4 py-2.5 flex items-center justify-between ${
