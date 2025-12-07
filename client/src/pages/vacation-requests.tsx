@@ -969,40 +969,37 @@ export default function VacationRequests() {
                         </span>
                       </div>
                     </div>
+                    
+                    {/* Comment bubble - shows if admin replied */}
+                    {request.status !== 'pending' && request.adminComment && (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-500/20 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-500/30 transition-colors flex-shrink-0">
+                            <MessageCircle className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-72 max-w-[80vw] p-3 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" side="top" sideOffset={5} align="end" avoidCollisions={true}>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <MessageCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Respuesta del admin</span>
+                            </div>
+                            <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
+                              {request.adminComment}
+                            </p>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    )}
                   </div>
                   
                   {/* Status indicator - colored right side */}
-                  {request.status !== 'pending' && request.adminComment ? (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <div className={`${statusStyle.bg} w-16 flex flex-col items-center justify-center cursor-pointer hover:opacity-80`}>
-                          <div className={statusStyle.icon}>
-                            {getStatusIcon(request.status)}
-                          </div>
-                          <span className={`text-[10px] mt-0.5 ${statusStyle.icon}`}>{statusStyle.text}</span>
-                          <MessageCircle className="w-2.5 h-2.5 text-gray-400 mt-0.5" />
-                        </div>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-72 max-w-[80vw] p-3 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" side="top" sideOffset={5} align="end" avoidCollisions={true}>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <MessageCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Respuesta</span>
-                          </div>
-                          <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
-                            {request.adminComment}
-                          </p>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  ) : (
-                    <div className={`${statusStyle.bg} w-16 flex flex-col items-center justify-center`}>
-                      <div className={statusStyle.icon}>
-                        {getStatusIcon(request.status)}
-                      </div>
-                      <span className={`text-[10px] mt-0.5 ${statusStyle.icon}`}>{statusStyle.text}</span>
+                  <div className={`${statusStyle.bg} w-14 flex flex-col items-center justify-center py-2`}>
+                    <div className={statusStyle.icon}>
+                      {getStatusIcon(request.status)}
                     </div>
-                  )}
+                    <span className={`text-[10px] mt-0.5 font-medium ${statusStyle.icon}`}>{statusStyle.text}</span>
+                  </div>
                 </div>
               );
             })
