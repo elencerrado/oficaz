@@ -133,7 +133,9 @@ export default function VacationManagement() {
   }, []);
   const [activeTab, setActiveTab] = useState("employees");
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState("all");
+  const [selectedAbsenceType, setSelectedAbsenceType] = useState("all");
+  const [employeeSearchTerm, setEmployeeSearchTerm] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
   const [newHoliday, setNewHoliday] = useState<{ name: string; startDate: Date | null; endDate: Date | null; type: 'national' | 'regional' | 'local' }>({ name: "", startDate: null, endDate: null, type: "regional" });
   const [showAddHoliday, setShowAddHoliday] = useState(false);
@@ -824,10 +826,15 @@ export default function VacationManagement() {
 
   const filteredRequests = (vacationRequests || []).filter((request: VacationRequest) => {
     const matchesStatus = selectedStatus === "all" || request.status === selectedStatus;
-    const matchesSearch = searchTerm === "" || 
-      (request.user?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
-    return matchesStatus && matchesSearch;
+    const matchesEmployee = selectedEmployeeId === "all" || request.userId === parseInt(selectedEmployeeId);
+    const matchesAbsenceType = selectedAbsenceType === "all" || (request.absenceType || 'vacation') === selectedAbsenceType;
+    return matchesStatus && matchesEmployee && matchesAbsenceType;
   });
+  
+  // Filtrar empleados para el buscador
+  const filteredEmployeesForSearch = (employees || []).filter((emp: Employee) =>
+    emp.fullName.toLowerCase().includes(employeeSearchTerm.toLowerCase())
+  );
 
   const pendingRequests = (vacationRequests || []).filter((r: VacationRequest) => r.status === 'pending');
   const approvedRequests = (vacationRequests || []).filter((r: VacationRequest) => r.status === 'approved');
@@ -1020,11 +1027,11 @@ export default function VacationManagement() {
       <div>
           {activeTab === 'requests' && (
             <div className="space-y-4">
-              <div className="flex items-center gap-4 mb-4">
-                {/* Izquierda: Filtros */}
+              <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4">
+                {/* Filtro Estado */}
                 <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger className="w-36">
-                    <SelectValue />
+                  <SelectTrigger className="w-[120px] md:w-[130px]">
+                    <SelectValue placeholder="Estado" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas</SelectItem>
@@ -1034,15 +1041,64 @@ export default function VacationManagement() {
                   </SelectContent>
                 </Select>
                 
-                {/* Centro: Búsqueda que ocupa todo el espacio disponible */}
-                <Input
-                  placeholder="Buscar empleado..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1"
-                />
+                {/* Filtro Empleado con buscador */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-[160px] md:w-[180px] justify-between font-normal">
+                      <span className="truncate">
+                        {selectedEmployeeId === "all" 
+                          ? "Todos los empleados" 
+                          : employees.find((e: Employee) => e.id === parseInt(selectedEmployeeId))?.fullName || "Empleado"}
+                      </span>
+                      <User className="w-4 h-4 ml-2 flex-shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[240px] p-0" align="start">
+                    <div className="p-2 border-b">
+                      <Input
+                        placeholder="Buscar empleado..."
+                        value={employeeSearchTerm}
+                        onChange={(e) => setEmployeeSearchTerm(e.target.value)}
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="max-h-[200px] overflow-y-auto p-1">
+                      <button
+                        onClick={() => { setSelectedEmployeeId("all"); setEmployeeSearchTerm(""); }}
+                        className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors ${selectedEmployeeId === "all" ? "bg-muted font-medium" : ""}`}
+                      >
+                        Todos los empleados
+                      </button>
+                      {filteredEmployeesForSearch.map((emp: Employee) => (
+                        <button
+                          key={emp.id}
+                          onClick={() => { setSelectedEmployeeId(emp.id.toString()); setEmployeeSearchTerm(""); }}
+                          className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors truncate ${selectedEmployeeId === emp.id.toString() ? "bg-muted font-medium" : ""}`}
+                        >
+                          {emp.fullName}
+                        </button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 
-                {/* Derecha: Botón Nueva Solicitud */}
+                {/* Filtro Tipo de Ausencia */}
+                <Select value={selectedAbsenceType} onValueChange={setSelectedAbsenceType}>
+                  <SelectTrigger className="w-[140px] md:w-[160px]">
+                    <SelectValue placeholder="Tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los tipos</SelectItem>
+                    {Object.entries(ABSENCE_TYPE_LABELS).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* Espaciador flexible */}
+                <div className="flex-1" />
+                
+                {/* Botón Nueva Solicitud */}
                 {(user?.role === 'admin' || user?.role === 'manager') && (
                   <Button 
                     size="sm" 
@@ -1050,7 +1106,8 @@ export default function VacationManagement() {
                     onClick={() => setShowNewRequestModal(true)}
                   >
                     <Plus className="w-4 h-4 mr-1" />
-                    Nueva Solicitud
+                    <span className="hidden sm:inline">Nueva Solicitud</span>
+                    <span className="sm:hidden">Nueva</span>
                   </Button>
                 )}
               </div>
