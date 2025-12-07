@@ -2103,8 +2103,8 @@ export default function Landing() {
           <ScrollReveal delay={0.1} className="mb-6">
             <div className="px-4 md:px-12">
               <div className="grid md:grid-cols-2 gap-4">
-                {/* Price Summary - Vertical layout */}
-                <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
+                {/* Price Summary - Vertical layout with flex grow */}
+                <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 flex flex-col">
                   {/* Price on top */}
                   <div className="text-center mb-4">
                     <p className="text-gray-500 text-sm mb-1">Tu plan mensual</p>
@@ -2131,42 +2131,44 @@ export default function Landing() {
                     </span>
                   </div>
                   
-                  {/* Function badges */}
-                  <div className="flex flex-wrap justify-center gap-1.5 mb-4">
+                  {/* Function badges - 2 column grid */}
+                  <div className="grid grid-cols-2 gap-1.5 mb-4 flex-1">
                     {addons.filter(a => selectedAddons.has(a.key) || a.isLocked).map((addon) => {
                       const IconComponent = addon.icon;
                       return (
                         <span 
                           key={addon.key}
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                          className={`inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium ${
                             addon.isLocked 
                               ? 'bg-green-100 text-green-700' 
                               : 'bg-blue-100 text-blue-700'
                           }`}
                         >
-                          <IconComponent className="w-3 h-3" />
-                          {addon.name}
+                          <IconComponent className="w-3 h-3 flex-shrink-0" />
+                          <span className="truncate">{addon.name}</span>
                         </span>
                       );
                     })}
                   </div>
                   
-                  {/* CTA Button */}
-                  {registrationSettings?.publicRegistrationEnabled ? (
-                    <Link href="/request-code">
-                      <Button className="w-full py-5 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]">
-                        Prueba 7 días gratis
+                  {/* CTA Button - Always at bottom */}
+                  <div className="mt-auto">
+                    {registrationSettings?.publicRegistrationEnabled ? (
+                      <Link href="/request-code">
+                        <Button className="w-full py-5 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]">
+                          Prueba 7 días gratis
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button 
+                        onClick={() => setIsContactFormOpen(true)}
+                        className="w-full py-5 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]"
+                      >
+                        Contactar
                       </Button>
-                    </Link>
-                  ) : (
-                    <Button 
-                      onClick={() => setIsContactFormOpen(true)}
-                      className="w-full py-5 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]"
-                    >
-                      Contactar
-                    </Button>
-                  )}
-                  <p className="text-center text-xs text-gray-400 mt-2">Sin compromiso • Cancela cuando quieras</p>
+                    )}
+                    <p className="text-center text-xs text-gray-400 mt-2">Sin compromiso • Cancela cuando quieras</p>
+                  </div>
                 </div>
                 
                 {/* Users - Card style with descriptions */}
