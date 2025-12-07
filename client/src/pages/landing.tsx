@@ -52,7 +52,8 @@ import {
   Heart,
   Briefcase,
   GraduationCap,
-  Scale
+  Scale,
+  User
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
@@ -692,33 +693,63 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
   
   if (addonKey === 'work_reports') {
     return (
-      <div className="p-3 h-full bg-[#0a1628]">
+      <div className="p-3 h-full bg-[#0a1628] flex flex-col">
         <h3 className="text-white font-bold text-sm mb-0.5">Partes de Trabajo</h3>
-        <p className="text-gray-400 text-[8px] mb-2">Documenta tus servicios</p>
-        <div className="bg-[#1a2942] rounded-xl p-2 mb-3 space-y-2">
-          <div className="p-1.5 bg-[#0a1628] rounded-lg">
-            <p className="text-gray-500 text-[6px]">Cliente</p>
-            <p className="text-white text-[7px]">Empresa ABC S.L.</p>
-          </div>
-          <div className="p-1.5 bg-[#0a1628] rounded-lg">
-            <p className="text-gray-500 text-[6px]">Ubicación</p>
-            <p className="text-white text-[7px]">📍 Calle Mayor, 15</p>
-          </div>
-          <div className="p-1.5 bg-[#0a1628] rounded-lg">
-            <p className="text-gray-500 text-[6px]">Descripción</p>
-            <p className="text-white text-[7px]">Instalación sistema eléctrico</p>
-          </div>
-          <div className="grid grid-cols-3 gap-1">
-            {['📸', '📸', '+'].map((icon, i) => (
-              <div key={i} className="aspect-square bg-[#0a1628] rounded-lg flex items-center justify-center text-gray-500 text-sm">
-                {icon}
-              </div>
-            ))}
-          </div>
-        </div>
-        <button className="w-full bg-green-500 rounded-xl p-2 text-center">
-          <p className="text-white font-semibold text-[7px]">✍️ Firmar y enviar</p>
+        <p className="text-gray-400 text-[8px] mb-2">Historial de servicios</p>
+        
+        {/* New report button */}
+        <button className="w-full bg-[#007AFF] rounded-xl p-1.5 mb-2 flex items-center justify-center gap-1">
+          <span className="text-white text-[7px] font-medium">+ Nuevo Parte</span>
         </button>
+        
+        {/* Reports list */}
+        <div className="flex-1 space-y-1.5 overflow-y-auto">
+          {[
+            { date: 'jue, 4 dic', time: '09:00-17:00', hours: '8h', location: 'Madrid IFEMA', client: 'Repsol', desc: 'Mantenimiento', status: 'submitted', signed: false },
+            { date: 'lun, 1 dic', time: '09:00-17:00', hours: '8h', location: 'Madrid IFEMA', client: 'Repsol', desc: 'Instalación', status: 'submitted', signed: true, refCode: 'SMI0032SE' },
+            { date: 'jue, 27 nov', time: '09:00-15:00', hours: '6h', location: 'Madrid IFEMA', client: 'Repsol', desc: 'Revisión', status: 'submitted', signed: true, refCode: 'SMI0034SE' },
+          ].map((report, i) => (
+            <div key={i} className="bg-white/5 rounded-xl p-2 border border-white/10">
+              {/* Status badge + date */}
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[6px] font-medium px-1.5 py-0.5 rounded bg-green-500/20 text-green-400">Enviado</span>
+                <span className="text-gray-400 text-[6px]">{report.date}</span>
+              </div>
+              
+              {/* Time */}
+              <div className="flex items-center gap-1 text-gray-400 text-[6px] mb-1">
+                <Clock className="w-2 h-2" />
+                <span>{report.time} ({report.hours})</span>
+              </div>
+              
+              {/* Location + ref code */}
+              <div className="flex items-center gap-1 mb-1">
+                <MapPin className="w-2 h-2 text-gray-400" />
+                <span className="text-white text-[7px] font-medium">{report.location}</span>
+                {report.refCode && (
+                  <span className="text-[5px] px-1 py-0.5 rounded bg-blue-500/20 text-blue-400">{report.refCode}</span>
+                )}
+              </div>
+              
+              {/* Client */}
+              <div className="flex items-center gap-1 text-gray-400 text-[6px] mb-1">
+                <User className="w-2 h-2" />
+                <span>Cliente: {report.client}</span>
+              </div>
+              
+              {/* Description */}
+              <p className="text-gray-300 text-[6px]">{report.desc}</p>
+              
+              {/* Signature indicator */}
+              {report.signed && (
+                <div className="flex items-center gap-1 mt-1 pt-1 border-t border-white/10">
+                  <PenLine className="w-2 h-2 text-amber-400" />
+                  <span className="text-amber-400 text-[5px]">Firmado</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
