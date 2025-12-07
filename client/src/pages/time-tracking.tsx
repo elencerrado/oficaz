@@ -2706,7 +2706,6 @@ export default function TimeTracking() {
             });
           })}
         </div>
-
         {/* Timeline visual minimalista */}
         <div className="relative h-5">
           {/* Línea base gris minimalista */}
@@ -2771,7 +2770,6 @@ export default function TimeTracking() {
             })}
           </div>
         </div>
-
         {/* Contenedor para horas de entrada/salida ABAJO de las barras */}
         <div className="relative h-4" style={{ zIndex: 10 }}>
           {(() => {
@@ -2903,7 +2901,7 @@ export default function TimeTracking() {
                 // Entrada
                 return label.hasCollision ? (
                   // Con colisión: punto desplazado horizontalmente
-                  <div 
+                  (<div 
                     key={key}
                     className="absolute w-2 h-2 bg-green-500 rounded-full cursor-help shadow-md border border-white" 
                     style={{ 
@@ -2913,21 +2911,21 @@ export default function TimeTracking() {
                       zIndex: 10
                     }}
                     title={`Entrada: ${label.text}`}
-                  />
+                  />)
                 ) : (
                   // Sin colisión: punto + hora visible (+ verde si hay consolidación)
-                  <div key={key} className="absolute flex items-center" style={{ left: `${label.position}%`, top: '0px' }}>
+                  (<div key={key} className="absolute flex items-center" style={{ left: `${label.position}%`, top: '0px' }}>
                     <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
                     <span className="text-xs font-medium text-green-700 whitespace-nowrap">
                       {label.text}{wasConsolidated && label.sessionIndex === 0 && <span className="text-green-600 font-bold">+</span>}
                     </span>
-                  </div>
+                  </div>)
                 );
               } else {
                 // Salida
                 return label.hasCollision ? (
                   // Con colisión: punto desplazado horizontalmente
-                  <div 
+                  (<div 
                     key={key}
                     className="absolute w-2 h-2 bg-red-500 rounded-full cursor-help shadow-md border border-white" 
                     style={{ 
@@ -2937,15 +2935,15 @@ export default function TimeTracking() {
                       zIndex: 10
                     }}
                     title={`Salida: ${label.text}`}
-                  />
+                  />)
                 ) : (
                   // Sin colisión: punto + hora visible (+ rojo a la izquierda si hay consolidación)
-                  <div key={key} className="absolute flex items-center" style={{ left: `${label.position}%`, top: '0px', transform: 'translateX(-100%)' }}>
+                  (<div key={key} className="absolute flex items-center" style={{ left: `${label.position}%`, top: '0px', transform: 'translateX(-100%)' }}>
                     <span className="text-xs font-medium text-red-700 whitespace-nowrap mr-1">
                       {wasConsolidated && label.sessionIndex === consolidatedSessions.length - 1 && <span className="text-red-600 font-bold">+</span>}{label.text}
                     </span>
                     <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                  </div>
+                  </div>)
                 );
               }
             });
@@ -2957,7 +2955,6 @@ export default function TimeTracking() {
 
   return (
     <div>
-
       <StatsCardGrid columns={4}>
         <StatsCard
           label="Incompletos"
@@ -3004,7 +3001,6 @@ export default function TimeTracking() {
           data-testid="stat-monthly-average"
         />
       </StatsCardGrid>
-
       {/* Tab Navigation - Simplified for self-access mode */}
       <TabNavigation
         tabs={isSelfAccessOnly 
@@ -3018,7 +3014,6 @@ export default function TimeTracking() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
-
       {/* Tab Content: Lista de Horas */}
       {activeTab === 'sessions' && (
         <div className="space-y-4">
@@ -3597,7 +3592,7 @@ export default function TimeTracking() {
                               profilePicture={dayData.profilePicture}
                             />
                             <div className="flex items-center gap-1 min-w-0 flex-1">
-                              <span className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+                              <span className="font-medium text-gray-900 dark:text-gray-100 text-sm pl-[2px] pr-[2px]">
                                 {dayData.userName || 'Usuario Desconocido'}
                               </span>
                               {dayData.hasAutoCompleted && (
@@ -4331,7 +4326,6 @@ export default function TimeTracking() {
           </div>
         </div>
       )}
-
       {/* Tab Content: Resumen */}
       {activeTab === 'summary' && (
         <div className="space-y-6">
@@ -4513,7 +4507,6 @@ export default function TimeTracking() {
           )}
         </div>
       )}
-
       {/* Tab Content: Solicitudes de Modificación */}
       {activeTab === 'requests' && (
         <div className="space-y-4">
@@ -4911,7 +4904,6 @@ export default function TimeTracking() {
           })()}
         </div>
       )}
-
       {/* Export Dialog */}
       <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
         <DialogContent className="max-w-md">
@@ -4951,7 +4943,6 @@ export default function TimeTracking() {
           </div>
         </DialogContent>
       </Dialog>
-
       {/* Manual Entry Dialog */}
       <Dialog open={showManualEntryDialog} onOpenChange={setShowManualEntryDialog}>
         <DialogContent className="max-w-md">
@@ -5044,7 +5035,6 @@ export default function TimeTracking() {
           </div>
         </DialogContent>
       </Dialog>
-
       {/* Modification Requests Dialog */}
       <Dialog open={showRequestsDialog} onOpenChange={setShowRequestsDialog}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
@@ -5085,7 +5075,7 @@ export default function TimeTracking() {
                     
                     {request.requestType === 'forgotten_checkin' ? (
                       // Fichaje olvidado - solo mostrar nueva información
-                      <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg space-y-2 text-sm">
+                      (<div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg space-y-2 text-sm">
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">Entrada:</span>
                           <span className="font-medium">{format(new Date(request.requestedClockIn), 'HH:mm')}</span>
@@ -5107,10 +5097,10 @@ export default function TimeTracking() {
                             </div>
                           );
                         })()}
-                      </div>
+                      </div>)
                     ) : (
                       // Modificación de horario - mostrar antes y después compacto
-                      <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg space-y-2 text-sm">
+                      (<div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg space-y-2 text-sm">
                         {/* Entrada */}
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">Entrada:</span>
@@ -5120,7 +5110,6 @@ export default function TimeTracking() {
                             <span className="font-medium text-blue-600 dark:text-blue-400">{format(new Date(request.requestedClockIn), 'HH:mm')}</span>
                           </div>
                         </div>
-                        
                         {/* Salida */}
                         {request.requestedClockOut && (
                           <div className="flex items-center justify-between">
@@ -5132,7 +5121,6 @@ export default function TimeTracking() {
                             </div>
                           </div>
                         )}
-                        
                         {/* Total */}
                         {request.requestedClockOut && (
                           <div className="flex items-center justify-between pt-1 border-t border-gray-200 dark:border-gray-700">
@@ -5140,7 +5128,7 @@ export default function TimeTracking() {
                             <div className="flex items-center gap-2">
                               {request.currentClockIn && request.currentClockOut ? (
                                 // Mostrar comparación si hay ambos valores
-                                <>
+                                (<>
                                   {(() => {
                                     const currentMs = new Date(request.currentClockOut).getTime() - new Date(request.currentClockIn).getTime();
                                     const currentHours = Math.floor(currentMs / (1000 * 60 * 60));
@@ -5148,7 +5136,7 @@ export default function TimeTracking() {
                                     return <span className="line-through text-gray-400">{currentHours}h {currentMinutes}min</span>;
                                   })()}
                                   <ArrowDown className="w-3 h-3 text-blue-500 rotate-[-90deg]" />
-                                </>
+                                </>)
                               ) : null}
                               {(() => {
                                 const requestedMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
@@ -5159,7 +5147,7 @@ export default function TimeTracking() {
                             </div>
                           </div>
                         )}
-                      </div>
+                      </div>)
                     )}
                     
                     <div className="text-sm pt-1">
@@ -5197,7 +5185,6 @@ export default function TimeTracking() {
           </div>
         </DialogContent>
       </Dialog>
-
       {/* Audit History Dialog */}
       <Dialog open={showAuditDialog} onOpenChange={setShowAuditDialog}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -5311,7 +5298,6 @@ export default function TimeTracking() {
           </div>
         </DialogContent>
       </Dialog>
-
       {/* Incomplete Sessions Warning Dialog */}
       <Dialog open={showIncompleteWarningDialog} onOpenChange={setShowIncompleteWarningDialog}>
         <DialogContent className="max-w-md">
@@ -5355,7 +5341,6 @@ export default function TimeTracking() {
           </div>
         </DialogContent>
       </Dialog>
-
       {/* Close Incomplete Session Dialog - ask for close time */}
       <Dialog open={showCloseIncompleteDialog} onOpenChange={(open) => {
         if (!open) {
