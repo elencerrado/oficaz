@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "wouter";
 import { usePageTitle } from '@/hooks/use-page-title';
@@ -390,8 +391,8 @@ export default function VacationManagement() {
             {daysCount}d
           </div>
 
-          {/* Panel de información que aparece al hacer clic */}
-          {isTooltipActive && (
+          {/* Panel de información que aparece al hacer clic - Renderizado en portal para evitar problemas de z-index */}
+          {isTooltipActive && createPortal(
             <>
               {/* Overlay semi-transparente para evitar interferencias */}
               <div 
@@ -511,7 +512,8 @@ export default function VacationManagement() {
                 )}
               </div>
               </div>
-            </>
+            </>,
+            document.body
           )}
         </div>
       );
