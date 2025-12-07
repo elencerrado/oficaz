@@ -864,6 +864,10 @@ export default function TimeTracking() {
 
   // ⚠️ PROTECTED: PDF generation function - CRITICAL FOR REPORTING
   const executeExportPDF = useCallback(async () => {
+    // Get auth token for API calls
+    const authData = JSON.parse(localStorage.getItem('authData') || sessionStorage.getItem('authData') || '{}');
+    const authToken = authData.token || '';
+    
     // First, load audit logs for sessions that have them
     const sessionsWithAuditLogs = await Promise.all(
       (filteredSessions || []).map(async (session: any) => {
@@ -871,6 +875,10 @@ export default function TimeTracking() {
           try {
             const response = await fetch(`/api/admin/work-sessions/${session.id}/audit-log`, {
               credentials: 'include',
+              headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json',
+              },
             });
             if (response.ok) {
               const auditLogs = await response.json();
