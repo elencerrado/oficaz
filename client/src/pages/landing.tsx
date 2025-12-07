@@ -1166,7 +1166,7 @@ export default function Landing() {
 
           {/* Mobile: Swipeable Carousel with Description Below */}
           <div className="lg:hidden">
-            <div className="-mx-6">
+            <div className="-mx-6 py-8">
               <Carousel 
                 className="w-full" 
                 opts={{ align: 'center', loop: true }}
@@ -1182,7 +1182,7 @@ export default function Landing() {
                 <CarouselContent className="-ml-2">
                   {addons.map((addon, index) => (
                     <CarouselItem key={addon.key} className="pl-2 basis-[80%] sm:basis-[65%]">
-                      <div className="flex flex-col items-center">
+                      <div className="flex flex-col items-center py-4">
                         {/* Phone Preview - Taller for mobile with enhanced shadow */}
                         <div className="relative bg-gray-900 rounded-[2.5rem] p-2 shadow-[0_25px_80px_-12px_rgba(0,0,0,0.4),0_12px_40px_-8px_rgba(0,0,0,0.3)]">
                           <div className="relative bg-[#0a1628] rounded-[2rem] overflow-hidden" style={{ width: '200px', aspectRatio: '9/19.5' }}>
