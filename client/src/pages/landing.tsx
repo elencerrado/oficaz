@@ -1182,9 +1182,9 @@ export default function Landing() {
                 <CarouselContent className="-ml-2">
                   {addons.map((addon, index) => (
                     <CarouselItem key={addon.key} className="pl-2 basis-[80%] sm:basis-[65%]">
-                      <div className="flex flex-col items-center py-4">
-                        {/* Phone Preview - Taller for mobile with enhanced shadow */}
-                        <div className="relative bg-gray-900 rounded-[2.5rem] p-2 shadow-[0_25px_80px_-12px_rgba(0,0,0,0.4),0_12px_40px_-8px_rgba(0,0,0,0.3)]">
+                      <div className="flex flex-col items-center py-2">
+                        {/* Phone Preview - Taller for mobile, no shadow */}
+                        <div className="relative bg-gray-900 rounded-[2.5rem] p-2">
                           <div className="relative bg-[#0a1628] rounded-[2rem] overflow-hidden" style={{ width: '200px', aspectRatio: '9/19.5' }}>
                             <div className="absolute top-0 left-0 right-0 h-7 bg-[#0a1628] z-10 flex items-center justify-between px-3 pt-1">
                               <span className="text-[10px] font-semibold text-white">17:00</span>
@@ -1204,7 +1204,7 @@ export default function Landing() {
             </div>
             
             {/* Description below carousel */}
-            <div className="mt-3 px-4">
+            <div className="-mt-2 px-4">
               {addons.map((addon) => {
                 if (addon.key !== previewAddon) return null;
                 const IconComponent = addon.icon;
