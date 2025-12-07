@@ -1387,7 +1387,7 @@ export default function VacationManagement() {
                   No hay empleados registrados
                 </div>
               ) : (
-                <div className="bg-card rounded-lg border border-border overflow-hidden">
+                <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                   {/* Desktop: Header con controles */}
                   <div className="hidden md:block p-4 border-b bg-muted/20">
                     {/* Header unificado con controles y leyenda */}
