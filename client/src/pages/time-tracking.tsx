@@ -157,6 +157,12 @@ export default function TimeTracking() {
   const [summaryWeek, setSummaryWeek] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [summarySearch, setSummarySearch] = useState('');
   
+  // Requests tab filter states
+  const [requestsStatus, setRequestsStatus] = useState('all');
+  const [requestsEmployeeId, setRequestsEmployeeId] = useState('all');
+  const [requestsType, setRequestsType] = useState('all');
+  const [requestsEmployeeSearchTerm, setRequestsEmployeeSearchTerm] = useState('');
+  
   // Modification & Audit states
   const [showManualEntryDialog, setShowManualEntryDialog] = useState(false);
   const [showRequestsDialog, setShowRequestsDialog] = useState(false);
@@ -4500,23 +4506,111 @@ export default function TimeTracking() {
 
       {/* Tab Content: Solicitudes de Modificación */}
       {activeTab === 'requests' && (
-        <div className="space-y-3">
-          {modificationRequests.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="flex flex-col items-center justify-center space-y-3">
-                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
-                  <Bell className="w-6 h-6 text-muted-foreground" />
+        <div className="space-y-4">
+          {/* Filtros */}
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
+            {/* Filtro Estado */}
+            <Select value={requestsStatus} onValueChange={setRequestsStatus}>
+              <SelectTrigger className="w-[120px] md:w-[130px]">
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="pending">Pendientes</SelectItem>
+                <SelectItem value="approved">Aprobadas</SelectItem>
+                <SelectItem value="rejected">Rechazadas</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {/* Filtro Empleado con buscador */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[160px] md:w-[180px] justify-between font-normal">
+                  <span className="truncate">
+                    {requestsEmployeeId === "all" 
+                      ? "Todos los empleados" 
+                      : employees.find((e: any) => e.id === parseInt(requestsEmployeeId))?.fullName || "Empleado"}
+                  </span>
+                  <User className="w-4 h-4 ml-2 flex-shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[240px] p-0" align="start">
+                <div className="p-2 border-b">
+                  <Input
+                    placeholder="Buscar empleado..."
+                    value={requestsEmployeeSearchTerm}
+                    onChange={(e) => setRequestsEmployeeSearchTerm(e.target.value)}
+                    className="h-8"
+                  />
                 </div>
-                <div className="text-foreground font-medium">
-                  No hay solicitudes pendientes
+                <div className="max-h-[200px] overflow-y-auto p-1">
+                  <button
+                    onClick={() => { setRequestsEmployeeId("all"); setRequestsEmployeeSearchTerm(""); }}
+                    className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors ${requestsEmployeeId === "all" ? "bg-muted font-medium" : ""}`}
+                  >
+                    Todos los empleados
+                  </button>
+                  {(employees || [])
+                    .filter((emp: any) => 
+                      requestsEmployeeSearchTerm === '' || 
+                      emp.fullName.toLowerCase().includes(requestsEmployeeSearchTerm.toLowerCase())
+                    )
+                    .map((emp: any) => (
+                      <button
+                        key={emp.id}
+                        onClick={() => { setRequestsEmployeeId(emp.id.toString()); setRequestsEmployeeSearchTerm(""); }}
+                        className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors truncate ${requestsEmployeeId === emp.id.toString() ? "bg-muted font-medium" : ""}`}
+                      >
+                        {emp.fullName}
+                      </button>
+                    ))}
                 </div>
-                <div className="text-muted-foreground text-sm">
-                  Las solicitudes de modificación aparecerán aquí
+              </PopoverContent>
+            </Popover>
+            
+            {/* Filtro Tipo de Solicitud */}
+            <Select value={requestsType} onValueChange={setRequestsType}>
+              <SelectTrigger className="w-[140px] md:w-[160px]">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los tipos</SelectItem>
+                <SelectItem value="forgotten_checkin">Fichaje olvidado</SelectItem>
+                <SelectItem value="modification">Modificar horario</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Lista de solicitudes filtradas */}
+          {(() => {
+            const filteredModificationRequests = modificationRequests.filter((request: any) => {
+              const matchesStatus = requestsStatus === "all" || request.status === requestsStatus;
+              const matchesEmployee = requestsEmployeeId === "all" || request.employeeId === parseInt(requestsEmployeeId);
+              const matchesType = requestsType === "all" || request.requestType === requestsType || (requestsType === "modification" && request.requestType !== "forgotten_checkin");
+              return matchesStatus && matchesEmployee && matchesType;
+            });
+            
+            return filteredModificationRequests.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="flex flex-col items-center justify-center space-y-3">
+                  <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                    <Bell className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                  <div className="text-foreground font-medium">
+                    {modificationRequests.length === 0 
+                      ? "No hay solicitudes pendientes" 
+                      : "No se encontraron solicitudes con los filtros aplicados"}
+                  </div>
+                  <div className="text-muted-foreground text-sm">
+                    {modificationRequests.length === 0 
+                      ? "Las solicitudes de modificación aparecerán aquí"
+                      : `Total de solicitudes: ${modificationRequests.length}`}
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            modificationRequests.map((request: any) => {
+            ) : (
+              <div className="space-y-3">
+                {filteredModificationRequests.map((request: any) => {
               const isForgotten = request.requestType === 'forgotten_checkin';
               const requestedTotal = request.requestedClockOut ? (() => {
                 const ms = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
@@ -4694,8 +4788,10 @@ export default function TimeTracking() {
                   </div>
                 </div>
               );
-            })
-          )}
+            })}
+              </div>
+            );
+          })()}
         </div>
       )}
 
