@@ -2131,21 +2131,21 @@ export default function Landing() {
                     </span>
                   </div>
                   
-                  {/* Function badges - 2 column grid */}
-                  <div className="grid grid-cols-2 gap-1.5 mb-4 flex-1">
+                  {/* Function badges - flex wrap with fixed size badges */}
+                  <div className="flex flex-wrap gap-1.5 mb-4 flex-1 content-start">
                     {addons.filter(a => selectedAddons.has(a.key) || a.isLocked).map((addon) => {
                       const IconComponent = addon.icon;
                       return (
                         <span 
                           key={addon.key}
-                          className={`inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium ${
+                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap ${
                             addon.isLocked 
                               ? 'bg-green-100 text-green-700' 
                               : 'bg-blue-100 text-blue-700'
                           }`}
                         >
                           <IconComponent className="w-3 h-3 flex-shrink-0" />
-                          <span className="truncate">{addon.name}</span>
+                          {addon.name}
                         </span>
                       );
                     })}
