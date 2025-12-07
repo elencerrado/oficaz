@@ -1463,6 +1463,78 @@ export default function Landing() {
                     {/* Dynamic Content based on selected addon */}
                     <div className="pt-8 h-full overflow-hidden">
                       <AnimatePresence mode="wait">
+                      {previewAddon === 'employee_dashboard' && (
+                        <motion.div
+                          key="employee_dashboard"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
+                        <div className="p-3 h-full bg-[#0a1628] flex flex-col">
+                          {/* Company name */}
+                          <div className="text-center mb-2">
+                            <p className="text-white text-[10px] font-medium">Mi Empresa S.L.</p>
+                          </div>
+                          
+                          {/* User header with avatar */}
+                          <div className="flex items-center justify-end gap-1.5 mb-2">
+                            <span className="text-white text-[7px]">Carlos López</span>
+                            <img 
+                              src={avatarMan01} 
+                              alt="Avatar"
+                              className="w-5 h-5 rounded-full object-cover"
+                            />
+                          </div>
+                          
+                          {/* Icon grid - 3x2 like iPhone apps */}
+                          <div className="grid grid-cols-3 gap-2 mb-3">
+                            {[
+                              { icon: Clock, label: 'Fichajes', color: 'bg-[#007AFF]' },
+                              { icon: Calendar, label: 'Ausencias', color: 'bg-[#007AFF]' },
+                              { icon: CalendarDays, label: 'Cuadrante', color: 'bg-[#007AFF]' },
+                              { icon: MessageSquare, label: 'Mensajes', color: 'bg-[#007AFF]' },
+                              { icon: FileText, label: 'Documentos', color: 'bg-[#007AFF]' },
+                              { icon: Bell, label: 'Recordatorios', color: 'bg-[#007AFF]' },
+                            ].map((item, i) => (
+                              <div key={i} className="flex flex-col items-center">
+                                <div className={`w-10 h-10 ${item.color} rounded-xl flex items-center justify-center mb-1`}>
+                                  <item.icon className="w-5 h-5 text-white" />
+                                </div>
+                                <span className="text-white/80 text-[6px] text-center">{item.label}</span>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Status card */}
+                          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-2 mb-3">
+                            <div className="flex items-center justify-center gap-1.5 mb-1">
+                              <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                              <span className="text-green-400 text-[8px] font-medium">Trabajando...</span>
+                            </div>
+                            <p className="text-gray-400 text-[6px] text-center mb-0.5">Tu último fichaje</p>
+                            <p className="text-white text-[8px] text-center font-medium">Hoy a las 09:00</p>
+                          </div>
+                          
+                          {/* Two round buttons */}
+                          <div className="flex justify-center gap-4">
+                            <div className="flex flex-col items-center">
+                              <div className="w-14 h-14 rounded-full bg-orange-500 flex items-center justify-center">
+                                <span className="text-white text-[6px] font-bold text-center leading-tight">Tomar<br/>Descanso</span>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <div className="w-14 h-14 rounded-full bg-[#007AFF] flex items-center justify-center relative">
+                                <span className="text-white text-[10px] font-bold">SALIR</span>
+                                <div className="absolute -inset-0.5 rounded-full border border-green-400 animate-ping opacity-50"></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        </motion.div>
+                      )}
+                      
                       {previewAddon === 'time_tracking' && (
                         <motion.div
                           key="time_tracking"
@@ -2075,31 +2147,63 @@ export default function Landing() {
                           transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
                           className="h-full"
                         >
-                        <div className="p-3 h-full bg-[#0a1628]">
+                        <div className="p-3 h-full bg-[#0a1628] flex flex-col">
                           <h3 className="text-white font-bold text-sm mb-0.5">Partes de Trabajo</h3>
-                          <p className="text-gray-400 text-[8px] mb-3">Documenta tus servicios</p>
+                          <p className="text-gray-400 text-[8px] mb-2">Historial de servicios</p>
                           
-                          <div className="bg-[#1a2942] rounded-xl p-2 mb-3 space-y-2">
-                            <div className="p-1.5 bg-[#0a1628] rounded-lg">
-                              <p className="text-gray-500 text-[7px]">Cliente</p>
-                              <p className="text-white text-[8px]">Empresa ABC S.L.</p>
-                            </div>
-                            <div className="p-1.5 bg-[#0a1628] rounded-lg">
-                              <p className="text-gray-500 text-[7px]">Ubicación</p>
-                              <p className="text-white text-[8px]">📍 Calle Mayor, 15</p>
-                            </div>
-                            <div className="grid grid-cols-3 gap-1">
-                              {['📸', '📸', '+'].map((icon, i) => (
-                                <div key={i} className="aspect-square bg-[#0a1628] rounded-lg flex items-center justify-center text-gray-500 text-xs">
-                                  {icon}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                          
-                          <button className="w-full bg-green-500 rounded-xl p-2 text-center">
-                            <p className="text-white font-semibold text-[8px]">✍️ Firmar y enviar</p>
+                          {/* New report button */}
+                          <button className="w-full bg-[#007AFF] rounded-xl p-1.5 mb-2 flex items-center justify-center gap-1">
+                            <span className="text-white text-[7px] font-medium">+ Nuevo Parte</span>
                           </button>
+                          
+                          {/* Reports list */}
+                          <div className="flex-1 space-y-1.5 overflow-y-auto">
+                            {[
+                              { date: 'jue, 4 dic', time: '09:00-17:00', hours: '8h', location: 'Madrid IFEMA', client: 'Repsol', desc: 'Mantenimiento', status: 'submitted', signed: false },
+                              { date: 'lun, 1 dic', time: '09:00-17:00', hours: '8h', location: 'Madrid IFEMA', client: 'Repsol', desc: 'Instalación', status: 'submitted', signed: true, refCode: 'SMI0032SE' },
+                              { date: 'jue, 27 nov', time: '09:00-15:00', hours: '6h', location: 'Madrid IFEMA', client: 'Repsol', desc: 'Revisión', status: 'submitted', signed: true, refCode: 'SMI0034SE' },
+                            ].map((report, i) => (
+                              <div key={i} className="bg-white/5 rounded-xl p-2 border border-white/10">
+                                {/* Status badge + date */}
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-[6px] font-medium px-1.5 py-0.5 rounded bg-green-500/20 text-green-400">Enviado</span>
+                                  <span className="text-gray-400 text-[6px]">{report.date}</span>
+                                </div>
+                                
+                                {/* Time */}
+                                <div className="flex items-center gap-1 text-gray-400 text-[6px] mb-1">
+                                  <Clock className="w-2 h-2" />
+                                  <span>{report.time} ({report.hours})</span>
+                                </div>
+                                
+                                {/* Location + ref code */}
+                                <div className="flex items-center gap-1 mb-1">
+                                  <MapPin className="w-2 h-2 text-gray-400" />
+                                  <span className="text-white text-[7px] font-medium">{report.location}</span>
+                                  {report.refCode && (
+                                    <span className="text-[5px] px-1 py-0.5 rounded bg-blue-500/20 text-blue-400">{report.refCode}</span>
+                                  )}
+                                </div>
+                                
+                                {/* Client */}
+                                <div className="flex items-center gap-1 text-gray-400 text-[6px] mb-1">
+                                  <User className="w-2 h-2" />
+                                  <span>Cliente: {report.client}</span>
+                                </div>
+                                
+                                {/* Description */}
+                                <p className="text-gray-300 text-[6px]">{report.desc}</p>
+                                
+                                {/* Signature indicator */}
+                                {report.signed && (
+                                  <div className="flex items-center gap-1 mt-1 pt-1 border-t border-white/10">
+                                    <PenLine className="w-2 h-2 text-amber-400" />
+                                    <span className="text-amber-400 text-[5px]">Firmado</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </div>
                         </motion.div>
                       )}
