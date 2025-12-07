@@ -1521,15 +1521,15 @@ export default function VacationManagement() {
                               <Popover>
                                 <PopoverTrigger asChild>
                                   <button 
-                                    className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    className="p-1 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
                                     onClick={(e) => e.stopPropagation()}
                                   >
-                                    <FileText className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                                    <FileText className="w-4 h-4 text-amber-500 dark:text-amber-400" />
                                   </button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-72 p-4" side="top">
                                   <div className="space-y-2">
-                                    <h4 className="font-medium text-sm text-gray-900 dark:text-gray-100">Observaciones</h4>
+                                    <h4 className="font-medium text-sm text-gray-900 dark:text-gray-100">Observaciones del empleado</h4>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">{request.reason}</p>
                                   </div>
                                 </PopoverContent>
