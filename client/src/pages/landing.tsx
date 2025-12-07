@@ -726,34 +726,46 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
     return (
       <div className="p-3 h-full bg-[#0a1628] flex flex-col">
         <h3 className="text-white font-bold text-sm mb-0.5">OficazIA</h3>
-        <p className="text-gray-400 text-[8px] mb-3">Tu asistente inteligente</p>
-        <div className="flex-1 space-y-2">
-          <div className="flex gap-1.5">
-            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-              <Zap className="w-2.5 h-2.5 text-white" />
-            </div>
-            <div className="bg-[#1a2942] rounded-xl rounded-tl-sm p-2 max-w-[85%]">
-              <p className="text-white text-[7px]">¡Hola! ¿En qué puedo ayudarte hoy?</p>
-            </div>
-          </div>
+        <p className="text-gray-400 text-[8px] mb-2">Tu asistente inteligente</p>
+        <div className="flex-1 space-y-1.5 overflow-y-auto">
+          {/* Usuario mensaje 1 */}
           <div className="flex justify-end">
-            <div className="bg-[#007AFF] rounded-xl rounded-tr-sm p-2 max-w-[85%]">
-              <p className="text-white text-[7px]">Hazme el cuadrante de la semana</p>
+            <div className="bg-[#007AFF] rounded-xl rounded-tr-sm p-1.5 max-w-[85%]">
+              <p className="text-white text-[6px]">Ramírez tiene que trabajar la semana que viene de 9 a 14 y Marta hace los turnos de tarde</p>
             </div>
           </div>
-          <div className="flex gap-1.5">
-            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-              <Zap className="w-2.5 h-2.5 text-white" />
+          {/* IA respuesta 1 */}
+          <div className="flex gap-1">
+            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+              <Zap className="w-2 h-2 text-white" />
             </div>
-            <div className="bg-[#1a2942] rounded-xl rounded-tl-sm p-2 max-w-[85%]">
-              <p className="text-white text-[7px]">¡Listo! Cuadrante creado para 12 empleados.</p>
+            <div className="bg-[#1a2942] rounded-xl rounded-tl-sm p-1.5 max-w-[85%]">
+              <p className="text-white text-[6px]">¿El turno de Marta de 15 a 20? Recuerda que el viernes Marta está ausente, podría cubrirlo Marcos 🤔</p>
+            </div>
+          </div>
+          {/* Usuario mensaje 2 */}
+          <div className="flex justify-end">
+            <div className="bg-[#007AFF] rounded-xl rounded-tr-sm p-1.5 max-w-[85%]">
+              <p className="text-white text-[6px]">¡Exacto!</p>
+            </div>
+          </div>
+          {/* IA respuesta 2 */}
+          <div className="flex gap-1">
+            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+              <Zap className="w-2 h-2 text-white" />
+            </div>
+            <div className="bg-[#1a2942] rounded-xl rounded-tl-sm p-1.5 max-w-[85%]">
+              <p className="text-white text-[6px]">✅ Turnos creados para la semana que viene:</p>
+              <p className="text-gray-400 text-[5px] mt-0.5">• Ramírez: L-V 9:00-14:00</p>
+              <p className="text-gray-400 text-[5px]">• Marta: L-J 15:00-20:00</p>
+              <p className="text-gray-400 text-[5px]">• Marcos: V 15:00-20:00</p>
             </div>
           </div>
         </div>
         <div className="mt-2 flex gap-1.5">
           <input 
             type="text" 
-            placeholder="Escribe un mensaje..."
+            placeholder="Escribe..."
             className="flex-1 bg-[#1a2942] rounded-full px-3 py-1.5 text-[7px] text-white border border-[#2a3952] placeholder-gray-500"
             readOnly
           />
@@ -2005,28 +2017,40 @@ export default function Landing() {
                         >
                         <div className="p-3 h-full bg-[#0a1628] flex flex-col">
                           <h3 className="text-white font-bold text-sm mb-0.5">OficazIA</h3>
-                          <p className="text-gray-400 text-[8px] mb-3">Tu asistente inteligente</p>
+                          <p className="text-gray-400 text-[8px] mb-2">Tu asistente inteligente</p>
                           
-                          <div className="flex-1 space-y-2">
-                            <div className="flex gap-1.5">
-                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                                <Zap className="w-2.5 h-2.5 text-white" />
-                              </div>
-                              <div className="bg-[#1a2942] rounded-xl rounded-tl-sm p-2 max-w-[85%]">
-                                <p className="text-white text-[8px]">¡Hola! ¿En qué puedo ayudarte?</p>
-                              </div>
-                            </div>
+                          <div className="flex-1 space-y-1.5 overflow-y-auto">
+                            {/* Usuario mensaje 1 */}
                             <div className="flex justify-end">
-                              <div className="bg-[#007AFF] rounded-xl rounded-tr-sm p-2 max-w-[85%]">
-                                <p className="text-white text-[8px]">Hazme el cuadrante</p>
+                              <div className="bg-[#007AFF] rounded-xl rounded-tr-sm p-1.5 max-w-[85%]">
+                                <p className="text-white text-[6px]">Ramírez tiene que trabajar la semana que viene de 9 a 14 y Marta hace los turnos de tarde</p>
                               </div>
                             </div>
-                            <div className="flex gap-1.5">
-                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                                <Zap className="w-2.5 h-2.5 text-white" />
+                            {/* IA respuesta 1 */}
+                            <div className="flex gap-1">
+                              <div className="w-4 h-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                                <Zap className="w-2 h-2 text-white" />
                               </div>
-                              <div className="bg-[#1a2942] rounded-xl rounded-tl-sm p-2 max-w-[85%]">
-                                <p className="text-white text-[8px]">¡Listo! Cuadrante creado.</p>
+                              <div className="bg-[#1a2942] rounded-xl rounded-tl-sm p-1.5 max-w-[85%]">
+                                <p className="text-white text-[6px]">¿El turno de Marta de 15 a 20? Recuerda que el viernes Marta está ausente, podría cubrirlo Marcos 🤔</p>
+                              </div>
+                            </div>
+                            {/* Usuario mensaje 2 */}
+                            <div className="flex justify-end">
+                              <div className="bg-[#007AFF] rounded-xl rounded-tr-sm p-1.5 max-w-[85%]">
+                                <p className="text-white text-[6px]">¡Exacto!</p>
+                              </div>
+                            </div>
+                            {/* IA respuesta 2 */}
+                            <div className="flex gap-1">
+                              <div className="w-4 h-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                                <Zap className="w-2 h-2 text-white" />
+                              </div>
+                              <div className="bg-[#1a2942] rounded-xl rounded-tl-sm p-1.5 max-w-[85%]">
+                                <p className="text-white text-[6px]">✅ Turnos creados para la semana que viene:</p>
+                                <p className="text-gray-400 text-[5px] mt-0.5">• Ramírez: L-V 9:00-14:00</p>
+                                <p className="text-gray-400 text-[5px]">• Marta: L-J 15:00-20:00</p>
+                                <p className="text-gray-400 text-[5px]">• Marcos: V 15:00-20:00</p>
                               </div>
                             </div>
                           </div>
@@ -2035,7 +2059,7 @@ export default function Landing() {
                             <input 
                               type="text" 
                               placeholder="Escribe..."
-                              className="flex-1 bg-[#1a2942] rounded-full px-3 py-1.5 text-[8px] text-white border border-[#2a3952] placeholder-gray-500"
+                              className="flex-1 bg-[#1a2942] rounded-full px-3 py-1.5 text-[7px] text-white border border-[#2a3952] placeholder-gray-500"
                               readOnly
                             />
                             <button className="w-6 h-6 bg-[#007AFF] rounded-full flex items-center justify-center">
