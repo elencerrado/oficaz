@@ -2099,8 +2099,138 @@ export default function Landing() {
             </p>
           </ScrollReveal>
           
+          {/* Top: Price Summary + Users - Same width as carousel */}
+          <ScrollReveal delay={0.1} className="mb-6">
+            <div className="px-4 md:px-12">
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Price Summary */}
+                <div className="bg-white rounded-2xl p-5 shadow-xl border border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-gray-500 text-sm">Tu plan mensual</p>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-4xl md:text-5xl font-black text-gray-900">€{monthlyTotal}</span>
+                        <span className="text-lg text-gray-400">/mes</span>
+                      </div>
+                    </div>
+                    
+                    {/* CTA */}
+                    {registrationSettings?.publicRegistrationEnabled ? (
+                      <Link href="/request-code">
+                        <Button className="py-4 px-6 text-sm font-bold bg-[#007AFF] hover:bg-[#0056CC]">
+                          Prueba 7 días gratis
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button 
+                        onClick={() => setIsContactFormOpen(true)}
+                        className="py-4 px-6 text-sm font-bold bg-[#007AFF] hover:bg-[#0056CC]"
+                      >
+                        Contactar
+                      </Button>
+                    )}
+                  </div>
+                  
+                  {/* Selected summary */}
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {addons.filter(a => selectedAddons.has(a.key) || a.isLocked).map((addon) => {
+                      const IconComponent = addon.icon;
+                      return (
+                        <span 
+                          key={addon.key}
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                            addon.isLocked 
+                              ? 'bg-green-100 text-green-700' 
+                              : 'bg-blue-100 text-blue-700'
+                          }`}
+                        >
+                          <IconComponent className="w-3 h-3" />
+                          {addon.name}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+                
+                {/* Users - Horizontal layout */}
+                <div className="bg-white rounded-2xl p-5 shadow-xl border border-gray-100">
+                  <h3 className="font-semibold text-gray-900 mb-3 text-sm">Usuarios adicionales</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    {/* Employees */}
+                    <div className="text-center">
+                      <p className="font-medium text-gray-900 text-sm">Empleados</p>
+                      <p className="text-[10px] text-gray-500 mb-2">+€2/usuario</p>
+                      <div className="flex items-center justify-center gap-2">
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, employees: Math.max(0, prev.employees - 1) }))}
+                          className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-sm"
+                        >
+                          -
+                        </button>
+                        <span className="w-6 text-center font-semibold text-gray-900">{userCounts.employees}</span>
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, employees: prev.employees + 1 }))}
+                          className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Managers */}
+                    <div className="text-center">
+                      <p className="font-medium text-gray-900 text-sm">Managers</p>
+                      <p className="text-[10px] text-gray-500 mb-2">+€4/usuario</p>
+                      <div className="flex items-center justify-center gap-2">
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, managers: Math.max(0, prev.managers - 1) }))}
+                          className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-sm"
+                        >
+                          -
+                        </button>
+                        <span className="w-6 text-center font-semibold text-gray-900">{userCounts.managers}</span>
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, managers: prev.managers + 1 }))}
+                          className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Admins */}
+                    <div className="text-center">
+                      <p className="font-medium text-gray-900 text-sm">Admins</p>
+                      <p className="text-[10px] text-gray-500 mb-2">+€6 (mín. 1)</p>
+                      <div className="flex items-center justify-center gap-2">
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, admins: Math.max(1, prev.admins - 1) }))}
+                          disabled={userCounts.admins <= 1}
+                          className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm ${
+                            userCounts.admins <= 1 
+                              ? 'bg-gray-50 text-gray-300 cursor-not-allowed' 
+                              : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                          }`}
+                        >
+                          -
+                        </button>
+                        <span className="w-6 text-center font-semibold text-gray-900">{userCounts.admins}</span>
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, admins: prev.admins + 1 }))}
+                          className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ScrollReveal>
+          
           {/* Addon Carousel - Full width */}
-          <ScrollReveal delay={0.1} className="mb-8">
+          <ScrollReveal delay={0.2} className="mb-8">
             <div className="relative px-4 md:px-12">
               <Carousel 
                 className="w-full"
@@ -2173,141 +2303,6 @@ export default function Landing() {
               
               {/* Scroll hint for mobile */}
               <p className="text-center text-xs text-gray-400 mt-4 md:hidden">← Desliza para ver más →</p>
-            </div>
-          </ScrollReveal>
-          
-          {/* Bottom: Price Summary + Users */}
-          <ScrollReveal delay={0.2}>
-            <div className="max-w-4xl mx-auto px-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Price Summary */}
-                <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
-                  <div className="text-center">
-                    <p className="text-gray-500 text-sm mb-1">Tu plan mensual</p>
-                    <div className="flex items-baseline justify-center gap-1 mb-4">
-                      <span className="text-5xl md:text-6xl font-black text-gray-900">€{monthlyTotal}</span>
-                      <span className="text-lg text-gray-400">/mes</span>
-                    </div>
-                    
-                    {/* Selected summary */}
-                    <div className="flex flex-wrap justify-center gap-1.5 mb-4">
-                      {addons.filter(a => selectedAddons.has(a.key) || a.isLocked).map((addon) => {
-                        const IconComponent = addon.icon;
-                        return (
-                          <span 
-                            key={addon.key}
-                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                              addon.isLocked 
-                                ? 'bg-green-100 text-green-700' 
-                                : 'bg-blue-100 text-blue-700'
-                            }`}
-                          >
-                            <IconComponent className="w-3 h-3" />
-                            {addon.name}
-                          </span>
-                        );
-                      })}
-                    </div>
-                    
-                    {/* CTA */}
-                    {registrationSettings?.publicRegistrationEnabled ? (
-                      <Link href="/request-code">
-                        <Button className="w-full py-5 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]">
-                          Prueba 7 días gratis
-                        </Button>
-                      </Link>
-                    ) : (
-                      <Button 
-                        onClick={() => setIsContactFormOpen(true)}
-                        className="w-full py-5 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]"
-                      >
-                        Contactar
-                      </Button>
-                    )}
-                    <p className="text-center text-xs text-gray-400 mt-2">Sin compromiso • Cancela cuando quieras</p>
-                  </div>
-                </div>
-                
-                {/* Users */}
-                <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
-                  <h3 className="font-semibold text-gray-900 mb-4 text-center">Usuarios adicionales</h3>
-                  <div className="space-y-4">
-                    {/* Employees */}
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-gray-900">Empleados</p>
-                        <p className="text-xs text-gray-500">+€2/usuario</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => setUserCounts(prev => ({ ...prev, employees: Math.max(0, prev.employees - 1) }))}
-                          className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold"
-                        >
-                          -
-                        </button>
-                        <span className="w-8 text-center font-semibold text-gray-900 text-lg">{userCounts.employees}</span>
-                        <button 
-                          onClick={() => setUserCounts(prev => ({ ...prev, employees: prev.employees + 1 }))}
-                          className="w-8 h-8 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                    
-                    {/* Managers */}
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-gray-900">Managers</p>
-                        <p className="text-xs text-gray-500">+€4/usuario</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => setUserCounts(prev => ({ ...prev, managers: Math.max(0, prev.managers - 1) }))}
-                          className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold"
-                        >
-                          -
-                        </button>
-                        <span className="w-8 text-center font-semibold text-gray-900 text-lg">{userCounts.managers}</span>
-                        <button 
-                          onClick={() => setUserCounts(prev => ({ ...prev, managers: prev.managers + 1 }))}
-                          className="w-8 h-8 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                    
-                    {/* Admins */}
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-gray-900">Admins</p>
-                        <p className="text-xs text-gray-500">+€6/usuario (mín. 1)</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => setUserCounts(prev => ({ ...prev, admins: Math.max(1, prev.admins - 1) }))}
-                          disabled={userCounts.admins <= 1}
-                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                            userCounts.admins <= 1 
-                              ? 'bg-gray-50 text-gray-300 cursor-not-allowed' 
-                              : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
-                          }`}
-                        >
-                          -
-                        </button>
-                        <span className="w-8 text-center font-semibold text-gray-900 text-lg">{userCounts.admins}</span>
-                        <button 
-                          onClick={() => setUserCounts(prev => ({ ...prev, admins: prev.admins + 1 }))}
-                          className="w-8 h-8 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </ScrollReveal>
         </div>
