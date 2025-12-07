@@ -165,6 +165,8 @@ export default function VacationManagement() {
   const [newRequestAbsenceType, setNewRequestAbsenceType] = useState<string>('vacation');
   const [newRequestAttachment, setNewRequestAttachment] = useState<File | null>(null);
   const [uploadingNewRequestAttachment, setUploadingNewRequestAttachment] = useState(false);
+  const [newRequestCalendarDate, setNewRequestCalendarDate] = useState(new Date());
+  const [newRequestHoverDate, setNewRequestHoverDate] = useState<Date | null>(null);
   
   // Estados para el timeline de vacaciones (pestaña empleados)
   const [timelineViewDate, setTimelineViewDate] = useState(new Date());
@@ -619,6 +621,87 @@ export default function VacationManagement() {
   // Calculate policy requirements for new request
   const selectedNewRequestPolicy = absencePolicies.find(p => p.absenceType === newRequestAbsenceType);
   const newRequestRequiresAttachment = selectedNewRequestPolicy?.requiresAttachment ?? false;
+  const isNewRequestFixedDuration = selectedNewRequestPolicy?.maxDays !== null && newRequestAbsenceType !== 'vacation';
+
+  // Calendar functions for new request modal
+  const handleNewRequestDateClick = (date: Date) => {
+    // For fixed-duration absences, auto-select end date
+    if (isNewRequestFixedDuration && selectedNewRequestPolicy?.maxDays) {
+      setNewRequestDates({
+        startDate: date,
+        endDate: addDays(date, selectedNewRequestPolicy.maxDays - 1)
+      });
+      return;
+    }
+    
+    if (!newRequestDates.startDate || (newRequestDates.startDate && newRequestDates.endDate)) {
+      setNewRequestDates({ startDate: date, endDate: null });
+    } else if (date < newRequestDates.startDate) {
+      setNewRequestDates({ startDate: date, endDate: null });
+    } else {
+      setNewRequestDates(prev => ({ ...prev, endDate: date }));
+    }
+  };
+
+  const isNewRequestDateInRange = (date: Date) => {
+    if (!newRequestDates.startDate) return false;
+    if (!newRequestDates.endDate && !newRequestHoverDate) return isSameDay(date, newRequestDates.startDate);
+    
+    const endDate = newRequestDates.endDate || newRequestHoverDate;
+    if (!endDate) return isSameDay(date, newRequestDates.startDate);
+    
+    return isWithinInterval(date, { 
+      start: newRequestDates.startDate < endDate ? newRequestDates.startDate : endDate,
+      end: newRequestDates.startDate < endDate ? endDate : newRequestDates.startDate
+    });
+  };
+
+  const isNewRequestDateStart = (date: Date) => newRequestDates.startDate && isSameDay(date, newRequestDates.startDate);
+  const isNewRequestDateEnd = (date: Date) => newRequestDates.endDate && isSameDay(date, newRequestDates.endDate);
+
+  const goToNewRequestPreviousMonth = () => {
+    setNewRequestCalendarDate(new Date(newRequestCalendarDate.getFullYear(), newRequestCalendarDate.getMonth() - 1, 1));
+  };
+
+  const goToNewRequestNextMonth = () => {
+    setNewRequestCalendarDate(new Date(newRequestCalendarDate.getFullYear(), newRequestCalendarDate.getMonth() + 1, 1));
+  };
+
+  const generateNewRequestCalendarDays = () => {
+    const today = new Date();
+    const currentMonth = newRequestCalendarDate.getMonth();
+    const currentYear = newRequestCalendarDate.getFullYear();
+    
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+    const startDay = (firstDayOfMonth.getDay() + 6) % 7; // Monday = 0
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    
+    const days: (Date | null)[] = [];
+    
+    for (let i = 0; i < startDay; i++) {
+      days.push(null);
+    }
+    
+    for (let i = 1; i <= daysInMonth; i++) {
+      const date = new Date(currentYear, currentMonth, i);
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      
+      if (date > yesterday) {
+        days.push(date);
+      } else {
+        days.push(null);
+      }
+    }
+    
+    return days;
+  };
+
+  const isSameDay = (date1: Date, date2: Date) => {
+    return date1.getDate() === date2.getDate() && 
+           date1.getMonth() === date2.getMonth() && 
+           date1.getFullYear() === date2.getFullYear();
+  };
 
   // ⚡ REAL-TIME UPDATES: WebSocket listener for instant vacation request notifications
   // This eliminates polling delays - updates appear immediately when employees submit requests
@@ -2265,6 +2348,8 @@ export default function VacationManagement() {
           setNewRequestReason("");
           setNewRequestAbsenceType('vacation');
           setNewRequestAttachment(null);
+          setNewRequestCalendarDate(new Date());
+          setNewRequestHoverDate(null);
         }
       }}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 rounded-2xl">
@@ -2351,28 +2436,101 @@ export default function VacationManagement() {
               </Select>
             </div>
 
-            {/* Date Range Selector */}
-            <div>
-              <Label className="text-sm font-medium text-muted-foreground mb-2 block">
-                Período de ausencia
-              </Label>
-              <DatePickerPeriod
-                startDate={newRequestDates.startDate || undefined}
-                endDate={newRequestDates.endDate || undefined}
-                onStartDateChange={(date) => setNewRequestDates(prev => ({ ...prev, startDate: date || null }))}
-                onEndDateChange={(date) => setNewRequestDates(prev => ({ ...prev, endDate: date || null }))}
-              />
-              
-              {/* Days calculated */}
-              {newRequestDates.startDate && newRequestDates.endDate && (
-                <div className="text-sm text-center mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300">
-                  {calculateDays(
-                    newRequestDates.startDate.toISOString().split('T')[0],
-                    newRequestDates.endDate.toISOString().split('T')[0]
-                  )} días solicitados
+            {/* Calendar - Same as employee */}
+            <div className="bg-muted/30 rounded-xl p-3 border border-border">
+              <div className="flex items-center justify-between mb-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={goToNewRequestPreviousMonth}
+                  disabled={newRequestCalendarDate.getMonth() <= new Date().getMonth() && newRequestCalendarDate.getFullYear() <= new Date().getFullYear()}
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                <div className="text-sm font-medium text-foreground capitalize">
+                  {format(newRequestCalendarDate, 'MMMM yyyy', { locale: es })}
                 </div>
-              )}
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={goToNewRequestNextMonth}
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Days of week header */}
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day) => (
+                  <div key={day} className="text-xs text-muted-foreground text-center py-2 font-medium">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Calendar days */}
+              <div className="grid grid-cols-7 gap-1 min-h-[192px]">
+                {generateNewRequestCalendarDays().map((date, index) => {
+                  if (!date) {
+                    return <div key={`empty-${index}`} className="w-8 h-8"></div>;
+                  }
+                  
+                  const isInRange = isNewRequestDateInRange(date);
+                  const isStart = isNewRequestDateStart(date);
+                  const isEnd = isNewRequestDateEnd(date);
+                  const isToday = isSameDay(date, new Date());
+                  
+                  return (
+                    <button
+                      key={date.toISOString()}
+                      onClick={() => handleNewRequestDateClick(date)}
+                      onMouseEnter={() => newRequestDates.startDate && !newRequestDates.endDate && setNewRequestHoverDate(date)}
+                      onMouseLeave={() => setNewRequestHoverDate(null)}
+                      className={`
+                        w-8 h-8 text-xs rounded-lg transition-all duration-200 relative
+                        ${isInRange 
+                          ? (isStart || isEnd)
+                            ? 'bg-[#007AFF] text-white font-semibold'
+                            : 'bg-blue-100 dark:bg-blue-500/30 text-blue-700 dark:text-blue-200'
+                          : 'text-foreground hover:bg-muted'
+                        }
+                        ${isToday && !isInRange ? 'ring-1 ring-[#007AFF]' : ''}
+                      `}
+                    >
+                      {date.getDate()}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+            
+            {/* Selected range info */}
+            {newRequestDates.startDate && newRequestDates.endDate && (
+              <div className="text-sm text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 font-medium">
+                {format(newRequestDates.startDate, 'd MMM', { locale: es })} - {format(newRequestDates.endDate, 'd MMM', { locale: es })}
+                <span className="mx-2">•</span>
+                {calculateDays(
+                  newRequestDates.startDate.toISOString().split('T')[0],
+                  newRequestDates.endDate.toISOString().split('T')[0]
+                )} días
+                {isNewRequestFixedDuration && selectedNewRequestPolicy?.maxDays && (
+                  <span className="block text-xs mt-1 text-muted-foreground">
+                    (Duración fija según convenio: {selectedNewRequestPolicy.maxDays} días)
+                  </span>
+                )}
+              </div>
+            )}
+            
+            {/* Instruction for fixed duration */}
+            {isNewRequestFixedDuration && !newRequestDates.startDate && (
+              <div className="text-xs text-center text-muted-foreground">
+                Selecciona la fecha de inicio. Los {selectedNewRequestPolicy?.maxDays} días se calcularán automáticamente.
+              </div>
+            )}
 
             {/* Description textarea */}
             <div>
@@ -2460,6 +2618,8 @@ export default function VacationManagement() {
                   setNewRequestReason("");
                   setNewRequestAbsenceType('vacation');
                   setNewRequestAttachment(null);
+                  setNewRequestCalendarDate(new Date());
+                  setNewRequestHoverDate(null);
                 }}
                 className="flex-1"
               >
