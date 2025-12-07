@@ -4976,7 +4976,8 @@ Responde directamente a este email para contactar con la persona.
               employeeId: req.user!.id,
               employeeName: user.fullName,
               startDate: request.startDate,
-              endDate: request.endDate
+              endDate: request.endDate,
+              absenceType: absenceType
             }
           };
           console.log(`📢 Broadcasting vacation request:`, JSON.stringify(broadcastMessage));

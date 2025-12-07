@@ -81,13 +81,30 @@ export function AdminWebSocketNotifications() {
           }
 
           if (message.type === 'vacation_request_created' && message.data) {
-            const { employeeName, startDate, endDate } = message.data;
+            const { employeeName, startDate, endDate, absenceType } = message.data;
             const periodText = startDate && endDate ? ` ${formatVacationPeriod(startDate, endDate)}` : '';
+            
+            const ABSENCE_TYPE_LABELS: Record<string, string> = {
+              vacation: 'vacaciones',
+              maternity_paternity: 'baja de maternidad/paternidad',
+              marriage: 'permiso por matrimonio',
+              bereavement: 'permiso por fallecimiento',
+              moving: 'permiso por mudanza',
+              medical_appointment: 'cita médica',
+              public_duty: 'deber público',
+              training: 'formación',
+              temporary_disability: 'baja médica',
+              personal_leave: 'asuntos propios',
+            };
+            
+            const absenceLabel = ABSENCE_TYPE_LABELS[absenceType || 'vacation'] || 'ausencia';
+            const isVacation = !absenceType || absenceType === 'vacation';
+            
             toast({
-              title: "📋 Nueva solicitud de vacaciones",
+              title: isVacation ? "🏖️ Nueva solicitud de vacaciones" : "📋 Nueva solicitud de ausencia",
               description: employeeName 
-                ? `${employeeName} ha solicitado vacaciones${periodText}`
-                : "Se ha recibido una nueva solicitud de vacaciones",
+                ? `${employeeName} ha solicitado ${absenceLabel}${periodText}`
+                : `Se ha recibido una nueva solicitud de ${absenceLabel}`,
               duration: 8000
             });
             queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
