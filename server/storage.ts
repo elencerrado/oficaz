@@ -1061,6 +1061,8 @@ export class DrizzleStorage implements IStorage {
       reviewedBy: schema.vacationRequests.reviewedBy,
       reviewedAt: schema.vacationRequests.reviewedAt,
       createdAt: schema.vacationRequests.createdAt,
+      absenceType: schema.vacationRequests.absenceType,
+      attachmentPath: schema.vacationRequests.attachmentPath,
       // User information
       userFullName: schema.users.fullName,
       userEmail: schema.users.companyEmail
@@ -1083,6 +1085,8 @@ export class DrizzleStorage implements IStorage {
       approvedDate: request.reviewedAt,
       createdAt: request.createdAt,
       updatedAt: request.createdAt,
+      absenceType: request.absenceType || 'vacation',
+      attachmentPath: request.attachmentPath,
       user: {
         fullName: request.userFullName,
         email: request.userEmail
