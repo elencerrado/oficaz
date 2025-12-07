@@ -655,7 +655,7 @@ export default function VacationRequests() {
                     <SelectSeparator />
                     <SelectGroup>
                       <SelectLabel className="text-gray-500 dark:text-white/50">Permisos retribuidos</SelectLabel>
-                      {absencePolicies.filter(p => p.absenceType !== 'vacation' && p.isActive).map(policy => {
+                      {absencePolicies.filter(p => p.absenceType !== 'vacation' && p.absenceType !== 'incapacidad_temporal' && p.isActive).map(policy => {
                         const IconComponent = ABSENCE_TYPE_ICONS[policy.absenceType] || Calendar;
                         return (
                           <SelectItem 
@@ -671,6 +671,25 @@ export default function VacationRequests() {
                                   ({policy.maxDays}d)
                                 </span>
                               )}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectGroup>
+                    <SelectSeparator />
+                    <SelectGroup>
+                      <SelectLabel className="text-gray-500 dark:text-white/50">Baja médica</SelectLabel>
+                      {absencePolicies.filter(p => p.absenceType === 'incapacidad_temporal' && p.isActive).map(policy => {
+                        const IconComponent = ABSENCE_TYPE_ICONS[policy.absenceType] || Calendar;
+                        return (
+                          <SelectItem 
+                            key={policy.absenceType} 
+                            value={policy.absenceType}
+                            className="text-gray-900 dark:text-white"
+                          >
+                            <div className="flex items-center gap-2">
+                              <IconComponent className="w-4 h-4 text-red-500" />
+                              <span>{policy.name}</span>
                             </div>
                           </SelectItem>
                         );
