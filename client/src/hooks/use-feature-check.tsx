@@ -26,7 +26,7 @@ const EMPLOYEE_ROUTES = [
   '/recordatorios',
   '/mensajes',
   '/cuadrante',
-  '/vacaciones',
+  '/ausencias',
   '/horas',
   '/partes-trabajo'
 ];

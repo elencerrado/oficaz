@@ -638,7 +638,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/:companyAlias/vacaciones">
+      <Route path="/:companyAlias/ausencias">
         <ProtectedRoute>
           <ManagerFeatureGate feature="vacation">
             <AppLayout>

@@ -1050,7 +1050,7 @@ export default function AdminDashboard() {
 
                   {hasAccess('vacation') && pendingVacations.length > 0 && (
                     <button
-                      onClick={() => setLocation('/test/vacaciones?filter=pending')}
+                      onClick={() => setLocation('/test/ausencias?filter=pending')}
                       className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
@@ -1368,7 +1368,7 @@ export default function AdminDashboard() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => setLocation('/test/vacaciones')}
+                      onClick={() => setLocation('/test/ausencias')}
                       className="text-xs text-blue-600 hover:text-blue-700"
                     >
                       ver más
@@ -1394,21 +1394,21 @@ export default function AdminDashboard() {
                         {canManageRequest(request) && (
                           <div className="flex gap-1 flex-shrink-0">
                             <button
-                              onClick={() => setLocation(`/test/vacaciones?requestId=${request.id}&action=approve`)}
+                              onClick={() => setLocation(`/test/ausencias?requestId=${request.id}&action=approve`)}
                               className="p-1.5 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
                               title="Aprobar solicitud"
                             >
                               <Check className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => setLocation(`/test/vacaciones?requestId=${request.id}&action=edit`)}
+                              onClick={() => setLocation(`/test/ausencias?requestId=${request.id}&action=edit`)}
                               className="p-1.5 rounded text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                               title="Modificar solicitud"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => setLocation(`/test/vacaciones?requestId=${request.id}&action=deny`)}
+                              onClick={() => setLocation(`/test/ausencias?requestId=${request.id}&action=deny`)}
                               className="p-1.5 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                               title="Denegar solicitud"
                             >

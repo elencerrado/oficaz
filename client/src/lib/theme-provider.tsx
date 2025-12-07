@@ -85,7 +85,7 @@ const isAdminRoute = () => {
     '/fichajes',
     '/misfichajes',
     '/horas',
-    '/vacaciones',
+    '/ausencias',
     '/documentos',
     '/mensajes',
     '/cuadrante',
@@ -122,7 +122,7 @@ const isAdminRoute = () => {
     '/oficaz/inicio',
     '/oficaz/fichajes',
     '/oficaz/horas',
-    '/oficaz/vacaciones',
+    '/oficaz/ausencias',
     '/oficaz/documentos',
     '/oficaz/mensajes',
     '/oficaz/cuadrante',
@@ -132,7 +132,7 @@ const isAdminRoute = () => {
   
   // Also check for company alias patterns like /companyName/recordatorios, /companyName/empleados
   // Support both Spanish and English route names
-  const hasCompanyAliasAdminRoute = /^\/[^\/]+\/(recordatorios|empleados|inicio|fichajes|misfichajes|horas|vacaciones|documentos|documents|mensajes|messages|cuadrante|configuracion|usuario|settings|profile|reminders|employees|time-tracking|vacation-requests|vacation-management|admin-documents|employee-dashboard|admin-dashboard|partes-trabajo|work-reports|dispositivos|control-tiempo|schedules|addon-store|tienda|inventario|inventory)/.test(path);
+  const hasCompanyAliasAdminRoute = /^\/[^\/]+\/(recordatorios|empleados|inicio|fichajes|misfichajes|horas|ausencias|documentos|documents|mensajes|messages|cuadrante|configuracion|usuario|settings|profile|reminders|employees|time-tracking|vacation-requests|vacation-management|admin-documents|employee-dashboard|admin-dashboard|partes-trabajo|work-reports|dispositivos|control-tiempo|schedules|addon-store|tienda|inventario|inventory)/.test(path);
   
   return adminRoutes.some(route => path.startsWith(route)) || hasCompanyAliasAdminRoute;
 };

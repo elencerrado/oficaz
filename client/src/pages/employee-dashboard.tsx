@@ -1038,8 +1038,8 @@ export default function EmployeeDashboard() {
     },
     { 
       icon: Calendar, 
-      title: 'Vacaciones', 
-      route: `/${companyAlias}/vacaciones`,
+      title: 'Ausencias', 
+      route: `/${companyAlias}/ausencias`,
       notification: hasVacationUpdates,
       notificationType: hasVacationUpdates ? (localStorage.getItem('vacationNotificationType') || 'red') : 'red',
       feature: 'vacation' as const
