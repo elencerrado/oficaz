@@ -2547,13 +2547,14 @@ export default function TimeTracking() {
               );
             })}
             
-            {/* Descanso activo */}
+            {/* Descanso activo - siempre a la derecha de la barra */}
             {activeBreakPeriod && (
               <div
-                className="absolute text-xs text-orange-600 font-medium transform -translate-x-1/2 flex items-center gap-1 animate-pulse"
+                className="absolute text-xs text-orange-600 font-medium flex items-center gap-1 animate-pulse"
                 style={{ 
-                  left: `${Math.min((((activeBreakStart!.getTime() - sessionStart.getTime()) / sessionElapsedMs) * progressPercentage), progressPercentage - 5)}%`,
-                  top: '0px'
+                  left: `${progressPercentage}%`,
+                  top: '0px',
+                  marginLeft: '4px'
                 }}
               >
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
