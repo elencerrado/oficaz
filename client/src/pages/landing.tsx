@@ -2086,208 +2086,229 @@ export default function Landing() {
           </div>
         </div>
       </section>
-      {/* Pricing Section - Compact, fits in viewport */}
+      {/* Pricing Section - Horizontal Carousel */}
       <section id="precios" className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-16 flex items-center">
-        <div className="max-w-5xl mx-auto px-6 w-full">
+        <div className="w-full">
           {/* Header */}
-          <ScrollReveal className="text-center mb-10 lg:mb-12">
+          <ScrollReveal className="text-center mb-8 px-6">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
               Sin planes. Paga solo lo que necesitas.
             </h2>
             <p className="text-base md:text-lg text-gray-500">
-              Configura tu suscripción a medida
+              Desliza y selecciona las funciones que necesitas
             </p>
           </ScrollReveal>
           
-          {/* Calculator Layout - Two columns, same height */}
-          <ScrollReveal delay={0.1}>
-          <div className="grid lg:grid-cols-2 gap-6 items-stretch">
-            {/* Left: Price Summary */}
-            <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 flex flex-col">
-              <div className="text-center">
-                <p className="text-gray-500 text-sm mb-1">Tu plan mensual</p>
-                <div className="flex items-baseline justify-center gap-1 mb-4">
-                  <span className="text-6xl md:text-7xl font-black text-gray-900">€{monthlyTotal}</span>
-                  <span className="text-lg text-gray-400">/mes</span>
-                </div>
-                
-                {/* Dynamic summary - scrollable if many items */}
-                <div className="max-h-28 overflow-y-auto mb-4 px-2">
-                  {/* User counts first */}
-                  <div className="flex flex-wrap justify-center gap-1.5 mb-2">
-                    {userCounts.employees > 0 && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                        {userCounts.employees} Empleado{userCounts.employees !== 1 ? 's' : ''}
-                      </span>
-                    )}
-                    {userCounts.managers > 0 && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                        {userCounts.managers} Manager{userCounts.managers !== 1 ? 's' : ''}
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                      {userCounts.admins} Admin{userCounts.admins !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  {/* Selected addons below */}
-                  <div className="flex flex-wrap justify-center gap-1.5">
-                    {addons.filter(a => selectedAddons.has(a.key) || a.isLocked).map((addon) => {
-                      const IconComponent = addon.icon;
-                      return (
-                        <span 
-                          key={addon.key}
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                            addon.isLocked 
-                              ? 'bg-green-100 text-green-700' 
-                              : 'bg-blue-100 text-blue-700'
-                          }`}
-                        >
-                          <IconComponent className="w-3 h-3" />
-                          {addon.name}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
-                
-                {/* CTA */}
-                {registrationSettings?.publicRegistrationEnabled ? (
-                  <Link href="/request-code">
-                    <Button className="w-full py-5 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]">
-                      Prueba 7 días gratis
-                    </Button>
-                  </Link>
-                ) : (
-                  <Button 
-                    onClick={() => setIsContactFormOpen(true)}
-                    className="w-full py-5 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]"
-                  >
-                    Contactar
-                  </Button>
-                )}
-                <p className="text-center text-xs text-gray-400 mt-2">Sin compromiso • Cancela cuando quieras</p>
-              </div>
-            </div>
-            
-            {/* Right: Feature Selector */}
-            <div className="space-y-4">
-              {/* Functions - scrollable */}
-              <div className="bg-white rounded-xl p-4 border border-gray-100">
-                <h3 className="font-semibold text-gray-900 mb-3 text-sm">Funciones</h3>
-                <div className="scrollbar-visible max-h-28 pr-1">
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {addons.map((addon) => {
-                      const isSelected = selectedAddons.has(addon.key);
-                      const IconComponent = addon.icon;
-                      const isLocked = addon.isLocked;
-                      return (
+          {/* Addon Carousel - Full width */}
+          <ScrollReveal delay={0.1} className="mb-8">
+            <div className="relative px-4 md:px-12">
+              <Carousel 
+                className="w-full"
+                opts={{ align: 'start', loop: false, dragFree: true }}
+              >
+                <CarouselContent className="-ml-3">
+                  {addons.map((addon) => {
+                    const isSelected = selectedAddons.has(addon.key);
+                    const IconComponent = addon.icon;
+                    const isLocked = addon.isLocked;
+                    return (
+                      <CarouselItem key={addon.key} className="pl-3 basis-[75%] sm:basis-[45%] md:basis-[32%] lg:basis-[24%]">
                         <button
-                          key={addon.key}
                           onClick={() => toggleAddon(addon.key)}
                           disabled={isLocked}
-                          className={`group/card relative flex flex-col p-2.5 rounded-lg text-left transition-all duration-300 ${
+                          className={`w-full h-full min-h-[160px] p-4 rounded-2xl text-left transition-all duration-300 border-2 flex flex-col ${
                             isLocked
-                              ? 'bg-green-500 text-white cursor-default'
+                              ? 'bg-green-50 border-green-300 hover:border-green-400'
                               : isSelected 
-                                ? 'bg-[#007AFF] text-white' 
-                                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                          } hover:z-10 hover:shadow-lg`}
+                                ? 'bg-[#007AFF] border-[#007AFF] text-white shadow-lg shadow-blue-500/25 scale-[1.02]' 
+                                : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
+                          }`}
                         >
-                          <div className="flex items-center gap-2">
-                            <IconComponent className={`w-4 h-4 flex-shrink-0 ${isSelected || isLocked ? 'text-white' : 'text-gray-400'}`} />
-                            <span className={`text-xs font-medium ${isSelected || isLocked ? 'text-white' : 'text-gray-900'}`}>
-                              {addon.name}
-                            </span>
-                            {isLocked && (
-                              <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded ml-auto">Gratis</span>
+                          {/* Header with icon and badge */}
+                          <div className="flex items-start justify-between mb-3">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                              isLocked ? 'bg-green-500' : isSelected ? 'bg-white/20' : 'bg-gray-100'
+                            }`}>
+                              <IconComponent className={`w-5 h-5 ${
+                                isLocked ? 'text-white' : isSelected ? 'text-white' : 'text-gray-600'
+                              }`} />
+                            </div>
+                            {isLocked ? (
+                              <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full font-medium">Gratis</span>
+                            ) : isSelected ? (
+                              <CheckCircle className="w-6 h-6 text-white" />
+                            ) : (
+                              <span className="text-sm font-bold text-[#007AFF]">€{addon.price}/mes</span>
                             )}
                           </div>
-                          <div className={`overflow-hidden transition-all duration-300 max-h-0 group-hover/card:max-h-24 group-hover/card:mt-2 ${
-                            isSelected || isLocked ? 'text-white/90' : 'text-gray-500'
+                          
+                          {/* Name */}
+                          <h4 className={`font-semibold text-base mb-2 ${
+                            isLocked ? 'text-green-800' : isSelected ? 'text-white' : 'text-gray-900'
                           }`}>
-                            <p className="text-[10px] leading-relaxed">
-                              {addon.description}
-                            </p>
+                            {addon.name}
+                          </h4>
+                          
+                          {/* Description */}
+                          <p className={`text-sm leading-relaxed flex-1 ${
+                            isLocked ? 'text-green-700' : isSelected ? 'text-white/90' : 'text-gray-500'
+                          }`}>
+                            {addon.description}
+                          </p>
+                          
+                          {/* Select indicator */}
+                          <div className={`mt-3 text-xs font-medium ${
+                            isLocked ? 'text-green-600' : isSelected ? 'text-white/80' : 'text-[#007AFF]'
+                          }`}>
+                            {isLocked ? '✓ Incluido' : isSelected ? '✓ Seleccionado' : 'Toca para añadir'}
                           </div>
                         </button>
-                      );
-                    })}
+                      </CarouselItem>
+                    );
+                  })}
+                </CarouselContent>
+                <CarouselPrevious className="hidden md:flex -left-4 bg-white shadow-lg border-gray-200 hover:bg-gray-50" />
+                <CarouselNext className="hidden md:flex -right-4 bg-white shadow-lg border-gray-200 hover:bg-gray-50" />
+              </Carousel>
+              
+              {/* Scroll hint for mobile */}
+              <p className="text-center text-xs text-gray-400 mt-4 md:hidden">← Desliza para ver más →</p>
+            </div>
+          </ScrollReveal>
+          
+          {/* Bottom: Price Summary + Users */}
+          <ScrollReveal delay={0.2}>
+            <div className="max-w-4xl mx-auto px-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Price Summary */}
+                <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
+                  <div className="text-center">
+                    <p className="text-gray-500 text-sm mb-1">Tu plan mensual</p>
+                    <div className="flex items-baseline justify-center gap-1 mb-4">
+                      <span className="text-5xl md:text-6xl font-black text-gray-900">€{monthlyTotal}</span>
+                      <span className="text-lg text-gray-400">/mes</span>
+                    </div>
+                    
+                    {/* Selected summary */}
+                    <div className="flex flex-wrap justify-center gap-1.5 mb-4">
+                      {addons.filter(a => selectedAddons.has(a.key) || a.isLocked).map((addon) => {
+                        const IconComponent = addon.icon;
+                        return (
+                          <span 
+                            key={addon.key}
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                              addon.isLocked 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-blue-100 text-blue-700'
+                            }`}
+                          >
+                            <IconComponent className="w-3 h-3" />
+                            {addon.name}
+                          </span>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* CTA */}
+                    {registrationSettings?.publicRegistrationEnabled ? (
+                      <Link href="/request-code">
+                        <Button className="w-full py-5 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]">
+                          Prueba 7 días gratis
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button 
+                        onClick={() => setIsContactFormOpen(true)}
+                        className="w-full py-5 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]"
+                      >
+                        Contactar
+                      </Button>
+                    )}
+                    <p className="text-center text-xs text-gray-400 mt-2">Sin compromiso • Cancela cuando quieras</p>
                   </div>
                 </div>
-              </div>
-              
-              {/* Users */}
-              <div className="bg-white rounded-xl p-4 border border-gray-100">
-                <h3 className="font-semibold text-gray-900 mb-3 text-sm">Usuarios</h3>
-                <div className="space-y-3">
-                  {/* Employees */}
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium text-gray-900 text-sm">Empleados</p>
-                    <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => setUserCounts(prev => ({ ...prev, employees: Math.max(0, prev.employees - 1) }))}
-                        className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-sm"
-                      >
-                        -
-                      </button>
-                      <span className="w-6 text-center font-semibold text-gray-900 text-sm">{userCounts.employees}</span>
-                      <button 
-                        onClick={() => setUserCounts(prev => ({ ...prev, employees: prev.employees + 1 }))}
-                        className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
-                      >
-                        +
-                      </button>
+                
+                {/* Users */}
+                <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
+                  <h3 className="font-semibold text-gray-900 mb-4 text-center">Usuarios adicionales</h3>
+                  <div className="space-y-4">
+                    {/* Employees */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900">Empleados</p>
+                        <p className="text-xs text-gray-500">+€2/usuario</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, employees: Math.max(0, prev.employees - 1) }))}
+                          className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold"
+                        >
+                          -
+                        </button>
+                        <span className="w-8 text-center font-semibold text-gray-900 text-lg">{userCounts.employees}</span>
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, employees: prev.employees + 1 }))}
+                          className="w-8 h-8 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold"
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* Managers */}
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium text-gray-900 text-sm">Managers</p>
-                    <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => setUserCounts(prev => ({ ...prev, managers: Math.max(0, prev.managers - 1) }))}
-                        className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-sm"
-                      >
-                        -
-                      </button>
-                      <span className="w-6 text-center font-semibold text-gray-900 text-sm">{userCounts.managers}</span>
-                      <button 
-                        onClick={() => setUserCounts(prev => ({ ...prev, managers: prev.managers + 1 }))}
-                        className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
-                      >
-                        +
-                      </button>
+                    
+                    {/* Managers */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900">Managers</p>
+                        <p className="text-xs text-gray-500">+€4/usuario</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, managers: Math.max(0, prev.managers - 1) }))}
+                          className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold"
+                        >
+                          -
+                        </button>
+                        <span className="w-8 text-center font-semibold text-gray-900 text-lg">{userCounts.managers}</span>
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, managers: prev.managers + 1 }))}
+                          className="w-8 h-8 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold"
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* Admins - minimum 1 required */}
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium text-gray-900 text-sm">Admins</p>
-                    <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => setUserCounts(prev => ({ ...prev, admins: Math.max(1, prev.admins - 1) }))}
-                        disabled={userCounts.admins <= 1}
-                        className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm ${
-                          userCounts.admins <= 1 
-                            ? 'bg-gray-50 text-gray-300 cursor-not-allowed' 
-                            : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
-                        }`}
-                      >
-                        -
-                      </button>
-                      <span className="w-6 text-center font-semibold text-gray-900 text-sm">{userCounts.admins}</span>
-                      <button 
-                        onClick={() => setUserCounts(prev => ({ ...prev, admins: prev.admins + 1 }))}
-                        className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
-                      >
-                        +
-                      </button>
+                    
+                    {/* Admins */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900">Admins</p>
+                        <p className="text-xs text-gray-500">+€6/usuario (mín. 1)</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, admins: Math.max(1, prev.admins - 1) }))}
+                          disabled={userCounts.admins <= 1}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                            userCounts.admins <= 1 
+                              ? 'bg-gray-50 text-gray-300 cursor-not-allowed' 
+                              : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                          }`}
+                        >
+                          -
+                        </button>
+                        <span className="w-8 text-center font-semibold text-gray-900 text-lg">{userCounts.admins}</span>
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, admins: prev.admins + 1 }))}
+                          className="w-8 h-8 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold"
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
           </ScrollReveal>
         </div>
       </section>
