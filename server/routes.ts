@@ -4874,40 +4874,55 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  // Vacation request routes
+  // Vacation/Absence request routes
   app.post('/api/vacation-requests', authenticateToken, async (req: AuthRequest, res) => {
     try {
-      console.log('Vacation request body:', req.body);
+      console.log('Absence request body:', req.body);
       console.log('User ID:', req.user!.id);
       
       // Determine status based on user role
       // Admin requests are auto-approved, manager/employee requests are pending
       const status = req.user!.role === 'admin' ? 'approved' : 'pending';
       
+      // Get absence type (default to 'vacation' for backwards compatibility)
+      const absenceType = req.body.absenceType || 'vacation';
+      
       const data = insertVacationRequestSchema.parse({
         ...req.body,
         userId: req.user!.id,
         startDate: new Date(req.body.startDate),
         endDate: new Date(req.body.endDate),
+        absenceType: absenceType,
+        attachmentPath: req.body.attachmentPath || null,
         status: status, // Set status based on role
       });
 
       console.log('Parsed data:', data);
       
-      // Validate vacation days availability
+      // Validate vacation days availability ONLY for 'vacation' type
       const user = await storage.getUser(req.user!.id);
       if (!user) {
         return res.status(404).json({ message: 'Usuario no encontrado' });
       }
 
-      const requestedDays = Math.ceil((data.endDate.getTime() - data.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-      const totalDays = parseFloat(user.totalVacationDays || '22');
-      const usedDays = parseFloat(user.usedVacationDays || '0');
-      const availableDays = totalDays - usedDays;
+      // Only check vacation balance for vacation type absences
+      if (absenceType === 'vacation') {
+        const requestedDays = Math.ceil((data.endDate.getTime() - data.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        const totalDays = parseFloat(user.totalVacationDays || '22');
+        const usedDays = parseFloat(user.usedVacationDays || '0');
+        const availableDays = totalDays - usedDays;
 
-      if (requestedDays > availableDays) {
-        return res.status(400).json({ 
-          message: `Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días disponibles.` 
+        if (requestedDays > availableDays) {
+          return res.status(400).json({ 
+            message: `Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días disponibles.` 
+          });
+        }
+      }
+
+      // Validate attachment requirement for public_duty type
+      if (absenceType === 'public_duty' && !req.body.attachmentPath) {
+        return res.status(400).json({
+          message: 'El justificante es obligatorio para este tipo de ausencia.'
         });
       }
       
@@ -5045,6 +5060,96 @@ Responde directamente a este email para contactar con la persona.
       res.json(request);
     } catch (error: any) {
       console.error('Error updating vacation request:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ================== ABSENCE POLICIES ROUTES ==================
+  
+  // Get absence policies for company (initialize defaults if none exist)
+  app.get('/api/absence-policies', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      // Initialize default policies if none exist
+      await storage.initializeDefaultAbsencePolicies(req.user!.companyId);
+      
+      const policies = await storage.getAbsencePoliciesByCompany(req.user!.companyId);
+      res.json(policies);
+    } catch (error: any) {
+      console.error('Error fetching absence policies:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Update an absence policy (admin only)
+  app.patch('/api/absence-policies/:id', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { maxDays, requiresAttachment, isActive, name } = req.body;
+
+      // Verify policy belongs to user's company
+      const policy = await storage.getAbsencePolicy(id);
+      if (!policy) {
+        return res.status(404).json({ message: 'Política no encontrada' });
+      }
+      if (policy.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'No tienes permisos para modificar esta política' });
+      }
+
+      const updateData: any = {};
+      if (maxDays !== undefined) updateData.maxDays = maxDays;
+      if (requiresAttachment !== undefined) updateData.requiresAttachment = requiresAttachment;
+      if (isActive !== undefined) updateData.isActive = isActive;
+      if (name !== undefined) updateData.name = name;
+
+      const updatedPolicy = await storage.updateAbsencePolicy(id, updateData);
+      res.json(updatedPolicy);
+    } catch (error: any) {
+      console.error('Error updating absence policy:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Upload attachment for absence request
+  app.post('/api/absence-attachments', authenticateToken, memoryUpload.single('file'), async (req: AuthRequest, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No se ha proporcionado ningún archivo' });
+      }
+
+      // Upload to object storage
+      const timestamp = Date.now();
+      const sanitizedName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const fileName = `absence-attachments/${req.user!.companyId}/${req.user!.id}/${timestamp}_${sanitizedName}`;
+      
+      // Use the object storage bucket
+      const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+      if (!bucketId) {
+        return res.status(500).json({ message: 'Object storage not configured' });
+      }
+
+      const { Storage } = await import('@google-cloud/storage');
+      const storage = new Storage();
+      const bucket = storage.bucket(bucketId);
+      const file = bucket.file(fileName);
+      
+      await file.save(req.file.buffer, {
+        metadata: {
+          contentType: req.file.mimetype,
+        },
+      });
+
+      // Make file publicly accessible
+      await file.makePublic();
+      
+      const publicUrl = `https://storage.googleapis.com/${bucketId}/${fileName}`;
+      
+      res.json({ 
+        path: fileName,
+        url: publicUrl,
+        originalName: req.file.originalname
+      });
+    } catch (error: any) {
+      console.error('Error uploading absence attachment:', error);
       res.status(500).json({ message: error.message });
     }
   });
