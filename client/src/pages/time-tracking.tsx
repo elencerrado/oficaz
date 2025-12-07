@@ -3579,30 +3579,31 @@ export default function TimeTracking() {
                         key={rowKey} 
                         className={`bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600${showSessionsWaveLoading ? ` row-wave-loading row-wave-${index % 15}` : ''}`}
                       >
-                        {/* Card Header - clickable to expand */}
+                        {/* Card Header - clickable to expand - GRID LAYOUT for column alignment */}
                         <div 
                           className={cn(
-                            "flex items-center gap-4 px-4 py-2.5 cursor-pointer select-none transition-colors",
+                            "grid items-center px-4 py-2.5 cursor-pointer select-none transition-colors gap-3",
                             isExpanded && "bg-gray-50 dark:bg-gray-900/50"
                           )}
+                          style={{ gridTemplateColumns: '20px 200px 90px 1fr 60px 36px' }}
                           onClick={toggleExpand}
                         >
-                          {/* Chevron */}
+                          {/* Col 1: Chevron */}
                           <ChevronDown className={cn(
-                            "w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0",
+                            "w-4 h-4 text-gray-400 transition-transform duration-200",
                             isExpanded && "transform rotate-180"
                           )} />
                           
-                          {/* Avatar + Name */}
-                          <div className="flex items-center gap-2 flex-shrink-0">
+                          {/* Col 2: Avatar + Name (fixed width) */}
+                          <div className="flex items-center gap-2 min-w-0">
                             <UserAvatar 
                               fullName={dayData.userName || 'Usuario Desconocido'} 
                               size="sm"
                               userId={dayData.userId}
                               profilePicture={dayData.profilePicture}
                             />
-                            <div className="flex items-center gap-1">
-                              <span className="font-medium text-gray-900 dark:text-gray-100 text-sm whitespace-nowrap">
+                            <div className="flex items-center gap-1 min-w-0">
+                              <span className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
                                 {dayData.userName || 'Usuario Desconocido'}
                               </span>
                               {dayData.hasAutoCompleted && (
@@ -3613,23 +3614,23 @@ export default function TimeTracking() {
                             </div>
                           </div>
                           
-                          {/* Date */}
-                          <div className="text-gray-600 dark:text-gray-400 text-sm flex-shrink-0">
+                          {/* Col 3: Date (fixed width) */}
+                          <div className="text-gray-600 dark:text-gray-400 text-sm">
                             {format(new Date(dayData.date), 'dd/MM/yyyy')}
                           </div>
                           
-                          {/* Timeline Bar - flexible, sacrifices width */}
-                          <div className="flex-1 min-w-[100px]">
+                          {/* Col 4: Timeline Bar (flexible) */}
+                          <div className="w-full">
                             <DailyTimelineBar dayData={dayData} />
                           </div>
                           
-                          {/* Total Hours */}
-                          <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm w-[60px] text-right flex-shrink-0">
+                          {/* Col 5: Total Hours (fixed width) */}
+                          <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm text-right">
                             {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
                           </div>
                           
-                          {/* Action Button */}
-                          <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                          {/* Col 6: Action Button (fixed width) */}
+                          <div className="justify-self-end" onClick={(e) => e.stopPropagation()}>
                             {(() => {
                               const incompleteSession = dayData.sessions.find((s: any) => s.status === 'incomplete');
                               const activeSession = dayData.sessions.find((s: any) => !s.clockOut);
