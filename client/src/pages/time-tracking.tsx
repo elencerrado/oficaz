@@ -320,7 +320,7 @@ export default function TimeTracking() {
   const summaryMonthEnd = useMemo(() => endOfMonth(summaryWeek), [summaryWeek]);
   
   // Monthly stats query
-  const { data: monthlyStats = [] } = useQuery<{ employeeId: number; totalHours: number; totalBreakHours: number; sessionCount: number }[]>({
+  const { data: monthlyStatsRaw = {} } = useQuery<Record<string, { employeeId: number; totalHours: number; totalBreakHours: number; sessionCount: number }>>({
     queryKey: ['/api/work-sessions/summary-stats', { startDate: format(summaryMonthStart, 'yyyy-MM-dd'), endDate: format(summaryMonthEnd, 'yyyy-MM-dd') }],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager') && activeTab === 'summary',
     staleTime: 60 * 1000, // 1 minute - stats don't need to be super fresh
@@ -330,12 +330,16 @@ export default function TimeTracking() {
   // Weekly stats query (for the selected week within the month)
   const weekEnd = useMemo(() => endOfWeek(summaryWeek, { weekStartsOn: 1 }), [summaryWeek]);
   
-  const { data: weeklyStats = [] } = useQuery<{ employeeId: number; totalHours: number; totalBreakHours: number; sessionCount: number }[]>({
+  const { data: weeklyStatsRaw = {} } = useQuery<Record<string, { employeeId: number; totalHours: number; totalBreakHours: number; sessionCount: number }>>({
     queryKey: ['/api/work-sessions/summary-stats', { startDate: format(summaryWeek, 'yyyy-MM-dd'), endDate: format(weekEnd, 'yyyy-MM-dd') }],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager') && activeTab === 'summary',
     staleTime: 60 * 1000, // 1 minute
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
+  
+  // Convert object response to arrays (API returns object with numeric keys)
+  const monthlyStats = useMemo(() => Array.isArray(monthlyStatsRaw) ? monthlyStatsRaw : Object.values(monthlyStatsRaw || {}), [monthlyStatsRaw]);
+  const weeklyStats = useMemo(() => Array.isArray(weeklyStatsRaw) ? weeklyStatsRaw : Object.values(weeklyStatsRaw || {}), [weeklyStatsRaw]);
   
   // Create lookup maps for fast access
   const monthlyStatsMap = useMemo(() => new Map(monthlyStats.map(s => [s.employeeId, s])), [monthlyStats]);
