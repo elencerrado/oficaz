@@ -775,7 +775,7 @@ export default function VacationRequests() {
               {canRequestDays > 0 && (
                 <div className={`
                   text-sm p-3 rounded-lg text-center font-medium
-                  ${exceedsAvailable 
+                  ${selectedAbsenceType === 'vacation' && exceedsAvailable 
                     ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-500/30' 
                     : 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-500/30'
                   }
@@ -783,11 +783,15 @@ export default function VacationRequests() {
                   {selectedStartDate && selectedEndDate ? (
                     <>
                       {format(selectedStartDate, 'd MMM', { locale: es })} - {format(selectedEndDate, 'd MMM', { locale: es })}
-                      <br />
-                      {exceedsAvailable 
-                        ? `Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`
-                        : `${canRequestDays} días solicitados`
-                      }
+                      {selectedAbsenceType === 'vacation' && (
+                        <>
+                          <br />
+                          {exceedsAvailable 
+                            ? `Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`
+                            : `${canRequestDays} días solicitados`
+                          }
+                        </>
+                      )}
                     </>
                   ) : (
                     'Selecciona fecha de inicio y fin'
