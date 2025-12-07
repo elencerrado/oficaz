@@ -345,7 +345,8 @@ export default function VacationRequests() {
         }
 
         const result = await response.json();
-        attachmentPath = result.path;
+        // Use the URL (not path) so it's accessible via the public-objects endpoint
+        attachmentPath = result.url;
         attachmentFileSize = result.fileSize;
         attachmentMimeType = result.mimeType;
         setUploadingAttachment(false);
