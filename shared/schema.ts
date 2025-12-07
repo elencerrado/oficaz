@@ -437,7 +437,7 @@ export const workSessionModificationRequests = pgTable("work_session_modificatio
   companyStatusIdx: index("mod_requests_company_status_idx").on(table.companyId, table.status),
 }));
 
-// Vacation requests table
+// Vacation/Absence requests table
 export const vacationRequests = pgTable("vacation_requests", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
@@ -448,7 +448,23 @@ export const vacationRequests = pgTable("vacation_requests", {
   reviewedBy: integer("reviewed_by").references(() => users.id),
   reviewedAt: timestamp("reviewed_at"),
   adminComment: text("admin_comment"), // Admin's comment when reviewing
+  // New absence type fields
+  absenceType: text("absence_type").notNull().default("vacation"), // vacation, maternity_paternity, marriage, family_death, family_death_travel, family_illness, family_illness_travel, home_relocation, public_duty, temporary_disability
+  attachmentPath: text("attachment_path"), // File path for supporting documents
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Absence policies table - configurable days per absence type per company
+export const absencePolicies = pgTable("absence_policies", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").references(() => companies.id).notNull(),
+  absenceType: text("absence_type").notNull(), // Same values as vacation_requests.absenceType
+  name: text("name").notNull(), // Display name in Spanish
+  maxDays: integer("max_days"), // null = unlimited (for temporary_disability, public_duty)
+  requiresAttachment: boolean("requires_attachment").notNull().default(false),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Documents table
@@ -628,6 +644,12 @@ export const insertVacationRequestSchema = createInsertSchema(vacationRequests).
   createdAt: true,
   reviewedBy: true,
   reviewedAt: true,
+});
+
+export const insertAbsencePolicySchema = createInsertSchema(absencePolicies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const insertDocumentSchema = createInsertSchema(documents).omit({
@@ -864,6 +886,7 @@ export type BreakPeriod = typeof breakPeriods.$inferSelect;
 export type WorkSessionAuditLog = typeof workSessionAuditLog.$inferSelect;
 export type WorkSessionModificationRequest = typeof workSessionModificationRequests.$inferSelect;
 export type VacationRequest = typeof vacationRequests.$inferSelect;
+export type AbsencePolicy = typeof absencePolicies.$inferSelect;
 export type Document = typeof documents.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type SystemNotification = typeof systemNotifications.$inferSelect;
@@ -877,6 +900,7 @@ export type InsertBreakPeriod = z.infer<typeof insertBreakPeriodSchema>;
 export type InsertWorkSessionAuditLog = z.infer<typeof insertWorkSessionAuditLogSchema>;
 export type InsertWorkSessionModificationRequest = z.infer<typeof insertWorkSessionModificationRequestSchema>;
 export type InsertVacationRequest = z.infer<typeof insertVacationRequestSchema>;
+export type InsertAbsencePolicy = z.infer<typeof insertAbsencePolicySchema>;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type InsertSystemNotification = z.infer<typeof insertNotificationSchema>;
