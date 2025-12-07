@@ -477,7 +477,7 @@ export default function VacationRequests() {
       </div>
       {/* Compact Vacation Summary */}
       <div className="px-6 mb-6">
-        <div className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-gray-200 dark:border-white/20">
+        <div className="bg-white dark:bg-white/5 rounded-xl p-6 border border-gray-100 dark:border-white/10">
           {/* Stats grid */}
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="text-center">
