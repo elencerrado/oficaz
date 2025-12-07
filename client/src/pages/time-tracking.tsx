@@ -43,7 +43,8 @@ import {
   LogOut,
   MapPin,
   Coffee,
-  ExternalLink
+  ExternalLink,
+  User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, startOfWeek, addDays, subDays, differenceInMinutes, startOfDay, endOfDay, endOfWeek, startOfMonth, endOfMonth, isToday } from 'date-fns';
