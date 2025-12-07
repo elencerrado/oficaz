@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PageLoading } from '@/components/ui/page-loading';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArrowLeft, CalendarPlus, Calendar, Check, X, Clock, CalendarDays, ChevronLeft, ChevronRight, HelpCircle, MessageCircle, FileText } from 'lucide-react';
+import { ArrowLeft, CalendarPlus, Calendar, Check, X, Clock, CalendarDays, ChevronLeft, ChevronRight, HelpCircle, MessageCircle, FileText, Upload, Paperclip, Baby, Heart, Users, Home, Briefcase, Thermometer, Palmtree } from 'lucide-react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
@@ -20,10 +20,47 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { addDays, isSameDay, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 
+interface AbsencePolicy {
+  id: number;
+  companyId: number;
+  absenceType: string;
+  name: string;
+  maxDays: number | null;
+  requiresAttachment: boolean;
+  isActive: boolean;
+}
+
+const ABSENCE_TYPE_ICONS: Record<string, any> = {
+  vacation: Palmtree,
+  maternity_paternity: Baby,
+  marriage: Heart,
+  family_death: Users,
+  family_death_travel: Users,
+  family_illness: Thermometer,
+  family_illness_travel: Thermometer,
+  home_relocation: Home,
+  public_duty: Briefcase,
+  temporary_disability: Thermometer,
+};
+
+const ABSENCE_TYPE_LABELS: Record<string, string> = {
+  vacation: 'Vacaciones',
+  maternity_paternity: 'Maternidad / Paternidad',
+  marriage: 'Matrimonio',
+  family_death: 'Fallecimiento familiar',
+  family_death_travel: 'Fallecimiento familiar (con desplazamiento)',
+  family_illness: 'Enfermedad grave familiar',
+  family_illness_travel: 'Enfermedad grave familiar (con desplazamiento)',
+  home_relocation: 'Traslado de domicilio',
+  public_duty: 'Deber público',
+  temporary_disability: 'Incapacidad temporal',
+};
+
 export default function VacationRequests() {
-  usePageTitle('Mis Vacaciones');
+  usePageTitle('Mis Ausencias');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
   const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
@@ -31,6 +68,9 @@ export default function VacationRequests() {
   const [reason, setReason] = useState('');
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [selectedAbsenceType, setSelectedAbsenceType] = useState<string>('vacation');
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
 
   const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
@@ -62,8 +102,14 @@ export default function VacationRequests() {
     staleTime: 60000, // ⚡ WebSocket handles vacation_request_* events - cache for 1 min
   });
 
+  const { data: absencePolicies = [] } = useQuery<AbsencePolicy[]>({
+    queryKey: ['/api/absence-policies'],
+    enabled: !!user,
+  });
 
-
+  const selectedPolicy = absencePolicies.find(p => p.absenceType === selectedAbsenceType);
+  const isFixedDurationAbsence = selectedPolicy?.maxDays !== null && selectedAbsenceType !== 'vacation';
+  const requiresAttachment = selectedPolicy?.requiresAttachment ?? false;
 
 
 
@@ -71,7 +117,7 @@ export default function VacationRequests() {
 
 
   const createRequestMutation = useMutation({
-    mutationFn: (data: { startDate: string; endDate: string; reason?: string }) =>
+    mutationFn: (data: { startDate: string; endDate: string; reason?: string; absenceType?: string; attachmentPath?: string }) =>
       apiRequest('POST', '/api/vacation-requests', data),
     onSuccess: () => {
       // Invalidate both employee and admin cache keys
@@ -81,9 +127,13 @@ export default function VacationRequests() {
       setSelectedStartDate(null);
       setSelectedEndDate(null);
       setReason('');
+      setSelectedAbsenceType('vacation');
+      setAttachmentFile(null);
       toast({
         title: '¡Solicitud enviada!',
-        description: 'Tu solicitud de vacaciones ha sido enviada correctamente.',
+        description: selectedAbsenceType === 'vacation' 
+          ? 'Tu solicitud de vacaciones ha sido enviada correctamente.'
+          : 'Tu solicitud de ausencia ha sido enviada correctamente.',
       });
     },
     onError: (error: any) => {
@@ -214,6 +264,15 @@ export default function VacationRequests() {
   const handleDateClick = (date: Date) => {
     setErrorMessage(null); // Clear any previous error
     
+    // For fixed-duration absences, only allow start date selection
+    if (isFixedDurationAbsence && selectedPolicy?.maxDays) {
+      setSelectedStartDate(date);
+      // Auto-calculate end date based on policy maxDays
+      const endDate = addDays(date, selectedPolicy.maxDays - 1);
+      setSelectedEndDate(endDate);
+      return;
+    }
+    
     if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
       // Starting new selection
       setSelectedStartDate(date);
@@ -222,17 +281,21 @@ export default function VacationRequests() {
       // Clicked before start date, make it the new start
       setSelectedStartDate(date);
     } else {
-      // Set end date and check if range is valid
-      const daysBetween = differenceInDays(date, selectedStartDate) + 1;
-      if (daysBetween <= availableDays) {
-        setSelectedEndDate(date);
+      // Set end date and check if range is valid (only for vacation)
+      if (selectedAbsenceType === 'vacation') {
+        const daysBetween = differenceInDays(date, selectedStartDate) + 1;
+        if (daysBetween <= availableDays) {
+          setSelectedEndDate(date);
+        } else {
+          setErrorMessage(`Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`);
+        }
       } else {
-        setErrorMessage(`Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`);
+        setSelectedEndDate(date);
       }
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedStartDate || !selectedEndDate) {
       toast({
         title: 'Error',
@@ -242,16 +305,63 @@ export default function VacationRequests() {
       return;
     }
 
-    if (exceedsAvailable) {
+    // Only check vacation balance for vacation type
+    if (selectedAbsenceType === 'vacation' && exceedsAvailable) {
       setErrorMessage(`Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`);
       return;
     }
 
-    createRequestMutation.mutate({
-      startDate: selectedStartDate.toISOString(),
-      endDate: selectedEndDate.toISOString(),
-      reason: reason || undefined,
-    });
+    // Check if attachment is required but not provided
+    if (requiresAttachment && !attachmentFile) {
+      toast({
+        title: 'Error',
+        description: 'Debes adjuntar un justificante para este tipo de ausencia',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      let attachmentPath: string | undefined;
+
+      // Upload attachment if provided
+      if (attachmentFile) {
+        setUploadingAttachment(true);
+        const formData = new FormData();
+        formData.append('file', attachmentFile);
+        
+        const response = await fetch('/api/absence-attachments', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al subir el archivo');
+        }
+
+        const result = await response.json();
+        attachmentPath = result.path;
+        setUploadingAttachment(false);
+      }
+
+      createRequestMutation.mutate({
+        startDate: selectedStartDate.toISOString(),
+        endDate: selectedEndDate.toISOString(),
+        reason: reason || undefined,
+        absenceType: selectedAbsenceType,
+        attachmentPath,
+      });
+    } catch (error: any) {
+      setUploadingAttachment(false);
+      toast({
+        title: 'Error',
+        description: error.message || 'Error al procesar la solicitud',
+        variant: 'destructive',
+      });
+    }
   };
 
   const isDateInRange = (date: Date) => {
@@ -361,9 +471,9 @@ export default function VacationRequests() {
       </div>
       {/* Page Title */}
       <div className="px-6 pb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Vacaciones</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Ausencias</h1>
         <p className="text-gray-600 dark:text-white/70 text-sm">
-          Solicita y consulta el estado de tus vacaciones
+          Solicita y consulta el estado de tus vacaciones y permisos
         </p>
       </div>
       {/* Compact Vacation Summary */}
@@ -473,22 +583,31 @@ export default function VacationRequests() {
             setReason('');
             setCalendarDate(new Date());
             setErrorMessage(null);
+            setSelectedAbsenceType('vacation');
+            setAttachmentFile(null);
           }
         }}>
           <DialogTrigger asChild>
             <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold">
               <CalendarPlus className="mr-2 h-5 w-5" />
-              Solicitar Vacaciones
+              Solicitar Ausencia
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md mx-auto bg-white dark:bg-white/10 border border-gray-200 dark:border-white/20 text-gray-900 dark:text-white rounded-2xl mt-4 max-h-[95vh] overflow-hidden flex flex-col backdrop-blur-sm">
             <DialogHeader className="pb-4 pt-2">
               <DialogTitle className="text-xl font-semibold text-center text-gray-900 dark:text-white">
-                Solicitar Vacaciones
+                Solicitar Ausencia
               </DialogTitle>
-              <p className="text-sm text-gray-600 dark:text-white/70 text-center">
-                Tienes {availableDays} días disponibles
-              </p>
+              {selectedAbsenceType === 'vacation' && (
+                <p className="text-sm text-gray-600 dark:text-white/70 text-center">
+                  Tienes {availableDays} días disponibles
+                </p>
+              )}
+              {selectedPolicy && selectedAbsenceType !== 'vacation' && (
+                <p className="text-sm text-gray-600 dark:text-white/70 text-center">
+                  {selectedPolicy.maxDays ? `${selectedPolicy.maxDays} días según convenio` : 'Sin límite de días'}
+                </p>
+              )}
               {errorMessage && (
                 <div className="bg-red-100 dark:bg-red-500/20 border border-red-300 dark:border-red-500/30 rounded-lg p-3 mt-2">
                   <p className="text-red-700 dark:text-red-300 text-sm text-center font-medium">
@@ -499,6 +618,62 @@ export default function VacationRequests() {
             </DialogHeader>
             
             <div className="flex-1 overflow-y-auto px-1 space-y-4">
+              {/* Absence Type Selector */}
+              <div>
+                <Label className="text-sm font-medium text-gray-600 dark:text-white/70 mb-2 block">
+                  Tipo de Ausencia
+                </Label>
+                <Select 
+                  value={selectedAbsenceType} 
+                  onValueChange={(value) => {
+                    setSelectedAbsenceType(value);
+                    setSelectedStartDate(null);
+                    setSelectedEndDate(null);
+                    setAttachmentFile(null);
+                    setErrorMessage(null);
+                  }}
+                >
+                  <SelectTrigger className="bg-white dark:bg-white/5 border-gray-300 dark:border-white/20 text-gray-900 dark:text-white">
+                    <SelectValue placeholder="Selecciona el tipo de ausencia" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-gray-900 border-gray-300 dark:border-white/20">
+                    <SelectGroup>
+                      <SelectLabel className="text-gray-500 dark:text-white/50">Vacaciones</SelectLabel>
+                      <SelectItem value="vacation" className="text-gray-900 dark:text-white">
+                        <div className="flex items-center gap-2">
+                          <Palmtree className="w-4 h-4 text-green-500" />
+                          <span>Vacaciones</span>
+                        </div>
+                      </SelectItem>
+                    </SelectGroup>
+                    <SelectSeparator />
+                    <SelectGroup>
+                      <SelectLabel className="text-gray-500 dark:text-white/50">Permisos retribuidos</SelectLabel>
+                      {absencePolicies.filter(p => p.absenceType !== 'vacation' && p.isActive).map(policy => {
+                        const IconComponent = ABSENCE_TYPE_ICONS[policy.absenceType] || Calendar;
+                        return (
+                          <SelectItem 
+                            key={policy.absenceType} 
+                            value={policy.absenceType}
+                            className="text-gray-900 dark:text-white"
+                          >
+                            <div className="flex items-center gap-2">
+                              <IconComponent className="w-4 h-4 text-blue-500" />
+                              <span>{policy.name}</span>
+                              {policy.maxDays && (
+                                <span className="text-xs text-gray-500 dark:text-white/50">
+                                  ({policy.maxDays}d)
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Calendar */}
               <div className="bg-gray-50 dark:bg-white/10 rounded-xl p-3 border border-gray-200 dark:border-white/20">
                 <div className="flex items-center justify-between mb-3">
@@ -608,6 +783,68 @@ export default function VacationRequests() {
                   rows={3}
                 />
               </div>
+
+              {/* File attachment (optional/required based on policy) */}
+              {selectedAbsenceType !== 'vacation' && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-white/70 mb-2 block flex items-center gap-2">
+                    <Paperclip className="w-4 h-4" />
+                    Justificante {requiresAttachment ? '(obligatorio)' : '(opcional)'}
+                  </Label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      id="attachment-upload"
+                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setAttachmentFile(file);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="attachment-upload"
+                      className={`
+                        flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed cursor-pointer
+                        transition-all duration-200
+                        ${attachmentFile 
+                          ? 'border-green-400 bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-300' 
+                          : requiresAttachment
+                            ? 'border-orange-300 dark:border-orange-500/50 bg-orange-50/50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-300 hover:border-orange-400'
+                            : 'border-gray-300 dark:border-white/20 text-gray-600 dark:text-white/60 hover:border-blue-400 dark:hover:border-blue-400'
+                        }
+                      `}
+                    >
+                      {attachmentFile ? (
+                        <>
+                          <Check className="w-5 h-5" />
+                          <span className="text-sm truncate max-w-[200px]">{attachmentFile.name}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setAttachmentFile(null);
+                            }}
+                            className="ml-2 p-1 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-full transition-colors"
+                          >
+                            <X className="w-4 h-4 text-red-500" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-5 h-5" />
+                          <span className="text-sm">Subir archivo</span>
+                        </>
+                      )}
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-white/50 mt-1">
+                    PDF, imágenes o documentos (máx. 10MB)
+                  </p>
+                </div>
+              )}
             </div>
             
             {/* Action buttons - Fixed at bottom */}
@@ -620,10 +857,22 @@ export default function VacationRequests() {
               </Button>
               <Button
                 onClick={handleSubmit}
-                disabled={createRequestMutation.isPending || !selectedStartDate || !selectedEndDate || exceedsAvailable}
+                disabled={
+                  createRequestMutation.isPending || 
+                  uploadingAttachment ||
+                  !selectedStartDate || 
+                  !selectedEndDate || 
+                  (selectedAbsenceType === 'vacation' && exceedsAvailable) ||
+                  (requiresAttachment && !attachmentFile)
+                }
                 className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl h-12 disabled:opacity-50"
               >
-                {createRequestMutation.isPending ? 'Solicitando...' : 'Solicitar'}
+                {uploadingAttachment 
+                  ? 'Subiendo archivo...' 
+                  : createRequestMutation.isPending 
+                    ? 'Solicitando...' 
+                    : 'Solicitar'
+                }
               </Button>
             </div>
           </DialogContent>
@@ -645,12 +894,25 @@ export default function VacationRequests() {
             {(requests as any[]).length > 0 ? (
               (requests as any[])
                 .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                .map((request: any) => (
+                .map((request: any) => {
+                    const absenceType = request.absenceType || 'vacation';
+                    const AbsenceIcon = ABSENCE_TYPE_ICONS[absenceType] || Calendar;
+                    return (
                     <div 
                       key={request.id} 
                       className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr] py-3 px-4 border-b border-gray-200 dark:border-white/20 items-center min-h-[48px] hover:bg-gray-100 dark:hover:bg-white/10"
                     >
-                    <div className="text-sm text-center text-gray-900 dark:text-white flex items-center justify-center">
+                    <div className="text-sm text-center text-gray-900 dark:text-white flex items-center justify-center gap-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <AbsenceIcon className={`w-4 h-4 flex-shrink-0 ${absenceType === 'vacation' ? 'text-green-500' : 'text-blue-500'}`} />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{ABSENCE_TYPE_LABELS[absenceType] || 'Vacaciones'}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       {formatDateRange(request.startDate, request.endDate)}
                     </div>
                     <div className="text-sm text-center font-mono text-gray-900 dark:text-white flex items-center justify-center">
@@ -691,13 +953,14 @@ export default function VacationRequests() {
                       {formatDate(request.createdAt)}
                     </div>
                     </div>
-                ))
+                    );
+                })
             ) : (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center text-gray-600 dark:text-white/70">
                   <CalendarDays className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>No tienes solicitudes de vacaciones</p>
-                  <p className="text-sm mt-1">Solicita tus primeras vacaciones</p>
+                  <p>No tienes solicitudes de ausencia</p>
+                  <p className="text-sm mt-1">Solicita tus primeras vacaciones o permisos</p>
                 </div>
               </div>
             )}
