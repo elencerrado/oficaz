@@ -4953,23 +4953,50 @@ Responde directamente a este email para contactar con la persona.
         try {
           const hasDocumentsAddon = await storage.hasActiveAddon(req.user!.companyId, 'documents');
           if (hasDocumentsAddon) {
-            // Extract filename from path
+            // Get employee name for descriptive filename
+            const employeeName = user.fullName.replace(/\s+/g, '_').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            
+            // Get absence type name in Spanish
+            const absenceTypeNames: Record<string, string> = {
+              'vacation': 'Vacaciones',
+              'sick_leave': 'BajaMedica',
+              'paternity_maternity': 'PaternidadMaternidad',
+              'personal': 'AsuntosPersonales',
+              'training': 'Formacion',
+              'work_related': 'AsuntosLaborales',
+              'public_duty': 'DeberInexcusable',
+              'temporary_disability': 'IncapacidadTemporal'
+            };
+            const absenceTypeName = absenceTypeNames[absenceType] || 'Ausencia';
+            
+            // Format date for filename (YYYY-MM-DD)
+            const dateStr = new Date(data.startDate).toISOString().split('T')[0];
+            
+            // Extract file extension from original name
             const attachmentPath = req.body.attachmentPath;
             const pathParts = attachmentPath.split('/');
-            const originalName = pathParts[pathParts.length - 1] || `justificante_${request.id}.pdf`;
+            const originalFileName = pathParts[pathParts.length - 1] || 'justificante.pdf';
+            const extension = originalFileName.includes('.') ? originalFileName.split('.').pop() : 'pdf';
+            
+            // Create descriptive filename: fecha_tipoAusencia_nombreEmpleado.ext
+            const descriptiveFileName = `${dateStr}_${absenceTypeName}_${employeeName}.${extension}`;
+            
+            // Get file size and mime type from request body (if passed)
+            const fileSize = req.body.attachmentFileSize || 0;
+            const mimeType = req.body.attachmentMimeType || 'application/octet-stream';
             
             // Create document in Justificantes folder for the employee
             await storage.createDocument({
               userId: req.user!.id,
-              fileName: `justificante_ausencia_${request.id}_${originalName}`,
-              originalName: originalName,
-              mimeType: 'application/octet-stream',
-              fileSize: 0, // Size unknown from URL
+              fileName: descriptiveFileName,
+              originalName: descriptiveFileName,
+              mimeType: mimeType,
+              fileSize: fileSize,
               filePath: attachmentPath,
               isViewed: false,
               isAccepted: false,
             });
-            console.log(`Justificante document created for vacation request ${request.id}`);
+            console.log(`Justificante document created for vacation request ${request.id}: ${descriptiveFileName}`);
           }
         } catch (docError) {
           // Don't fail the vacation request if document creation fails
@@ -5207,7 +5234,9 @@ Responde directamente a este email para contactar con la persona.
       res.json({ 
         path: objectName,
         url: relativeUrl,
-        originalName: req.file.originalname
+        originalName: req.file.originalname,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype
       });
     } catch (error: any) {
       console.error('Error uploading absence attachment:', error);

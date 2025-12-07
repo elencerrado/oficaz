@@ -118,7 +118,7 @@ export default function VacationRequests() {
 
 
   const createRequestMutation = useMutation({
-    mutationFn: (data: { startDate: string; endDate: string; reason?: string; absenceType?: string; attachmentPath?: string }) =>
+    mutationFn: (data: { startDate: string; endDate: string; reason?: string; absenceType?: string; attachmentPath?: string; attachmentFileSize?: number; attachmentMimeType?: string }) =>
       apiRequest('POST', '/api/vacation-requests', data),
     onSuccess: () => {
       // Invalidate both employee and admin cache keys
@@ -326,6 +326,9 @@ export default function VacationRequests() {
       let attachmentPath: string | undefined;
 
       // Upload attachment if provided
+      let attachmentFileSize: number | undefined;
+      let attachmentMimeType: string | undefined;
+      
       if (attachmentFile) {
         setUploadingAttachment(true);
         const formData = new FormData();
@@ -343,6 +346,8 @@ export default function VacationRequests() {
 
         const result = await response.json();
         attachmentPath = result.path;
+        attachmentFileSize = result.fileSize;
+        attachmentMimeType = result.mimeType;
         setUploadingAttachment(false);
       }
 
@@ -352,6 +357,8 @@ export default function VacationRequests() {
         reason: reason || undefined,
         absenceType: selectedAbsenceType,
         attachmentPath,
+        attachmentFileSize,
+        attachmentMimeType,
       });
     } catch (error: any) {
       setUploadingAttachment(false);
