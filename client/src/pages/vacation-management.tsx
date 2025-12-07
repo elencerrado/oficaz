@@ -795,11 +795,24 @@ export default function VacationManagement() {
   // Track previous vacation requests (for reference only - WebSocket handles toasts)
   const previousRequestsRef = useRef<VacationRequest[]>([]);
   
+  // Track first load completion for wave animation (only show animation on initial load)
+  const requestsFirstLoadCompletedRef = useRef(false);
+  
   // Keep reference in sync with current requests (WebSocket handles toast notifications)
   useEffect(() => {
     if (!vacationRequests || vacationRequests.length === 0) return;
     previousRequestsRef.current = [...vacationRequests];
   }, [vacationRequests]);
+  
+  // Track first load completion for wave animation
+  useEffect(() => {
+    if (!loadingRequests && vacationRequests.length >= 0 && !requestsFirstLoadCompletedRef.current) {
+      requestsFirstLoadCompletedRef.current = true;
+    }
+  }, [loadingRequests, vacationRequests.length]);
+  
+  // Compute whether to show wave loading animation (only on first load)
+  const showWaveLoading = loadingRequests && !requestsFirstLoadCompletedRef.current;
 
   // Update vacation request status
   const updateRequestMutation = useMutation({
@@ -1443,7 +1456,7 @@ export default function VacationManagement() {
                   return (
                     <div
                       key={request.id}
-                      className={`bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md row-wave-loading row-wave-${requestIndex % 15}`}
+                      className={`bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md${showWaveLoading ? ` row-wave-loading row-wave-${requestIndex % 15}` : ''}`}
                     >
                       {/* Header con estado - solo móvil */}
                       <div className={`md:hidden px-4 py-2.5 flex items-center justify-between ${

@@ -192,6 +192,10 @@ export default function TimeTracking() {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const loadMoreDesktopRef = useRef<HTMLDivElement>(null);
   const loadMoreMobileRef = useRef<HTMLDivElement>(null);
+  
+  // Track first load completion for wave animation (only show animation on initial load)
+  const sessionsFirstLoadCompletedRef = useRef(false);
+  const requestsFirstLoadCompletedRef = useRef(false);
   const [manualEntryData, setManualEntryData] = useState({
     employeeId: '',
     date: '',
@@ -361,10 +365,27 @@ export default function TimeTracking() {
   const pendingRequestsCount = pendingRequestsData?.count || 0;
   
   // Modification requests (when tab is active or dialog is open)
-  const { data: modificationRequests = [], isLoading: isLoadingModificationRequests } = useQuery<any[]>({
+  const { data: modificationRequests = [], isLoading: isLoadingModificationRequests, isFetching: isFetchingModificationRequests } = useQuery<any[]>({
     queryKey: ['/api/admin/work-sessions/modification-requests'],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager') && (activeTab === 'requests' || showRequestsDialog),
   });
+  
+  // Track first load completion for wave animations
+  useEffect(() => {
+    if (!isLoading && allSessions.length > 0 && !sessionsFirstLoadCompletedRef.current) {
+      sessionsFirstLoadCompletedRef.current = true;
+    }
+  }, [isLoading, allSessions.length]);
+  
+  useEffect(() => {
+    if (!isLoadingModificationRequests && !isFetchingModificationRequests && modificationRequests.length >= 0 && !requestsFirstLoadCompletedRef.current) {
+      requestsFirstLoadCompletedRef.current = true;
+    }
+  }, [isLoadingModificationRequests, isFetchingModificationRequests, modificationRequests.length]);
+  
+  // Compute whether to show wave loading animation (only on first load)
+  const showSessionsWaveLoading = isLoading && !sessionsFirstLoadCompletedRef.current;
+  const showRequestsWaveLoading = isLoadingModificationRequests && !requestsFirstLoadCompletedRef.current;
   
   // WebSocket connection for real-time updates (Performance Optimization)
   useEffect(() => {
@@ -3551,7 +3572,7 @@ export default function TimeTracking() {
                     result.push(
                       <div 
                         key={rowKey} 
-                        className={`bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md row-wave-loading row-wave-${index % 15}`}
+                        className={`bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md${showSessionsWaveLoading ? ` row-wave-loading row-wave-${index % 15}` : ''}`}
                       >
                         {/* Card Header - clickable to expand */}
                         <div 
@@ -4031,7 +4052,7 @@ export default function TimeTracking() {
                   <div 
                     key={mobileRowKey} 
                     className={cn(
-                      `bg-background border border-border rounded-lg mx-4 mb-3 shadow-sm row-wave-loading row-wave-${index % 15} cursor-pointer select-none transition-all`,
+                      `bg-background border border-border rounded-lg mx-4 mb-3 shadow-sm${showSessionsWaveLoading ? ` row-wave-loading row-wave-${index % 15}` : ''} cursor-pointer select-none transition-all`,
                       isMobileExpanded && "ring-1 ring-blue-200 dark:ring-blue-800"
                     )}
                     onClick={toggleMobileExpand}
@@ -4711,7 +4732,7 @@ export default function TimeTracking() {
               return (
                 <div
                   key={request.id}
-                  className={`bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md row-wave-loading row-wave-${reqIndex % 15}`}
+                  className={`bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md${showRequestsWaveLoading ? ` row-wave-loading row-wave-${reqIndex % 15}` : ''}`}
                 >
                   {/* Mobile: Header con estado */}
                   <div className={`lg:hidden px-4 py-2.5 flex items-center justify-between ${
