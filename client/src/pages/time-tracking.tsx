@@ -4814,7 +4814,7 @@ export default function TimeTracking() {
 
                   {/* Desktop: Fila horizontal con grid */}
                   <div className="hidden lg:flex items-stretch min-w-0">
-                    <div className="flex-1 grid items-center px-4 py-4 gap-3" style={{ gridTemplateColumns: 'auto minmax(100px,1.2fr) 80px 60px 60px 70px minmax(100px,1.5fr) auto' }}>
+                    <div className="flex-1 grid items-center px-4 py-5 gap-3" style={{ gridTemplateColumns: 'auto minmax(100px,1.2fr) 80px 60px 60px 70px minmax(100px,1.5fr) auto' }}>
                       {/* Col 1: Avatar */}
                       <UserAvatar fullName={request.employeeName} profilePicture={request.employeeProfilePicture} size="sm" userId={request.employeeId} />
                       
