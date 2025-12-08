@@ -17292,6 +17292,40 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         return res.json(fullMovement);
       }
 
+      // Handle adjustmentDirection change on posted internal movements
+      if (movement.status === 'posted' && 
+          movement.movementType === 'internal' && 
+          (movement as any).internalReason === 'adjustment' &&
+          req.body.adjustmentDirection !== undefined &&
+          req.body.adjustmentDirection !== (movement as any).adjustmentDirection) {
+        
+        const oldDirection = (movement as any).adjustmentDirection || 'add';
+        const newDirection = req.body.adjustmentDirection;
+        
+        // For each line, recalculate stock: reverse old direction, apply new direction
+        for (const line of movement.lines) {
+          const quantity = parseFloat(line.quantity);
+          const warehouseId = movement.destinationWarehouseId;
+          
+          if (warehouseId) {
+            const currentStock = await storage.getProductStock(line.productId);
+            const warehouseStock = currentStock.find(s => s.warehouseId === warehouseId);
+            const currentQty = parseFloat(warehouseStock?.quantity || '0');
+            
+            // Reverse old direction
+            let reversedQty = oldDirection === 'add' ? currentQty - quantity : currentQty + quantity;
+            // Apply new direction
+            let newQty = newDirection === 'add' ? reversedQty + quantity : reversedQty - quantity;
+            
+            await storage.updateWarehouseStock(warehouseId, line.productId, newQty, req.user!.companyId);
+          }
+        }
+        
+        const updated = await storage.updateInventoryMovement(id, req.body);
+        const fullMovement = await storage.getInventoryMovement(id);
+        return res.json(fullMovement);
+      }
+
       // Regular update (for draft movements or archiving)
       if (movement.status === 'posted' && req.body.status !== 'archived' && req.body.status !== 'draft') {
         return res.status(400).json({ message: 'Solo se puede archivar o revertir a borrador un movimiento confirmado' });
