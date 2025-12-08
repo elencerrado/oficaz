@@ -27,8 +27,10 @@ function validateR2Config() {
 
 // Initialize R2 client (S3-compatible)
 export function createR2Client(): S3Client | null {
+  console.log("🔍 Checking R2 configuration...");
   try {
     const config = validateR2Config();
+    console.log("🔍 R2 config validated - Account ID exists:", !!config.R2_ACCOUNT_ID);
 
     const r2Client = new S3Client({
       region: "auto", // R2 uses "auto" for region
