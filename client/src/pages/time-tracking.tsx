@@ -3589,7 +3589,7 @@ export default function TimeTracking() {
           </div>
 
           {/* Mobile Card View */}
-          <div className="md:hidden px-4 py-2 space-y-0">
+          <div className="md:hidden space-y-2">
             {(() => {
               const sortedSessions = filteredSessions
                 .sort((a: any, b: any) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
