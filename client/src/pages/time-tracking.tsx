@@ -2752,21 +2752,8 @@ export default function TimeTracking() {
               </Button>
             </div>
 
-            {/* Mobile: buttons in single row */}
-            <div className="sm:hidden grid grid-cols-3 gap-2 w-full">
-              <Button 
-                variant={pendingRequestsCount > 0 ? "default" : "outline"}
-                size="sm" 
-                onClick={() => setShowRequestsDialog(true)}
-                className="flex items-center justify-center gap-1"
-                data-testid="button-view-requests"
-              >
-                <Bell className={cn("w-4 h-4", pendingRequestsCount > 0 && "animate-pulse")} />
-                <span className="text-xs">Solicitudes</span>
-                {pendingRequestsCount > 0 && (
-                  <Badge className="ml-1 text-xs">{pendingRequestsCount}</Badge>
-                )}
-              </Button>
+            {/* Mobile: buttons in single row - only Filters and Export */}
+            <div className="sm:hidden grid grid-cols-2 gap-2 w-full">
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -3602,7 +3589,7 @@ export default function TimeTracking() {
           </div>
 
           {/* Mobile Card View */}
-          <div className="md:hidden">
+          <div className="md:hidden px-4 py-2 space-y-0">
             {(() => {
               const sortedSessions = filteredSessions
                 .sort((a: any, b: any) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
@@ -3701,7 +3688,7 @@ export default function TimeTracking() {
                   const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
                   
                   result.push(
-                    <div key={`month-${previousMonth}`} className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-3 mx-4 mb-3">
+                    <div key={`month-${previousMonth}`} className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-xl p-3 mb-2">
                       <div className="font-semibold text-blue-800 dark:text-blue-200 capitalize text-sm text-center">
                         Total {monthName}: {monthTotal.toFixed(1)}h
                       </div>
@@ -3715,7 +3702,7 @@ export default function TimeTracking() {
                     // Show week total when filtering by specific employee
                     const weekTotal = calculateWeekTotal(previousWeekStart);
                     result.push(
-                      <div key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 dark:bg-gray-700/50 border-2 border-gray-400 dark:border-gray-500 rounded-lg p-3 mx-4 mb-3">
+                      <div key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-xl p-2.5 mb-2">
                         <div className="font-medium text-gray-700 dark:text-gray-300 text-sm text-center">
                           Total semana: {weekTotal.toFixed(1)}h
                         </div>
@@ -3724,7 +3711,7 @@ export default function TimeTracking() {
                   } else {
                     // Show just a separator line when showing all employees
                     result.push(
-                      <div key={`week-separator-${previousWeekStart.getTime()}`} className="border-t-2 border-gray-400 dark:border-gray-500 mx-4 mb-3"></div>
+                      <div key={`week-separator-${previousWeekStart.getTime()}`} className="border-t border-gray-300 dark:border-gray-600 mb-2"></div>
                     );
                   }
                 }
@@ -3767,7 +3754,7 @@ export default function TimeTracking() {
                   <div 
                     key={mobileRowKey} 
                     className={cn(
-                      `bg-background border border-border rounded-lg mx-4 mb-3 shadow-sm${showSessionsWaveLoading ? ` row-wave-loading row-wave-${index % 15}` : ''} cursor-pointer select-none transition-all`,
+                      `bg-card dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl mb-2 shadow-sm${showSessionsWaveLoading ? ` row-wave-loading row-wave-${index % 15}` : ''} cursor-pointer select-none transition-all`,
                       isMobileExpanded && "ring-1 ring-blue-200 dark:ring-blue-800"
                     )}
                     onClick={toggleMobileExpand}
@@ -3963,7 +3950,7 @@ export default function TimeTracking() {
                 if (previousWeekStart) {
                   const weekTotal = calculateWeekTotal(previousWeekStart);
                   result.push(
-                    <div key={`week-final`} className="bg-gray-100 dark:bg-gray-700/50 border-2 border-gray-400 dark:border-gray-500 rounded-lg p-3 mx-4 mb-3">
+                    <div key={`week-final`} className="bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-xl p-2.5 mb-2">
                       <div className="font-medium text-gray-700 dark:text-gray-300 text-sm text-center">
                         Total semana: {weekTotal.toFixed(1)}h
                       </div>
@@ -3976,7 +3963,7 @@ export default function TimeTracking() {
                   const monthName = format(new Date(currentMonth + '-01'), 'MMMM yyyy', { locale: es });
                   
                   result.push(
-                    <div key={`month-final`} className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mx-4 mb-3">
+                    <div key={`month-final`} className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-xl p-3 mb-2">
                       <div className="font-semibold text-blue-800 dark:text-blue-200 capitalize text-sm text-center">
                         Total {monthName}: {monthTotal.toFixed(1)}h
                       </div>
@@ -3987,7 +3974,7 @@ export default function TimeTracking() {
               
               // Elemento observador para infinite scroll + indicador visual (mobile)
               result.push(
-                <div key="load-more-observer-mobile" className="py-4 text-center mx-4">
+                <div key="load-more-observer-mobile" className="py-4 text-center">
                   <div ref={loadMoreMobileRef} className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
                     {hasMoreToDisplay ? (
                       <>
@@ -4011,7 +3998,7 @@ export default function TimeTracking() {
             })()}
             
             {filteredSessions.length === 0 && (
-              <div className="py-12 text-center mx-4">
+              <div className="py-12 text-center">
                 <div className="flex flex-col items-center justify-center space-y-3">
                   <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
                     {isLoading ? (
