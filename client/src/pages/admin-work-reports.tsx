@@ -726,11 +726,72 @@ export default function AdminWorkReportsPage() {
       {/* Filters & List Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-            <span className="text-sm sm:text-lg font-medium">{filterTitle} ({filteredReports.length})</span>
+          <CardTitle className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm sm:text-lg font-medium">{filterTitle} ({filteredReports.length})</span>
+              
+              {/* Desktop buttons */}
+              <div className="hidden sm:flex items-center gap-2">
+                {/* Create button - hidden in self-access mode (read-only) */}
+                {!isSelfAccessOnly && (
+                  <Button 
+                    size="sm" 
+                    onClick={() => {
+                      setSelectedEmployeeId('');
+                      setCreateFormData({
+                        reportDate: format(new Date(), 'yyyy-MM-dd'),
+                        refCode: '',
+                        location: '',
+                        startTime: '09:00',
+                        endTime: '17:00',
+                        description: '',
+                        clientName: '',
+                        notes: ''
+                      });
+                      setCreateModalOpen(true);
+                    }}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Crear Parte
+                  </Button>
+                )}
+                {/* Config button - hidden in self-access mode */}
+                {!isSelfAccessOnly && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      const modes: Record<number, string> = {};
+                      employees.forEach(emp => {
+                        let mode = emp.workReportMode || 'manual';
+                        if (mode === 'on_clockout') mode = 'both';
+                        modes[emp.id] = mode;
+                      });
+                      setEmployeeWorkModes(modes);
+                      setConfigModalOpen(true);
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Configurar
+                  </Button>
+                )}
+                {/* Filters button */}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center gap-2"
+                >
+                  <Filter className="w-4 h-4" />
+                  Filtros
+                </Button>
+              </div>
+            </div>
             
-            <div className="flex items-center gap-2">
-              {/* Create button - hidden in self-access mode (read-only) */}
+            {/* Mobile buttons - grid layout */}
+            <div className={`sm:hidden grid gap-2 ${isSelfAccessOnly ? 'grid-cols-1' : 'grid-cols-3'}`}>
               {!isSelfAccessOnly && (
                 <Button 
                   size="sm" 
@@ -748,13 +809,12 @@ export default function AdminWorkReportsPage() {
                     });
                     setCreateModalOpen(true);
                   }}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                  className="flex items-center justify-center gap-1 bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <Plus className="w-4 h-4" />
-                  Crear Parte
+                  <span className="text-xs">Crear</span>
                 </Button>
               )}
-              {/* Config button - hidden in self-access mode */}
               {!isSelfAccessOnly && (
                 <Button 
                   variant="outline" 
@@ -769,21 +829,20 @@ export default function AdminWorkReportsPage() {
                     setEmployeeWorkModes(modes);
                     setConfigModalOpen(true);
                   }}
-                  className="flex items-center gap-2"
+                  className="flex items-center justify-center gap-1"
                 >
                   <Settings className="w-4 h-4" />
-                  Configurar
+                  <span className="text-xs">Config</span>
                 </Button>
               )}
-              {/* Filters button */}
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2"
+                className="flex items-center justify-center gap-1"
               >
                 <Filter className="w-4 h-4" />
-                Filtros
+                <span className="text-xs">Filtros</span>
               </Button>
             </div>
           </CardTitle>
