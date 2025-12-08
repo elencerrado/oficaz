@@ -174,8 +174,8 @@ export default function Inventory() {
         tabs={[
           { id: 'dashboard', label: 'Panel', icon: LayoutGrid },
           { id: 'products', label: 'Productos', icon: Package },
-          { id: 'movements', label: 'Movimientos', icon: ArrowRightLeft },
-          { id: 'settings', label: 'Configuración', icon: Settings },
+          { id: 'movements', label: 'Mov.', icon: ArrowRightLeft },
+          { id: 'settings', label: 'Config', icon: Settings },
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -575,7 +575,8 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3 justify-between">
+      {/* Desktop filters */}
+      <div className="hidden md:flex gap-3 justify-between">
         <div className="flex gap-2 flex-1">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -620,7 +621,7 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
             En stock
           </Button>
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2">
           <input
             ref={fileInputRef}
             type="file"
@@ -636,6 +637,72 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
             }} data-testid="button-add-product">
             <Plus className="h-4 w-4 mr-2" />
             Añadir Producto
+          </Button>
+        </div>
+      </div>
+      
+      {/* Mobile filters */}
+      <div className="md:hidden space-y-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Buscar..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9"
+            data-testid="input-search-products-mobile"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger data-testid="select-category-filter-mobile">
+              <SelectValue placeholder="Categoría" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              {categories.map(cat => (
+                <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={warehouseFilter} onValueChange={setWarehouseFilter}>
+            <SelectTrigger data-testid="select-warehouse-filter-mobile">
+              <SelectValue placeholder="Almacén" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">{defaultWarehouse?.name || 'Principal'}</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
+              {warehouses.filter(w => !w.isDefault).map(wh => (
+                <SelectItem key={wh.id} value={String(wh.id)}>{wh.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            variant={inStockOnly ? "default" : "outline"}
+            onClick={() => setInStockOnly(!inStockOnly)}
+            className={`${inStockOnly ? "bg-green-600 hover:bg-green-700" : ""} text-sm`}
+            data-testid="button-in-stock-filter-mobile"
+          >
+            <Package className="h-4 w-4 mr-1" />
+            En stock
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+          <Button onClick={() => { 
+              setEditingProduct(null); 
+              setSelectedVatRate('21'); 
+              setSelectedCategoryId(''); 
+              setIsDialogOpen(true); 
+            }} data-testid="button-add-product-mobile" className="text-sm">
+            <Plus className="h-4 w-4 mr-1" />
+            Añadir
           </Button>
         </div>
       </div>
