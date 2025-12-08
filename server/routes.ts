@@ -17314,6 +17314,68 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         return res.json(fullMovement);
       }
 
+      // Handle confirming a draft movement (draft -> posted)
+      if (movement.status === 'draft' && req.body.status === 'posted') {
+        // Apply stock changes for each line
+        for (const line of movement.lines) {
+          const quantity = parseFloat(line.quantity);
+          
+          if (movement.movementType === 'in') {
+            if (movement.destinationWarehouseId) {
+              const currentStock = await storage.getProductStock(line.productId);
+              const warehouseStock = currentStock.find(s => s.warehouseId === movement.destinationWarehouseId);
+              const currentQty = parseFloat(warehouseStock?.quantity || '0');
+              await storage.updateWarehouseStock(movement.destinationWarehouseId, line.productId, currentQty + quantity, req.user!.companyId);
+            }
+          } else if (movement.movementType === 'out' || movement.movementType === 'loan') {
+            if (movement.sourceWarehouseId) {
+              const currentStock = await storage.getProductStock(line.productId);
+              const warehouseStock = currentStock.find(s => s.warehouseId === movement.sourceWarehouseId);
+              const currentQty = parseFloat(warehouseStock?.quantity || '0');
+              await storage.updateWarehouseStock(movement.sourceWarehouseId, line.productId, currentQty - quantity, req.user!.companyId);
+            }
+          } else if (movement.movementType === 'internal') {
+            const internalReason = (movement as any).internalReason || 'adjustment';
+            const adjustmentDirection = (movement as any).adjustmentDirection || 'add';
+            
+            if (internalReason === 'transfer') {
+              if (movement.sourceWarehouseId) {
+                const sourceStock = await storage.getProductStock(line.productId);
+                const sourceWh = sourceStock.find(s => s.warehouseId === movement.sourceWarehouseId);
+                const sourceQty = parseFloat(sourceWh?.quantity || '0');
+                await storage.updateWarehouseStock(movement.sourceWarehouseId, line.productId, sourceQty - quantity, req.user!.companyId);
+              }
+              if (movement.destinationWarehouseId) {
+                const destStock = await storage.getProductStock(line.productId);
+                const destWh = destStock.find(s => s.warehouseId === movement.destinationWarehouseId);
+                const destQty = parseFloat(destWh?.quantity || '0');
+                await storage.updateWarehouseStock(movement.destinationWarehouseId, line.productId, destQty + quantity, req.user!.companyId);
+              }
+            } else {
+              // Adjustment
+              if (movement.destinationWarehouseId) {
+                const destStock = await storage.getProductStock(line.productId);
+                const destWh = destStock.find(s => s.warehouseId === movement.destinationWarehouseId);
+                const destQty = parseFloat(destWh?.quantity || '0');
+                const newQty = adjustmentDirection === 'add' ? destQty + quantity : destQty - quantity;
+                await storage.updateWarehouseStock(movement.destinationWarehouseId, line.productId, newQty, req.user!.companyId);
+              }
+            }
+          } else if (movement.movementType === 'return') {
+            if (movement.sourceWarehouseId) {
+              const currentStock = await storage.getProductStock(line.productId);
+              const warehouseStock = currentStock.find(s => s.warehouseId === movement.sourceWarehouseId);
+              const currentQty = parseFloat(warehouseStock?.quantity || '0');
+              await storage.updateWarehouseStock(movement.sourceWarehouseId, line.productId, currentQty + quantity, req.user!.companyId);
+            }
+          }
+        }
+        
+        const updated = await storage.updateInventoryMovement(id, { status: 'posted' });
+        const fullMovement = await storage.getInventoryMovement(id);
+        return res.json(fullMovement);
+      }
+
       // Regular update (for draft movements or archiving)
       if (movement.status === 'posted' && req.body.status !== 'archived' && req.body.status !== 'draft') {
         return res.status(400).json({ message: 'Solo se puede archivar o revertir a borrador un movimiento confirmado' });
