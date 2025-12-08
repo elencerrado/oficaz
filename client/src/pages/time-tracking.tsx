@@ -3847,9 +3847,7 @@ export default function TimeTracking() {
                     
                     {/* Timeline - always visible */}
                     <div className="px-3 pb-2">
-                      <div className="bg-muted rounded-lg p-2 w-full">
-                        <DailyTimelineBar dayData={dayData} />
-                      </div>
+                      <DailyTimelineBar dayData={dayData} />
                     </div>
                     
                     {/* Expanded details */}
