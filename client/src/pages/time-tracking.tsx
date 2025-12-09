@@ -159,7 +159,7 @@ export default function TimeTracking() {
   const [summarySearch, setSummarySearch] = useState('');
   
   // Requests tab filter states
-  const [requestsStatus, setRequestsStatus] = useState('all');
+  const [requestsStatus, setRequestsStatus] = useState('pending');
   const [requestsEmployeeId, setRequestsEmployeeId] = useState('all');
   const [requestsType, setRequestsType] = useState('all');
   const [requestsEmployeeSearchTerm, setRequestsEmployeeSearchTerm] = useState('');
@@ -4401,12 +4401,16 @@ export default function TimeTracking() {
                   </div>
                   <div className="text-foreground font-medium">
                     {modificationRequests.length === 0 
-                      ? "No hay solicitudes pendientes" 
+                      ? "No hay solicitudes de modificación" 
+                      : requestsStatus === 'pending'
+                      ? "No hay solicitudes pendientes"
                       : "No se encontraron solicitudes con los filtros aplicados"}
                   </div>
                   <div className="text-muted-foreground text-sm">
                     {modificationRequests.length === 0 
                       ? "Las solicitudes de modificación aparecerán aquí"
+                      : requestsStatus === 'pending'
+                      ? "Todas las solicitudes han sido procesadas"
                       : `Total de solicitudes: ${modificationRequests.length}`}
                   </div>
                 </div>

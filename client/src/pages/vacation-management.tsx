@@ -150,7 +150,7 @@ export default function VacationManagement() {
     return resetHeader;
   }, []);
   const [activeTab, setActiveTab] = useState("employees");
-  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("pending");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("all");
   const [selectedAbsenceType, setSelectedAbsenceType] = useState("all");
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState("");
@@ -1448,11 +1448,15 @@ export default function VacationManagement() {
                   <div className="text-foreground font-medium">
                     {vacationRequests.length === 0 
                       ? "No hay solicitudes de ausencias" 
+                      : selectedStatus === 'pending'
+                      ? "No hay solicitudes pendientes"
                       : "No se encontraron solicitudes con los filtros aplicados"}
                   </div>
                   <div className="text-muted-foreground text-sm">
                     {vacationRequests.length === 0 
                       ? "Las solicitudes de ausencias aparecerán aquí"
+                      : selectedStatus === 'pending'
+                      ? "Todas las solicitudes han sido procesadas"
                       : `Total de solicitudes: ${vacationRequests.length}`}
                   </div>
                 </div>
