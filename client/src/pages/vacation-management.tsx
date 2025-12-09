@@ -380,6 +380,11 @@ export default function VacationManagement() {
       const daysCount = fullRequest?.startDate && fullRequest?.endDate 
         ? calculateDays(fullRequest.startDate, fullRequest.endDate)
         : fullRequest?.days || duration;
+      
+      // Para ausencias cortas (1-2 días), centrar el badge y usar ancho mínimo
+      const isCompact = duration <= 2;
+      const centerPercent = leftPercent + widthPercent / 2;
+      const minWidth = isCompact ? '2.5rem' : undefined;
 
       return (
         <div
@@ -389,10 +394,11 @@ export default function VacationManagement() {
             period.status === 'approved' 
               ? 'bg-green-500 border-green-600 hover:bg-green-600' 
               : 'bg-yellow-400 border-yellow-500 hover:bg-yellow-500'
-          } border opacity-90 hover:opacity-100 flex flex-col items-center justify-center py-0.5`}
+          } border opacity-90 hover:opacity-100 flex flex-col items-center justify-center py-0.5 px-1`}
           style={{
-            left: `${leftPercent}%`,
-            width: `${widthPercent}%`,
+            left: isCompact ? `${centerPercent}%` : `${leftPercent}%`,
+            width: isCompact ? `max(${widthPercent}%, ${minWidth})` : `${widthPercent}%`,
+            transform: isCompact ? 'translateX(-50%)' : undefined,
             top: '2px',
             bottom: '2px',
             zIndex: isTooltipActive ? 15 : 10
