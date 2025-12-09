@@ -2302,11 +2302,9 @@ export default function Landing() {
               {/* Column 1: Users */}
               <div className="bg-white rounded-2xl p-5 shadow-xl border border-gray-100 flex flex-col">
                 <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
-                      <Users className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900">1. Crea tu equipo</h3>
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="text-3xl font-black text-blue-500">1</span>
+                    <h3 className="font-semibold text-gray-900">Crea tu equipo</h3>
                   </div>
                   <p className="text-xs text-gray-400 ml-10">Luego podrás añadir más en segundos</p>
                 </div>
@@ -2430,11 +2428,9 @@ export default function Landing() {
               {/* Column 2: Funcionalidades - Vertical Scroll */}
               <div className="bg-white rounded-2xl p-5 shadow-xl border border-gray-100 flex flex-col">
                 <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-8 h-8 rounded-xl bg-purple-100 flex items-center justify-center">
-                      <Sparkles className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900">2. Elige funcionalidades</h3>
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="text-3xl font-black text-purple-500">2</span>
+                    <h3 className="font-semibold text-gray-900">Elige funcionalidades</h3>
                   </div>
                   <p className="text-xs text-gray-400 ml-10">Podrás ampliar poco a poco tu empresa</p>
                 </div>
@@ -2491,11 +2487,9 @@ export default function Landing() {
               {/* Column 3: Summary */}
               <div className="bg-white rounded-2xl p-5 shadow-xl border border-gray-100 flex flex-col">
                 <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center">
-                      <Euro className="w-4 h-4 text-emerald-600" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900">3. Tu plan perfecto</h3>
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="text-3xl font-black text-emerald-500">3</span>
+                    <h3 className="font-semibold text-gray-900">Tu plan perfecto</h3>
                   </div>
                   <p className="text-xs text-gray-400 ml-10">Nada sobra, nada falta. Justo lo que necesitas</p>
                 </div>
