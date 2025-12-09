@@ -349,15 +349,13 @@ export default function VacationManagement() {
     if (!periods || !Array.isArray(periods)) return [];
     
     return periods.map((period: any, index: number) => {
-      // Verificar si el período se solapa con el rango visible
       const periodStart = period.startDate;
       const periodEnd = period.endDate;
       
       if (periodEnd < rangeStart || periodStart > rangeEnd) {
-        return null; // Período fuera del rango visible
+        return null;
       }
       
-      // Calcular posición y ancho relativo
       const visibleStart = periodStart < rangeStart ? rangeStart : periodStart;
       const visibleEnd = periodEnd > rangeEnd ? rangeEnd : periodEnd;
       
@@ -369,22 +367,17 @@ export default function VacationManagement() {
       const widthPercent = (duration / totalDays) * 100;
       
       const fullRequest = vacationRequests?.find((req: any) => req.id === period.id);
-      const periodText = `${format(periodStart, "dd/MM")} - ${format(periodEnd, "dd/MM")}`;
-      
       const tooltipId = `${employee.id}-${period.id}-${index}`;
       const isTooltipActive = activeTooltip === tooltipId;
 
-      // Obtener el icono del tipo de ausencia
       const absenceType = fullRequest?.absenceType || 'vacation';
       const AbsenceIcon = ABSENCE_TYPE_ICONS[absenceType] || Plane;
       const daysCount = fullRequest?.startDate && fullRequest?.endDate 
         ? calculateDays(fullRequest.startDate, fullRequest.endDate)
         : fullRequest?.days || duration;
       
-      // Para ausencias cortas (1-2 días), centrar el badge y usar ancho mínimo
+      // For compact badges (1-2 days): only show icon, no text
       const isCompact = duration <= 2;
-      const centerPercent = leftPercent + widthPercent / 2;
-      const minWidth = isCompact ? '2.5rem' : undefined;
 
       return (
         <div
@@ -394,11 +387,10 @@ export default function VacationManagement() {
             period.status === 'approved' 
               ? 'bg-green-500 border-green-600 hover:bg-green-600' 
               : 'bg-yellow-400 border-yellow-500 hover:bg-yellow-500'
-          } border opacity-90 hover:opacity-100 flex flex-col items-center justify-center py-0.5 px-1`}
+          } border opacity-90 hover:opacity-100 flex flex-col items-center justify-center py-0.5`}
           style={{
-            left: isCompact ? `${centerPercent}%` : `${leftPercent}%`,
-            width: isCompact ? `max(${widthPercent}%, ${minWidth})` : `${widthPercent}%`,
-            transform: isCompact ? 'translateX(-50%)' : undefined,
+            left: `${leftPercent}%`,
+            width: `${widthPercent}%`,
             top: '2px',
             bottom: '2px',
             zIndex: isTooltipActive ? 15 : 10
@@ -409,15 +401,17 @@ export default function VacationManagement() {
           }}
         >
           {/* Icono del tipo de ausencia */}
-          <AbsenceIcon className={`w-3.5 h-3.5 md:w-4 md:h-4 ${
+          <AbsenceIcon className={`${isCompact ? 'w-4 h-4 md:w-5 md:h-5' : 'w-3.5 h-3.5 md:w-4 md:h-4'} ${
             period.status === 'approved' ? 'text-white' : 'text-yellow-900 dark:text-yellow-950'
           }`} />
-          {/* Número de días */}
-          <div className={`text-[10px] md:text-xs font-bold select-none leading-tight ${
-            period.status === 'approved' ? 'text-white' : 'text-yellow-900 dark:text-yellow-950'
-          }`}>
-            {daysCount}d
-          </div>
+          {/* Número de días - solo para ausencias de 3+ días */}
+          {!isCompact && (
+            <div className={`text-[10px] md:text-xs font-bold select-none leading-tight ${
+              period.status === 'approved' ? 'text-white' : 'text-yellow-900 dark:text-yellow-950'
+            }`}>
+              {daysCount}d
+            </div>
+          )}
 
           {/* Panel de información que aparece al hacer clic - Renderizado en portal para evitar problemas de z-index */}
           {isTooltipActive && createPortal(
