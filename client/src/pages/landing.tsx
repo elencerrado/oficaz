@@ -2318,8 +2318,7 @@ export default function Landing() {
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 text-sm">Empleados</p>
-                          <p className="text-[10px] text-gray-400">€2/mes</p>
-                        </div>
+                                                  </div>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <button 
@@ -2355,8 +2354,7 @@ export default function Landing() {
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 text-sm">Managers</p>
-                          <p className="text-[10px] text-gray-400">€4/mes</p>
-                        </div>
+                                                  </div>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <button 
@@ -2392,8 +2390,7 @@ export default function Landing() {
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 text-sm">Admins</p>
-                          <p className="text-[10px] text-gray-400">€6/mes</p>
-                        </div>
+                                                  </div>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <button 
@@ -2466,18 +2463,11 @@ export default function Landing() {
                           }`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <p className={`font-medium text-sm ${
-                              isLocked ? 'text-green-800' : isSelected ? 'text-white' : 'text-gray-900'
-                            }`}>
-                              {addon.name}
-                            </p>
-                            {!isLocked && (
-                              <span className={`text-xs font-semibold ${isSelected ? 'text-white/80' : 'text-[#007AFF]'}`}>
-                                €{addon.price}
-                              </span>
-                            )}
-                          </div>
+                          <p className={`font-medium text-sm ${
+                            isLocked ? 'text-green-800' : isSelected ? 'text-white' : 'text-gray-900'
+                          }`}>
+                            {addon.name}
+                          </p>
                           <p className={`text-[10px] leading-tight mt-0.5 ${
                             isLocked ? 'text-green-600' : isSelected ? 'text-white/70' : 'text-gray-500'
                           }`}>
