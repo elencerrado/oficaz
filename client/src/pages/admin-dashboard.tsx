@@ -539,8 +539,9 @@ export default function AdminDashboard() {
     },
   });
 
-  // Spanish national holidays 2025
+  // Spanish national holidays 2025-2026
   const nationalHolidays = [
+    // 2025
     { name: "Año Nuevo", date: "2025-01-01", type: "national" },
     { name: "Día de Reyes", date: "2025-01-06", type: "national" },
     { name: "Viernes Santo", date: "2025-04-18", type: "national" },
@@ -550,7 +551,18 @@ export default function AdminDashboard() {
     { name: "Todos los Santos", date: "2025-11-01", type: "national" },
     { name: "Día de la Constitución", date: "2025-12-06", type: "national" },
     { name: "Inmaculada Concepción", date: "2025-12-08", type: "national" },
-    { name: "Navidad", date: "2025-12-25", type: "national" }
+    { name: "Navidad", date: "2025-12-25", type: "national" },
+    // 2026
+    { name: "Año Nuevo", date: "2026-01-01", type: "national" },
+    { name: "Día de Reyes", date: "2026-01-06", type: "national" },
+    { name: "Viernes Santo", date: "2026-04-03", type: "national" },
+    { name: "Día del Trabajo", date: "2026-05-01", type: "national" },
+    { name: "Asunción de la Virgen", date: "2026-08-15", type: "national" },
+    { name: "Día de la Hispanidad", date: "2026-10-12", type: "national" },
+    { name: "Todos los Santos", date: "2026-11-01", type: "national" },
+    { name: "Día de la Constitución", date: "2026-12-06", type: "national" },
+    { name: "Inmaculada Concepción", date: "2026-12-08", type: "national" },
+    { name: "Navidad", date: "2026-12-25", type: "national" }
   ];
 
   // ✨ OPTIMIZED: Process custom holidays from consolidated response
