@@ -1295,58 +1295,59 @@ export default function AdminDocuments() {
         )}
 
         {activeTab === 'explorer' && (
-          <Card>
-            <CardContent className="p-6 space-y-4">
-              {/* Filters and View Mode - All in same row */}
-              <div className="flex flex-col md:flex-row gap-4">
-                {/* 1. Search Bar - Takes remaining space */}
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
-                    <Input
-                      placeholder="Buscar por nombre de archivo o empleado..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 w-full"
-                    />
+          <div className="space-y-4">
+              {/* Filters Section - Same style as time-tracking */}
+              <div className="p-4 bg-card dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+                <div className="flex flex-col md:flex-row gap-4">
+                  {/* 1. Search Bar - Takes remaining space */}
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+                      <Input
+                        placeholder="Buscar por nombre de archivo o empleado..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 w-full h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                      />
+                    </div>
                   </div>
-                </div>
-                
-                {/* 2. Employee Filter - Hidden in self-access mode */}
-                {!isSelfAccessOnly && (
-                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                    <SelectTrigger className="w-full md:w-64">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los empleados</SelectItem>
-                      {employees.map((employee: Employee) => (
-                        <SelectItem key={employee.id} value={employee.id.toString()}>
-                          {employee.fullName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-                
-                {/* 3. View Mode Toggle Buttons */}
-                <div className="flex bg-muted rounded-lg p-1">
-                  <Button
-                    variant={viewMode === 'list' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('list')}
-                    className="px-3"
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('grid')}
-                    className="px-3"
-                  >
-                    <Grid3X3 className="h-4 w-4" />
-                  </Button>
+                  
+                  {/* 2. Employee Filter - Hidden in self-access mode */}
+                  {!isSelfAccessOnly && (
+                    <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                      <SelectTrigger className="w-full md:w-64 h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos los empleados</SelectItem>
+                        {employees.map((employee: Employee) => (
+                          <SelectItem key={employee.id} value={employee.id.toString()}>
+                            {employee.fullName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  
+                  {/* 3. View Mode Toggle Buttons */}
+                  <div className="flex bg-muted rounded-lg p-1">
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('list')}
+                      className="px-3"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('grid')}
+                      className="px-3"
+                    >
+                      <Grid3X3 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
 
@@ -1386,7 +1387,7 @@ export default function AdminDocuments() {
                       return (
                         <div
                           key={document.id}
-                          className="flex flex-col sm:flex-row p-4 border border-border rounded-lg hover:bg-muted bg-card gap-3"
+                          className="flex flex-col sm:flex-row p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow gap-3"
                         >
                           {/* Header section - icon and title */}
                           <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -1766,8 +1767,7 @@ export default function AdminDocuments() {
                   </p>
                 </div>
               )}
-            </CardContent>
-          </Card>
+          </div>
         )}
 
         {activeTab === 'requests' && (
