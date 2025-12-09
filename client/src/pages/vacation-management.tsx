@@ -376,30 +376,19 @@ export default function VacationManagement() {
         ? calculateDays(fullRequest.startDate, fullRequest.endDate)
         : fullRequest?.days || duration;
       
-      // For compact badges (1-2 days): use minimal dot indicator
-      const isCompact = duration <= 2;
-      const centerPercent = leftPercent + widthPercent / 2;
-
       return (
         <div
           key={tooltipId}
           data-vacation-bar
-          className={`absolute cursor-pointer transition-all ${
-            isCompact 
-              ? `rounded-full ${period.status === 'approved' ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-400 hover:bg-yellow-500'} shadow-sm hover:scale-110`
-              : `rounded-md ${period.status === 'approved' ? 'bg-green-500 border-green-600 hover:bg-green-600' : 'bg-yellow-400 border-yellow-500 hover:bg-yellow-500'} border opacity-90 hover:opacity-100 flex flex-col items-center justify-center py-0.5`
-          }`}
-          style={isCompact ? {
-            left: `${centerPercent}%`,
-            transform: 'translateX(-50%)',
-            width: '24px',
-            height: '24px',
-            top: '50%',
-            marginTop: '-12px',
-            zIndex: isTooltipActive ? 15 : 10
-          } : {
+          className={`absolute rounded-md cursor-pointer transition-all ${
+            period.status === 'approved' 
+              ? 'bg-green-500 border-green-600 hover:bg-green-600' 
+              : 'bg-yellow-400 border-yellow-500 hover:bg-yellow-500'
+          } border opacity-90 hover:opacity-100 flex flex-col items-center justify-center py-0.5`}
+          style={{
             left: `${leftPercent}%`,
             width: `${widthPercent}%`,
+            minWidth: '2.5rem',
             top: '2px',
             bottom: '2px',
             zIndex: isTooltipActive ? 15 : 10
@@ -409,27 +398,16 @@ export default function VacationManagement() {
             setActiveTooltip(isTooltipActive ? null : tooltipId);
           }}
         >
-          {/* Para badges compactos: solo icono pequeño centrado */}
-          {isCompact ? (
-            <div className="w-full h-full flex items-center justify-center">
-              <AbsenceIcon className={`w-3.5 h-3.5 ${
-                period.status === 'approved' ? 'text-white' : 'text-yellow-900'
-              }`} />
-            </div>
-          ) : (
-            <>
-              {/* Icono del tipo de ausencia */}
-              <AbsenceIcon className={`w-3.5 h-3.5 md:w-4 md:h-4 ${
-                period.status === 'approved' ? 'text-white' : 'text-yellow-900 dark:text-yellow-950'
-              }`} />
-              {/* Número de días */}
-              <div className={`text-[10px] md:text-xs font-bold select-none leading-tight ${
-                period.status === 'approved' ? 'text-white' : 'text-yellow-900 dark:text-yellow-950'
-              }`}>
-                {daysCount}d
-              </div>
-            </>
-          )}
+          {/* Icono del tipo de ausencia */}
+          <AbsenceIcon className={`w-3.5 h-3.5 md:w-4 md:h-4 ${
+            period.status === 'approved' ? 'text-white' : 'text-yellow-900 dark:text-yellow-950'
+          }`} />
+          {/* Número de días */}
+          <div className={`text-[10px] md:text-xs font-bold select-none leading-tight ${
+            period.status === 'approved' ? 'text-white' : 'text-yellow-900 dark:text-yellow-950'
+          }`}>
+            {daysCount}d
+          </div>
 
           {/* Panel de información que aparece al hacer clic - Renderizado en portal para evitar problemas de z-index */}
           {isTooltipActive && createPortal(
