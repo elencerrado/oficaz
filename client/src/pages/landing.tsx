@@ -2301,11 +2301,14 @@ export default function Landing() {
               
               {/* Column 1: Users */}
               <div className="bg-white rounded-2xl p-5 shadow-xl border border-gray-100 flex flex-col">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
-                    <Users className="w-4 h-4 text-blue-600" />
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
+                      <Users className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <h3 className="font-semibold text-gray-900">1. Crea tu equipo</h3>
                   </div>
-                  <h3 className="font-semibold text-gray-900">Usuarios</h3>
+                  <p className="text-xs text-gray-400 ml-10">Luego podrás añadir más en segundos</p>
                 </div>
                 
                 <div className="space-y-3 flex-1">
@@ -2426,14 +2429,14 @@ export default function Landing() {
 
               {/* Column 2: Funcionalidades - Vertical Scroll */}
               <div className="bg-white rounded-2xl p-5 shadow-xl border border-gray-100 flex flex-col">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-1">
                     <div className="w-8 h-8 rounded-xl bg-purple-100 flex items-center justify-center">
                       <Sparkles className="w-4 h-4 text-purple-600" />
                     </div>
-                    <h3 className="font-semibold text-gray-900">Funciones</h3>
+                    <h3 className="font-semibold text-gray-900">2. Elige funcionalidades</h3>
                   </div>
-                  <span className="text-xs text-gray-400">Toca para añadir</span>
+                  <p className="text-xs text-gray-400 ml-10">Podrás ampliar poco a poco tu empresa</p>
                 </div>
                 
                 {/* Scrollable addon list */}
@@ -2487,11 +2490,14 @@ export default function Landing() {
 
               {/* Column 3: Summary */}
               <div className="bg-white rounded-2xl p-5 shadow-xl border border-gray-100 flex flex-col">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center">
-                    <Euro className="w-4 h-4 text-emerald-600" />
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center">
+                      <Euro className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <h3 className="font-semibold text-gray-900">3. Tu plan perfecto</h3>
                   </div>
-                  <h3 className="font-semibold text-gray-900">Tu Plan</h3>
+                  <p className="text-xs text-gray-400 ml-10">Nada sobra, nada falta. Justo lo que necesitas</p>
                 </div>
                 
                 {/* Price */}
