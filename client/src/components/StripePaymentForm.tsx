@@ -22,6 +22,9 @@ export function StripePaymentForm({ planName, planPrice, trialEndDate, onSuccess
   const stripe = useStripe();
   const elements = useElements();
 
+  // Check if trial has expired
+  const trialHasExpired = trialEndDate ? new Date(trialEndDate) < new Date() : false;
+  
   // Format the trial end date
   const formattedTrialEndDate = trialEndDate 
     ? format(new Date(trialEndDate), "d 'de' MMMM", { locale: es })
@@ -80,8 +83,10 @@ export function StripePaymentForm({ planName, planPrice, trialEndDate, onSuccess
             });
 
             toast({
-              title: "¡Tarjeta verificada!",
-              description: `Tu tarjeta ha sido verificada correctamente. El primer cobro será cuando termine tu prueba gratuita.`,
+              title: trialHasExpired ? "¡Suscripción activada!" : "¡Tarjeta verificada!",
+              description: trialHasExpired 
+                ? `Tu suscripción ha sido activada correctamente.`
+                : `Tu tarjeta ha sido verificada correctamente. El primer cobro será cuando termine tu prueba gratuita.`,
             });
             
             // Invalidate auth data to refresh subscription status
@@ -139,20 +144,31 @@ export function StripePaymentForm({ planName, planPrice, trialEndDate, onSuccess
             €{planPrice}/mes • Facturación mensual
           </p>
         </div>
-        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-sm text-green-800">
-            🔒 <strong>Verificación sin cobro:</strong> Solo validaremos tu tarjeta (€0)
-          </p>
-          {formattedTrialEndDate ? (
-            <p className="text-xs text-green-600 mt-1">
-              El primer cobro de €{planPrice} será el {formattedTrialEndDate} cuando termine tu prueba gratuita
+        {trialHasExpired ? (
+          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              💳 <strong>Activar suscripción:</strong> El cobro de €{planPrice} se realizará ahora
             </p>
-          ) : (
-            <p className="text-xs text-green-600 mt-1">
-              El primer cobro de €{planPrice} será cuando termine tu prueba gratuita
+            <p className="text-xs text-blue-600 mt-1">
+              Tu periodo de prueba ha finalizado. Al añadir tu tarjeta, se activará tu suscripción.
             </p>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm text-green-800">
+              🔒 <strong>Verificación sin cobro:</strong> Solo validaremos tu tarjeta (€0)
+            </p>
+            {formattedTrialEndDate ? (
+              <p className="text-xs text-green-600 mt-1">
+                El primer cobro de €{planPrice} será el {formattedTrialEndDate} cuando termine tu prueba gratuita
+              </p>
+            ) : (
+              <p className="text-xs text-green-600 mt-1">
+                El primer cobro de €{planPrice} será cuando termine tu prueba gratuita
+              </p>
+            )}
+          </div>
+        )}
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -183,12 +199,12 @@ export function StripePaymentForm({ planName, planPrice, trialEndDate, onSuccess
             {isLoading ? (
               <>
                 <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2" />
-                Verificando...
+                {trialHasExpired ? 'Activando...' : 'Verificando...'}
               </>
             ) : (
               <>
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Verificar tarjeta
+                {trialHasExpired ? 'Activar suscripción' : 'Verificar tarjeta'}
               </>
             )}
           </Button>
