@@ -1574,10 +1574,10 @@ export default function AdminDocuments() {
                         const isEmployeeExpanded = expandedFolders.has(employeeFolderId);
 
                         return (
-                          <div key={employeeId} className="border border-border rounded-lg bg-card">
+                          <div key={employeeId} className="bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md">
                             {/* Employee Header */}
                             <div 
-                              className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted"
+                              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
                               onClick={() => {
                                 const newExpanded = new Set(expandedFolders);
                                 if (isEmployeeExpanded) {
@@ -1619,10 +1619,10 @@ export default function AdminDocuments() {
                                   };
 
                                   return (
-                                    <div key={type} className="border border-border rounded-lg bg-muted">
+                                    <div key={type} className="bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
                                       {/* Type Header */}
                                       <div 
-                                        className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-t-xl"
                                         onClick={() => {
                                           const newExpanded = new Set(expandedFolders);
                                           if (isTypeExpanded) {
