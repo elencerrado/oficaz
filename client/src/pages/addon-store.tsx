@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { PaymentMethodManager } from '@/components/PaymentMethodManager';
 import { 
   Store, 
   Sparkles, 
@@ -28,7 +29,8 @@ import {
   UserPlus,
   Shield,
   Briefcase,
-  Package
+  Package,
+  CreditCard
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -130,6 +132,21 @@ export default function AddonStore() {
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showSeatsDialog, setShowSeatsDialog] = useState(false);
+  const [showPaymentManager, setShowPaymentManager] = useState(false);
+  
+  const { data: trialStatus } = useQuery<{ isBlocked: boolean; trialEndDate: string }>({
+    queryKey: ['/api/account/trial-status'],
+    staleTime: 30000,
+    enabled: !!user && isAdmin,
+  });
+  
+  const { data: paymentMethods = [] } = useQuery<any[]>({
+    queryKey: ['/api/account/payment-methods'],
+    retry: false,
+    enabled: !!user && isAdmin,
+  });
+  
+  const isTrialExpired = trialStatus?.isBlocked === true;
   
   const seatPrices = {
     employees: 2,
@@ -449,16 +466,93 @@ export default function AddonStore() {
   };
 
   const featureIncludedInPlan = (key: string) => {
-    // Add-ons are NEVER included in plans - they must always be purchased separately
-    // So we always return false for add-on keys
     return false;
+  };
+  
+  const handlePaymentSuccess = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
+    await queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
+    await queryClient.invalidateQueries({ queryKey: ['/api/account/payment-methods'] });
+    await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+    await queryClient.invalidateQueries({ queryKey: ['/api/company/addons'] });
+    await queryClient.refetchQueries({ queryKey: ['/api/account/subscription'] });
+    await queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
+    await refreshUser();
+    setShowPaymentManager(false);
+    window.location.reload();
+  };
+  
+  const calculateTotalMonthlyPrice = () => {
+    let total = 0;
+    total += displaySeats.employees * seatPrices.employees;
+    total += displaySeats.managers * seatPrices.managers;
+    total += displaySeats.admins * seatPrices.admins;
+    addonsWithStatus.filter(a => a.isPurchased && !a.isFreeFeature).forEach(addon => {
+      total += Number(addon.monthlyPrice) || 0;
+    });
+    return total;
   };
 
   return (
     <div className="px-6 py-4 min-h-screen bg-gray-50 dark:bg-gray-900" style={{ overflowX: 'clip' }}>
+      {isTrialExpired && (
+        <Card className="mb-6 border-amber-300 dark:border-amber-700 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 shadow-lg">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
+                <AlertCircle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <CardTitle className="text-xl text-amber-800 dark:text-amber-200">
+                  Período de Prueba Finalizado
+                </CardTitle>
+                <CardDescription className="text-amber-700 dark:text-amber-300">
+                  {trialStatus?.trialEndDate && `Tu prueba gratuita terminó el ${new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')}`}
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+              Selecciona las funcionalidades y usuarios que necesitas. Tu suscripción comenzará el día que realices el pago.
+            </p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-4">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                    €{calculateTotalMonthlyPrice().toFixed(2)}
+                  </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">por mes</div>
+                </div>
+                <div className="hidden sm:block h-12 w-px bg-gray-200 dark:bg-gray-700" />
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <div>{displaySeats.admins} admin{displaySeats.admins !== 1 ? 's' : ''} • {displaySeats.managers} manager{displaySeats.managers !== 1 ? 's' : ''} • {displaySeats.employees} empleado{displaySeats.employees !== 1 ? 's' : ''}</div>
+                  <div className="text-xs">{addonsWithStatus.filter(a => a.isPurchased).length} complementos activos</div>
+                </div>
+              </div>
+              <Button 
+                onClick={() => setShowPaymentManager(true)}
+                size="lg"
+                className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white shadow-md"
+              >
+                <CreditCard className="mr-2 h-5 w-5" />
+                Añadir Método de Pago
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Tienda de Complementos</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">Añade funcionalidades extra a tu plan de suscripción</p>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+          {isTrialExpired ? 'Configura tu Suscripción' : 'Tienda de Complementos'}
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1">
+          {isTrialExpired 
+            ? 'Elige las funcionalidades y usuarios que necesitas para tu empresa'
+            : 'Añade funcionalidades extra a tu plan de suscripción'
+          }
+        </p>
       </div>
 
       {isLoading ? (
@@ -1102,6 +1196,36 @@ export default function AddonStore() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {showPaymentManager && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Activar Suscripción</CardTitle>
+                <CardDescription>
+                  Total mensual: €{calculateTotalMonthlyPrice().toFixed(2)}/mes
+                </CardDescription>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowPaymentManager(false)}
+              >
+                ✕
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <PaymentMethodManager 
+                paymentMethods={paymentMethods} 
+                onPaymentSuccess={handlePaymentSuccess}
+                selectedPlan="oficaz"
+                selectedPlanPrice={calculateTotalMonthlyPrice()}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

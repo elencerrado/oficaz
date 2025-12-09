@@ -125,30 +125,38 @@ function RoleBasedPage({
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading, token } = useAuth();
+  const { user, company, isLoading, token } = useAuth();
   const [, setLocation] = useLocation();
+  
+  const { data: trialStatus, isLoading: trialLoading } = useQuery<{ isBlocked: boolean }>({
+    queryKey: ['/api/account/trial-status'],
+    staleTime: 30000,
+    enabled: !!user,
+  });
 
-  // SECURITY FIX: Clean up auth data when no valid session exists
   useEffect(() => {
     if (!isLoading && (!user || !token)) {
-      // Clear only auth data, not entire localStorage
       localStorage.removeItem('authData');
-      
-      // Prevent browser history navigation to admin pages
       if (window.history?.replaceState) {
         window.history.replaceState(null, '', '/login');
       }
-      
       setLocation('/login');
     }
   }, [user, token, isLoading, setLocation]);
 
-  if (isLoading) {
+  if (isLoading || trialLoading) {
     return <PageLoading />;
   }
 
   if (!user || !token) {
-    return <PageLoading />; // Show loading while cleanup happens
+    return <PageLoading />;
+  }
+  
+  const isTrialExpired = trialStatus?.isBlocked === true;
+  
+  if (isTrialExpired) {
+    const companyAlias = company?.companyAlias || 'test';
+    return <Redirect to={`/${companyAlias}/tienda`} />;
   }
 
   return <>{children}</>;
@@ -189,11 +197,88 @@ function ManagerFeatureGate({
   return <>{children}</>;
 }
 
+function TrialExpiredLayout({ children }: { children: React.ReactNode }) {
+  useScrollReset();
+  
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <main className="min-h-screen">
+        {children}
+      </main>
+    </div>
+  );
+}
+
+function StoreRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoading, token } = useAuth();
+  const [, setLocation] = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { showBanner } = useDemoBanner();
+  
+  const { data: trialStatus, isLoading: trialLoading } = useQuery<{ isBlocked: boolean }>({
+    queryKey: ['/api/account/trial-status'],
+    staleTime: 30000,
+    enabled: !!user,
+  });
+  
+  useScrollReset();
+
+  useEffect(() => {
+    if (!isLoading && (!user || !token)) {
+      localStorage.removeItem('authData');
+      if (window.history?.replaceState) {
+        window.history.replaceState(null, '', '/login');
+      }
+      setLocation('/login');
+    }
+  }, [user, token, isLoading, setLocation]);
+
+  if (isLoading || trialLoading) {
+    return <PageLoading />;
+  }
+
+  if (!user || !token) {
+    return <PageLoading />;
+  }
+  
+  const isTrialExpired = trialStatus?.isBlocked === true;
+  
+  if (isTrialExpired) {
+    return (
+      <TrialExpiredLayout>
+        {children}
+      </TrialExpiredLayout>
+    );
+  }
+  
+  const paddingTop = showBanner ? 'pt-header-banner-safe' : 'pt-header-safe';
+  
+  return (
+    <SidebarProvider>
+      <AppLayoutContent 
+        isSidebarOpen={isSidebarOpen} 
+        setIsSidebarOpen={setIsSidebarOpen}
+        paddingTop={paddingTop}
+      >
+        {children}
+      </AppLayoutContent>
+    </SidebarProvider>
+  );
+}
+
 function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, subscription } = useAuth();
   const { isEmployeeViewMode } = useEmployeeViewMode();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { showBanner } = useDemoBanner();
+  
+  const { data: trialStatus } = useQuery<{ isBlocked: boolean }>({
+    queryKey: ['/api/account/trial-status'],
+    staleTime: 30000,
+    enabled: !!user && user.role === 'admin',
+  });
+  
+  const isTrialExpired = trialStatus?.isBlocked === true;
   
   // Determine if we should use employee view (either employee role OR employee view mode)
   const useEmployeeLayout = user?.role === 'employee' || isEmployeeViewMode;
@@ -615,11 +700,9 @@ function Router() {
       </Route>
 
       <Route path="/:companyAlias/tienda">
-        <ProtectedRoute>
-          <AppLayout>
-            <AddonStore />
-          </AppLayout>
-        </ProtectedRoute>
+        <StoreRoute>
+          <AddonStore />
+        </StoreRoute>
       </Route>
 
       <Route path="/:companyAlias/usuario">

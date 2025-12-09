@@ -39,7 +39,6 @@ import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { TrialManager } from '@/components/TrialManager';
-import BlockedAccountOverlay from '@/components/BlockedAccountOverlay';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PaymentMethodManager } from '@/components/PaymentMethodManager';
 import { getNationalHolidaysForCalendar, getUpcomingHolidays } from '@/utils/spanishHolidays';
@@ -765,11 +764,6 @@ export default function AdminDashboard() {
         <div className={`mb-6 ${getCardAnimationClass(0)}`}>
           <TrialManager />
         </div>
-      )}
-
-      {/* Blocked Account Overlay */}
-      {trialStatus?.isBlocked && (
-        <BlockedAccountOverlay trialStatus={trialStatus} />
       )}
 
       {/* Subscription Termination Warning - Discrete */}
