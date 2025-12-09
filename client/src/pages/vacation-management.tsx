@@ -1918,7 +1918,7 @@ export default function VacationManagement() {
                             {/* Timeline Horizontal */}
                             <div className="flex-1 relative">
                               {/* Fondo del timeline con marcas de días */}
-                              <div className="relative h-14 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">
+                              <div className="relative h-14 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
                                 {/* Grid de días (solo mostrar algunos para no saturar) */}
                                 {timelineRange.days
                                   .filter((_, index) => index % (timelineViewMode === 'month' ? 3 : 7) === 0)
@@ -2078,7 +2078,7 @@ export default function VacationManagement() {
                           <div className="relative">
                             {/* Fondo del timeline con marcas de días */}
                             <div 
-                              className="relative h-12 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 overflow-hidden touch-pan-y select-none"
+                              className="relative h-12 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 overflow-hidden touch-pan-y select-none"
                               onTouchStart={handleTouchStart}
                               onTouchMove={handleTouchMove}
                               onTouchEnd={handleTouchEnd}
