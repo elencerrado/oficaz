@@ -1017,8 +1017,7 @@ export default function AdminWorkReportsPage() {
       </div>
 
       {/* Reports List */}
-      <div>
-        {filteredReports.length === 0 ? (
+      {filteredReports.length === 0 ? (
         <div className="py-12 text-center px-4">
           <ClipboardList className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
@@ -1167,7 +1166,6 @@ export default function AdminWorkReportsPage() {
           </div>
         </div>
       ) : null}
-      </div>
 
       {/* Modal de visualización del parte */}
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
