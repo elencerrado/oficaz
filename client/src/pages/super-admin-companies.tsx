@@ -32,6 +32,15 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
+interface ActiveAddon {
+  id: number;
+  key: string;
+  name: string;
+  monthlyPrice: string;
+  status: string;
+  purchasedAt?: string;
+}
+
 interface Company {
   id: number;
   name: string;
@@ -52,6 +61,13 @@ interface Company {
     useCustomSettings?: boolean;
     features?: any;
   };
+  activeAddons?: ActiveAddon[];
+  contractedRoles?: {
+    admins: number;
+    managers: number;
+    employees: number;
+  };
+  calculatedMonthlyPrice?: string;
   promotionalCode?: {
     code: string;
     description: string;
@@ -714,87 +730,72 @@ export default function SuperAdminCompanies() {
               </CardContent>
             </Card>
 
-            {/* Features Configuration */}
+            {/* Subscription Summary */}
             <Card className="!bg-white/10 backdrop-blur-xl !border-white/20">
               <CardHeader>
                 <CardTitle className="!text-white flex items-center gap-2">
                   <Settings className="w-5 h-5" />
-                  Funcionalidades
+                  Resumen de Suscripción
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Toggle para configuración personalizada */}
-                <div className="border !border-white/20 rounded-lg p-4 bg-blue-500/10">
-                  <div className="flex items-center justify-between mb-3">
+                {/* Monthly Price */}
+                <div className="border !border-emerald-500/30 rounded-lg p-4 bg-emerald-500/10">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-medium !text-white">Configuración Personalizada</h3>
-                      <p className="text-xs !text-white/60">
-                        {useCustomSettings 
-                          ? 'Esta empresa usa configuración personalizada independiente del plan' 
-                          : 'Esta empresa sigue la configuración por defecto del plan seleccionado'
-                        }
-                      </p>
+                      <h3 className="text-sm font-medium !text-white">Precio Mensual Total</h3>
+                      <p className="text-xs !text-white/60">Suma de complementos + usuarios contratados</p>
                     </div>
-                    <Button
-                      variant={useCustomSettings ? "destructive" : "default"}
-                      size="sm"
-                      onClick={toggleCustomSettings}
-                      disabled={updateCompanyMutation.isPending}
-                    >
-                      {useCustomSettings ? 'Desactivar Personalización' : 'Activar Personalización'}
-                    </Button>
-                  </div>
-                  <div className="text-xs !text-white/50">
-                    {useCustomSettings 
-                      ? '⚙️ Las funcionalidades se pueden modificar individualmente'
-                      : '📋 Las funcionalidades siguen automáticamente la configuración del plan'
-                    }
+                    <div className="text-2xl font-bold text-emerald-400">
+                      €{company.calculatedMonthlyPrice || '0.00'}
+                    </div>
                   </div>
                 </div>
 
-                {/* Funcionalidades */}
+                {/* Contracted Roles */}
                 <div>
-                  {!useCustomSettings && (
-                    <div className="mb-4 p-3 !bg-white/5 border !border-white/10 rounded-lg">
-                      <p className="text-sm !text-white/70">
-                        🔒 Configuración automática según el plan "{company.subscription.plan}". 
-                        Activa la personalización para modificar individualmente.
-                      </p>
+                  <h3 className="text-sm font-medium !text-white mb-3">Usuarios Contratados</h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="p-3 !bg-white/5 rounded-lg border !border-white/10 text-center">
+                      <div className="text-xl font-bold text-purple-400">{company.contractedRoles?.admins || 0}</div>
+                      <div className="text-xs !text-white/60">Admins</div>
+                      <div className="text-xs text-purple-400/80">€6/mes c/u</div>
                     </div>
-                  )}
-                  
-                  <div className="space-y-3">
-                    {Object.entries(customFeatures).map(([key, enabled]) => (
-                      <div key={key} className={`flex items-center justify-between p-3 !bg-white/5 rounded-lg ${!useCustomSettings ? 'opacity-60' : ''}`}>
-                        <span className="!text-white/80 text-sm">{featureLabels[key as keyof typeof featureLabels] || key}</span>
-                        {useCustomSettings ? (
-                          <Switch
-                            checked={enabled as boolean}
-                            onCheckedChange={(checked) => {
-                              setCustomFeatures((prev: any) => ({
-                                ...prev,
-                                [key]: checked
-                              }));
-                            }}
-                          />
-                        ) : (
-                          <Badge variant={enabled ? "default" : "secondary"} className="text-xs">
-                            {enabled ? 'Habilitado' : 'Deshabilitado'}
-                          </Badge>
-                        )}
-                      </div>
-                    ))}
+                    <div className="p-3 !bg-white/5 rounded-lg border !border-white/10 text-center">
+                      <div className="text-xl font-bold text-blue-400">{company.contractedRoles?.managers || 0}</div>
+                      <div className="text-xs !text-white/60">Managers</div>
+                      <div className="text-xs text-blue-400/80">€4/mes c/u</div>
+                    </div>
+                    <div className="p-3 !bg-white/5 rounded-lg border !border-white/10 text-center">
+                      <div className="text-xl font-bold text-gray-400">{company.contractedRoles?.employees || 0}</div>
+                      <div className="text-xs !text-white/60">Empleados</div>
+                      <div className="text-xs text-gray-400/80">€2/mes c/u</div>
+                    </div>
                   </div>
-                  
-                  {useCustomSettings && (
-                    <div className="mt-4 flex justify-end">
-                      <Button 
-                        onClick={saveCustomSettings}
-                        disabled={updateCompanyMutation.isPending}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        Guardar Configuración Personalizada
-                      </Button>
+                </div>
+
+                {/* Active Addons */}
+                <div>
+                  <h3 className="text-sm font-medium !text-white mb-3">Complementos Activos</h3>
+                  {company.activeAddons && company.activeAddons.length > 0 ? (
+                    <div className="space-y-2">
+                      {company.activeAddons.map((addon: ActiveAddon) => (
+                        <div key={addon.id} className="flex items-center justify-between p-3 !bg-white/5 rounded-lg border !border-white/10">
+                          <div className="flex items-center gap-2">
+                            <span className="!text-white/80 text-sm">{addon.name}</span>
+                            {addon.status === 'pending_cancel' && (
+                              <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 text-xs">
+                                Cancelación pendiente
+                              </Badge>
+                            )}
+                          </div>
+                          <span className="text-emerald-400 font-medium">€{addon.monthlyPrice}/mes</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 !bg-white/5 rounded-lg border !border-white/10 text-center">
+                      <p className="text-sm !text-white/50">No hay complementos activos</p>
                     </div>
                   )}
                 </div>

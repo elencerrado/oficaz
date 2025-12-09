@@ -11392,6 +11392,41 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
       
       const activeUsers = users.filter(user => user.isActive).length;
       
+      // Get active addons for this company
+      const companyAddons = await storage.getCompanyAddons(companyId);
+      const activeAddons = companyAddons.filter(ca => ca.status === 'active' || ca.status === 'pending_cancel');
+      
+      // Get addon details
+      const allAddons = await storage.getAllAddons();
+      const activeAddonDetails = activeAddons.map(ca => {
+        const addon = allAddons.find(a => a.id === ca.addonId);
+        return {
+          id: ca.addonId,
+          key: addon?.key || 'unknown',
+          name: addon?.name || 'Desconocido',
+          monthlyPrice: addon?.monthlyPrice || '0',
+          status: ca.status,
+          purchasedAt: ca.purchasedAt
+        };
+      });
+      
+      // Calculate monthly subscription price
+      let totalMonthlyPrice = 0;
+      
+      // Add addon prices
+      for (const addon of activeAddonDetails) {
+        totalMonthlyPrice += parseFloat(addon.monthlyPrice);
+      }
+      
+      // Add user seat prices (€6 admin, €4 manager, €2 employee)
+      const extraAdmins = subscription?.extraAdmins || 0;
+      const extraManagers = subscription?.extraManagers || 0;
+      const extraEmployees = subscription?.extraEmployees || 0;
+      
+      totalMonthlyPrice += extraAdmins * 6;
+      totalMonthlyPrice += extraManagers * 4;
+      totalMonthlyPrice += extraEmployees * 2;
+      
       // Calculate trial days remaining
       const trialDuration = company.trialDurationDays || 14;
       const trialStartDate = new Date(company.createdAt);
@@ -11414,6 +11449,13 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
         },
         userCount: users.length,
         activeUsers,
+        activeAddons: activeAddonDetails,
+        contractedRoles: {
+          admins: extraAdmins,
+          managers: extraManagers,
+          employees: extraEmployees
+        },
+        calculatedMonthlyPrice: totalMonthlyPrice.toFixed(2),
         trialInfo: {
           daysRemaining: Math.max(0, daysRemaining),
           isTrialActive,
