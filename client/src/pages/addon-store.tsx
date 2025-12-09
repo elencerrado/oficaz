@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { usePageTitle } from '@/hooks/use-page-title';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,8 @@ import {
   Shield,
   Briefcase,
   Package,
-  CreditCard
+  CreditCard,
+  LogOut
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -107,12 +109,18 @@ const getAddonColor = (key: string, isFree: boolean = false) => {
 
 export default function AddonStore() {
   usePageTitle('Tienda - Oficaz');
-  const { user, subscription, refreshUser } = useAuth();
+  const { user, subscription, refreshUser, logout } = useAuth();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
   const isAdmin = user?.role === 'admin';
   const isManager = user?.role === 'manager';
+  
+  const handleLogout = async () => {
+    await logout();
+    setLocation('/login');
+  };
 
   // Query for manager permissions
   const { data: permissionsData } = useQuery<{ managerPermissions: {
@@ -530,14 +538,27 @@ export default function AddonStore() {
                   <div className="text-xs">{addonsWithStatus.filter(a => a.isPurchased).length} complementos activos</div>
                 </div>
               </div>
-              <Button 
-                onClick={() => setShowPaymentManager(true)}
-                size="lg"
-                className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white shadow-md"
-              >
-                <CreditCard className="mr-2 h-5 w-5" />
-                Añadir Método de Pago
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <Button 
+                  onClick={() => setShowPaymentManager(true)}
+                  size="lg"
+                  className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white shadow-md"
+                  data-testid="button-add-payment-method"
+                >
+                  <CreditCard className="mr-2 h-5 w-5" />
+                  Añadir Método de Pago
+                </Button>
+                <Button 
+                  onClick={handleLogout}
+                  variant="outline"
+                  size="lg"
+                  className="w-full sm:w-auto"
+                  data-testid="button-logout-store"
+                >
+                  <LogOut className="mr-2 h-5 w-5" />
+                  Cerrar Sesión
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
