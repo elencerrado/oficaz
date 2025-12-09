@@ -173,13 +173,16 @@ export async function refreshAccessToken(): Promise<string | null> {
 
       const data = await response.json();
       
-      if (data.token) {
+      if (data.token && data.refreshToken) {
         console.log('✅ Access token refreshed successfully');
+        console.log('🔄 Refresh token rotated (sliding session)');
         
-        // Update stored auth data with new access token (keep same refresh token)
+        // 🔒 SLIDING SESSION: Update stored auth data with new access token AND new refresh token
+        // Server MUST return a new refresh token (single-use) - old one is revoked
         const updatedAuthData = {
           ...authData,
           token: data.token,
+          refreshToken: data.refreshToken,
         };
         
         // Determine which storage was used
@@ -192,6 +195,12 @@ export async function refreshAccessToken(): Promise<string | null> {
         }
         
         return data.token;
+      } else if (data.token && !data.refreshToken) {
+        // 🔒 SECURITY: If server doesn't return new refresh token, the old one is revoked
+        // Must fail the refresh and force re-login
+        console.warn('⚠️ Server returned access token but no refresh token - session invalid');
+        clearAuthData();
+        return null;
       }
       
       return null;

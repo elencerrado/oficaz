@@ -72,12 +72,13 @@ export function generateToken(user: { id: number; username: string; role: string
   return token;
 }
 
-// 🔒 SECURITY: Generate long-lived refresh token (30 days)
+// 🔒 SECURITY: Generate long-lived refresh token (90 days for PWA persistence)
+// Extended from 30d to 90d for better PWA experience - sliding session renews on each use
 export function generateRefreshToken(userId: number) {
   const token = jwt.sign({
     userId,
     type: 'refresh' // Mark as refresh token
-  }, JWT_SECRET, { expiresIn: '30d' });
+  }, JWT_SECRET, { expiresIn: '90d' }); // 90 days for PWA - renewed on each use (sliding session)
   return token;
 }
 

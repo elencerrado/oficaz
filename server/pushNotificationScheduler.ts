@@ -221,14 +221,15 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
       return;
     }
 
-    // Generate temporary JWT token valid for 5 minutes (for push notification actions)
+    // Generate temporary JWT token valid for 15 minutes (for push notification actions)
+    // Balance between usability (time to respond) and security (replay window)
     const tempToken = jwt.sign({
       id: user.id,
       email: user.personalEmail || user.companyEmail || `user_${user.id}@temp.com`,
       role: user.role,
       companyId: user.companyId,
-      pushAction: true // Mark as push action token
-    }, JWT_SECRET, { expiresIn: '5m' });
+      pushAction: true // Mark as push action token - limits scope of this token
+    }, JWT_SECRET, { expiresIn: '15m' });
 
     // Get current work status to determine available actions
     const workStatus = await getWorkStatus(userId);

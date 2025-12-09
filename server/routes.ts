@@ -3037,7 +3037,7 @@ Responde directamente a este email para contactar con la persona.
 
       const refreshToken = generateRefreshToken(user.id);
       const refreshTokenExpiry = new Date();
-      refreshTokenExpiry.setDate(refreshTokenExpiry.getDate() + 30); // 30 days
+      refreshTokenExpiry.setDate(refreshTokenExpiry.getDate() + 90); // 90 days for PWA persistence
 
       // 🔒 SECURITY: Hash refresh token before storing (protect against DB leaks)
       const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
@@ -3066,6 +3066,9 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // 🔒 SECURITY: In-memory lock to prevent concurrent refresh token operations per user
+  const refreshLocks = new Map<number, Promise<any>>();
+
   // 🔒 SECURITY: Refresh Token Endpoint
   app.post('/api/auth/refresh', async (req, res) => {
     try {
@@ -3088,54 +3091,98 @@ Responde directamente a este email para contactar con la persona.
         return res.status(403).json({ message: 'Token inválido' });
       }
 
-      // 🔒 SECURITY: Get all valid tokens for user and compare hashes
-      const userTokens = await storage.getRefreshTokensForUser(decoded.userId);
-      if (!userTokens || userTokens.length === 0) {
-        return res.status(403).json({ message: 'Refresh token no encontrado o revocado' });
-      }
+      const userId = decoded.userId;
 
-      // Find matching token by comparing hashes
-      let matchedToken: any = null;
-      for (const storedToken of userTokens) {
-        const isMatch = await bcrypt.compare(refreshToken, storedToken.token);
-        if (isMatch) {
-          matchedToken = storedToken;
-          break;
+      // 🔒 ATOMIC LOCK: Reject if another refresh operation is in progress for this user
+      // This prevents race conditions where multiple concurrent refreshes create duplicate tokens
+      // SYNC CHECK + SYNC SET to prevent race between check and set
+      if (refreshLocks.has(userId)) {
+        console.log(`[SECURITY] Rejecting concurrent refresh for user ${userId}`);
+        return res.status(429).json({ message: 'Operación de refresh en progreso, intenta de nuevo' });
+      }
+      
+      // 🔒 SET LOCK IMMEDIATELY (synchronously) before any async operation
+      // This creates a placeholder that will be replaced by the actual promise
+      refreshLocks.set(userId, Promise.resolve());
+
+      // Create the refresh operation as a promise
+      const refreshOperation = (async () => {
+        // 🔒 SECURITY: Get all valid tokens for user and compare hashes
+        const userTokens = await storage.getRefreshTokensForUser(userId);
+        if (!userTokens || userTokens.length === 0) {
+          throw { status: 403, message: 'Refresh token no encontrado o revocado' };
         }
+
+        // Find matching token by comparing hashes
+        let matchedToken: any = null;
+        for (const storedToken of userTokens) {
+          const isMatch = await bcrypt.compare(refreshToken, storedToken.token);
+          if (isMatch) {
+            matchedToken = storedToken;
+            break;
+          }
+        }
+
+        if (!matchedToken) {
+          throw { status: 403, message: 'Refresh token inválido' };
+        }
+
+        // Get user information
+        const user = await storage.getUser(userId);
+        if (!user) {
+          throw { status: 404, message: 'Usuario no encontrado' };
+        }
+
+        // Check if user account is active
+        if (!user.isActive) {
+          throw { status: 401, message: 'Cuenta desactivada' };
+        }
+
+        // Generate new access token
+        const newAccessToken = generateToken({
+          id: user.id,
+          username: user.companyEmail || user.personalEmail || `user_${user.id}`,
+          role: user.role,
+          companyId: user.companyId,
+        });
+
+        // 🔒 SLIDING SESSION: Generate new refresh token on each use
+        const newRefreshToken = generateRefreshToken(user.id);
+        const newRefreshTokenExpiry = new Date();
+        newRefreshTokenExpiry.setDate(newRefreshTokenExpiry.getDate() + 90); // 90 days
+
+        // 🔒 ATOMIC OPERATION: Revoke ALL user tokens, then create new one
+        // Lock ensures no concurrent refreshes can create duplicates
+        await storage.revokeAllUserRefreshTokens(user.id);
+        
+        // Hash and store new refresh token (only valid one for this user now)
+        const hashedNewRefreshToken = await bcrypt.hash(newRefreshToken, 10);
+        await storage.createRefreshToken(user.id, hashedNewRefreshToken, newRefreshTokenExpiry);
+
+        console.log(`[SECURITY] Token refreshed with sliding session for user ${user.id} (${user.companyEmail})`);
+
+        return { newAccessToken, newRefreshToken };
+      })();
+
+      // Store the lock
+      refreshLocks.set(userId, refreshOperation);
+
+      try {
+        const { newAccessToken, newRefreshToken } = await refreshOperation;
+        res.json({
+          token: newAccessToken,
+          refreshToken: newRefreshToken,
+          message: 'Token refrescado exitosamente'
+        });
+      } catch (error: any) {
+        if (error.status) {
+          return res.status(error.status).json({ message: error.message });
+        }
+        throw error;
+      } finally {
+        // 🔒 ALWAYS release the lock, even on error
+        refreshLocks.delete(userId);
       }
-
-      if (!matchedToken) {
-        return res.status(403).json({ message: 'Refresh token inválido' });
-      }
-
-      // Update last used timestamp (using hashed token)
-      await storage.updateRefreshTokenUsage(matchedToken.token);
-
-      // Get user information
-      const user = await storage.getUser(decoded.userId);
-      if (!user) {
-        return res.status(404).json({ message: 'Usuario no encontrado' });
-      }
-
-      // Check if user account is active
-      if (!user.isActive) {
-        return res.status(401).json({ message: 'Cuenta desactivada' });
-      }
-
-      // Generate new access token
-      const newAccessToken = generateToken({
-        id: user.id,
-        username: user.companyEmail || user.personalEmail || `user_${user.id}`,
-        role: user.role,
-        companyId: user.companyId,
-      });
-
-      console.log(`[SECURITY] Token refreshed for user ${user.id} (${user.companyEmail})`);
-
-      res.json({
-        token: newAccessToken,
-        message: 'Token refrescado exitosamente'
-      });
     } catch (error: any) {
       console.error(`[SECURITY] Refresh token error: ${error.message}`);
       res.status(500).json({ message: 'Error interno del servidor' });
