@@ -264,9 +264,12 @@ export default function AddonStore() {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
       await refreshUser();
+      const hasPaymentMethod = paymentMethods && paymentMethods.length > 0;
       toast({
         title: 'Complemento cancelado',
-        description: 'El complemento se cancelará al final del período de facturación.',
+        description: hasPaymentMethod 
+          ? 'El complemento se cancelará al final del período de facturación.'
+          : 'El complemento ha sido eliminado de tu selección.',
       });
       setShowCancelDialog(false);
       setSelectedAddon(null);
@@ -1080,8 +1083,9 @@ export default function AddonStore() {
                 <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm text-amber-800 dark:text-amber-200">
-                    El complemento permanecerá activo hasta el final de tu período de facturación actual.
-                    Después de esa fecha, perderás acceso a las funcionalidades del complemento.
+                    {paymentMethods && paymentMethods.length > 0 
+                      ? 'El complemento permanecerá activo hasta el final de tu período de facturación actual. Después de esa fecha, perderás acceso a las funcionalidades del complemento.'
+                      : 'El complemento será eliminado de tu selección. Perderás acceso a sus funcionalidades inmediatamente.'}
                   </p>
                 </div>
               </div>
