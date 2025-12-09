@@ -42,6 +42,7 @@ import { TrialManager } from '@/components/TrialManager';
 import BlockedAccountOverlay from '@/components/BlockedAccountOverlay';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PaymentMethodManager } from '@/components/PaymentMethodManager';
+import { getNationalHolidaysForCalendar, getUpcomingHolidays } from '@/utils/spanishHolidays';
 
 export default function AdminDashboard() {
   usePageTitle('Panel Principal');
@@ -539,31 +540,17 @@ export default function AdminDashboard() {
     },
   });
 
-  // Spanish national holidays 2025-2026
-  const nationalHolidays = [
-    // 2025
-    { name: "Año Nuevo", date: "2025-01-01", type: "national" },
-    { name: "Día de Reyes", date: "2025-01-06", type: "national" },
-    { name: "Viernes Santo", date: "2025-04-18", type: "national" },
-    { name: "Día del Trabajo", date: "2025-05-01", type: "national" },
-    { name: "Asunción de la Virgen", date: "2025-08-15", type: "national" },
-    { name: "Día de la Hispanidad", date: "2025-10-12", type: "national" },
-    { name: "Todos los Santos", date: "2025-11-01", type: "national" },
-    { name: "Día de la Constitución", date: "2025-12-06", type: "national" },
-    { name: "Inmaculada Concepción", date: "2025-12-08", type: "national" },
-    { name: "Navidad", date: "2025-12-25", type: "national" },
-    // 2026
-    { name: "Año Nuevo", date: "2026-01-01", type: "national" },
-    { name: "Día de Reyes", date: "2026-01-06", type: "national" },
-    { name: "Viernes Santo", date: "2026-04-03", type: "national" },
-    { name: "Día del Trabajo", date: "2026-05-01", type: "national" },
-    { name: "Asunción de la Virgen", date: "2026-08-15", type: "national" },
-    { name: "Día de la Hispanidad", date: "2026-10-12", type: "national" },
-    { name: "Todos los Santos", date: "2026-11-01", type: "national" },
-    { name: "Día de la Constitución", date: "2026-12-06", type: "national" },
-    { name: "Inmaculada Concepción", date: "2026-12-08", type: "national" },
-    { name: "Navidad", date: "2026-12-25", type: "national" }
-  ];
+  // Dynamic Spanish national holidays based on calendar visible month
+  const nationalHolidays = useMemo(() => 
+    getNationalHolidaysForCalendar(selectedDate || new Date()), 
+    [selectedDate]
+  );
+  
+  // Upcoming national holidays for "Próximos Eventos" (limit 3 months, max 4 items)
+  const upcomingNationalHolidays = useMemo(() => 
+    getUpcomingHolidays(3, 4), 
+    []
+  );
 
   // ✨ OPTIMIZED: Process custom holidays from consolidated response
   const processedCustomHolidays = useMemo(() => {
@@ -596,7 +583,33 @@ export default function AdminDashboard() {
   // ✨ OPTIMIZED: Memoize holidays array to prevent recalculation on every render
   const allHolidays = useMemo(() => {
     return [...nationalHolidays, ...processedCustomHolidays];
-  }, [processedCustomHolidays]);
+  }, [nationalHolidays, processedCustomHolidays]);
+  
+  // Upcoming events for "Próximos Eventos" section (limited to 3 months, max 4 items)
+  const upcomingEvents = useMemo(() => {
+    const today = new Date();
+    const threeMonthsLater = new Date(today);
+    threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+    const todayStr = today.toISOString().split('T')[0];
+    const limitStr = threeMonthsLater.toISOString().split('T')[0];
+    
+    // Combine upcoming national holidays with filtered custom holidays
+    const customUpcoming = processedCustomHolidays
+      .filter(h => h.date > todayStr && h.date <= limitStr)
+      .reduce((acc: any[], holiday: any) => {
+        if (holiday.isMultiDay) {
+          const existing = acc.find(h => h.id === holiday.id);
+          if (!existing) acc.push(holiday);
+        } else {
+          acc.push(holiday);
+        }
+        return acc;
+      }, []);
+    
+    return [...upcomingNationalHolidays, ...customUpcoming]
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(0, 4);
+  }, [upcomingNationalHolidays, processedCustomHolidays]);
 
   // ✨ OPTIMIZATION: Calculate work hours once and reuse (prevents duplicate calculations)
   const currentWorkHours = useMemo(() => {
@@ -1434,7 +1447,7 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-              {/* Upcoming Events Section */}
+              {/* Upcoming Events Section - Limited to 3 months */}
               <div className="mt-6 pt-4 border-t border-border">
                 <div className="mb-3">
                   <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -1442,73 +1455,41 @@ export default function AdminDashboard() {
                   </h4>
                 </div>
                 <div className="space-y-3">
-                  {allHolidays
-                    .filter(holiday => {
-                      if (!holiday.date) return false;
-                      try {
-                        const holidayDate = parseISO(holiday.date);
-                        const today = new Date();
-                        return holidayDate > today;
-                      } catch (error) {
-                        return false;
-                      }
-                    })
-                    // Remove duplicates for multi-day events (show only the first day)
-                    .reduce((acc: any[], holiday: any) => {
-                      if (holiday.isMultiDay) {
-                        const existing = acc.find(h => h.id === holiday.id);
-                        if (!existing) {
-                          acc.push(holiday);
-                        }
-                      } else {
-                        acc.push(holiday);
-                      }
-                      return acc;
-                    }, [])
-                    .sort((a, b) => {
-                      try {
-                        return parseISO(a.date).getTime() - parseISO(b.date).getTime();
-                      } catch (error) {
-                        return 0;
-                      }
-                    })
-                    .slice(0, 4)
-                    .map((holiday, idx) => {
-                      if (!holiday.date) return null;
-                      try {
-                        const holidayDate = parseISO(holiday.date);
-                        const isCustom = holiday.type === 'custom';
-                      
-                        return (
-                          <div key={idx} className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border">
-                            <div className={`w-3 h-3 rounded-full ${
-                              isCustom ? 'bg-orange-500' : 'bg-red-500'
-                            }`}></div>
-                            <div>
-                              <p className="text-sm font-medium text-foreground">
-                                {holiday.name}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {holiday.isMultiDay ? (
-                                  <>
-                                    {format(parseISO(holiday.originalStart), 'dd MMM', { locale: es })} - {format(parseISO(holiday.originalEnd), 'dd MMM', { locale: es })}
-                                  </>
-                                ) : (
-                                  format(holidayDate, 'dd MMM, EEEE', { locale: es })
-                                )}
-                                {isCustom && (
-                                  <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                                    {holiday.originalType === 'regional' ? 'Regional' : 'Personalizado'}
-                                  </span>
-                                )}
-                              </p>
-                            </div>
+                  {upcomingEvents.length > 0 ? (
+                    upcomingEvents.map((holiday: any, idx: number) => {
+                      const holidayDate = parseISO(holiday.date);
+                      const isCustom = holiday.type === 'custom';
+                    
+                      return (
+                        <div key={idx} className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border">
+                          <div className={`w-3 h-3 rounded-full ${
+                            isCustom ? 'bg-orange-500' : 'bg-red-500'
+                          }`}></div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground">
+                              {holiday.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {holiday.isMultiDay ? (
+                                <>
+                                  {format(parseISO(holiday.originalStart), 'dd MMM', { locale: es })} - {format(parseISO(holiday.originalEnd), 'dd MMM', { locale: es })}
+                                </>
+                              ) : (
+                                format(holidayDate, 'dd MMM, EEEE', { locale: es })
+                              )}
+                              {isCustom && (
+                                <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                                  {holiday.originalType === 'regional' ? 'Regional' : 'Personalizado'}
+                                </span>
+                              )}
+                            </p>
                           </div>
-                        );
-                      } catch (error) {
-                        return null;
-                      }
-                    }).filter(Boolean)}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-2">No hay eventos próximos</p>
+                  )}
                 </div>
               </div>
             </CardContent>
