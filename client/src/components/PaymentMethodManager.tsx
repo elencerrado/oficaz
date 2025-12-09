@@ -449,6 +449,7 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
                 planName={actualPlan}
                 planPrice={actualPrice}
                 trialEndDate={trialStatus?.trialEnd}
+                isTrialExpired={trialStatus?.isBlocked || (trialStatus?.trialEnd ? new Date(trialStatus.trialEnd) < new Date() : false)}
                 onSuccess={handlePaymentSuccess}
                 onCancel={handlePaymentCancel}
               />

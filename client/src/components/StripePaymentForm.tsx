@@ -11,19 +11,20 @@ interface StripePaymentFormProps {
   planName: string;
   planPrice: number;
   trialEndDate?: string;
+  isTrialExpired?: boolean;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-export function StripePaymentForm({ planName, planPrice, trialEndDate, onSuccess, onCancel }: StripePaymentFormProps) {
+export function StripePaymentForm({ planName, planPrice, trialEndDate, isTrialExpired, onSuccess, onCancel }: StripePaymentFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
   const stripe = useStripe();
   const elements = useElements();
 
-  // Check if trial has expired
-  const trialHasExpired = trialEndDate ? new Date(trialEndDate) < new Date() : false;
+  // Check if trial has expired - use prop if provided, otherwise calculate from date
+  const trialHasExpired = isTrialExpired ?? (trialEndDate ? new Date(trialEndDate) < new Date() : false);
   
   // Format the trial end date
   const formattedTrialEndDate = trialEndDate 
