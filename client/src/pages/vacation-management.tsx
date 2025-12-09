@@ -2035,7 +2035,7 @@ export default function VacationManagement() {
                       const timelineRange = getTimelineRange();
                       
                       return (
-                        <div key={employee.id} className="p-4 bg-card">
+                        <div key={employee.id} className="p-4">
                           {/* Employee Header */}
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-3">
