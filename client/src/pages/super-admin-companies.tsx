@@ -19,7 +19,16 @@ import {
   Edit2,
   Euro,
   AlertCircle,
-  Trash2
+  Trash2,
+  Shield,
+  Package,
+  Clock,
+  Calendar,
+  MessageSquare,
+  FileText,
+  Bell,
+  Brain,
+  Boxes
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
@@ -31,6 +40,19 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+const addonIcons: Record<string, any> = {
+  time_tracking: Clock,
+  vacation: Calendar,
+  schedule: Calendar,
+  messages: MessageSquare,
+  reminders: Bell,
+  work_reports: FileText,
+  documents: FileText,
+  inventory: Boxes,
+  oficaz_ai: Brain,
+};
 
 interface ActiveAddon {
   id: number;
@@ -730,106 +752,175 @@ export default function SuperAdminCompanies() {
               </CardContent>
             </Card>
 
-            {/* Subscription Summary */}
-            <Card className="!bg-white/10 backdrop-blur-xl !border-white/20">
-              <CardHeader>
-                <CardTitle className="!text-white flex items-center gap-2">
-                  <Settings className="w-5 h-5" />
-                  Resumen de Suscripción
+          </div>
+
+          {/* Subscription Dashboard - 3 Column iOS Style */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-6 xl:max-h-[400px]">
+            {/* Column 1: User Mix */}
+            <Card className="!bg-white/10 backdrop-blur-xl !border-white/15 rounded-3xl">
+              <CardHeader className="pb-2">
+                <CardTitle className="!text-white text-base flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Usuarios
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Monthly Price */}
-                <div className="border !border-emerald-500/30 rounded-lg p-4 bg-emerald-500/10">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-medium !text-white">Precio Mensual Total</h3>
-                      <p className="text-xs !text-white/60">Suma de complementos + usuarios contratados</p>
+              <CardContent className="space-y-2">
+                {/* Admin */}
+                <div className="flex items-center gap-2 p-2.5 bg-amber-500/10 rounded-xl border border-amber-500/20">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                    <Crown className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-medium !text-white">Admins</div>
+                    <div className="text-[10px] !text-white/50">€6/mes c/u</div>
+                  </div>
+                  <div className="text-xl font-bold text-amber-400">{company.contractedRoles?.admins || 0}</div>
+                </div>
+                
+                {/* Manager */}
+                <div className="flex items-center gap-2 p-2.5 bg-purple-500/10 rounded-xl border border-purple-500/20">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                    <Shield className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-medium !text-white">Managers</div>
+                    <div className="text-[10px] !text-white/50">€4/mes c/u</div>
+                  </div>
+                  <div className="text-xl font-bold text-purple-400">{company.contractedRoles?.managers || 0}</div>
+                </div>
+                
+                {/* Employee */}
+                <div className="flex items-center gap-2 p-2.5 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                    <Users className="w-4 h-4 text-blue-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-medium !text-white">Empleados</div>
+                    <div className="text-[10px] !text-white/50">€2/mes c/u</div>
+                  </div>
+                  <div className="text-xl font-bold text-blue-400">{company.contractedRoles?.employees || 0}</div>
+                </div>
+
+                {/* Stats footer */}
+                <div className="pt-2 border-t border-white/10 flex justify-between text-[10px] !text-white/50">
+                  <span>{company.userCount} totales</span>
+                  <span className="text-emerald-400">{company.activeUsers || 0} activos</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Column 2: Funcionalidades - Vertical Carousel */}
+            <Card className="!bg-white/10 backdrop-blur-xl !border-white/15 rounded-3xl">
+              <CardHeader className="pb-2">
+                <CardTitle className="!text-white text-base flex items-center gap-2">
+                  <Package className="w-4 h-4" />
+                  Funcionalidades
+                  {company.activeAddons && company.activeAddons.length > 0 && (
+                    <Badge className="ml-auto bg-emerald-500/20 text-emerald-400 text-xs">
+                      {company.activeAddons.length} activas
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[200px] pr-2">
+                  {company.activeAddons && company.activeAddons.length > 0 ? (
+                    <div className="space-y-2">
+                      {company.activeAddons.map((addon: ActiveAddon) => {
+                        const IconComponent = addonIcons[addon.key] || Package;
+                        return (
+                          <div 
+                            key={addon.id} 
+                            className="flex items-center gap-2 p-2.5 bg-white/5 rounded-xl border border-white/10"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                              <IconComponent className="w-4 h-4 text-blue-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs font-medium !text-white truncate">{addon.name}</div>
+                              {addon.status === 'pending_cancel' && (
+                                <div className="text-[10px] text-orange-400">Cancelación pendiente</div>
+                              )}
+                            </div>
+                            <div className="text-xs font-semibold text-emerald-400 whitespace-nowrap">
+                              €{addon.monthlyPrice}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <div className="text-2xl font-bold text-emerald-400">
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-center py-6">
+                      <Package className="w-8 h-8 !text-white/20 mb-2" />
+                      <p className="text-xs !text-white/40">Sin complementos</p>
+                      <p className="text-[10px] !text-white/30 mt-1">Solo tiene acceso base</p>
+                    </div>
+                  )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+
+            {/* Column 3: Price Summary */}
+            <Card className="!bg-white/10 backdrop-blur-xl !border-white/15 rounded-3xl">
+              <CardHeader className="pb-2">
+                <CardTitle className="!text-white text-base flex items-center gap-2">
+                  <Euro className="w-4 h-4" />
+                  Resumen
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {/* Breakdown */}
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-white/5">
+                    <span className="!text-white/70">Usuarios</span>
+                    <span className="!text-white font-medium">
+                      €{(
+                        (company.contractedRoles?.admins || 0) * 6 +
+                        (company.contractedRoles?.managers || 0) * 4 +
+                        (company.contractedRoles?.employees || 0) * 2
+                      ).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-white/5">
+                    <span className="!text-white/70">Complementos</span>
+                    <span className="!text-white font-medium">
+                      €{company.activeAddons?.reduce((sum: number, a: ActiveAddon) => sum + parseFloat(a.monthlyPrice), 0).toFixed(2) || '0.00'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Total */}
+                <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30">
+                  <div className="text-center">
+                    <div className="text-[10px] !text-white/60">Total mensual</div>
+                    <div className="text-2xl font-black text-emerald-400">
                       €{company.calculatedMonthlyPrice || '0.00'}
                     </div>
                   </div>
                 </div>
 
-                {/* Contracted Roles */}
-                <div>
-                  <h3 className="text-sm font-medium !text-white mb-3">Usuarios Contratados</h3>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="p-3 !bg-white/5 rounded-lg border !border-white/10 text-center">
-                      <div className="text-xl font-bold text-purple-400">{company.contractedRoles?.admins || 0}</div>
-                      <div className="text-xs !text-white/60">Admins</div>
-                      <div className="text-xs text-purple-400/80">€6/mes c/u</div>
-                    </div>
-                    <div className="p-3 !bg-white/5 rounded-lg border !border-white/10 text-center">
-                      <div className="text-xl font-bold text-blue-400">{company.contractedRoles?.managers || 0}</div>
-                      <div className="text-xs !text-white/60">Managers</div>
-                      <div className="text-xs text-blue-400/80">€4/mes c/u</div>
-                    </div>
-                    <div className="p-3 !bg-white/5 rounded-lg border !border-white/10 text-center">
-                      <div className="text-xl font-bold text-gray-400">{company.contractedRoles?.employees || 0}</div>
-                      <div className="text-xs !text-white/60">Empleados</div>
-                      <div className="text-xs text-gray-400/80">€2/mes c/u</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Active Addons */}
-                <div>
-                  <h3 className="text-sm font-medium !text-white mb-3">Complementos Activos</h3>
-                  {company.activeAddons && company.activeAddons.length > 0 ? (
-                    <div className="space-y-2">
-                      {company.activeAddons.map((addon: ActiveAddon) => (
-                        <div key={addon.id} className="flex items-center justify-between p-3 !bg-white/5 rounded-lg border !border-white/10">
-                          <div className="flex items-center gap-2">
-                            <span className="!text-white/80 text-sm">{addon.name}</span>
-                            {addon.status === 'pending_cancel' && (
-                              <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 text-xs">
-                                Cancelación pendiente
-                              </Badge>
-                            )}
-                          </div>
-                          <span className="text-emerald-400 font-medium">€{addon.monthlyPrice}/mes</span>
-                        </div>
-                      ))}
-                    </div>
+                {/* Status badges */}
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {company.trialInfo?.isTrialActive ? (
+                    <Badge className="bg-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5">
+                      Prueba: {company.trialInfo.daysRemaining}d
+                    </Badge>
+                  ) : company.subscription.stripeSubscriptionId ? (
+                    <Badge className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5">
+                      Activa
+                    </Badge>
                   ) : (
-                    <div className="p-4 !bg-white/5 rounded-lg border !border-white/10 text-center">
-                      <p className="text-sm !text-white/50">No hay complementos activos</p>
-                    </div>
+                    <Badge className="bg-orange-500/20 text-orange-400 text-[10px] px-2 py-0.5">
+                      Sin pago
+                    </Badge>
                   )}
+                  <Badge className="bg-white/10 !text-white/60 text-[10px] px-2 py-0.5">
+                    {company.subscription.status}
+                  </Badge>
                 </div>
               </CardContent>
             </Card>
           </div>
-
-          {/* Users Stats */}
-          <Card className="!bg-white/10 backdrop-blur-xl !border-white/20 mt-8">
-            <CardHeader>
-              <CardTitle className="!text-white flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Estadísticas de Usuarios
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="!bg-white/5 p-4 rounded-lg border !border-white/10">
-                  <div className="text-2xl font-bold !text-white">{company.userCount}</div>
-                  <div className="text-sm !text-white/60">Usuarios Totales</div>
-                </div>
-                <div className="!bg-white/5 p-4 rounded-lg border !border-white/10">
-                  <div className="text-2xl font-bold text-emerald-400">{company.activeUsers || 0}</div>
-                  <div className="text-sm !text-white/60">Usuarios Activos</div>
-                </div>
-                <div className="!bg-white/5 p-4 rounded-lg border !border-white/10">
-                  <div className="text-2xl font-bold text-yellow-400">
-                    €{((company.subscription.customPricePerUser || company.subscription.pricePerUser || 0) * company.userCount).toFixed(2)}
-                  </div>
-                  <div className="text-sm !text-white/60">Ingresos Mensuales</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Danger Zone */}
           <Card className="bg-red-500/10 backdrop-blur-xl border-red-500/30 mt-8">

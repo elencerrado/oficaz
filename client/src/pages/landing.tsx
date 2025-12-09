@@ -2280,279 +2280,307 @@ export default function Landing() {
           </div>
         </div>
       </section>
-      {/* Pricing Section - Horizontal Carousel */}
-      <section id="precios" className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-16 flex items-center">
-        <div className="w-full">
+      {/* Pricing Section - 3 Column Layout */}
+      <section id="precios" className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 lg:py-16 flex items-center">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-8">
           {/* Header */}
-          <ScrollReveal className="text-center mb-8 px-6">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
+          <ScrollReveal className="text-center mb-6 lg:mb-8">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
               Sin planes. Paga solo lo que necesitas.
             </h2>
-            <p className="text-base md:text-lg text-gray-500">
-              Desliza y selecciona las funciones que necesitas
+            <p className="text-sm md:text-base text-gray-500">
+              Configura tu equipo y selecciona las funciones
             </p>
           </ScrollReveal>
           
-          {/* Top: Price Summary + Users - Same width as carousel */}
-          <ScrollReveal delay={0.1} className="mb-6">
-            <div className="px-4 md:px-12">
-              <div className="grid md:grid-cols-2 gap-4">
-                {/* Price Summary - Vertical layout with flex grow */}
-                <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 flex flex-col">
-                  {/* Price on top */}
-                  <div className="text-center mb-4">
-                    <p className="text-gray-500 text-sm mb-1">Tu plan mensual</p>
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-5xl md:text-6xl font-black text-gray-900">€{monthlyTotal}</span>
-                      <span className="text-lg text-gray-400">/mes</span>
-                    </div>
+          {/* 3 Column Grid */}
+          <ScrollReveal delay={0.1}>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5">
+              
+              {/* Column 1: Users */}
+              <div className="bg-white rounded-2xl p-5 shadow-xl border border-gray-100 flex flex-col">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
+                    <Users className="w-4 h-4 text-blue-600" />
                   </div>
-                  
-                  {/* User badges */}
-                  <div className="flex flex-wrap justify-center gap-1.5 mb-3">
-                    {userCounts.employees > 0 && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                        {userCounts.employees} Empleado{userCounts.employees !== 1 ? 's' : ''}
-                      </span>
-                    )}
-                    {userCounts.managers > 0 && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                        {userCounts.managers} Manager{userCounts.managers !== 1 ? 's' : ''}
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                      {userCounts.admins} Admin{userCounts.admins !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  
-                  {/* Function badges - flex wrap with fixed size badges */}
-                  <div className="flex flex-wrap gap-1.5 mb-4 flex-1 content-start">
-                    {addons.filter(a => selectedAddons.has(a.key) || a.isLocked).map((addon) => {
-                      const IconComponent = addon.icon;
-                      return (
-                        <span 
-                          key={addon.key}
-                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap ${
-                            addon.isLocked 
-                              ? 'bg-green-100 text-green-700' 
-                              : 'bg-blue-100 text-blue-700'
-                          }`}
-                        >
-                          <IconComponent className="w-3 h-3 flex-shrink-0" />
-                          {addon.name}
-                        </span>
-                      );
-                    })}
-                  </div>
-                  
-                  {/* CTA Button - Always at bottom */}
-                  <div className="mt-auto">
-                    {registrationSettings?.publicRegistrationEnabled ? (
-                      <Link href="/request-code">
-                        <Button className="w-full py-5 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]">
-                          Prueba 7 días gratis
-                        </Button>
-                      </Link>
-                    ) : (
-                      <Button 
-                        onClick={() => setIsContactFormOpen(true)}
-                        className="w-full py-5 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]"
-                      >
-                        Contactar
-                      </Button>
-                    )}
-                    <p className="text-center text-xs text-gray-400 mt-2">Sin compromiso • Cancela cuando quieras</p>
-                  </div>
+                  <h3 className="font-semibold text-gray-900">Usuarios</h3>
                 </div>
                 
-                {/* Users - Card style with descriptions */}
-                <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
-                  <h3 className="font-semibold text-gray-900 mb-2 text-center">¿Cuántos usuarios necesitas?</h3>
-                  <p className="text-gray-500 text-xs text-center mb-4">Añade usuarios según sus funciones en tu empresa</p>
+                <div className="space-y-3 flex-1">
+                  {/* Employees */}
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                          <Users className="w-3.5 h-3.5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Empleados</p>
+                          <p className="text-[10px] text-gray-400">€2/mes</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, employees: Math.max(0, prev.employees - 1) }))}
+                          className="w-6 h-6 rounded-full bg-white border border-gray-200 hover:bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-xs"
+                        >
+                          -
+                        </button>
+                        <input 
+                          type="number"
+                          min="0"
+                          value={userCounts.employees}
+                          onChange={(e) => setUserCounts(prev => ({ ...prev, employees: Math.max(0, parseInt(e.target.value) || 0) }))}
+                          className="w-8 text-center font-bold text-gray-900 text-sm bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, employees: prev.employees + 1 }))}
+                          className="w-6 h-6 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-xs"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-gray-500 leading-tight">Fichan, solicitan vacaciones, reciben mensajes</p>
+                  </div>
                   
-                  <div className="space-y-4">
-                    {/* Employees */}
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                            <Users className="w-4 h-4 text-blue-600" />
-                          </div>
-                          <p className="font-semibold text-gray-900">Empleados</p>
+                  {/* Managers */}
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center">
+                          <Shield className="w-3.5 h-3.5 text-purple-600" />
                         </div>
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => setUserCounts(prev => ({ ...prev, employees: Math.max(0, prev.employees - 1) }))}
-                            className="w-7 h-7 rounded-full bg-white border border-gray-200 hover:bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-sm"
-                          >
-                            -
-                          </button>
-                          <input 
-                            type="number"
-                            min="0"
-                            value={userCounts.employees}
-                            onChange={(e) => setUserCounts(prev => ({ ...prev, employees: Math.max(0, parseInt(e.target.value) || 0) }))}
-                            className="w-10 text-center font-bold text-gray-900 bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                          <button 
-                            onClick={() => setUserCounts(prev => ({ ...prev, employees: prev.employees + 1 }))}
-                            className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
-                          >
-                            +
-                          </button>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Managers</p>
+                          <p className="text-[10px] text-gray-400">€4/mes</p>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-500">Fichan entrada/salida, solicitan vacaciones y reciben mensajes</p>
+                      <div className="flex items-center gap-1.5">
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, managers: Math.max(0, prev.managers - 1) }))}
+                          className="w-6 h-6 rounded-full bg-white border border-gray-200 hover:bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-xs"
+                        >
+                          -
+                        </button>
+                        <input 
+                          type="number"
+                          min="0"
+                          value={userCounts.managers}
+                          onChange={(e) => setUserCounts(prev => ({ ...prev, managers: Math.max(0, parseInt(e.target.value) || 0) }))}
+                          className="w-8 text-center font-bold text-gray-900 text-sm bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, managers: prev.managers + 1 }))}
+                          className="w-6 h-6 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-xs"
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
-                    
-                    {/* Managers */}
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                            <Shield className="w-4 h-4 text-purple-600" />
-                          </div>
-                          <p className="font-semibold text-gray-900">Managers</p>
+                    <p className="text-[10px] text-gray-500 leading-tight">Supervisan equipos, aprueban solicitudes</p>
+                  </div>
+                  
+                  {/* Admins */}
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center">
+                          <Settings className="w-3.5 h-3.5 text-amber-600" />
                         </div>
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => setUserCounts(prev => ({ ...prev, managers: Math.max(0, prev.managers - 1) }))}
-                            className="w-7 h-7 rounded-full bg-white border border-gray-200 hover:bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-sm"
-                          >
-                            -
-                          </button>
-                          <input 
-                            type="number"
-                            min="0"
-                            value={userCounts.managers}
-                            onChange={(e) => setUserCounts(prev => ({ ...prev, managers: Math.max(0, parseInt(e.target.value) || 0) }))}
-                            className="w-10 text-center font-bold text-gray-900 bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                          <button 
-                            onClick={() => setUserCounts(prev => ({ ...prev, managers: prev.managers + 1 }))}
-                            className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
-                          >
-                            +
-                          </button>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Admins</p>
+                          <p className="text-[10px] text-gray-400">€6/mes</p>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-500">Supervisan equipos, aprueban solicitudes y gestionan turnos</p>
-                    </div>
-                    
-                    {/* Admins */}
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-                            <Settings className="w-4 h-4 text-amber-600" />
-                          </div>
-                          <p className="font-semibold text-gray-900">Admins</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => setUserCounts(prev => ({ ...prev, admins: Math.max(1, prev.admins - 1) }))}
-                            disabled={userCounts.admins <= 1}
-                            className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm ${
-                              userCounts.admins <= 1 
-                                ? 'bg-gray-100 text-gray-300 cursor-not-allowed' 
-                                : 'bg-white border border-gray-200 hover:bg-gray-100 text-gray-600'
-                            }`}
-                          >
-                            -
-                          </button>
-                          <input 
-                            type="number"
-                            min="1"
-                            value={userCounts.admins}
-                            onChange={(e) => setUserCounts(prev => ({ ...prev, admins: Math.max(1, parseInt(e.target.value) || 1) }))}
-                            className="w-10 text-center font-bold text-gray-900 bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                          <button 
-                            onClick={() => setUserCounts(prev => ({ ...prev, admins: prev.admins + 1 }))}
-                            className="w-7 h-7 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-sm"
-                          >
-                            +
-                          </button>
-                        </div>
+                      <div className="flex items-center gap-1.5">
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, admins: Math.max(1, prev.admins - 1) }))}
+                          disabled={userCounts.admins <= 1}
+                          className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${
+                            userCounts.admins <= 1 
+                              ? 'bg-gray-100 text-gray-300 cursor-not-allowed' 
+                              : 'bg-white border border-gray-200 hover:bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          -
+                        </button>
+                        <input 
+                          type="number"
+                          min="1"
+                          value={userCounts.admins}
+                          onChange={(e) => setUserCounts(prev => ({ ...prev, admins: Math.max(1, parseInt(e.target.value) || 1) }))}
+                          className="w-8 text-center font-bold text-gray-900 text-sm bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, admins: prev.admins + 1 }))}
+                          className="w-6 h-6 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-xs"
+                        >
+                          +
+                        </button>
                       </div>
-                      <p className="text-xs text-gray-500">Control total: configuración, facturación y todos los permisos</p>
                     </div>
+                    <p className="text-[10px] text-gray-500 leading-tight">Control total: configuración y facturación</p>
                   </div>
                 </div>
               </div>
-            </div>
-          </ScrollReveal>
-          
-          {/* Addon Carousel - Full width */}
-          <ScrollReveal delay={0.2} className="mb-8">
-            <div className="relative px-4 md:px-12">
-              <Carousel 
-                className="w-full"
-                opts={{ align: 'start', loop: false, dragFree: true }}
-              >
-                <CarouselContent className="-ml-3">
+
+              {/* Column 2: Funcionalidades - Vertical Scroll */}
+              <div className="bg-white rounded-2xl p-5 shadow-xl border border-gray-100 flex flex-col">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-purple-100 flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-purple-600" />
+                    </div>
+                    <h3 className="font-semibold text-gray-900">Funciones</h3>
+                  </div>
+                  <span className="text-xs text-gray-400">Toca para añadir</span>
+                </div>
+                
+                {/* Scrollable addon list */}
+                <div className="flex-1 overflow-y-auto max-h-[280px] lg:max-h-[320px] space-y-2 pr-1 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
                   {addons.map((addon) => {
                     const isSelected = selectedAddons.has(addon.key);
                     const IconComponent = addon.icon;
                     const isLocked = addon.isLocked;
                     return (
-                      <CarouselItem key={addon.key} className="pl-3 basis-[75%] sm:basis-[45%] md:basis-[32%] lg:basis-[24%]">
-                        <button
-                          onClick={() => toggleAddon(addon.key)}
-                          disabled={isLocked}
-                          className={`w-full h-full min-h-[160px] p-4 rounded-2xl text-left transition-all duration-300 border-2 flex flex-col ${
-                            isLocked
-                              ? 'bg-green-50 border-green-300 hover:border-green-400'
-                              : isSelected 
-                                ? 'bg-[#007AFF] border-[#007AFF] text-white shadow-lg shadow-blue-500/25 scale-[1.02]' 
-                                : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
-                          }`}
-                        >
-                          {/* Header with icon and badge */}
-                          <div className="flex items-start justify-between mb-3">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                              isLocked ? 'bg-green-500' : isSelected ? 'bg-white/20' : 'bg-gray-100'
+                      <button
+                        key={addon.key}
+                        onClick={() => toggleAddon(addon.key)}
+                        disabled={isLocked}
+                        className={`w-full p-3 rounded-xl text-left transition-all duration-200 border flex items-center gap-3 ${
+                          isLocked
+                            ? 'bg-green-50 border-green-200'
+                            : isSelected 
+                              ? 'bg-[#007AFF] border-[#007AFF] text-white shadow-md' 
+                              : 'bg-gray-50 border-gray-100 hover:border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          isLocked ? 'bg-green-500' : isSelected ? 'bg-white/20' : 'bg-white'
+                        }`}>
+                          <IconComponent className={`w-4 h-4 ${
+                            isLocked ? 'text-white' : isSelected ? 'text-white' : 'text-gray-600'
+                          }`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <p className={`font-medium text-sm ${
+                              isLocked ? 'text-green-800' : isSelected ? 'text-white' : 'text-gray-900'
                             }`}>
-                              <IconComponent className={`w-5 h-5 ${
-                                isLocked ? 'text-white' : isSelected ? 'text-white' : 'text-gray-600'
-                              }`} />
-                            </div>
-                            {isSelected && !isLocked && (
-                              <CheckCircle className="w-6 h-6 text-white" />
+                              {addon.name}
+                            </p>
+                            {!isLocked && (
+                              <span className={`text-xs font-semibold ${isSelected ? 'text-white/80' : 'text-[#007AFF]'}`}>
+                                €{addon.price}
+                              </span>
                             )}
                           </div>
-                          
-                          {/* Name */}
-                          <h4 className={`font-semibold text-base mb-2 ${
-                            isLocked ? 'text-green-800' : isSelected ? 'text-white' : 'text-gray-900'
+                          <p className={`text-[10px] leading-tight mt-0.5 ${
+                            isLocked ? 'text-green-600' : isSelected ? 'text-white/70' : 'text-gray-500'
                           }`}>
-                            {addon.name}
-                          </h4>
-                          
-                          {/* Description */}
-                          <p className={`text-sm leading-relaxed flex-1 ${
-                            isLocked ? 'text-green-700' : isSelected ? 'text-white/90' : 'text-gray-500'
-                          }`}>
-                            {addon.description}
+                            {isLocked ? '✓ Incluido gratis' : addon.description}
                           </p>
-                          
-                          {/* Select indicator */}
-                          <div className={`mt-3 text-xs font-medium ${
-                            isLocked ? 'text-green-600' : isSelected ? 'text-white/80' : 'text-[#007AFF]'
-                          }`}>
-                            {isLocked ? '✓ Siempre activo' : isSelected ? '✓ Seleccionado' : 'Toca para añadir'}
-                          </div>
-                        </button>
-                      </CarouselItem>
+                        </div>
+                        {isSelected && !isLocked && (
+                          <CheckCircle className="w-5 h-5 text-white flex-shrink-0" />
+                        )}
+                      </button>
                     );
                   })}
-                </CarouselContent>
-                <CarouselPrevious className="hidden md:flex -left-4 bg-white shadow-lg border-gray-200 hover:bg-gray-50" />
-                <CarouselNext className="hidden md:flex -right-4 bg-white shadow-lg border-gray-200 hover:bg-gray-50" />
-              </Carousel>
+                </div>
+                
+                <p className="text-center text-[10px] text-gray-400 mt-3 lg:hidden">↕ Desliza para ver más</p>
+              </div>
+
+              {/* Column 3: Summary */}
+              <div className="bg-white rounded-2xl p-5 shadow-xl border border-gray-100 flex flex-col">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center">
+                    <Euro className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Tu Plan</h3>
+                </div>
+                
+                {/* Price */}
+                <div className="text-center py-4 mb-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
+                  <p className="text-gray-500 text-xs mb-1">Total mensual</p>
+                  <div className="flex items-baseline justify-center gap-1">
+                    <span className="text-4xl lg:text-5xl font-black text-gray-900">€{monthlyTotal}</span>
+                    <span className="text-base text-gray-400">/mes</span>
+                  </div>
+                </div>
+                
+                {/* Breakdown */}
+                <div className="space-y-2 flex-1">
+                  {/* Users */}
+                  <div className="flex justify-between text-sm py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Usuarios</span>
+                    <span className="font-medium text-gray-900">
+                      €{userCounts.employees * 2 + userCounts.managers * 4 + userCounts.admins * 6}
+                    </span>
+                  </div>
+                  
+                  {/* Addons */}
+                  <div className="flex justify-between text-sm py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Funciones</span>
+                    <span className="font-medium text-gray-900">
+                      €{addons.filter(a => selectedAddons.has(a.key) && !a.isLocked).reduce((sum, a) => sum + a.price, 0)}
+                    </span>
+                  </div>
+                  
+                  {/* Selected items badges */}
+                  <div className="flex flex-wrap gap-1.5 py-2">
+                    {userCounts.employees > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700">
+                        {userCounts.employees} Empleado{userCounts.employees !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {userCounts.managers > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-700">
+                        {userCounts.managers} Manager{userCounts.managers !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700">
+                      {userCounts.admins} Admin
+                    </span>
+                    {addons.filter(a => selectedAddons.has(a.key) || a.isLocked).map((addon) => {
+                      const IconComponent = addon.icon;
+                      return (
+                        <span 
+                          key={addon.key}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                            addon.isLocked ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          <IconComponent className="w-2.5 h-2.5" />
+                          {addon.name}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+                
+                {/* CTA */}
+                <div className="mt-auto pt-4">
+                  {registrationSettings?.publicRegistrationEnabled ? (
+                    <Link href="/request-code">
+                      <Button className="w-full py-4 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]">
+                        Prueba 7 días gratis
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button 
+                      onClick={() => setIsContactFormOpen(true)}
+                      className="w-full py-4 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]"
+                    >
+                      Contactar
+                    </Button>
+                  )}
+                  <p className="text-center text-[10px] text-gray-400 mt-2">Sin compromiso • Cancela cuando quieras</p>
+                </div>
+              </div>
               
-              {/* Scroll hint for mobile */}
-              <p className="text-center text-xs text-gray-400 mt-4 md:hidden">← Desliza para ver más →</p>
             </div>
           </ScrollReveal>
         </div>
