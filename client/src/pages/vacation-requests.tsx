@@ -948,7 +948,7 @@ export default function VacationRequests() {
                   className="bg-white dark:bg-white/5 rounded-xl overflow-hidden border border-gray-100 dark:border-white/10 hover:shadow-sm transition-shadow flex"
                 >
                   {/* Main content */}
-                  <div className="flex-1 p-3 flex items-center gap-3">
+                  <div className="flex-1 p-3 flex items-center gap-3 overflow-hidden">
                     {/* Icon with colored background */}
                     <div className={`
                       w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0
@@ -960,8 +960,8 @@ export default function VacationRequests() {
                       <AbsenceIcon className={`w-4 h-4 ${absenceType === 'vacation' ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`} />
                     </div>
                     
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium text-gray-900 dark:text-white truncate block">
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <span className="text-sm font-medium text-gray-900 dark:text-white truncate block max-w-full">
                         {ABSENCE_TYPE_LABELS[absenceType] || 'Vacaciones'}
                       </span>
                       <div className="flex items-center gap-2 mt-0.5">
