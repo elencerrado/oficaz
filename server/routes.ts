@@ -15397,6 +15397,29 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         }
       }
 
+      // 🔒 CRITICAL: Remove old subscriptions from the same push provider (Apple/FCM)
+      // This prevents duplicate notifications when user reinstalls PWA with new deviceId
+      // Keep only 1 subscription per provider per user to avoid notification spam
+      const isAppleEndpoint = endpoint.includes('web.push.apple.com');
+      const isFCMEndpoint = endpoint.includes('fcm.googleapis.com');
+      
+      if (isAppleEndpoint || isFCMEndpoint) {
+        const providerPattern = isAppleEndpoint ? 'web.push.apple.com' : 'fcm.googleapis.com';
+        const oldProviderSubs = await db.select()
+          .from(pushSubscriptions)
+          .where(and(
+            eq(pushSubscriptions.userId, userId),
+            sql`${pushSubscriptions.endpoint} LIKE ${'%' + providerPattern + '%'}`
+          ));
+        
+        if (oldProviderSubs.length > 0) {
+          // Delete all old subscriptions from the same provider
+          await db.delete(pushSubscriptions)
+            .where(inArray(pushSubscriptions.id, oldProviderSubs.map(s => s.id)));
+          console.log(`🗑️  Removed ${oldProviderSubs.length} old ${isAppleEndpoint ? 'Apple' : 'FCM'} subscription(s) for user ${userId}`);
+        }
+      }
+
       // Create new subscription
       const [newSubscription] = await db.insert(pushSubscriptions)
         .values({
