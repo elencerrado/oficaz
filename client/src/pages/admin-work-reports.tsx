@@ -1014,8 +1014,7 @@ export default function AdminWorkReportsPage() {
             </div>
           </div>
         )}
-      </div>
-
+      
       {/* Reports List */}
       {filteredReports.length === 0 ? (
         <div className="py-12 text-center px-4">
