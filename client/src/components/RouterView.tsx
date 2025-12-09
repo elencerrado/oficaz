@@ -19,6 +19,9 @@ import { TestBanner } from "@/components/test-banner";
 import { updateThemeColor, THEME_COLORS } from "@/lib/theme-provider";
 import type { FeatureKey } from "@/lib/feature-restrictions";
 import { useQuery } from "@tanstack/react-query";
+import oficazLogo from "@/assets/oficaz-logo.png";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
 const featureToAddonKey: Record<string, string> = {
   timeTracking: 'time_tracking',
@@ -124,6 +127,50 @@ function RoleBasedPage({
   return <AdminComponent />;
 }
 
+function SubscriptionExpiredScreen() {
+  const { logout } = useAuth();
+  const [, setLocation] = useLocation();
+  
+  const handleLogout = async () => {
+    await logout();
+    setLocation('/login');
+  };
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 flex flex-col items-center justify-center px-4">
+      <div className="text-center max-w-md">
+        <img 
+          src={oficazLogo} 
+          alt="Oficaz" 
+          className="h-16 w-auto mx-auto mb-8"
+          data-testid="img-oficaz-logo"
+        />
+        <h1 
+          className="text-2xl font-semibold text-gray-900 dark:text-white mb-3"
+          data-testid="text-subscription-expired-title"
+        >
+          Tu suscripción ha caducado
+        </h1>
+        <p 
+          className="text-gray-600 dark:text-gray-400 mb-8"
+          data-testid="text-subscription-expired-message"
+        >
+          Ponte en contacto con tu administrador para renovar la suscripción y seguir utilizando Oficaz.
+        </p>
+        <Button 
+          onClick={handleLogout}
+          variant="outline"
+          className="gap-2"
+          data-testid="button-logout"
+        >
+          <LogOut className="h-4 w-4" />
+          Cerrar sesión
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, company, isLoading, token } = useAuth();
   const [, setLocation] = useLocation();
@@ -155,8 +202,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isTrialExpired = trialStatus?.isBlocked === true;
   
   if (isTrialExpired) {
-    const companyAlias = company?.companyAlias || 'test';
-    return <Redirect to={`/${companyAlias}/tienda`} />;
+    if (user.role === 'admin') {
+      const companyAlias = company?.companyAlias || 'test';
+      return <Redirect to={`/${companyAlias}/tienda`} />;
+    }
+    return <SubscriptionExpiredScreen />;
   }
 
   return <>{children}</>;
@@ -244,11 +294,14 @@ function StoreRoute({ children }: { children: React.ReactNode }) {
   const isTrialExpired = trialStatus?.isBlocked === true;
   
   if (isTrialExpired) {
-    return (
-      <TrialExpiredLayout>
-        {children}
-      </TrialExpiredLayout>
-    );
+    if (user.role === 'admin') {
+      return (
+        <TrialExpiredLayout>
+          {children}
+        </TrialExpiredLayout>
+      );
+    }
+    return <SubscriptionExpiredScreen />;
   }
   
   const paddingTop = showBanner ? 'pt-header-banner-safe' : 'pt-header-safe';
