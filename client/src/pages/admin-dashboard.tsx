@@ -1058,7 +1058,7 @@ export default function AdminDashboard() {
                           <Plane className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                         </div>
                         <div>
-                          <p className="font-medium text-sm">Solicitudes de vacaciones</p>
+                          <p className="font-medium text-sm">Solicitudes de ausencias</p>
                           <p className="text-xs text-muted-foreground">Pendientes de aprobación</p>
                         </div>
                       </div>
@@ -1383,7 +1383,7 @@ export default function AdminDashboard() {
                         <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                         <div className="flex-1">
                           <p className="text-sm font-medium text-foreground">
-                            Vacaciones de {request.userName || 'Empleado'}
+                            Ausencia de {request.userName || 'Empleado'}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             Del {format(parseISO(request.startDate), 'dd/MM')} al {format(parseISO(request.endDate), 'dd/MM')}
