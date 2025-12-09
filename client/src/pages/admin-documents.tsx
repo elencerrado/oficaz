@@ -1387,7 +1387,7 @@ export default function AdminDocuments() {
                       return (
                         <div
                           key={document.id}
-                          className="flex flex-col sm:flex-row p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow gap-3"
+                          className="flex flex-col sm:flex-row p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow gap-3"
                         >
                           {/* Header section - icon and title */}
                           <div className="flex items-center gap-3 min-w-0 flex-1">
