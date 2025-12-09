@@ -53,7 +53,9 @@ import {
   Briefcase,
   GraduationCap,
   Scale,
-  User
+  User,
+  Sparkles,
+  Euro
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
