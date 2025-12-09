@@ -951,16 +951,16 @@ export default function Landing() {
 
   // Addon definitions for pricing calculator - employees is free and always included
   const addons = [
-    { key: 'employee_dashboard', name: 'Panel Empleado', price: 0, icon: Smartphone, isLocked: true, description: 'Ficha entrada/salida, descansos y accede a todo desde tu móvil.' },
-    { key: 'employees', name: 'Empleados', price: 0, icon: Users, isLocked: true, description: 'Alta, baja, datos personales, roles y permisos. Todo centralizado.' },
-    { key: 'time_tracking', name: 'Fichajes', price: 3, icon: Clock, isLocked: false, description: 'Registro horario obligatorio. Fichan en dos toques y exportas PDF.' },
-    { key: 'vacation', name: 'Ausencias', price: 3, icon: Calendar, isLocked: false, description: 'Cada empleado ve sus días, solicita fechas, y tú apruebas.' },
-    { key: 'schedules', name: 'Cuadrante', price: 3, icon: CalendarDays, isLocked: false, description: 'Arrastra turnos, duplica semanas. Con IA lo montas en segundos.' },
-    { key: 'messages', name: 'Mensajes', price: 5, icon: MessageSquare, isLocked: false, description: 'Comunicación profesional sin mezclar con WhatsApp personal.' },
-    { key: 'reminders', name: 'Recordatorios', price: 5, icon: Bell, isLocked: false, description: 'Alertas para ti o tu equipo con notificaciones push.' },
-    { key: 'documents', name: 'Documentos', price: 10, icon: FileText, isLocked: false, description: 'Nóminas, contratos, certificados... todo digital con firma.' },
-    { key: 'work_reports', name: 'Partes de Trabajo', price: 8, icon: Settings, isLocked: false, description: 'Documenta trabajos con fotos, ubicación y firma del cliente.' },
-    { key: 'ai_assistant', name: 'OficazIA', price: 15, icon: Zap, isLocked: false, description: 'Dile "crea el horario" y lo hace en segundos. Tu asistente 24/7.' },
+    { key: 'employee_dashboard', name: 'Panel Empleado', price: 0, icon: Smartphone, isLocked: true, description: 'El panel de control personal de cada empleado. Fichar entrada y salida con un toque, gestionar descansos, y acceder a todas las funciones desde un menú intuitivo.' },
+    { key: 'employees', name: 'Empleados', price: 0, icon: Users, isLocked: true, description: 'Centraliza toda la información de tu equipo. Alta y baja de empleados, gestión de datos, asignación de roles y acceso seguro para cada miembro.' },
+    { key: 'time_tracking', name: 'Fichajes', price: 3, icon: Clock, isLocked: false, description: 'Cumple con la normativa de registro horario. Tus empleados fichan en dos toques desde el móvil, y tú obtienes informes PDF listos para inspección.' },
+    { key: 'vacation', name: 'Ausencias', price: 3, icon: Calendar, isLocked: false, description: 'Olvídate del caos de las hojas de cálculo. Cada empleado ve sus días disponibles, solicita fechas, y tú apruebas o rechazas al instante.' },
+    { key: 'schedules', name: 'Cuadrante', price: 3, icon: CalendarDays, isLocked: false, description: 'Planifica turnos arrastrando y soltando. Duplica semanas enteras, crea plantillas, y con OficazIA genera cuadrantes optimizados en segundos.' },
+    { key: 'messages', name: 'Mensajes', price: 5, icon: MessageSquare, isLocked: false, description: 'Mantén la comunicación profesional separada del WhatsApp personal. Crea grupos por departamento y guarda historial de conversaciones.' },
+    { key: 'reminders', name: 'Recordatorios', price: 5, icon: Bell, isLocked: false, description: 'Configura alertas para ti o para cualquier empleado. Notificaciones push que llegan aunque la app esté cerrada. Perfectas para fechas límite.' },
+    { key: 'documents', name: 'Documentos', price: 10, icon: FileText, isLocked: false, description: 'Sube nóminas, contratos, certificados y cualquier documento. Organización automática por empleado y categoría. Firma digital integrada.' },
+    { key: 'work_reports', name: 'Partes de Trabajo', price: 8, icon: Settings, isLocked: false, description: 'Ideal para servicios técnicos y trabajo en campo. Documenta cada trabajo con fotos, ubicación GPS y descripción. El cliente firma en pantalla.' },
+    { key: 'ai_assistant', name: 'OficazIA', price: 15, icon: Zap, isLocked: false, description: 'Tu asistente inteligente disponible 24/7. Dile "crea el horario de esta semana" y lo hace. Pregúntale cuántas horas trabajó alguien y te responde.' },
   ];
 
   // Calculate total price (employees is free, not counted)
@@ -2345,7 +2345,7 @@ export default function Landing() {
                         </button>
                       </div>
                     </div>
-                    <p className="text-[10px] text-gray-500 leading-tight">Fichan, solicitan vacaciones, reciben mensajes</p>
+                    <p className="text-xs text-gray-500 leading-tight">Tu equipo del día a día. Fichan entrada y salida, solicitan vacaciones, consultan su horario y reciben mensajes. Todo desde el móvil.</p>
                   </div>
                   
                   {/* Managers */}
@@ -2381,7 +2381,7 @@ export default function Landing() {
                         </button>
                       </div>
                     </div>
-                    <p className="text-[10px] text-gray-500 leading-tight">Supervisan equipos, aprueban solicitudes</p>
+                    <p className="text-xs text-gray-500 leading-tight">Tus encargados o supervisores. Aprueban vacaciones, ven los fichajes de su equipo y gestionan horarios. Sin acceso a facturación.</p>
                   </div>
                   
                   {/* Admins */}
@@ -2422,7 +2422,7 @@ export default function Landing() {
                         </button>
                       </div>
                     </div>
-                    <p className="text-[10px] text-gray-500 leading-tight">Control total: configuración y facturación</p>
+                    <p className="text-xs text-gray-500 leading-tight">Tú y tus socios. Control total del sistema: añadir empleados, contratar funciones, ver informes y gestionar la facturación.</p>
                   </div>
                 </div>
               </div>
