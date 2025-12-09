@@ -58,6 +58,8 @@ const ABSENCE_TYPE_ICONS: Record<string, any> = {
   training: GraduationCap,
   temporary_disability: Stethoscope,
   personal_leave: FileText,
+  family_illness: Stethoscope,
+  family_illness_travel: Stethoscope,
 };
 
 const ABSENCE_TYPE_LABELS: Record<string, string> = {
@@ -71,6 +73,8 @@ const ABSENCE_TYPE_LABELS: Record<string, string> = {
   training: 'Formación',
   temporary_disability: 'Baja médica',
   personal_leave: 'Asuntos propios',
+  family_illness: 'Enfermedad grave familiar',
+  family_illness_travel: 'Enfermedad grave familiar (con desplazamiento)',
 };
 
 const ABSENCE_TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
@@ -84,6 +88,8 @@ const ABSENCE_TYPE_COLORS: Record<string, { bg: string; text: string; border: st
   training: { bg: 'bg-violet-50 dark:bg-violet-950/40', text: 'text-violet-700 dark:text-violet-300', border: 'border-violet-200 dark:border-violet-800' },
   temporary_disability: { bg: 'bg-red-50 dark:bg-red-950/40', text: 'text-red-700 dark:text-red-300', border: 'border-red-200 dark:border-red-800' },
   personal_leave: { bg: 'bg-gray-50 dark:bg-gray-950/40', text: 'text-gray-700 dark:text-gray-300', border: 'border-gray-200 dark:border-gray-800' },
+  family_illness: { bg: 'bg-orange-50 dark:bg-orange-950/40', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-200 dark:border-orange-800' },
+  family_illness_travel: { bg: 'bg-orange-50 dark:bg-orange-950/40', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-200 dark:border-orange-800' },
 };
 
 interface Employee {
