@@ -1654,7 +1654,7 @@ export default function AdminDocuments() {
                                             return (
                                               <div
                                                 key={document.id}
-                                                className="bg-card border border-border rounded-lg p-3 hover:shadow-md transition-shadow"
+                                                className="bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600"
                                               >
                                                 <div className="flex items-start justify-between mb-2">
                                                   <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
