@@ -723,10 +723,9 @@ export default function AdminWorkReportsPage() {
         </div>
       )}
 
-      {/* Filters & List Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex flex-col gap-3">
+      {/* Filters Section */}
+      <div className="mb-4">
+        <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <span className="text-sm sm:text-lg font-medium">{filterTitle} ({filteredReports.length})</span>
               
@@ -845,12 +844,12 @@ export default function AdminWorkReportsPage() {
                 <span className="text-xs">Filtros</span>
               </Button>
             </div>
-          </CardTitle>
-        </CardHeader>
+          </div>
+        </div>
 
         {/* Collapsible Filters */}
         {showFilters && (
-          <div className="px-6 py-4 border-b bg-muted">
+          <div className="py-4 bg-muted/50 rounded-lg px-4 mb-4">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
               <div className="flex flex-col space-y-2">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Buscar</label>
@@ -1015,160 +1014,160 @@ export default function AdminWorkReportsPage() {
             </div>
           </div>
         )}
+      </div>
 
-        <CardContent className="p-0">
-          {filteredReports.length === 0 ? (
-            <div className="py-12 text-center px-4">
-              <ClipboardList className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                {searchTerm || employeeFilter !== 'all' || dateFilter !== 'all' ? 'No se encontraron partes' : 'Sin partes de trabajo'}
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base max-w-xs sm:max-w-none mx-auto">
-                {searchTerm || employeeFilter !== 'all' || dateFilter !== 'all'
-                  ? 'Intenta con otros filtros' 
-                  : 'Aún no hay partes registrados'}
-              </p>
-            </div>
-          ) : visibleReports.length > 0 ? (
-            <div className="p-4 md:p-6 space-y-4">
-              {visibleReports.map((report) => {
-                const statusStyle = STATUS_STYLES[report.status];
-                return (
-                  <div 
-                    key={report.id} 
-                    className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-                    data-testid={`card-admin-report-${report.id}`}
-                  >
-                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <div className="flex items-center gap-2 text-gray-900 dark:text-white min-w-0">
-                          <User className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                          <span className="font-semibold truncate">{report.employeeName}</span>
-                          {report.refCode && (
-                            <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs flex-shrink-0">
-                              {report.refCode}
-                            </Badge>
-                          )}
+      {/* Reports List */}
+      <div>
+        {filteredReports.length === 0 ? (
+        <div className="py-12 text-center px-4">
+          <ClipboardList className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            {searchTerm || employeeFilter !== 'all' || dateFilter !== 'all' ? 'No se encontraron partes' : 'Sin partes de trabajo'}
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base max-w-xs sm:max-w-none mx-auto">
+            {searchTerm || employeeFilter !== 'all' || dateFilter !== 'all'
+              ? 'Intenta con otros filtros' 
+              : 'Aún no hay partes registrados'}
+          </p>
+        </div>
+      ) : visibleReports.length > 0 ? (
+        <div className="space-y-4">
+          {visibleReports.map((report) => {
+            const statusStyle = STATUS_STYLES[report.status];
+            return (
+              <div 
+                key={report.id} 
+                className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                data-testid={`card-admin-report-${report.id}`}
+              >
+                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex items-center gap-2 text-gray-900 dark:text-white min-w-0">
+                      <User className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                      <span className="font-semibold truncate">{report.employeeName}</span>
+                      {report.refCode && (
+                        <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs flex-shrink-0">
+                          {report.refCode}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 sm:gap-2 self-end sm:self-auto">
+                      {!isSelfAccessOnly && (
+                        <button
+                          onClick={() => handleEditReport(report)}
+                          className="p-2 sm:p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
+                          title="Editar parte"
+                          data-testid={`button-edit-report-${report.id}`}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleViewReport(report)}
+                        className="p-2 sm:p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
+                        title="Ver parte completo"
+                        data-testid={`button-view-report-${report.id}`}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDownloadPdf(report)}
+                        disabled={isDownloadingPdf === report.id}
+                        className="p-2 sm:p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400 disabled:opacity-50"
+                        title="Descargar PDF"
+                        data-testid={`button-download-pdf-${report.id}`}
+                      >
+                        <Download className={`w-4 h-4 ${isDownloadingPdf === report.id ? 'animate-pulse' : ''}`} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
+                      <div>
+                        <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
+                          <CalendarIcon className="w-3.5 h-3.5" />
+                          Fecha
                         </div>
-                        <div className="flex items-center gap-1 sm:gap-2 self-end sm:self-auto">
-                          {/* Edit button - hidden in self-access mode (read-only) */}
-                          {!isSelfAccessOnly && (
-                            <button
-                              onClick={() => handleEditReport(report)}
-                              className="p-2 sm:p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
-                              title="Editar parte"
-                              data-testid={`button-edit-report-${report.id}`}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleViewReport(report)}
-                            className="p-2 sm:p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
-                            title="Ver parte completo"
-                            data-testid={`button-view-report-${report.id}`}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDownloadPdf(report)}
-                            disabled={isDownloadingPdf === report.id}
-                            className="p-2 sm:p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400 disabled:opacity-50"
-                            title="Descargar PDF"
-                            data-testid={`button-download-pdf-${report.id}`}
-                          >
-                            <Download className={`w-4 h-4 ${isDownloadingPdf === report.id ? 'animate-pulse' : ''}`} />
-                          </button>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
+                          {format(parseISO(report.reportDate), 'EEE, d MMM yyyy', { locale: es })}
+                        </p>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
+                          <Clock className="w-3.5 h-3.5" />
+                          Horario
                         </div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {report.startTime} - {report.endTime}
+                          <span className="ml-1 text-xs text-blue-600 dark:text-blue-400 font-medium">
+                            ({formatDuration(report.durationMinutes)})
+                          </span>
+                        </p>
                       </div>
                     </div>
                     
-                    <div className="p-4">
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
-                          <div>
-                            <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
-                              <CalendarIcon className="w-3.5 h-3.5" />
-                              Fecha
-                            </div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                              {format(parseISO(report.reportDate), 'EEE, d MMM yyyy', { locale: es })}
-                            </p>
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
-                              <Clock className="w-3.5 h-3.5" />
-                              Horario
-                            </div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">
-                              {report.startTime} - {report.endTime}
-                              <span className="ml-1 text-xs text-blue-600 dark:text-blue-400 font-medium">
-                                ({formatDuration(report.durationMinutes)})
-                              </span>
-                            </p>
-                          </div>
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
+                      <div>
+                        <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
+                          <MapPin className="w-3.5 h-3.5" />
+                          Ubicación
                         </div>
-                        
-                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
-                          <div>
-                            <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
-                              <MapPin className="w-3.5 h-3.5" />
-                              Ubicación
-                            </div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">{report.location}</p>
-                          </div>
-                          {report.clientName && (
-                            <div>
-                              <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
-                                <User className="w-3.5 h-3.5" />
-                                Cliente
-                              </div>
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">{report.clientName}</p>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="md:col-span-2 bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-                          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
-                            <FileText className="w-3.5 h-3.5" />
-                            Trabajo realizado
-                          </div>
-                          <p className="text-sm text-gray-700 dark:text-gray-300">{report.description}</p>
-                        </div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{report.location}</p>
                       </div>
-                      
-                      {report.notes && (
-                        <div className="mt-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 border-l-4 border-amber-400">
-                          <p className="text-sm text-amber-800 dark:text-amber-200">
-                            <span className="font-medium">Notas:</span> {report.notes}
-                          </p>
+                      {report.clientName && (
+                        <div>
+                          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
+                            <User className="w-3.5 h-3.5" />
+                            Cliente
+                          </div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{report.clientName}</p>
                         </div>
                       )}
                     </div>
+
+                    <div className="md:col-span-2 bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                      <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
+                        <FileText className="w-3.5 h-3.5" />
+                        Trabajo realizado
+                      </div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">{report.description}</p>
+                    </div>
                   </div>
-                );
-              })}
-              
-              {/* Infinite scroll observer */}
-              <div 
-                ref={loadMoreRef} 
-                className="py-4 text-center"
-              >
-                {hasMoreToDisplay ? (
-                  <div className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
-                    <ArrowDown className="w-4 h-4 animate-bounce" />
-                    <span>Desplaza para ver más ({filteredReports.length - displayedCount} restantes de {filteredReports.length})</span>
-                  </div>
-                ) : filteredReports.length > 5 ? (
-                  <span className="text-gray-300 dark:text-gray-600 text-sm">
-                    Has visto todos los {filteredReports.length} partes
-                  </span>
-                ) : null}
+                  
+                  {report.notes && (
+                    <div className="mt-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 border-l-4 border-amber-400">
+                      <p className="text-sm text-amber-800 dark:text-amber-200">
+                        <span className="font-medium">Notas:</span> {report.notes}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
+            );
+          })}
+          
+          {/* Infinite scroll observer */}
+          <div 
+            ref={loadMoreRef} 
+            className="py-4 text-center"
+          >
+            {hasMoreToDisplay ? (
+              <div className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
+                <ArrowDown className="w-4 h-4 animate-bounce" />
+                <span>Desplaza para ver más ({filteredReports.length - displayedCount} restantes de {filteredReports.length})</span>
+              </div>
+            ) : filteredReports.length > 5 ? (
+              <span className="text-gray-300 dark:text-gray-600 text-sm">
+                Has visto todos los {filteredReports.length} partes
+              </span>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+      </div>
 
       {/* Modal de visualización del parte */}
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
