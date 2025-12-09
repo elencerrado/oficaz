@@ -15842,15 +15842,20 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
 
       // If inventory addon is activated, create default warehouse if none exists
       if (addon.key === 'inventory') {
-        const existingWarehouses = await storage.getInventoryWarehouses({ companyId: user.companyId });
-        if (existingWarehouses.length === 0) {
-          await storage.createInventoryWarehouse({
-            companyId: user.companyId,
-            name: 'Almacén Principal',
-            isDefault: true,
-            isActive: true,
-          });
-          console.log(`📦 Created default warehouse for company ${user.companyId}`);
+        try {
+          const existingWarehouses = await storage.getWarehouses(user.companyId);
+          if (existingWarehouses.length === 0) {
+            await storage.createWarehouse({
+              companyId: user.companyId,
+              name: 'Almacén Principal',
+              isDefault: true,
+              isActive: true,
+            });
+            console.log(`📦 Created default warehouse for company ${user.companyId}`);
+          }
+        } catch (warehouseError) {
+          // Non-critical error, log but don't fail the addon purchase
+          console.error('Error creating default warehouse:', warehouseError);
         }
       }
 
