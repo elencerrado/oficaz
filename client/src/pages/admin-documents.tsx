@@ -47,7 +47,8 @@ import {
   Receipt,
   FileSignature,
   Loader2,
-  Undo2
+  Undo2,
+  Clock
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -1771,161 +1772,154 @@ export default function AdminDocuments() {
         )}
 
         {activeTab === 'requests' && (
-          <Card>
-            <CardContent className="p-6 space-y-6">
-              {/* Sent Requests History */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-medium text-foreground">Historial de Solicitudes ({(sentRequests || []).length})</h3>
-                  <Button 
-                    onClick={() => setShowRequestDialog(true)}
-                    data-testid="button-new-request"
-                  >
-                    <Send className="mr-2 h-4 w-4" />
-                    Nueva Solicitud
-                  </Button>
+          <div className="space-y-4">
+            {/* Header Section - Same style as time-tracking */}
+            <div className="p-4 bg-card dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                    <Send className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100">Historial de Solicitudes</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{(sentRequests || []).length} solicitudes</p>
+                  </div>
                 </div>
-                {(sentRequests || []).length > 0 ? (
-                  <div className="space-y-3">
-                    {sentRequests.map((request: any) => (
-                      <div key={request.id} className="border rounded-lg p-4 bg-card">
-                        <div className="flex flex-col sm:flex-row gap-4">
-                          <div className="flex-1 space-y-3">
-                            {/* Header with status and type */}
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Badge variant={request.isCompleted ? 'default' : 'secondary'}>
-                                {request.isCompleted ? 'Completada' : 'Pendiente'}
-                              </Badge>
-                              <span className="text-sm font-medium text-muted-foreground">
-                                {request.documentType}
+                <Button 
+                  onClick={() => setShowRequestDialog(true)}
+                  data-testid="button-new-request"
+                  className="rounded-xl"
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  Nueva Solicitud
+                </Button>
+              </div>
+            </div>
+
+            {/* Request Cards */}
+            {(sentRequests || []).length > 0 ? (
+              <div className="space-y-3">
+                {sentRequests.map((request: any) => (
+                  <div 
+                    key={request.id} 
+                    className="bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600"
+                  >
+                    <div className="p-4">
+                      {/* Top Row: Avatar, Name, Status, Actions */}
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                            request.isCompleted 
+                              ? request.document 
+                                ? 'bg-green-100 dark:bg-green-900/30' 
+                                : 'bg-red-100 dark:bg-red-900/30'
+                              : 'bg-amber-100 dark:bg-amber-900/30'
+                          }`}>
+                            {request.isCompleted ? (
+                              request.document ? (
+                                <FileCheck className="h-5 w-5 text-green-600 dark:text-green-400" />
+                              ) : (
+                                <X className="h-5 w-5 text-red-600 dark:text-red-400" />
+                              )
+                            ) : (
+                              <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                                {request.user?.fullName || 'Empleado'}
                               </span>
+                              <Badge 
+                                variant={request.isCompleted ? 'default' : 'secondary'}
+                                className={`text-xs ${
+                                  request.isCompleted 
+                                    ? request.document
+                                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                                      : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                                }`}
+                              >
+                                {request.isCompleted ? (request.document ? 'Completada' : 'Sin archivo') : 'Pendiente'}
+                              </Badge>
                             </div>
-
-                            {/* Employee and message info */}
-                            <div className="space-y-1">
-                              <p className="text-sm text-muted-foreground">
-                                Para: <span className="font-medium">{request.user?.fullName || 'Empleado'}</span>
-                              </p>
-                              {request.message && (
-                                <p className="text-sm text-muted-foreground">
-                                  Mensaje: "{request.message}"
-                                </p>
-                              )}
-                            </div>
-
-                            {/* Dates section */}
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                              <span>{request.documentType}</span>
+                              <span>•</span>
                               <span>
-                                Enviada: {(() => {
+                                {(() => {
                                   const utcDate = new Date(request.createdAt);
                                   const localDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
-                                  return format(localDate, 'd MMM yyyy HH:mm', { locale: es });
+                                  return format(localDate, 'd MMM yyyy', { locale: es });
                                 })()}
                               </span>
-                              {request.dueDate && (
-                                <span>
-                                  Fecha límite: {format(new Date(request.dueDate), 'd MMM yyyy', { locale: es })}
-                                </span>
-                              )}
-                            </div>
-                            
-                            {/* Document status */}
-                            <div>
-                              {request.document ? (
-                                <div className="p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded space-y-2">
-                                  <div className="flex items-center flex-wrap">
-                                    <FileCheck className="h-4 w-4 mr-2 text-green-600 flex-shrink-0" />
-                                    <span className="text-green-700 dark:text-green-300 text-sm break-all">
-                                      Documento recibido: {request.document.originalName}
-                                    </span>
-                                  </div>
-                                  <div className="flex flex-wrap gap-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleDownload(request.document.id, request.document.originalName)}
-                                      className="text-blue-600 hover:text-blue-700 border-blue-200 hover:border-blue-300"
-                                    >
-                                      <Download className="h-3 w-3 mr-1" />
-                                      Descargar
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleViewDocument(request.document.id)}
-                                      className="text-green-600 hover:text-green-700 border-green-200 hover:border-green-300"
-                                    >
-                                      <Eye className="h-3 w-3 mr-1" />
-                                      Ver
-                                    </Button>
-                                  </div>
-                                </div>
-                              ) : request.isCompleted ? (
-                                <div className="flex items-center p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded">
-                                  <X className="h-4 w-4 mr-2 text-red-600 flex-shrink-0" />
-                                  <span className="text-red-700 dark:text-red-300 text-sm">
-                                    Archivo eliminado o no encontrado
-                                  </span>
-                                </div>
-                              ) : (
-                                <div className="flex items-center p-2 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded">
-                                  <AlertTriangle className="h-4 w-4 mr-2 text-yellow-600 flex-shrink-0" />
-                                  <span className="text-yellow-700 dark:text-yellow-300 text-sm">
-                                    Esperando respuesta del empleado
-                                  </span>
-                                </div>
-                              )}
                             </div>
                           </div>
-
-                          {/* Action button - separated for mobile */}
-                          <div className="flex justify-end sm:items-start pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
-                            {!request.isCompleted ? (
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {request.document && (
+                            <>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleDeleteRequest(request.id, request.documentType)}
-                                className="text-orange-600 hover:text-orange-700"
+                                onClick={() => handleViewDocument(request.document.id)}
+                                className="h-8 w-8 p-0 rounded-lg"
                               >
-                                <X className="h-4 w-4 mr-1" />
-                                Cancelar
+                                <Eye className="h-4 w-4" />
                               </Button>
-                            ) : request.document ? (
                               <Button
-                                variant="destructive"
+                                variant="outline"
                                 size="sm"
-                                onClick={() => handleDeleteRequest(request.id, request.documentType)}
-                                className="text-white hover:text-white bg-red-600 hover:bg-red-700"
+                                onClick={() => handleDownload(request.document.id, request.document.originalName)}
+                                className="h-8 w-8 p-0 rounded-lg"
                               >
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                Eliminar
+                                <Download className="h-4 w-4" />
                               </Button>
-                            ) : (
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleDeleteRequest(request.id, request.documentType)}
-                                className="text-white hover:text-white bg-red-600 hover:bg-red-700"
-                              >
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                Eliminar
-                              </Button>
-                            )}
-                          </div>
+                            </>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteRequest(request.id, request.documentType)}
+                            className="h-8 w-8 p-0 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                    ))}
+
+                      {/* Message if exists */}
+                      {request.message && (
+                        <div className="mt-2 p-2.5 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 italic">
+                            "{request.message}"
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Document info if received */}
+                      {request.document && (
+                        <div className="mt-2 p-2.5 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                          <span className="text-sm text-green-700 dark:text-green-300 truncate">
+                            {request.document.originalName}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Send className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                    <p>No hay solicitudes enviadas</p>
-                    <p className="text-sm">Las solicitudes que envíes aparecerán aquí</p>
-                  </div>
-                )}
+                ))}
               </div>
-            </CardContent>
-          </Card>
+            ) : (
+              <div className="text-center py-12 bg-card dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+                <Send className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
+                <p className="font-medium text-gray-900 dark:text-gray-100">No hay solicitudes enviadas</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Las solicitudes que envíes aparecerán aquí</p>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Smart Upload Preview Dialog - Enhanced with Individual/Circular modes */}
