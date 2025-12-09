@@ -2513,54 +2513,35 @@ export default function Landing() {
                   </div>
                 </div>
                 
-                {/* Breakdown */}
-                <div className="space-y-2 flex-1">
-                  {/* Users */}
-                  <div className="flex justify-between text-sm py-2 border-b border-gray-100">
-                    <span className="text-gray-600">Usuarios</span>
-                    <span className="font-medium text-gray-900">
-                      €{userCounts.employees * 2 + userCounts.managers * 4 + userCounts.admins * 6}
+                {/* Selected items badges */}
+                <div className="flex flex-wrap gap-1.5 flex-1 content-start">
+                  {userCounts.employees > 0 && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                      {userCounts.employees} Empleado{userCounts.employees !== 1 ? 's' : ''}
                     </span>
-                  </div>
-                  
-                  {/* Addons */}
-                  <div className="flex justify-between text-sm py-2 border-b border-gray-100">
-                    <span className="text-gray-600">Funciones</span>
-                    <span className="font-medium text-gray-900">
-                      €{addons.filter(a => selectedAddons.has(a.key) && !a.isLocked).reduce((sum, a) => sum + a.price, 0)}
+                  )}
+                  {userCounts.managers > 0 && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                      {userCounts.managers} Manager{userCounts.managers !== 1 ? 's' : ''}
                     </span>
-                  </div>
-                  
-                  {/* Selected items badges */}
-                  <div className="flex flex-wrap gap-1.5 py-2">
-                    {userCounts.employees > 0 && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700">
-                        {userCounts.employees} Empleado{userCounts.employees !== 1 ? 's' : ''}
+                  )}
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                    {userCounts.admins} Admin
+                  </span>
+                  {addons.filter(a => selectedAddons.has(a.key) || a.isLocked).map((addon) => {
+                    const IconComponent = addon.icon;
+                    return (
+                      <span 
+                        key={addon.key}
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                          addon.isLocked ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        <IconComponent className="w-3 h-3" />
+                        {addon.name}
                       </span>
-                    )}
-                    {userCounts.managers > 0 && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-700">
-                        {userCounts.managers} Manager{userCounts.managers !== 1 ? 's' : ''}
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700">
-                      {userCounts.admins} Admin
-                    </span>
-                    {addons.filter(a => selectedAddons.has(a.key) || a.isLocked).map((addon) => {
-                      const IconComponent = addon.icon;
-                      return (
-                        <span 
-                          key={addon.key}
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                            addon.isLocked ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                          }`}
-                        >
-                          <IconComponent className="w-2.5 h-2.5" />
-                          {addon.name}
-                        </span>
-                      );
-                    })}
-                  </div>
+                    );
+                  })}
                 </div>
                 
                 {/* CTA */}
