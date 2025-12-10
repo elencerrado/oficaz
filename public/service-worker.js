@@ -1,15 +1,30 @@
-// Oficaz PWA Service Worker - v2.0 (FIXED DUPLICATE NOTIFICATIONS)
-const CACHE_NAME = 'oficaz-v2';
+// Oficaz PWA Service Worker - v3.0 (FAST STARTUP + FIXED NOTIFICATIONS)
+const CACHE_NAME = 'oficaz-v3';
 const SW_INSTANCE_ID = `SW-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-console.log(`[${SW_INSTANCE_ID}] Service Worker v2.0 initializing...`);
+console.log(`[${SW_INSTANCE_ID}] Service Worker v3.0 initializing...`);
 
-// Install event
+// Essential assets to cache on install for instant startup
+const PRECACHE_ASSETS = [
+  '/',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/manifest.json'
+];
+
+// Install event - precache essential assets
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing service worker...');
-  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('[SW] Precaching essential assets...');
+      return cache.addAll(PRECACHE_ASSETS).catch(err => {
+        console.warn('[SW] Precache failed (non-critical):', err);
+      });
+    }).then(() => self.skipWaiting())
+  );
 });
 
-// Activate event
+// Activate event - clean old caches
 self.addEventListener('activate', (event) => {
   console.log('[SW] Activating service worker...');
   event.waitUntil(
@@ -21,6 +36,64 @@ self.addEventListener('activate', (event) => {
       );
     }).then(() => self.clients.claim())
   );
+});
+
+// Fetch event - Network first for API, Cache first for assets
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') return;
+  
+  // Skip API calls - always go to network
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/ws/')) {
+    return;
+  }
+  
+  // For static assets, use stale-while-revalidate strategy
+  if (url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|ico|woff2?)$/i) || 
+      url.pathname === '/' || 
+      url.pathname === '/manifest.json') {
+    event.respondWith(
+      caches.open(CACHE_NAME).then((cache) => {
+        return cache.match(event.request).then((cachedResponse) => {
+          const fetchPromise = fetch(event.request).then((networkResponse) => {
+            // Update cache with fresh version
+            if (networkResponse.ok) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          }).catch(() => {
+            // Network failed, return cached if available
+            return cachedResponse;
+          });
+          
+          // Return cached immediately, update in background
+          return cachedResponse || fetchPromise;
+        });
+      })
+    );
+    return;
+  }
+  
+  // For HTML navigation, use network-first with cache fallback
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).then((response) => {
+        // Cache the latest HTML
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, response.clone());
+        });
+        return response;
+      }).catch(() => {
+        // Offline - try cache
+        return caches.match(event.request).then((cachedResponse) => {
+          return cachedResponse || caches.match('/');
+        });
+      })
+    );
+    return;
+  }
 });
 
 // Push event - Receive push notifications
