@@ -1373,18 +1373,11 @@ export default function Landing() {
                             <IconComponent className="w-8 h-8 text-white" />
                           </div>
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-2xl font-bold text-gray-900">{addon.name}</h3>
-                            </div>
-                            <p className="text-gray-500 text-base leading-relaxed">{addon.description}</p>
+                            <h3 className="text-2xl font-bold text-gray-900 mb-3">{addon.name}</h3>
+                            <p className="text-gray-600 text-base leading-relaxed">
+                              {addonExtendedDescriptions[addon.key]}
+                            </p>
                           </div>
-                        </div>
-                        
-                        {/* Extended Description */}
-                        <div className="bg-gray-50 rounded-2xl p-5 mb-6">
-                          <p className="text-gray-600 text-sm leading-relaxed">
-                            {addonExtendedDescriptions[addon.key]}
-                          </p>
                         </div>
                         
                         {/* Navigation - Apple Style */}
