@@ -89,6 +89,7 @@ function getSpainTime(): Date {
 }
 
 // Helper function to check if alarm should trigger now
+// 🔧 IMPROVED: Added 5-minute tolerance window for missed alarms (server sleep/restart)
 function shouldTriggerAlarm(alarmTime: string, weekdays: number[]): boolean {
   const now = getSpainTime(); // ⚠️ CRITICAL: Use Spain time, not server UTC
   const currentDay = now.getDay() === 0 ? 7 : now.getDay(); // Convert Sunday from 0 to 7
@@ -103,9 +104,16 @@ function shouldTriggerAlarm(alarmTime: string, weekdays: number[]): boolean {
   // Parse alarm time
   const [alarmHour, alarmMinute] = alarmTime.split(':').map(Number);
   
-  // Check if we're in the same hour and minute (within the current minute window)
-  // This handles the 30-second check interval properly
-  return currentHour === alarmHour && currentMinute === alarmMinute;
+  // Calculate minutes since midnight for both current time and alarm time
+  const currentTotalMinutes = currentHour * 60 + currentMinute;
+  const alarmTotalMinutes = alarmHour * 60 + alarmMinute;
+  
+  // Calculate difference
+  const minutesDiff = currentTotalMinutes - alarmTotalMinutes;
+  
+  // Trigger if we're within 0-5 minutes AFTER the alarm time (catch-up window)
+  // This handles server restarts and sleep states
+  return minutesDiff >= 0 && minutesDiff <= 5;
 }
 
 // Get current work status for user
@@ -638,16 +646,17 @@ export async function checkWorkAlarms() {
     console.log(`📱 Checking alarms at ${currentTime} (${activeAlarms.length} active alarms)`);
 
     for (const alarm of activeAlarms) {
-      // Create unique key for this alarm in this specific minute
-      const checkKey = `${alarm.id}-${currentMinute}`;
+      // Create unique key for this alarm using the ALARM'S scheduled time (not current minute)
+      // This prevents duplicate sends during the 5-minute catch-up window
+      const alarmDateKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+      const checkKey = `${alarm.id}-${alarmDateKey}-${alarm.time}`;
       
-      // Skip if already sent in this exact minute
+      // Skip if already sent today for this alarm time
       if (checkedAlarms.has(checkKey)) {
-        console.log(`⏭️  Alarm ${alarm.id} already sent this minute`);
-        continue;
+        continue; // Silent skip - don't log every 30 seconds
       }
 
-      // Check if alarm should trigger
+      // Check if alarm should trigger (now includes 5-minute catch-up window)
       const shouldTrigger = shouldTriggerAlarm(alarm.time, alarm.weekdays);
       console.log(`🔍 Alarm ${alarm.id} (${alarm.title}) at ${alarm.time}: shouldTrigger=${shouldTrigger}`);
       
@@ -656,9 +665,9 @@ export async function checkWorkAlarms() {
         
         await sendPushNotification(alarm.userId, alarm.title, alarm.type as 'clock_in' | 'clock_out', alarm.id);
         
-        // Mark as sent for this specific minute
+        // Mark as sent for TODAY at this alarm time (prevents re-sends during catch-up window)
         checkedAlarms.set(checkKey, now);
-        console.log(`✅ Alarm ${alarm.id} marked as sent for minute ${currentMinute}`);
+        console.log(`✅ Alarm ${alarm.id} marked as sent for ${alarmDateKey} at ${alarm.time}`);
       }
     }
 
