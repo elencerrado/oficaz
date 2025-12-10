@@ -102,6 +102,9 @@
     <!-- Resource hints for performance -->
     <link rel="preconnect" href="/api" />
     
+    <!-- Preload splash logo for instant display -->
+    <link rel="preload" href="/splash-logo.png" as="image" />
+    
     <!-- Preload critical modules -->
     <link rel="modulepreload" href="/src/main.tsx" />
     <!-- Optimize font loading -->
@@ -117,23 +120,7 @@
         margin: 0; 
         padding: 0; 
         height: 100%; 
-        background-color: #f9fafb;
-        /* Safe area insets para iOS PWA - mantiene el fondo consistente */
-      }
-      
-      /* Dark mode background - must match bg-employee-gradient: #2A3441 */
-      html.dark, html.dark body {
         background-color: #2A3441;
-      }
-      
-      /* Loading state optimization */
-      body { 
-        opacity: 0; 
-        overflow-x: hidden;
-      }
-      body.loaded { 
-        opacity: 1; 
-        transition: opacity 0.15s ease-in; 
       }
       
       /* Critical layout to prevent CLS */
@@ -142,20 +129,46 @@
         width: 100%;
       }
       
-      /* Oficaz Standard Loader - Thick circle with orbiting dot */
-      .oficaz-loader {
+      /* PWA Splash Screen - Shows immediately on app open */
+      #pwa-splash {
         position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+        inset: 0;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: #2A3441;
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        transition: opacity 0.3s ease-out;
+      }
+      
+      #pwa-splash.fade-out {
+        opacity: 0;
+        pointer-events: none;
+      }
+      
+      #pwa-splash.hidden {
+        display: none;
+      }
+      
+      #pwa-splash img {
+        width: 180px;
+        height: auto;
+        margin-bottom: 32px;
+      }
+      
+      /* Oficaz Standard Loader - Blue circle with orbiting dot */
+      .oficaz-loader {
         width: 36px;
         height: 36px;
+        position: relative;
       }
       
       .oficaz-loader-circle {
         position: absolute;
         inset: 0;
-        border: 6px solid #007AFF;
+        border: 4px solid #007AFF;
         border-radius: 50%;
       }
       
@@ -171,9 +184,9 @@
         height: 6px;
         background: #007AFF;
         border-radius: 50%;
-        top: 6px;
+        top: 4px;
         left: 50%;
-        transform: translateX(-50%) translateY(6px);
+        transform: translateX(-50%) translateY(4px);
       }
       
       @keyframes spin {
@@ -181,18 +194,44 @@
         100% { transform: rotate(360deg); }
       }
       
-      /* Dark mode loader */
-      html.dark .oficaz-loader-circle { border-color: white; }
-      html.dark .oficaz-loader-dot { background: white; }
-      
       /* Prevent render blocking font flash */
       @font-display: swap;
     </style>
   </head>
   <body>
+    <!-- PWA Splash Screen - Visible immediately -->
+    <div id="pwa-splash">
+      <img src="/splash-logo.png" alt="Oficaz" />
+      <div class="oficaz-loader">
+        <div class="oficaz-loader-circle"></div>
+        <div class="oficaz-loader-orbit">
+          <div class="oficaz-loader-dot"></div>
+        </div>
+      </div>
+    </div>
+    
     <div id="root"></div>
     <!-- Separate mount point for AI chat (isolated React root) -->
     <div id="chat-root"></div>
+    
+    <!-- Global function to remove splash when React is ready -->
+    <script>
+      window.removeInitialSplash = function() {
+        var splash = document.getElementById('pwa-splash');
+        if (splash && !splash.classList.contains('fade-out')) {
+          splash.classList.add('fade-out');
+          setTimeout(function() {
+            splash.classList.add('hidden');
+          }, 300);
+        }
+      };
+      
+      // Fallback: Remove splash after 5 seconds max (in case auth fails silently)
+      setTimeout(function() {
+        window.removeInitialSplash();
+      }, 5000);
+    </script>
+    
     <script type="module" src="/src/main.tsx"></script>
     <!-- Load Replit banner asynchronously to prevent render blocking -->
     <script async type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>

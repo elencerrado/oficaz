@@ -126,6 +126,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
       setIsLoading(false);
+      
+      // Remove PWA splash screen when auth is ready
+      if (typeof window !== 'undefined' && typeof (window as any).removeInitialSplash === 'function') {
+        (window as any).removeInitialSplash();
+      }
     };
 
     initAuth();
