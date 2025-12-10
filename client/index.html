@@ -216,20 +216,21 @@
     
     <!-- Global function to remove splash when React is ready -->
     <script>
-      window.removeInitialSplash = function() {
-        var splash = document.getElementById('pwa-splash');
-        if (splash && !splash.classList.contains('fade-out')) {
-          splash.classList.add('fade-out');
-          setTimeout(function() {
-            splash.classList.add('hidden');
-          }, 300);
-        }
-      };
-      
-      // Fallback: Remove splash after 3 seconds max (in case auth fails or network issues)
-      setTimeout(function() {
-        window.removeInitialSplash();
-      }, 3000);
+      (function() {
+        window.removeInitialSplash = function() {
+          var splash = document.getElementById('pwa-splash');
+          if (splash) {
+            splash.style.opacity = '0';
+            splash.style.pointerEvents = 'none';
+            setTimeout(function() {
+              splash.style.display = 'none';
+            }, 300);
+          }
+        };
+        
+        // CRITICAL FALLBACK: Remove splash after 2 seconds NO MATTER WHAT
+        setTimeout(window.removeInitialSplash, 2000);
+      })();
     </script>
     
     <script type="module" src="/src/main.tsx"></script>
