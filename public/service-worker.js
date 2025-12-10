@@ -1,12 +1,11 @@
-// Oficaz PWA Service Worker - v4.0 (SPLASH SCREEN + FAST STARTUP)
-const CACHE_NAME = 'oficaz-v4';
+// Oficaz PWA Service Worker - v3.0 (FAST STARTUP + FIXED NOTIFICATIONS)
+const CACHE_NAME = 'oficaz-v3';
 const SW_INSTANCE_ID = `SW-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-console.log(`[${SW_INSTANCE_ID}] Service Worker v4.0 initializing...`);
+console.log(`[${SW_INSTANCE_ID}] Service Worker v3.0 initializing...`);
 
 // Essential assets to cache on install for instant startup
 const PRECACHE_ASSETS = [
   '/',
-  '/splash-logo.png',
   '/icon-192.png',
   '/icon-512.png',
   '/manifest.json'
