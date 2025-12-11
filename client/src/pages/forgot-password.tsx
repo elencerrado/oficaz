@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Mail, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { passwordResetRequestSchema } from '@shared/schema';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import oficazLogo from '@/assets/oficaz-logo.png';
 
 type ForgotPasswordData = z.infer<typeof passwordResetRequestSchema>;
@@ -175,7 +176,7 @@ export default function ForgotPassword() {
             >
               {submitting ? (
                 <div className="flex items-center gap-2">
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                  <LoadingSpinner size="xs" />
                   Enviando email...
                 </div>
               ) : (

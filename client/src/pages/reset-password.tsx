@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Eye, EyeOff, Lock, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { passwordResetSchema } from '@shared/schema';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import oficazLogo from '@/assets/oficaz-logo.png';
 
 type ResetPasswordData = z.infer<typeof passwordResetSchema>;
@@ -212,7 +213,7 @@ export default function ResetPassword() {
         <CardContent className="px-8 pb-8">
           {tokenValid === null ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+              <LoadingSpinner size="sm" />
               <span className="ml-2 text-gray-600">Validando enlace...</span>
             </div>
           ) : (
@@ -314,7 +315,7 @@ export default function ResetPassword() {
               >
                 {submitting ? (
                   <div className="flex items-center gap-2">
-                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                    <LoadingSpinner size="xs" />
                     Cambiando contraseña...
                   </div>
                 ) : (
