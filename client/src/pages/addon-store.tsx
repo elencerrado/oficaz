@@ -1054,7 +1054,7 @@ export default function AddonStore() {
             >
               {purchaseMutation.isPending ? (
                 <>
-                  <LoadingSpinner className="h-4 w-4 mr-2" />
+                  <LoadingSpinner variant="button" size="md" className="mr-2" />
                   Procesando...
                 </>
               ) : (
@@ -1110,7 +1110,7 @@ export default function AddonStore() {
             >
               {cancelMutation.isPending ? (
                 <>
-                  <LoadingSpinner className="h-4 w-4 mr-2" />
+                  <LoadingSpinner variant="button" size="md" className="mr-2" />
                   Procesando...
                 </>
               ) : (
@@ -1208,7 +1208,7 @@ export default function AddonStore() {
             >
               {updateSeatsMutation.isPending ? (
                 <>
-                  <LoadingSpinner className="h-4 w-4 mr-2" />
+                  <LoadingSpinner variant="button" size="md" className="mr-2" />
                   Procesando...
                 </>
               ) : (

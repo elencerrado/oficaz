@@ -3,16 +3,28 @@ import { cn } from "@/lib/utils";
 interface LoadingSpinnerProps {
   className?: string;
   size?: "sm" | "md" | "lg";
+  variant?: "default" | "button";
 }
 
-export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) {
-  const sizeClasses = {
-    sm: "w-6 h-6",
-    md: "w-8 h-8", 
-    lg: "w-12 h-12"
-  };
+export function LoadingSpinner({ className, size = "md", variant = "default" }: LoadingSpinnerProps) {
+  if (variant === "button") {
+    const buttonSizes = {
+      sm: "w-3 h-3 border-[2px]",
+      md: "w-4 h-4 border-2",
+      lg: "w-5 h-5 border-2"
+    };
+    
+    return (
+      <div 
+        className={cn(
+          "rounded-full animate-spin border-current border-t-transparent",
+          buttonSizes[size],
+          className
+        )}
+      />
+    );
+  }
 
-  // Configuración: gordito pero con espacio para girar libremente
   const config = {
     sm: { outerSize: 28, borderWidth: 5, innerSize: 5, gap: 4 },
     md: { outerSize: 36, borderWidth: 6, innerSize: 6, gap: 6 }, 
@@ -26,13 +38,11 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
       width: `${currentConfig.outerSize}px`, 
       height: `${currentConfig.outerSize}px` 
     }}>
-      {/* Círculo contorno fijo - azul primario en modo claro, blanco en modo oscuro */}
       <div 
         className="absolute inset-0 rounded-full border-[#007AFF] dark:border-white"
         style={{ borderWidth: `${currentConfig.borderWidth}px` }}
       ></div>
       
-      {/* Círculo relleno giratorio interno - gira en órbita completa */}
       <div className="absolute inset-0 animate-spin">
         <div 
           className="absolute bg-[#007AFF] dark:bg-white rounded-full"
