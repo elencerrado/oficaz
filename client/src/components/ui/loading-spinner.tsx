@@ -7,10 +7,10 @@ interface LoadingSpinnerProps {
 
 export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) {
   const config = {
-    xs: { outerSize: 16, borderWidth: 3, innerSize: 5, gap: 1 },
-    sm: { outerSize: 24, borderWidth: 4, innerSize: 7, gap: 1 },
-    md: { outerSize: 36, borderWidth: 6, innerSize: 10, gap: 2 }, 
-    lg: { outerSize: 70, borderWidth: 12, innerSize: 18, gap: 3 }
+    xs: { outerSize: 16, borderWidth: 3, innerSize: 3, gap: 2 },
+    sm: { outerSize: 24, borderWidth: 4, innerSize: 4, gap: 3 },
+    md: { outerSize: 36, borderWidth: 6, innerSize: 6, gap: 5 }, 
+    lg: { outerSize: 70, borderWidth: 12, innerSize: 12, gap: 8 }
   };
 
   const currentConfig = config[size];
