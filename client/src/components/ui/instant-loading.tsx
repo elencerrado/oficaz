@@ -8,7 +8,7 @@ export function InstantLoading() {
         background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
       }}
     >
-      <LoadingSpinner size="xl" />
+      <LoadingSpinner size="lg" />
     </div>
   );
 }

@@ -21,7 +21,6 @@ import { getAuthHeaders } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import StatsCard, { StatsCardGrid } from '@/components/StatsCard';
 import { TabNavigation } from '@/components/ui/tab-navigation';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import {
   Upload,
   Search,
@@ -47,6 +46,7 @@ import {
   FolderOpen,
   Receipt,
   FileSignature,
+  Loader2,
   Undo2,
   Clock
 } from 'lucide-react';
@@ -1141,7 +1141,7 @@ export default function AdminDocuments() {
                     disabled={undoCircularMutation.isPending}
                   >
                     {undoCircularMutation.isPending ? (
-                      <LoadingSpinner size="sm" className="mr-1" />
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
                     ) : (
                       <Undo2 className="h-4 w-4 mr-1" />
                     )}
@@ -1279,7 +1279,7 @@ export default function AdminDocuments() {
                 >
                   {undoCircularMutation.isPending ? (
                     <>
-                      <LoadingSpinner size="sm" className="mr-2" />
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       Eliminando...
                     </>
                   ) : (
@@ -1475,7 +1475,7 @@ export default function AdminDocuments() {
                               disabled={viewingDocId === document.id}
                             >
                               {viewingDocId === document.id ? (
-                                <LoadingSpinner size="sm" />
+                                <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
                                 <Eye className="h-4 w-4" />
                               )}
@@ -1488,7 +1488,7 @@ export default function AdminDocuments() {
                               disabled={downloadingDocId === document.id}
                             >
                               {downloadingDocId === document.id ? (
-                                <LoadingSpinner size="sm" />
+                                <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
                                 <Download className="h-4 w-4" />
                               )}
@@ -1669,7 +1669,7 @@ export default function AdminDocuments() {
                                                       disabled={viewingDocId === document.id}
                                                     >
                                                       {viewingDocId === document.id ? (
-                                                        <LoadingSpinner size="xs" />
+                                                        <Loader2 className="h-3 w-3 animate-spin" />
                                                       ) : (
                                                         <Eye className="h-3 w-3" />
                                                       )}
@@ -1682,7 +1682,7 @@ export default function AdminDocuments() {
                                                       disabled={downloadingDocId === document.id}
                                                     >
                                                       {downloadingDocId === document.id ? (
-                                                        <LoadingSpinner size="xs" />
+                                                        <Loader2 className="h-3 w-3 animate-spin" />
                                                       ) : (
                                                         <Download className="h-3 w-3" />
                                                       )}

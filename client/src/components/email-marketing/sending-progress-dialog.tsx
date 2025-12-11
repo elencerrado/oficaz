@@ -1,7 +1,6 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Mail, CheckCircle, XCircle } from "lucide-react";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Loader2, Mail, CheckCircle, XCircle } from "lucide-react";
 
 interface SendingProgressDialogProps {
   isOpen: boolean;
@@ -27,7 +26,7 @@ export function SendingProgressDialog({
     switch (status) {
       case 'preparing':
       case 'sending':
-        return <LoadingSpinner size="xl" variant="blue" />;
+        return <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />;
       case 'success':
         return <CheckCircle className="w-12 h-12 text-green-500" />;
       case 'error':

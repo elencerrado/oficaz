@@ -6,8 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Sparkles, AlertTriangle, CheckCircle2, Globe } from 'lucide-react';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { Loader2, Search, Sparkles, AlertTriangle, CheckCircle2, Globe } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface AiProspect {
@@ -272,7 +271,7 @@ export function AiProspectDiscoveryDialog({
                 data-testid="button-ai-search"
               >
                 {searchMutation.isPending ? (
-                  <LoadingSpinner size="sm" className="mr-2" />
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (
                   <Search className="h-4 w-4 mr-2" />
                 )}
@@ -284,7 +283,7 @@ export function AiProspectDiscoveryDialog({
           {/* Loading State */}
           {searchMutation.isPending && (
             <div className="text-center py-8 space-y-3">
-              <LoadingSpinner size="lg" className="mx-auto text-purple-500" />
+              <Loader2 className="h-8 w-8 animate-spin mx-auto text-purple-500" />
               <p className="text-sm text-muted-foreground">
                 Generando prospects... Esto puede tardar 3-5 segundos
               </p>
@@ -464,7 +463,7 @@ export function AiProspectDiscoveryDialog({
               data-testid="button-add-selected"
             >
               {addMutation.isPending ? (
-                <LoadingSpinner size="sm" className="mr-2" />
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
               Añadir seleccionados ({selectedIndices.size})
             </Button>
