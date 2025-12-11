@@ -1,20 +1,21 @@
 import { cn } from "@/lib/utils";
 
-interface LoadingSpinnerProps {
+interface OficazLoaderProps {
   className?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   variant?: "blue" | "white" | "auto";
 }
 
-export function LoadingSpinner({ 
+export function OficazLoader({ 
   className, 
-  size = "md",
-  variant = "auto"
-}: LoadingSpinnerProps) {
+  size = "md", 
+  variant = "auto" 
+}: OficazLoaderProps) {
   const sizeMap = {
     sm: 24,
     md: 36,
-    lg: 56
+    lg: 56,
+    xl: 80
   };
 
   const pixelSize = sizeMap[size];
@@ -51,4 +52,4 @@ export function LoadingSpinner({
   );
 }
 
-export default LoadingSpinner;
+export default OficazLoader;
