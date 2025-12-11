@@ -603,7 +603,7 @@ const AccountManagement = () => {
   if (!accountInfo && !subscription) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+        <LoadingSpinner size="md" />
       </div>
     );
   }
@@ -1170,7 +1170,7 @@ const AccountManagement = () => {
               >
                 {isDeleting ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                    <LoadingSpinner size="xs" className="mr-2" />
                     Programando...
                   </>
                 ) : (
@@ -1356,7 +1356,7 @@ const AccountManagement = () => {
                 >
                   {contactMutation.isPending ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                      <LoadingSpinner size="xs" className="mr-2" />
                       Enviando...
                     </>
                   ) : (

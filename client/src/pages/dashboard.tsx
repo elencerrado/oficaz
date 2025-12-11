@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function Dashboard() {
   usePageTitle('Panel de Control');
@@ -163,7 +164,7 @@ export default function Dashboard() {
               >
                 {generateDemoDataMutation.isPending ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <LoadingSpinner size="xs" className="mr-2" />
                     Generando...
                   </>
                 ) : (

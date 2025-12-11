@@ -41,6 +41,7 @@ import { useToast } from '@/hooks/use-toast';
 import { TrialManager } from '@/components/TrialManager';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PaymentMethodManager } from '@/components/PaymentMethodManager';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { getNationalHolidaysForCalendar, getUpcomingHolidays } from '@/utils/spanishHolidays';
 
 export default function AdminDashboard() {
@@ -906,7 +907,7 @@ export default function AdminDashboard() {
                             >
                               {clockOutMutation.isPending ? (
                                 <>
-                                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                  <LoadingSpinner size="xs" className="mr-2" />
                                   Fichando...
                                 </>
                               ) : (
@@ -935,7 +936,7 @@ export default function AdminDashboard() {
                               >
                                 {startBreakMutation.isPending ? (
                                   <>
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600 mr-2"></div>
+                                    <LoadingSpinner size="xs" className="mr-2" />
                                     Iniciando...
                                   </>
                                 ) : (
@@ -963,7 +964,7 @@ export default function AdminDashboard() {
                               >
                                 {endBreakMutation.isPending ? (
                                   <>
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600 mr-2"></div>
+                                    <LoadingSpinner size="xs" className="mr-2" />
                                     Finalizando...
                                   </>
                                 ) : (
@@ -994,7 +995,7 @@ export default function AdminDashboard() {
                           >
                             {clockInMutation.isPending ? (
                               <>
-                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                <LoadingSpinner size="xs" className="mr-2" />
                                 Fichando...
                               </>
                             ) : (

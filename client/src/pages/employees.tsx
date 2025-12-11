@@ -39,6 +39,7 @@ import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 // Función para traducir roles al español
 const translateRole = (role: string | undefined) => {
@@ -284,7 +285,7 @@ export default function Employees() {
   if (employeesLoading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-oficaz-primary"></div>
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
