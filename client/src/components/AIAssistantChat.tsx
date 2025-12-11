@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, memo, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, Minimize2, RotateCcw } from "lucide-react";
+import { Send, Minimize2, RotateCcw } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -477,7 +478,7 @@ export function AIAssistantChat() {
               <div className="flex justify-start" data-testid="indicator-ai-loading">
                 <div className="max-w-[85%] rounded-2xl bg-gray-100 px-4 py-3 dark:bg-gray-800">
                   <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <LoadingSpinner size="sm" />
                     <span>Procesando...</span>
                   </div>
                 </div>

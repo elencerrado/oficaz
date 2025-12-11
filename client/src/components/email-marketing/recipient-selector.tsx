@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface RecipientSelectorProps {
   selectedEmails: string[];
@@ -159,7 +159,7 @@ export function RecipientSelector({ selectedEmails, onSelectionChange, audienceT
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-white/50" />
+        <LoadingSpinner size="md" variant="white" className="opacity-50" />
       </div>
     );
   }
