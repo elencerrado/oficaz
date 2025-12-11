@@ -12,11 +12,11 @@ export function LoadingSpinner({
   variant = "auto"
 }: LoadingSpinnerProps) {
   const sizeMap = {
-    xs: 12,
-    sm: 16,
-    md: 24,
-    lg: 36,
-    xl: 56
+    xs: 16,
+    sm: 20,
+    md: 28,
+    lg: 40,
+    xl: 64
   };
 
   const pixelSize = sizeMap[size];
@@ -37,25 +37,19 @@ export function LoadingSpinner({
       <circle
         cx="50"
         cy="50"
-        r="40"
+        r="39"
         fill="none"
         stroke="currentColor"
-        strokeWidth="12"
+        strokeWidth="22"
       />
-      <g style={{ transformOrigin: '50px 50px', animation: 'spin 1s linear infinite' }}>
+      <g className="animate-spin" style={{ transformOrigin: '50px 50px' }}>
         <circle
           cx="50"
           cy="18"
-          r="8"
+          r="11"
           fill="currentColor"
         />
       </g>
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </svg>
   );
 }
