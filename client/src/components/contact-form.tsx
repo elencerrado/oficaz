@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Loader2, Mail, Phone, User, MessageSquare } from 'lucide-react';
+import { Send, Mail, Phone, User, MessageSquare } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface ContactFormProps {
   isOpen: boolean;
@@ -220,7 +221,7 @@ export default function ContactForm({ isOpen, onClose }: ContactFormProps) {
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <LoadingSpinner size="xs" className="mr-2" />
                   Enviando...
                 </>
               ) : (

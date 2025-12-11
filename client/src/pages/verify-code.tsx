@@ -12,6 +12,7 @@ import { Shield, ArrowRight, ArrowLeft, RotateCcw, Clock, CheckCircle } from 'lu
 
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 const codeSchema = z.object({
   code: z.string().length(6, 'El código debe tener exactamente 6 dígitos'),
@@ -278,7 +279,7 @@ export default function VerifyCode() {
             >
               {isLoading ? (
                 <div className="flex items-center gap-2">
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                  <LoadingSpinner size="xs" />
                   Verificando...
                 </div>
               ) : (
@@ -300,7 +301,7 @@ export default function VerifyCode() {
             >
               {isResending ? (
                 <div className="flex items-center gap-2">
-                  <div className="animate-spin w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full"></div>
+                  <LoadingSpinner size="xs" />
                   Enviando...
                 </div>
               ) : !canResend ? (

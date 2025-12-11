@@ -739,7 +739,7 @@ export default function Documents() {
                   className="bg-[#007AFF] hover:bg-[#0056CC] dark:bg-[#007AFF] dark:hover:bg-[#0056CC] text-white"
                 >
                   {createDemoMutation.isPending ? (
-                    <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    <LoadingSpinner size="xs" className="mr-2" />
                   ) : (
                     <FileText className="h-4 w-4 mr-2" />
                   )}

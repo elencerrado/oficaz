@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Trash2, Users } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface DemoDeleteDialogProps {
   isOpen: boolean;
@@ -82,7 +83,7 @@ export function DemoDeleteDialog({ isOpen, onClose }: DemoDeleteDialogProps) {
             >
               {deleteDemoDataMutation.isPending ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  <LoadingSpinner size="xs" className="mr-2" />
                   Eliminando...
                 </>
               ) : (

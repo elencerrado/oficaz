@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CreditCard, Lock, AlertCircle } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -173,7 +174,7 @@ export function MockPaymentForm({
           >
             {isProcessing ? (
               <>
-                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                <LoadingSpinner size="xs" className="mr-2" />
                 Procesando...
               </>
             ) : (

@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { TrendingUp, Send, Eye, MousePointerClick, UserPlus, CreditCard, ArrowRight, ChevronDown, ChevronRight } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -109,7 +110,7 @@ export function CampaignConversionsDialog({ campaign, open, onOpenChange }: Camp
 
         {isLoading ? (
           <div className="py-12 text-center">
-            <div className="animate-spin mx-auto h-8 w-8 border-4 border-purple-500 border-t-transparent rounded-full"></div>
+            <LoadingSpinner size="md" />
             <p className="mt-4 text-white/60">Cargando estadísticas...</p>
           </div>
         ) : conversions ? (

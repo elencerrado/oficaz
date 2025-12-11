@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertCircle, CreditCard, Clock, Plus, TrendingUp } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentMethodManager } from '@/components/PaymentMethodManager';
 import { useAuth } from '@/hooks/use-auth';
@@ -193,7 +194,7 @@ export function TrialManager() {
             >
               {isProcessingPayment ? (
                 <>
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                  <LoadingSpinner size="xs" className="mr-2" />
                   Procesando pago...
                 </>
               ) : (

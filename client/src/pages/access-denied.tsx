@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useLocation, useParams } from "wouter";
 import { usePageTitle } from '@/hooks/use-page-title';
 import oficazLogo from "@assets/Imagotipo Oficaz white_1750407614936.png";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function AccessDenied() {
   usePageTitle('Acceso Denegado');
@@ -42,10 +43,7 @@ export default function AccessDenied() {
 
         {/* Spinner de carga */}
         <div className="flex justify-center">
-          <div className="relative">
-            <div className="w-8 h-8 border-2 border-white/20 rounded-full"></div>
-            <div className="absolute top-0 left-0 w-8 h-8 border-2 border-white border-r-transparent rounded-full animate-spin"></div>
-          </div>
+          <LoadingSpinner size="md" />
         </div>
       </div>
     </div>

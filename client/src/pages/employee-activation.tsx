@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 const activationSchema = z.object({
   password: z.string()
@@ -95,7 +96,7 @@ export default function EmployeeActivation() {
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="flex items-center justify-center space-x-2">
-              <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <LoadingSpinner size="sm" />
               <span>Verificando token de activación...</span>
             </div>
           </CardContent>
@@ -249,7 +250,7 @@ export default function EmployeeActivation() {
               >
                 {activateAccountMutation.isPending ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    <LoadingSpinner size="xs" className="mr-2" />
                     Configurando...
                   </>
                 ) : (

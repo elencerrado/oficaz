@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Building2, Users, Crown, Settings, Edit2, Check, X, Euro, AlertCircle, Trash2 } from 'lucide-react';
 import { getAuthHeaders } from '@/lib/auth';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface CompanyDetailProps {
   companyId: string;
@@ -311,7 +312,7 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full" />
+        <LoadingSpinner size="md" />
       </div>
     );
   }

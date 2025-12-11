@@ -1,6 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { MockPaymentForm } from './MockPaymentForm';
 import { CreditCard, AlertCircle } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 
 // Lazy load ALL Stripe components to remove 141KB from main bundle
@@ -75,8 +76,8 @@ export function LazyStripeForm({
   if (loading) {
     return (
       <div className="p-6 text-center">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4" />
-        <p className="text-sm text-gray-600">Cargando formulario de pago...</p>
+        <LoadingSpinner size="md" />
+        <p className="text-sm text-gray-600 mt-4">Cargando formulario de pago...</p>
       </div>
     );
   }
@@ -97,8 +98,8 @@ export function LazyStripeForm({
   return (
     <Suspense fallback={
       <div className="p-6 text-center">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4" />
-        <p className="text-sm text-gray-600">Cargando sistema de pagos...</p>
+        <LoadingSpinner size="md" />
+        <p className="text-sm text-gray-600 mt-4">Cargando sistema de pagos...</p>
       </div>
     }>
       <Elements 

@@ -53,6 +53,7 @@ import {
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { analyzeFileName, documentTypes as importedDocumentTypes } from '@/utils/documentUtils';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface Employee {
   id: number;
@@ -1141,7 +1142,7 @@ export default function AdminDocuments() {
                     disabled={undoCircularMutation.isPending}
                   >
                     {undoCircularMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      <LoadingSpinner size="xs" className="mr-1" />
                     ) : (
                       <Undo2 className="h-4 w-4 mr-1" />
                     )}
@@ -1279,7 +1280,7 @@ export default function AdminDocuments() {
                 >
                   {undoCircularMutation.isPending ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <LoadingSpinner size="xs" className="mr-2" />
                       Eliminando...
                     </>
                   ) : (
@@ -1475,7 +1476,7 @@ export default function AdminDocuments() {
                               disabled={viewingDocId === document.id}
                             >
                               {viewingDocId === document.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <LoadingSpinner size="xs" />
                               ) : (
                                 <Eye className="h-4 w-4" />
                               )}
@@ -1488,7 +1489,7 @@ export default function AdminDocuments() {
                               disabled={downloadingDocId === document.id}
                             >
                               {downloadingDocId === document.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <LoadingSpinner size="xs" />
                               ) : (
                                 <Download className="h-4 w-4" />
                               )}
@@ -1669,7 +1670,7 @@ export default function AdminDocuments() {
                                                       disabled={viewingDocId === document.id}
                                                     >
                                                       {viewingDocId === document.id ? (
-                                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                                        <LoadingSpinner size="xs" />
                                                       ) : (
                                                         <Eye className="h-3 w-3" />
                                                       )}
@@ -1682,7 +1683,7 @@ export default function AdminDocuments() {
                                                       disabled={downloadingDocId === document.id}
                                                     >
                                                       {downloadingDocId === document.id ? (
-                                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                                        <LoadingSpinner size="xs" />
                                                       ) : (
                                                         <Download className="h-3 w-3" />
                                                       )}

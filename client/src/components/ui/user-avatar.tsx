@@ -4,6 +4,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { Camera, X } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface UserAvatarProps {
   fullName: string;
@@ -565,7 +566,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
         {/* Overlay con icono de cámara cuando está uploading */}
         {isUploading && (
           <div className="absolute inset-0 rounded-full bg-black bg-opacity-50 flex items-center justify-center flex-col">
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <LoadingSpinner size="xs" />
             {processingStatus && (
               <div className="text-white text-xs mt-1 font-medium">
                 {processingStatus === 'pending' ? 'Subiendo...' : 

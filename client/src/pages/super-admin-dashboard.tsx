@@ -18,6 +18,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SuperAdminLayout } from "@/components/layout/super-admin-layout";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface CompanyWithStats {
   id: number;
@@ -143,8 +144,8 @@ export default function SuperAdminDashboard() {
       <SuperAdminLayout>
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-white/70">Cargando panel de administración...</p>
+            <LoadingSpinner size="lg" />
+            <p className="text-white/70 mt-4">Cargando panel de administración...</p>
           </div>
         </div>
       </SuperAdminLayout>

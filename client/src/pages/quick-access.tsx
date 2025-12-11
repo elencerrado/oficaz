@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Crown, Building2, Users, UserCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface QuickUser {
   id: string;
@@ -240,7 +241,7 @@ export default function QuickAccess() {
           >
             {isLogging ? (
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <LoadingSpinner size="xs" />
                 Iniciando sesión...
               </div>
             ) : (

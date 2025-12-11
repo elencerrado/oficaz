@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { PenTool, RotateCcw, Check, X, Edit3, Info } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -334,7 +335,7 @@ export function DocumentSignatureModal({
           className="w-full"
         >
           {isLoading ? (
-            <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            <LoadingSpinner size="xs" className="mr-2" />
           ) : (
             <Check className="h-4 w-4 mr-2" />
           )}
@@ -453,7 +454,7 @@ export function DocumentSignatureModal({
             className="flex-1"
           >
             {(isLoading || saveSignatureMutation.isPending) ? (
-              <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              <LoadingSpinner size="xs" className="mr-2" />
             ) : (
               <Check className="h-4 w-4 mr-2" />
             )}
@@ -489,7 +490,7 @@ export function DocumentSignatureModal({
 
         {signatureLoading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <LoadingSpinner size="sm" />
           </div>
         ) : (
           hasSavedSignature && !showDrawMode 

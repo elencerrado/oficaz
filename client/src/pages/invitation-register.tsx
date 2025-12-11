@@ -6,6 +6,7 @@ import { AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import imagotipo from "@assets/Imagotipo Oficaz_1750321812493.png";
 import Register from "./register";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface InvitationData {
   email: string;
@@ -60,8 +61,8 @@ export default function InvitationRegister() {
         <Card className="w-full max-w-md">
           <CardContent className="p-8">
             <div className="text-center">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-600">Validando invitación...</p>
+              <LoadingSpinner size="md" />
+              <p className="text-gray-600 mt-4">Validando invitación...</p>
             </div>
           </CardContent>
         </Card>

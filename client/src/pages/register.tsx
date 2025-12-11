@@ -19,6 +19,7 @@ import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
 import { useAuth } from '@/hooks/use-auth';
 import { DemoLoadingOverlay } from '@/components/demo-loading-overlay';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface Addon {
   id: number;
@@ -1436,7 +1437,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
                       {promoCodeValidation.status === 'checking' && (
-                        <div className="animate-spin h-5 w-5 border-2 border-gray-300 border-t-oficaz-primary rounded-full" />
+                        <LoadingSpinner size="xs" />
                       )}
                       {promoCodeValidation.status === 'valid' && (
                         <CheckCircle className="w-5 h-5 text-green-500" />

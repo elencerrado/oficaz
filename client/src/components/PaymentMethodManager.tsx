@@ -11,6 +11,7 @@ import { StripePaymentForm } from './StripePaymentForm';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { useAuth } from '@/hooks/use-auth';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface PaymentMethod {
   id: string;
@@ -458,8 +459,8 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
             <div className="p-6 text-center">
               {createSetupIntentMutation.isPending ? (
                 <>
-                  <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4" />
-                  <p className="text-sm text-gray-600">Preparando formulario de pago...</p>
+                  <LoadingSpinner size="md" />
+                  <p className="text-sm text-gray-600 mt-4">Preparando formulario de pago...</p>
                 </>
               ) : (
                 <>

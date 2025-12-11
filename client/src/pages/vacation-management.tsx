@@ -2290,7 +2290,7 @@ export default function VacationManagement() {
                           onClick={handleAddHoliday}
                         >
                           {addHolidayMutation.isPending ? (
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            <LoadingSpinner size="xs" />
                           ) : (
                             'Añadir Festivo'
                           )}
@@ -2465,7 +2465,7 @@ export default function VacationManagement() {
                   }
                 >
                   {updateRequestMutation.isPending ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <LoadingSpinner size="xs" />
                   ) : (
                     <>
                       {modalAction === 'approve' && <Check className="w-4 h-4 mr-1" />}

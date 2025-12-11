@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface Invitation {
   id: number;
@@ -374,8 +375,8 @@ export default function SuperAdminInvitations() {
           <CardContent>
             {isLoadingInvitations ? (
               <div className="text-center py-8">
-                <div className="animate-spin w-8 h-8 border-4 border-blue-400 border-t-transparent rounded-full mx-auto mb-4" />
-                <p className="text-white/70">Cargando invitaciones...</p>
+                <LoadingSpinner size="md" />
+                <p className="text-white/70 mt-4">Cargando invitaciones...</p>
               </div>
             ) : invitations.length === 0 ? (
               <div className="text-center py-8">

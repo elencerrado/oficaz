@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CheckCircle } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 
@@ -199,7 +200,7 @@ export function StripePaymentForm({ planName, planPrice, trialEndDate, isTrialEx
           >
             {isLoading ? (
               <>
-                <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2" />
+                <LoadingSpinner size="xs" className="mr-2" />
                 {trialHasExpired ? 'Activando...' : 'Verificando...'}
               </>
             ) : (

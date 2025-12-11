@@ -1447,7 +1447,7 @@ export default function EmployeeTimeTracking() {
                   data-testid="button-submit-request"
                 >
                   {requestModificationMutation.isPending ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <LoadingSpinner size="xs" />
                   ) : (
                     'Enviar'
                   )}
@@ -1496,7 +1496,7 @@ export default function EmployeeTimeTracking() {
                 className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
               >
                 {clockOutMutation.isPending ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <LoadingSpinner size="xs" />
                 ) : (
                   'Cerrar Sesión'
                 )}

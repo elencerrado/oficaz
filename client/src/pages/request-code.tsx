@@ -13,6 +13,7 @@ import { Mail, ArrowRight, AlertTriangle, CheckCircle, XCircle } from 'lucide-re
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@/assets/oficaz-logo.png';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 const emailSchema = z.object({
   email: z.string().email('Email no válido'),
@@ -286,7 +287,7 @@ export default function RequestCode() {
                 <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
                   <div className="flex items-center gap-2">
                     {emailStatus === 'checking' && (
-                      <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
+                      <LoadingSpinner size="xs" />
                     )}
                     {emailStatus === 'available' && (
                       <CheckCircle className="h-4 w-4 text-green-500" />
@@ -356,7 +357,7 @@ export default function RequestCode() {
             >
               {isLoading ? (
                 <div className="flex items-center gap-2">
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                  <LoadingSpinner size="xs" />
                   {canRecover ? 'Enviando código de recuperación...' : 'Enviando código...'}
                 </div>
               ) : (
