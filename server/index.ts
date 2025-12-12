@@ -1,3 +1,6 @@
+// Load environment variables from .env file (for local development outside Replit)
+import 'dotenv/config';
+
 import express, { type Request, Response, NextFunction } from "express";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
