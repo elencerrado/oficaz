@@ -890,6 +890,11 @@ export default function Schedules() {
       // Don't duplicate if dropped on the same cell
       if (targetEmployeeId === draggedShift.employeeId && 
           format(targetDate, 'yyyy-MM-dd') === format(parseISO(draggedShift.startAt), 'yyyy-MM-dd')) {
+        toast({
+          title: 'Operación cancelada',
+          description: 'Soltaste el turno en el mismo sitio. Arrastra a otro empleado o fecha para duplicarlo.',
+          variant: 'default',
+        });
         return;
       }
     }
