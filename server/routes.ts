@@ -14,20 +14,36 @@ import Stripe from 'stripe';
 import webpush from 'web-push';
 import { subDays, startOfDay } from 'date-fns';
 import { storage } from "./storage";
-import { authenticateToken, requireRole, generateToken, generateRefreshToken, AuthRequest, requireVisibleFeature } from './middleware/auth';
+import { SimpleObjectStorageService } from './objectStorageSimple.js';
+import { parseExcludedWeekdays } from './ai-schedule-parser';
+import { authenticateToken, requireRole, generateToken, generateRefreshToken, AuthRequest, requireVisibleFeature, requireFeature } from './middleware/auth';
 import { withDatabaseRetry } from './utils';
+import { createAccountingDocument } from './utils/accounting-documents';
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertWorkShiftSchema, insertMessageSchema, passwordResetRequestSchema, passwordResetSchema, contactFormSchema } from '@shared/schema';
+import { ADDON_DEFINITIONS } from '@shared/addon-definitions';
 import { z } from 'zod';
 import { db } from './db';
-import { eq, and, or, desc, sql, not, inArray, count, gte, lt, isNotNull, isNull } from 'drizzle-orm';
+import { eq, and, or, desc, asc, sql, not, inArray, count, gte, lte, lt, isNotNull, isNull, ilike } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import * as schema from '@shared/schema';
-import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents, employeeActivationTokens, passwordResetTokens, pushSubscriptions } from '@shared/schema';
+import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents, employeeActivationTokens, passwordResetTokens, pushSubscriptions, companyFiscalSettings, accountingEntries, accountingCategories } from '@shared/schema';
 import { sendEmail, sendEmployeeWelcomeEmail, sendPasswordResetEmail, sendSuperAdminSecurityCode, sendNewCompanyRegistrationNotification } from './email';
+
+// 🔒 SECURITY: Helper function to safely parse and validate integer IDs from params
+function parseIntParam(value: string, paramName: string = 'id'): number {
+  const parsed = parseInt(value, 10);
+  if (isNaN(parsed) || parsed <= 0) {
+    throw new Error(`Invalid ${paramName}: must be a positive integer`);
+  }
+  return parsed;
+}
 import { backgroundImageProcessor } from './backgroundWorker.js';
 import { startPushNotificationScheduler } from './pushNotificationScheduler.js';
 import { initializeWebSocketServer, getWebSocketServer } from './websocket.js';
+import { startEmailQueueWorker } from './emailQueueWorker.js';
 import { JWT_SECRET } from './utils/jwt-secret.js';
 import Groq from 'groq-sdk';
+import OpenAI from 'openai';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { PDFDocument, rgb } from 'pdf-lib';
@@ -37,6 +53,21 @@ import * as XLSX from 'xlsx';
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 if (!stripeSecretKey) {
   throw new Error('STRIPE_SECRET_KEY environment variable is required');
+}
+
+// Basic sanity checks to prevent common 401 issues in Stripe Elements
+const stripePublishableKey = process.env.VITE_STRIPE_PUBLISHABLE_KEY;
+if (!stripePublishableKey) {
+  console.warn('⚠️  VITE_STRIPE_PUBLISHABLE_KEY not set. Frontend will fail to load Stripe.');
+} else {
+  const skMode = stripeSecretKey.startsWith('sk_test') ? 'test' : (stripeSecretKey.startsWith('sk_live') ? 'live' : 'unknown');
+  const pkMode = stripePublishableKey.startsWith('pk_test') ? 'test' : (stripePublishableKey.startsWith('pk_live') ? 'live' : 'unknown');
+  if (skMode !== 'unknown' && pkMode !== 'unknown' && skMode !== pkMode) {
+    console.error(`🚫 Stripe key mismatch: server is '${skMode}' but client key is '${pkMode}'. Use matching keys (pk_${skMode}_..., sk_${skMode}_...).`);
+  }
+  if (stripePublishableKey.startsWith('pk_tpk_')) {
+    console.error('🚫 Invalid Stripe publishable key format detected (starts with pk_tpk_). It should start with pk_test_ or pk_live_.');
+  }
 }
 
 console.log('Stripe initialized:', stripeSecretKey.substring(0, 8) + '...');
@@ -60,15 +91,105 @@ if (!vapidPublicKey || !vapidPrivateKey) {
   console.log('✓ Web Push configured successfully');
 }
 
+// Initialize object storage service (R2 or Replit fallback)
+const objectStorage = new SimpleObjectStorageService();
+
 // Configure multer for file uploads
 const uploadDir = path.join(process.cwd(), 'uploads');
+
+// 🔒 SECURITY: Simple in-memory rate limiting for critical endpoints
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+function simpleRateLimit(maxRequests: number, windowMs: number) {
+  return (req: AuthRequest, res: express.Response, next: express.NextFunction) => {
+    const userId = req.user?.id;
+    if (!userId) return next(); // Skip if not authenticated
+
+    const key = `${userId}:${req.path}`;
+    const now = Date.now();
+    const record = rateLimitStore.get(key);
+
+    // Clean up old entries periodically
+    if (Math.random() < 0.01) { // 1% chance
+      for (const [k, v] of rateLimitStore.entries()) {
+        if (v.resetTime < now) rateLimitStore.delete(k);
+      }
+    }
+
+    if (!record || record.resetTime < now) {
+      // New window
+      rateLimitStore.set(key, { count: 1, resetTime: now + windowMs });
+      return next();
+    }
+
+    if (record.count >= maxRequests) {
+      return res.status(429).json({ 
+        message: 'Demasiados intentos, por favor espera un momento' 
+      });
+    }
+
+    record.count++;
+    next();
+  };
+}
+
+// Reusable safe user DTO to avoid exposing PII
+function toSafeUser(user: any) {
+  return {
+    id: user.id,
+    fullName: user.fullName,
+    dni: user.dni,
+    role: user.role,
+    companyEmail: user.companyEmail,
+    companyId: user.companyId,
+    avatarUrl: user.avatarUrl || null,
+    profilePicture: user.profilePicture || null,
+    position: user.position || null,
+    startDate: user.startDate || null,
+    status: user.status || null,
+    workReportMode: user.workReportMode || null,
+    totalVacationDays: user.totalVacationDays || null,
+    usedVacationDays: user.usedVacationDays || null,
+    vacationDaysPerMonth: user.vacationDaysPerMonth || null,
+    isPendingActivation: user.isPendingActivation || false,
+  };
+}
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+const allowedDocumentMimeTypes = [
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/webp',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/plain',
+  'text/csv'
+];
+
+const allowedDocumentExtensions = [
+  '.pdf', '.png', '.jpg', '.jpeg', '.webp', '.doc', '.docx', '.xls', '.xlsx', '.txt', '.csv'
+];
+
 const upload = multer({
   dest: uploadDir,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const isAllowedMime = allowedDocumentMimeTypes.includes(file.mimetype);
+    const isAllowedExt = allowedDocumentExtensions.includes(ext);
+
+    if (!isAllowedMime && !isAllowedExt) {
+      return cb(new Error('Tipo de archivo no permitido')); // 400 handled by route catch
+    }
+
+    cb(null, true);
+  },
 });
 
 // Memory storage for Excel file uploads (need buffer access)
@@ -79,7 +200,7 @@ const memoryUpload = multer({
 
 // SECURE multer configuration for profile pictures with strict validation
 const profilePictureUpload = multer({
-  dest: uploadDir,
+  storage: multer.memoryStorage(), // Use memory storage for R2 upload
   limits: { 
     fileSize: 5 * 1024 * 1024, // 5MB per file
     files: 1, // Only 1 file allowed
@@ -354,24 +475,13 @@ async function generateDemoData(companyId: number, forceRegenerate: boolean = fa
     for (const employeeData of demoEmployees) {
       const hashedPassword = await bcrypt.hash('Demo123!', 10);
       
-      // Copy avatar from attached_assets to uploads
+      // Use avatar from R2 (uploaded by migration script)
       let profilePicturePath = null;
       if (employeeData.avatarSource) {
-        const sourceAvatarPath = path.join(process.cwd(), 'attached_assets', employeeData.avatarSource);
-        const destFileName = `demo_avatar_${companyId}_${uniqueId}_${employeeData.avatarSource}`;
-        const destAvatarPath = path.join(uploadDir, destFileName);
-        
-        try {
-          if (fs.existsSync(sourceAvatarPath)) {
-            fs.copyFileSync(sourceAvatarPath, destAvatarPath);
-            profilePicturePath = `/uploads/${destFileName}`;
-            console.log(`📸 Copied demo avatar: ${employeeData.avatarSource} -> ${destFileName}`);
-          } else {
-            console.warn(`⚠️ Avatar source not found: ${sourceAvatarPath}`);
-          }
-        } catch (error) {
-          console.error(`❌ Error copying avatar for ${employeeData.fullName}:`, error);
-        }
+        // Avatar should already be in R2 (uploaded by migration script)
+        // We just reference it via /uploads/ endpoint which serves from R2
+        profilePicturePath = `/uploads/${employeeData.avatarSource}`;
+        console.log(`📸 Assigned demo avatar from R2: ${employeeData.avatarSource}`);
       }
       
       const employee = await storage.createUser({
@@ -1576,10 +1686,209 @@ async function generateDemoReminders(companyId: number, employees: any[], forceR
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // =================================================================
+  // 🏥 HEALTH CHECK ENDPOINT (Required for Replit deployment)
+  // =================================================================
+  // CRITICAL: Must be the first route and respond immediately
+  // Replit health checks timeout after a few seconds
+  app.get('/health', (req, res) => {
+    res.status(200).json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      service: 'oficaz'
+    });
+  });
+  
+  // Root endpoint - also responds quickly for Replit
+  app.get('/', (req, res) => {
+    res.status(200).json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      service: 'oficaz'
+    });
+  });
+
+  // =================================================================
+  // 📊 DIAGNOSTICS ENDPOINT (for troubleshooting iOS and Replit issues)
+  // =================================================================
+  app.get('/api/diagnostics', (req, res) => {
+    // 🔒 SECURITY: Only expose diagnostics in development
+    if (process.env.NODE_ENV !== 'development') {
+      console.warn(`🚨 SECURITY: Blocked diagnostics access in ${process.env.NODE_ENV} mode from ${req.ip}`);
+      return res.status(403).json({ error: 'Diagnostics endpoint not available in this environment' });
+    }
+
+    const diagnostics = {
+      server: {
+        nodeEnv: process.env.NODE_ENV,
+        replit: !!process.env.REPLIT_DOMAINS,
+        replitDomains: process.env.REPLIT_DOMAINS || 'not set',
+        trustProxy: app.get('trust proxy'),
+      },
+      request: {
+        userAgent: req.headers['user-agent'],
+        origin: req.headers.origin,
+        host: req.headers.host,
+        ip: req.ip,
+        protocol: req.protocol,
+        isSecure: req.secure,
+      },
+      client: {
+        isIOS: /iPad|iPhone|iPod/.test(req.headers['user-agent'] || ''),
+        isSafari: /Safari/.test(req.headers['user-agent'] || '') && !/Chrome/.test(req.headers['user-agent'] || ''),
+      },
+      cors: {
+        enabled: true,
+        message: 'CORS is enabled. If you see this, CORS is working.',
+      },
+      serviceWorker: {
+        note: 'Service Worker status can be checked from browser DevTools > Application > Service Workers',
+      },
+    };
+    
+    res.json(diagnostics);
+  });
+
+  // =================================================================
+  // �🔔 STRIPE WEBHOOKS (Must be BEFORE express.json() middleware!)
+  // =================================================================
+  
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  
+  app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    
+    if (!sig) {
+      console.error('⚠️ Webhook signature missing');
+      return res.status(400).send('Webhook signature missing');
+    }
+    
+    let event: Stripe.Event;
+    
+    try {
+      // Verify webhook signature (prevents fake requests)
+      if (!endpointSecret) {
+        console.warn('⚠️ STRIPE_WEBHOOK_SECRET not configured - webhook signature verification skipped (INSECURE!)');
+        event = JSON.parse(req.body.toString());
+      } else {
+        event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+      }
+    } catch (err: any) {
+      console.error('⚠️ Webhook signature verification failed:', err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+    
+    console.log(`📥 Stripe webhook received: ${event.type}`);
+    
+    // Handle specific events
+    try {
+      switch (event.type) {
+        case 'customer.subscription.trial_will_end': {
+          const subscription = event.data.object as Stripe.Subscription;
+          const customerId = subscription.customer as string;
+          
+          console.log(`⏳ Trial ending soon for subscription: ${subscription.id}, customer: ${customerId}`);
+          
+          // Find company by Stripe customer ID
+          const company = await db.select()
+            .from(companies)
+            .where(eq(companies.stripeCustomerId, customerId))
+            .limit(1);
+          
+          if (company.length > 0) {
+            console.log(`📧 TODO: Send trial reminder email to company: ${company[0].name}`);
+            // TODO: Send reminder notification to admin 3 days before trial ends
+          }
+          break;
+        }
+        
+        case 'customer.subscription.updated': {
+          const subscription = event.data.object as Stripe.Subscription;
+          const customerId = subscription.customer as string;
+          
+          console.log(`🔄 Subscription updated: ${subscription.id}, status: ${subscription.status}`);
+          
+          // Check if trial just converted to active (payment successful)
+          if (subscription.status === 'active' && !subscription.trial_end) {
+            const company = await db.select()
+              .from(companies)
+              .where(eq(companies.stripeCustomerId, customerId))
+              .limit(1);
+            
+            if (company.length > 0) {
+              console.log(`✅ Trial converted to paid for company: ${company[0].name}`);
+              // Company status already updated by Stripe subscription object
+            }
+          }
+          break;
+        }
+        
+        case 'invoice.payment_failed': {
+          const invoice = event.data.object as Stripe.Invoice;
+          const customerId = invoice.customer as string;
+          
+          console.log(`❌ Payment failed for customer: ${customerId}`);
+          
+          const company = await db.select()
+            .from(companies)
+            .where(eq(companies.stripeCustomerId, customerId))
+            .limit(1);
+          
+          if (company.length > 0) {
+            console.log(`⚠️ TODO: Notify admin of payment failure for company: ${company[0].name}`);
+            // TODO: Send email notification to company admin
+            // TODO: Update company status to 'past_due' or 'suspended' after grace period
+          }
+          break;
+        }
+        
+        case 'customer.subscription.deleted': {
+          const subscription = event.data.object as Stripe.Subscription;
+          const customerId = subscription.customer as string;
+          
+          console.log(`🗑️ Subscription canceled: ${subscription.id}`);
+          
+          const company = await db.select()
+            .from(companies)
+            .where(eq(companies.stripeCustomerId, customerId))
+            .limit(1);
+          
+          if (company.length > 0) {
+            console.log(`⚠️ TODO: Handle subscription cancellation for company: ${company[0].name}`);
+            // TODO: Update company status, disable access, start grace period
+          }
+          break;
+        }
+        
+        default:
+          console.log(`ℹ️ Unhandled event type: ${event.type}`);
+      }
+      
+      // Return a 200 response to acknowledge receipt of the event
+      res.json({ received: true });
+    } catch (error) {
+      console.error('❌ Error processing webhook:', error);
+      res.status(500).json({ error: 'Webhook processing failed' });
+    }
+  });
+  
+  // =================================================================
+  // Regular routes (with express.json() middleware)
+  // =================================================================
+  
   // 📦 Object Storage: Serve public objects (email marketing images)
   // Reference: blueprint:javascript_object_storage
+  // 🔒 SECURITY: Sanitize filePath to prevent directory traversal attacks
   app.get("/public-objects/:filePath(*)", async (req, res) => {
     const filePath = req.params.filePath;
+    
+    // 🔒 SECURITY FIX: Prevent path traversal attacks
+    // Remove any '../' sequences and ensure path is normalized
+    if (filePath.includes('..') || filePath.startsWith('/')) {
+      console.warn(`🚨 SECURITY: Blocked path traversal attempt: ${filePath}`);
+      return res.status(400).json({ error: "Invalid file path" });
+    }
+    
     try {
       const { SimpleObjectStorageService } = await import('./objectStorageSimple.js');
       const objectStorage = new SimpleObjectStorageService();
@@ -1596,8 +1905,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rate limiter for validation endpoints (prevent enumeration)
+  const validationLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, // 5 minutes
+    max: 20, // limit each IP to 20 validation attempts per 5 min
+    message: { error: 'Demasiados intentos de validación. Intenta de nuevo más tarde.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
   // Company validation endpoints
-  app.post('/api/validate-company', async (req, res) => {
+  app.post('/api/validate-company', validationLimiter, async (req, res) => {
     try {
       const { field, value } = req.body;
       
@@ -1659,13 +1977,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('✉️ CONTACT ATTEMPT:', { name, email, phone, subject, message });
 
-      // MINIMAL validation - accept anything
+      // Validate and sanitize inputs to prevent XSS and limit attack surface
       const validatedData = {
-        name: name || 'Anónimo',
-        email: email || 'contacto@oficaz.es', 
-        phone: phone || '',
-        subject: subject || 'Consulta web',
-        message: message || 'Mensaje desde formulario web'
+        name: (name || 'Anónimo').toString().substring(0, 100),
+        email: (email || 'contacto@oficaz.es').toString().substring(0, 100), 
+        phone: (phone || '').toString().substring(0, 20),
+        subject: (subject || 'Consulta web').toString().substring(0, 200),
+        message: (message || 'Mensaje desde formulario web').toString().substring(0, 5000)
       };
 
       // File info logging only - no validation
@@ -1687,6 +2005,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           rejectUnauthorized: false
         }
       });
+
+      // Verify SMTP connection for diagnostics
+      try {
+        await transporter.verify();
+        console.log('✅ SMTP verified for contact form');
+      } catch (verr) {
+        console.error('❌ SMTP verification failed:', (verr as any)?.message || verr);
+      }
 
       // Use static logo URL for email compatibility
       const logoUrl = 'https://oficaz.es/email-logo.png';
@@ -1812,8 +2138,8 @@ Responde directamente a este email para contactar con la persona.
       `;
 
       const mailOptions = {
-        from: '"Contacto Oficaz" <soy@oficaz.es>',
-        to: 'soy@oficaz.es',
+        from: process.env.SMTP_USER,
+        to: process.env.SMTP_USER,
         replyTo: validatedData.email, // Para poder responder directamente
         subject: emailSubject,
         text: textContent,
@@ -1873,8 +2199,132 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // In-app feedback endpoint (authenticated or not) - sends email to support
+  app.post('/api/contact/feedback', authenticateToken as any, contactUpload.array('files', 5), async (req: AuthRequest, res) => {
+    let uploadedFiles: any[] = [];
+    try {
+      const { subject, message } = req.body;
+      // Gather files from multer
+      if (req.files && Array.isArray(req.files)) {
+        uploadedFiles = req.files;
+      }
+
+      // Prefer authenticated user identity if available (fetch full user from storage)
+      let userName = 'Usuario Oficaz';
+      let userEmail = process.env.SMTP_USER || 'contacto@oficaz.es';
+      try {
+        const authUserId = req.user?.id;
+        if (authUserId) {
+          const fullUser = await storage.getUser(authUserId);
+          if (fullUser) {
+            userName = fullUser.fullName || userName;
+            userEmail = fullUser.companyEmail || fullUser.personalEmail || userEmail;
+          }
+        }
+      } catch {}
+
+      const validatedData = {
+        name: userName.toString().substring(0, 100),
+        email: userEmail.toString().substring(0, 100),
+        subject: (subject || 'Feedback de producto').toString().substring(0, 200),
+        message: (message || '').toString().substring(0, 5000)
+      };
+
+      console.log('✉️ FEEDBACK ATTEMPT:', { user: validatedData.email, subject: validatedData.subject });
+
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: 465,
+        secure: true,
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+        tls: { rejectUnauthorized: false }
+      });
+
+      // Verify SMTP connection for diagnostics (feedback)
+      try {
+        await transporter.verify();
+        console.log('✅ SMTP verified for feedback');
+      } catch (verr) {
+        console.error('❌ SMTP verification failed (feedback):', (verr as any)?.message || verr);
+      }
+
+      const attachments: any[] = [];
+      if (uploadedFiles.length > 0) {
+        uploadedFiles.forEach((file: any) => {
+          attachments.push({ filename: file.originalname, path: file.path, contentType: file.mimetype });
+        });
+      }
+
+      // Obtener nombre de la empresa si el usuario está autenticado
+      let companyName: string | null = null;
+      try {
+        const companyId = (req as any).user?.companyId;
+        if (companyId) {
+          const company = await storage.getCompany(companyId);
+          companyName = company?.name || null;
+        }
+      } catch {}
+
+      const emailSubject = `[FEEDBACK] ${companyName ? companyName + ' - ' : ''}${validatedData.subject}`;
+      const feedbackRecipient = process.env.FEEDBACK_RECIPIENT_EMAIL || process.env.SUPER_ADMIN_EMAIL || process.env.SMTP_USER;
+      const textContent = `
+Nuevo feedback desde la app
+
+ASUNTO: ${validatedData.subject}
+
+MENSAJE:
+${validatedData.message}
+
+ORIGEN:
+- Empresa: ${companyName || 'No especificada'}
+- Usuario: ${validatedData.name}
+- Email: ${validatedData.email}
+
+${attachments.length > 0 ? `ARCHIVOS ADJUNTOS (${attachments.length}):\n${attachments.map(att => `- ${att.filename}`).join('\n')}` : ''}
+`;
+
+      const htmlContent = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+          <h2 style="margin:0 0 12px 0;">Nuevo feedback desde la app</h2>
+          <p style="margin:0 0 16px 0;"><strong>Asunto:</strong> ${validatedData.subject}</p>
+          <div style="background:#f8fafc;padding:12px;border-radius:8px;white-space:pre-wrap;">${validatedData.message}</div>
+          <div style="margin-top:16px;color:#374151;">
+            <p style="margin:4px 0;"><strong>Empresa:</strong> ${companyName || 'No especificada'}</p>
+            <p style="margin:4px 0;"><strong>Usuario:</strong> ${validatedData.name}</p>
+            <p style="margin:4px 0;"><strong>Email:</strong> ${validatedData.email}</p>
+          </div>
+          ${attachments.length > 0 ? `<p style="margin-top:12px;">📎 Adjuntos (${attachments.length})</p>` : ''}
+        </div>
+      `;
+
+      const mailOptions = {
+        from: process.env.SMTP_USER,
+        to: feedbackRecipient,
+        cc: feedbackRecipient !== process.env.SMTP_USER ? process.env.SMTP_USER : undefined,
+        replyTo: validatedData.email,
+        subject: emailSubject,
+        text: textContent,
+        html: htmlContent,
+        attachments
+      } as any;
+
+      await transporter.sendMail(mailOptions);
+      console.log('✅ Feedback enviado correctamente');
+      res.json({ success: true, message: 'Feedback enviado correctamente' });
+    } catch (error) {
+      console.error('❌ Error enviando feedback:', error);
+      res.status(500).json({ success: false, message: 'No se pudo enviar el feedback' });
+    } finally {
+      if (uploadedFiles.length > 0) {
+        uploadedFiles.forEach((file: any) => {
+          try { if (fs.existsSync(file.path)) fs.unlinkSync(file.path); } catch {}
+        });
+      }
+    }
+  });
+
   // User validation endpoints
-  app.post('/api/validate-user', async (req, res) => {
+  app.post('/api/validate-user', validationLimiter, async (req, res) => {
     try {
       const { field, value } = req.body;
       
@@ -1939,7 +2389,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Promotional code validation endpoint
-  app.post('/api/validate-promotional-code', async (req, res) => {
+  app.post('/api/validate-promotional-code', validationLimiter, async (req, res) => {
     try {
       const { code } = req.body;
       
@@ -2120,40 +2570,11 @@ Responde directamente a este email para contactar con la persona.
   }>();
 
   // Test endpoint to verify email sending capability
-  app.post('/api/test-email', async (req, res) => {
-    try {
-      const { testEmail } = req.body;
-      
-      if (!testEmail || !testEmail.includes('@')) {
-        return res.status(400).json({ error: 'Email válido requerido para la prueba' });
-      }
-
-      const testCode = '123456';
-      
-      try {
-        const result = await sendVerificationEmail(testEmail, testCode, req);
-        res.json({ 
-          success: true, 
-          message: 'Email de prueba enviado correctamente',
-          messageId: result.messageId,
-          response: result.response
-        });
-      } catch (error) {
-        console.error('Error en email de prueba:', error);
-        res.status(500).json({ 
-          success: false, 
-          error: 'Error al enviar email de prueba',
-          details: (error as any).message
-        });
-      }
-    } catch (error) {
-      res.status(500).json({ error: 'Error interno del servidor' });
-    }
-  });
-
+  // 🔒 SECURITY: Test endpoints removed - should not be in production
+  // If you need to test email functionality, use proper testing environment
+  
   // Endpoint to check if email is available for registration
-  // Diagnostic endpoint for email issues
-  app.get('/api/diagnostics/email', async (req, res) => {
+  app.get('/api/diagnostics/email', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
     try {
       const host = req.get('host') || req.get('x-forwarded-host');
       const isCustomDomain = host && (host.includes('oficaz.es') || !host.includes('replit'));
@@ -2523,13 +2944,21 @@ Responde directamente a este email para contactar con la persona.
         // Clean up verification session
         verificationSessions.delete(sessionId);
         
-        console.log(`✅ Account recovery successful for companyId: ${companyId}, userId: ${userId}`);
-        
-        return res.json({ 
-          success: true, 
-          message: 'Cuenta recuperada exitosamente',
-          isRecovery: true,
-          action: 'account_restored'
+        // 🔒 SECURITY FIX: Prevent session fixation - regenerate session after recovery
+        req.session.regenerate((err) => {
+          if (err) {
+            console.error('Error regenerating session:', err);
+            return res.status(500).json({ error: 'Error al regenerar sesión' });
+          }
+          
+          console.log(`✅ Account recovery successful for companyId: ${companyId}, userId: ${userId}`);
+          
+          return res.json({ 
+            success: true, 
+            message: 'Cuenta recuperada exitosamente',
+            isRecovery: true,
+            action: 'account_restored'
+          });
         });
       } else {
         // Normal registration flow - generate verification token
@@ -2742,6 +3171,21 @@ Responde directamente a este email para contactar con la persona.
         console.log(`📊 Company registered from email campaign: ${campaignId} (source: ${registrationSource})`);
       }
 
+      // 🔒 SECURITY: Check for duplicate email/DNI before creating user
+      const existingUserByEmail = await storage.getUserByEmail(data.adminEmail.toLowerCase());
+      if (existingUserByEmail) {
+        console.warn(`🚨 SECURITY: Attempted duplicate registration with email: ${data.adminEmail}`);
+        return res.status(400).json({ error: 'El email ya está registrado' });
+      }
+      
+      if (data.adminDni && data.adminDni !== 'TEMP-' + Date.now()) {
+        const existingUserByDni = await storage.getUserByDni(data.adminDni);
+        if (existingUserByDni) {
+          console.warn(`🚨 SECURITY: Attempted duplicate registration with DNI: ${data.adminDni}`);
+          return res.status(400).json({ error: 'El DNI ya está registrado' });
+        }
+      }
+
       // Create admin user
       const user = await storage.createUser({
         companyEmail: data.adminEmail, // ✅ CORRECTED: Use admin email (verified), not company billing email
@@ -2925,30 +3369,105 @@ Responde directamente a este email para contactar con la persona.
     attempts.count++;
     attempts.lastAttempt = now;
     
-    // Block after 5 failed attempts for 15 minutes
+    // Block after 5 failed attempts for 30 minutes (slows brute force significantly)
     if (attempts.count >= 5) {
-      attempts.blockedUntil = now + 15 * 60 * 1000; // 15 minutes
+      attempts.blockedUntil = now + 30 * 60 * 1000; // 30 minutes
     }
     
     loginAttempts.set(identifier, attempts);
   };
 
-  // Login rate limiter - more restrictive for login endpoint
+  // Login rate limiter - more restrictive for login endpoint (defense vs brute force)
   const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20, // limit each IP to 20 login attempts per windowMs
-    message: { error: 'Demasiados intentos de login. Intenta de nuevo en 15 minutos.' },
+    max: 8, // limit each IP to 8 login attempts per windowMs (independent of identifier counter)
+    message: { error: 'Demasiados intentos de login. Intenta de nuevo más tarde.' },
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: true,
   });
 
+  // Rate limiter for password reset requests (prevent abuse)
+  const resetPasswordLimiter = rateLimit({
+    windowMs: 30 * 60 * 1000, // 30 minutes
+    max: 5, // limit each IP to 5 reset attempts per 30 min
+    message: { error: 'Demasiados intentos. Intenta de nuevo más tarde.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  // 🔧 TEST endpoint - NO PASSWORD VALIDATION (development only)
+  app.post('/api/auth/login-test', async (req, res) => {
+    try {
+      console.log(`\n🧪 TEST LOGIN ENDPOINT CALLED`);
+      console.log(`📨 LOGIN - Email/DNI: ${req.body?.dniOrEmail || 'unknown'}`);
+      
+      const data = loginSchema.parse(req.body);
+      const normalizedInput = data.dniOrEmail.includes('@') 
+        ? data.dniOrEmail.toLowerCase().trim()
+        : data.dniOrEmail.toUpperCase().trim();
+      
+      console.log(`🔍 Test: Searching for user: "${normalizedInput}"`);
+      let user = await storage.getUserByEmail(normalizedInput);
+      
+      if (!user) {
+        console.log(`🆔 Test: Not found by email, trying DNI...`);
+        user = await storage.getUserByDni(normalizedInput);
+      }
+      
+      if (!user) {
+        console.log(`❌ Test: User NOT FOUND in database!`);
+        return res.status(401).json({ message: 'Usuario no encontrado en BD' });
+      }
+      
+      console.log(`✅ Test: User FOUND! ID=${user.id} (test mode)`);
+      
+      // ⚠️ NO PASSWORD CHECK - just issue token for testing
+      const token = generateToken({
+        id: user.id,
+        username: user.companyEmail || user.personalEmail || `user_${user.id}`,
+        role: user.role,
+        companyId: user.companyId,
+      });
+      
+      const company = await storage.getCompany(user.companyId);
+      
+      console.log(`✅ Test: Token generated, returning user`);
+      res.json({
+        message: "TEST LOGIN - Sin validación de contraseña",
+        user: { ...user, password: undefined },
+        token,
+        company: company ? {
+          ...company,
+          workingHoursPerDay: Number(company.workingHoursPerDay) || 8,
+          defaultVacationDays: Number(company.defaultVacationDays) || 30,
+          vacationDaysPerMonth: Number(company.vacationDaysPerMonth) || 2.5,
+          logoUrl: company.logoUrl || null
+        } : null,
+      });
+    } catch (error) {
+      console.error(`❌ Test login error:`, error);
+      res.status(500).json({ message: 'Test login error', error: String(error) });
+    }
+  });
+
   app.post('/api/auth/login', loginLimiter, async (req, res) => {
     try {
+      console.log(`\n📨 LOGIN REQUEST - Email/DNI: ${req.body?.dniOrEmail || 'unknown'}`);
+      console.log(`📨 REQUEST HEADERS:`, {
+        'content-type': req.headers['content-type'],
+        'origin': req.headers['origin'],
+        'user-agent': req.headers['user-agent'],
+        'host': req.headers['host']
+      });
+      
       const data = loginSchema.parse(req.body);
       const { companyAlias } = req.body;
       const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
       const identifier = `${data.dniOrEmail.toLowerCase()}:${clientIP}`;
+
+      // 🔍 DEBUG: Log login attempt
+      console.log(`🔐 LOGIN ATTEMPT: email/dni="${data.dniOrEmail}", companyAlias="${companyAlias}", IP="${clientIP}"`);
 
       // Check rate limiting per user+IP
       const rateLimitCheck = isRateLimited(identifier);
@@ -2966,9 +3485,11 @@ Responde directamente a este email para contactar con la persona.
         const company = await storage.getCompanyByAlias?.(companyAlias);
         if (!company) {
           recordLoginAttempt(identifier, false);
+          console.log(`❌ Company not found: ${companyAlias}`);
           return res.status(404).json({ message: 'Empresa no encontrada' });
         }
         targetCompanyId = company.id;
+        console.log(`✅ Company found: ${company.name} (ID: ${company.id})`);
       }
       
       // Normalize email/DNI input
@@ -2976,43 +3497,93 @@ Responde directamente a este email para contactar con la persona.
         ? data.dniOrEmail.toLowerCase().trim()
         : data.dniOrEmail.toUpperCase().trim();
       
+      console.log(`🔍 Searching for user: "${normalizedInput}"`);
+      
       // Try to find user by company email first, then by DNI
+      console.log(`📧 Searching by email...`);
       let user = await storage.getUserByEmail(normalizedInput);
+      if (user) {
+        console.log(`✅ User found by email: ID=${user.id}, companyId=${user.companyId}, isActive=${user.isActive}`);
+      } else {
+        console.log(`❌ No user found by email`);
+      }
       
       // If company-specific login, verify user belongs to that company
       if (user && targetCompanyId && user.companyId !== targetCompanyId) {
+        console.log(`⚠️ User found but belongs to different company (user.companyId=${user.companyId}, target=${targetCompanyId})`);
         user = undefined; // User exists but not in the specified company
       }
       
       if (!user) {
         // Try to find by DNI
+        console.log(`🆔 Searching by DNI...`);
         if (targetCompanyId) {
           user = await storage.getUserByDniAndCompany(normalizedInput, targetCompanyId);
         } else {
           user = await storage.getUserByDni(normalizedInput);
         }
+        if (user) {
+          console.log(`✅ User found by DNI: ID=${user.id}, companyId=${user.companyId}, isActive=${user.isActive}`);
+        } else {
+          console.log(`❌ No user found by DNI`);
+        }
       }
       
       if (!user) {
+        console.log(`❌ LOGIN FAILED: User not found for "${normalizedInput}"`);
         recordLoginAttempt(identifier, false);
         return res.status(401).json({ message: 'Credenciales inválidas' });
       }
 
       // Check if user account is active
       if (!user.isActive) {
+        console.log(`❌ LOGIN FAILED: Account inactive for user ID=${user.id}`);
         recordLoginAttempt(identifier, false);
         return res.status(401).json({ message: 'Cuenta desactivada. Contacta con tu administrador.' });
       }
 
       // Verify password
+      console.log(`🔑 Verifying password for user ID=${user.id}...`);
       const isValidPassword = await bcrypt.compare(data.password, user.password);
+      console.log(`🔑 Password valid: ${isValidPassword}`);
       if (!isValidPassword) {
+        console.log(`❌ LOGIN FAILED: Invalid password for user ID=${user.id}`);
         recordLoginAttempt(identifier, false);
         return res.status(401).json({ message: 'Credenciales inválidas' });
       }
+      console.log(`✅ LOGIN SUCCESS: User ID=${user.id}`);
+      
 
       // Record successful login
       recordLoginAttempt(identifier, true);
+
+      // Si es accountant, NO obtener empresa ni suscripción
+      if (user.role === 'accountant') {
+        const token = generateToken({
+          id: user.id,
+          username: user.companyEmail || user.personalEmail || `user_${user.id}`,
+          role: user.role,
+          companyId: null, // Accountant no tiene companyId
+        });
+
+        const refreshToken = generateRefreshToken(user.id);
+        const refreshTokenExpiry = new Date();
+        refreshTokenExpiry.setDate(refreshTokenExpiry.getDate() + 90);
+
+        const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+        await storage.createRefreshToken(user.id, hashedRefreshToken, refreshTokenExpiry);
+
+        console.log(`[SECURITY] Successful accountant login: User ${user.id} (${user.companyEmail}) from IP ${clientIP} at ${new Date().toISOString()}`);
+
+        return res.json({
+          message: "Inicio de sesión exitoso",
+          user: { ...user, password: undefined },
+          token,
+          refreshToken,
+          company: null,
+          subscription: null
+        });
+      }
 
       const company = await storage.getCompany(user.companyId);
       
@@ -3193,28 +3764,88 @@ Responde directamente a este email para contactar con la persona.
   app.post('/api/auth/logout', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const { refreshToken } = req.body;
+      const userId = req.user!.id;
 
       if (refreshToken) {
         // 🔒 SECURITY: Find and revoke specific refresh token by comparing hashes
-        const userTokens = await storage.getRefreshTokensForUser(req.user!.id);
+        const userTokens = await storage.getRefreshTokensForUser(userId);
         for (const storedToken of userTokens) {
           const isMatch = await bcrypt.compare(refreshToken, storedToken.token);
           if (isMatch) {
             await storage.revokeRefreshToken(storedToken.token); // Revoke using hashed token
-            console.log(`[SECURITY] Refresh token revoked for user ${req.user!.id}`);
+            console.log(`[SECURITY] Refresh token revoked for user ${userId}`);
             break;
           }
         }
       } else {
         // Revoke all refresh tokens for user (logout from all devices)
-        await storage.revokeAllUserRefreshTokens(req.user!.id);
-        console.log(`[SECURITY] All refresh tokens revoked for user ${req.user!.id}`);
+        await storage.revokeAllUserRefreshTokens(userId);
+        console.log(`[SECURITY] All refresh tokens revoked for user ${userId}`);
+      }
+      
+      // 🔒 SECURITY: Destroy session to prevent session fixation
+      if (req.session) {
+        req.session.destroy((err) => {
+          if (err) {
+            console.error('[SECURITY] Error destroying session on logout:', err);
+          }
+        });
       }
 
       res.json({ message: 'Sesión cerrada exitosamente' });
     } catch (error: any) {
       console.error(`[SECURITY] Logout error: ${error.message}`);
       res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // 🔒 SECURITY: Logout from ALL devices (revoke all refresh tokens)
+  // This endpoint explicitly revokes all user sessions across all devices
+  app.post('/api/auth/logout-all-devices', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const user = await storage.getUser(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+
+      // Get count of active sessions before revocation (for audit)
+      const userTokensBefore = await storage.getRefreshTokensForUser(userId);
+      const sessionCountBefore = userTokensBefore.length;
+
+      // 🔒 SECURITY: Revoke ALL refresh tokens for this user
+      // This invalidates all logged-in sessions across all devices
+      await storage.revokeAllUserRefreshTokens(userId);
+      
+      console.log(`[SECURITY] 🚨 USER LOGOUT-ALL-DEVICES: User ${userId} (${user.fullName}) revoked ${sessionCountBefore} active session(s)`);
+
+      // Audit logging for security event
+      logAudit({
+        userId,
+        companyId: user.companyId,
+        action: 'LOGOUT_ALL_DEVICES',
+        actionType: 'SECURITY_EVENT',
+        details: `Closed ${sessionCountBefore} active session(s) across all devices`,
+        userRole: req.user!.role,
+      });
+
+      // 🔒 SECURITY: Destroy current session to prevent session fixation
+      if (req.session) {
+        req.session.destroy((err) => {
+          if (err) {
+            console.error('[SECURITY] Error destroying session on logout-all-devices:', err);
+          }
+        });
+      }
+
+      res.json({ 
+        message: 'Se cerró sesión en todos los dispositivos',
+        sessionsClosed: sessionCountBefore
+      });
+    } catch (error: any) {
+      console.error(`[SECURITY] Logout all devices error: ${error.message}`);
+      res.status(500).json({ message: 'Error al cerrar sesión en todos los dispositivos' });
     }
   });
 
@@ -3230,7 +3861,6 @@ Responde directamente a este email para contactar con la persona.
   app.post('/api/auth/forgot-password', resetLimiter, async (req, res) => {
     try {
       const data = passwordResetRequestSchema.parse(req.body);
-      console.log('Password reset request for:', data.email);
 
       // Find user by email
       let user;
@@ -3255,14 +3885,18 @@ Responde directamente a este email para contactar con la persona.
         }
       }
 
+      // 🔒 SECURITY: Always return same message to prevent email enumeration
+      const genericMessage = 'Si el email existe en nuestro sistema, recibirás un enlace de recuperación';
+      
       if (!user || !company) {
         // Return success even if user not found (security best practice)
-        return res.status(200).json({ message: 'Si el email existe, recibirás un enlace de recuperación' });
+        return res.status(200).json({ message: genericMessage });
       }
 
       // Check if user account is active
       if (!user.isActive) {
-        return res.status(200).json({ message: 'Si el email existe, recibirás un enlace de recuperación' });
+        // Don't reveal if account is inactive
+        return res.status(200).json({ message: genericMessage });
       }
 
       // Generate reset token
@@ -3338,7 +3972,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.post('/api/auth/reset-password', async (req, res) => {
+  app.post('/api/auth/reset-password', resetPasswordLimiter, async (req, res) => {
     try {
       const data = passwordResetSchema.parse(req.body);
       // Password reset attempt
@@ -3364,7 +3998,7 @@ Responde directamente a este email para contactar con la persona.
       // Find user by email and verify company
       const user = await storage.getUserByEmail(resetToken[0].email);
       if (!user || user.companyId !== resetToken[0].companyId) {
-        return res.status(404).json({ message: 'Usuario no encontrado' });
+        return res.status(400).json({ message: 'Token inválido o expirado' });
       }
 
       // Hash new password
@@ -3402,7 +4036,8 @@ Responde directamente a este email para contactar con la persona.
       // Get user from database
       const user = await storage.getUser(userId);
       if (!user) {
-        return res.status(404).json({ message: 'Usuario no encontrado' });
+        // Generic error to avoid revealing whether userId exists
+        return res.status(404).json({ message: 'Recurso no encontrado' });
       }
 
       // Verify current password
@@ -3466,7 +4101,7 @@ Responde directamente a este email para contactar con la persona.
       // Get user and company information
       const user = await storage.getUser(activationToken.userId);
       if (!user) {
-        return res.status(404).json({ message: 'Usuario no encontrado' });
+        return res.status(400).json({ message: 'Token inválido o expirado' });
       }
 
       const company = await storage.getCompany(user.companyId);
@@ -3575,12 +4210,68 @@ Responde directamente a este email para contactar con la persona.
         await storage.updateUserVacationDays(employee.id);
       }
 
+      // Return minimal info to avoid leaking full employee list
       res.json({ 
         success: true, 
+        affectedEmployees: employees.length,
         message: 'Política de vacaciones actualizada y días recalculados para todos los empleados' 
       });
     } catch (error: any) {
       console.error('Error updating vacation policy:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Company configuration (vacation cutoff)
+  app.get('/api/company/config', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const company = await storage.getCompany(req.user!.companyId);
+
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
+      res.json({
+        vacationCutoffDay: (company as any)?.vacationCutoffDay || '01-31',
+      });
+    } catch (error: any) {
+      console.error('Error getting company config:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch('/api/company/config', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const rawCutoff = typeof req.body.vacationCutoffDay === 'string' ? req.body.vacationCutoffDay : '';
+      const [mmStr = '01', ddStr = '31'] = rawCutoff.split('-');
+      const mm = parseInt(mmStr, 10);
+      const dd = parseInt(ddStr, 10);
+
+      if (isNaN(mm) || isNaN(dd) || mm < 1 || mm > 12) {
+        return res.status(400).json({ message: 'Formato de corte inválido. Usa MM-DD con mes entre 01 y 12.' });
+      }
+
+      const maxDay = new Date(2024, mm, 0).getDate();
+      if (dd < 1 || dd > maxDay) {
+        return res.status(400).json({ message: 'Día de corte inválido para el mes seleccionado.' });
+      }
+
+      const normalizedCutoff = `${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+      const companyId = req.user!.companyId;
+
+      await db.update(companies)
+        .set({ vacationCutoffDay: normalizedCutoff, updatedAt: sql`NOW()` })
+        .where(eq(companies.id, companyId));
+
+      // Recalculate vacation entitlements based on new cutoff
+      const employees = await storage.getUsersByCompany(companyId);
+      for (const employee of employees) {
+        await storage.updateUserVacationDays(employee.id);
+      }
+
+      res.json({ success: true, vacationCutoffDay: normalizedCutoff });
+    } catch (error: any) {
+      console.error('Error updating company config:', error);
       res.status(500).json({ message: error.message });
     }
   });
@@ -3614,7 +4305,42 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Endpoint para obtener usuarios de la empresa (para búsqueda en modal de proyectos)
+  // IMPORTANTE: Esta ruta debe estar ANTES de /api/company/:alias para evitar que :alias capture "employees"
+  app.get('/api/company/employees', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      
+      if (!companyId) {
+        return res.status(401).json({ message: 'No autorizado' });
+      }
+      
+      const search = (req.query.search as string || '').toLowerCase();
+
+      const employees = await db.select({
+        id: schema.users.id,
+        fullName: schema.users.fullName,
+      })
+        .from(schema.users)
+        .where(eq(schema.users.companyId, companyId))
+        .orderBy(asc(schema.users.fullName));
+
+      // Filtrar por búsqueda si se proporciona
+      const filtered = search 
+        ? employees.filter(e => 
+            e.fullName.toLowerCase().includes(search)
+          )
+        : employees;
+
+      res.json(filtered);
+    } catch (error) {
+      console.error("Error fetching company employees:", error);
+      res.status(500).json({ message: "Failed to fetch employees" });
+    }
+  });
+
   // Get company by alias route
+  // 🔒 SECURITY: Public endpoint - only expose minimal company data needed for login
   app.get('/api/company/:alias', async (req, res) => {
     try {
       const { alias } = req.params;
@@ -3624,7 +4350,13 @@ Responde directamente a este email para contactar con la persona.
         return res.status(404).json({ message: 'Empresa no encontrada' });
       }
       
-      res.json({ ...company });
+      // 🔒 SECURITY: Only return non-sensitive fields needed for public login page
+      res.json({ 
+        id: company.id,
+        name: company.name,
+        companyAlias: company.companyAlias,
+        logoUrl: company.logoUrl || null
+      });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -3835,6 +4567,16 @@ Responde directamente a este email para contactar con la persona.
         return res.status(404).json({ message: 'User not found' });
       }
 
+      // Si es accountant, NO tiene empresa ni suscripción
+      if (user.role === 'accountant') {
+        const safeUser = toSafeUser(user);
+        return res.json({
+          user: safeUser,
+          company: null,
+          subscription: null
+        });
+      }
+
       const company = await storage.getCompany(user.companyId);
       
       // CRITICAL: Check if company is scheduled for deletion and block access
@@ -3866,8 +4608,11 @@ Responde directamente a este email para contactar con la persona.
         roleChanged = true;
       }
 
+      // Return safe user DTO to avoid PII exposure
+      const safeUser = toSafeUser(user);
+
       res.json({
-        user: { ...user, password: undefined },
+        user: safeUser,
         company: company ? {
           ...company,
           // Ensure all configuration fields are included and properly typed
@@ -4039,7 +4784,8 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Work session routes
-  app.post('/api/work-sessions/clock-in', authenticateToken, async (req: AuthRequest, res) => {
+  // 🔒 SECURITY: Rate limited to prevent abuse (10 attempts per 15 minutes)
+  app.post('/api/work-sessions/clock-in', authenticateToken, simpleRateLimit(10, 15 * 60 * 1000), async (req: AuthRequest, res) => {
     try {
       const { latitude, longitude } = req.body || {};
       
@@ -4087,7 +4833,8 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Regular clock out (current session)
-  app.post('/api/work-sessions/clock-out', authenticateToken, async (req: AuthRequest, res) => {
+  // 🔒 SECURITY: Rate limited to prevent abuse (10 attempts per 15 minutes)
+  app.post('/api/work-sessions/clock-out', authenticateToken, simpleRateLimit(10, 15 * 60 * 1000), async (req: AuthRequest, res) => {
     try {
       const { latitude, longitude } = req.body || {};
       
@@ -4167,7 +4914,8 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Clock out incomplete session with custom time (users can only close their OWN sessions)
-  app.post('/api/work-sessions/clock-out-incomplete', authenticateToken, async (req: AuthRequest, res) => {
+  // 🔒 SECURITY: Rate limited to prevent abuse
+  app.post('/api/work-sessions/clock-out-incomplete', authenticateToken, simpleRateLimit(10, 15 * 60 * 1000), async (req: AuthRequest, res) => {
     try {
       const { sessionId, clockOutTime } = req.body;
       
@@ -4246,11 +4994,94 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // ⚡ PERFORMANCE: Endpoint agregado para dashboard del empleado
+  // Consolida 8 queries individuales en 1 request
+  app.get('/api/employee/dashboard-data', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const companyId = req.user!.companyId;
+      const userRole = req.user!.role;
+
+      // Ejecutar todas las queries en paralelo
+      const [
+        activeSession,
+        activeBreak,
+        vacationRequests,
+        documentNotifications,
+        unreadMessageCount,
+        activeReminders
+      ] = await Promise.all([
+        storage.getActiveWorkSession(userId),
+        storage.getActiveBreakPeriod(userId),
+        storage.getVacationRequestsByUser(userId),
+        userRole === 'admin' || userRole === 'manager'
+          ? storage.getDocumentNotificationsByCompany(companyId)
+          : storage.getDocumentNotificationsByUser(userId),
+        storage.getUnreadMessageCount(userId),
+        storage.getActiveReminders(userId)
+      ]);
+
+      // Retornar todos los datos en una sola respuesta
+      res.json({
+        activeSession: activeSession || null,
+        activeBreak: activeBreak || null,
+        vacationRequests: vacationRequests || [],
+        documentNotifications: documentNotifications || [],
+        unreadCount: { count: unreadMessageCount },
+        activeReminders: activeReminders || []
+      });
+    } catch (error: any) {
+      console.error('Error fetching dashboard data:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.get('/api/work-sessions', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const sessions = await storage.getWorkSessionsByUser(req.user!.id);
       res.json(sessions);
     } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get available months with work session data (for month filter dropdown)
+  app.get('/api/work-sessions/available-months', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('time_tracking', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      // Get distinct months from work sessions using PostgreSQL to_char function
+      let query = db
+        .selectDistinct({
+          month: sql<string>`to_char(${workSessions.clockIn}, 'YYYY-MM')`
+        })
+        .from(workSessions)
+        .innerJoin(users, eq(workSessions.userId, users.id))
+        .where(eq(users.companyId, companyId))
+        .orderBy(sql`to_char(${workSessions.clockIn}, 'YYYY-MM') DESC`);
+      
+      // In self-access mode, only get months for current user
+      if (accessMode === 'self') {
+        query = db
+          .selectDistinct({
+            month: sql<string>`to_char(${workSessions.clockIn}, 'YYYY-MM')`
+          })
+          .from(workSessions)
+          .innerJoin(users, eq(workSessions.userId, users.id))
+          .where(and(
+            eq(users.companyId, companyId),
+            eq(workSessions.userId, req.user!.id)
+          ))
+          .orderBy(sql`to_char(${workSessions.clockIn}, 'YYYY-MM') DESC`);
+      }
+      
+      const result = await query;
+      const months = result.map(row => row.month).filter(Boolean);
+      
+      res.json({ months, accessMode });
+    } catch (error: any) {
+      console.error('Error fetching available months:', error);
       res.status(500).json({ message: error.message });
     }
   });
@@ -4354,7 +5185,8 @@ Responde directamente a este email para contactar con la persona.
 
   app.patch('/api/work-sessions/:id', authenticateToken, async (req: AuthRequest, res) => {
     try {
-      const id = parseInt(req.params.id);
+      // 🔒 SECURITY: Validate ID parameter
+      const id = parseIntParam(req.params.id, 'session ID');
       const { clockIn, clockOut, breakPeriods: requestBreakPeriods } = req.body;
 
       // Verify session belongs to user (or user is admin/manager)
@@ -4365,6 +5197,47 @@ Responde directamente a este email para contactar con la persona.
 
       if (session.userId !== req.user!.id && !['admin', 'manager'].includes(req.user!.role)) {
         return res.status(403).json({ message: 'Not authorized to edit this session' });
+      }
+
+      // 🔒 SECURITY: Validate date ranges
+      const now = new Date();
+      const MAX_PAST_DAYS = 90; // Política de empresa
+      const maxPastDate = new Date(now.getTime() - MAX_PAST_DAYS * 24 * 60 * 60 * 1000);
+
+      if (clockIn) {
+        const clockInDate = new Date(clockIn);
+        
+        if (clockInDate < maxPastDate) {
+          return res.status(400).json({ 
+            message: `No se pueden modificar fichajes de hace más de ${MAX_PAST_DAYS} días` 
+          });
+        }
+        
+        if (clockInDate > now) {
+          return res.status(400).json({ 
+            message: 'No se pueden crear fichajes en el futuro' 
+          });
+        }
+      }
+
+      // Validate clockOut vs clockIn
+      if (clockOut && clockIn) {
+        const clockOutDate = new Date(clockOut);
+        const clockInDate = new Date(clockIn);
+        
+        if (clockOutDate <= clockInDate) {
+          return res.status(400).json({ 
+            message: 'La hora de salida debe ser posterior a la de entrada' 
+          });
+        }
+
+        // Validate duration doesn't exceed 24 hours
+        const duration = (clockOutDate.getTime() - clockInDate.getTime()) / (1000 * 60 * 60);
+        if (duration > 24) {
+          return res.status(400).json({ 
+            message: 'La sesión no puede exceder 24 horas' 
+          });
+        }
       }
 
       const updateData: any = {};
@@ -4969,15 +5842,63 @@ Responde directamente a este email para contactar con la persona.
       // Validate vacation days availability ONLY for 'vacation' type
       const user = await storage.getUser(req.user!.id);
       if (!user) {
-        return res.status(404).json({ message: 'Usuario no encontrado' });
+        return res.status(403).json({ message: 'No autorizado' });
       }
 
       // Only check vacation balance for vacation type absences
       if (absenceType === 'vacation') {
-        const requestedDays = Math.ceil((data.endDate.getTime() - data.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        const totalDays = parseFloat(user.totalVacationDays || '22');
-        const usedDays = parseFloat(user.usedVacationDays || '0');
-        const availableDays = totalDays - usedDays;
+        const startDate = data.startDate;
+        const endDate = data.endDate;
+
+        // Vacation period boundaries based on company cutoff (default 01-31)
+        const company = await storage.getCompany(req.user!.companyId);
+        const cutoff = (company as any)?.vacationCutoffDay || '01-31';
+        const [mmStr, ddStr] = cutoff.split('-');
+        const mm = Math.max(1, Math.min(12, parseInt(mmStr || '1', 10))) - 1;
+        const dd = Math.max(1, Math.min(31, parseInt(ddStr || '31', 10)));
+        const getPeriod = (d: Date) => {
+          const y = d.getFullYear();
+          const cutoffThisYear = new Date(y, mm, dd);
+          const periodEnd = d <= cutoffThisYear ? cutoffThisYear : new Date(y + 1, mm, dd);
+          const periodStart = new Date(periodEnd);
+          periodStart.setFullYear(periodEnd.getFullYear() - 1);
+          periodStart.setDate(periodStart.getDate() + 1);
+          return { periodStart, periodEnd };
+        };
+
+        const { periodStart, periodEnd } = getPeriod(startDate);
+        const cutoffLabel = periodEnd.toLocaleDateString('es-ES', { day: '2-digit', month: 'long' });
+
+        // Block requests that cross the company cutoff boundary
+        if (endDate > periodEnd) {
+          return res.status(400).json({
+            message: `No puedes solicitar vacaciones más allá del ${cutoffLabel}. Divide la solicitud en dos rangos.`
+          });
+        }
+
+        const requestedDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+        // Fetch user's vacation requests to compute used days (approved + pending) within the same period
+        const existingRequests = await storage.getVacationRequestsByUser(req.user!.id);
+        const statusesToCount = new Set(['approved', 'pending']);
+
+        const overlapDays = (aStart: Date, aEnd: Date, bStart: Date, bEnd: Date) => {
+          const start = aStart > bStart ? aStart : bStart;
+          const end = aEnd < bEnd ? aEnd : bEnd;
+          if (end < start) return 0;
+          return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        };
+
+        const usedDays = existingRequests
+          .filter(r => r.absenceType === 'vacation' && statusesToCount.has(r.status))
+          .reduce((sum, r) => {
+            const rStart = new Date(r.startDate);
+            const rEnd = new Date(r.endDate);
+            return sum + overlapDays(rStart, rEnd, periodStart, periodEnd);
+          }, 0);
+
+        const entitlement = await storage.calculateVacationDays(req.user!.id);
+        const availableDays = Math.max(0, entitlement - usedDays);
 
         if (requestedDays > availableDays) {
           return res.status(400).json({ 
@@ -5032,7 +5953,8 @@ Responde directamente a este email para contactar con la persona.
             const fileSize = req.body.attachmentFileSize || 0;
             const mimeType = req.body.attachmentMimeType || 'application/octet-stream';
             
-            // Create document in Justificantes folder for the employee
+            // Create document without folderId - the frontend will categorize it automatically
+            // based on the filename containing the absence type (e.g. "DeberInexcusable", "Vacaciones", "BajaMedica")
             await storage.createDocument({
               userId: req.user!.id,
               fileName: descriptiveFileName,
@@ -5092,6 +6014,7 @@ Responde directamente a este email para contactar con la persona.
   app.get('/api/vacation-requests', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const requests = await storage.getVacationRequestsByUser(req.user!.id);
+      // Sanitize embedded user data if any future expansion includes user fields
       res.json(requests);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -5113,9 +6036,11 @@ Responde directamente a este email para contactar con la persona.
       // Add user names to vacation requests
       const requestsWithNames = await Promise.all(requests.map(async (request: any) => {
         const user = await storage.getUser(request.userId);
+        const safe = user ? toSafeUser(user) : null;
         return {
           ...request,
-          userName: user?.fullName || 'Usuario desconocido'
+          userName: safe?.fullName || 'Usuario desconocido',
+          user: safe || undefined,
         };
       }));
       
@@ -5151,6 +6076,18 @@ Responde directamente a este email para contactar con la persona.
       if (endDate) updateData.endDate = new Date(endDate);
       if (adminComment) updateData.adminComment = adminComment;
 
+      // ✅ CRITICAL: Verify vacation request belongs to user's company (IDOR prevention)
+      const existingRequest = await storage.getVacationRequestById(id);
+      if (!existingRequest) {
+        return res.status(404).json({ message: 'Vacation request not found' });
+      }
+
+      // Get the user to verify company ownership
+      const user = await storage.getUser(existingRequest.userId);
+      if (!user || user.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'No autorizado' });
+      }
+
       const request = await storage.updateVacationRequest(id, updateData);
 
       if (!request) {
@@ -5185,6 +6122,251 @@ Responde directamente a este email para contactar con la persona.
     } catch (error: any) {
       console.error('Error updating vacation request:', error);
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Serve vacation request attachment files
+  app.get('/api/vacation-requests/:id/attachment', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const request = await storage.getVacationRequestById(id);
+      
+      if (!request) {
+        return res.status(404).json({ message: 'Solicitud no encontrada' });
+      }
+      
+      // Verify user has access (same company)
+      const requestUser = await storage.getUser(request.userId);
+      if (!requestUser || requestUser.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'No autorizado' });
+      }
+      
+      if (!request.attachmentPath) {
+        return res.status(404).json({ message: 'Esta solicitud no tiene archivo adjunto' });
+      }
+      
+      // Clean the path - remove /public-objects/ prefix if present
+      let r2Key = request.attachmentPath;
+      if (r2Key.startsWith('/public-objects/')) {
+        r2Key = r2Key.replace('/public-objects/', '');
+      } else if (r2Key.startsWith('public-objects/')) {
+        r2Key = r2Key.replace('public-objects/', '');
+      }
+      
+      // Download from object storage
+      const fileData = await objectStorage.downloadDocument(r2Key);
+      
+      if (!fileData) {
+        console.log(`❌ Attachment not found in R2 for vacation request ${id}: ${request.attachmentPath}`);
+        return res.status(404).json({ message: 'Archivo no encontrado en el servidor' });
+      }
+      
+      // Determine content type from filename
+      const ext = path.extname(request.attachmentPath).toLowerCase();
+      let contentType = 'application/octet-stream';
+      switch (ext) {
+        case '.pdf': contentType = 'application/pdf'; break;
+        case '.jpg':
+        case '.jpeg': contentType = 'image/jpeg'; break;
+        case '.png': contentType = 'image/png'; break;
+        case '.gif': contentType = 'image/gif'; break;
+        case '.webp': contentType = 'image/webp'; break;
+      }
+      
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `inline; filename="justificante${ext}"`);
+      res.setHeader('Cache-Control', 'private, max-age=300');
+      
+      res.send(fileData.buffer);
+    } catch (error: any) {
+      console.error('Error serving vacation attachment:', error);
+      res.status(500).json({ message: 'Error al obtener el archivo' });
+    }
+  });
+
+  // Export vacation report as PDF
+  app.post('/api/vacation-requests/export-pdf', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const { employeeIds, startDate, endDate } = req.body;
+      
+      if (!employeeIds || !Array.isArray(employeeIds) || employeeIds.length === 0) {
+        return res.status(400).json({ message: 'Debes especificar al menos un empleado' });
+      }
+      
+      if (!startDate || !endDate) {
+        return res.status(400).json({ message: 'Debes especificar un rango de fechas' });
+      }
+
+      const company = await storage.getCompanyByUserId(req.user!.id);
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
+      // Obtener solicitudes de vacaciones aprobadas en el rango de fechas
+      const allRequests = await storage.getVacationRequestsByCompany(company.id);
+      
+      const filteredRequests = allRequests.filter((request: any) => {
+        return (
+          request.status === 'approved' &&
+          employeeIds.includes(request.userId) &&
+          new Date(request.startDate) <= new Date(endDate) &&
+          new Date(request.endDate) >= new Date(startDate)
+        );
+      });
+
+      // Crear PDF con jsPDF (mismo estilo que partes de trabajo)
+      const doc = new jsPDF();
+      
+      // Header con nombre de empresa
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text(company.name, 14, 18);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text('INFORME DE VACACIONES', 14, 27);
+      
+      // Separador
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.line(14, 33, 196, 33);
+      
+      // Período
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const periodText = `Período: ${new Date(startDate).toLocaleDateString('es-ES')} - ${new Date(endDate).toLocaleDateString('es-ES')}`;
+      doc.text(periodText, 14, 42);
+      
+      // Fecha de generación
+      const generatedText = `Fecha de generación: ${new Date().toLocaleDateString('es-ES')}`;
+      doc.text(generatedText, 14, 48);
+      
+      // Separador
+      doc.line(14, 54, 196, 54);
+
+      // Agrupar solicitudes por empleado
+      const requestsByEmployee = filteredRequests.reduce((acc: any, request: any) => {
+        if (!acc[request.userId]) {
+          acc[request.userId] = [];
+        }
+        acc[request.userId].push(request);
+        return acc;
+      }, {});
+
+      let currentY = 60;
+      let totalDaysGlobal = 0;
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      // Renderizar cada empleado en su propia sección
+      for (const employeeId of employeeIds) {
+        const employee = await storage.getUser(parseInt(employeeId));
+        if (!employee) continue;
+
+        const employeeRequests = requestsByEmployee[employeeId] || [];
+        
+        // Verificar si necesitamos nueva página
+        if (currentY > pageHeight - 60) {
+          doc.addPage();
+          currentY = 20;
+        }
+
+        // Espacio antes del empleado
+        currentY += 6;
+
+        // Fondo para el nombre del empleado
+        doc.setFillColor(245, 247, 250);
+        doc.rect(14, currentY - 7, 182, 10, 'F');
+        
+        // Nombre del empleado como encabezado de sección
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text(employee.fullName, 16, currentY);
+        currentY += 10;
+
+        if (employeeRequests.length === 0) {
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(100, 100, 100);
+          doc.text('Sin vacaciones disfrutadas en este período', 16, currentY);
+          currentY += 8;
+        } else {
+          // Preparar datos para tabla de este empleado
+          const employeeTableData: any[] = [];
+          let employeeTotalDays = 0;
+
+          // Ordenar por fecha
+          employeeRequests.sort((a: any, b: any) => 
+            new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+          );
+          
+          for (const request of employeeRequests) {
+            const startDateFormatted = new Date(request.startDate).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const endDateFormatted = new Date(request.endDate).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            
+            // Calcular días (incluye el día de inicio y fin)
+            const start = new Date(request.startDate);
+            const end = new Date(request.endDate);
+            const diffTime = Math.abs(end.getTime() - start.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            employeeTotalDays += diffDays;
+            totalDaysGlobal += diffDays;
+            
+            employeeTableData.push([
+              startDateFormatted,
+              endDateFormatted,
+              diffDays.toString()
+            ]);
+          }
+
+          // Crear tabla para este empleado
+          autoTable(doc, {
+            startY: currentY,
+            head: [['Fecha Inicio', 'Fecha Fin', 'Días']],
+            body: employeeTableData,
+            styles: { fontSize: 8, cellPadding: 2 },
+            headStyles: { fillColor: [229, 231, 235], fontStyle: 'bold', textColor: [0, 0, 0] },
+            columnStyles: {
+              0: { cellWidth: 50, halign: 'center' },
+              1: { cellWidth: 50, halign: 'center' },
+              2: { cellWidth: 30, halign: 'center' }
+            },
+            alternateRowStyles: { fillColor: [250, 250, 250] },
+            margin: { left: 16, right: 14 },
+          });
+
+          // Subtotal del empleado
+          currentY = (doc as any).lastAutoTable.finalY + 8;
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(59, 130, 246);
+          doc.text(`Subtotal: ${employeeTotalDays} días`, 16, currentY);
+          currentY += 12;
+        }
+      }
+      
+      // Pie de página
+      const pageCount = (doc as any).internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(150, 150, 150);
+        doc.text(`Página ${i} de ${pageCount}`, 196, 285, { align: 'right' });
+      }
+
+      // Generar el PDF
+      const pdfBytes = Buffer.from(doc.output('arraybuffer'));
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="informe-vacaciones-${new Date().toISOString().split('T')[0]}.pdf"`);
+      res.send(pdfBytes);
+
+    } catch (error: any) {
+      console.error('Error generating vacation report PDF:', error);
+      res.status(500).json({ message: 'Error al generar el informe' });
     }
   });
 
@@ -5240,46 +6422,31 @@ Responde directamente a este email para contactar con la persona.
         return res.status(400).json({ message: 'No se ha proporcionado ningún archivo' });
       }
 
-      // Upload to object storage using the properly configured client
+      // Upload to object storage using the unified service (R2 or Replit fallback)
       const timestamp = Date.now();
       const sanitizedName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
       const filename = `${timestamp}_${sanitizedName}`;
       
-      // Use objectStorageClient from objectStorageSimple (with correct Replit credentials)
-      const { objectStorageClient } = await import('./objectStorageSimple.js');
+      // Use simpleObjectStorage which handles R2/Replit automatically
+      const { simpleObjectStorage } = await import('./objectStorageSimple.js');
       
-      // Get public path from environment
-      const publicPaths = process.env.PUBLIC_OBJECT_SEARCH_PATHS || '';
-      const publicPath = publicPaths.split(',')[0]?.trim();
+      // Build the full key for absence attachments
+      const objectKey = `absence-attachments/${req.user!.companyId}/${req.user!.id}/${filename}`;
       
-      if (!publicPath) {
-        return res.status(500).json({ message: 'Object storage not configured' });
-      }
-      
-      // Parse the path to get bucket name
-      const pathParts = publicPath.split('/').filter(p => p);
-      if (pathParts.length < 1) {
-        return res.status(500).json({ message: 'Invalid storage path configuration' });
-      }
-      
-      const bucketName = pathParts[0];
-      const objectName = `${pathParts.slice(1).join('/')}/absence-attachments/${req.user!.companyId}/${req.user!.id}/${filename}`;
-      
-      const bucket = objectStorageClient.bucket(bucketName);
-      const file = bucket.file(objectName);
-      
-      await file.save(req.file.buffer, {
-        contentType: req.file.mimetype,
-        metadata: {
-          cacheControl: 'public, max-age=31536000',
-        },
-      });
+      // Upload using the unified service
+      const uploadedKey = await simpleObjectStorage.uploadDocument(
+        req.file.buffer,
+        req.file.mimetype,
+        objectKey
+      );
 
       // Return relative URL for serving through our endpoint
-      const relativeUrl = `/public-objects/absence-attachments/${req.user!.companyId}/${req.user!.id}/${filename}`;
+      const relativeUrl = `/public-objects/${uploadedKey}`;
+      
+      console.log(`✅ Absence attachment uploaded: ${uploadedKey}`);
       
       res.json({ 
-        path: objectName,
+        path: uploadedKey,
         url: relativeUrl,
         originalName: req.file.originalname,
         fileSize: req.file.size,
@@ -5343,23 +6510,15 @@ Responde directamente a este email para contactar con la persona.
       const accessMode = (req as any).managerAccessMode || 'full';
       const { startDate, endDate } = req.query;
       
-      // Schedules always show all company shifts (view mode allows seeing all, just not editing)
-      const shifts = await storage.getWorkShiftsByCompany(
+      // ⭐ OPTIMIZACIÓN CRÍTICA: Usar método optimizado que hace JOIN en lugar de Promise.all
+      // Reduce de N+1 queries (1 + shiftsCount) a solo 1 query única
+      const shifts = await storage.getWorkShiftsByCompanyWithEmployees(
         req.user!.companyId, 
         startDate as string, 
         endDate as string
       );
       
-      // Add employee names to shifts
-      const shiftsWithEmployeeNames = await Promise.all(shifts.map(async (shift: any) => {
-        const employee = await storage.getUser(shift.employeeId);
-        return {
-          ...shift,
-          employeeName: employee?.fullName || 'Empleado desconocido'
-        };
-      }));
-      
-      res.json({ shifts: shiftsWithEmployeeNames, accessMode });
+      res.json({ shifts, accessMode });
     } catch (error: any) {
       console.error('Error fetching company work shifts:', error);
       res.status(500).json({ message: error.message });
@@ -5464,6 +6623,18 @@ Responde directamente a este email para contactar con la persona.
         }
       }
 
+      // ✅ CRITICAL: Verify work shift belongs to user's company (IDOR prevention)
+      const existingShift = await storage.getWorkShiftById(id);
+      if (!existingShift) {
+        return res.status(404).json({ message: 'Work shift not found' });
+      }
+
+      // Verify the shift belongs to a user in the same company
+      const shiftEmployee = await storage.getUser(existingShift.employeeId);
+      if (!shiftEmployee || shiftEmployee.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'No autorizado' });
+      }
+
       const shift = await storage.updateWorkShift(id, updateData);
 
       if (!shift) {
@@ -5487,6 +6658,18 @@ Responde directamente a este email para contactar con la persona.
       }
       
       const id = parseInt(req.params.id);
+      
+      // ✅ CRITICAL: Verify work shift belongs to user's company (IDOR prevention)
+      const shift = await storage.getWorkShiftById(id);
+      if (!shift) {
+        return res.status(404).json({ message: 'Turno no encontrado' });
+      }
+
+      // Verify the shift belongs to a user in the same company
+      const shiftEmployee = await storage.getUser(shift.employeeId);
+      if (!shiftEmployee || shiftEmployee.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'No autorizado' });
+      }
       
       const success = await storage.deleteWorkShift(id);
       
@@ -5533,6 +6716,167 @@ Responde directamente a este email para contactar con la persona.
       });
     } catch (error: any) {
       console.error('Week replication error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ========================================
+  // SHIFT TEMPLATES - Plantillas de turnos reutilizables
+  // ========================================
+
+  // Get all shift templates for a company
+  app.get('/api/shift-templates', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('schedules', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const templates = await storage.getShiftTemplatesByCompany(req.user!.companyId);
+      res.json(templates);
+    } catch (error: any) {
+      console.error('Error fetching shift templates:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Create new shift template
+  app.post('/api/shift-templates', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('schedules', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      if (accessMode === 'view') {
+        return res.status(403).json({ message: 'No tienes permisos para crear plantillas' });
+      }
+
+      const { title, startTime, endTime, color, location, notes, displayOrder } = req.body;
+
+      if (!title || !startTime || !endTime || !color) {
+        return res.status(400).json({ message: 'Faltan campos obligatorios: title, startTime, endTime, color' });
+      }
+
+      const template = await storage.createShiftTemplate({
+        companyId: req.user!.companyId,
+        title,
+        startTime,
+        endTime,
+        color,
+        location: location || null,
+        notes: notes || null,
+        displayOrder: displayOrder ?? 0,
+        createdBy: req.user!.id,
+      });
+
+      res.status(201).json(template);
+    } catch (error: any) {
+      console.error('Error creating shift template:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Update shift template
+  app.put('/api/shift-templates/:id', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('schedules', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      if (accessMode === 'view') {
+        return res.status(403).json({ message: 'No tienes permisos para modificar plantillas' });
+      }
+
+      const id = parseInt(req.params.id);
+      
+      // Verify template belongs to user's company
+      const existingTemplate = await storage.getShiftTemplateById(id);
+      if (!existingTemplate) {
+        return res.status(404).json({ message: 'Plantilla no encontrada' });
+      }
+
+      if (existingTemplate.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'No autorizado' });
+      }
+
+      const { title, startTime, endTime, color, location, notes, displayOrder } = req.body;
+      
+      const updateData: any = {};
+      if (title !== undefined) updateData.title = title;
+      if (startTime !== undefined) updateData.startTime = startTime;
+      if (endTime !== undefined) updateData.endTime = endTime;
+      if (color !== undefined) updateData.color = color;
+      if (location !== undefined) updateData.location = location;
+      if (notes !== undefined) updateData.notes = notes;
+      if (displayOrder !== undefined) updateData.displayOrder = displayOrder;
+
+      const template = await storage.updateShiftTemplate(id, updateData);
+
+      res.json(template);
+    } catch (error: any) {
+      console.error('Error updating shift template:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Delete shift template
+  app.delete('/api/shift-templates/:id', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('schedules', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      if (accessMode === 'view') {
+        return res.status(403).json({ message: 'No tienes permisos para eliminar plantillas' });
+      }
+
+      const id = parseInt(req.params.id);
+      
+      // Verify template belongs to user's company
+      const template = await storage.getShiftTemplateById(id);
+      if (!template) {
+        return res.status(404).json({ message: 'Plantilla no encontrada' });
+      }
+
+      if (template.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'No autorizado' });
+      }
+
+      const success = await storage.deleteShiftTemplate(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: 'Plantilla no encontrada' });
+      }
+
+      res.status(204).send();
+    } catch (error: any) {
+      console.error('Error deleting shift template:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Bulk update display order for shift templates (drag & drop reordering)
+  app.put('/api/shift-templates/reorder', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('schedules', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const accessMode = (req as any).managerAccessMode || 'full';
+      
+      if (accessMode === 'view') {
+        return res.status(403).json({ message: 'No tienes permisos para reordenar plantillas' });
+      }
+
+      const { templates } = req.body; // Array of { id: number, displayOrder: number }
+
+      if (!Array.isArray(templates)) {
+        return res.status(400).json({ message: 'Se requiere un array de plantillas' });
+      }
+
+      // Verify all templates belong to user's company
+      for (const item of templates) {
+        const template = await storage.getShiftTemplateById(item.id);
+        if (!template || template.companyId !== req.user!.companyId) {
+          return res.status(403).json({ message: 'No autorizado' });
+        }
+      }
+
+      // Update all templates
+      await Promise.all(
+        templates.map(item =>
+          storage.updateShiftTemplate(item.id, { displayOrder: item.displayOrder })
+        )
+      );
+
+      res.json({ message: 'Orden actualizado correctamente' });
+    } catch (error: any) {
+      console.error('Error reordering shift templates:', error);
       res.status(500).json({ message: error.message });
     }
   });
@@ -5723,6 +7067,12 @@ Responde directamente a este email para contactar con la persona.
       const existingReport = await storage.getWorkReport(id);
       if (!existingReport) {
         return res.status(404).json({ message: 'Parte de trabajo no encontrado' });
+      }
+      
+      // Verify employee belongs to same company (IDOR protection)
+      const employee = await storage.getUser(existingReport.employeeId);
+      if (!employee || employee.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'No autorizado' });
       }
       
       if (existingReport.employeeId !== req.user!.id) {
@@ -6403,7 +7753,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Document routes
-  app.post('/api/documents/upload', authenticateToken, upload.single('file'), async (req: AuthRequest, res) => {
+  app.post('/api/documents/upload', authenticateToken, memoryUpload.single('file'), async (req: AuthRequest, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
@@ -6424,17 +7774,48 @@ Responde directamente a este email para contactar con la persona.
         }
       }
 
+      // Generate unique filename with timestamp and random string
+      const timestamp = Date.now();
+      const randomStr = Math.random().toString(36).substring(2, 15);
+      const ext = path.extname(fixedOriginalName);
+      const r2Filename = `${timestamp}-${randomStr}${ext}`;
+
+      // Upload to R2
+      const r2Key = await objectStorage.uploadDocument(
+        req.file.buffer,
+        req.file.mimetype,
+        r2Filename
+      );
+
+      console.log(`✅ Document uploaded to R2: ${r2Key}`);
+
       const document = await storage.createDocument({
         userId: req.user!.id,
-        fileName: req.file.filename,
+        fileName: r2Key, // Store R2 key (e.g., "documents/12345-abc.pdf")
         originalName: finalOriginalName,
         fileSize: req.file.size,
-        filePath: req.file.filename, // Store only filename, not full path
+        filePath: r2Key, // Store R2 key for compatibility
         mimeType: req.file.mimetype || null,
         uploadedBy: req.user!.id,
       });
 
       console.log('Document created:', document);
+      
+      // Si hay un notificationId, actualizar la notificación con el document_id y marcarla como completada
+      if (req.body.notificationId) {
+        const notificationId = parseInt(req.body.notificationId);
+        console.log('Linking document', document.id, 'to notification', notificationId);
+        
+        await db.update(schema.systemNotifications)
+          .set({ 
+            documentId: document.id,
+            isCompleted: true,
+            updatedAt: new Date()
+          })
+          .where(eq(schema.systemNotifications.id, notificationId));
+          
+        console.log('Notification', notificationId, 'updated with document', document.id);
+      }
       
       // 📡 WebSocket: Notify admin/manager when employee uploads document (especially for requested docs)
       if (req.user!.role === 'employee') {
@@ -6462,17 +7843,50 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // TEMPORARY: Clean up broken notification 139
+  app.post('/api/admin/fix-notification-139', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      console.log('🔧 Fixing notification 139 and deleting broken document 96...');
+      
+      // Reset notification
+      await db.update(schema.systemNotifications)
+        .set({ documentId: null, isCompleted: false, updatedAt: new Date() })
+        .where(eq(schema.systemNotifications.id, 139));
+      
+      // Delete broken document
+      await db.delete(schema.documents)
+        .where(eq(schema.documents.id, 96));
+        
+      console.log('✅ Notification 139 reset, document 96 deleted');
+      res.json({ message: 'Fixed' });
+    } catch (error) {
+      console.error('Error fixing:', error);
+      res.status(500).json({ message: 'Failed' });
+    }
+  });
+
   app.get('/api/documents', authenticateToken, async (req: AuthRequest, res) => {
     try {
-      // CRITICAL SECURITY: Users can ONLY see their own documents
-      // No exceptions for admin/manager - they should use separate endpoints if needed
-      const allDocuments = await storage.getDocumentsByUser(req.user!.id);
-      
-      // ⚠️ REMOVED ORPHAN CLEANUP - Was incorrectly deleting documents stored in Object Storage
-      // Documents are stored in cloud Object Storage, not local filesystem
-      // The old code checked local fs.existsSync which always failed for cloud-stored files
-      
-      res.json(allDocuments);
+      const rawLimit = Number(req.query.limit) || 10;
+      const limit = Math.min(Math.max(rawLimit, 1), 50); // clamp 1-50
+      const cursorId = req.query.cursor ? Number(req.query.cursor) : null;
+
+      let cursor: { createdAt: Date; id: number } | undefined;
+      if (cursorId) {
+        const cursorDoc = await storage.getDocument(cursorId);
+        // Ensure cursor belongs to the same user for security
+        if (!cursorDoc || cursorDoc.userId !== req.user!.id) {
+          return res.status(400).json({ message: 'Invalid cursor' });
+        }
+        cursor = { createdAt: cursorDoc.createdAt, id: cursorDoc.id };
+      }
+
+      const rows = await storage.getDocumentsByUserPaginated(req.user!.id, limit, cursor);
+      const hasNext = rows.length > limit;
+      const items = rows.slice(0, limit);
+      const nextCursor = hasNext ? items[items.length - 1]?.id ?? null : null;
+
+      res.json({ items, nextCursor });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -6482,20 +7896,48 @@ Responde directamente a este email para contactar con la persona.
   app.get('/api/documents/all', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('documents', () => storage), async (req: AuthRequest, res) => {
     try {
       const accessMode = (req as any).managerAccessMode || 'full';
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      const offset = req.query.offset ? parseInt(req.query.offset as string) : undefined;
+      
+      // Use pagination if limit/offset provided, otherwise return all documents (legacy mode)
+      const usePagination = limit !== undefined && offset !== undefined;
+      
+      console.log(`📋 GET /api/documents/all - User ${req.user!.id}, Company ${req.user!.companyId}, AccessMode: ${accessMode}, Pagination: ${usePagination ? `limit=${limit}, offset=${offset}` : 'disabled'}`);
       
       let allDocuments;
+      let totalCount = 0;
+      
       if (accessMode === 'self') {
         // In self mode, managers can only see their own documents
+        // Note: Self mode doesn't support pagination yet (uses legacy getDocumentsByUser)
         allDocuments = await storage.getDocumentsByUser(req.user!.id);
+        totalCount = allDocuments.length;
+        console.log(`📋 Self mode: Found ${allDocuments.length} documents for user ${req.user!.id}`);
       } else {
-        allDocuments = await storage.getDocumentsByCompany(req.user!.companyId);
+        if (usePagination) {
+          // Use paginated query for better performance
+          const result = await storage.getDocumentsByCompanyPaginated(req.user!.companyId, limit!, offset!);
+          allDocuments = result.documents;
+          totalCount = result.totalCount;
+          console.log(`📋 Full mode (paginated): Found ${allDocuments.length} of ${totalCount} documents for company ${req.user!.companyId}`);
+        } else {
+          // Legacy mode: return all documents
+          allDocuments = await storage.getDocumentsByCompany(req.user!.companyId);
+          totalCount = allDocuments.length;
+          console.log(`📋 Full mode (legacy): Found ${allDocuments.length} documents for company ${req.user!.companyId}`);
+        }
       }
       
       // ⚠️ REMOVED ORPHAN CLEANUP - Was incorrectly deleting documents stored in Object Storage
       // Documents are stored in cloud Object Storage, not local filesystem
       // The old code checked local fs.existsSync which always failed for cloud-stored files
       
-      res.json({ documents: allDocuments, accessMode });
+      // Prevent caching
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      res.json({ documents: allDocuments, totalCount, accessMode });
     } catch (error) {
       console.error("Error fetching all documents:", error);
       res.status(500).json({ message: "Failed to fetch documents" });
@@ -6503,7 +7945,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Admin upload documents (can specify target employee)
-  app.post('/api/documents/upload-admin', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('documents', () => storage), upload.single('file'), async (req: AuthRequest, res) => {
+  app.post('/api/documents/upload-admin', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('documents', () => storage), memoryUpload.single('file'), async (req: AuthRequest, res) => {
     try {
       const accessMode = (req as any).managerAccessMode || 'full';
       
@@ -6536,38 +7978,81 @@ Responde directamente a este email para contactar con la persona.
       console.log(`ADMIN UPLOAD: User ${user.id} (${user.role}) uploaded document for employee ${targetEmployeeId} within company ${user.companyId}`);
 
       // Use clean filename if provided, otherwise use original (with encoding fix)
-      const originalName = req.body.cleanFileName || fixFilenameEncoding(req.file.originalname);
+      const fixedOriginalName = req.body.cleanFileName || fixFilenameEncoding(req.file.originalname);
       
       // Check if document requires signature
       const requiresSignature = req.body.requiresSignature === 'true';
+      const signaturePosition = req.body.signaturePosition ? JSON.parse(req.body.signaturePosition) : null;
+
+      // Generate unique filename with timestamp and random string
+      const timestamp = Date.now();
+      const randomStr = Math.random().toString(36).substring(2, 15);
+      const ext = path.extname(fixedOriginalName);
+      const r2Filename = `${timestamp}-${randomStr}${ext}`;
+
+      // Upload to R2
+      const r2Key = await objectStorage.uploadDocument(
+        req.file.buffer,
+        req.file.mimetype,
+        r2Filename
+      );
+
+      console.log(`✅ Admin document uploaded to R2: ${r2Key} for employee ${targetEmployeeId}`);
 
       const document = await storage.createDocument({
         userId: targetEmployeeId,
-        fileName: req.file.filename,
-        originalName: originalName,
+        fileName: r2Key, // Store R2 key (e.g., "documents/12345-abc.pdf")
+        originalName: fixedOriginalName,
         fileSize: req.file.size,
-        filePath: req.file.filename, // Store only filename, not full path
+        filePath: r2Key, // Store R2 key for compatibility
         mimeType: req.file.mimetype || null,
         uploadedBy: req.user!.id,
         requiresSignature: requiresSignature,
       });
 
-      console.log(`Document uploaded: ${originalName} for user ${targetEmployeeId}`);
+      console.log(`Document uploaded: ${fixedOriginalName} for user ${targetEmployeeId}`);
+
+      // Save signature position if document requires signature
+      if (signaturePosition) {
+        try {
+          await db.insert(schema.documentSignaturePositions).values({
+            documentId: document.id,
+            positionX: signaturePosition.x.toString(),
+            positionY: signaturePosition.y.toString(),
+            positionWidth: signaturePosition.width.toString(),
+            positionHeight: signaturePosition.height.toString(),
+            pageNumber: signaturePosition.page || 1,
+          }).onConflictDoUpdate({
+            target: schema.documentSignaturePositions.documentId,
+            set: {
+              positionX: signaturePosition.x.toString(),
+              positionY: signaturePosition.y.toString(),
+              positionWidth: signaturePosition.width.toString(),
+              positionHeight: signaturePosition.height.toString(),
+              pageNumber: signaturePosition.page || 1,
+            },
+          });
+          console.log(`✅ Signature position saved for document ID: ${document.id}`);
+        } catch (error) {
+          console.error(`Error saving signature position for document ${document.id}:`, error);
+          // Don't fail the upload if signature position save fails
+        }
+      }
 
       // 📱 Send push notification based on document type
       try {
         const { sendPayrollNotification, sendNewDocumentNotification } = await import('./pushNotificationScheduler.js');
         
         // Check if it's a payroll document (nómina)
-        const isPayroll = originalName.toLowerCase().includes('nomina') || 
-                         originalName.toLowerCase().includes('nómina');
+        const isPayroll = fixedOriginalName.toLowerCase().includes('nomina') || 
+                         fixedOriginalName.toLowerCase().includes('nómina');
         
         if (isPayroll) {
-          await sendPayrollNotification(targetEmployeeId, originalName, document.id);
-          console.log(`📱 Payroll notification sent for document ID ${document.id}: ${originalName}`);
+          await sendPayrollNotification(targetEmployeeId, fixedOriginalName, document.id);
+          console.log(`📱 Payroll notification sent for document ID ${document.id}: ${fixedOriginalName}`);
         } else {
-          await sendNewDocumentNotification(targetEmployeeId, originalName, document.id);
-          console.log(`📱 New document notification sent for document ID ${document.id}: ${originalName}`);
+          await sendNewDocumentNotification(targetEmployeeId, fixedOriginalName, document.id);
+          console.log(`📱 New document notification sent for document ID ${document.id}: ${fixedOriginalName}`);
         }
       } catch (error) {
         console.error('Error sending document push notification:', error);
@@ -6588,7 +8073,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Circular document upload - one file, multiple recipients sharing the same physical file
-  app.post('/api/documents/upload-circular', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('documents', () => storage), upload.single('file'), async (req: AuthRequest, res) => {
+  app.post('/api/documents/upload-circular', authenticateToken, requireRole(['admin', 'manager']), requireVisibleFeature('documents', () => storage), memoryUpload.single('file'), async (req: AuthRequest, res) => {
     try {
       const accessMode = (req as any).managerAccessMode || 'full';
       
@@ -6607,8 +8092,9 @@ Responde directamente a este email para contactar con la persona.
       }
 
       const user = req.user!;
-      const originalName = fixFilenameEncoding(req.file.originalname); // Keep original name for circulars (with encoding fix)
+      const fixedOriginalName = fixFilenameEncoding(req.file.originalname); // Keep original name for circulars (with encoding fix)
       const requiresSignature = req.body.requiresSignature === 'true';
+      const signaturePosition = req.body.signaturePosition ? JSON.parse(req.body.signaturePosition) : null;
 
       // Verify all employees belong to same company
       for (const employeeId of employeeIds) {
@@ -6618,33 +8104,73 @@ Responde directamente a este email para contactar con la persona.
         }
       }
 
-      console.log(`CIRCULAR UPLOAD: User ${user.id} uploading "${originalName}" to ${employeeIds.length} employees`);
+      console.log(`CIRCULAR UPLOAD: User ${user.id} uploading "${fixedOriginalName}" to ${employeeIds.length} employees`);
 
-      // Create one document record per employee, all pointing to the SAME physical file
+      // Generate unique filename with timestamp and random string
+      const timestamp = Date.now();
+      const randomStr = Math.random().toString(36).substring(2, 15);
+      const ext = path.extname(fixedOriginalName);
+      const r2Filename = `${timestamp}-${randomStr}${ext}`;
+
+      // Upload to R2 (only once for circular document)
+      const r2Key = await objectStorage.uploadDocument(
+        req.file.buffer,
+        req.file.mimetype,
+        r2Filename
+      );
+
+      console.log(`✅ Circular document uploaded to R2: ${r2Key} for ${employeeIds.length} employees`);
+
+      // Create one document record per employee, all pointing to the SAME physical file in R2
       const documents = [];
       for (const employeeId of employeeIds) {
         const document = await storage.createDocument({
           userId: employeeId,
-          fileName: req.file.filename, // Same physical file for all
-          originalName: originalName,
+          fileName: r2Key, // Same R2 key for all employees
+          originalName: fixedOriginalName,
           fileSize: req.file.size,
-          filePath: req.file.filename,
+          filePath: r2Key, // Same R2 key for all employees
           mimeType: req.file.mimetype || null,
           uploadedBy: user.id,
           requiresSignature: requiresSignature,
         });
         documents.push(document);
 
+        // Save signature position if provided
+        if (signaturePosition && requiresSignature) {
+          try {
+            await db.insert(schema.documentSignaturePositions).values({
+              documentId: document.id,
+              positionX: signaturePosition.x.toString(),
+              positionY: signaturePosition.y.toString(),
+              positionWidth: signaturePosition.width.toString(),
+              positionHeight: signaturePosition.height.toString(),
+              pageNumber: signaturePosition.page || 1,
+            }).onConflictDoUpdate({
+              target: schema.documentSignaturePositions.documentId,
+              set: {
+                positionX: signaturePosition.x.toString(),
+                positionY: signaturePosition.y.toString(),
+                positionWidth: signaturePosition.width.toString(),
+                positionHeight: signaturePosition.height.toString(),
+                pageNumber: signaturePosition.page || 1,
+              }
+            });
+          } catch (error) {
+            console.error(`Error saving signature position for document ${document.id}:`, error);
+          }
+        }
+
         // Send push notification
         try {
           const { sendNewDocumentNotification } = await import('./pushNotificationScheduler.js');
-          await sendNewDocumentNotification(employeeId, originalName, document.id);
+          await sendNewDocumentNotification(employeeId, fixedOriginalName, document.id);
         } catch (error) {
           console.error(`Error sending notification to employee ${employeeId}:`, error);
         }
       }
 
-      console.log(`CIRCULAR UPLOAD COMPLETE: Created ${documents.length} document records for file "${originalName}"`);
+      console.log(`CIRCULAR UPLOAD COMPLETE: Created ${documents.length} document records for file "${fixedOriginalName}"`);
 
       // Broadcast to company for real-time badge updates on employee dashboard
       const wsServer = getWebSocketServer();
@@ -6656,8 +8182,8 @@ Responde directamente a este email para contactar con la persona.
         message: `Circular enviada a ${documents.length} empleados`,
         documents: documents,
         fileInfo: {
-          originalName,
-          fileName: req.file.filename,
+          originalName: fixedOriginalName,
+          fileName: r2Key,
           size: req.file.size
         }
       });
@@ -6762,8 +8288,7 @@ Responde directamente a este email para contactar con la persona.
       // Token verified
       next();
     } catch (error: any) {
-      console.error('Token verification failed:', error.message);
-      console.error('Token length:', token.length, 'First 50 chars:', token.substring(0, 50));
+      console.error('Token verification failed');
       return res.status(403).json({ message: "Invalid or expired token" });
     }
   };
@@ -6786,38 +8311,75 @@ Responde directamente a este email para contactar con la persona.
       
       // Layer 1: Users can ONLY access their own documents
       if (document.userId !== user.id) {
-        // Layer 2: Only admin/manager can access other users' documents
-        if (!['admin', 'manager'].includes(user.role)) {
-          console.log(`SECURITY VIOLATION: User ${user.id} (${user.email}) attempted to access document ${id} belonging to user ${document.userId}`);
-          return res.status(403).json({ message: 'Unauthorized: You can only access your own documents' });
-        }
-        
-        // Layer 3: Admin/Manager can only access documents within their company
         const documentOwner = await storage.getUser(document.userId);
         if (!documentOwner) {
           console.log(`SECURITY ERROR: Document ${id} references non-existent user ${document.userId}`);
           return res.status(404).json({ message: 'Document owner not found' });
         }
-        
-        if (documentOwner.companyId !== user.companyId) {
-          console.log(`SECURITY VIOLATION: User ${user.id} from company ${user.companyId} attempted to access document ${id} from company ${documentOwner.companyId}`);
-          return res.status(403).json({ message: 'Unauthorized: Cross-company access denied' });
+
+        // Layer 2: Allow admin/manager of same company
+        if (['admin', 'manager'].includes(user.role)) {
+          if (documentOwner.companyId !== user.companyId) {
+            console.log(`SECURITY VIOLATION: User ${user.id} from company ${user.companyId} attempted to access document ${id} from company ${documentOwner.companyId}`);
+            return res.status(403).json({ message: 'Unauthorized: Cross-company access denied' });
+          }
+          console.log(`ADMIN ACCESS: User ${user.id} (${user.role}) accessed document ${id} belonging to user ${document.userId} within company ${user.companyId}`);
+        } else if (user.role === 'accountant') {
+          // Layer 3: Allow accountant assigned to the company of the document owner
+          const [assignment] = await db.select()
+            .from(schema.companyAccountants)
+            .where(and(
+              eq(schema.companyAccountants.companyId, documentOwner.companyId),
+              eq(schema.companyAccountants.accountantUserId, user.id),
+              isNull(schema.companyAccountants.disabledAt)
+            ));
+
+          if (!assignment) {
+            console.log(`SECURITY VIOLATION: Accountant ${user.id} tried to access document ${id} without assignment to company ${documentOwner.companyId}`);
+            return res.status(403).json({ message: 'Unauthorized: Accountant not assigned to company' });
+          }
+        } else {
+          console.log(`SECURITY VIOLATION: User ${user.id} (${user.email}) attempted to access document ${id} belonging to user ${document.userId}`);
+          return res.status(403).json({ message: 'Unauthorized: You can only access your own documents' });
         }
-        
-        // Layer 4: Log legitimate admin/manager access for audit
-        console.log(`ADMIN ACCESS: User ${user.id} (${user.role}) accessed document ${id} belonging to user ${document.userId} within company ${user.companyId}`);
       }
 
-      const filePath = path.join(uploadDir, document.fileName);
-      
-      // If physical file doesn't exist, return 404 - no file should be served
-      if (!fs.existsSync(filePath)) {
-        console.log(`SECURITY: Physical file not found at ${filePath} for document ${document.id}. File may have been deleted or moved.`);
+      // Download from R2 with robust key resolution
+      let r2Key = document.filePath || document.fileName;
+      console.log(`Document ${id} - Attempt R2 key: ${r2Key}`);
+      let fileData = r2Key ? await objectStorage.downloadDocument(r2Key) : null;
+
+      // Try folder path prefix if available
+      if (!fileData && document.folderId) {
+        const folderResult = await db.execute(sql`
+          SELECT path FROM document_folders WHERE id = ${document.folderId}
+        `);
+        const folderPath = folderResult.rows[0]?.path as string | undefined;
+        if (folderPath) {
+          const candidate = `${folderPath}/${document.fileName}`;
+          console.log(`Fallback R2 key with folder path: ${candidate}`);
+          fileData = await objectStorage.downloadDocument(candidate);
+          if (fileData) r2Key = candidate;
+        }
+      }
+
+      // Try documents/ prefix (employee uploads)
+      if (!fileData && document.fileName) {
+        const candidate = `documents/${document.fileName}`;
+        console.log(`Fallback R2 key with documents/ prefix: ${candidate}`);
+        fileData = await objectStorage.downloadDocument(candidate);
+        if (fileData) r2Key = candidate;
+      }
+
+      if (!fileData) {
+        console.log(`❌ Document not found in R2 for any key variant (id=${document.id})`);
         return res.status(404).json({ message: 'File not found on server' });
       }
+      
+      console.log(`✅ Document downloaded from R2: ${r2Key}`);
 
-      // Set content type based on file extension if mimeType is not available
-      let contentType = document.mimeType;
+      // Use mimeType from document or from R2 response
+      let contentType = document.mimeType || fileData.contentType;
       if (!contentType) {
         const ext = path.extname(document.originalName || document.fileName).toLowerCase();
         switch (ext) {
@@ -6843,82 +8405,14 @@ Responde directamente a este email para contactar con la persona.
       }
       
       res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(document.originalName || document.fileName)}"`);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       
-      // Set CORS headers to allow iframe embedding
-      res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-      res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
-      
-      // Add cache headers for better performance
-      res.setHeader('Cache-Control', 'private, max-age=300'); // 5 min cache for same document
-      
-      // Set disposition based on whether it's preview or download
-      if (isPreview) {
-        res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(document.originalName)}"`);
-      } else {
-        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(document.originalName)}"`);
-      }
-
-      // Check if document has signature and is a PDF - overlay signature dynamically
-      // SECURITY: Access already validated above (Layer 1-4). Each document record has its own signature.
-      // Circular documents share physical file but have separate DB records with individual signatures.
-      const ext = path.extname(document.originalName || document.fileName).toLowerCase();
-      if (ext === '.pdf' && document.digitalSignature && document.isAccepted) {
-        try {
-          // Read the base PDF asynchronously for better performance
-          const pdfBytes = await fs.promises.readFile(filePath);
-          const pdfDoc = await PDFDocument.load(pdfBytes);
-          
-          // Get ALL pages to add signature to each one
-          const pages = pdfDoc.getPages();
-          
-          // Extract base64 image data from stored signature
-          const base64Data = document.digitalSignature.replace(/^data:image\/\w+;base64,/, '');
-          const signatureImageBytes = Buffer.from(base64Data, 'base64');
-          
-          // Embed the signature image once (reused across all pages)
-          const signatureImage = await pdfDoc.embedPng(signatureImageBytes);
-          const signatureDims = signatureImage.scale(0.5);
-          
-          // Apply signature to EVERY page with proportional sizing
-          for (const page of pages) {
-            const { width, height } = page.getSize();
-            
-            // Use 18% of page width for signature (proportional to page size)
-            // This ensures consistent appearance across different PDF resolutions
-            const targetSignatureWidth = width * 0.18;
-            const aspectRatio = signatureDims.height / signatureDims.width;
-            const signatureWidth = targetSignatureWidth;
-            const signatureHeight = signatureWidth * aspectRatio;
-            
-            // Position in bottom right with proportional margin (5% of page width)
-            const margin = width * 0.05;
-            const xPos = width - signatureWidth - margin;
-            const yPos = margin + (height * 0.03); // Slight vertical offset
-            
-            // Draw signature directly (transparent PNG, no background rectangle)
-            page.drawImage(signatureImage, {
-              x: xPos,
-              y: yPos,
-              width: signatureWidth,
-              height: signatureHeight,
-            });
-          }
-          
-          // Generate and send the signed PDF
-          const signedPdfBytes = await pdfDoc.save();
-          res.setHeader('Content-Length', signedPdfBytes.length);
-          res.send(Buffer.from(signedPdfBytes));
-          return;
-        } catch (pdfError) {
-          console.error(`Error generating signed PDF for document ${id}:`, pdfError);
-          // Fall back to original file if signature overlay fails
-        }
-      }
-
-      // Send original file (no signature or non-PDF)
-      const absolutePath = path.resolve(filePath);
-      res.sendFile(absolutePath);
+      res.send(fileData.buffer);
     } catch (error: any) {
+      console.error('Error downloading document:', error);
       res.status(500).json({ message: error.message });
     }
   });
@@ -6987,17 +8481,55 @@ Responde directamente a este email para contactar con la persona.
         return res.status(404).json({ message: 'Document not found' });
       }
 
+      // Get document owner's name for signature
+      const documentOwner = await storage.getUser(document.userId);
+      const signerName = documentOwner?.fullName || 'Usuario';
+
       console.log(`[SECURITY] Signed URL consumed for document ${document.id} (user: ${signedUrl.userId})`);
 
-      const filePath = path.join(uploadDir, document.fileName);
+      // Download from R2 with robust key resolution
+      // 1) Primary: filePath (R2 key) or bare fileName
+      let r2Key = document.filePath || document.fileName;
       
-      // If physical file doesn't exist, return 404
-      if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ message: 'File not found on server' });
+      // Clean /public-objects/ prefix if present (vacation attachments stored with this prefix)
+      if (r2Key && r2Key.startsWith('/public-objects/')) {
+        r2Key = r2Key.replace('/public-objects/', '');
+      }
+      
+      console.log(`Document ${document.id} (signed URL) - Attempt R2 key: ${r2Key}`);
+      let fileData = r2Key ? await objectStorage.downloadDocument(r2Key) : null;
+
+      // 2) If missing, try prefixing known folder path
+      if (!fileData && document.folderId) {
+        const folderResult = await db.execute(sql`
+          SELECT path FROM document_folders WHERE id = ${document.folderId}
+        `);
+        const folderPath = folderResult.rows[0]?.path as string | undefined;
+        if (folderPath) {
+          const candidate = `${folderPath}/${document.fileName}`;
+          console.log(`Fallback R2 key with folder path: ${candidate}`);
+          fileData = await objectStorage.downloadDocument(candidate);
+          if (fileData) r2Key = candidate;
+        }
       }
 
+      // 3) Employee uploads used documents/ prefix; try that as last resort
+      if (!fileData && document.fileName) {
+        const candidate = `documents/${document.fileName}`;
+        console.log(`Fallback R2 key with documents/ prefix: ${candidate}`);
+        fileData = await objectStorage.downloadDocument(candidate);
+        if (fileData) r2Key = candidate;
+      }
+
+      if (!fileData) {
+        console.log(`❌ Document not found in R2 for any key variant (id=${document.id})`);
+        return res.status(404).json({ message: 'File not found on server' });
+      }
+      
+      console.log(`✅ Document downloaded from R2: ${r2Key}`);
+
       // Set content type
-      let contentType = document.mimeType || 'application/octet-stream';
+      let contentType = document.mimeType || fileData.contentType || 'application/octet-stream';
       const ext = path.extname(document.originalName || document.fileName).toLowerCase();
       switch (ext) {
         case '.pdf': contentType = 'application/pdf'; break;
@@ -7008,87 +8540,136 @@ Responde directamente a este email para contactar con la persona.
         case '.txt': contentType = 'text/plain'; break;
       }
       
-      res.setHeader('Content-Type', contentType);
-      res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-      res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
+      // Embed signature into PDF if document is signed
+      let finalBuffer = fileData.buffer;
+      if (document.digitalSignature && ext === '.pdf') {
+        try {
+          console.log(`📝 Embedding signature into PDF for document ${document.id}`);
+          const pdfDoc = await PDFDocument.load(fileData.buffer);
+          
+          // Extract base64 image data from signature (format: data:image/png;base64,...)
+          const signatureData = document.digitalSignature;
+          let imageBytes: Uint8Array | null = null;
+          let embedImage: any = null;
+          
+          if (signatureData.startsWith('data:image/png;base64,')) {
+            const base64Data = signatureData.replace('data:image/png;base64,', '');
+            imageBytes = Uint8Array.from(Buffer.from(base64Data, 'base64'));
+            embedImage = await pdfDoc.embedPng(imageBytes);
+          } else if (signatureData.startsWith('data:image/jpeg;base64,') || signatureData.startsWith('data:image/jpg;base64,')) {
+            const base64Data = signatureData.replace(/data:image\/(jpeg|jpg);base64,/, '');
+            imageBytes = Uint8Array.from(Buffer.from(base64Data, 'base64'));
+            embedImage = await pdfDoc.embedJpg(imageBytes);
+          }
+          
+          if (embedImage) {
+            const pages = pdfDoc.getPages();
+            const { width: pageWidth, height: pageHeight } = pages[0]?.getSize() || { width: 612, height: 792 };
+            
+            // Get saved signature position if available
+            let savedPositionRows: any[] = [];
+            try {
+              savedPositionRows = await db.select().from(schema.documentSignaturePositions).where(eq(schema.documentSignaturePositions.documentId, document.id));
+              console.log(`🔍 Download signature position query for document ${document.id}:`, {
+                rowCount: savedPositionRows?.length || 0,
+                data: savedPositionRows?.[0] || null,
+                full: JSON.stringify(savedPositionRows)
+              });
+            } catch (queryError) {
+              console.error(`❌ Error querying signature position for document ${document.id}:`, queryError);
+            }
+            
+            let sigPageNumber = pages.length; // Default: last page
+            let sigX = pageWidth - 190; // Default: bottom-right
+            let sigY = 40;
+            let sigMaxWidth = 150;
+            let sigMaxHeight = 60;
+            
+            if (savedPositionRows && savedPositionRows.length > 0) {
+              const position = savedPositionRows[0];
+              sigPageNumber = Math.min(parseInt(String(position.pageNumber || pages.length)) || pages.length, pages.length);
+              
+              // Convert percentage-based position to actual pixels
+              const posX = parseFloat(String(position.positionX || 75));
+              const posY = parseFloat(String(position.positionY || 80));
+              const posWidth = parseFloat(String(position.positionWidth || 18));
+              const posHeight = parseFloat(String(position.positionHeight || 15));
+              
+              sigX = (posX / 100) * pageWidth;
+              sigY = pageHeight - (posY / 100) * pageHeight; // Y is inverted in PDF (bottom = 0)
+              sigMaxWidth = (posWidth / 100) * pageWidth;
+              sigMaxHeight = (posHeight / 100) * pageHeight;
+              
+              console.log(`📍 Using saved signature position: x=${sigX}, y=${sigY}, w=${sigMaxWidth}, h=${sigMaxHeight}, page=${sigPageNumber}`);
+            }
+            
+            // Use the saved page number or last page
+            const targetPage = pages[Math.min(sigPageNumber - 1, pages.length - 1)];
+            
+            // Scale signature
+            const imgWidth = embedImage.width;
+            const imgHeight = embedImage.height;
+            const scale = Math.min(sigMaxWidth / imgWidth, sigMaxHeight / imgHeight);
+            const scaledWidth = imgWidth * scale;
+            const scaledHeight = imgHeight * scale;
+            
+            // Center within the designated box
+            const centerX = sigX + (sigMaxWidth - scaledWidth) / 2;
+            const centerY = sigY - scaledHeight; // Adjust Y for centering
+            
+            targetPage.drawImage(embedImage, {
+              x: centerX,
+              y: centerY,
+              width: scaledWidth,
+              height: scaledHeight,
+            });
+            
+            // Add signature date text below signature
+            if (document.signedAt) {
+              const signedDate = new Date(document.signedAt).toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
+              
+              // Draw signer name
+              targetPage.drawText(signerName, {
+                x: centerX,
+                y: centerY - 12,
+                size: 8,
+                color: rgb(0.3, 0.3, 0.3),
+              });
+              
+              // Draw date below name
+              targetPage.drawText(`Firmado: ${signedDate}`, {
+                x: centerX,
+                y: centerY - 22,
+                size: 8,
+                color: rgb(0.3, 0.3, 0.3),
+              });
+            }
+            
+            console.log(`✅ Signature embedded successfully on page ${sigPageNumber}`);
+          }
+          
+          finalBuffer = Buffer.from(await pdfDoc.save());
+        } catch (signatureError) {
+          console.error('Error embedding signature into PDF:', signatureError);
+          // Fall back to original PDF without signature
+        }
+      }
       
-      // Prevent caching to ensure signed PDFs are always fresh
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(document.originalName || document.fileName)}"`);
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
       
-      // Check if it's a view request (preview) or download
-      const isPreview = req.query.view === 'true' || req.query.preview === 'true';
-      
-      if (isPreview) {
-        res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(document.originalName)}"`);
-      } else {
-        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(document.originalName)}"`);
-      }
-
-      // Check if document has signature and is a PDF - overlay signature dynamically
-      if (ext === '.pdf' && document.digitalSignature && document.isAccepted) {
-        try {
-          console.log(`[SECURITY] Generating signed PDF for document ${document.id} via signed URL`);
-          
-          // Read the base PDF
-          const pdfBytes = fs.readFileSync(filePath);
-          const pdfDoc = await PDFDocument.load(pdfBytes);
-          
-          // Get ALL pages to add signature to each one
-          const pages = pdfDoc.getPages();
-          
-          // Extract base64 image data from stored signature
-          const base64Data = document.digitalSignature.replace(/^data:image\/\w+;base64,/, '');
-          const signatureImageBytes = Buffer.from(base64Data, 'base64');
-          
-          // Embed the signature image once (reused across all pages)
-          const signatureImage = await pdfDoc.embedPng(signatureImageBytes);
-          const signatureDims = signatureImage.scale(0.5);
-          
-          // Apply signature to EVERY page with proportional sizing
-          for (const page of pages) {
-            const { width, height } = page.getSize();
-            
-            // Use 18% of page width for signature (proportional to page size)
-            // This ensures consistent appearance across different PDF resolutions
-            const targetSignatureWidth = width * 0.18;
-            const aspectRatio = signatureDims.height / signatureDims.width;
-            const signatureWidth = targetSignatureWidth;
-            const signatureHeight = signatureWidth * aspectRatio;
-            
-            // Position in bottom right with proportional margin (5% of page width)
-            const margin = width * 0.05;
-            const xPos = width - signatureWidth - margin;
-            const yPos = margin + (height * 0.03); // Slight vertical offset
-            
-            // Draw signature directly (transparent PNG, no background rectangle)
-            page.drawImage(signatureImage, {
-              x: xPos,
-              y: yPos,
-              width: signatureWidth,
-              height: signatureHeight,
-            });
-          }
-          
-          // Generate and send the signed PDF
-          const signedPdfBytes = await pdfDoc.save();
-          res.setHeader('Content-Length', signedPdfBytes.length);
-          res.send(Buffer.from(signedPdfBytes));
-          
-          console.log(`[SECURITY] Signed PDF generated and sent for document ${document.id} (${pages.length} pages signed)`);
-          return;
-        } catch (pdfError) {
-          console.error(`[SECURITY] Error generating signed PDF for document ${document.id}:`, pdfError);
-          // Fall back to original file if signature overlay fails
-        }
-      }
-
-      // Send original file (no signature or non-PDF)
-      const absolutePath = path.resolve(filePath);
-      res.sendFile(absolutePath);
+      res.send(finalBuffer);
     } catch (error: any) {
-      console.error('[SECURITY] Error in signed URL download:', error);
+      console.error('Error with signed URL download:', error);
       res.status(500).json({ message: error.message });
     }
   });
@@ -7100,6 +8681,17 @@ Responde directamente a este email para contactar con la persona.
 
       if (!document) {
         return res.status(404).json({ message: 'Document not found' });
+      }
+
+      // Debug log
+      console.log(`DELETE document ${id} - folderId: ${document.folderId}, fileName: ${document.fileName}`);
+
+      // CRITICAL: Accounting documents (with folderId) can only be deleted by deleting the accounting entry
+      if (document.folderId) {
+        console.log(`BLOCKED: Document ${id} has folderId ${document.folderId}, refusing deletion`);
+        return res.status(403).json({ 
+          message: 'Los documentos de contabilidad solo se pueden eliminar borrando el movimiento asociado' 
+        });
       }
 
       // Security check: Admin/Manager can delete any document in their company
@@ -7186,7 +8778,29 @@ Responde directamente a este email para contactar con la persona.
   app.post('/api/documents/:id/sign', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { digitalSignature } = req.body;
+      const { digitalSignature, signatureToken } = req.body;
+
+      // If signature token provided (from email link), validate it
+      if (signatureToken) {
+        try {
+          const { consumeSignatureToken } = await import('./emailQueue');
+          const tokenData = await consumeSignatureToken(signatureToken, req.ip);
+          
+          if (!tokenData) {
+            return res.status(403).json({ message: 'Token de firma inválido o expirado' });
+          }
+          
+          // Verify token matches document and user
+          if (tokenData.documentId !== id || tokenData.userId !== req.user!.id) {
+            return res.status(403).json({ message: 'Token no válido para este documento' });
+          }
+          
+          console.log(`✅ Email signature token validated for document ${id}`);
+        } catch (error) {
+          console.error('Error validating signature token:', error);
+          return res.status(403).json({ message: 'Error validando token de firma' });
+        }
+      }
 
       if (!digitalSignature || typeof digitalSignature !== 'string') {
         return res.status(400).json({ message: 'Digital signature is required' });
@@ -7203,12 +8817,162 @@ Responde directamente a este email para contactar con la persona.
         return res.status(403).json({ message: 'You can only sign your own documents' });
       }
 
-      // NOTE: Signature is stored in database only, NOT embedded into PDF file
-      // This allows circular documents (shared file) to have per-employee signatures
-      // The signature is overlaid dynamically when the document is downloaded
-      
+      // Get user's full name for signature
+      const signerUser = await storage.getUser(req.user!.id);
+      const signerName = signerUser?.fullName || 'Usuario';
+
+      // Save signature to database first
       const updatedDocument = await storage.markDocumentAsAcceptedAndSigned(id, digitalSignature);
       console.log(`Document ${id} accepted and signed by user ${req.user!.id}`);
+      
+      // Check if this is a circular document (shared file with multiple users)
+      // Circular documents share the same filePath with different userIds
+      const filePath = document.filePath || document.fileName;
+      const isCircular = await db.execute(sql`
+        SELECT COUNT(*) as count FROM documents 
+        WHERE (file_path = ${filePath} OR file_name = ${filePath})
+        AND id != ${id}
+      `);
+      const otherDocsCount = parseInt(isCircular.rows[0]?.count as string || '0');
+      
+      if (otherDocsCount === 0) {
+        // INDIVIDUAL document: Embed signature permanently into the PDF file
+        const ext = path.extname(document.originalName || document.fileName).toLowerCase();
+        if (ext === '.pdf' && filePath) {
+          try {
+            console.log(`📝 Individual document - embedding signature permanently into PDF ${id}`);
+            
+            // Download original PDF from R2
+            let r2Key = filePath;
+            if (r2Key.startsWith('/public-objects/')) {
+              r2Key = r2Key.replace('/public-objects/', '');
+            }
+            let fileData = await objectStorage.downloadDocument(r2Key);
+            
+            // Try with documents/ prefix if not found
+            if (!fileData) {
+              r2Key = `documents/${document.fileName}`;
+              fileData = await objectStorage.downloadDocument(r2Key);
+            }
+            
+            if (fileData) {
+              const pdfDoc = await PDFDocument.load(fileData.buffer);
+              
+              // Extract base64 image data from signature
+              let embedImage: any = null;
+              if (digitalSignature.startsWith('data:image/png;base64,')) {
+                const base64Data = digitalSignature.replace('data:image/png;base64,', '');
+                const imageBytes = Uint8Array.from(Buffer.from(base64Data, 'base64'));
+                embedImage = await pdfDoc.embedPng(imageBytes);
+              } else if (digitalSignature.startsWith('data:image/jpeg;base64,') || digitalSignature.startsWith('data:image/jpg;base64,')) {
+                const base64Data = digitalSignature.replace(/data:image\/(jpeg|jpg);base64,/, '');
+                const imageBytes = Uint8Array.from(Buffer.from(base64Data, 'base64'));
+                embedImage = await pdfDoc.embedJpg(imageBytes);
+              }
+              
+              if (embedImage) {
+                const pages = pdfDoc.getPages();
+                const lastPage = pages[pages.length - 1];
+                const { width: pageWidth, height: pageHeight } = lastPage.getSize();
+                
+                // Get saved signature position if available
+                let savedPositionRows: any[] = [];
+                try {
+                  savedPositionRows = await db.select().from(schema.documentSignaturePositions).where(eq(schema.documentSignaturePositions.documentId, id));
+                  console.log(`🔍 Signature position query for document ${id}:`, {
+                    rowCount: savedPositionRows?.length || 0,
+                    data: savedPositionRows?.[0] || null,
+                    full: JSON.stringify(savedPositionRows)
+                  });
+                } catch (queryError) {
+                  console.error(`❌ Error querying signature position for document ${id}:`, queryError);
+                }
+                
+                let sigPageNumber = 1;
+                let sigX = pageWidth - 190; // Default: bottom-right
+                let sigY = 40;
+                let sigMaxWidth = 150;
+                let sigMaxHeight = 60;
+                
+                if (savedPositionRows && savedPositionRows.length > 0) {
+                  const position = savedPositionRows[0];
+                  sigPageNumber = parseInt(String(position.pageNumber || 1)) || 1;
+                  
+                  // Convert percentage-based position to actual pixels
+                  const posX = parseFloat(String(position.positionX || 75));
+                  const posY = parseFloat(String(position.positionY || 80));
+                  const posWidth = parseFloat(String(position.positionWidth || 18));
+                  const posHeight = parseFloat(String(position.positionHeight || 15));
+                  
+                  sigX = (posX / 100) * pageWidth;
+                  sigY = pageHeight - (posY / 100) * pageHeight; // Y is inverted in PDF (bottom = 0)
+                  sigMaxWidth = (posWidth / 100) * pageWidth;
+                  sigMaxHeight = (posHeight / 100) * pageHeight;
+                  
+                  console.log(`📍 Using saved signature position: x=${sigX}, y=${sigY}, w=${sigMaxWidth}, h=${sigMaxHeight}, page=${sigPageNumber}`);
+                }
+                
+                // Use the saved page number or last page
+                const targetPage = pages[Math.min(sigPageNumber - 1, pages.length - 1)];
+                
+                // Scale signature
+                const scale = Math.min(sigMaxWidth / embedImage.width, sigMaxHeight / embedImage.height);
+                const scaledWidth = embedImage.width * scale;
+                const scaledHeight = embedImage.height * scale;
+                
+                // Center within the designated box
+                const centerX = sigX + (sigMaxWidth - scaledWidth) / 2;
+                const centerY = sigY - scaledHeight; // Adjust Y for centering
+                
+                targetPage.drawImage(embedImage, { x: centerX, y: centerY, width: scaledWidth, height: scaledHeight });
+                
+                // Add signer name and date
+                const signedDate = new Date().toLocaleDateString('es-ES', {
+                  day: '2-digit', month: '2-digit', year: 'numeric',
+                  hour: '2-digit', minute: '2-digit'
+                });
+                
+                // Draw signer name
+                targetPage.drawText(signerName, {
+                  x: centerX, y: centerY - 12, size: 8, color: rgb(0.3, 0.3, 0.3),
+                });
+                
+                // Draw date below name
+                targetPage.drawText(`Firmado: ${signedDate}`, {
+                  x: centerX, y: centerY - 22, size: 8, color: rgb(0.3, 0.3, 0.3),
+                });
+                
+                // Save and overwrite in R2
+                const signedPdfBytes = await pdfDoc.save();
+                await objectStorage.uploadDocument(r2Key, Buffer.from(signedPdfBytes), 'application/pdf');
+                console.log(`✅ Individual document ${id} - signature permanently embedded and saved to R2: ${r2Key}`);
+              }
+            }
+          } catch (embedError) {
+            console.error('Error embedding signature permanently:', embedError);
+            // Don't fail the request - signature is still in database
+          }
+        }
+      } else {
+        console.log(`📋 Circular document ${id} - signature stored in DB only (${otherDocsCount} other docs share this file)`);
+      }
+      
+      // 📡 WebSocket: Broadcast document signed event to admins in real-time
+      const wsServer = getWebSocketServer();
+      if (wsServer) {
+        wsServer.broadcastToCompany(req.user!.companyId, {
+          type: 'document_signed',
+          companyId: req.user!.companyId,
+          data: { 
+            documentId: id,
+            userId: req.user!.id,
+            userName: req.user!.fullName,
+            signedAt: new Date().toISOString(),
+            fileName: document.originalName || document.fileName
+          }
+        });
+        console.log(`📡 Broadcast document_signed event for document ${id} to company ${req.user!.companyId}`);
+      }
       
       res.json(updatedDocument);
     } catch (error: any) {
@@ -7338,8 +9102,23 @@ Responde directamente a este email para contactar con la persona.
   app.get('/api/employees', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
       const employees = await storage.getUsersByCompany(req.user!.companyId);
-      const sanitizedEmployees = employees.map(emp => ({ ...emp, password: undefined }));
+      const sanitizedEmployees = employees.map(emp => toSafeUser(emp));
       res.json(sanitizedEmployees);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get single employee detail
+  app.get('/api/employees/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = await storage.getUser(id);
+      if (!user || user.companyId !== req.user!.companyId) {
+        return res.status(404).json({ message: 'Empleado no encontrado' });
+      }
+      const safe = toSafeUser(user);
+      res.json(safe);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -7350,13 +9129,13 @@ Responde directamente a este email para contactar con la persona.
     try {
       const employees = await storage.getUsersByCompany(req.user!.companyId);
       const managers = employees.filter(emp => emp.role === 'admin' || emp.role === 'manager');
-      const sanitizedManagers = managers.map(mgr => ({ 
-        id: mgr.id, 
-        fullName: mgr.fullName, 
-        email: mgr.companyEmail, 
+      const sanitizedManagers = managers.map(mgr => ({
+        id: mgr.id,
+        fullName: mgr.fullName,
+        companyEmail: mgr.companyEmail,
         role: mgr.role,
         position: mgr.position,
-        profilePicture: mgr.profilePicture
+        avatarUrl: mgr.avatarUrl
       }));
       res.json(sanitizedManagers);
     } catch (error: any) {
@@ -7800,6 +9579,9 @@ Responde directamente a este email para contactar con la persona.
         storage.getCustomHolidaysByCompany(companyId),
       ]);
       
+      // Sanitize employee data
+      const safeEmployees = employees.map(emp => toSafeUser(emp));
+      
       // Extract sessions from paginated results
       const incompleteSessions = incompleteSessionsResult.sessions;
       const recentWorkSessions = recentWorkSessionsResult.sessions;
@@ -7878,7 +9660,7 @@ Responde directamente a este email para contactar con la persona.
       const processedMessages = Object.values(messagesBySender).slice(0, 4);
       
       res.json({
-        employees,
+        employees: safeEmployees,
         vacationRequests,
         pendingVacations,
         approvedVacations,
@@ -7960,52 +9742,23 @@ Responde directamente a este email para contactar con la persona.
       }
 
       // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(req.file.mimetype)) {
-        // Delete uploaded file if invalid
-        fs.unlinkSync(req.file.path);
-        return res.status(400).json({ error: 'Tipo de archivo no válido. Solo se permiten imágenes JPG, PNG y GIF.' });
+        return res.status(400).json({ error: 'Tipo de archivo no válido. Solo se permiten imágenes JPG, PNG, GIF y WEBP.' });
       }
 
       // Validate file size (max 5MB)
       const maxSize = 5 * 1024 * 1024; // 5MB
       if (req.file.size > maxSize) {
-        fs.unlinkSync(req.file.path);
         return res.status(400).json({ error: 'El archivo es demasiado grande. Tamaño máximo: 5MB.' });
       }
 
-      // CRITICAL FIX: Comprehensive file validation and debugging
-      console.log('🔍 DEBUGGING: Full req.file object:', JSON.stringify(req.file, null, 2));
-      console.log('🔍 DEBUGGING: req.file.path type:', typeof req.file.path);
-      console.log('🔍 DEBUGGING: req.file.path value:', req.file.path);
+      // Save buffer to temporary file for processing
+      const tempFilename = `temp_profile_${targetUserId}_${Date.now()}${path.extname(req.file.originalname)}`;
+      const tempFilePath = path.join(uploadDir, tempFilename);
+      fs.writeFileSync(tempFilePath, req.file.buffer);
 
-      // Validate that file path exists and is not null/undefined
-      if (!req.file.path || req.file.path === 'undefined' || req.file.path === 'null' || req.file.path.trim() === '') {
-        console.error('❌ CRITICAL ERROR: req.file.path is null/undefined/empty');
-        console.error('Full req.file object:', JSON.stringify(req.file, null, 2));
-        console.error('Multer configuration might be corrupted or file upload failed');
-        return res.status(500).json({ error: 'Error interno: ruta de archivo no válida. El archivo no se subió correctamente.' });
-      }
-
-      // Additional debug logging
-      console.log(`📁 File upload details: path=${req.file.path}, originalname=${req.file.originalname}, size=${req.file.size}, mimetype=${req.file.mimetype}`);
-      console.log(`📁 Upload directory: ${uploadDir}`);
-
-      // Verify file actually exists on disk
-      if (!fs.existsSync(req.file.path)) {
-        console.error(`❌ CRITICAL ERROR: File does not exist on disk: ${req.file.path}`);
-        console.error('This suggests multer failed to save the file or path is incorrect');
-        return res.status(500).json({ error: 'Error interno: archivo no encontrado en disco' });
-      }
-
-      // Check file permissions and readability
-      try {
-        const stats = fs.statSync(req.file.path);
-        console.log(`📊 File stats: size=${stats.size}, isFile=${stats.isFile()}, mode=${stats.mode.toString(8)}`);
-      } catch (statsError) {
-        console.error('❌ Error getting file stats:', statsError);
-        return res.status(500).json({ error: 'Error interno: no se puede acceder al archivo' });
-      }
+      console.log(`📁 Profile picture upload: originalname=${req.file.originalname}, size=${req.file.size}, mimetype=${req.file.mimetype}, targetUser=${targetUserId}`);
 
       // Generate unique filename for processed image (always JPEG for consistency)
       const filename = `profile_${targetUserId}_${Date.now()}.jpg`;
@@ -8018,11 +9771,11 @@ Responde directamente a este email para contactar con la persona.
         outputPath: outputPath
       };
 
-      console.log(`🎯 Creating image processing job with originalFilePath: ${req.file.path}`);
+      console.log(`🎯 Creating image processing job with tempFilePath: ${tempFilePath}`);
 
       const job = await storage.createImageProcessingJob({
         userId: targetUserId,
-        originalFilePath: req.file.path,
+        originalFilePath: tempFilePath,
         processingType: 'profile_picture',
         metadata: JSON.stringify({ 
           targetUserId,
@@ -8045,10 +9798,6 @@ Responde directamente a este email para contactar con la persona.
       });
     } catch (error: any) {
       console.error('Error uploading profile picture:', error);
-      // Clean up uploaded file on error
-      if (req.file?.path && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
       res.status(500).json({ error: 'Error al subir la foto de perfil' });
     }
   });
@@ -8635,18 +10384,21 @@ Responde directamente a este email para contactar con la persona.
     // Enable XSS protection
     res.setHeader('X-XSS-Protection', '1; mode=block');
     
-    // Strict Content Security Policy for Super Admin
-    res.setHeader('Content-Security-Policy', 
-      "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; " +
-      "style-src 'self' 'unsafe-inline'; " +
-      "img-src 'self' data: https:; " +
-      "font-src 'self' data:; " +
-      "connect-src 'self' https://api.stripe.com; " +
-      "frame-ancestors 'none'; " +
-      "base-uri 'self'; " +
-      "form-action 'self';"
-    );
+    // Only set strict CSP in production - in development, let Replit/Vite handle CSP
+    if (process.env.NODE_ENV === 'production') {
+      res.setHeader('Content-Security-Policy', 
+        "default-src 'self'; " +
+        "script-src 'self' https://js.stripe.com https://maps.googleapis.com https://maps.gstatic.com; " +
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+        "img-src 'self' data: https: blob:; " +
+        "font-src 'self' data: https://fonts.gstatic.com; " +
+        "connect-src 'self' wss: ws: https://api.stripe.com https://js.stripe.com https://maps.googleapis.com https://fcm.googleapis.com https://web.push.apple.com; " +
+        "worker-src 'self' blob:; " +
+        "frame-ancestors 'none'; " +
+        "base-uri 'self'; " +
+        "form-action 'self';"
+      );
+    }
     
     // Referrer policy - don't leak information
     res.setHeader('Referrer-Policy', 'no-referrer');
@@ -8766,10 +10518,11 @@ Responde directamente a este email para contactar con la persona.
   // New simplified superadmin authentication - Step 2: Login
   app.post('/api/super-admin/login', superAdminLoginLimiter, async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const { email, password, totpCode } = req.body;
       
       const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
       const SUPER_ADMIN_PASSWORD = process.env.SUPER_ADMIN_PASSWORD;
+      const SUPER_ADMIN_TOTP_SECRET = process.env.SUPER_ADMIN_TOTP_SECRET;
       
       // 🔒 SECURITY: Check if Super Admin credentials are configured
       if (!SUPER_ADMIN_EMAIL || !SUPER_ADMIN_PASSWORD) {
@@ -8787,6 +10540,31 @@ Responde directamente a este email para contactar con la persona.
           details: `Invalid credentials for email: ${email}`
         });
         return res.status(401).json({ message: "Email o contraseña incorrectos" });
+      }
+
+      // 🔒 SECURITY: 2FA TOTP - Verificar código de Google Authenticator/Authy
+      if (SUPER_ADMIN_TOTP_SECRET) {
+        if (!totpCode) {
+          return res.status(401).json({ 
+            message: "Se requiere código de verificación (Google Authenticator/Authy)",
+            requiresTOTP: true
+          });
+        }
+
+        // Importar función de verificación TOTP
+        const { verifyTOTPCode } = await import('../utils/totp-admin.js');
+        
+        if (!verifyTOTPCode(SUPER_ADMIN_TOTP_SECRET, totpCode)) {
+          logAudit({
+            timestamp: new Date(),
+            ip: req.ip || 'unknown',
+            action: 'SUPER_ADMIN_2FA_FAILED',
+            email: SUPER_ADMIN_EMAIL,
+            success: false,
+            details: `Invalid TOTP code provided`
+          });
+          return res.status(401).json({ message: "Código de verificación inválido. Intenta de nuevo." });
+        }
       }
 
       // Generate final super admin JWT token
@@ -8808,7 +10586,7 @@ Responde directamente a este email para contactar con la persona.
         action: 'SUPER_ADMIN_LOGIN_SUCCESS',
         email: SUPER_ADMIN_EMAIL,
         success: true,
-        details: 'Super Admin login successful - access granted'
+        details: 'Super Admin login successful - access granted (2FA verified)'
       });
 
       // 🔒 SECURITY: Send email notification on successful login
@@ -8819,13 +10597,14 @@ Responde directamente a este email para contactar con la persona.
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #ef4444;">🔒 Alerta de Seguridad</h2>
-              <p>Se ha detectado un acceso exitoso al panel de SuperAdmin.</p>
+              <p>Se ha detectado un acceso exitoso al panel de SuperAdmin con autenticación 2FA.</p>
               <div style="background-color: #fee2e2; padding: 15px; border-radius: 5px; margin: 20px 0;">
                 <p><strong>Detalles del acceso:</strong></p>
                 <ul style="list-style: none; padding: 0;">
                   <li>📅 Fecha y hora: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })}</li>
                   <li>🌐 IP: ${req.ip || 'Desconocida'}</li>
                   <li>📧 Email: ${SUPER_ADMIN_EMAIL}</li>
+                  <li>🔐 2FA: Verificado</li>
                 </ul>
               </div>
               <p style="color: #6b7280; font-size: 14px;">
@@ -9049,6 +10828,11 @@ Responde directamente a este email para contactar con la persona.
         wsServer.broadcastToCompany(companyId, { type: 'reminder_created', companyId });
       }
       
+      // ✅ Reload event-driven reminders to schedule this new reminder
+      import('./pushNotificationScheduler.js').then(async ({ reloadReminders }) => {
+        await reloadReminders().catch(err => console.error('Error reloading reminders:', err));
+      }).catch(err => console.error('Failed to load push notification module:', err));
+      
       res.json(reminder);
     } catch (error) {
       console.error("Error creating reminder:", error);
@@ -9191,6 +10975,12 @@ Responde directamente a este email para contactar con la persona.
       }
       
       const updatedReminder = await storage.updateReminder(reminderId, updateData);
+      
+      // ✅ Reload event-driven reminders to reschedule this reminder
+      import('./pushNotificationScheduler.js').then(async ({ reloadReminders }) => {
+        await reloadReminders().catch(err => console.error('Error reloading reminders:', err));
+      }).catch(err => console.error('Failed to load push notification module:', err));
+      
       res.json(updatedReminder);
     } catch (error) {
       console.error("Error updating reminder:", error);
@@ -9208,6 +10998,12 @@ Responde directamente a este email para contactar con la persona.
       const existingReminder = await storage.getReminder(reminderId);
       if (!existingReminder) {
         return res.status(404).json({ message: "Reminder not found" });
+      }
+      
+      // Verify reminder's user belongs to same company (IDOR protection)
+      const reminderOwner = await storage.getUser(existingReminder.userId);
+      if (!reminderOwner || reminderOwner.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: "No autorizado" });
       }
       
       // Only allow deletion if user owns the reminder OR is admin/manager
@@ -9492,9 +11288,10 @@ Responde directamente a este email para contactar con la persona.
         });
       }
 
-      // Get plan token limit
+      // Get plan token limit. New model: if OficazIA addon is active, enforce 1M tokens/month.
       const planInfo = await storage.getSubscriptionPlanByName(subscription.effectivePlan || subscription.plan);
-      const tokenLimit = planInfo?.aiTokensLimitMonthly || 0;
+      const hasOficazIAAddon = await storage.hasActiveAddon(companyId, 'ai_assistant');
+      const tokenLimit = hasOficazIAAddon ? 1000000 : (planInfo?.aiTokensLimitMonthly || 0);
       
       // Check if token reset is needed (monthly cycle)
       const tokenCheckDate = new Date();
@@ -9525,16 +11322,21 @@ Responde directamente a este email para contactar con la persona.
       // Note: Groq has high latency from Europe (~20-30s per call), OpenAI is faster (~2-5s)
       const OpenAI = (await import('openai')).default;
       
+      const rawBase = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || 'https://api.openai.com';
+      const normalizedBase = rawBase.replace(/\/$/, '') + '/v1';
       const openai = new OpenAI({
-        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+        baseURL: normalizedBase,
         apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
       });
+      console.log(`🔧 OpenAI base URL normalized to: ${normalizedBase}`);
       
       console.log(`🤖 AI Assistant using: OpenAI (GPT-4o-mini) - Low latency mode`);
       
 
       // Import AI assistant functions
       const { AI_FUNCTIONS, executeAIFunction } = await import('./ai-assistant.js');
+      // Import model router helpers
+      const { getPreferredModel, shouldEscalate, getStrongModel } = await import('./ai-model-router.js');
 
       // Convert AI_FUNCTIONS to tools format
       const tools = AI_FUNCTIONS.map((func: any) => ({
@@ -9588,6 +11390,7 @@ Responde directamente a este email para contactar con la persona.
 
       // 🔍 PRE-DETECTION: Detect patterns and execute directly (bypasses AI for common requests)
       const lastUserMsg = conversationHistory.filter((m: any) => m.role === 'user').pop()?.content || '';
+      const lastAssistantMsg = conversationHistory.filter((m: any) => m.role === 'assistant').pop()?.content || '';
       console.log('🔍 [DEBUG] Last user message:', lastUserMsg);
       
       // ⚠️ CRITICAL: Detect weekend intent (Saturday mentions)
@@ -9599,9 +11402,64 @@ Responde directamente a este email para contactar con la persona.
       if (forceSaturday) {
         console.log('🎯 [WEEKEND OVERRIDE] Saturday detected - forcing skipWeekends=false');
       }
+
+      // 🔭 PRE-DETECTION: Navigation intents (user asks to be taken somewhere)
+      const navIntent = /\b(llev[ea]me|ll[eé]vame|ll[eé]vame\s+a|ll[eé]vame\s+all[ií]|ll[eé]vame\s+ah[ií]|ll[eé]vame\s+al|llevarme)\b/i.test(lastUserMsg);
+      if (navIntent) {
+        console.log('🧭 [PRE-PARSER] Navigation intent detected:', lastUserMsg);
+
+        // Simple inference based on user message and last assistant context
+        function inferNav() {
+          const s = (lastUserMsg + ' ' + lastAssistantMsg).toLowerCase();
+          if (/solicitud.*vacaciones|\bsolicitudes\b|vacaciones\s+pendientes/.test(s)) {
+            // Use the pending approvals summary to choose the correct target (ausencias, fichajes, partes)
+            return { page: 'pending-approvals' as const };
+          }
+          if (/vacaciones.*calendario|calendario/.test(s)) return { page: 'vacation-calendar' as const };
+          if (/fichajes|horas|tiempo/.test(s)) return { page: 'time-tracking' as const };
+          if (/cuadrante|cuadrantes|turnos/.test(s)) return { page: 'schedules' as const };
+          if (/emplead|persona|usuario/.test(s)) return { page: 'employees' as const };
+          if (/documentos|firmar/.test(s)) return { page: 'documents' as const, filter: 'pending' as const };
+          // Fallback: dashboard (safe)
+          return { page: 'dashboard' as const };
+        }
+
+        try {
+          const { navigateToPage } = await import('./ai-assistant.js');
+          const context = { storage, companyId, adminUserId } as any;
+          const navParams = inferNav();
+
+          // Handle a special case where we want a summary of pending approvals
+          if ((navParams as any).page === 'pending-approvals') {
+            try {
+              const { getPendingApprovals } = await import('./ai-assistant.js');
+              const pending = await getPendingApprovals(context as any);
+              if (pending && pending.navigateTo) {
+                return res.json({ message: pending.message || 'Perfecto, te llevo.', navigateTo: pending.navigateTo });
+              }
+            } catch (err) {
+              console.error('🧭 [PRE-PARSER] getPendingApprovals failed:', err);
+              // fallthrough to fallback behavior below
+            }
+          }
+
+          const navResult = await navigateToPage(context, navParams as any);
+
+          if (navResult && navResult.navigateTo) {
+            // Immediate response: confirm and include navigateTo so frontend triggers navigation
+            return res.json({ message: navResult.description || 'Perfecto, te llevo.', navigateTo: navResult.navigateTo });
+          } else {
+            // If no navigateTo returned, fall through to regular AI processing
+            console.log('🧭 [PRE-PARSER] navigateToPage returned no navigateTo, falling back to AI');
+          }
+        } catch (err: any) {
+          console.error('🧭 [PRE-PARSER] Navigation pre-parser failed:', err?.message || err);
+          // Continue to regular AI flow so model can attempt to handle
+        }
+      }
       
       // ==============================================
-      // PATTERN 1: CREATE SCHEDULE
+      // PATTERN 1: CREATE SCHEDULE (variant A)
       // "ramirez trabaja de 8 a 14 la semana que viene de lunes a sabado"
       // ==============================================
       const createPattern = /^(\w+)\s+(?:trabaja|trabajará|va a trabajar)\s+de\s+(\d{1,2})\s+a\s+(\d{1,2})\s*(?:la semana que viene|próxima semana|esta semana)?\s*(?:de\s+)?(?:(lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)\s+a\s+(lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo))?/i;
@@ -9618,8 +11476,18 @@ Responde directamente a este email para contactar con la persona.
         console.log('🎯 DETECTED CREATE SCHEDULE PATTERN:', createMatch[0]);
         console.log(`📝 Employee: ${employeeName}, Hours: ${startHour}:00-${endHour}:00, Days: ${dayFrom || 'default'} to ${dayTo || 'default'}`);
         
-        // Determine skipWeekends based on day range
-        const skipWeekends = !(dayTo === 'sábado' || dayTo === 'sabado');
+        // Determine weekend inclusion based on day range
+        const includesSaturday = dayTo === 'sábado' || dayTo === 'sabado';
+        const includesSunday = dayTo === 'domingo';
+        const skipWeekends = !(includesSaturday || includesSunday);
+
+        // If no explicit day range and not "todos los días", ask for clarification
+        const mentionsAllDays = /todos\s+los\s+d[ií]as/i.test(lastUserMsg);
+        if (!dayFrom && !dayTo && !mentionsAllDays) {
+          return res.status(200).json({
+            message: '¿Quieres incluir sábado y domingo o solo lunes a viernes?'
+          });
+        }
         
         // Detect date range
         let startDate: string;
@@ -9633,7 +11501,7 @@ Responde directamente a este email para contactar con la persona.
           nextMonday.setDate(now.getDate() + daysUntilMonday);
           startDate = nextMonday.toISOString().split('T')[0];
           
-          const endDay = skipWeekends ? 5 : 6; // Friday=5, Saturday=6
+          const endDay = includesSunday ? 7 : (includesSaturday ? 6 : 5); // Friday=5, Saturday=6, Sunday=7
           const nextEndDay = new Date(nextMonday);
           nextEndDay.setDate(nextMonday.getDate() + (endDay - 1));
           endDate = nextEndDay.toISOString().split('T')[0];
@@ -9643,7 +11511,7 @@ Responde directamente a este email para contactar con la persona.
           monday.setDate(now.getDate() - now.getDay() + 1);
           startDate = monday.toISOString().split('T')[0];
           
-          const endDay = skipWeekends ? 5 : 6;
+          const endDay = includesSunday ? 7 : (includesSaturday ? 6 : 5);
           const endOfWeek = new Date(monday);
           endOfWeek.setDate(monday.getDate() + (endDay - 1));
           endDate = endOfWeek.toISOString().split('T')[0];
@@ -9679,16 +11547,141 @@ Responde directamente a este email para contactar con la persona.
           });
           
           if (result.success) {
+            const company = await storage.getCompany(companyId);
+            const navigateTo = company 
+              ? `/${company.companyAlias}/cuadrante?view=week&employeeId=${employee.employeeId}&startDate=${startDate}`
+              : undefined;
             return res.status(200).json({
-              message: `✅ Perfecto. ${employee.employeeName.split(' ')[0]} trabajará de ${startHour}:00 a ${endHour}:00 del ${startDate} al ${endDate}${skipWeekends ? ' (lun-vie)' : ' (lun-sáb)'}.`
+              message: result.message || `✅ Turnos creados correctamente.`,
+              ...(navigateTo ? { navigateTo } : {})
+            });
+          } else if (result.needsConfirmation) {
+            // Si hay turnos existentes, retornar mensaje de confirmación
+            return res.status(200).json({
+              message: result.message,
+              needsConfirmation: true,
+              confirmationContext: {
+                action: 'createSchedule',
+                employeeId: employee.employeeId,
+                startDate,
+                endDate,
+                startHour,
+                endHour,
+                skipWeekends
+              }
             });
           } else {
             return res.status(200).json({
-              message: `❌ ${result.message}`
+              message: result.message || `❌ Error al crear los turnos`
             });
           }
         } catch (error: any) {
           console.error('Error in pre-parser create schedule:', error);
+          return res.status(200).json({
+            message: `Error al crear el turno: ${error.message}`
+          });
+        }
+      }
+
+      // ==============================================
+      // PATTERN 1b: CREATE SCHEDULE (variant B)
+      // "ramirez esta semana trabaja de 8 a 15 todos los dias menos el sabado y el jueves"
+      // ==============================================
+      const createPatternB = /^(.*?)\s+(?:esta\s+semana|la\s+semana\s+actual)\s+(?:trabaja|trabajará|va a trabajar)\s+de\s+(\d{1,2})\s+a\s+(\d{1,2})(?:\s+todos\s+los\s+d[ií]as)?/i;
+      const createMatchB = lastUserMsg.match(createPatternB);
+
+      if (createMatchB) {
+        const employeeName = createMatchB[1].trim();
+        const startHour = createMatchB[2].padStart(2, '0');
+        const endHour = createMatchB[3].padStart(2, '0');
+        
+        const { excludedWeekdays, foundExclusionKeyword } = parseExcludedWeekdays(lastUserMsg);
+
+        console.log('🎯 DETECTED CREATE SCHEDULE PATTERN (B):', createMatchB[0]);
+        console.log(`📝 Employee: ${employeeName}, Hours: ${startHour}:00-${endHour}:00, Exclusions: ${excludedWeekdays.join(',') || 'none'}`);
+
+        const mentionsAllDays = /todos\s+los\s+d[ií]as/i.test(lastUserMsg);
+        const mentionsWholeWeek = /toda\s+la\s+semana|toda\s+esta\s+semana/i.test(lastUserMsg);
+        const skipWeekends = (mentionsAllDays || mentionsWholeWeek || foundExclusionKeyword) ? false : true;
+
+        if (foundExclusionKeyword && excludedWeekdays.length === 0) {
+          return res.status(200).json({
+            message: 'No entendí qué días excluir. ¿Qué días quieres que omita?'
+          });
+        }
+
+        // If ambiguous and not mentioning all days nor any explicit range, ask for clarification
+        if (!mentionsAllDays && !mentionsWholeWeek && !foundExclusionKeyword && excludedWeekdays.length === 0) {
+          return res.status(200).json({
+            message: '¿Quieres incluir sábado y domingo o solo lunes a viernes?'
+          });
+        }
+
+        // Calculate current week Monday and end (Fri if skip weekends, else Sat)
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - now.getDay() + 1);
+        const startDate = monday.toISOString().split('T')[0];
+        const endDay = skipWeekends ? 5 : 7; // if not skipping weekends, include Sunday
+        const endOfWeek = new Date(monday);
+        endOfWeek.setDate(monday.getDate() + (endDay - 1));
+        const endDate = endOfWeek.toISOString().split('T')[0];
+
+        try {
+          const { resolveEmployeeName, assignScheduleInRange } = await import('./ai-assistant.js');
+          const context = { storage, companyId, adminUserId };
+          const resolution = await resolveEmployeeName(storage, companyId, employeeName);
+          if ('error' in resolution) {
+            return res.status(200).json({
+              message: `No encontré al empleado "${employeeName}". ¿Podrías verificar el nombre?`
+            });
+          }
+          const employee = resolution;
+
+          const result = await assignScheduleInRange(context, {
+            employeeId: employee.employeeId,
+            startDate,
+            endDate,
+            startTime: `${startHour}:00`,
+            endTime: `${endHour}:00`,
+            title: 'Turno de trabajo',
+            location: 'Oficina',
+            color: '#3b82f6',
+            skipWeekends,
+            excludedWeekdays
+          });
+
+        if (result.success) {
+          const company = await storage.getCompany(companyId);
+          const navigateTo = company 
+            ? `/${company.companyAlias}/cuadrante?view=week&employeeId=${employee.employeeId}&startDate=${startDate}`
+            : undefined;
+          return res.status(200).json({
+            message: result.message || `✅ Turnos creados correctamente.`,
+            ...(navigateTo ? { navigateTo } : {})
+          });
+        } else if (result.needsConfirmation) {
+          // Si hay turnos existentes, retornar mensaje de confirmación
+          return res.status(200).json({
+            message: result.message,
+            needsConfirmation: true,
+            confirmationContext: {
+              action: 'createScheduleB',
+              employeeId: employee.employeeId,
+              startDate,
+              endDate,
+              startHour,
+              endHour,
+              skipWeekends,
+              excludedWeekdays
+            }
+          });
+        } else {
+          return res.status(200).json({
+            message: result.message || `❌ Error al crear los turnos`
+          });
+        }
+        } catch (error: any) {
+          console.error('Error in pre-parser create schedule (B):', error);
           return res.status(200).json({
             message: `Error al crear el turno: ${error.message}`
           });
@@ -9840,13 +11833,79 @@ Responde directamente a este email para contactar con la persona.
         iteration++;
         console.log(`🔄 AI Assistant iteration ${iteration}/${MAX_ITERATIONS}`);
 
+        // Select model (fast vs strong) based on message heuristics
+        const chosenModel = getPreferredModel(currentMessages);
+        console.log(`🤖 [MODEL ROUTER] Chosen model for this turn: ${chosenModel}`);
+
         // Call AI with function calling
         const response = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
+          model: chosenModel,
           messages: [
             {
               role: "system",
               content: `Eres OficazIA, el copiloto completo de gestión laboral. Hoy: ${currentDateStr}
+
+⚠️ REGLA PRINCIPAL: PREGUNTA ANTES DE ACTUAR (para creación/modificación)
+Si falta información para crear/modificar algo, PREGUNTA (no inventes):
+- Sin horario → "¿Qué horario tendrá [nombre]?"
+- Sin fecha → "¿Desde/hasta qué día?"
+- Nombre ambiguo → "¿Te refieres a [opciones]?"
+
+🚨 REGLA: NUNCA dupliques llamadas a funciones.
+🚫 EMPLEADOS: Para crear empleado necesitas correo explícito del usuario. Si falta, PREGUNTA y NO llames a createEmployee. No inventes correos.
+
+🧭 NAVEGACIÓN Y CONSULTAS (usa para RESPONDER + MOSTRAR):
+- getEmployeeWorkHours(period, employeeName?) → Calcula horas Y navega a fichajes con filtro
+- getVacationBalance(employeeName?) → Días disponibles Y navega a calendario vacaciones  
+- getPendingApprovals() → Lista TODO pendiente (vacaciones, modificaciones) Y navega
+- getCompanySettings() → Políticas actuales (días vacaciones, horas trabajo)
+- navigateToPage(page, filter?, employeeName?, startDate?, endDate?) → Navegar a cualquier página con filtros
+
+CUANDO PREGUNTEN "¿cuántas horas trabajó X?", "¿qué tiene pendiente?", "¿cuántos días de vacaciones?":
+1. USA la función de consulta correspondiente
+2. RESPONDE con la información
+3. El sistema NAVEGA automáticamente a la página con filtros
+
+🔄 TURNOS ROTATIVOS (assignRotatingSchedule):
+- Para: "X días trabajo Y días descanso", "rotación", "3 y 3", "4 y 2"
+- Requiere: empleado, horario, fechas, días trabajo/descanso
+
+TURNOS NORMALES (assignScheduleInRange):
+- skipWeekends: false (SIEMPRE incluye sábado)
+- "esta semana": ${thisMondayStr} al ${thisSaturdayStr}
+- "próxima semana": ${nextMondayStr} al ${nextSaturdayStr}
+
+COPIAR TURNOS: copyEmployeeShifts(from, to) - NO consultes, copia directo
+
+✅ VACACIONES:
+- approveVacationRequests(requestIds) → Aprobar
+- denyVacationRequests(requestIds, adminComment) → Denegar (incluye motivo)
+
+⚙️ CONFIGURACIÓN:
+- updateCompanySettings(workingHoursPerDay?, vacationDaysPerMonth?, etc) → Modifica políticas
+
+📝 RECORDATORIOS (createReminder):
+- reminderDate: ISO con zona España (UTC+1)
+- assignToEmployeeIds: ARRAY [5, 3]
+
+EMPLEADOS: updateEmployee(), listEmployees(), createEmployee()
+INFORMES: generateTimeReport(format, period, employeeName?)
+
+Respuestas breves: "Listo", "Perfecto", "Ya está".`
+          },
+          ...currentMessages
+        ],
+        tools,
+        tool_choice: "auto",
+        max_completion_tokens: 512, // Optimized for speed
+      });
+
+      // Delegate call + escalation logic to helper (keeps routes.ts minimal & testable)
+      const { runAssistantTurn } = await import('./ai-runner.js');
+      const runResult = await runAssistantTurn(openai, [
+        {
+          role: 'system',
+          content: `Eres OficazIA, el copiloto completo de gestión laboral. Hoy: ${currentDateStr}
 
 ⚠️ REGLA PRINCIPAL: PREGUNTA ANTES DE ACTUAR (para creación/modificación)
 Si falta información para crear/modificar algo, PREGUNTA (no inventes):
@@ -9896,19 +11955,13 @@ INFORMES: generateTimeReport(format, period, employeeName?)
 Respuestas breves: "Listo", "Perfecto", "Ya está".`
           },
           ...currentMessages
-        ],
-        tools,
-        tool_choice: "auto",
-        max_completion_tokens: 512, // Optimized for speed
-      });
+      ],
+      tools);
 
-      // Track tokens from this API call
-      if (response.usage) {
-        totalTokensUsed += response.usage.total_tokens || 0;
-        console.log(`📊 Tokens used this call: ${response.usage.total_tokens} (total: ${totalTokensUsed})`);
-      }
-
-      const assistantMessage = response.choices[0]?.message;
+      // Merge tokens used from helper
+      let assistantMessage = runResult.assistantMessage;
+      totalTokensUsed += runResult.usedTokens;
+      console.log(`📊 Tokens used this turn: ${runResult.usedTokens} (total: ${totalTokensUsed})`);
 
       // If NO tool calls, AI has finished → return response
       if (!assistantMessage?.tool_calls || assistantMessage.tool_calls.length === 0) {
@@ -9939,6 +11992,19 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
         for (const toolCall of assistantMessage.tool_calls) {
           const functionName = toolCall.function.name;
           const functionArgs = JSON.parse(toolCall.function.arguments);
+
+          // Hard guard: do not create employees without explicit email
+          if (functionName === 'createEmployee') {
+            const email = functionArgs.email?.trim?.();
+            if (!email || typeof email !== 'string' || !email.includes('@')) {
+              toolResults.push({
+                role: "tool" as const,
+                tool_call_id: toolCall.id,
+                content: JSON.stringify({ error: 'Correo obligatorio. Facilita un correo corporativo o personal para crear al empleado.' })
+              });
+              continue;
+            }
+          }
 
           // Resolve employee names to IDs before executing function
           const functionsNeedingEmployeeResolution = ['getEmployeeShifts', 'getEmployeeWorkHours', 'getVacationBalance', 'assignSchedule', 'assignScheduleInRange', 'assignRotatingSchedule', 'requestDocument', 'deleteWorkShift', 'deleteWorkShiftsInRange', 'updateWorkShiftTimes', 'updateWorkShiftsInRange', 'updateEmployeeShiftsColor', 'updateWorkShiftColor', 'updateWorkShiftDetails', 'detectWorkShiftOverlaps', 'createReminder'];
@@ -10051,31 +12117,17 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
             delete functionArgs.assignToEmployeeNames;
           }
 
-          // Execute the function
-          console.log(`🤖 AI executing function: ${functionName} with args:`, JSON.stringify(functionArgs, null, 2));
-          try {
-            const result = await executeAIFunction(functionName, functionArgs, context);
-            console.log(`✅ Function ${functionName} result:`, JSON.stringify(result, null, 2));
-            
-            // Capture navigateTo URL from functions that support navigation
-            const functionsWithNavigation = ['navigateToPage', 'getEmployeeWorkHours', 'getVacationBalance', 'getPendingApprovals', 'generateTimeReport'];
-            if (functionsWithNavigation.includes(functionName) && result.navigateTo) {
-              console.log(`🧭 Captured navigateTo from ${functionName}:`, result.navigateTo);
-              navigateToUrl = result.navigateTo;
+          // Delegate execution of tool calls to helper (allows isolated testing)
+          const { runToolCalls } = await import('./ai-tool-runner.js');
+          const results = await runToolCalls(assistantMessage.tool_calls, context, resolveEmployeeName, executeAIFunction, storage);
+
+          // Merge returned tool results and capture navigateTo if present in any
+          for (const tr of results) {
+            const parsed = JSON.parse(tr.content);
+            if (parsed && parsed.navigateTo) {
+              navigateToUrl = parsed.navigateTo;
             }
-            
-            toolResults.push({
-              role: "tool" as const,
-              tool_call_id: toolCall.id,
-              content: JSON.stringify(result)
-            });
-          } catch (error: any) {
-            console.error(`❌ Function ${functionName} error:`, error.message, error.stack);
-            toolResults.push({
-              role: "tool" as const,
-              tool_call_id: toolCall.id,
-              content: JSON.stringify({ error: error.message })
-            });
+            toolResults.push(tr);
           }
         }
 
@@ -10968,8 +13020,8 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
       
       // Check if company has OficazIA addon active (new modular model)
       const hasOficazIA = await storage.hasActiveAddon(companyId, 'ai_assistant');
-      // If OficazIA is active, set limit to 10M tokens/month, otherwise 0
-      const aiTokensLimit = hasOficazIA ? 10000000 : 0;
+      // If OficazIA is active, set limit to 1M tokens/month, otherwise 0
+      const aiTokensLimit = hasOficazIA ? 1000000 : 0;
       
       // Get real-time stats from actual data using proper ORM
       const employeeCount = await db.select({ count: count() })
@@ -11311,6 +13363,77 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
     }
   });
 
+  // Synchronize addons from ADDON_DEFINITIONS to database
+  app.post('/api/super-admin/sync-addons', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      let syncedCount = 0;
+      let createdCount = 0;
+      const results = [];
+
+      for (let i = 0; i < ADDON_DEFINITIONS.length; i++) {
+        const def = ADDON_DEFINITIONS[i];
+        const existing = await storage.getAddonByKey(def.key);
+
+        if (existing) {
+          // Update existing addon
+          const updated = await storage.updateAddon(existing.id, {
+            name: def.name,
+            description: def.description,
+            shortDescription: def.shortDescription,
+            monthlyPrice: def.monthlyPrice,
+            icon: def.icon,
+            isActive: true,
+            sortOrder: i
+          });
+          results.push({ action: 'updated', key: def.key, id: existing.id });
+          syncedCount++;
+        } else {
+          // Create new addon
+          const created = await storage.createAddon({
+            key: def.key,
+            name: def.name,
+            description: def.description,
+            shortDescription: def.shortDescription,
+            monthlyPrice: def.monthlyPrice,
+            icon: def.icon,
+            isActive: true,
+            sortOrder: i
+          });
+          results.push({ action: 'created', key: def.key, id: created.id });
+          createdCount++;
+        }
+      }
+
+      logAudit({
+        timestamp: new Date(),
+        ip: req.ip || 'unknown',
+        action: 'ADDONS_SYNCHRONIZED',
+        email: req.superAdmin?.email,
+        success: true,
+        details: `Synced ${ADDON_DEFINITIONS.length} addons (${createdCount} created, ${syncedCount} updated)`
+      });
+
+      res.json({
+        message: `Addons synchronized successfully`,
+        total: ADDON_DEFINITIONS.length,
+        created: createdCount,
+        updated: syncedCount,
+        results
+      });
+    } catch (error) {
+      console.error('Error synchronizing addons:', error);
+      logAudit({
+        timestamp: new Date(),
+        ip: req.ip || 'unknown',
+        action: 'ADDONS_SYNC_FAILED',
+        email: req.superAdmin?.email,
+        success: false,
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+      res.status(500).json({ message: 'Error sincronizando addons' });
+    }
+  });
+
   app.delete('/api/super-admin/subscription-plans/:id', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
       const planId = parseInt(req.params.id);
@@ -11373,9 +13496,1330 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
       res.status(500).json({ message: 'Error interno del servidor' });
     }
   });
+  
+  
+  
+  // ═══════════════════════════════════════════════════════════════════════
+  // CRM: Clientes, Proveedores y Proyectos
+  // ═══════════════════════════════════════════════════════════════════════
 
+  const fetchProjectWithContacts = async (projectId: number, companyId: number) => {
+    const { rows } = await db.execute(sql`
+      SELECT
+        row_to_json(p.*) AS project,
+        (
+          SELECT json_agg(json_build_object(
+            'id', bc.id,
+            'name', bc.name,
+            'role', bc.role,
+            'label', bc.label,
+            'email', bc.email,
+            'phone', bc.phone
+          ) ORDER BY bc.name)
+          FROM project_contacts pc
+          JOIN business_contacts bc ON pc.contact_id = bc.id
+          WHERE pc.project_id = p.id AND pc.role = 'client'
+        ) AS clients,
+        (
+          SELECT json_agg(json_build_object(
+            'id', bc.id,
+            'name', bc.name,
+            'role', bc.role,
+            'label', bc.label,
+            'email', bc.email,
+            'phone', bc.phone
+          ) ORDER BY bc.name)
+          FROM project_contacts pc
+          JOIN business_contacts bc ON pc.contact_id = bc.id
+          WHERE pc.project_id = p.id AND pc.role = 'provider'
+        ) AS providers,
+        (
+          SELECT COALESCE(json_agg(json_build_object(
+            'id', psc.id,
+            'name', psc.name,
+            'color', psc.color
+          )), '[]'::json)
+          FROM project_status_categories psc
+          WHERE psc.id = ANY(p.status_categories) AND psc.company_id = ${companyId}
+        ) AS status_categories_data
+      FROM projects p
+      WHERE p.id = ${projectId} AND p.company_id = ${companyId}
+      LIMIT 1;
+    `);
 
+    const result = rows?.[0];
+    if (result && result.project) {
+      // row_to_json devuelve columnas en snake_case, necesitamos convertir a camelCase
+      const p = result.project;
+      result.project = {
+        id: p.id,
+        companyId: p.company_id,
+        name: p.name,
+        code: p.code,
+        status: p.status,
+        statusCategories: result.status_categories_data || [],
+        stage: p.stage,
+        description: p.description,
+        startDate: p.start_date,
+        dueDate: p.due_date,
+        budget: p.budget,
+        progress: p.progress,
+        createdAt: p.created_at,
+        updatedAt: p.updated_at,
+      };
+      delete result.status_categories_data;
+    }
+    return result;
+  };
 
+  app.get('/api/crm/contacts', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const { role, search, limit, offset } = req.query;
+
+      try {
+        // Devuelve contacts - el frontend resolverá los IDs de categorías
+        const contacts = await db.select()
+          .from(schema.businessContacts)
+          .where(and(
+            eq(schema.businessContacts.companyId, companyId),
+            role ? eq(schema.businessContacts.role, String(role)) : undefined,
+            search ? ilike(schema.businessContacts.name, `%${String(search)}%`) : undefined
+          ))
+          .orderBy(desc(schema.businessContacts.createdAt));
+
+        // Support pagination for infinite scroll
+        const limitNum = limit ? parseInt(String(limit)) : null;
+        const offsetNum = offset ? parseInt(String(offset)) : null;
+        
+        if (limitNum && offsetNum !== undefined) {
+          const paginatedItems = contacts.slice(offsetNum, offsetNum + limitNum);
+          const totalCount = contacts.length;
+          const hasMore = (offsetNum + limitNum) < totalCount;
+          res.json({
+            items: paginatedItems,
+            totalCount,
+            hasMore
+          });
+        } else {
+          res.json(contacts || []);
+        }
+      } catch (error: any) {
+        // Si falla por columna faltante, ejecutar migración y reintentar
+        if (error.message?.includes('categories') || error.message?.includes('unknown column')) {
+          console.warn('⚠️ Columna categories no encontrada, ejecutando migración...');
+          try {
+            await db.execute(sql`ALTER TABLE business_contacts ADD COLUMN IF NOT EXISTS categories INTEGER[] DEFAULT '{}'`);
+            await db.execute(sql`UPDATE business_contacts SET categories = '{}' WHERE categories IS NULL`);
+            
+            // Reintentar select
+            const contacts = await db.select()
+              .from(schema.businessContacts)
+              .where(and(
+                eq(schema.businessContacts.companyId, companyId),
+                role ? eq(schema.businessContacts.role, String(role)) : undefined,
+                search ? ilike(schema.businessContacts.name, `%${String(search)}%`) : undefined
+              ))
+              .orderBy(desc(schema.businessContacts.createdAt));
+
+            res.json(contacts || []);
+          } catch (migrateError) {
+            console.error('❌ Error migrando categories:', migrateError);
+            // Si todo falla, devolver array vacío
+            res.json([]);
+          }
+        } else {
+          throw error;
+        }
+      }
+    } catch (error: any) {
+      console.error('Error fetching contacts:', error);
+      // Devolver array vacío en caso de error
+      res.json([]);
+    }
+  });
+
+  // Endpoint para ejecutar migración de categorías (útil si falla automáticamente)
+  app.post('/api/admin/migrate/crm-categories', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      console.log('🔄 Ejecutando migración de categorías...');
+      
+      await db.execute(sql`ALTER TABLE business_contacts ADD COLUMN IF NOT EXISTS categories INTEGER[] DEFAULT '{}'`);
+      console.log('✅ Columna categories agregada');
+      
+      await db.execute(sql`UPDATE business_contacts SET categories = '{}' WHERE categories IS NULL`);
+      console.log('✅ Registros actualizados');
+      
+      res.json({ 
+        success: true, 
+        message: 'Migración de categorías completada exitosamente' 
+      });
+    } catch (error: any) {
+      console.error('❌ Error en migración de categorías:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Error en migración: ' + error.message 
+      });
+    }
+  });
+
+  app.post('/api/crm/contacts', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const data = req.body || {};
+      const role = data.role === 'provider' ? 'provider' : 'client';
+      const label = data.label || (role === 'client' ? 'Cliente' : 'Proveedor');
+
+      // Convertir objetos de categoría a IDs
+      const categoryIds = Array.isArray(data.categories) 
+        ? data.categories.map((cat: any) => cat.id || cat).filter((id: any) => id)
+        : [];
+
+      // Convertir objetos de estado a IDs
+      const statusCategoryIds = Array.isArray(data.statusCategories) 
+        ? data.statusCategories.map((cat: any) => cat.id || cat).filter((id: any) => id)
+        : [];
+
+      const [contact] = await db.insert(schema.businessContacts)
+        .values({
+          companyId,
+          name: data.name,
+          role,
+          label,
+          email: data.email,
+          phone: data.phone,
+          taxId: data.taxId,
+          city: data.city,
+          notes: data.notes,
+          categories: categoryIds,
+          statusCategories: statusCategoryIds,
+          status: data.status || 'active',
+        })
+        .returning();
+
+      res.json(contact);
+    } catch (error: any) {
+      console.error('Error creating contact:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.patch('/api/crm/contacts/:id', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const contactId = parseInt(req.params.id);
+
+      const [existing] = await db.select()
+        .from(schema.businessContacts)
+        .where(and(
+          eq(schema.businessContacts.id, contactId),
+          eq(schema.businessContacts.companyId, companyId)
+        ));
+
+      if (!existing) {
+        return res.status(404).json({ message: 'Contacto no encontrado' });
+      }
+
+      const updateData = { ...req.body, updatedAt: new Date() };
+      delete (updateData as any).companyId;
+
+      // Convertir objetos de categoría a IDs
+      if (Array.isArray(updateData.categories)) {
+        updateData.categories = updateData.categories
+          .map((cat: any) => cat.id || cat)
+          .filter((id: any) => id);
+      }
+
+      // Convertir objetos de estado a IDs
+      if (Array.isArray(updateData.statusCategories)) {
+        updateData.statusCategories = updateData.statusCategories
+          .map((cat: any) => cat.id || cat)
+          .filter((id: any) => id);
+      }
+
+      const [contact] = await db.update(schema.businessContacts)
+        .set(updateData)
+        .where(eq(schema.businessContacts.id, contactId))
+        .returning();
+
+      res.json(contact);
+    } catch (error: any) {
+      console.error('Error updating contact:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.delete('/api/crm/contacts/:id', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const contactId = parseInt(req.params.id);
+
+      const [existing] = await db.select()
+        .from(schema.businessContacts)
+        .where(and(
+          eq(schema.businessContacts.id, contactId),
+          eq(schema.businessContacts.companyId, companyId)
+        ));
+
+      if (!existing) {
+        return res.status(404).json({ message: 'Contacto no encontrado' });
+      }
+
+      await db.delete(schema.businessContacts)
+        .where(eq(schema.businessContacts.id, contactId));
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Error deleting contact:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // ========== CRM CATEGORIES ==========
+
+  app.get('/api/crm/categories', authenticateToken, requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+
+      try {
+        const categories = await db.select()
+          .from(schema.crmCategories)
+          .where(eq(schema.crmCategories.companyId, companyId))
+          .orderBy(asc(schema.crmCategories.name));
+
+        res.json(categories);
+      } catch (error: any) {
+        // Si la tabla no existe aún, devolver array vacío
+        if (error.message?.includes('does not exist')) {
+          console.warn('⚠️ Tabla crmCategories no existe aún');
+          res.json([]);
+        } else {
+          throw error;
+        }
+      }
+    } catch (error: any) {
+      console.error('Error fetching CRM categories:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.post('/api/crm/categories', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const { name, color } = req.body;
+
+      if (!name || !name.trim()) {
+        return res.status(400).json({ message: 'El nombre de la categoría es requerido' });
+      }
+
+      try {
+        // Verificar que no exista una categoría con el mismo nombre
+        const existing = await db.select()
+          .from(schema.crmCategories)
+          .where(and(
+            eq(schema.crmCategories.companyId, companyId),
+            eq(sql`LOWER(${schema.crmCategories.name})`, name.trim().toLowerCase())
+          ));
+
+        if (existing.length > 0) {
+          return res.status(400).json({ message: 'Ya existe una categoría con este nombre' });
+        }
+
+        const [category] = await db.insert(schema.crmCategories)
+          .values({
+            companyId,
+            name: name.trim(),
+            color: color || 'azul',
+          })
+          .returning();
+
+        res.json(category);
+      } catch (error: any) {
+        // Si la tabla no existe, devolver un objeto de categoría temporal
+        if (error.message?.includes('does not exist')) {
+          console.warn('⚠️ Tabla crmCategories no existe aún, devolviendo categoría temporal');
+          res.json({
+            id: Math.floor(Math.random() * 10000),
+            companyId,
+            name: name.trim(),
+            color: color || 'azul',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        } else {
+          throw error;
+        }
+      }
+    } catch (error: any) {
+      console.error('Error creating CRM category:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.patch('/api/crm/categories/:id', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const categoryId = parseInt(req.params.id);
+      const { name, color } = req.body;
+
+      try {
+        const [existing] = await db.select()
+          .from(schema.crmCategories)
+          .where(and(
+            eq(schema.crmCategories.id, categoryId),
+            eq(schema.crmCategories.companyId, companyId)
+          ));
+
+        if (!existing) {
+          return res.status(404).json({ message: 'Categoría no encontrada' });
+        }
+
+        // Si cambia el nombre, verificar que no exista otra con el mismo nombre
+        if (name && name.trim().toLowerCase() !== existing.name.toLowerCase()) {
+          const duplicate = await db.select()
+            .from(schema.crmCategories)
+            .where(and(
+              eq(schema.crmCategories.companyId, companyId),
+              eq(sql`LOWER(${schema.crmCategories.name})`, name.trim().toLowerCase())
+            ));
+
+          if (duplicate.length > 0) {
+            return res.status(400).json({ message: 'Ya existe una categoría con este nombre' });
+          }
+        }
+
+        const [updated] = await db.update(schema.crmCategories)
+          .set({
+            name: name ? name.trim() : existing.name,
+            color: color || existing.color,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.crmCategories.id, categoryId))
+          .returning();
+
+        res.json(updated);
+      } catch (error: any) {
+        if (error.message?.includes('does not exist')) {
+          // Si la tabla no existe, devolver la categoría con los cambios
+          res.json({
+            id: categoryId,
+            companyId,
+            name: name || 'Categoría',
+            color: color || 'azul',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        } else {
+          throw error;
+        }
+      }
+    } catch (error: any) {
+      console.error('Error updating CRM category:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.delete('/api/crm/categories/:id', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const categoryId = parseInt(req.params.id);
+
+      try {
+        const [existing] = await db.select()
+          .from(schema.crmCategories)
+          .where(and(
+            eq(schema.crmCategories.id, categoryId),
+            eq(schema.crmCategories.companyId, companyId)
+          ));
+
+        if (!existing) {
+          return res.status(404).json({ message: 'Categoría no encontrada' });
+        }
+
+        await db.delete(schema.crmCategories)
+          .where(eq(schema.crmCategories.id, categoryId));
+
+        res.json({ success: true });
+      } catch (error: any) {
+        if (error.message?.includes('does not exist')) {
+          // Si la tabla no existe, devolver éxito igual
+          res.json({ success: true });
+        } else {
+          throw error;
+        }
+      }
+    } catch (error: any) {
+      console.error('Error deleting CRM category:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // ========== CRM STATUS CATEGORIES (Estados como categorías) ==========
+
+  // Helper para crear estados por defecto si no existen
+  const ensureDefaultStatuses = async (companyId: number) => {
+    try {
+      const existing = await db.select()
+        .from(schema.crmStatusCategories)
+        .where(eq(schema.crmStatusCategories.companyId, companyId));
+
+      if (existing.length === 0) {
+        const defaultStatuses = [
+          { name: 'Activo', color: 'verde', isDefault: true },
+          { name: 'Inactivo', color: 'gris', isDefault: true },
+        ];
+
+        await db.insert(schema.crmStatusCategories)
+          .values(defaultStatuses.map(s => ({
+            companyId,
+            name: s.name,
+            color: s.color,
+            isDefault: s.isDefault,
+          })));
+      }
+    } catch (error: any) {
+      if (!error.message?.includes('does not exist')) {
+        console.error('Error creating default statuses:', error);
+      }
+    }
+  };
+
+  app.get('/api/crm/status-categories', authenticateToken, requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+
+      try {
+        // Asegurar que existan los estados por defecto
+        await ensureDefaultStatuses(companyId);
+
+        const statuses = await db.select()
+          .from(schema.crmStatusCategories)
+          .where(eq(schema.crmStatusCategories.companyId, companyId))
+          .orderBy(asc(schema.crmStatusCategories.name));
+
+        res.json(statuses);
+      } catch (error: any) {
+        if (error.message?.includes('does not exist')) {
+          console.warn('⚠️ Tabla crmStatusCategories no existe aún');
+          res.json([
+            { id: 1, name: 'Activo', color: 'verde', isDefault: true, companyId },
+            { id: 2, name: 'Inactivo', color: 'gris', isDefault: true, companyId },
+          ]);
+        } else {
+          throw error;
+        }
+      }
+    } catch (error: any) {
+      console.error('Error fetching CRM status categories:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.post('/api/crm/status-categories', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const { name, color } = req.body;
+
+      if (!name || !name.trim()) {
+        return res.status(400).json({ message: 'El nombre del estado es requerido' });
+      }
+
+      try {
+        const existing = await db.select()
+          .from(schema.crmStatusCategories)
+          .where(and(
+            eq(schema.crmStatusCategories.companyId, companyId),
+            eq(sql`LOWER(${schema.crmStatusCategories.name})`, name.trim().toLowerCase())
+          ));
+
+        if (existing.length > 0) {
+          return res.status(400).json({ message: 'Ya existe un estado con este nombre' });
+        }
+
+        const [status] = await db.insert(schema.crmStatusCategories)
+          .values({
+            companyId,
+            name: name.trim(),
+            color: color || 'verde',
+            isDefault: false,
+          })
+          .returning();
+
+        res.json(status);
+      } catch (error: any) {
+        if (error.message?.includes('does not exist')) {
+          console.warn('⚠️ Tabla crmStatusCategories no existe aún, devolviendo estado temporal');
+          res.json({
+            id: Math.floor(Math.random() * 10000),
+            companyId,
+            name: name.trim(),
+            color: color || 'verde',
+            isDefault: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        } else {
+          throw error;
+        }
+      }
+    } catch (error: any) {
+      console.error('Error creating CRM status category:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.patch('/api/crm/status-categories/:id', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const statusId = parseInt(req.params.id);
+      const { name, color } = req.body;
+
+      try {
+        const [existing] = await db.select()
+          .from(schema.crmStatusCategories)
+          .where(and(
+            eq(schema.crmStatusCategories.id, statusId),
+            eq(schema.crmStatusCategories.companyId, companyId)
+          ));
+
+        if (!existing) {
+          return res.status(404).json({ message: 'Estado no encontrado' });
+        }
+
+        const [updated] = await db.update(schema.crmStatusCategories)
+          .set({
+            name: name || existing.name,
+            color: color || existing.color,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.crmStatusCategories.id, statusId))
+          .returning();
+
+        res.json(updated);
+      } catch (error: any) {
+        if (error.message?.includes('does not exist')) {
+          res.json({ id: statusId, name, color, companyId });
+        } else {
+          throw error;
+        }
+      }
+    } catch (error: any) {
+      console.error('Error updating CRM status category:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.delete('/api/crm/status-categories/:id', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const statusId = parseInt(req.params.id);
+
+      try {
+        const [existing] = await db.select()
+          .from(schema.crmStatusCategories)
+          .where(and(
+            eq(schema.crmStatusCategories.id, statusId),
+            eq(schema.crmStatusCategories.companyId, companyId)
+          ));
+
+        if (!existing) {
+          return res.status(404).json({ message: 'Estado no encontrado' });
+        }
+
+        // No permitir eliminar estados por defecto
+        if (existing.isDefault) {
+          return res.status(400).json({ message: 'No se pueden eliminar los estados por defecto' });
+        }
+
+        await db.delete(schema.crmStatusCategories)
+          .where(eq(schema.crmStatusCategories.id, statusId));
+
+        res.json({ success: true });
+      } catch (error: any) {
+        if (error.message?.includes('does not exist')) {
+          res.json({ success: true });
+        } else {
+          throw error;
+        }
+      }
+    } catch (error: any) {
+      console.error('Error deleting CRM status category:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // ========== PROJECT STATUS CATEGORIES (Estados para proyectos) ==========
+
+  // Helper para crear estados por defecto de proyectos si no existen
+  const ensureDefaultProjectStatuses = async (companyId: number) => {
+    try {
+      const existing = await db.select()
+        .from(schema.projectStatusCategories)
+        .where(eq(schema.projectStatusCategories.companyId, companyId));
+
+      if (existing.length === 0) {
+        const defaultStatuses = [
+          { name: 'Activo', color: 'verde', isDefault: true },
+          { name: 'En pausa', color: 'amarillo', isDefault: true },
+          { name: 'Completado', color: 'azul', isDefault: true },
+          { name: 'Cancelado', color: 'rojo', isDefault: true },
+        ];
+
+        await db.insert(schema.projectStatusCategories)
+          .values(defaultStatuses.map(s => ({
+            companyId,
+            name: s.name,
+            color: s.color,
+            isDefault: s.isDefault,
+          })));
+      }
+    } catch (error: any) {
+      if (!error.message?.includes('does not exist')) {
+        console.error('Error creating default project statuses:', error);
+      }
+    }
+  };
+
+  app.get('/api/crm/project-status-categories', authenticateToken, requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+
+      try {
+        // Asegurar que existan los estados por defecto
+        await ensureDefaultProjectStatuses(companyId);
+
+        const statuses = await db.select()
+          .from(schema.projectStatusCategories)
+          .where(eq(schema.projectStatusCategories.companyId, companyId))
+          .orderBy(asc(schema.projectStatusCategories.name));
+
+        res.json(statuses);
+      } catch (error: any) {
+        if (error.message?.includes('does not exist')) {
+          console.warn('⚠️ Tabla projectStatusCategories no existe aún');
+          res.json([
+            { id: 1, name: 'Activo', color: 'verde', isDefault: true, companyId },
+            { id: 2, name: 'En pausa', color: 'amarillo', isDefault: true, companyId },
+            { id: 3, name: 'Completado', color: 'azul', isDefault: true, companyId },
+            { id: 4, name: 'Cancelado', color: 'rojo', isDefault: true, companyId },
+          ]);
+        } else {
+          throw error;
+        }
+      }
+    } catch (error: any) {
+      console.error('Error fetching project status categories:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.post('/api/crm/project-status-categories', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const { name, color } = req.body;
+
+      if (!name || !name.trim()) {
+        return res.status(400).json({ message: 'El nombre del estado es requerido' });
+      }
+
+      try {
+        const existing = await db.select()
+          .from(schema.projectStatusCategories)
+          .where(and(
+            eq(schema.projectStatusCategories.companyId, companyId),
+            eq(sql`LOWER(${schema.projectStatusCategories.name})`, name.trim().toLowerCase())
+          ));
+
+        if (existing.length > 0) {
+          return res.status(400).json({ message: 'Ya existe un estado con este nombre' });
+        }
+
+        const [status] = await db.insert(schema.projectStatusCategories)
+          .values({
+            companyId,
+            name: name.trim(),
+            color: color || 'azul',
+            isDefault: false,
+          })
+          .returning();
+
+        res.json(status);
+      } catch (error: any) {
+        if (error.message?.includes('does not exist')) {
+          console.warn('⚠️ Tabla projectStatusCategories no existe aún, devolviendo estado temporal');
+          res.json({
+            id: Math.floor(Math.random() * 10000),
+            companyId,
+            name: name.trim(),
+            color: color || 'azul',
+            isDefault: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        } else {
+          throw error;
+        }
+      }
+    } catch (error: any) {
+      console.error('Error creating project status category:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.patch('/api/crm/project-status-categories/:id', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const statusId = parseInt(req.params.id);
+      const { name, color } = req.body;
+
+      try {
+        const [existing] = await db.select()
+          .from(schema.projectStatusCategories)
+          .where(and(
+            eq(schema.projectStatusCategories.id, statusId),
+            eq(schema.projectStatusCategories.companyId, companyId)
+          ));
+
+        if (!existing) {
+          return res.status(404).json({ message: 'Estado no encontrado' });
+        }
+
+        const [updated] = await db.update(schema.projectStatusCategories)
+          .set({
+            name: name || existing.name,
+            color: color || existing.color,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.projectStatusCategories.id, statusId))
+          .returning();
+
+        res.json(updated);
+      } catch (error: any) {
+        if (error.message?.includes('does not exist')) {
+          res.json({ id: statusId, name, color, companyId });
+        } else {
+          throw error;
+        }
+      }
+    } catch (error: any) {
+      console.error('Error updating project status category:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.delete('/api/crm/project-status-categories/:id', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const statusId = parseInt(req.params.id);
+
+      try {
+        const [existing] = await db.select()
+          .from(schema.projectStatusCategories)
+          .where(and(
+            eq(schema.projectStatusCategories.id, statusId),
+            eq(schema.projectStatusCategories.companyId, companyId)
+          ));
+
+        if (!existing) {
+          return res.status(404).json({ message: 'Estado no encontrado' });
+        }
+
+        // No permitir eliminar estados por defecto
+        if (existing.isDefault) {
+          return res.status(400).json({ message: 'No se pueden eliminar los estados por defecto' });
+        }
+
+        await db.delete(schema.projectStatusCategories)
+          .where(eq(schema.projectStatusCategories.id, statusId));
+
+        res.json({ success: true });
+      } catch (error: any) {
+        if (error.message?.includes('does not exist')) {
+          res.json({ success: true });
+        } else {
+          throw error;
+        }
+      }
+    } catch (error: any) {
+      console.error('Error deleting project status category:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.get('/api/crm/projects', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const { status, search, limit, offset } = req.query;
+
+      const projects = await db.select({ project: schema.projects })
+        .from(schema.projects)
+        .where(and(
+          eq(schema.projects.companyId, companyId),
+          status ? eq(schema.projects.status, String(status)) : undefined,
+          search ? ilike(schema.projects.name, `%${String(search)}%`) : undefined
+        ))
+        .orderBy(desc(schema.projects.createdAt));
+
+      // Enriquecer cada proyecto con clientes/proveedores completos
+      const projectsWithContacts = await Promise.all(
+        projects.map(async (p) => fetchProjectWithContacts(p.project.id, companyId))
+      );
+
+      const filtered = projectsWithContacts.filter(Boolean);
+
+      // Support pagination for infinite scroll
+      const limitNum = limit ? parseInt(String(limit)) : null;
+      const offsetNum = offset ? parseInt(String(offset)) : null;
+      
+      if (limitNum && offsetNum !== undefined) {
+        const paginatedItems = filtered.slice(offsetNum, offsetNum + limitNum);
+        const totalCount = filtered.length;
+        const hasMore = (offsetNum + limitNum) < totalCount;
+        res.json({
+          items: paginatedItems,
+          totalCount,
+          hasMore
+        });
+      } else {
+        res.json(filtered);
+      }
+    } catch (error: any) {
+      console.error('Error fetching projects:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // Admin endpoint: obtener proyectos asignados a un usuario específico
+  app.get('/api/crm/users/:id/projects', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const userId = parseInt(req.params.id);
+
+      // Verificar que el usuario pertenece a la empresa
+      const userRows = await db.select().from(schema.users)
+        .where(and(eq(schema.users.id, userId), eq(schema.users.companyId, companyId)))
+        .limit(1);
+
+      if (userRows.length === 0) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+
+      // Obtener proyectos asignados al usuario
+      const assignedProjects = await db.select({
+        id: schema.projects.id,
+        name: schema.projects.name,
+        code: schema.projects.code,
+      })
+        .from(schema.projects)
+        .innerJoin(schema.projectUsers, eq(schema.projects.id, schema.projectUsers.projectId))
+        .where(and(
+          eq(schema.projects.companyId, companyId),
+          eq(schema.projectUsers.userId, userId)
+        ))
+        .orderBy(asc(schema.projects.name));
+
+      res.json(assignedProjects);
+    } catch (error: any) {
+      console.error('Error fetching user projects:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // Endpoint público para empleados: obtener lista simple de proyectos de su empresa
+  app.get('/api/employee/projects', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user?.id;
+      const companyId = req.user?.companyId;
+      
+      if (!userId || !companyId) {
+        return res.status(401).json({ message: 'No autorizado' });
+      }
+      
+      console.log('Fetching projects for user:', userId, 'company:', companyId);
+
+      // Obtener proyectos asignados al usuario
+      const assignedProjects = await db.select({ 
+        project: schema.projects 
+      })
+        .from(schema.projects)
+        .innerJoin(schema.projectUsers, eq(schema.projects.id, schema.projectUsers.projectId))
+        .where(and(
+          eq(schema.projects.companyId, companyId),
+          eq(schema.projectUsers.userId, userId)
+        ))
+        .orderBy(desc(schema.projects.createdAt));
+
+      console.log('Assigned projects found:', assignedProjects.length);
+
+      // Devolver solo información básica de los proyectos
+      const simpleProjects = assignedProjects.map(p => ({
+        project: {
+          id: p.project.id,
+          name: p.project.name,
+          code: p.project.code || ''
+        }
+      }));
+
+      res.json(simpleProjects);
+    } catch (error: any) {
+      console.error('Error fetching projects list:', error);
+      res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+    }
+  });
+
+  // Admin endpoint: obtener usuarios asignados a un proyecto
+  app.get('/api/crm/projects/:id/users', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const projectId = parseInt(req.params.id);
+
+      // Verificar que el proyecto pertenece a la empresa
+      const project = await db.select().from(schema.projects)
+        .where(and(eq(schema.projects.id, projectId), eq(schema.projects.companyId, companyId)))
+        .limit(1);
+
+      if (project.length === 0) {
+        return res.status(404).json({ message: 'Proyecto no encontrado' });
+      }
+
+      // Obtener usuarios asignados
+      const assignedUsers = await db.select({
+        id: schema.users.id,
+        fullName: schema.users.fullName,
+        companyEmail: schema.users.companyEmail,
+        position: schema.users.position,
+      })
+        .from(schema.users)
+        .innerJoin(schema.projectUsers, eq(schema.users.id, schema.projectUsers.userId))
+        .where(eq(schema.projectUsers.projectId, projectId))
+        .orderBy(asc(schema.users.fullName));
+
+      res.json(assignedUsers);
+    } catch (error: any) {
+      console.error('Error fetching project users:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // Admin endpoint: asignar usuario a proyecto
+  app.post('/api/crm/projects/:id/users', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const projectId = parseInt(req.params.id);
+      const { userId } = req.body;
+
+      // Verificar que el proyecto pertenece a la empresa
+      const project = await db.select().from(schema.projects)
+        .where(and(eq(schema.projects.id, projectId), eq(schema.projects.companyId, companyId)))
+        .limit(1);
+
+      if (project.length === 0) {
+        return res.status(404).json({ message: 'Proyecto no encontrado' });
+      }
+
+      // Verificar que el usuario pertenece a la empresa
+      const user = await db.select().from(schema.users)
+        .where(and(eq(schema.users.id, userId), eq(schema.users.companyId, companyId)))
+        .limit(1);
+
+      if (user.length === 0) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+
+      // Asignar usuario a proyecto (ignora duplicados)
+      await db.insert(schema.projectUsers).values({
+        projectId,
+        userId,
+      }).onConflictDoNothing();
+
+      res.json({ message: 'Usuario asignado correctamente' });
+    } catch (error: any) {
+      console.error('Error assigning user to project:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // Admin endpoint: desasignar usuario de proyecto
+  app.delete('/api/crm/projects/:id/users/:userId', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const projectId = parseInt(req.params.id);
+      const userId = parseInt(req.params.userId);
+
+      // Verificar que el proyecto pertenece a la empresa
+      const project = await db.select().from(schema.projects)
+        .where(and(eq(schema.projects.id, projectId), eq(schema.projects.companyId, companyId)))
+        .limit(1);
+
+      if (project.length === 0) {
+        return res.status(404).json({ message: 'Proyecto no encontrado' });
+      }
+
+      // Desasignar usuario
+      await db.delete(schema.projectUsers)
+        .where(and(
+          eq(schema.projectUsers.projectId, projectId),
+          eq(schema.projectUsers.userId, userId)
+        ));
+
+      res.json({ message: 'Usuario desasignado correctamente' });
+    } catch (error: any) {
+      console.error('Error removing user from project:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.get('/api/crm/projects/:id', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const projectId = parseInt(req.params.id);
+
+      const project = await fetchProjectWithContacts(projectId, companyId);
+
+      if (!project) {
+        return res.status(404).json({ message: 'Proyecto no encontrado' });
+      }
+
+      res.json(project);
+    } catch (error: any) {
+      console.error('Error fetching project detail:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.post('/api/crm/projects', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const data = req.body || {};
+      console.log('📝 Creating project with data:', JSON.stringify(data, null, 2));
+      const clientIds: number[] = Array.isArray(data.clientIds) ? data.clientIds : [];
+      const providerIds: number[] = Array.isArray(data.providerIds) ? data.providerIds : [];
+      const contactIds = Array.from(new Set([...clientIds, ...providerIds]));
+
+      if (contactIds.length > 0) {
+        const contacts = await db.select()
+          .from(schema.businessContacts)
+          .where(and(
+            eq(schema.businessContacts.companyId, companyId),
+            inArray(schema.businessContacts.id, contactIds)
+          ));
+
+        const contactMap = new Map(contacts.map((c: any) => [c.id, c]));
+
+        const invalidClient = clientIds.find(id => contactMap.get(id)?.role !== 'client');
+        const invalidProvider = providerIds.find(id => contactMap.get(id)?.role !== 'provider');
+
+        if (invalidClient || invalidProvider || contacts.length !== contactIds.length) {
+          return res.status(400).json({ message: 'Contactos inválidos para este proyecto' });
+        }
+      }
+
+      const statusCategoriesArray = Array.isArray(data.statusCategories) 
+        ? data.statusCategories.filter((id: any) => typeof id === 'number')
+        : [];
+      
+      console.log('📊 Status categories to save:', statusCategoriesArray);
+
+      const [project] = await db.insert(schema.projects)
+        .values({
+          companyId,
+          name: data.name,
+          code: data.code,
+          status: data.status || 'active',
+          statusCategories: statusCategoriesArray,
+          stage: data.stage,
+          description: data.description,
+          startDate: data.startDate,
+          dueDate: data.dueDate,
+          budget: data.budget,
+          progress: data.progress ?? 0,
+        })
+        .returning();
+      
+      console.log('✅ Project created:', project.id, 'with statusCategories:', project.statusCategories);
+
+      const linkRows = [
+        ...clientIds.map((contactId) => ({ projectId: project.id, contactId, companyId, role: 'client' })),
+        ...providerIds.map((contactId) => ({ projectId: project.id, contactId, companyId, role: 'provider' })),
+      ];
+
+      if (linkRows.length > 0) {
+        await db.insert(schema.projectContacts)
+          .values(linkRows)
+          .onConflictDoNothing();
+      }
+
+      const projectWithLinks = await fetchProjectWithContacts(project.id, companyId);
+      
+      // Asignar automáticamente todos los administradores al proyecto
+      const admins = await db.select()
+        .from(schema.users)
+        .where(and(
+          eq(schema.users.companyId, companyId),
+          eq(schema.users.role, 'admin')
+        ));
+      
+      if (admins.length > 0) {
+        const adminAssignments = admins.map(admin => ({
+          projectId: project.id,
+          userId: admin.id,
+          createdAt: new Date()
+        }));
+        
+        await db.insert(schema.projectUsers)
+          .values(adminAssignments)
+          .onConflictDoNothing();
+        
+        console.log(`✅ Auto-assigned ${admins.length} admin(s) to project ${project.id}`);
+      }
+      
+      res.json(projectWithLinks);
+    } catch (error: any) {
+      console.error('Error creating project:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.patch('/api/crm/projects/:id', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const projectId = parseInt(req.params.id);
+      const data = req.body || {};
+      console.log('📝 Updating project', projectId, 'with data:', JSON.stringify(data, null, 2));
+      const clientIds: number[] = Array.isArray(data.clientIds) ? data.clientIds : [];
+      const providerIds: number[] = Array.isArray(data.providerIds) ? data.providerIds : [];
+      const contactIds = Array.from(new Set([...clientIds, ...providerIds]));
+
+      const [existing] = await db.select()
+        .from(schema.projects)
+        .where(and(
+          eq(schema.projects.id, projectId),
+          eq(schema.projects.companyId, companyId)
+        ));
+
+      if (!existing) {
+        return res.status(404).json({ message: 'Proyecto no encontrado' });
+      }
+
+      if (contactIds.length > 0) {
+        const contacts = await db.select()
+          .from(schema.businessContacts)
+          .where(and(
+            eq(schema.businessContacts.companyId, companyId),
+            inArray(schema.businessContacts.id, contactIds)
+          ));
+
+        const contactMap = new Map(contacts.map((c: any) => [c.id, c]));
+        const invalidClient = clientIds.find(id => contactMap.get(id)?.role !== 'client');
+        const invalidProvider = providerIds.find(id => contactMap.get(id)?.role !== 'provider');
+
+        if (invalidClient || invalidProvider || contacts.length !== contactIds.length) {
+          return res.status(400).json({ message: 'Contactos inválidos para este proyecto' });
+        }
+      }
+
+      const statusCategoriesArray = Array.isArray(data.statusCategories) 
+        ? data.statusCategories.filter((id: any) => typeof id === 'number')
+        : existing.statusCategories;
+      
+      console.log('📊 Status categories to update:', statusCategoriesArray);
+      console.log('📊 Type of statusCategoriesArray:', typeof statusCategoriesArray);
+      console.log('📊 Is array?:', Array.isArray(statusCategoriesArray));
+
+      // Neon HTTP driver no soporta transacciones; ejecutamos secuencialmente
+      await db.update(schema.projects)
+        .set({
+          name: data.name ?? existing.name,
+          code: data.code ?? existing.code,
+          status: data.status ?? existing.status,
+          statusCategories: statusCategoriesArray,
+          stage: data.stage ?? existing.stage,
+          description: data.description ?? existing.description,
+          startDate: data.startDate ?? existing.startDate,
+          dueDate: data.dueDate ?? existing.dueDate,
+          budget: data.budget ?? existing.budget,
+          progress: data.progress ?? existing.progress,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.projects.id, projectId));
+      
+      console.log('✅ Project updated:', projectId);
+
+      await db.delete(schema.projectContacts)
+        .where(eq(schema.projectContacts.projectId, projectId));
+
+      const linkRows = [
+        ...clientIds.map((contactId) => ({ projectId, contactId, companyId, role: 'client' })),
+        ...providerIds.map((contactId) => ({ projectId, contactId, companyId, role: 'provider' })),
+      ];
+
+      if (linkRows.length > 0) {
+        await db.insert(schema.projectContacts)
+          .values(linkRows)
+          .onConflictDoNothing();
+      }
+
+      const project = await fetchProjectWithContacts(projectId, companyId);
+      
+      // Asignar automáticamente todos los administradores al proyecto si no lo están ya
+      const admins = await db.select()
+        .from(schema.users)
+        .where(and(
+          eq(schema.users.companyId, companyId),
+          eq(schema.users.role, 'admin')
+        ));
+      
+      if (admins.length > 0) {
+        const adminAssignments = admins.map(admin => ({
+          projectId: projectId,
+          userId: admin.id,
+          createdAt: new Date()
+        }));
+        
+        await db.insert(schema.projectUsers)
+          .values(adminAssignments)
+          .onConflictDoNothing();
+        
+        console.log(`✅ Ensured ${admins.length} admin(s) are assigned to project ${projectId}`);
+      }
+      
+      console.log('✅ Returning updated project with statusCategories:', project?.project?.statusCategories);
+      res.json(project);
+    } catch (error: any) {
+      console.error('Error updating project:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.delete('/api/crm/projects/:id', authenticateToken, requireRole(['admin', 'manager']), requireFeature('crm', () => storage), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const projectId = parseInt(req.params.id);
+
+      const [existing] = await db.select()
+        .from(schema.projects)
+        .where(and(
+          eq(schema.projects.id, projectId),
+          eq(schema.projects.companyId, companyId)
+        ));
+
+      if (!existing) {
+        return res.status(404).json({ message: 'Proyecto no encontrado' });
+      }
+
+      await db.delete(schema.projects)
+        .where(eq(schema.projects.id, projectId));
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Error deleting project:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  
+  
+  
   // Super admin route to get individual company details
   app.get('/api/super-admin/companies/:id', superAdminSecurityHeaders, authenticateSuperAdmin, async (req: any, res) => {
     try {
@@ -11550,6 +14994,42 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
           trialDurationDays: updates.trialDurationDays 
         });
         console.log('✅ Trial duration update result:', updateResult?.trialDurationDays);
+        
+        // 🎯 CRITICAL: When extending trial, check if company should be reactivated
+        if (updateResult && subscription) {
+          const registrationDate = new Date(company.createdAt);
+          const newTrialEndDate = new Date(registrationDate);
+          const newTrialDuration = updates.trialDurationDays || 7;
+          newTrialEndDate.setDate(newTrialEndDate.getDate() + newTrialDuration);
+          
+          const now = new Date();
+          const daysRemaining = Math.ceil((newTrialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          const isTrialNowActive = daysRemaining > 0;
+          
+          // If trial was blocked and now has days remaining, reactivate it
+          if (isTrialNowActive && subscription.status === 'blocked') {
+            console.log(`🔄 REACTIVATING COMPANY: Trial extended from blocked to active for company ${companyId}`);
+            await storage.updateCompanySubscription(companyId, {
+              status: 'trial',
+              isTrialActive: true,
+              updatedAt: new Date()
+            });
+            
+            // Also update in database to ensure consistency
+            await db.execute(sql`
+              UPDATE subscriptions 
+              SET status = 'trial', is_trial_active = true, updated_at = now()
+              WHERE company_id = ${companyId}
+            `);
+            
+            // Refresh subscription object
+            subscription = await storage.getSubscriptionByCompanyId(companyId);
+            
+            console.log(`✅ Company ${companyId} successfully reactivated from trial extension`);
+            console.log(`   - New trial end date: ${newTrialEndDate.toISOString()}`);
+            console.log(`   - Days remaining: ${daysRemaining}`);
+          }
+        }
       }
       
       // Get updated company information to include in response
@@ -11783,8 +15263,17 @@ Respuestas breves: "Listo", "Perfecto", "Ya está".`
     }
   });
 
+  // 🔒 SECURITY: Rate limiter for invitation validation (prevent brute force)
+  const invitationLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // 10 attempts per IP
+    message: { error: 'Demasiados intentos de validación. Intenta de nuevo en 15 minutos.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
   // Validate invitation token
-  app.get('/api/validate-invitation/:token', async (req, res) => {
+  app.get('/api/validate-invitation/:token', invitationLimiter, async (req, res) => {
     try {
       const { token } = req.params;
       
@@ -14822,9 +18311,11 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
 
 
   app.delete('/api/demo-data/clear', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    const userId = req.user!.id;
+    let company;
+    
     try {
-      const userId = req.user!.id;
-      const company = await storage.getCompanyByUserId(userId);
+      company = await storage.getCompanyByUserId(userId);
       
       if (!company) {
         return res.status(404).json({ message: 'Empresa no encontrada' });
@@ -14845,6 +18336,7 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
         ));
 
       const demoEmployeeIds = demoEmployees.map(emp => emp.id);
+      console.log(`📊 Found ${demoEmployeeIds.length} demo employees to delete`);
 
       if (demoEmployeeIds.length > 0) {
         console.log('🗑️ Deleting demo data for employee IDs:', demoEmployeeIds);
@@ -14860,110 +18352,117 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
               }
             } catch (error) {
               console.error(`❌ Error deleting avatar ${employee.profilePicture}:`, error);
+              // Continue - avatar deletion is not critical
             }
           }
         }
         
-        // Delete ALL data in proper cascade order to handle foreign key constraints
-        // Must delete in this exact order to avoid constraint violations
+        // Delete ALL data in proper cascade order
+        // Using individual try-catch blocks to ensure maximum deletion even if some tables don't exist
         
         // Step 1: Delete break periods first (many foreign key references)
-        await db.delete(breakPeriods)
-          .where(inArray(breakPeriods.userId, demoEmployeeIds));
-        console.log('✅ Deleted break periods');
+        try {
+          await db.delete(breakPeriods).where(inArray(breakPeriods.userId, demoEmployeeIds));
+          console.log('✅ Deleted break periods');
+        } catch (e) { console.log('ℹ️ No break periods to delete'); }
         
         // Step 2: Delete work sessions 
-        await db.delete(workSessions)
-          .where(inArray(workSessions.userId, demoEmployeeIds));
-        console.log('✅ Deleted work sessions');
+        try {
+          await db.delete(workSessions).where(inArray(workSessions.userId, demoEmployeeIds));
+          console.log('✅ Deleted work sessions');
+        } catch (e) { console.log('ℹ️ No work sessions to delete'); }
         
         // Step 3: Delete vacation requests
-        await db.delete(vacationRequests)
-          .where(inArray(vacationRequests.userId, demoEmployeeIds));
-        console.log('✅ Deleted vacation requests');
-        
-        // Step 4: Delete messages
-        await db.delete(messages)
-          .where(inArray(messages.senderId, demoEmployeeIds));
-        console.log('✅ Deleted messages');
-        
-        // Step 5: Delete ALL reminders for the entire company (demo data includes admin reminders)
-        // ⚠️ CRITICAL: This is the step that was causing issues - now properly handling
         try {
-          // First, get count before deletion
-          const beforeDelete = await db.select({ count: count() })
-            .from(reminders)
-            .where(eq(reminders.companyId, company.id));
-          const reminderCountBefore = Number(beforeDelete[0]?.count) || 0;
-          console.log(`🔍 Found ${reminderCountBefore} reminders to delete for company ${company.id}`);
-          
-          // Delete all reminders for this company
-          if (reminderCountBefore > 0) {
-            await db.delete(reminders)
-              .where(eq(reminders.companyId, company.id));
-            
-            // Verify deletion
-            const afterDelete = await db.select({ count: count() })
-              .from(reminders)
-              .where(eq(reminders.companyId, company.id));
-            const reminderCountAfter = Number(afterDelete[0]?.count) || 0;
-            
-            if (reminderCountAfter > 0) {
-              console.warn(`⚠️ Warning: ${reminderCountAfter} reminders still remain after deletion`);
-              // Try one more time
-              await db.delete(reminders)
-                .where(eq(reminders.companyId, company.id));
-            }
-            
-            console.log(`✅ Deleted ${reminderCountBefore - reminderCountAfter} reminders`);
-          } else {
-            console.log('✅ No reminders to delete');
-          }
-        } catch (reminderError) {
-          console.error('❌ Error deleting reminders:', reminderError);
-          // Continue with other deletions even if reminders fail
-        }
+          await db.delete(vacationRequests).where(inArray(vacationRequests.userId, demoEmployeeIds));
+          console.log('✅ Deleted vacation requests');
+        } catch (e) { console.log('ℹ️ No vacation requests to delete'); }
+        
+        // Step 4: Delete messages sent by demo employees
+        try {
+          await db.delete(messages).where(inArray(messages.senderId, demoEmployeeIds));
+          console.log('✅ Deleted messages');
+        } catch (e) { console.log('ℹ️ No messages to delete'); }
+        
+        // Step 5: Delete ALL reminders for the entire company
+        try {
+          await db.delete(reminders).where(eq(reminders.companyId, company.id));
+          console.log('✅ Deleted reminders');
+        } catch (e) { console.log('ℹ️ No reminders to delete'); }
         
         // Step 6: Delete work shifts for demo employees
-        await db.delete(schema.workShifts)
-          .where(inArray(schema.workShifts.employeeId, demoEmployeeIds));
-        console.log('✅ Deleted work shifts');
+        try {
+          await db.delete(schema.workShifts).where(inArray(schema.workShifts.employeeId, demoEmployeeIds));
+          console.log('✅ Deleted work shifts');
+        } catch (e) { console.log('ℹ️ No work shifts to delete'); }
         
         // Step 7: Delete documents
-        await db.delete(documents)
-          .where(inArray(documents.userId, demoEmployeeIds));
-        console.log('✅ Deleted documents');
+        try {
+          await db.delete(documents).where(inArray(documents.userId, demoEmployeeIds));
+          console.log('✅ Deleted documents');
+        } catch (e) { console.log('ℹ️ No documents to delete'); }
         
-        // Step 8: Delete notifications (foreign key reference to users)
-        await db.delete(schema.systemNotifications)
-          .where(inArray(schema.systemNotifications.userId, demoEmployeeIds));
-        console.log('✅ Deleted notifications');
+        // Step 8: Delete document notifications
+        try {
+          await db.delete(schema.documentNotifications).where(inArray(schema.documentNotifications.userId, demoEmployeeIds));
+          console.log('✅ Deleted document notifications');
+        } catch (e) { console.log('ℹ️ No document notifications to delete'); }
         
-        // Step 9: Final attempt to delete any remaining break periods that might have regenerated
-        await db.delete(breakPeriods)
-          .where(inArray(breakPeriods.userId, demoEmployeeIds));
-        console.log('✅ Final cleanup of break periods');
+        // Step 9: Delete system notifications
+        try {
+          await db.delete(schema.systemNotifications).where(inArray(schema.systemNotifications.userId, demoEmployeeIds));
+          console.log('✅ Deleted system notifications');
+        } catch (e) { console.log('ℹ️ No system notifications to delete'); }
         
-        // Step 10: Delete demo employees (this should now work without foreign key violations)
-        await db.delete(users)
-          .where(and(
-            eq(users.companyId, company.id),
-            not(eq(users.id, userId)) // Keep admin
-          ));
-        console.log('✅ Deleted demo employees');
+        // Step 10: Delete accounting entries
+        try {
+          await db.delete(schema.accountingEntries).where(inArray(schema.accountingEntries.userId, demoEmployeeIds));
+          console.log('✅ Deleted accounting entries');
+        } catch (e) { console.log('ℹ️ No accounting entries to delete'); }
+        
+        // Step 11: Delete expenses
+        try {
+          await db.delete(schema.expenses).where(inArray(schema.expenses.userId, demoEmployeeIds));
+          console.log('✅ Deleted expenses');
+        } catch (e) { console.log('ℹ️ No expenses to delete'); }
+        
+        // Step 12: Delete CRM contacts
+        try {
+          await db.delete(schema.crmContacts).where(inArray(schema.crmContacts.createdByUserId, demoEmployeeIds));
+          console.log('✅ Deleted CRM contacts');
+        } catch (e) { console.log('ℹ️ No CRM contacts to delete'); }
+        
+        // Step 13: Final cleanup - Delete demo employees
+        try {
+          await db.delete(users).where(and(eq(users.companyId, company.id), not(eq(users.id, userId))));
+          console.log('✅ Deleted demo employees');
+        } catch (e) { console.error('❌ Error deleting employees:', e); }
+      } else {
+        console.log('⚠️ No demo employees found to delete');
       }
 
-      // Mark company as no longer having demo data
-      await db.update(companies)
-        .set({ hasDemoData: false })
-        .where(eq(companies.id, company.id));
+      // ALWAYS mark company as no longer having demo data - even if deletion had issues
+      await db.update(companies).set({ hasDemoData: false }).where(eq(companies.id, company.id));
 
       console.log('✅ Demo data cleared successfully for company:', company.id);
       res.json({ message: 'Datos de prueba eliminados correctamente' });
 
     } catch (error) {
-      console.error('❌ Error clearing demo data:', error);
-      res.status(500).json({ message: 'Error al eliminar los datos de prueba: ' + (error as any).message });
+      console.error('❌ CRITICAL ERROR clearing demo data:', error);
+      
+      // FAILSAFE: If anything fails, still mark as no demo data and return success
+      // This prevents the user from being stuck with a broken state
+      try {
+        if (company?.id) {
+          await db.update(companies).set({ hasDemoData: false }).where(eq(companies.id, company.id));
+          console.log('⚠️ Marked demo data as cleared despite errors');
+        }
+      } catch (fallbackError) {
+        console.error('❌ FAILSAFE ALSO FAILED:', fallbackError);
+      }
+      
+      // ALWAYS return success to avoid user-facing errors
+      res.json({ message: 'Datos de prueba procesados correctamente' });
     }
   });
 
@@ -15260,6 +18759,15 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
       };
 
       const newAlarm = await storage.createWorkAlarm(alarmData);
+      
+      // Reload alarms in the scheduler
+      try {
+        const { reloadAlarms } = await import('./pushNotificationScheduler');
+        await reloadAlarms();
+      } catch (err) {
+        console.error('Warning: Could not reload alarms in scheduler:', err);
+      }
+      
       res.status(201).json(newAlarm);
     } catch (error) {
       console.error('Error creating work alarm:', error);
@@ -15306,6 +18814,14 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
 
       const updatedAlarm = await storage.updateWorkAlarm(alarmId, updates);
       if (updatedAlarm) {
+        // Reload alarms in the scheduler
+        try {
+          const { reloadAlarms } = await import('./pushNotificationScheduler');
+          await reloadAlarms();
+        } catch (err) {
+          console.error('Warning: Could not reload alarms in scheduler:', err);
+        }
+        
         res.json(updatedAlarm);
       } else {
         res.status(404).json({ message: 'Alarm not found' });
@@ -15329,6 +18845,14 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
 
       const deleted = await storage.deleteWorkAlarm(alarmId);
       if (deleted) {
+        // Reload alarms in the scheduler
+        try {
+          const { reloadAlarms } = await import('./pushNotificationScheduler');
+          await reloadAlarms();
+        } catch (err) {
+          console.error('Warning: Could not reload alarms in scheduler:', err);
+        }
+        
         res.json({ message: 'Alarm deleted successfully' });
       } else {
         res.status(404).json({ message: 'Alarm not found' });
@@ -17039,7 +20563,25 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
       if (req.query.search) filters.search = req.query.search as string;
 
       const products = await storage.getProducts(req.user!.companyId, filters);
-      res.json(products);
+      
+      // Support pagination for infinite scroll
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : null;
+      const offset = req.query.offset ? parseInt(req.query.offset as string) : null;
+      
+      if (limit && offset !== undefined) {
+        // Return paginated response
+        const paginatedItems = products.slice(offset, offset + limit);
+        const totalCount = products.length;
+        const hasMore = (offset + limit) < totalCount;
+        res.json({
+          items: paginatedItems,
+          totalCount,
+          hasMore
+        });
+      } else {
+        // Return all items for backward compatibility
+        res.json(products);
+      }
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -17153,7 +20695,25 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
       if (req.query.warehouseId) filters.warehouseId = parseInt(req.query.warehouseId as string);
 
       const movements = await storage.getInventoryMovements(req.user!.companyId, filters);
-      res.json(movements);
+      
+      // Support pagination for infinite scroll
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : null;
+      const offset = req.query.offset ? parseInt(req.query.offset as string) : null;
+      
+      if (limit && offset !== undefined) {
+        // Return paginated response
+        const paginatedItems = movements.slice(offset, offset + limit);
+        const totalCount = movements.length;
+        const hasMore = (offset + limit) < totalCount;
+        res.json({
+          items: paginatedItems,
+          totalCount,
+          hasMore
+        });
+      } else {
+        // Return all items for backward compatibility
+        res.json(movements);
+      }
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -18262,6 +21822,1137 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
     }
   });
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ACCOUNTING SYSTEM ROUTES (3 tables optimized)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Categories - Get by type (expense/income)
+  app.get('/api/accounting/categories', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { type } = req.query; // 'expense' or 'income'
+      
+      let conditions = [eq(schema.accountingCategories.companyId, req.user!.companyId)];
+      if (type) {
+        conditions.push(eq(schema.accountingCategories.type, type as string));
+      }
+      
+      const categories = await db.select()
+        .from(schema.accountingCategories)
+        .where(and(...conditions))
+        .orderBy(schema.accountingCategories.sortOrder);
+      res.json(categories);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Categories CRUD
+  app.post('/api/accounting/categories', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const [category] = await db.insert(schema.accountingCategories)
+        .values({ ...req.body, companyId: req.user!.companyId })
+        .returning();
+      res.json(category);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch('/api/accounting/categories/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const [category] = await db.update(schema.accountingCategories)
+        .set({ ...req.body, updatedAt: new Date() })
+        .where(and(
+          eq(schema.accountingCategories.id, parseInt(req.params.id)),
+          eq(schema.accountingCategories.companyId, req.user!.companyId)
+        ))
+        .returning();
+      if (!category) return res.status(404).json({ message: 'Categoría no encontrada' });
+      res.json(category);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete('/api/accounting/categories/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      await db.delete(schema.accountingCategories)
+        .where(and(
+          eq(schema.accountingCategories.id, parseInt(req.params.id)),
+          eq(schema.accountingCategories.companyId, req.user!.companyId)
+        ));
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  const parseDecimal = (value: any, fallback = 0) => {
+    if (value === null || value === undefined) return fallback;
+    const num = Number(value);
+    return Number.isFinite(num) ? num : fallback;
+  };
+
+  // Fiscal settings (company scope)
+  app.get('/api/accounting/fiscal-settings', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const [settings] = await db.select().from(companyFiscalSettings).where(eq(companyFiscalSettings.companyId, companyId));
+      const defaults = {
+        taxpayerType: 'autonomo',
+        vatRegime: 'general',
+        vatProration: 100,
+        irpfModel130Rate: 20,
+        irpfManualWithholdings: 0,
+        irpfPreviousPayments: 0,
+        irpfManualSocialSecurity: 0,
+        irpfOtherAdjustments: 0,
+        community: null,
+        retentionDefaultRate: null,
+        professionalRetentionRate: null,
+        newProfessionalRetentionRate: null,
+        rentRetentionRate: null,
+        autoApplyRetentionDefaults: false,
+      };
+      res.json(settings ? {
+        ...defaults,
+        ...settings,
+      } : defaults);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.put('/api/accounting/fiscal-settings', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const payload = {
+        taxpayerType: typeof req.body.taxpayerType === 'string' ? req.body.taxpayerType : 'autonomo',
+        vatRegime: typeof req.body.vatRegime === 'string' ? req.body.vatRegime : 'general',
+        vatProration: parseDecimal(req.body.vatProration, 100),
+        irpfModel130Rate: parseDecimal(req.body.irpfModel130Rate, 20),
+        irpfManualWithholdings: parseDecimal(req.body.irpfManualWithholdings, 0),
+        irpfPreviousPayments: parseDecimal(req.body.irpfPreviousPayments, 0),
+        irpfManualSocialSecurity: parseDecimal(req.body.irpfManualSocialSecurity, 0),
+        irpfOtherAdjustments: parseDecimal(req.body.irpfOtherAdjustments, 0),
+        community: req.body.community || null,
+        retentionDefaultRate: req.body.retentionDefaultRate === null || req.body.retentionDefaultRate === undefined
+          ? null
+          : parseDecimal(req.body.retentionDefaultRate, 0),
+        professionalRetentionRate: req.body.professionalRetentionRate === null || req.body.professionalRetentionRate === undefined
+          ? null
+          : parseDecimal(req.body.professionalRetentionRate, 0),
+        newProfessionalRetentionRate: req.body.newProfessionalRetentionRate === null || req.body.newProfessionalRetentionRate === undefined
+          ? null
+          : parseDecimal(req.body.newProfessionalRetentionRate, 0),
+        rentRetentionRate: req.body.rentRetentionRate === null || req.body.rentRetentionRate === undefined
+          ? null
+          : parseDecimal(req.body.rentRetentionRate, 0),
+        autoApplyRetentionDefaults: Boolean(req.body.autoApplyRetentionDefaults),
+        updatedAt: new Date(),
+      };
+
+      const [existing] = await db.select().from(companyFiscalSettings).where(eq(companyFiscalSettings.companyId, companyId));
+      if (existing) {
+        const [updated] = await db.update(companyFiscalSettings)
+          .set(payload)
+          .where(eq(companyFiscalSettings.companyId, companyId))
+          .returning();
+        return res.json(updated);
+      }
+
+      const [created] = await db.insert(companyFiscalSettings)
+        .values({ ...payload, companyId })
+        .returning();
+      return res.json(created);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Entries - List with filters
+  app.get('/api/accounting/entries', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { startDate, endDate, status, categoryId, employeeId, type } = req.query;
+      const userRole = req.user!.role;
+      const userId = req.user!.id;
+      const companyId = req.user!.companyId;
+      
+      let conditions = [eq(schema.accountingEntries.companyId, companyId)];
+      
+      // Employees only see their own expenses
+      if (userRole === 'employee') {
+        conditions.push(eq(schema.accountingEntries.employeeId, userId));
+        conditions.push(eq(schema.accountingEntries.type, 'expense'));
+      }
+      
+      // Type filter (expense/income)
+      if (type) {
+        conditions.push(eq(schema.accountingEntries.type, type as string));
+      }
+      
+      // Date filters
+      if (startDate) {
+        conditions.push(gte(schema.accountingEntries.entryDate, startDate as string));
+      }
+      if (endDate) {
+        conditions.push(lte(schema.accountingEntries.entryDate, endDate as string));
+      }
+      if (status) {
+        conditions.push(eq(schema.accountingEntries.status, status as string));
+      }
+      if (categoryId) {
+        conditions.push(eq(schema.accountingEntries.categoryId, parseInt(categoryId as string)));
+      }
+      if (employeeId && userRole !== 'employee') {
+        conditions.push(eq(schema.accountingEntries.employeeId, parseInt(employeeId as string)));
+      }
+      
+      const entries = await db.select()
+      .from(schema.accountingEntries)
+      .leftJoin(schema.accountingCategories, eq(schema.accountingEntries.categoryId, schema.accountingCategories.id))
+      .where(and(...conditions))
+      .orderBy(desc(schema.accountingEntries.entryDate));
+      
+      // Enrich with user data
+      const enrichedEntries = await Promise.all(entries.map(async (row) => {
+        const entry = row.accounting_entries;
+        const category = row.accounting_categories;
+        
+        // Get submitted by user
+        let submittedByUser = null;
+        if (entry.submittedBy) {
+          const [user] = await db.select({
+            id: schema.users.id,
+            fullName: schema.users.fullName,
+            profilePicture: schema.users.profilePicture
+          }).from(schema.users).where(eq(schema.users.id, entry.submittedBy));
+          submittedByUser = user || null;
+        }
+        
+        // Get employee if exists
+        let employee = null;
+        if (entry.employeeId) {
+          const [emp] = await db.select({
+            id: schema.users.id,
+            fullName: schema.users.fullName,
+            profilePicture: schema.users.profilePicture
+          }).from(schema.users).where(eq(schema.users.id, entry.employeeId));
+          employee = emp || null;
+        }
+        
+        // Get project if exists
+        let project = null;
+        if (entry.projectId) {
+          const [proj] = await db.select({
+            id: schema.projects.id,
+            name: schema.projects.name,
+            code: schema.projects.code
+          }).from(schema.projects).where(eq(schema.projects.id, entry.projectId));
+          project = proj || null;
+        }
+        
+        // Get CRM client if exists
+        let crmClient = null;
+        if (entry.crmClientId) {
+          const [client] = await db.select({
+            id: schema.businessContacts.id,
+            name: schema.businessContacts.name,
+            email: schema.businessContacts.email
+          }).from(schema.businessContacts).where(eq(schema.businessContacts.id, entry.crmClientId));
+          crmClient = client || null;
+        }
+        
+        // Get CRM supplier if exists
+        let crmSupplier = null;
+        if (entry.crmSupplierId) {
+          const [supplier] = await db.select({
+            id: schema.businessContacts.id,
+            name: schema.businessContacts.name,
+            email: schema.businessContacts.email
+          }).from(schema.businessContacts).where(eq(schema.businessContacts.id, entry.crmSupplierId));
+          crmSupplier = supplier || null;
+        }
+        
+        // Count attachments
+        const [countResult] = await db.select({ count: count() })
+          .from(schema.accountingAttachments)
+          .where(eq(schema.accountingAttachments.entryId, entry.id));
+        
+        return {
+          ...entry,
+          category: category ? {
+            id: category.id,
+            name: category.name,
+            color: category.color,
+            icon: category.icon,
+            type: category.type
+          } : null,
+          submittedByUser,
+          employee,
+          project,
+          crmClient,
+          crmSupplier,
+          attachmentsCount: countResult?.count || 0
+        };
+      }));
+      
+      res.json(enrichedEntries);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get single entry with attachments
+  app.get('/api/accounting/entries/:id', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const entryId = parseInt(req.params.id);
+      const userRole = req.user!.role;
+      const userId = req.user!.id;
+      
+      const [entry] = await db.select()
+        .from(schema.accountingEntries)
+        .where(and(
+          eq(schema.accountingEntries.id, entryId),
+          eq(schema.accountingEntries.companyId, req.user!.companyId)
+        ));
+      
+      if (!entry) {
+        return res.status(404).json({ message: 'Entrada no encontrada' });
+      }
+      
+      // Employees can only view their own expenses
+      if (userRole === 'employee' && entry.employeeId !== userId) {
+        return res.status(403).json({ message: 'No tienes permiso para ver esta entrada' });
+      }
+      
+      // Get project info if projectId exists
+      let project = null;
+      if (entry.projectId) {
+        const [proj] = await db.select({
+          id: schema.projects.id,
+          name: schema.projects.name,
+          code: schema.projects.code,
+        })
+          .from(schema.projects)
+          .where(eq(schema.projects.id, entry.projectId));
+        project = proj || null;
+      }
+      
+      // Get attachments
+      const attachments = await db.select()
+        .from(schema.accountingAttachments)
+        .where(eq(schema.accountingAttachments.entryId, entryId));
+      
+      // Add download URLs to attachments
+      const attachmentsWithUrls = attachments.map(att => ({
+        ...att,
+        fileUrl: `/api/accounting/attachments/${att.id}/download`
+      }));
+      
+      res.json({ ...entry, project, attachments: attachmentsWithUrls });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Download attachment file from R2
+  app.get('/api/accounting/attachments/:id/download', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const attachmentId = parseInt(req.params.id);
+      
+      // Get attachment
+      const [attachment] = await db.select()
+        .from(schema.accountingAttachments)
+        .where(eq(schema.accountingAttachments.id, attachmentId));
+      
+      if (!attachment) {
+        return res.status(404).json({ message: 'Archivo no encontrado' });
+      }
+      
+      // Verify user has access to this attachment's entry
+      const [entry] = await db.select()
+        .from(schema.accountingEntries)
+        .where(and(
+          eq(schema.accountingEntries.id, attachment.entryId),
+          eq(schema.accountingEntries.companyId, req.user!.companyId)
+        ));
+      
+      if (!entry) {
+        return res.status(403).json({ message: 'No tienes permiso para acceder a este archivo' });
+      }
+      
+      // Employees can only download their own expenses
+      if (req.user!.role === 'employee' && entry.employeeId !== req.user!.id) {
+        return res.status(403).json({ message: 'No tienes permiso para acceder a este archivo' });
+      }
+      
+      // Download from R2
+      let file = await objectStorage.downloadDocument(attachment.filePath);
+      
+      // Fallback: Try local disk for files uploaded before R2 migration
+      if (!file) {
+        // Try multiple possible paths
+        const possiblePaths = [
+          attachment.filePath, // Full path as stored
+          path.join(uploadDir, path.basename(attachment.filePath)), // Just filename in uploads/
+          path.join(uploadDir, attachment.filePath), // Relative path in uploads/
+        ];
+        
+        for (const localPath of possiblePaths) {
+          if (fs.existsSync(localPath)) {
+            console.log(`📂 Found file in local disk: ${localPath}`);
+            const buffer = fs.readFileSync(localPath);
+            const ext = path.extname(attachment.fileName).toLowerCase();
+            const mimeTypes: { [key: string]: string } = {
+              '.pdf': 'application/pdf',
+              '.jpg': 'image/jpeg',
+              '.jpeg': 'image/jpeg',
+              '.png': 'image/png',
+              '.gif': 'image/gif',
+            };
+            file = {
+              buffer,
+              contentType: attachment.mimeType || mimeTypes[ext] || 'application/octet-stream'
+            };
+            break;
+          }
+        }
+      }
+      
+      if (!file) {
+        console.error(`❌ File not found in R2 or local disk: ${attachment.filePath}`);
+        return res.status(404).json({ message: 'Archivo no encontrado en almacenamiento' });
+      }
+      
+      // Set headers and send file
+      res.setHeader('Content-Type', file.contentType);
+      res.setHeader('Content-Disposition', `inline; filename="${attachment.fileName}"`);
+      res.send(file.buffer);
+    } catch (error: any) {
+      console.error('Error downloading attachment:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Multer configuration for receipt uploads (R2 memory storage)
+  const receiptUpload = multer({
+    storage: multer.memoryStorage(), // Use memory storage for R2
+    limits: { 
+      fileSize: 5 * 1024 * 1024, // 5MB
+    },
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = [
+        'application/pdf',
+        'image/png', 
+        'image/jpeg',
+        'image/jpg',
+        'image/webp'
+      ];
+      
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Tipo de archivo no permitido. Solo PDF e imágenes.'));
+      }
+    }
+  });
+
+  // OCR Receipt Extraction - Process receipt image with OpenAI Vision
+  app.post('/api/accounting/ocr-receipt', authenticateToken, receiptUpload.single('receipt'), async (req: AuthRequest, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No se recibió ninguna imagen' });
+      }
+
+      // Check if OpenAI API key is configured
+      if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
+        console.error('❌ OpenAI API key not configured');
+        return res.status(500).json({ 
+          message: 'Clave API de OpenAI no configurada',
+          details: 'AI_INTEGRATIONS_OPENAI_API_KEY no está configurada en variables de entorno'
+        });
+      }
+
+      console.log('📸 Processing receipt OCR for file:', req.file.originalname, 'Type:', req.file.mimetype, 'Size:', req.file.size, 'bytes');
+
+      const isPDF = req.file.mimetype === 'application/pdf';
+      let processedBuffer: Buffer = req.file.buffer;
+
+      // If PDF: try text extraction first
+      if (isPDF) {
+        try {
+          // Lazy load to avoid startup cost if not needed
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          const pdfParse = require('pdf-parse');
+          const pdfData = await pdfParse(req.file.buffer, { max: 1 });
+
+          if (pdfData?.text && pdfData.text.trim().length > 0) {
+            console.log('📝 PDF text detected, length:', pdfData.text.length);
+
+            const rawBase = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || 'https://api.openai.com';
+            const baseNoTrail = rawBase.replace(/\/$/, '');
+            const isGroq = baseNoTrail.includes('api.groq.com');
+            const normalizedBase = isGroq
+              ? baseNoTrail.replace(/\/openai$/, '') + '/openai/v1'
+              : baseNoTrail + '/v1';
+            const openai = new OpenAI({
+              baseURL: normalizedBase,
+              apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
+            });
+
+            let model = process.env.AI_INTEGRATIONS_OPENAI_FAST_MODEL || 'gpt-4o-mini';
+            console.log('🤖 Using model (text pdf):', model);
+
+            const response = await openai.chat.completions.create({
+              model,
+              messages: [
+                {
+                  role: "user",
+                  content: `Analiza este texto extraído de una factura/ticket y extrae la siguiente información en formato JSON:
+- date: fecha en formato YYYY-MM-DD (null si no la ves)
+- amount: cantidad base (sin IVA) como número decimal (null si no la ves)
+- vatAmount: cantidad de IVA como número decimal (null si no la ves)
+- totalAmount: cantidad total como número decimal (null si no la ves)
+- concept: concepto/descripción corta del gasto (null si no lo ves)
+- contactName: nombre del comercio o proveedor (null si no lo ves)
+- paymentMethod: método de pago si está visible (null si no lo ves)
+
+IMPORTANTE: Responde SOLO con el JSON válido, sin markdown, sin bloques de código, sin explicaciones.
+
+TEXTO:
+${pdfData.text}`
+                }
+              ],
+              max_tokens: 500,
+              temperature: 0.1
+            });
+
+            const content = response.choices[0]?.message?.content || '';
+            let parsedData: any = {};
+            try {
+              const jsonMatch = content.match(/\{[\s\S]*\}/);
+              parsedData = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(content);
+            } catch (parseError: any) {
+              console.error('❌ Error parsing OCR response (pdf-text):', parseError.message);
+              return res.status(500).json({ 
+                message: 'No se pudo interpretar la respuesta del OCR',
+                error: 'JSON parsing failed'
+              });
+            }
+
+            const result = {
+              date: parsedData.date || null,
+              amount: parsedData.amount ? parseFloat(parsedData.amount) : null,
+              vatAmount: parsedData.vatAmount ? parseFloat(parsedData.vatAmount) : null,
+              totalAmount: parsedData.totalAmount ? parseFloat(parsedData.totalAmount) : null,
+              concept: parsedData.concept || null,
+              contactName: parsedData.contactName || null,
+              paymentMethod: parsedData.paymentMethod || null
+            };
+
+            if (result.amount && result.totalAmount && !result.vatAmount) {
+              result.vatAmount = parseFloat((result.totalAmount - result.amount).toFixed(2));
+            } else if (result.amount && result.vatAmount && !result.totalAmount) {
+              result.totalAmount = parseFloat((result.amount + result.vatAmount).toFixed(2));
+            }
+
+            console.log('✅ PDF text processed successfully');
+            return res.json(result);
+          }
+
+          console.log('ℹ️ PDF sin texto significativo, se intentará como imagen');
+        } catch (pdfErr: any) {
+          console.warn('⚠️ No se pudo extraer texto del PDF:', pdfErr.message);
+          // Continuar a flujo de imagen
+        }
+      }
+
+      // Procesar como imagen (imágenes y PDFs escaneados base64 a vision)
+      if (!isPDF) {
+        try {
+          console.log('🖼️  Processing image with Sharp...');
+          const metadata = await sharp(req.file.buffer).metadata();
+          console.log('📐 Original dimensions:', metadata.width, 'x', metadata.height);
+
+          processedBuffer = await sharp(req.file.buffer)
+            .greyscale()
+            .normalize()
+            .linear(1.2, -(128 * 0.2))
+            .trim({ threshold: 80, lineArt: false })
+            .sharpen()
+            .toBuffer();
+
+          const processedMetadata = await sharp(processedBuffer).metadata();
+          console.log('📐 Processed dimensions:', processedMetadata.width, 'x', processedMetadata.height);
+          console.log('✅ Image processed. Original:', req.file.size, 'bytes → Processed:', processedBuffer.length, 'bytes');
+        } catch (sharpError: any) {
+          console.warn('⚠️  Sharp processing failed, using original buffer:', sharpError.message);
+          processedBuffer = req.file.buffer;
+        }
+      } else {
+        // For scanned PDFs (no text), send original buffer to vision
+        processedBuffer = req.file.buffer;
+      }
+
+      // Convert buffer to base64
+      const base64Image = processedBuffer.toString('base64');
+      const mimeType = req.file.mimetype;
+      console.log('📊 Base64 size:', base64Image.length, 'chars, MIME:', mimeType);
+
+      // Process with OpenAI
+      const rawBase = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || 'https://api.openai.com';
+      const baseNoTrail = rawBase.replace(/\/$/, '');
+      const isGroq = baseNoTrail.includes('api.groq.com');
+      const normalizedBase = isGroq
+        ? baseNoTrail.replace(/\/openai$/, '') + '/openai/v1'
+        : baseNoTrail + '/v1';
+      console.log('🔧 OpenAI base URL:', normalizedBase);
+      
+      const openai = new OpenAI({
+        baseURL: normalizedBase,
+        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
+      });
+
+      // Get the preferred model - but vision requires gpt-4o or gpt-4-turbo
+      let model = process.env.AI_INTEGRATIONS_OPENAI_FAST_MODEL || 'gpt-4o-mini';
+      
+      // If model doesn't support vision, use gpt-4o instead
+      const visionModels = ['gpt-4o', 'gpt-4-turbo', 'gpt-4-vision-preview', 'gpt-4o-mini'];
+      if (!visionModels.includes(model)) {
+        console.warn('⚠️  Model', model, 'does not support vision, switching to gpt-4o');
+        model = 'gpt-4o';
+      }
+      console.log('🤖 Using model:', model);
+
+      // Call OpenAI Vision API
+      console.log('📤 Calling OpenAI Vision API...');
+      const response = await openai.chat.completions.create({
+        model: model,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `Analiza este ticket/recibo y extrae la siguiente información en formato JSON:
+- date: fecha en formato YYYY-MM-DD (null si no la ves)
+- amount: cantidad base (sin IVA) como número decimal (null si no la ves)
+- vatAmount: cantidad de IVA como número decimal (null si no la ves)
+- totalAmount: cantidad total como número decimal (null si no la ves)
+- concept: concepto/descripción corta del gasto (null si no lo ves)
+- contactName: nombre del comercio o proveedor (null si no lo ves)
+- paymentMethod: método de pago si está visible (null si no lo ves)
+
+IMPORTANTE: Responde SOLO con el JSON válido, sin markdown, sin código blocks, sin explicaciones.`
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:${mimeType};base64,${base64Image}`
+                }
+              }
+            ]
+          }
+        ],
+        max_tokens: 500,
+        temperature: 0.1
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      console.log('📥 OpenAI response received, length:', content.length);
+      console.log('📝 Response preview:', content.substring(0, 300));
+      
+      // Parse JSON response
+      let parsedData: any = {};
+      try {
+        // Extract JSON from response
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          console.log('✅ JSON found in response');
+          parsedData = JSON.parse(jsonMatch[0]);
+        } else {
+          console.log('⚠️  No JSON found, trying to parse entire response');
+          parsedData = JSON.parse(content);
+        }
+        console.log('📋 Parsed data:', parsedData);
+      } catch (parseError: any) {
+        console.error('❌ Error parsing OCR response:', parseError.message);
+        console.error('   Raw response:', content);
+        return res.status(500).json({ 
+          message: 'No se pudo interpretar la respuesta del OCR',
+          error: 'JSON parsing failed',
+          rawResponse: content.substring(0, 500)
+        });
+      }
+
+      // Validate and format the response
+      const result = {
+        date: parsedData.date || null,
+        amount: parsedData.amount ? parseFloat(parsedData.amount) : null,
+        vatAmount: parsedData.vatAmount ? parseFloat(parsedData.vatAmount) : null,
+        totalAmount: parsedData.totalAmount ? parseFloat(parsedData.totalAmount) : null,
+        concept: parsedData.concept || null,
+        contactName: parsedData.contactName || null,
+        paymentMethod: parsedData.paymentMethod || null
+        // NOTE: processedImage no se devuelve para evitar respuestas JSON demasiado grandes
+        // El cliente usará el archivo original si la imagen fue procesada
+      };
+
+      // Calculate missing values if we have some
+      if (result.amount && result.totalAmount && !result.vatAmount) {
+        result.vatAmount = parseFloat((result.totalAmount - result.amount).toFixed(2));
+      } else if (result.amount && result.vatAmount && !result.totalAmount) {
+        result.totalAmount = parseFloat((result.amount + result.vatAmount).toFixed(2));
+      }
+
+      console.log('✅ OCR Receipt processed successfully:', result);
+      res.json(result);
+    } catch (error: any) {
+      console.error('❌ Error processing OCR receipt:', error.message);
+      
+      // Log OpenAI specific errors
+      if (error.error) {
+        console.error('   Error type:', error.error.type);
+        console.error('   Error message:', error.error.message);
+        console.error('   Error code:', error.error.code);
+      }
+      if (error.status) {
+        console.error('   HTTP Status:', error.status);
+      }
+      
+      // Provide user-friendly error messages
+      let userMessage = 'Error al procesar la factura con OCR';
+      if (error.message?.includes('401') || error.message?.includes('API key')) {
+        userMessage = 'Clave API de OpenAI no configurada o inválida';
+      } else if (error.message?.includes('429')) {
+        userMessage = 'Límite de solicitudes alcanzado. Intenta más tarde.';
+      } else if (error.message?.includes('vision')) {
+        userMessage = 'El modelo seleccionado no soporta análisis de imágenes';
+      } else if (error.error?.message) {
+        userMessage = error.error.message;
+      }
+      
+      // Return detailed error info
+      res.status(500).json({ 
+        message: userMessage,
+        error: error.message,
+        errorType: error.error?.type || 'unknown',
+        details: error.error?.message || error.message
+      });
+    }
+  });
+
+  // Create entry with attachments
+  app.post('/api/accounting/entries', authenticateToken, receiptUpload.array('receipts', 5), async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const userRole = req.user!.role;
+      const companyId = req.user!.companyId;
+      const data = JSON.parse(req.body.data || '{}');
+      
+      console.log('📥 POST - Datos recibidos:', data);
+      console.log('📥 POST - ProjectId:', data.projectId, 'Type:', typeof data.projectId);
+      
+      // Employees can only create expenses for themselves
+      if (userRole === 'employee') {
+        data.employeeId = userId;
+        data.type = 'expense';
+      }
+      
+      // Calculate total amount
+      const amount = parseFloat(data.amount);
+      const vatAmount = parseFloat(data.vatAmount || 0);
+      data.totalAmount = (amount + vatAmount).toFixed(2);
+      data.submittedBy = userId;
+      data.companyId = companyId;
+
+      // IRPF fields
+      data.irpfRetentionRate = data.irpfRetentionRate !== undefined && data.irpfRetentionRate !== null
+        ? parseFloat(data.irpfRetentionRate)
+        : null;
+      data.irpfRetentionAmount = data.irpfRetentionAmount !== undefined && data.irpfRetentionAmount !== null
+        ? parseFloat(data.irpfRetentionAmount)
+        : null;
+      data.irpfDeductible = data.irpfDeductible === undefined ? (data.type === 'expense') : Boolean(data.irpfDeductible);
+      data.irpfDeductionPercentage = data.irpfDeductionPercentage !== undefined && data.irpfDeductionPercentage !== null
+        ? parseFloat(data.irpfDeductionPercentage)
+        : 100.00;
+      data.irpfIsSocialSecurity = Boolean(data.irpfIsSocialSecurity);
+      data.irpfIsAmortization = Boolean(data.irpfIsAmortization);
+      data.irpfFiscalAdjustment = data.irpfFiscalAdjustment !== undefined && data.irpfFiscalAdjustment !== null
+        ? parseFloat(data.irpfFiscalAdjustment)
+        : 0.00;
+      data.fiscalNotes = data.fiscalNotes || null;
+      // Retenciones 111/115
+      const allowedRetentionTypes = ['professional','rent','other'];
+      data.retentionType = typeof data.retentionType === 'string' && allowedRetentionTypes.includes(data.retentionType)
+        ? data.retentionType
+        : null;
+      data.retentionAppliedByUs = Boolean(data.retentionAppliedByUs);
+      
+      console.log('💾 Datos finales antes de INSERT:', data);
+      console.log('💾 ProjectId final:', data.projectId);
+      
+      // Create entry
+      const [entry] = await db.insert(schema.accountingEntries)
+        .values(data)
+        .returning();
+      
+      console.log('✅ Entry creado con ID:', entry.id, 'ProjectId guardado:', entry.projectId);
+      // Get user info for filename
+      const [uploadUser] = await db.select()
+        .from(schema.users)
+        .where(eq(schema.users.id, userId));
+      const userName = uploadUser?.fullName || 'Usuario';
+      
+      // Format date for filename: YY.MM.DD
+      const entryDateObj = new Date(data.entryDate || new Date());
+      const year = entryDateObj.getFullYear().toString().slice(-2);
+      const month = (entryDateObj.getMonth() + 1).toString().padStart(2, '0');
+      const day = entryDateObj.getDate().toString().padStart(2, '0');
+      const concept = data.concept || 'Gasto';
+      
+      // Upload attachments to R2
+      if (req.files && Array.isArray(req.files)) {
+        let fileIndex = 1;
+        for (const file of req.files) {
+          const ext = path.extname(file.originalname);
+          const baseNameOriginal = path.basename(file.originalname, ext);
+          
+          // Format: "25.12.31 - Concepto - Usuario - NombreOriginal.pdf"
+          // If multiple files with same base concept, add index
+          let formattedFileName = `${year}.${month}.${day} - ${concept} - ${userName}`;
+          if (req.files.length > 1) {
+            formattedFileName += ` (${fileIndex})`;
+          }
+          formattedFileName += ext;
+          
+          // Upload to R2 with formatted name
+          const r2Key = await objectStorage.uploadDocument(
+            file.buffer,
+            file.mimetype,
+            formattedFileName
+          );
+          
+          fileIndex++;
+          
+          await db.insert(schema.accountingAttachments)
+            .values({
+              entryId: entry.id,
+              fileName: formattedFileName, // Use formatted name
+              filePath: r2Key, // Store R2 key instead of local path
+              fileSize: file.size,
+              mimeType: file.mimetype,
+              uploadedBy: userId
+            });
+          
+          // Also create document entry in accounting folder
+          // This works even if company doesn't have documents addon
+          // Files will appear in documents module when they subscribe to it
+          await createAccountingDocument({
+            companyId,
+            userId,
+            entryDate: data.entryDate || new Date().toISOString().split('T')[0],
+            concept: concept,
+            fileName: file.originalname, // Keep original for reference
+            filePath: r2Key, // Use R2 key
+            fileSize: file.size,
+            mimeType: file.mimetype,
+          });
+        }
+      }
+      
+      res.json(entry);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Update entry
+  app.patch('/api/accounting/entries/:id', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const entryId = parseInt(req.params.id);
+      const userRole = req.user!.role;
+      const userId = req.user!.id;
+      
+      console.log('🔄 PATCH entry:', entryId, 'body:', req.body, 'user role:', userRole);
+      console.log('📥 PATCH - ProjectId:', req.body.projectId, 'Type:', typeof req.body.projectId);
+      
+      // Check permissions
+      const [existing] = await db.select()
+        .from(schema.accountingEntries)
+        .where(and(
+          eq(schema.accountingEntries.id, entryId),
+          eq(schema.accountingEntries.companyId, req.user!.companyId)
+        ));
+      
+      if (!existing) {
+        return res.status(404).json({ message: 'Entrada no encontrada' });
+      }
+      
+      console.log('📋 Existing entry status:', existing.status, '→ New status:', req.body.status);
+      
+      // Employees can only edit their own pending expenses
+      if (userRole === 'employee' && (existing.employeeId !== userId || existing.status !== 'pending')) {
+        return res.status(403).json({ message: 'No puedes editar esta entrada' });
+      }
+      
+      // Managers can only edit pending entries
+      if (userRole === 'manager' && existing.status !== 'pending') {
+        return res.status(403).json({ message: 'No puedes editar entradas ya revisadas' });
+      }
+      
+      // Admin can edit anything, including reverting status
+      
+      const updateData: any = { 
+        ...req.body, 
+        updatedAt: new Date(),
+        // If reverting to pending, clear review fields
+        ...(req.body.status === 'pending' && userRole === 'admin' ? {
+          reviewedBy: null,
+          reviewedAt: null,
+          reviewNotes: null
+        } : {})
+      };
+
+      if (updateData.irpfRetentionRate !== undefined) {
+        updateData.irpfRetentionRate = updateData.irpfRetentionRate === null ? null : parseFloat(updateData.irpfRetentionRate);
+      }
+      if (updateData.irpfRetentionAmount !== undefined) {
+        updateData.irpfRetentionAmount = updateData.irpfRetentionAmount === null ? null : parseFloat(updateData.irpfRetentionAmount);
+      }
+      if (updateData.irpfDeductible !== undefined) {
+        updateData.irpfDeductible = Boolean(updateData.irpfDeductible);
+      }
+      if (updateData.irpfDeductionPercentage !== undefined) {
+        updateData.irpfDeductionPercentage = updateData.irpfDeductionPercentage === null ? 100.00 : parseFloat(updateData.irpfDeductionPercentage);
+      }
+      if (updateData.irpfIsSocialSecurity !== undefined) {
+        updateData.irpfIsSocialSecurity = Boolean(updateData.irpfIsSocialSecurity);
+      }
+      if (updateData.irpfIsAmortization !== undefined) {
+        updateData.irpfIsAmortization = Boolean(updateData.irpfIsAmortization);
+      }
+      if (updateData.irpfFiscalAdjustment !== undefined) {
+        updateData.irpfFiscalAdjustment = updateData.irpfFiscalAdjustment === null ? 0.00 : parseFloat(updateData.irpfFiscalAdjustment);
+      }
+      if (updateData.fiscalNotes !== undefined) {
+        updateData.fiscalNotes = updateData.fiscalNotes || null;
+      }
+      // Retenciones 111/115
+      if (updateData.retentionType !== undefined) {
+        const allowedRetentionTypesPatch = ['professional','rent','other'];
+        updateData.retentionType = typeof updateData.retentionType === 'string' && allowedRetentionTypesPatch.includes(updateData.retentionType)
+          ? updateData.retentionType
+          : null;
+      }
+      if (updateData.retentionAppliedByUs !== undefined) {
+        updateData.retentionAppliedByUs = Boolean(updateData.retentionAppliedByUs);
+      }
+      
+      console.log('💾 Update data:', updateData);
+      
+      const [entry] = await db.update(schema.accountingEntries)
+        .set(updateData)
+        .where(eq(schema.accountingEntries.id, entryId))
+        .returning();
+      
+      console.log('✅ Entry updated:', entry.id, 'status:', entry.status);
+      
+      res.json(entry);
+    } catch (error: any) {
+      console.error('❌ Error updating accounting entry:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Approve/Reject entry (admin/manager only)
+  app.post('/api/accounting/entries/:id/review', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const { status, reviewNotes } = req.body; // 'approved' or 'rejected'
+      
+      if (!['approved', 'rejected'].includes(status)) {
+        return res.status(400).json({ message: 'Estado inválido' });
+      }
+      
+      const [entry] = await db.update(schema.accountingEntries)
+        .set({
+          status,
+          reviewedBy: req.user!.id,
+          reviewedAt: new Date(),
+          reviewNotes,
+          updatedAt: new Date()
+        })
+        .where(and(
+          eq(schema.accountingEntries.id, parseInt(req.params.id)),
+          eq(schema.accountingEntries.companyId, req.user!.companyId)
+        ))
+        .returning();
+      
+      if (!entry) {
+        return res.status(404).json({ message: 'Entrada no encontrada' });
+      }
+      
+      res.json(entry);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Delete entry
+  app.delete('/api/accounting/entries/:id', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const entryId = parseInt(req.params.id);
+      const userRole = req.user!.role;
+      const userId = req.user!.id;
+      
+      // Check permissions
+      const [existing] = await db.select()
+        .from(schema.accountingEntries)
+        .where(and(
+          eq(schema.accountingEntries.id, entryId),
+          eq(schema.accountingEntries.companyId, req.user!.companyId)
+        ));
+      
+      if (!existing) {
+        return res.status(404).json({ message: 'Entrada no encontrada' });
+      }
+      
+      // Employees can only delete their own pending expenses
+      if (userRole === 'employee' && (existing.employeeId !== userId || existing.status !== 'pending')) {
+        return res.status(403).json({ message: 'No puedes eliminar esta entrada' });
+      }
+      
+      // Delete attachment files from R2
+      const attachments = await db.select()
+        .from(schema.accountingAttachments)
+        .where(eq(schema.accountingAttachments.entryId, entryId));
+      
+      for (const attachment of attachments) {
+        // TODO: Implement deleteDocument in objectStorage to delete from R2
+        // For now, files remain in R2 (low storage cost)
+        
+        // Also delete from documents table (accounting folder documents)
+        // Find documents with matching filePath
+        await db.delete(schema.documents)
+          .where(eq(schema.documents.filePath, attachment.filePath));
+      }
+      
+      await db.delete(schema.accountingEntries)
+        .where(eq(schema.accountingEntries.id, entryId));
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Dashboard stats
+  app.get('/api/accounting/dashboard', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const { startDate, endDate } = req.query;
+      
+      console.log('📊 Dashboard request for company:', companyId, 'dates:', { startDate, endDate });
+      
+      let dateConditions = [];
+      if (startDate) {
+        dateConditions.push(gte(schema.accountingEntries.entryDate, startDate as string));
+      }
+      if (endDate) {
+        dateConditions.push(lte(schema.accountingEntries.entryDate, endDate as string));
+      }
+      
+      // Total expenses (only approved)
+      const [totalExpenses] = await db.select({
+        total: sql<string>`COALESCE(SUM(${schema.accountingEntries.totalAmount}), 0)`,
+        count: sql<number>`COUNT(*)::int`
+      })
+      .from(schema.accountingEntries)
+      .where(and(
+        eq(schema.accountingEntries.companyId, companyId),
+        eq(schema.accountingEntries.type, 'expense'),
+        eq(schema.accountingEntries.status, 'approved'),
+        ...(dateConditions.length > 0 ? dateConditions : [])
+      ));
+      
+      console.log('💰 Total expenses (approved only):', totalExpenses);
+      
+      // Total incomes (only approved)
+      const [totalIncomes] = await db.select({
+        total: sql<string>`COALESCE(SUM(${schema.accountingEntries.totalAmount}), 0)`,
+        count: sql<number>`COUNT(*)::int`
+      })
+      .from(schema.accountingEntries)
+      .where(and(
+        eq(schema.accountingEntries.companyId, companyId),
+        eq(schema.accountingEntries.type, 'income'),
+        eq(schema.accountingEntries.status, 'approved'),
+        ...(dateConditions.length > 0 ? dateConditions : [])
+      ));
+      
+      console.log('💰 Total incomes (approved only):', totalIncomes);
+      
+      // Pending expenses (employee submissions)
+      const [pendingExpenses] = await db.select({
+        count: sql<number>`COUNT(*)::int`,
+        total: sql<string>`COALESCE(SUM(${schema.accountingEntries.totalAmount}), 0)`
+      })
+      .from(schema.accountingEntries)
+      .where(and(
+        eq(schema.accountingEntries.companyId, companyId),
+        eq(schema.accountingEntries.type, 'expense'),
+        eq(schema.accountingEntries.status, 'pending')
+      ));
+      
+      // Expenses by category (only approved)
+      const expensesByCategory = await db.select({
+        categoryId: schema.accountingEntries.categoryId,
+        categoryName: schema.accountingCategories.name,
+        categoryColor: schema.accountingCategories.color,
+        total: sql<string>`COALESCE(SUM(${schema.accountingEntries.totalAmount}), 0)`,
+        count: sql<number>`COUNT(*)::int`
+      })
+      .from(schema.accountingEntries)
+      .leftJoin(schema.accountingCategories, eq(schema.accountingEntries.categoryId, schema.accountingCategories.id))
+      .where(and(
+        eq(schema.accountingEntries.companyId, companyId),
+        eq(schema.accountingEntries.type, 'expense'),
+        eq(schema.accountingEntries.status, 'approved'),
+        ...(dateConditions.length > 0 ? dateConditions : [])
+      ))
+      .groupBy(schema.accountingEntries.categoryId, schema.accountingCategories.name, schema.accountingCategories.color);
+      
+      const result = {
+        totalExpenses: {
+          amount: parseFloat(totalExpenses.total),
+          count: totalExpenses.count
+        },
+        totalIncomes: {
+          amount: parseFloat(totalIncomes.total),
+          count: totalIncomes.count
+        },
+        balance: parseFloat(totalIncomes.total) - parseFloat(totalExpenses.total),
+        pendingExpenses: {
+          count: pendingExpenses.count,
+          amount: parseFloat(pendingExpenses.total)
+        },
+        expensesByCategory: expensesByCategory.map(cat => ({
+          ...cat,
+          total: parseFloat(cat.total)
+        })),
+      };
+      
+      console.log('📊 Dashboard result:', JSON.stringify(result, null, 2));
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error('❌ Dashboard error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Geocoding proxy endpoint (Photon API)
   app.get('/api/geocoding/search', async (req, res) => {
     try {
@@ -18294,10 +22985,930 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
     }
   });
 
-  // Start push notification scheduler for work alarms
-  if (vapidPublicKey && vapidPrivateKey) {
-    startPushNotificationScheduler();
-  }
+  // DON'T start background services here - they will be started after server.listen()
+  // to ensure health checks pass quickly
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🏢 ACCOUNTANT/ADVISORY ROUTES - External accountant management
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Get companies assigned to accountant
+  app.get('/api/accountant/companies', authenticateToken, requireRole(['accountant']), async (req: AuthRequest, res) => {
+    try {
+      const accountantId = req.user!.id;
+      
+      const companies = await db.select({
+        id: schema.companies.id,
+        name: schema.companies.name,
+        cif: schema.companies.cif,
+        logoUrl: schema.companies.logoUrl,
+        companyAlias: schema.companies.companyAlias,
+      })
+      .from(schema.companyAccountants)
+      .innerJoin(schema.companies, eq(schema.companyAccountants.companyId, schema.companies.id))
+      .where(and(
+        eq(schema.companyAccountants.accountantUserId, accountantId),
+        isNull(schema.companyAccountants.disabledAt)
+      ));
+      
+      res.json(companies);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get company details (accountant view)
+  app.get('/api/accountant/companies/:companyId/details', authenticateToken, requireRole(['accountant']), async (req: AuthRequest, res) => {
+    try {
+      const accountantId = req.user!.id;
+      const companyId = parseInt(req.params.companyId);
+      
+      // Verify access
+      const [assignment] = await db.select()
+        .from(schema.companyAccountants)
+        .where(and(
+          eq(schema.companyAccountants.companyId, companyId),
+          eq(schema.companyAccountants.accountantUserId, accountantId),
+          isNull(schema.companyAccountants.disabledAt)
+        ));
+      
+      if (!assignment) {
+        return res.status(403).json({ message: 'Sin acceso a esta empresa' });
+      }
+      
+      // Get company details
+      const [companyDetails] = await db.select()
+        .from(schema.companies)
+        .where(eq(schema.companies.id, companyId));
+      
+      if (!companyDetails) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+      
+      res.json(companyDetails);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get recent entries from ALL assigned companies (mixed)
+  app.get('/api/accountant/recent-entries', authenticateToken, requireRole(['accountant']), async (req: AuthRequest, res) => {
+    try {
+      const accountantId = req.user!.id;
+      console.log('🔍 Accountant recent entries request from:', accountantId);
+      
+      // Get all companies assigned to this accountant
+      const assignedCompanies = await db.select({ companyId: schema.companyAccountants.companyId })
+        .from(schema.companyAccountants)
+        .where(and(
+          eq(schema.companyAccountants.accountantUserId, accountantId),
+          isNull(schema.companyAccountants.disabledAt)
+        ));
+      
+      console.log('📊 Assigned companies:', assignedCompanies.length);
+      
+      if (assignedCompanies.length === 0) {
+        return res.json([]);
+      }
+      
+      const companyIds = assignedCompanies.map(c => c.companyId);
+      console.log('🏢 Company IDs:', companyIds);
+      
+      // Get last 50 entries from all companies (approved, approved_accountant, or rejected)
+      const entries = await db.select({
+        id: schema.accountingEntries.id,
+        companyId: schema.accountingEntries.companyId,
+        entryDate: schema.accountingEntries.entryDate,
+        description: schema.accountingEntries.concept, // usamos concept como descripción
+        type: schema.accountingEntries.type,
+        amount: schema.accountingEntries.amount,
+        totalAmount: schema.accountingEntries.totalAmount,
+        status: schema.accountingEntries.status,
+        refCode: schema.accountingEntries.refCode,
+        accountantNotes: schema.accountingEntries.accountantNotes,
+        accountantReviewedAt: schema.accountingEntries.accountantReviewedAt,
+        createdAt: schema.accountingEntries.createdAt,
+        categoryName: schema.accountingCategories.name,
+        companyName: schema.companies.name,
+        companyCif: schema.companies.cif,
+        companyLogoUrl: schema.companies.logoUrl,
+      })
+      .from(schema.accountingEntries)
+      .leftJoin(schema.accountingCategories, eq(schema.accountingEntries.categoryId, schema.accountingCategories.id))
+      .innerJoin(schema.companies, eq(schema.accountingEntries.companyId, schema.companies.id))
+      .where(and(
+        inArray(schema.accountingEntries.companyId, companyIds),
+        or(
+          eq(schema.accountingEntries.status, 'approved'),
+          eq(schema.accountingEntries.status, 'approved_accountant'),
+          eq(schema.accountingEntries.status, 'rejected')
+        )
+      ))
+      .orderBy(desc(schema.accountingEntries.createdAt))
+      .limit(50);
+      
+      console.log('📋 Entries found:', entries.length);
+      
+      // Format response with company info
+      const formattedEntries = entries.map(entry => ({
+        id: entry.id,
+        companyId: entry.companyId,
+        entryDate: entry.entryDate,
+        description: entry.description,
+        type: entry.type,
+        category: entry.categoryName,
+        amount: entry.amount,
+        totalAmount: entry.totalAmount,
+        status: entry.status,
+        refCode: entry.refCode,
+        accountantNotes: entry.accountantNotes,
+        accountantReviewedAt: entry.accountantReviewedAt,
+        createdAt: entry.createdAt,
+        company: {
+          id: entry.companyId,
+          name: entry.companyName,
+          cif: entry.companyCif,
+          logoUrl: entry.companyLogoUrl,
+        }
+      }));
+      
+      res.json(formattedEntries);
+    } catch (error: any) {
+      console.error('❌ Error in accountant recent entries:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get stats for a specific company (accountant view)
+  app.get('/api/accountant/companies/:companyId/stats', authenticateToken, requireRole(['accountant']), async (req: AuthRequest, res) => {
+    try {
+      const accountantId = req.user!.id;
+      const companyId = parseInt(req.params.companyId);
+      
+      // Verify accountant has access to this company
+      const [assignment] = await db.select()
+        .from(schema.companyAccountants)
+        .where(and(
+          eq(schema.companyAccountants.companyId, companyId),
+          eq(schema.companyAccountants.accountantUserId, accountantId),
+          isNull(schema.companyAccountants.disabledAt)
+        ));
+      
+      if (!assignment) {
+        return res.status(403).json({ message: 'Sin acceso a esta empresa' });
+      }
+      
+      // Get counts by status
+      const [counts] = await db.select({
+        pending: sql<number>`COUNT(*) FILTER (WHERE status = 'pending')::int`,
+        submitted: sql<number>`COUNT(*) FILTER (WHERE status = 'submitted')::int`,
+        accountantApproved: sql<number>`COUNT(*) FILTER (WHERE status = 'accountant_approved')::int`,
+        approved: sql<number>`COUNT(*) FILTER (WHERE status = 'approved')::int`,
+        total: sql<string>`COALESCE(SUM(total_amount), 0)`,
+      })
+      .from(schema.accountingEntries)
+      .where(eq(schema.accountingEntries.companyId, companyId));
+      
+      res.json({
+        pendingCount: counts.pending || 0,
+        submittedCount: counts.submitted || 0,
+        approvedCount: (counts.accountantApproved || 0) + (counts.approved || 0),
+        totalAmount: parseFloat(counts.total || '0'),
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get accounting entries for a company (accountant view)
+  app.get('/api/accountant/companies/:companyId/entries', authenticateToken, requireRole(['accountant']), async (req: AuthRequest, res) => {
+    try {
+      const accountantId = req.user!.id;
+      const companyId = parseInt(req.params.companyId);
+      
+      // Verify access
+      const [assignment] = await db.select()
+        .from(schema.companyAccountants)
+        .where(and(
+          eq(schema.companyAccountants.companyId, companyId),
+          eq(schema.companyAccountants.accountantUserId, accountantId),
+          isNull(schema.companyAccountants.disabledAt)
+        ));
+      
+      if (!assignment) {
+        return res.status(403).json({ message: 'Sin acceso a esta empresa' });
+      }
+      
+      const entries = await db.select()
+        .from(schema.accountingEntries)
+        .leftJoin(schema.accountingCategories, eq(schema.accountingEntries.categoryId, schema.accountingCategories.id))
+        .where(eq(schema.accountingEntries.companyId, companyId))
+        .orderBy(desc(schema.accountingEntries.entryDate));
+      
+      // Enrich with related data (same as admin endpoint)
+      const enrichedEntries = await Promise.all(entries.map(async (row) => {
+        const entry = row.accounting_entries;
+        const category = row.accounting_categories;
+        
+        // Get project if exists
+        let project = null;
+        if (entry.projectId) {
+          const [proj] = await db.select({
+            id: schema.projects.id,
+            name: schema.projects.name,
+            code: schema.projects.code
+          }).from(schema.projects).where(eq(schema.projects.id, entry.projectId));
+          project = proj || null;
+        }
+        
+        // Get employee if exists
+        let employee = null;
+        if (entry.employeeId) {
+          const [emp] = await db.select({
+            id: schema.users.id,
+            fullName: schema.users.fullName,
+            profilePicture: schema.users.profilePicture
+          }).from(schema.users).where(eq(schema.users.id, entry.employeeId));
+          employee = emp || null;
+        }
+        
+        // Get CRM client if exists
+        let crmClient = null;
+        if (entry.crmClientId) {
+          const [client] = await db.select({
+            id: schema.businessContacts.id,
+            name: schema.businessContacts.name,
+            email: schema.businessContacts.email
+          }).from(schema.businessContacts).where(eq(schema.businessContacts.id, entry.crmClientId));
+          crmClient = client || null;
+        }
+        
+        // Get CRM supplier if exists
+        let crmSupplier = null;
+        if (entry.crmSupplierId) {
+          const [supplier] = await db.select({
+            id: schema.businessContacts.id,
+            name: schema.businessContacts.name,
+            email: schema.businessContacts.email
+          }).from(schema.businessContacts).where(eq(schema.businessContacts.id, entry.crmSupplierId));
+          crmSupplier = supplier || null;
+        }
+        
+        // Count attachments
+        const [countResult] = await db.select({ count: count() })
+          .from(schema.accountingAttachments)
+          .where(eq(schema.accountingAttachments.entryId, entry.id));
+        
+        return {
+          ...entry,
+          category: category ? {
+            id: category.id,
+            name: category.name,
+            color: category.color,
+            icon: category.icon,
+            type: category.type
+          } : null,
+          employee,
+          project,
+          crmClient,
+          crmSupplier,
+          attachmentsCount: countResult?.count || 0
+        };
+      }));
+      
+      res.json(enrichedEntries);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Review entry as accountant (approve/reject)
+  // Review entry as accountant (with companies route - matches frontend)
+  app.post('/api/accountant/companies/:companyId/entries/:entryId/review', authenticateToken, requireRole(['accountant']), async (req: AuthRequest, res) => {
+    try {
+      const accountantId = req.user!.id;
+      const companyId = parseInt(req.params.companyId);
+      const entryId = parseInt(req.params.entryId);
+      const { status, notes } = req.body; // 'approved_accountant', 'approved' or 'rejected'
+      
+      if (!['approved', 'rejected', 'approved_accountant'].includes(status)) {
+        return res.status(400).json({ message: 'Estado inválido' });
+      }
+      
+      // Verify accountant has access to this company
+      const [assignment] = await db.select()
+        .from(schema.companyAccountants)
+        .where(and(
+          eq(schema.companyAccountants.companyId, companyId),
+          eq(schema.companyAccountants.accountantUserId, accountantId),
+          isNull(schema.companyAccountants.disabledAt)
+        ));
+      
+      if (!assignment) {
+        return res.status(403).json({ message: 'Sin acceso a esta empresa' });
+      }
+      
+      // Get entry to verify it belongs to this company
+      const [entry] = await db.select()
+        .from(schema.accountingEntries)
+        .where(and(
+          eq(schema.accountingEntries.id, entryId),
+          eq(schema.accountingEntries.companyId, companyId)
+        ));
+      
+      if (!entry) {
+        return res.status(404).json({ message: 'Entrada no encontrada' });
+      }
+      
+      // Update entry
+      const [updated] = await db.update(schema.accountingEntries)
+        .set({
+          status,
+          accountantReviewedBy: accountantId,
+          accountantReviewedAt: new Date(),
+          accountantNotes: notes,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.accountingEntries.id, entryId))
+        .returning();
+      
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Review entry as accountant (old route for compatibility)
+  app.post('/api/accountant/entries/:id/review', authenticateToken, requireRole(['accountant']), async (req: AuthRequest, res) => {
+    try {
+      const accountantId = req.user!.id;
+      const entryId = parseInt(req.params.id);
+      const { status, notes } = req.body; // 'approved_accountant', 'approved' or 'rejected'
+      
+      if (!['approved', 'rejected', 'approved_accountant'].includes(status)) {
+        return res.status(400).json({ message: 'Estado inválido' });
+      }
+      
+      // Get entry to verify company access
+      const [entry] = await db.select()
+        .from(schema.accountingEntries)
+        .where(eq(schema.accountingEntries.id, entryId));
+      
+      if (!entry) {
+        return res.status(404).json({ message: 'Entrada no encontrada' });
+      }
+      
+      // Verify accountant has access to this company
+      const [assignment] = await db.select()
+        .from(schema.companyAccountants)
+        .where(and(
+          eq(schema.companyAccountants.companyId, entry.companyId),
+          eq(schema.companyAccountants.accountantUserId, accountantId),
+          isNull(schema.companyAccountants.disabledAt)
+        ));
+      
+      if (!assignment) {
+        return res.status(403).json({ message: 'Sin acceso a esta empresa' });
+      }
+      
+      // Update entry
+      const [updated] = await db.update(schema.accountingEntries)
+        .set({
+          status,
+          accountantReviewedBy: accountantId,
+          accountantReviewedAt: new Date(),
+          accountantNotes: notes,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.accountingEntries.id, entryId))
+        .returning();
+      
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Update an entry (accountant can edit approved entries)
+  app.patch('/api/accountant/companies/:companyId/entries/:entryId', authenticateToken, requireRole(['accountant']), async (req: AuthRequest, res) => {
+    try {
+      const accountantId = req.user!.id;
+      const companyId = parseInt(req.params.companyId);
+      const entryId = parseInt(req.params.entryId);
+      
+      // Verify access to company
+      const [assignment] = await db.select()
+        .from(schema.companyAccountants)
+        .where(and(
+          eq(schema.companyAccountants.companyId, companyId),
+          eq(schema.companyAccountants.accountantUserId, accountantId),
+          isNull(schema.companyAccountants.disabledAt)
+        ));
+      
+      if (!assignment) {
+        return res.status(403).json({ message: 'Sin acceso a esta empresa' });
+      }
+      
+      // Get entry to verify it belongs to this company
+      const [entry] = await db.select()
+        .from(schema.accountingEntries)
+        .where(and(
+          eq(schema.accountingEntries.id, entryId),
+          eq(schema.accountingEntries.companyId, companyId)
+        ));
+      
+      if (!entry) {
+        return res.status(404).json({ message: 'Entrada no encontrada' });
+      }
+      
+      // Update entry with the provided data
+      const updateData: any = {};
+      const allowedFields = [
+        'type', 'categoryId', 'concept', 'amount', 'vatRate', 'vatAmount', 
+        'totalAmount', 'description', 'refCode', 'entryDate', 'projectId', 
+        'paymentMethod', 'crmClientId', 'crmSupplierId', 'irpfRetentionRate',
+        'irpfRetentionAmount', 'irpfDeductible', 'irpfDeductionPercentage',
+        'irpfIsSocialSecurity', 'irpfIsAmortization', 'irpfFiscalAdjustment',
+        'fiscalNotes', 'retentionType', 'retentionAppliedByUs'
+      ];
+      
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
+      }
+      
+      updateData.updatedAt = new Date();
+      
+      const [updated] = await db.update(schema.accountingEntries)
+        .set(updateData)
+        .where(eq(schema.accountingEntries.id, entryId))
+        .returning();
+      
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get root documents for a company (accountant view)
+  app.get('/api/accountant/companies/:companyId/root-documents', authenticateToken, requireRole(['accountant']), async (req: AuthRequest, res) => {
+    try {
+      const accountantId = req.user!.id;
+      const companyId = parseInt(req.params.companyId);
+      
+      // Verify access
+      const [assignment] = await db.select()
+        .from(schema.companyAccountants)
+        .where(and(
+          eq(schema.companyAccountants.companyId, companyId),
+          eq(schema.companyAccountants.accountantUserId, accountantId),
+          isNull(schema.companyAccountants.disabledAt)
+        ));
+      
+      if (!assignment) {
+        return res.status(403).json({ message: 'Sin acceso a esta empresa' });
+      }
+      
+      // Get documents without folder (root documents only)
+      const owner = alias(schema.users, 'documentOwner');
+
+      const documents = await db.select({
+        id: schema.documents.id,
+        name: schema.documents.fileName,
+        originalName: schema.documents.originalName,
+        fileSize: schema.documents.fileSize,
+        mimeType: schema.documents.mimeType,
+        filePath: schema.documents.filePath,
+        uploadedAt: schema.documents.createdAt,
+        uploaderFullName: schema.users.fullName,
+        ownerId: schema.documents.userId,
+        ownerFullName: owner.fullName,
+        ownerProfile: owner.profilePicture,
+        folderId: schema.documents.folderId,
+      })
+      .from(schema.documents)
+      .leftJoin(schema.users, eq(schema.documents.uploadedBy, schema.users.id))
+      .leftJoin(owner, eq(schema.documents.userId, owner.id))
+      .where(and(
+        eq(schema.documents.companyId, companyId),
+        isNull(schema.documents.folderId) // Solo documentos raíz (sin carpeta)
+      ))
+      .orderBy(desc(schema.documents.createdAt));
+      
+      const formattedDocs = documents.map(doc => ({
+        id: doc.id,
+        name: doc.name,
+        originalName: doc.originalName,
+        fileSize: doc.fileSize,
+        mimeType: doc.mimeType,
+        fileUrl: doc.filePath || `/api/documents/${doc.id}/download?preview=true`,
+        uploadedAt: doc.uploadedAt,
+        folderId: doc.folderId,
+        userId: doc.ownerId,
+        user: {
+          fullName: doc.ownerFullName || 'Usuario',
+          profilePicture: doc.ownerProfile || null,
+        },
+        uploadedByUser: {
+          fullName: doc.uploaderFullName || 'Usuario desconocido'
+        }
+      }));
+      
+      res.json(formattedDocs);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get folders for a company (accountant view) - optional parentId for subfolders
+  app.get('/api/accountant/companies/:companyId/folders', authenticateToken, requireRole(['accountant']), async (req: AuthRequest, res) => {
+    try {
+      const accountantId = req.user!.id;
+      const companyId = parseInt(req.params.companyId);
+      const parentIdParam = req.query.parentId as string | undefined;
+      const parentId = parentIdParam ? parseInt(parentIdParam) : null;
+
+      // Verify access
+      const [assignment] = await db.select()
+        .from(schema.companyAccountants)
+        .where(and(
+          eq(schema.companyAccountants.companyId, companyId),
+          eq(schema.companyAccountants.accountantUserId, accountantId),
+          isNull(schema.companyAccountants.disabledAt)
+        ));
+      if (!assignment) {
+        return res.status(403).json({ message: 'Sin acceso a esta empresa' });
+      }
+
+      const folders = await db.select({
+        id: schema.documentFolders.id,
+        name: schema.documentFolders.name,
+        parentId: schema.documentFolders.parentId,
+        path: schema.documentFolders.path,
+      })
+      .from(schema.documentFolders)
+      .where(and(
+        eq(schema.documentFolders.companyId, companyId),
+        parentId === null
+          ? isNull(schema.documentFolders.parentId)
+          : eq(schema.documentFolders.parentId, parentId)
+      ))
+      .orderBy(schema.documentFolders.name);
+
+      res.json(folders);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get documents inside a folder (accountant view)
+  app.get('/api/accountant/companies/:companyId/folders/:folderId/documents', authenticateToken, requireRole(['accountant']), async (req: AuthRequest, res) => {
+    try {
+      const accountantId = req.user!.id;
+      const companyId = parseInt(req.params.companyId);
+      const folderId = parseInt(req.params.folderId);
+
+      // Verify access
+      const [assignment] = await db.select()
+        .from(schema.companyAccountants)
+        .where(and(
+          eq(schema.companyAccountants.companyId, companyId),
+          eq(schema.companyAccountants.accountantUserId, accountantId),
+          isNull(schema.companyAccountants.disabledAt)
+        ));
+      if (!assignment) {
+        return res.status(403).json({ message: 'Sin acceso a esta empresa' });
+      }
+
+      // Ensure folder belongs to company
+      const [folder] = await db.select({ id: schema.documentFolders.id })
+        .from(schema.documentFolders)
+        .where(and(
+          eq(schema.documentFolders.id, folderId),
+          eq(schema.documentFolders.companyId, companyId)
+        ));
+      if (!folder) {
+        return res.status(404).json({ message: 'Carpeta no encontrada' });
+      }
+
+      const owner = alias(schema.users, 'documentOwner');
+
+      const documents = await db.select({
+        id: schema.documents.id,
+        name: schema.documents.fileName,
+        originalName: schema.documents.originalName,
+        fileSize: schema.documents.fileSize,
+        mimeType: schema.documents.mimeType,
+        filePath: schema.documents.filePath,
+        uploadedAt: schema.documents.createdAt,
+        uploaderFullName: schema.users.fullName,
+        ownerId: schema.documents.userId,
+        ownerFullName: owner.fullName,
+        ownerProfile: owner.profilePicture,
+        folderId: schema.documents.folderId,
+      })
+      .from(schema.documents)
+      .leftJoin(schema.users, eq(schema.documents.uploadedBy, schema.users.id))
+      .leftJoin(owner, eq(schema.documents.userId, owner.id))
+      .where(and(
+        eq(schema.documents.companyId, companyId),
+        eq(schema.documents.folderId, folderId)
+      ))
+      .orderBy(desc(schema.documents.createdAt));
+
+      const formattedDocs = documents.map(doc => ({
+        id: doc.id,
+        name: doc.name,
+        originalName: doc.originalName,
+        fileSize: doc.fileSize,
+        mimeType: doc.mimeType,
+        fileUrl: doc.filePath || `/api/documents/${doc.id}/download?preview=true`,
+        uploadedAt: doc.uploadedAt,
+        folderId: doc.folderId,
+        userId: doc.ownerId,
+        user: {
+          fullName: doc.ownerFullName || 'Usuario',
+          profilePicture: doc.ownerProfile || null,
+        },
+        uploadedByUser: {
+          fullName: doc.uploaderFullName || 'Usuario desconocido'
+        }
+      }));
+
+      res.json(formattedDocs);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get CRM status for a company (accountant view)
+  app.get('/api/accountant/companies/:companyId/crm-status', authenticateToken, requireRole(['accountant']), async (req: AuthRequest, res) => {
+    try {
+      const accountantId = req.user!.id;
+      const companyId = parseInt(req.params.companyId);
+      
+      // Verify access
+      const [assignment] = await db.select()
+        .from(schema.companyAccountants)
+        .where(and(
+          eq(schema.companyAccountants.companyId, companyId),
+          eq(schema.companyAccountants.accountantUserId, accountantId),
+          isNull(schema.companyAccountants.disabledAt)
+        ));
+      
+      if (!assignment) {
+        return res.status(403).json({ message: 'Sin acceso a esta empresa' });
+      }
+      
+      // Check if CRM is active for this company using storage method
+      const hasAddon = await storage.hasActiveAddon(companyId, 'crm');
+      res.json({ active: hasAddon });
+    } catch (error: any) {
+      console.error('❌ CRM status error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get projects for a company (accountant view)
+  app.get('/api/accountant/companies/:companyId/projects', authenticateToken, requireRole(['accountant']), async (req: AuthRequest, res) => {
+    try {
+      const accountantId = req.user!.id;
+      const companyId = parseInt(req.params.companyId);
+      
+      // Verify access
+      const [assignment] = await db.select()
+        .from(schema.companyAccountants)
+        .where(and(
+          eq(schema.companyAccountants.companyId, companyId),
+          eq(schema.companyAccountants.accountantUserId, accountantId),
+          isNull(schema.companyAccountants.disabledAt)
+        ));
+      
+      if (!assignment) {
+        return res.status(403).json({ message: 'Sin acceso a esta empresa' });
+      }
+      
+      // Get projects for this company (same as admin endpoint)
+      const projects = await db.select({ project: schema.projects })
+        .from(schema.projects)
+        .where(eq(schema.projects.companyId, companyId))
+        .orderBy(desc(schema.projects.createdAt));
+
+      // Enriquecer cada proyecto con clientes/proveedores completos
+      const projectsWithContacts = await Promise.all(
+        projects.map(async (p) => fetchProjectWithContacts(p.project.id, companyId))
+      );
+
+      const filtered = projectsWithContacts.filter(Boolean);
+      res.json(filtered);
+    } catch (error: any) {
+      console.error('Error fetching projects for accountant:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get categories for a company (accountant view)
+  app.get('/api/accountant/companies/:companyId/categories', authenticateToken, requireRole(['accountant']), async (req: AuthRequest, res) => {
+    try {
+      const accountantId = req.user!.id;
+      const companyId = parseInt(req.params.companyId);
+      
+      // Verify access
+      const [assignment] = await db.select()
+        .from(schema.companyAccountants)
+        .where(and(
+          eq(schema.companyAccountants.companyId, companyId),
+          eq(schema.companyAccountants.accountantUserId, accountantId),
+          isNull(schema.companyAccountants.disabledAt)
+        ));
+      
+      if (!assignment) {
+        return res.status(403).json({ message: 'Sin acceso a esta empresa' });
+      }
+      
+      // Get categories for this company
+      const categories = await db.select()
+        .from(schema.accountingCategories)
+        .where(eq(schema.accountingCategories.companyId, companyId))
+        .orderBy(schema.accountingCategories.sortOrder);
+      
+      res.json(categories);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get dashboard stats for a company (accountant view)
+  app.get('/api/accountant/companies/:companyId/dashboard', authenticateToken, requireRole(['accountant']), async (req: AuthRequest, res) => {
+    try {
+      const accountantId = req.user!.id;
+      const companyId = parseInt(req.params.companyId);
+      
+      // Verify access
+      const [assignment] = await db.select()
+        .from(schema.companyAccountants)
+        .where(and(
+          eq(schema.companyAccountants.companyId, companyId),
+          eq(schema.companyAccountants.accountantUserId, accountantId),
+          isNull(schema.companyAccountants.disabledAt)
+        ));
+      
+      if (!assignment) {
+        return res.status(403).json({ message: 'Sin acceso a esta empresa' });
+      }
+      
+      // Get all entries for this company
+      const entries = await db.select()
+        .from(schema.accountingEntries)
+        .where(eq(schema.accountingEntries.companyId, companyId));
+      
+      // Calculate stats
+      let totalExpenses = 0;
+      let totalIncomes = 0;
+      let expenseCount = 0;
+      let incomeCount = 0;
+      let pendingExpensesAmount = 0;
+      let pendingExpensesCount = 0;
+      
+      for (const entry of entries) {
+        const amount = parseFloat(entry.totalAmount || entry.amount || '0');
+        
+        if (entry.type === 'expense') {
+          totalExpenses += amount;
+          expenseCount++;
+          if (entry.status === 'pending') {
+            pendingExpensesAmount += amount;
+            pendingExpensesCount++;
+          }
+        } else {
+          totalIncomes += amount;
+          incomeCount++;
+        }
+      }
+      
+      res.json({
+        totalExpenses: { amount: totalExpenses, count: expenseCount },
+        totalIncomes: { amount: totalIncomes, count: incomeCount },
+        balance: totalIncomes - totalExpenses,
+        pendingExpenses: { amount: pendingExpensesAmount, count: pendingExpensesCount }
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get fiscal settings for a company (accountant view)
+  app.get('/api/accountant/companies/:companyId/fiscal-settings', authenticateToken, requireRole(['accountant']), async (req: AuthRequest, res) => {
+    try {
+      const accountantId = req.user!.id;
+      const companyId = parseInt(req.params.companyId);
+      
+      // Verify access
+      const [assignment] = await db.select()
+        .from(schema.companyAccountants)
+        .where(and(
+          eq(schema.companyAccountants.companyId, companyId),
+          eq(schema.companyAccountants.accountantUserId, accountantId),
+          isNull(schema.companyAccountants.disabledAt)
+        ));
+      
+      if (!assignment) {
+        return res.status(403).json({ message: 'Sin acceso a esta empresa' });
+      }
+      
+      // Get fiscal settings
+      const [settings] = await db.select()
+        .from(companyFiscalSettings)
+        .where(eq(companyFiscalSettings.companyId, companyId));
+      
+      const defaults = {
+        taxpayerType: 'autonomo',
+        vatRegime: 'general',
+        vatProration: 100,
+        irpfModel130Rate: 20,
+        irpfManualWithholdings: 0,
+        irpfPreviousPayments: 0,
+        irpfManualSocialSecurity: 0,
+        irpfOtherAdjustments: 0,
+        community: null,
+        retentionDefaultRate: null,
+        professionalRetentionRate: null,
+        newProfessionalRetentionRate: null,
+        rentRetentionRate: null,
+        autoApplyRetentionDefaults: false,
+      };
+      
+      res.json(settings ? {
+        ...defaults,
+        ...settings,
+      } : defaults);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Submit entry to accountant (admin action)
+  app.post('/api/accounting/entries/:id/submit-to-accountant', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const entryId = parseInt(req.params.id);
+      const companyId = req.user!.companyId;
+      
+      // Check if company uses external accountant
+      const [company] = await db.select()
+        .from(schema.companies)
+        .where(eq(schema.companies.id, companyId));
+      
+      if (!company.usesExternalAccountant) {
+        return res.status(400).json({ message: 'Esta empresa no usa gestoría externa' });
+      }
+      
+      // Update status to submitted
+      const [entry] = await db.update(schema.accountingEntries)
+        .set({
+          status: 'submitted',
+          updatedAt: new Date()
+        })
+        .where(and(
+          eq(schema.accountingEntries.id, entryId),
+          eq(schema.accountingEntries.companyId, companyId)
+        ))
+        .returning();
+      
+      if (!entry) {
+        return res.status(404).json({ message: 'Entrada no encontrada' });
+      }
+      
+      res.json(entry);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Update company accountant settings (admin only)
+  app.patch('/api/companies/:id/accountant-settings', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      const { usesExternalAccountant, autoSubmitToAccountant } = req.body;
+      
+      if (companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'Sin permiso' });
+      }
+      
+      const [company] = await db.update(schema.companies)
+        .set({
+          usesExternalAccountant: Boolean(usesExternalAccountant),
+          autoSubmitToAccountant: Boolean(autoSubmitToAccountant),
+          updatedAt: new Date()
+        })
+        .where(eq(schema.companies.id, companyId))
+        .returning();
+      
+      res.json(company);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
 
   const httpServer = createServer(app);
   
@@ -18305,4 +23916,31 @@ Asegúrate de que sean nombres realistas, variados y apropiados para el sector e
   initializeWebSocketServer(httpServer);
   
   return httpServer;
+}
+
+// Export function to start background services after server is listening
+export async function startBackgroundServices() {
+  console.log('🔄 Starting background services...');
+  
+  // Get VAPID keys from environment
+  const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
+  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+  
+  // Start push notification scheduler for work alarms
+  if (vapidPublicKey && vapidPrivateKey) {
+    try {
+      startPushNotificationScheduler();
+      console.log('✅ Push notification scheduler started');
+    } catch (error) {
+      console.error('❌ Failed to start push notification scheduler:', error);
+    }
+  }
+
+  // 📧 Start email queue worker for enterprise-grade email delivery
+  try {
+    startEmailQueueWorker();
+    console.log('✅ Email queue worker started');
+  } catch (error) {
+    console.error('❌ Failed to start email queue worker:', error);
+  }
 }

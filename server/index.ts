@@ -5,7 +5,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
-import { registerRoutes } from "./routes";
+import { registerRoutes, startBackgroundServices } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import fs from "fs";
@@ -16,75 +16,81 @@ import { backgroundImageProcessor } from "./backgroundWorker";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
 const app = express();
 
-// ⚠️ SEO files served as static files from client/public/
+// 🔧 Configure Trust Proxy for Replit and production environments
+// This is essential for rate limiting and IP detection behind reverse proxies
+if (process.env.NODE_ENV === 'production' || process.env.REPLIT_DOMAINS) {
+  app.set('trust proxy', 1); // Trust first proxy (Replit or load balancer)
+} else if (process.env.NODE_ENV === 'development' && !process.env.REPLIT_DOMAINS) {
+  app.set('trust proxy', false);
+}
 
-// Trust proxy for rate limiting (required for Replit)
-app.set("trust proxy", 1);
-
-// 🛡️ SECURITY: Content Security Policy configuration for React/Vite
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        // React/Vite needs inline scripts and eval for HMR in development
-        // Stripe requires js.stripe.com for payment processing
-        // Google Maps SDK
+        // Stripe + Google Maps
         scriptSrc: [
           "'self'",
           "https://js.stripe.com",
           "https://maps.googleapis.com",
           "https://maps.gstatic.com",
-          ...(process.env.NODE_ENV === "development" 
-            ? ["'unsafe-inline'", "'unsafe-eval'"] 
+          ...(process.env.NODE_ENV === "development"
+            ? [
+                "https://replit.com/public/js/replit-dev-banner.js",
+                "'unsafe-inline'",
+                "'unsafe-eval'",
+              ]
             : []),
         ],
-        // Tailwind and styled components need unsafe-inline
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        // Images from self, data URIs, blobs, HTTPS, and third-party APIs
-        // UI Avatars for user profile pictures
+        // Tailwind/styled-components require inline styles; allowed
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        // Images from self, data URIs, blobs, HTTPS, and UI Avatars
         imgSrc: [
-          "'self'", 
-          "data:", 
-          "blob:", 
-          "https:", 
+          "'self'",
+          "data:",
+          "blob:",
+          "https:",
           "https://ui-avatars.com",
         ],
-        // API calls and WebSocket connections
-        // Stripe API for payment processing
-        // Google Maps API if used
+        // API calls and WebSockets - restrict in production
         connectSrc: [
           "'self'",
           "wss:",
           "ws:",
           "https://api.stripe.com",
+          "https://js.stripe.com",
           "https://maps.googleapis.com",
+          "https://fcm.googleapis.com",
+          "https://web.push.apple.com",
           ...(process.env.NODE_ENV === "development"
-            ? ["http://localhost:*", "ws://localhost:*"]
+            ? ["http://localhost:*", "ws://localhost:*", "https://*.trycloudflareaccess.com"]
             : []),
         ],
-        // Fonts from self and data URIs
-        fontSrc: ["'self'", "data:"],
-        // Stripe iframe for payment forms
+        // Fonts (Google Fonts)
+        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+        // Frames (Stripe) + blob: for previews
         frameSrc: [
           "'self'",
+          "blob:",
           "https://js.stripe.com",
           "https://hooks.stripe.com",
         ],
-        // No object/embed/applet allowed
-        objectSrc: ["'none'"],
+        // Allow blob: for PDF object/embed previews
+        objectSrc: ["'self'", "blob:"],
+        // Workers for SW and PDF.js
+        workerSrc: ["'self'", "blob:"],
         // Base URI restricted to self
         baseUri: ["'self'"],
         // Forms only submit to self or Stripe
         formAction: ["'self'", "https://js.stripe.com"],
-        // Frame ancestors (already set in routes.ts for document endpoints)
+        // Frame ancestors restriction
         frameAncestors: ["'self'"],
         // Upgrade insecure requests in production
-        ...(process.env.NODE_ENV === "production" 
-          ? { upgradeInsecureRequests: [] } 
+        ...(process.env.NODE_ENV === "production"
+          ? { upgradeInsecureRequests: [] }
           : {}),
       },
     },
@@ -96,17 +102,32 @@ app.use(
             includeSubDomains: true,
             preload: true,
           }
-        : false,
-  }),
+        : undefined,
+  })
 );
 
 // CORS configuration
+const isReplit = !!process.env.REPLIT_DOMAINS;
+// 🔒 SECURITY: Only treat as development if explicitly set, not just Replit
+const isDevelopment = process.env.NODE_ENV === 'development';
+const isLocalDevelopment = isDevelopment && !isReplit;
+
 const allowedOrigins =
-  process.env.NODE_ENV === "development"
+  isLocalDevelopment || isReplit
     ? [
         "http://localhost:3000",
         "http://localhost:5000",
+        "http://localhost:5173",
         "http://127.0.0.1:5000",
+        "http://127.0.0.1:5173",
+        // Cloudflare Tunnel
+        /^https:\/\/[a-zA-Z0-9-]+\.trycloudflareaccess\.com$/,
+        // Replit development domains (match subdomains and root)
+        ...(process.env.REPLIT_DOMAINS
+          ? process.env.REPLIT_DOMAINS.split(",").map(
+              (domain) => new RegExp(`^https://.*${domain.replace(/\./g, '\\.')}(:[0-9]+)?$`),
+            )
+          : []),
       ]
     : [
         // Replit domains
@@ -122,12 +143,71 @@ const allowedOrigins =
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // En desarrollo o Replit, ser muy permisivo
+      if (isDevelopment) {
+        return callback(null, true);
+      }
+      
+      // En producción, ser restrictivo
+      // Permitir sin origin (mobile apps, etc)
+      if (!origin) return callback(null, true);
+      
+      // Permitir matches exactos (strings)
+      const exactMatch = allowedOrigins.find(o => typeof o === 'string' && o === origin);
+      if (exactMatch) return callback(null, true);
+      
+      // Permitir matches regex (Cloudflare, etc)
+      const regexMatch = allowedOrigins.find(o => o instanceof RegExp && o.test(origin));
+      if (regexMatch) return callback(null, true);
+      
+      // Denegar si no coincide
+      return callback(new Error('CORS no permitido'));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   }),
 );
+
+// Minimal CSRF guard: validate Origin/Referer on state-changing requests when present
+const csrfOriginGuard = (req: Request, res: Response, next: NextFunction) => {
+  const method = req.method.toUpperCase();
+  if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') return next();
+
+  // Log all POST requests for debugging
+  console.log(`📨 ${method} ${req.path} - Origin: ${req.headers.origin}, Referer: ${req.headers.referer}`);
+
+  // 🔒 SECURITY: En desarrollo local (no Replit), ser permisivo para facilitar testing
+  if (process.env.NODE_ENV === 'development' && !isReplit) {
+    console.log(`✅ Local development mode - allowing request`);
+    return next();
+  }
+
+  const headerOrigin = req.headers.origin || req.headers.referer;
+  if (!headerOrigin) return next(); // Non-browser or missing headers
+
+  try {
+    const originUrl = new URL(headerOrigin);
+    const originValue = `${originUrl.protocol}//${originUrl.host}`;
+    
+    // Permitir matches exactos
+    const exactMatch = allowedOrigins.find(o => typeof o === 'string' && o === originValue);
+    if (exactMatch) return next();
+    
+    // Permitir matches regex
+    const regexMatch = allowedOrigins.find(o => o instanceof RegExp && o.test(originValue));
+    if (regexMatch) return next();
+    
+    return res.status(403).json({ message: 'Origen no permitido' });
+  } catch (err) {
+    return res.status(400).json({ message: 'Cabeceras de origen inválidas' });
+  }
+
+  next();
+};
+
+app.use(csrfOriginGuard);
 
 // Force HTTPS in production and set security headers
 if (process.env.NODE_ENV === "production") {
@@ -168,39 +248,43 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-// Global rate limiting
+// Global rate limiting (skip in dev to avoid local 429s on reload)
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000, // limit each IP to 1000 requests per windowMs
   message: { error: "Too many requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => process.env.NODE_ENV === 'development' && !process.env.REPLIT_DOMAINS,
 });
 
-app.use(globalLimiter);
+if (process.env.NODE_ENV === 'production') {
+  app.use(globalLimiter);
+} else {
+  console.warn('Skipping global rate limiter in non-production environment');
+}
 
 // Body parsing with size limits
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
-// 📦 Object Storage: Validate configuration on startup
+// 📦 Object Storage: Validate configuration on startup (deferred to after server starts)
 function validateObjectStorageConfig() {
-  const pathsStr = process.env.PUBLIC_OBJECT_SEARCH_PATHS || "";
-  const paths = pathsStr.split(",").map(p => p.trim()).filter(p => p.length > 0);
+  // R2 is now the primary storage, no need for PUBLIC_OBJECT_SEARCH_PATHS
+  const r2Configured = process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY && process.env.R2_BUCKET_NAME;
   
-  if (paths.length === 0) {
-    console.warn('⚠️  PUBLIC_OBJECT_SEARCH_PATHS not configured. Object Storage will not work.');
-    console.warn('   Create a bucket in "Object Storage" tool to enable persistent file storage.');
+  if (!r2Configured) {
+    console.warn('⚠️  Cloudflare R2 not configured. File storage will not work.');
+    console.warn('   Configure R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME in .env');
     return false;
   }
   
-  console.log('✓ Object Storage configured:');
-  console.log(`  • Search paths: ${paths.join(', ')}`);
-  console.log(`  • Write path: ${paths[0]} (first entry)`);
+  console.log('✓ Object Storage configured: Cloudflare R2');
+  console.log(`  • Bucket: ${process.env.R2_BUCKET_NAME}`);
   return true;
 }
 
-validateObjectStorageConfig();
+// Don't validate on startup - do it after server is listening
 
 // Serve uploaded files with R2/Object Storage priority, local fallback
 // Priority: R2 → Replit Object Storage → Local filesystem
@@ -213,9 +297,15 @@ app.get("/uploads/:filename", async (req, res, next) => {
     const { SimpleObjectStorageService } = await import('./objectStorageSimple.js');
     const objectStorage = new SimpleObjectStorageService();
     
-    // Try documents folder (migrated files)
-    let objectPath = `documents/${filename}`;
+    // Try profile-pictures folder first (user avatars)
+    let objectPath = `profile-pictures/${filename}`;
     let file = await objectStorage.searchPublicObject(objectPath);
+    
+    // If not in profile-pictures/, try documents folder (migrated files)
+    if (!file) {
+      objectPath = `documents/${filename}`;
+      file = await objectStorage.searchPublicObject(objectPath);
+    }
     
     // If not in documents/, try email-marketing/ (for email images)
     if (!file) {
@@ -356,35 +446,114 @@ process.on('unhandledRejection', (reason: any, promise) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
+  const isDevelopment = process.env.NODE_ENV === "development" || app.get("env") === "development";
+  console.log(`🔍 Environment: NODE_ENV=${process.env.NODE_ENV}, app.get("env")=${app.get("env")}, isDevelopment=${isDevelopment}`);
+  
+  if (isDevelopment) {
+    try {
+      console.log('🚀 Starting Vite server...');
+      await setupVite(app, server);
+      console.log('✅ Vite setup completed successfully');
+    } catch (error) {
+      console.error('❌ Error setting up Vite:', error);
+      console.error('Stack:', error);
+      // Don't exit, continue serving without Vite
+    }
   } else {
+    console.log('📦 Serving static build files...');
     serveStatic(app);
   }
 
-  // Simple solution: serve on port 5000
-  const port = 5000;
+  // Use PORT from environment (Replit sets this automatically)
+  const port = Number(process.env.PORT || 5000);
+  
+  if (!process.env.PORT && isReplit) {
+    console.warn('⚠️  PORT not set in Replit environment, using default 5000');
+  }
+  
+  // Determine host based on platform and environment
+  // Replit needs 0.0.0.0 to accept external connections
+  const isReplit = process.env.REPLIT_DOMAINS !== undefined || process.env.REPL_ID !== undefined;
+  let host: string;
+  
+  if (isReplit) {
+    host = '0.0.0.0'; // Replit requires binding to all interfaces
+    console.log('🔧 Detected Replit environment, binding to 0.0.0.0 on port', port);
+  } else if (process.platform === 'win32') {
+    host = '127.0.0.1'; // Windows local development
+  } else {
+    // Prefer localhost binding on macOS/dev machines to avoid
+    // platform-specific socket option issues (ENOTSUP).
+    host = '127.0.0.1';
+  }
+
+  // Only enable SO_REUSEPORT on Linux where it's consistently supported
+  const listenOptions: any = {
+    port,
+    host,
+  };
+  if (process.platform === "linux") {
+    listenOptions.reusePort = true;
+  }
+
   server.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
+    listenOptions,
     async () => {
+      const hostDisplay = process.platform === 'win32' ? 'localhost' : (listenOptions.host || '0.0.0.0');
+      const url = `http://${hostDisplay}:${port}`;
       log(`serving on port ${port}`);
+      console.log(`🔗 Open in browser: ${url}`);
+      console.log('✅ Server is ready to accept health checks');
       
-      // Initialize background image processor
-      console.log('[init] Starting background worker...');
-      try {
-        await backgroundImageProcessor.start();
-        log('🚀 Background image processor started successfully');
-        console.log('[init] Background worker started');
-      } catch (error) {
-        console.error('❌ Failed to start background image processor:', error);
-        console.error('[init] Background worker failed:', error);
-      }
+      // NOW that server is listening, start background services asynchronously
+      // This ensures health checks pass quickly during deployment
+      // Services start in the background without blocking the response
       
-      // Emergency refund completed successfully - code removed
+      // Initialize all background services asynchronously
+      setImmediate(async () => {
+        try {
+          // Validate R2 configuration
+          console.log('[init] Validating object storage...');
+          validateObjectStorageConfig();
+          
+          // Start background services (email queue, push notifications)
+          console.log('[init] Starting background services...');
+          await startBackgroundServices();
+          console.log('[init] ✓ Background services started');
+          
+          // Initialize background image processor
+          console.log('[init] Starting background worker...');
+          await backgroundImageProcessor.start();
+          console.log('[init] ✓ Background worker started');
+          
+          console.log('🎉 All services initialized - application ready');
+        } catch (error) {
+          console.error('❌ Background initialization error:', error);
+          // Don't crash - services can retry or work in degraded mode
+        }
+      });
     },
   );
+  
+  // Keep process alive and handle shutdown gracefully
+  process.on('SIGTERM', () => {
+    if (process.env.NODE_ENV === 'production') {
+      console.log('SIGTERM received, shutting down gracefully...');
+      server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+      });
+    }
+  });
+  
+  // Prevent auto-shutdown in development
+  if (process.env.NODE_ENV === 'production') {
+    process.on('SIGINT', () => {
+      console.log('SIGINT received, shutting down gracefully...');
+      server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+      });
+    });
+  }
 })();
