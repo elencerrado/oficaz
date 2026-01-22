@@ -1,0 +1,16 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "npm install": true
+    },
+    // Git Settings - Auto-sync
+    "git.autofetch": true,
+    "git.autofetchPeriod": 180,
+    "git.confirmSync": false,
+    "git.enableSmartCommit": true,
+    "git.postCommitCommand": "sync",
+    "git.showPushSuccessNotification": true,
+    // GitLens Settings
+    "gitlens.hovers.currentLine.over": "line",
+    "gitlens.currentLine.enabled": true,
+    "gitlens.codeLens.enabled": true
+}

@@ -4,3 +4,17 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# 🔒 SECURITY: Environment variables (never commit!)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+.env.prod
+.env.test
+
+# 🔒 SECURITY: Sensitive files
+*.pem
+*.key
+*.cert
