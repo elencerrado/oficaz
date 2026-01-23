@@ -41,13 +41,13 @@ export function DatePickerDay({
           </span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[350px]">
         <DialogHeader>
-          <DialogTitle className="text-center">
+          <DialogTitle className="text-center text-lg">
             Seleccionar fecha
           </DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col items-center space-y-4 p-4">
+        <div className="flex flex-col items-center space-y-3 px-2 pb-4">
           <Calendar
             mode="single"
             selected={date}
@@ -62,8 +62,9 @@ export function DatePickerDay({
             }}
             initialFocus
             locale={es}
+            className="rounded-md"
           />
-          <div className="flex gap-2 w-full">
+          <div className="flex gap-2 w-full pt-2">
             <Button 
               variant="outline" 
               onClick={() => setIsModalOpen(false)}
@@ -148,13 +149,13 @@ export function DatePickerDayEmployee({
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[350px]">
         <DialogHeader>
-          <DialogTitle className="text-center">
+          <DialogTitle className="text-center text-lg">
             Seleccionar fecha
           </DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col space-y-4 p-4">
+        <div className="flex flex-col space-y-3 px-2 pb-4">
           {/* Selector de Año */}
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
@@ -216,7 +217,7 @@ export function DatePickerDayEmployee({
           </div>
 
           {/* Botones */}
-          <div className="flex gap-2 mt-6">
+          <div className="flex gap-2 pt-3">
             <Button 
               variant="outline" 
               onClick={handleCancel}
@@ -286,18 +287,18 @@ export function DatePickerPeriod({
               ? (startDate.getMonth() === endDate.getMonth() && startDate.getFullYear() === endDate.getFullYear()
                 ? `${format(startDate, 'd', { locale: es })}-${format(endDate, 'd MMM', { locale: es })}`
                 : `${format(startDate, 'd/M', { locale: es })}-${format(endDate, 'd/M', { locale: es })}`)
-              : 'Rango')
+              : 'Fecha')
             }
           </span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[380px]">
         <DialogHeader>
-          <DialogTitle className="text-center">
+          <DialogTitle className="text-center text-lg">
             {isSelectingStart ? 'Seleccionar fecha de inicio' : 'Seleccionar fecha de fin'}
           </DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col items-center space-y-4 p-4">
+        <div className="flex flex-col items-center space-y-3 px-2 pb-4">
           <Calendar
             mode="range"
             selected={{
@@ -341,13 +342,13 @@ export function DatePickerPeriod({
                 setIsSelectingStart(false);
               }
             }}
-            className="rounded-md border"
+            className="rounded-md"
             numberOfMonths={1}
             showOutsideDays={false}
             locale={es}
           />
 
-          <div className="flex justify-center">
+          <div className="flex justify-center pt-2">
             <Button
               variant="outline"
               onClick={() => {

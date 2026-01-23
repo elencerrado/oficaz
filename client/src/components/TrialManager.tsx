@@ -36,9 +36,10 @@ export function TrialManager() {
   const { subscription } = useAuth();
 
   // Fetch trial status - trial doesn't change often, long cache is fine
-  const { data: trialStatus, isLoading: loadingTrial } = useQuery<TrialStatus>({
+  const { data: trialStatus, isLoading: loadingTrial, isFetching } = useQuery<TrialStatus>({
     queryKey: ['/api/account/trial-status'],
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes - trial status rarely changes
+    refetchOnMount: 'always', // Always check on mount to ensure fresh data after login
   });
 
   // Obtener métodos de pago para el modal
@@ -53,55 +54,64 @@ export function TrialManager() {
     staleTime: 30000,
   });
 
-  // Precios de los addons de pago
-  const addonPrices: Record<string, number> = {
-    messages: 5,
-    reminders: 5,
-    documents: 10,
-    work_reports: 8,
-    ai_assistant: 15
+  // Get seat prices from API (fallback to hardcoded defaults)
+  const { data: seatPricesData = [] } = useQuery({
+    queryKey: ['/api/super-admin/seat-prices'],
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/super-admin/seat-prices');
+        if (!response.ok) throw new Error('Failed to fetch seat prices');
+        return response.json();
+      } catch (error) {
+        console.warn('Failed to fetch seat prices from API, using defaults:', error);
+        return [];
+      }
+    },
+    staleTime: 60000,
+  });
+
+  // Build seat pricing map from API data (with hardcoded fallbacks)
+  const seatPriceMap = {
+    admin: seatPricesData.find((s: any) => s.roleType === 'admin')?.monthlyPrice
+      ? parseFloat(seatPricesData.find((s: any) => s.roleType === 'admin').monthlyPrice)
+      : 6,
+    manager: seatPricesData.find((s: any) => s.roleType === 'manager')?.monthlyPrice
+      ? parseFloat(seatPricesData.find((s: any) => s.roleType === 'manager').monthlyPrice)
+      : 4,
+    employee: seatPricesData.find((s: any) => s.roleType === 'employee')?.monthlyPrice
+      ? parseFloat(seatPricesData.find((s: any) => s.roleType === 'employee').monthlyPrice)
+      : 2,
   };
 
-  // Calcular precio proyectado total
+  // Calcular precio proyectado total usando datos reales (addons + asientos + precio base/custom)
   const projectedPrice = useMemo(() => {
-    const basePrice = subscription?.customMonthlyPrice 
-      ? Number(subscription.customMonthlyPrice) 
-      : (subscription?.baseMonthlyPrice ? Number(subscription.baseMonthlyPrice) : 39);
-    
-    // Sumar precio de addons de pago activos
-    let addonsTotal = 0;
-    companyAddons.forEach(ca => {
-      if (ca.status === 'active' && ca.addon?.key && addonPrices[ca.addon.key]) {
-        addonsTotal += addonPrices[ca.addon.key];
-      }
-    });
-    
-    // Sumar asientos extra
-    const extraEmployeesPrice = (subscription?.extraEmployees || 0) * 2;
-    const extraManagersPrice = (subscription?.extraManagers || 0) * 4;
-    const extraAdminsPrice = (subscription?.extraAdmins || 0) * 6;
-    
-    return basePrice + addonsTotal + extraEmployeesPrice + extraManagersPrice + extraAdminsPrice;
-  }, [companyAddons, subscription]);
+    // 1) Custom price siempre manda
+    if (subscription?.customMonthlyPrice != null) {
+      return Number(subscription.customMonthlyPrice);
+    }
+
+    // 2) Base (puede ser 0€ en modelo modular)
+    const basePrice = subscription?.baseMonthlyPrice != null ? Number(subscription.baseMonthlyPrice) : 0;
+
+    // 3) Addons activos o pending_cancel con su precio real
+    const addonsTotal = companyAddons
+      .filter(ca => ca.status === 'active' || ca.status === 'pending_cancel')
+      .reduce((sum, ca) => sum + Number(ca.addon?.monthlyPrice ?? 0), 0);
+
+    // 4) Asientos (incluye el admin inicial)
+    const adminSeats = (subscription?.extraAdmins ?? 0) + 1;
+    const managerSeats = subscription?.extraManagers ?? 0;
+    const employeeSeats = subscription?.extraEmployees ?? 0;
+
+    const seatsTotal = (adminSeats * seatPriceMap.admin)
+      + (managerSeats * seatPriceMap.manager)
+      + (employeeSeats * seatPriceMap.employee);
+
+    return basePrice + addonsTotal + seatsTotal;
+  }, [companyAddons, subscription, seatPriceMap]);
 
   // Función para obtener el precio del plan Oficaz
-  const getPlanPrice = (_planName: string) => {
-    // Use custom monthly price if available
-    if (subscription?.customMonthlyPrice) {
-      const customPrice = Number(subscription.customMonthlyPrice);
-      if (customPrice > 0) {
-        return customPrice.toFixed(2);
-      }
-    }
-    
-    // Nuevo modelo: precio base de Oficaz es 39€/mes
-    if (subscription?.baseMonthlyPrice) {
-      return Number(subscription.baseMonthlyPrice).toFixed(2);
-    }
-    
-    // Default al precio base del plan Oficaz
-    return '39.00';
-  };
+  const getPlanPrice = (_planName: string) => projectedPrice.toFixed(2);
 
   // Estado para procesar pago
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -148,9 +158,28 @@ export function TrialManager() {
     createPaymentMutation.mutate({ plan: 'oficaz' });
   };
 
+  // Show loading skeleton during initial load or when fetching without data
+  if ((loadingTrial || isFetching) && !trialStatus) {
+    return (
+      <div className="rounded-lg border p-3 sm:p-4 mb-4 sm:mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800/50 animate-pulse">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center space-x-2 sm:space-x-3 flex-1">
+            <div className="p-1.5 sm:p-2 rounded-full bg-blue-100 dark:bg-blue-900/50">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-300 dark:bg-blue-700 rounded"></div>
+            </div>
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-blue-200 dark:bg-blue-800/50 rounded w-1/3"></div>
+              <div className="h-3 bg-blue-200 dark:bg-blue-800/50 rounded w-1/2"></div>
+            </div>
+          </div>
+          <div className="h-8 w-32 bg-blue-200 dark:bg-blue-800/50 rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
-
-  if (loadingTrial || !trialStatus) return null;
+  // Only render if we have trial status data (avoid hydration mismatch)
+  if (!trialStatus) return null;
 
   // If account is active (paid), don't show anything - subscription is working
   if (trialStatus.status === 'active' && !trialStatus.isTrialActive) {
@@ -286,7 +315,11 @@ export function TrialManager() {
                 Añade un método de pago para continuar usando Oficaz cuando termine tu período de prueba.
               </DialogDescription>
             </DialogHeader>
-            <PaymentMethodManager paymentMethods={paymentMethods} />
+            <PaymentMethodManager 
+              paymentMethods={paymentMethods} 
+              selectedPlan="oficaz"
+              selectedPlanPrice={projectedPrice}
+            />
           </DialogContent>
         </Dialog>
       </div>

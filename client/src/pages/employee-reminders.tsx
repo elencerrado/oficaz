@@ -11,9 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Link } from 'wouter';
 import { 
-  ArrowLeft, 
   Plus, 
   Clock, 
   AlertCircle, 
@@ -27,6 +25,7 @@ import { format, isToday, isTomorrow, isPast, formatDistanceToNow } from 'date-f
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { convertMadridToUTC, convertUTCToMadrid, getMadridDate } from '@/utils/dateUtils';
+import { EmployeeTopBar } from '@/components/employee/employee-top-bar';
 
 interface Reminder {
   id: number;
@@ -284,7 +283,7 @@ export default function EmployeeReminders() {
       if (isPast(date)) return `Hace ${formatDistanceToNow(date, { locale: es })}`;
       return format(date, 'dd/MM/yyyy HH:mm', { locale: es });
     } catch (error) {
-      console.error('Error formatting reminder date:', error, 'Input:', dateString);
+      // console.error('Error formatting reminder date:', error, 'Input:', dateString);
       return 'Fecha inválida';
     }
   };
@@ -324,36 +323,7 @@ export default function EmployeeReminders() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col page-scroll">
       {/* Header - Standard employee pattern */}
-      <div className="flex items-center justify-between p-6 pb-8 h-20">
-        <Link href={`/${companyAlias}/inicio`}>
-          <Button
-            variant="ghost"
-            size="lg"
-            className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 px-6 py-3 rounded-xl bg-gray-100 dark:bg-white/10 backdrop-blur-sm transition-all duration-200 border border-gray-300 dark:border-white/20"
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            <span className="font-medium">Atrás</span>
-          </Button>
-        </Link>
-        
-        <div className="flex-1 flex flex-col items-end text-right">
-          {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
-          {company?.logoUrl && hasAccess('logoUpload') ? (
-            <img 
-              src={company.logoUrl} 
-              alt={company.name} 
-              className="h-8 w-auto mb-1 object-contain filter dark:brightness-0 dark:invert"
-            />
-          ) : (
-            <div className="text-gray-900 dark:text-white text-sm font-medium mb-1">
-              {company?.name || 'Mi Empresa'}
-            </div>
-          )}
-          <div className="text-gray-600 dark:text-white/70 text-xs">
-            {user?.fullName}
-          </div>
-        </div>
-      </div>
+      <EmployeeTopBar homeHref={`/${companyAlias}/inicio`} />
 
       {/* Page title */}
       <div className="px-6 pb-6">

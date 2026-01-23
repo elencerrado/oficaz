@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, jsonb, index, date, time } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, jsonb, index, date, time, uniqueIndex, unique } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -28,6 +28,7 @@ export const companies = pgTable("companies", {
   language: text("language").default("es").notNull(),
   timezone: text("timezone").default("Europe/Madrid").notNull(),
   customAiRules: text("custom_ai_rules").default(""),
+  vacationCutoffDay: text("vacation_cutoff_day").notNull().default("01-31"), // MM-DD, default Jan 31
   allowManagersToGrantRoles: boolean("allow_managers_to_grant_roles").default(false).notNull(),
   managerPermissions: jsonb("manager_permissions").default('{"canCreateDeleteEmployees":true,"canCreateDeleteManagers":false,"canBuyRemoveFeatures":false,"canBuyRemoveUsers":false,"canEditCompanyData":false,"visibleFeatures":[]}').notNull(),
   // Campos migrados desde account_info (datos de facturación)
@@ -57,9 +58,43 @@ export const companies = pgTable("companies", {
   isDeleted: boolean("is_deleted").default(false).notNull(),
   deletedAt: timestamp("deleted_at"),
   
+  // External accountant/advisory system
+  usesExternalAccountant: boolean("uses_external_accountant").default(false).notNull(),
+  autoSubmitToAccountant: boolean("auto_submit_to_accountant").default(false).notNull(),
+  
   updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const companyFiscalSettings = pgTable("company_fiscal_settings", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }).unique(),
+  taxpayerType: varchar("taxpayer_type", { length: 20 }).notNull().default("autonomo"), // autonomo | sociedad
+  vatRegime: varchar("vat_regime", { length: 50 }).default("general"),
+  vatProration: decimal("vat_proration", { precision: 5, scale: 2 }).default("100.00").notNull(),
+  irpfModel130Rate: decimal("irpf_model130_rate", { precision: 5, scale: 2 }).default("20.00").notNull(),
+  irpfManualWithholdings: decimal("irpf_manual_withholdings", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  irpfPreviousPayments: decimal("irpf_previous_payments", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  irpfManualSocialSecurity: decimal("irpf_manual_social_security", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  irpfOtherAdjustments: decimal("irpf_other_adjustments", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  community: varchar("community", { length: 100 }),
+  retentionDefaultRate: decimal("retention_default_rate", { precision: 5, scale: 2 }),
+  // Retenciones por defecto
+  professionalRetentionRate: decimal("professional_retention_rate", { precision: 5, scale: 2 }),
+  newProfessionalRetentionRate: decimal("new_professional_retention_rate", { precision: 5, scale: 2 }),
+  rentRetentionRate: decimal("rent_retention_rate", { precision: 5, scale: 2 }),
+  autoApplyRetentionDefaults: boolean("auto_apply_retention_defaults").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertCompanyFiscalSettingsSchema = createInsertSchema(companyFiscalSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type CompanyFiscalSettings = typeof companyFiscalSettings.$inferSelect;
+export type InsertCompanyFiscalSettings = z.infer<typeof insertCompanyFiscalSettingsSchema>;
 
 
 
@@ -467,9 +502,26 @@ export const absencePolicies = pgTable("absence_policies", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Document folders table for organizing documents
+export const documentFolders = pgTable("document_folders", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  parentId: integer("parent_id").references((): any => documentFolders.id, { onDelete: "cascade" }),
+  path: text("path").notNull(),
+  createdBy: integer("created_by").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  companyIdIdx: index("document_folders_company_id_idx").on(table.companyId),
+  parentIdIdx: index("document_folders_parent_id_idx").on(table.parentId),
+  pathIdx: index("document_folders_path_idx").on(table.companyId, table.path),
+}));
+
 // Documents table
 export const documents = pgTable("documents", {
   id: serial("id").primaryKey(),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }),
+  folderId: integer("folder_id").references(() => documentFolders.id, { onDelete: "set null" }),
   userId: integer("user_id").references(() => users.id).notNull(),
   fileName: text("file_name").notNull(),
   originalName: text("original_name").notNull(),
@@ -485,7 +537,10 @@ export const documents = pgTable("documents", {
   digitalSignature: text("digital_signature"), // Base64 encoded signature image
   signedAt: timestamp("signed_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  companyIdIdx: index("documents_company_id_idx").on(table.companyId),
+  folderIdIdx: index("documents_folder_id_idx").on(table.folderId),
+}));
 
 // Messages table
 export const messages = pgTable("messages", {
@@ -512,6 +567,7 @@ export const systemNotifications = pgTable("notifications", {
   priority: text("priority").notNull().default('medium'), // 'low', 'medium', 'high'
   isRead: boolean("is_read").default(false).notNull(),
   isCompleted: boolean("is_completed").default(false).notNull(),
+  documentId: integer("document_id").references(() => documents.id), // Link to uploaded document for document requests
   metadata: text("metadata"), // JSON string for additional data
   createdBy: integer("created_by").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -1007,6 +1063,36 @@ export const insertWorkShiftSchema = createInsertSchema(workShifts).omit({
 
 export type WorkShift = typeof workShifts.$inferSelect;
 export type InsertWorkShift = z.infer<typeof insertWorkShiftSchema>;
+
+// Shift Templates table - plantillas reutilizables de turnos para una empresa
+export const shiftTemplates = pgTable("shift_templates", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(), // Nombre de la plantilla (ej: "Turno mañana")
+  startTime: time("start_time").notNull(), // Hora de inicio del turno (solo hora, sin fecha)
+  endTime: time("end_time").notNull(), // Hora de fin del turno (solo hora, sin fecha)
+  color: varchar("color", { length: 7 }).notNull().default("#2563EB"), // Color hex para visualización
+  location: text("location"), // Ubicación opcional del trabajo
+  notes: text("notes"), // Notas adicionales
+  displayOrder: integer("display_order").notNull().default(0), // Orden de visualización en UI
+  createdBy: integer("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  companyIdIdx: index("idx_shift_templates_company_id").on(table.companyId),
+  companyOrderIdx: index("idx_shift_templates_company_order").on(table.companyId, table.displayOrder),
+  createdByIdx: index("idx_shift_templates_created_by").on(table.createdBy),
+}));
+
+// Schema for shift templates
+export const insertShiftTemplateSchema = createInsertSchema(shiftTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ShiftTemplate = typeof shiftTemplates.$inferSelect;
+export type InsertShiftTemplate = z.infer<typeof insertShiftTemplateSchema>;
 
 // Promotional codes table - códigos promocionales para extender período de prueba
 export const promotionalCodes = pgTable("promotional_codes", {
@@ -1670,3 +1756,353 @@ export const insertMovementSequenceSchema = createInsertSchema(movementSequences
 
 export type MovementSequence = typeof movementSequences.$inferSelect;
 export type InsertMovementSequence = z.infer<typeof insertMovementSequenceSchema>;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 💰 ACCOUNTING SYSTEM - Categories, Entries and Attachments
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const accountingCategories = pgTable("accounting_categories", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  type: varchar("type", { length: 10 }).notNull(), // 'expense' or 'income'
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  color: varchar("color", { length: 7 }).notNull(),
+  icon: varchar("icon", { length: 50 }).default("Receipt"),
+  isActive: boolean("is_active").default(true).notNull(),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyTypeIdx: index("accounting_categories_company_type_idx").on(table.companyId, table.type),
+}));
+
+export const accountingEntries = pgTable("accounting_entries", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  categoryId: integer("category_id").references(() => accountingCategories.id, { onDelete: "set null" }),
+  type: varchar("type", { length: 10 }).notNull(), // 'expense' or 'income'
+  
+  submittedBy: integer("submitted_by").notNull().references(() => users.id, { onDelete: "cascade" }),
+  employeeId: integer("employee_id").references(() => users.id, { onDelete: "set null" }),
+  projectId: integer("project_id").references(() => projects.id, { onDelete: "set null" }),
+  crmClientId: integer("crm_client_id").references(() => businessContacts.id, { onDelete: "set null" }),
+  crmSupplierId: integer("crm_supplier_id").references(() => businessContacts.id, { onDelete: "set null" }),
+  
+  concept: varchar("concept", { length: 200 }).notNull(),
+  description: text("description"),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  vatRate: decimal("vat_rate", { precision: 5, scale: 2 }),
+  vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("EUR").notNull(),
+
+  irpfRetentionRate: decimal("irpf_retention_rate", { precision: 5, scale: 2 }),
+  irpfRetentionAmount: decimal("irpf_retention_amount", { precision: 12, scale: 2 }),
+  irpfDeductible: boolean("irpf_deductible").default(true).notNull(),
+  irpfDeductionPercentage: decimal("irpf_deduction_percentage", { precision: 5, scale: 2 }).default("100.00").notNull(), // % deducible (ej: comidas 30%)
+  irpfIsSocialSecurity: boolean("irpf_is_social_security").default(false).notNull(),
+  irpfIsAmortization: boolean("irpf_is_amortization").default(false).notNull(), // Amortizaciones
+  irpfFiscalAdjustment: decimal("irpf_fiscal_adjustment", { precision: 12, scale: 2 }).default("0.00").notNull(), // Ajustes fiscales
+  fiscalNotes: text("fiscal_notes"), // Notas fiscales
+  // Retenciones (111/115)
+  retentionType: varchar("retention_type", { length: 20 }), // professional | rent | other
+  retentionAppliedByUs: boolean("retention_applied_by_us").default(false).notNull(), // true si practicamos la retención (gasto)
+  
+  entryDate: date("entry_date").notNull(),
+  paymentMethod: varchar("payment_method", { length: 50 }),
+  invoiceNumber: varchar("invoice_number", { length: 100 }),
+  refCode: varchar("ref_code", { length: 50 }),
+  contactName: varchar("contact_name", { length: 200 }),
+  
+  status: varchar("status", { length: 20 }).default("pending").notNull(),
+  reviewedBy: integer("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"),
+  
+  // Accountant/Advisory system fields
+  accountantReviewedBy: integer("accountant_reviewed_by").references(() => users.id, { onDelete: "set null" }),
+  accountantReviewedAt: timestamp("accountant_reviewed_at"),
+  accountantNotes: text("accountant_notes"),
+  
+  isReimbursable: boolean("is_reimbursable").default(false).notNull(),
+  reimbursedAt: timestamp("reimbursed_at"),
+  notes: text("notes"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyDateIdx: index("accounting_entries_company_date_idx").on(table.companyId, table.entryDate),
+  typeIdx: index("accounting_entries_type_idx").on(table.companyId, table.type),
+  employeeIdx: index("accounting_entries_employee_idx").on(table.employeeId),
+  statusIdx: index("accounting_entries_status_idx").on(table.companyId, table.status),
+}));
+
+export const accountingAttachments = pgTable("accounting_attachments", {
+  id: serial("id").primaryKey(),
+  entryId: integer("entry_id").notNull().references(() => accountingEntries.id, { onDelete: "cascade" }),
+  fileName: varchar("file_name", { length: 255 }).notNull(),
+  filePath: varchar("file_path", { length: 500 }).notNull(),
+  fileSize: integer("file_size"),
+  mimeType: varchar("mime_type", { length: 100 }),
+  uploadedBy: integer("uploaded_by").notNull().references(() => users.id, { onDelete: "cascade" }),
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+}, (table) => ({
+  entryIdx: index("accounting_attachments_entry_idx").on(table.entryId),
+}));
+
+export type AccountingEntry = typeof accountingEntries.$inferSelect;
+export type InsertAccountingEntry = typeof accountingEntries.$inferInsert;
+export type AccountingAttachment = typeof accountingAttachments.$inferSelect;
+export type InsertAccountingAttachment = typeof accountingAttachments.$inferInsert;
+
+// Company Accountants - External accountants/advisors managing multiple companies
+export const companyAccountants = pgTable("company_accountants", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  accountantUserId: integer("accountant_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  enabledAt: timestamp("enabled_at").defaultNow().notNull(),
+  disabledAt: timestamp("disabled_at"), // NULL = active
+  createdBy: integer("created_by").references(() => users.id),
+  notes: text("notes"),
+}, (table) => ({
+  companyIdx: index("company_accountants_company_idx").on(table.companyId),
+  accountantIdx: index("company_accountants_accountant_idx").on(table.accountantUserId),
+  uniqueAssignment: unique("company_accountants_unique").on(table.companyId, table.accountantUserId),
+}));
+
+export type CompanyAccountant = typeof companyAccountants.$inferSelect;
+export type InsertCompanyAccountant = typeof companyAccountants.$inferInsert;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🤝 CRM BÁSICO: Clientes, Proveedores y Proyectos
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const businessContacts = pgTable("business_contacts", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 180 }).notNull(),
+  role: varchar("role", { length: 20 }).notNull(), // client | provider
+  label: varchar("label", { length: 50 }), // Etiqueta visible en UI
+  email: varchar("email", { length: 200 }),
+  phone: varchar("phone", { length: 40 }),
+  taxId: varchar("tax_id", { length: 50 }),
+  city: varchar("city", { length: 120 }),
+  notes: text("notes"),
+  categories: integer("categories").array().default([]).notNull(), // IDs de categorías CRM de la empresa
+  statusCategories: integer("status_categories").array().default([]).notNull(), // IDs de categorías de estado
+  status: varchar("status", { length: 20 }).default("active").notNull(), // Campo legacy, usar statusCategories
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyRoleIdx: index("business_contacts_company_role_idx").on(table.companyId, table.role),
+  companyNameIdx: index("business_contacts_company_name_idx").on(table.companyId, table.name),
+}));
+
+export const projects = pgTable("projects", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 200 }).notNull(),
+  code: varchar("code", { length: 50 }),
+  status: varchar("status", { length: 30 }).default("active").notNull(), // Campo legacy, usar statusCategories
+  statusCategories: integer("status_categories").array().default([]).notNull(), // IDs de categorías de estado
+  stage: varchar("stage", { length: 30 }),
+  description: text("description"),
+  startDate: date("start_date"),
+  dueDate: date("due_date"),
+  budget: decimal("budget", { precision: 12, scale: 2 }),
+  progress: integer("progress").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyIdx: index("projects_company_idx").on(table.companyId),
+  statusIdx: index("projects_status_idx").on(table.companyId, table.status),
+}));
+
+export const projectContacts = pgTable("project_contacts", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  contactId: integer("contact_id").notNull().references(() => businessContacts.id, { onDelete: "cascade" }),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  role: varchar("role", { length: 20 }).notNull(), // client | provider
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  projectIdx: index("project_contacts_project_idx").on(table.projectId),
+  companyIdx: index("project_contacts_company_idx").on(table.companyId),
+  uniqueContact: uniqueIndex("project_contacts_unique").on(table.projectId, table.contactId, table.role),
+}));
+
+// CRM Categories - Categorías personalizadas por empresa para agrupar contactos
+export const crmCategories = pgTable("crm_categories", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 100 }).notNull(),
+  color: varchar("color", { length: 20 }).default("blue").notNull(), // predeterminado, naranja, gris, marrón, amarillo, verde, azul, morado, rosa, rojo
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyIdx: index("crm_categories_company_idx").on(table.companyId),
+  uniqueName: uniqueIndex("crm_categories_unique").on(table.companyId, table.name),
+}));
+
+export type CRMCategory = typeof crmCategories.$inferSelect;
+export type InsertCRMCategory = typeof crmCategories.$inferInsert;
+
+// CRM Status Categories - Categorías de estado personalizadas por empresa
+export const crmStatusCategories = pgTable("crm_status_categories", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 100 }).notNull(),
+  color: varchar("color", { length: 20 }).default("verde").notNull(),
+  isDefault: boolean("is_default").default(false).notNull(), // Para marcar Activo/Inactivo por defecto
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyIdx: index("crm_status_categories_company_idx").on(table.companyId),
+  uniqueName: uniqueIndex("crm_status_categories_unique").on(table.companyId, table.name),
+}));
+
+export type CRMStatusCategory = typeof crmStatusCategories.$inferSelect;
+export type InsertCRMStatusCategory = typeof crmStatusCategories.$inferInsert;
+
+// Project Status Categories - Categorías de estado personalizadas por empresa para proyectos
+export const projectStatusCategories = pgTable("project_status_categories", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 100 }).notNull(),
+  color: varchar("color", { length: 20 }).default("azul").notNull(),
+  isDefault: boolean("is_default").default(false).notNull(), // Para marcar estados por defecto
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyIdx: index("project_status_categories_company_idx").on(table.companyId),
+  uniqueName: uniqueIndex("project_status_categories_unique").on(table.companyId, table.name),
+}));
+
+export type ProjectStatusCategory = typeof projectStatusCategories.$inferSelect;
+export type InsertProjectStatusCategory = typeof projectStatusCategories.$inferInsert;
+
+// Project Users - Employees assigned to projects
+export const projectUsers = pgTable("project_users", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  projectIdx: index("project_users_project_id_idx").on(table.projectId),
+  userIdx: index("project_users_user_id_idx").on(table.userId),
+  uniqueAssignment: uniqueIndex("project_users_unique").on(table.projectId, table.userId),
+}));
+
+export type ProjectUser = typeof projectUsers.$inferSelect;
+export type InsertProjectUser = typeof projectUsers.$inferInsert;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EMAIL QUEUE - Enterprise-grade email system with queue and retries
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const emailQueue = pgTable("email_queue", {
+  id: serial("id").primaryKey(),
+  
+  // Recipient
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  toEmail: varchar("to_email", { length: 255 }).notNull(),
+  toName: varchar("to_name", { length: 255 }).notNull(),
+  
+  // Content
+  subject: varchar("subject", { length: 500 }).notNull(),
+  templateType: varchar("template_type", { length: 100 }).notNull(),
+  templateData: jsonb("template_data").notNull().default('{}'),
+  
+  // Priority and scheduling
+  priority: integer("priority").notNull().default(5),
+  scheduledFor: timestamp("scheduled_for"),
+  
+  // Status tracking
+  status: varchar("status", { length: 50 }).notNull().default('pending'),
+  attempts: integer("attempts").notNull().default(0),
+  maxAttempts: integer("max_attempts").notNull().default(3),
+  lastAttemptAt: timestamp("last_attempt_at"),
+  sentAt: timestamp("sent_at"),
+  failedAt: timestamp("failed_at"),
+  errorMessage: text("error_message"),
+  
+  // Metadata
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  createdBy: integer("created_by").references(() => users.id, { onDelete: "set null" }),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  statusIdx: index("idx_email_queue_status").on(table.status),
+  scheduledIdx: index("idx_email_queue_scheduled").on(table.scheduledFor),
+  priorityIdx: index("idx_email_queue_priority").on(table.priority, table.createdAt),
+  userIdx: index("idx_email_queue_user").on(table.userId),
+  companyIdx: index("idx_email_queue_company").on(table.companyId),
+}));
+
+export const insertEmailQueueSchema = createInsertSchema(emailQueue).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type EmailQueue = typeof emailQueue.$inferSelect;
+export type InsertEmailQueue = z.infer<typeof insertEmailQueueSchema>;
+
+// Document Signature Tokens - for direct email signature links
+export const documentSignatureTokens = pgTable("document_signature_tokens", {
+  id: serial("id").primaryKey(),
+  token: varchar("token", { length: 64 }).unique().notNull(),
+  documentId: integer("document_id").notNull().references(() => documents.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  
+  used: boolean("used").notNull().default(false),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  
+  createdFromIp: varchar("created_from_ip", { length: 100 }),
+  usedFromIp: varchar("used_from_ip", { length: 100 }),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  tokenIdx: index("idx_doc_sig_token").on(table.token),
+  expiresIdx: index("idx_doc_sig_expires").on(table.expiresAt),
+  documentIdx: index("idx_doc_sig_document").on(table.documentId),
+}));
+
+export const insertDocumentSignatureTokenSchema = createInsertSchema(documentSignatureTokens).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type DocumentSignatureToken = typeof documentSignatureTokens.$inferSelect;
+export type InsertDocumentSignatureToken = z.infer<typeof insertDocumentSignatureTokenSchema>;
+
+// Document Signature Positions table
+export const documentSignaturePositions = pgTable("document_signature_positions", {
+  id: serial("id").primaryKey(),
+  documentId: integer("document_id").references(() => documents.id, { onDelete: "cascade" }).unique().notNull(),
+  positionX: decimal("position_x", { precision: 5, scale: 2 }).default("75").notNull(),
+  positionY: decimal("position_y", { precision: 5, scale: 2 }).default("80").notNull(),
+  positionWidth: decimal("position_width", { precision: 5, scale: 2 }).default("18").notNull(),
+  positionHeight: decimal("position_height", { precision: 5, scale: 2 }).default("15").notNull(),
+  pageNumber: integer("page_number").default(1).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  documentIdIdx: index("document_signature_positions_document_id_idx").on(table.documentId),
+}));
+
+export const insertDocumentSignaturePositionSchema = createInsertSchema(documentSignaturePositions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type DocumentSignaturePosition = typeof documentSignaturePositions.$inferSelect;
+export type InsertDocumentSignaturePosition = z.infer<typeof insertDocumentSignaturePositionSchema>;
+
+// SeatPricing table is used instead (it already exists and has all needed fields for SuperAdmin pricing control)
+

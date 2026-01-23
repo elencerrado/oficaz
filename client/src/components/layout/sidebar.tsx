@@ -3,9 +3,11 @@ import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useDemoBanner } from '@/hooks/use-demo-banner';
 import { useEmployeeViewMode } from '@/hooks/use-employee-view-mode';
-import { LayoutDashboard, Clock, Calendar, CalendarClock, FileText, Mail, Bell, Users, Settings, LogOut, ClipboardList, Store, Package } from 'lucide-react';
+import { useSidebarScroll } from '@/hooks/use-sidebar-scroll';
+import { LayoutDashboard, Clock, Calendar, CalendarClock, FileText, Mail, Bell, Users, Settings, LogOut, ClipboardList, Store, Package, Calculator, FolderKanban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useRef, useEffect } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
@@ -34,8 +36,34 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { hasAccess } = useFeatureCheck();
   const { showBanner, bannerHeight } = useDemoBanner();
   const { isEmployeeViewMode } = useEmployeeViewMode();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { applyScroll, saveScroll } = useSidebarScroll();
   
   const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
+
+  // Apply saved scroll position on mount and location change
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      applyScroll(container);
+    }
+  }, [location, applyScroll]);
+
+  // Save scroll position when scrolling
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      saveScroll(container);
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, [saveScroll]);
 
   const { data: unreadCount } = useQuery({
     queryKey: ['/api/messages/unread-count'],
@@ -63,8 +91,29 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     return true;
   };
 
-  const companyAlias = company?.companyAlias || 'test';
+  // Para accountant no hay companyAlias (no pertenece a ninguna empresa)
+  const companyAlias = user?.role === 'accountant' ? '' : (company?.companyAlias || 'test');
   
+  // Menú específico para accountant/gestor
+  const accountantNavigation = [
+    { 
+      name: 'Panel Principal', 
+      href: '/accountant', 
+      icon: LayoutDashboard
+    },
+    { 
+      name: 'Contabilidad', 
+      href: '/accountant/contabilidad', 
+      icon: Calculator
+    },
+    { 
+      name: 'Documentos', 
+      href: '/accountant/documentos', 
+      icon: FileText
+    },
+  ];
+
+  // Menú normal para otros roles
   const navigation = [
     { 
       name: 'Panel Principal', 
@@ -137,7 +186,26 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         feature: 'inventory' as const
       }
     ] : []),
+    ...((user?.role === 'admin' || user?.role === 'manager') && hasAccess('crm', { bypassManagerRestrictions: true }) ? [
+      { 
+        name: 'Clientes y Proyectos', 
+        href: `/${companyAlias}/clientes-proyectos`, 
+        icon: FolderKanban,
+        feature: 'crm' as const
+      }
+    ] : []),
+    ...(hasAccess('accounting', { bypassManagerRestrictions: false }) ? [
+      { 
+        name: 'Contabilidad', 
+        href: `/${companyAlias}/contabilidad`, 
+        icon: Calculator,
+        feature: 'accounting' as const
+      }
+    ] : []),
   ];
+
+  // Usar menú de accountant si es accountant, sino menú normal
+  const activeNavigation = user?.role === 'accountant' ? accountantNavigation : navigation;
 
   const footerItems = [
     ...(user?.role === 'admin' || user?.role === 'manager' ? [
@@ -147,11 +215,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         icon: Users
       }
     ] : []),
-    { 
-      name: 'Configuración', 
-      href: `/${companyAlias}/configuracion`, 
-      icon: Settings
-    },
+    ...(user?.role !== 'accountant' ? [
+      { 
+        name: 'Configuración', 
+        href: `/${companyAlias}/configuracion`, 
+        icon: Settings
+      }
+    ] : []),
     ...(canAccessStore ? [
       { 
         name: 'Tienda', 
@@ -189,9 +259,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="h-16 bg-sidebar flex-shrink-0" style={{ backgroundColor: 'hsl(var(--sidebar-background))' }} />
         
         <div 
+          ref={scrollContainerRef}
+          data-preserve-scroll="true"
           className="flex-1 overflow-y-auto bg-sidebar min-h-0"
           style={{
-            backgroundColor: 'hsl(var(--sidebar-background))'
+            backgroundColor: 'hsl(var(--sidebar-background))',
+            overscrollBehavior: 'contain'
           }}
         >
           <div className="p-4 bg-sidebar">
@@ -199,7 +272,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                  style={{ 
                    gap: 'clamp(0.3rem, 1.2vh, 0.8rem)'
                  }}>
-              {navigation
+              {activeNavigation
                 .filter((item) => !item.feature || hasAccess(item.feature, { bypassManagerRestrictions: true }))
                 .map((item) => {
                 const isActive = location === item.href;

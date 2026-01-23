@@ -27,7 +27,7 @@ export const LazyChartWrapper = ({ children, className }: { children: React.Reac
     return {
       default: ({ children }: { children: React.ReactNode }) => (
         <recharts.ResponsiveContainer>
-          {children}
+          {children as React.ReactElement}
         </recharts.ResponsiveContainer>
       )
     };

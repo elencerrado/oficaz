@@ -1,0 +1,2 @@
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS document_id INTEGER REFERENCES documents(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_notifications_document_id ON notifications(document_id);

@@ -37,6 +37,8 @@ import {
 import { format, addDays, isSameDay, parseISO, startOfDay, differenceInCalendarDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
+import { logger } from '@/lib/logger';
+import { getAuthData } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { TrialManager } from '@/components/TrialManager';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -48,6 +50,7 @@ export default function AdminDashboard() {
   usePageTitle('Panel Principal');
   const { user, company } = useAuth();
   const { hasAccess } = useFeatureCheck();
+  const companyAlias = company?.companyAlias || 'test';
   const { setHeader, resetHeader } = usePageHeader();
 
   // Set page header
@@ -76,55 +79,7 @@ export default function AdminDashboard() {
     sessionStorage.getItem('adminDashboardAnimated') === 'true' ? [0, 1, 2, 3, 4, 5, 6] : []
   );
 
-  // Hook para destacar el día de hoy en el calendario con estilos inline
-  useEffect(() => {
-    const highlightTodayInCalendar = () => {
-      const calendarContainer = document.querySelector('.calendar-admin-override');
-      if (!calendarContainer) return;
-
-      // Buscar todos los botones con clase rdp-day_today
-      const todayButtons = calendarContainer.querySelectorAll('button.rdp-day_today');
-      
-      todayButtons.forEach((button: Element) => {
-        const htmlButton = button as HTMLElement;
-        // Aplicar estilos inline con máxima prioridad
-        htmlButton.style.cssText = `
-          background-color: #3b82f6 !important;
-          background: #3b82f6 !important;
-          color: white !important;
-          border: 3px solid #1d4ed8 !important;
-          border-radius: 50% !important;
-          font-weight: 900 !important;
-          box-shadow: 0 0 12px rgba(59, 130, 246, 0.8), 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
-          transform: scale(1.1) !important;
-          opacity: 1 !important;
-          position: relative !important;
-          z-index: 99999 !important;
-        `;
-      });
-    };
-
-    // Ejecutar inmediatamente y después de cualquier re-renderizado
-    const timeoutId = setTimeout(highlightTodayInCalendar, 100);
-    
-    // Observer para cambios en el DOM del calendario
-    const observer = new MutationObserver(highlightTodayInCalendar);
-    const calendarContainer = document.querySelector('.calendar-admin-override');
-    
-    if (calendarContainer) {
-      observer.observe(calendarContainer, { 
-        childList: true, 
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['class', 'style']
-      });
-    }
-
-    return () => {
-      clearTimeout(timeoutId);
-      observer.disconnect();
-    };
-  }, [selectedDate]); // Re-ejecutar cuando cambie la fecha seleccionada
+  // ✨ OPTIMIZED: Removed MutationObserver - CustomCalendar handles today highlighting via CSS
 
   // ⚠️ PROTECTED - DO NOT MODIFY - Dynamic message functions identical to employee system
   const generateDynamicMessage = (type: 'entrada' | 'salida') => {
@@ -164,40 +119,18 @@ export default function AdminDashboard() {
     };
   }, []);
 
-  // Helper function to determine if user can manage a specific request
-  const canManageRequest = (request: any) => {
-    // Admin can manage all requests
-    if (user?.role === 'admin') return true;
-    
-    // Manager can only manage employee requests, not their own
-    if (user?.role === 'manager') {
-      // Get the user who made the request
-      const requestUser = (employees || []).find((emp: any) => emp.id === request.userId);
-      // Manager cannot manage their own requests, only employee requests
-      return requestUser && requestUser.role === 'employee';
-    }
-    
-    // Employees cannot manage any requests
-    return false;
-  };
-
-  // Función para manejar clics en días del calendario
-  const handleDateSelect = (date: Date) => {
-    setSelectedDate(date);
-  };
-
   // ⚠️ Performance: currentTime state removed - calculate directly when needed to avoid unnecessary re-renders
 
 
   // Fetch cancellation status for subscription termination warning
-  const { data: cancellationStatus } = useQuery({
+  const { data: cancellationStatus } = useQuery<{ scheduledForCancellation?: boolean; nextPaymentDate?: string }>({
     queryKey: ['/api/account/cancellation-status'],
     staleTime: 30000,
-    refetchInterval: 60000,
+    refetchInterval: 300000, // ⚡ Optimizado: 5 minutos (was 60s)
   });
 
   // Fetch payment methods to determine if user has payment method
-  const { data: paymentMethods } = useQuery({
+  const { data: paymentMethods = [] } = useQuery<any[]>({
     queryKey: ['/api/account/payment-methods'],
     staleTime: 120000, // Cache for 2 minutes (optimized from 30s)
     refetchInterval: 300000, // Refetch every 5 minutes (optimized from 60s)
@@ -220,7 +153,7 @@ export default function AdminDashboard() {
 
   // ⚠️ PROTECTED - DO NOT MODIFY - Queries identical to employee system
   // WebSocket handles real-time work_session_* events - only use staleTime for cache
-  const { data: activeSession } = useQuery({
+  const { data: activeSession } = useQuery<any>({
     queryKey: ['/api/work-sessions/active'],
     staleTime: 30000, // Cache for 30s - WebSocket invalidates on changes
   });
@@ -255,36 +188,60 @@ export default function AdminDashboard() {
     enabled: user?.role === 'admin' || user?.role === 'manager',
   });
 
-  // Extract data from consolidated response
-  const employees = dashboardData?.employees || [];
-  const recentSessions = dashboardData?.recentSessions || [];
-  const messages = dashboardData?.messages || [];
-  const activeReminders = dashboardData?.activeReminders || [];
-  const vacationRequests = dashboardData?.vacationRequests || [];
-  const approvedVacations = dashboardData?.approvedVacations || [];
-  const pendingVacations = dashboardData?.pendingVacations || [];
-  const incompleteSessions = dashboardData?.incompleteSessions || [];
-  const modificationRequests = dashboardData?.modificationRequests || [];
+  // ✨ OPTIMIZATION: Memoize extracted data to prevent creating new arrays on every render
+  const employees = useMemo(() => dashboardData?.employees || [], [dashboardData?.employees]);
+  const recentSessions = useMemo(() => dashboardData?.recentSessions || [], [dashboardData?.recentSessions]);
+  const messages = useMemo(() => dashboardData?.messages || [], [dashboardData?.messages]);
+  const activeReminders = useMemo(() => dashboardData?.activeReminders || [], [dashboardData?.activeReminders]);
+  const vacationRequests = useMemo(() => dashboardData?.vacationRequests || [], [dashboardData?.vacationRequests]);
+  const approvedVacations = useMemo(() => dashboardData?.approvedVacations || [], [dashboardData?.approvedVacations]);
+  const pendingVacations = useMemo(() => dashboardData?.pendingVacations || [], [dashboardData?.pendingVacations]);
+  const incompleteSessions = useMemo(() => dashboardData?.incompleteSessions || [], [dashboardData?.incompleteSessions]);
+  const modificationRequests = useMemo(() => dashboardData?.modificationRequests || [], [dashboardData?.modificationRequests]);
+
+  // ✨ OPTIMIZATION: Memoize canManageRequest function to prevent recalculation
+  const canManageRequest = useCallback((request: any) => {
+    // Admin can manage all requests
+    if (user?.role === 'admin') return true;
+    
+    // Manager can only manage employee requests, not their own
+    if (user?.role === 'manager') {
+      // Get the user who made the request
+      const requestUser = (employees || []).find((emp: any) => emp.id === request.userId);
+      // Manager cannot manage their own requests, only employee requests
+      return requestUser && requestUser.role === 'employee';
+    }
+    
+    // Employees cannot manage any requests
+    return false;
+  }, [user?.role, employees]);
+
+  // ✨ OPTIMIZATION: Memoize date selection handler
+  const handleDateSelect = useCallback((date: Date) => {
+    setSelectedDate(date);
+  }, []);
   
   // WebSocket connection for real-time updates
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token || (user?.role !== 'admin' && user?.role !== 'manager')) {
-      return;
-    }
+    // Get fresh token from auth context (always up-to-date)
+      const token = getAuthData()?.token;
+      if (!token || (user?.role !== 'admin' && user?.role !== 'manager')) {
+        logger.warn('No token available for WebSocket');
+        return;
+      }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
     const ws = new WebSocket(`${protocol}//${host}/ws/work-sessions?token=${token}`);
 
     ws.onopen = () => {
-      console.log('✅ WebSocket connected for real-time updates');
+      logger.info('✅ WebSocket connected for real-time updates');
     };
 
     ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
-        console.log('📡 WebSocket message received:', message);
+        logger.debug('📡 WebSocket message received:', message);
 
         // Invalidate consolidated dashboard query for any updates
         if (message.type === 'vacation_request_created' || 
@@ -335,25 +292,33 @@ export default function AdminDashboard() {
           });
         }
       } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
+        logger.error('Error parsing WebSocket message:', error);
       }
     };
 
     ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      logger.error('WebSocket error:', error);
     };
 
-    ws.onclose = () => {
-      console.log('WebSocket disconnected');
-    };
-
-    // Cleanup on unmount
-    return () => {
-      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-        ws.close();
+    ws.onclose = (event) => {
+      logger.info('WebSocket disconnected', event.code, event.reason);
+      // If token expired, try to reconnect after a delay
+      if (event.code === 1008 && event.reason?.includes('Token expired')) {
+        logger.info('Token expired, will reconnect with fresh token in 5s');
+        setTimeout(() => {
+          // Force component re-render to get fresh token
+          queryClient.invalidateQueries();
+        }, 5000);
       }
     };
-  }, [user, queryClient]);
+
+    // ✨ OPTIMIZED: Cleanup on unmount with proper close code
+    return () => {
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+        ws.close(1000, 'Component unmounted'); // Normal closure
+      }
+    };
+  }, [user?.role, queryClient]); // ✨ OPTIMIZED: Only re-create WebSocket if role changes
 
   // Extract remaining data from consolidated response
   const unreadMessagesCount = dashboardData?.unreadMessagesCount || 0;
@@ -616,6 +581,32 @@ export default function AdminDashboard() {
     return calculateWorkHours(activeSession, companySettings);
   }, [activeSession, companySettings, calculateWorkHours]);
 
+  // ✨ OPTIMIZATION: Memoize current session status to prevent recalculation
+  const sessionStatus = useMemo(() => {
+    if (!currentWorkHours) {
+      return { state: 'inactive', label: 'Fuera del trabajo', color: 'red' };
+    }
+    
+    if (currentWorkHours.isExceeded) {
+      return { state: 'exceeded', label: 'Fuera del trabajo', color: 'red' };
+    }
+    
+    if (activeBreak) {
+      return { state: 'break', label: 'En descanso', color: 'orange' };
+    }
+    
+    if (currentWorkHours.isOvertime) {
+      return { state: 'overtime', label: 'Incompleto', color: 'red' };
+    }
+    
+    return { state: 'working', label: 'Trabajando', color: 'green' };
+  }, [currentWorkHours, activeBreak]);
+
+  // ✨ OPTIMIZATION: Memoize filtered received messages to prevent recalculation
+  const receivedMessages = useMemo(() => {
+    return messages?.filter((message: any) => message.senderId !== user?.id) || [];
+  }, [messages, user?.id]);
+
   const formatTime = (date: Date) => {
     return format(date, 'HH:mm', { locale: es });
   };
@@ -733,22 +724,27 @@ export default function AdminDashboard() {
   // Show skeleton loading on initial load
   const isInitialLoading = isDashboardLoading && !dashboardData;
 
-  // Staggered card animation effect - only runs ONCE per session
+  // ✨ OPTIMIZED: Staggered card animation - only runs ONCE per session using RAF
   useEffect(() => {
     if (!isInitialLoading && dashboardData && !hasAnimated) {
-      // Stagger the appearance of each card (7 cards total)
       const totalCards = 7;
-      const delays = Array.from({ length: totalCards }, (_, i) => i);
-      delays.forEach((cardIndex) => {
-        setTimeout(() => {
-          setVisibleCards(prev => [...prev, cardIndex]);
-          // Mark animation complete after last card
-          if (cardIndex === totalCards - 1) {
+      let currentCard = 0;
+      
+      const animateNextCard = () => {
+        if (currentCard < totalCards) {
+          setVisibleCards(prev => [...prev, currentCard]);
+          currentCard++;
+          
+          if (currentCard < totalCards) {
+            setTimeout(() => requestAnimationFrame(animateNextCard), 80);
+          } else {
             sessionStorage.setItem('adminDashboardAnimated', 'true');
             setHasAnimated(true);
           }
-        }, cardIndex * 80);
-      });
+        }
+      };
+      
+      requestAnimationFrame(animateNextCard);
     }
   }, [isInitialLoading, dashboardData, hasAnimated]);
 
@@ -760,9 +756,9 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      {/* Trial Status Management - Only visible to admins */}
+      {/* Trial Status Management - Only visible to admins - Always visible, no animation */}
       {user?.role === 'admin' && (
-        <div className={`mb-6 ${getCardAnimationClass(0)}`}>
+        <div className="mb-6">
           <TrialManager />
         </div>
       )}
@@ -824,53 +820,10 @@ export default function AdminDashboard() {
                   <div className="flex flex-col justify-center items-center md:items-start">
                     {/* Estado actual */}
                     <div className="mb-2">
-                      {(() => {
-                        // ✨ OPTIMIZED: Using memoized currentWorkHours (calculated once per render)
-                        const workHours = currentWorkHours;
-                        
-                        if (workHours) {
-                          // If session has exceeded max hours + overtime, show as "Fuera del trabajo"
-                          if (workHours.isExceeded) {
-                            return (
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                <span className="text-red-600 font-medium">Fuera del trabajo</span>
-                              </div>
-                            );
-                          }
-                          
-                          // Normal flow for active sessions
-                          if (activeBreak) {
-                            return (
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-                                <span className="text-orange-600 font-medium">En descanso</span>
-                              </div>
-                            );
-                          } else if (workHours.isOvertime) {
-                            return (
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                                <span className="text-red-600 font-medium">Incompleto</span>
-                              </div>
-                            );
-                          } else {
-                            return (
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                <span className="text-green-600 font-medium">Trabajando</span>
-                              </div>
-                            );
-                          }
-                        } else {
-                          return (
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                              <span className="text-red-600 font-medium">Fuera del trabajo</span>
-                            </div>
-                          );
-                        }
-                      })()}
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 bg-${sessionStatus.color}-500 rounded-full ${sessionStatus.state !== 'inactive' && sessionStatus.state !== 'exceeded' ? 'animate-pulse' : ''}`}></div>
+                        <span className={`text-${sessionStatus.color}-600 font-medium`}>{sessionStatus.label}</span>
+                      </div>
                     </div>
                     <p className="text-sm text-muted-foreground text-center md:text-left">
                       Tu último fichaje: {getLastClockInTime()}
@@ -878,16 +831,8 @@ export default function AdminDashboard() {
                   </div>
                 <div className="flex flex-row md:flex-col justify-center gap-2">
                   {(() => {
-                    // ✨ OPTIMIZED: Using memoized currentWorkHours (calculated once per render)
-                    const workHours = currentWorkHours;
-                    
-                    // Check if we should allow new clock-in even with active session
-                    let shouldShowActiveButtons = !!activeSession;
-                    
-                    // If session has exceeded max hours + overtime, treat as if no active session
-                    if (workHours?.isExceeded) {
-                      shouldShowActiveButtons = false; // Allow new clock-in
-                    }
+                    // ✨ OPTIMIZED: Using memoized sessionStatus (calculated once per render)
+                    const shouldShowActiveButtons = activeSession && sessionStatus.state !== 'exceeded';
                     
                     if (shouldShowActiveButtons) {
                       return (
@@ -1028,127 +973,115 @@ export default function AdminDashboard() {
                 <div className="space-y-2">
                   {hasAccess('time_tracking') && incompleteSessions.length > 0 && (
                     <button
-                      onClick={() => setLocation('/test/fichajes?filter=incomplete')}
-                      className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
+                      onClick={() => setLocation(`/${companyAlias}/fichajes?filter=incomplete`)}
+                      className="w-full flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
-                          <Clock className="h-4 w-4 text-red-600 dark:text-red-400" />
+                        <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                          <Clock className="h-5 w-5 text-red-600 dark:text-red-400" />
                         </div>
+                        <span className="text-2xl font-bold text-red-600 dark:text-red-400">{incompleteSessions.length}</span>
                         <div>
                           <p className="font-medium text-sm">Sesiones incompletas</p>
                           <p className="text-xs text-muted-foreground">Sin fichaje de salida</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">{incompleteSessions.length}</Badge>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </button>
                   )}
 
                   {hasAccess('time_tracking') && modificationRequests.length > 0 && (
                     <button
-                      onClick={() => setLocation('/test/fichajes')}
-                      className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
+                      onClick={() => setLocation(`/${companyAlias}/fichajes`)}
+                      className="w-full flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-                          <Edit className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                          <Edit className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                         </div>
+                        <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{modificationRequests.length}</span>
                         <div>
                           <p className="font-medium text-sm">Solicitudes de fichajes</p>
                           <p className="text-xs text-muted-foreground">Modificaciones pendientes</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">{modificationRequests.length}</Badge>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </button>
                   )}
 
                   {hasAccess('vacation') && pendingVacations.length > 0 && (
                     <button
-                      onClick={() => setLocation('/test/ausencias?filter=pending')}
-                      className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
+                      onClick={() => setLocation(`/${companyAlias}/ausencias?filter=pending`)}
+                      className="w-full flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-                          <Plane className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                        <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                          <Plane className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                         </div>
+                        <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">{pendingVacations.length}</span>
                         <div>
                           <p className="font-medium text-sm">Solicitudes de ausencias</p>
                           <p className="text-xs text-muted-foreground">Pendientes de aprobación</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">{pendingVacations.length}</Badge>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </button>
                   )}
 
                   {hasAccess('documents') && unsignedPayrollsCount > 0 && (
                     <button
-                      onClick={() => setLocation('/test/documentos?filter=unsigned')}
-                      className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
+                      onClick={() => setLocation(`/${companyAlias}/documentos?filter=unsigned`)}
+                      className="w-full flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center flex-shrink-0">
-                          <FileText className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                        <div className="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center flex-shrink-0">
+                          <FileText className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                         </div>
+                        <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{unsignedPayrollsCount}</span>
                         <div>
                           <p className="font-medium text-sm">Documentos pendientes de firma</p>
                           <p className="text-xs text-muted-foreground">Nóminas y circulares</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">{unsignedPayrollsCount}</Badge>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </button>
                   )}
 
                   {hasAccess('documents') && documentRequests.length > 0 && (
                     <button
-                      onClick={() => setLocation('/test/documentos')}
-                      className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
+                      onClick={() => setLocation(`/${companyAlias}/documentos`)}
+                      className="w-full flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
-                          <Upload className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                        <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
+                          <Upload className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                         </div>
+                        <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">{documentRequests.length}</span>
                         <div>
                           <p className="font-medium text-sm">Solicitudes de documentos</p>
                           <p className="text-xs text-muted-foreground">Pendientes de subida</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">{documentRequests.length}</Badge>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </button>
                   )}
 
                   {hasAccess('messages') && unreadMessagesCount > 0 && (
                     <button
-                      onClick={() => setLocation('/test/mensajes')}
-                      className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
+                      onClick={() => setLocation(`/${companyAlias}/mensajes`)}
+                      className="w-full flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
-                          <MessageSquare className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                        <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+                          <MessageSquare className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                         </div>
+                        <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{unreadMessagesCount}</span>
                         <div>
                           <p className="font-medium text-sm">Mensajes sin leer</p>
                           <p className="text-xs text-muted-foreground">Nuevas conversaciones</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">{unreadMessagesCount}</Badge>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </button>
                   )}
                 </div>
@@ -1167,15 +1100,12 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {(() => {
-                    const receivedMessages = messages?.filter((message: any) => message.senderId !== user?.id) || [];
-                    
-                    return receivedMessages.length > 0 ? (
-                      receivedMessages.map((message: any) => (
+                  {receivedMessages.length > 0 ? (
+                    receivedMessages.map((message: any) => (
                         <div 
                           key={message.id} 
-                          className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
-                          onClick={() => setLocation(`/test/mensajes?chat=${message.senderId}`)}
+                          className="flex items-start gap-3 p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                          onClick={() => setLocation(`/${companyAlias}/mensajes?chat=${message.senderId}`)}
                         >
                           <UserAvatar 
                             fullName={message.senderName || 'Empleado'}
@@ -1197,8 +1127,7 @@ export default function AdminDashboard() {
                       ))
                     ) : (
                       <p className="text-muted-foreground text-center py-4">No hay mensajes recientes</p>
-                    );
-                  })()}
+                    )}
                 </div>
               </CardContent>
             </Card>
@@ -1219,8 +1148,8 @@ export default function AdminDashboard() {
                     activeReminders.map((reminder: any) => (
                       <div 
                         key={reminder.id} 
-                        className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => setLocation('/test/recordatorios')}
+                        className="flex items-start gap-3 p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        onClick={() => setLocation(`/${companyAlias}/recordatorios`)}
                       >
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                           reminder.priority === 'high' ? 'bg-red-100 dark:bg-red-900/30' : 
@@ -1260,7 +1189,7 @@ export default function AdminDashboard() {
 
           {/* Recent Clock-ins */}
           {hasAccess('time_tracking') && (
-            <Card className={`cursor-pointer hover:shadow-md ${getCardAnimationClass(5)}`} onClick={() => setLocation('/test/fichajes')}>
+            <Card className={`cursor-pointer hover:shadow-md ${getCardAnimationClass(5)}`} onClick={() => setLocation(`/${companyAlias}/fichajes`)}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
@@ -1309,7 +1238,7 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               {/* Calendar - Simple and Compact */}
-              <div className="bg-card rounded-lg border border-border shadow-sm">
+              <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
                 <div className="p-4">
                   <CustomCalendar
                     selectedDate={selectedDate}
@@ -1341,7 +1270,7 @@ export default function AdminDashboard() {
                         <div className="space-y-3">
                           {/* Festivos */}
                           {events.filter(event => event.type === 'holiday').map((event, idx) => (
-                            <div key={idx} className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border">
+                            <div key={idx} className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
                               <div className={`w-3 h-3 rounded-full ${
                                 event.holidayType === 'custom' ? 'bg-orange-500' : 'bg-red-500'
                               }`}></div>
@@ -1359,7 +1288,7 @@ export default function AdminDashboard() {
                           
                           {/* Vacaciones aprobadas */}
                           {vacations.filter(v => v.status === 'approved').map((vacation: any, idx: number) => (
-                            <div key={idx} className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border">
+                            <div key={idx} className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
                               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                               <div>
                                 <p className="text-sm font-medium text-foreground">
@@ -1388,7 +1317,7 @@ export default function AdminDashboard() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => setLocation('/test/ausencias')}
+                      onClick={() => setLocation(`/${companyAlias}/ausencias`)}
                       className="text-xs text-blue-600 hover:text-blue-700"
                     >
                       ver más
@@ -1398,7 +1327,7 @@ export default function AdminDashboard() {
                     {pendingVacations.slice(0, 3).map((request: any) => (
                       <div 
                         key={request.id} 
-                        className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border"
+                        className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
                       >
                         <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                         <div className="flex-1">
@@ -1414,21 +1343,21 @@ export default function AdminDashboard() {
                         {canManageRequest(request) && (
                           <div className="flex gap-1 flex-shrink-0">
                             <button
-                              onClick={() => setLocation(`/test/ausencias?requestId=${request.id}&action=approve`)}
+                              onClick={() => setLocation(`/${companyAlias}/ausencias?requestId=${request.id}&action=approve`)}
                               className="p-1.5 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
                               title="Aprobar solicitud"
                             >
                               <Check className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => setLocation(`/test/ausencias?requestId=${request.id}&action=edit`)}
+                              onClick={() => setLocation(`/${companyAlias}/ausencias?requestId=${request.id}&action=edit`)}
                               className="p-1.5 rounded text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                               title="Modificar solicitud"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => setLocation(`/test/ausencias?requestId=${request.id}&action=deny`)}
+                              onClick={() => setLocation(`/${companyAlias}/ausencias?requestId=${request.id}&action=deny`)}
                               className="p-1.5 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                               title="Denegar solicitud"
                             >
@@ -1456,7 +1385,7 @@ export default function AdminDashboard() {
                       const isCustom = holiday.type === 'custom';
                     
                       return (
-                        <div key={idx} className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border">
+                        <div key={idx} className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
                           <div className={`w-3 h-3 rounded-full ${
                             isCustom ? 'bg-orange-500' : 'bg-red-500'
                           }`}></div>

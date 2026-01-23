@@ -32,27 +32,27 @@ export function LazyStripeForm({
 
   useEffect(() => {
     const initializeStripe = async () => {
-      console.log('🔧 STRIPE INIT - Starting Stripe initialization...');
+      // console.log('🔧 STRIPE INIT - Starting Stripe initialization...');
       try {
         const publicKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-        console.log('🔧 STRIPE - Using key:', publicKey ? publicKey.substring(0, 10) + '...' : 'NONE');
+        // console.log('🔧 STRIPE - Using key:', publicKey ? publicKey.substring(0, 10) + '...' : 'NONE');
         
         if (!publicKey) {
-          console.log('🚨 STRIPE ERROR - No public key found!');
+          // console.log('🚨 STRIPE ERROR - No public key found!');
           setError('FALTAN CLAVES DE TEST DE STRIPE');
           setLoading(false);
           return;
         }
 
         // Lazy load Stripe
-        console.log('🔧 STRIPE LOAD - Loading Stripe library...');
+        // console.log('🔧 STRIPE LOAD - Loading Stripe library...');
         const { default: loadStripeFunc } = await loadStripe;
-        console.log('🔧 STRIPE LOAD - Library loaded, calling loadStripeFunc with key');
+        // console.log('🔧 STRIPE LOAD - Library loaded, calling loadStripeFunc with key');
         const stripeInstance = await loadStripeFunc(publicKey);
-        console.log('🔧 STRIPE INSTANCE - Result:', !!stripeInstance);
+        // console.log('🔧 STRIPE INSTANCE - Result:', !!stripeInstance);
         
         if (!stripeInstance) {
-          console.log('🚨 STRIPE ERROR - Instance is null!');
+          // console.log('🚨 STRIPE ERROR - Instance is null!');
           setError('STRIPE NO SE PUDO CARGAR CON CLAVES DE TEST');
           setLoading(false);
           return;

@@ -2,6 +2,7 @@ import { Switch, Route, Redirect, useLocation } from "wouter";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useFeatureCheck } from "@/hooks/use-feature-check";
+import { clearAuthData } from "@/lib/auth";
 import { useEmployeeViewMode } from "@/hooks/use-employee-view-mode";
 import { PageLoading } from "@/components/ui/page-loading";
 import { AuthPageLoading } from "@/components/ui/auth-page-loading";
@@ -11,6 +12,7 @@ import { useDemoBanner } from "@/hooks/use-demo-banner";
 import { useScrollReset } from "@/hooks/use-scroll-reset";
 import { useReminderNotifications } from "@/hooks/useReminderNotifications";
 import { SidebarProvider, useSidebarState } from "@/hooks/use-sidebar-state";
+import { SidebarScrollProvider } from "@/hooks/use-sidebar-scroll";
 import { AdminLayout } from "@/components/layout/admin-layout";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileHeader } from "@/components/layout/mobile-header";
@@ -34,50 +36,58 @@ const featureToAddonKey: Record<string, string> = {
   reports: 'work_reports',
   ai_assistant: 'ai_assistant',
   inventory: 'inventory',
+  accounting: 'accounting',
 };
 
 import { lazy, Suspense } from "react";
 
 // Critical pages - loaded immediately
-import Landing from "@/pages/landing";
-import Privacy from "@/pages/privacy";
-import Terms from "@/pages/terms";
-import Cookies from "@/pages/cookies";
-import NotFound from "@/pages/not-found";
-import Login from "@/pages/login";
-import Register from "@/pages/register";
-import ForgotPassword from "@/pages/forgot-password";
-import ResetPassword from "@/pages/reset-password";
-import AccessDenied from "@/pages/access-denied";
+import PublicLanding from "@/pages/public-landing";
+import PublicPrivacy from "@/pages/public-privacy";
+import PublicTerms from "@/pages/public-terms";
+import PublicCookies from "@/pages/public-cookies";
+import PublicLegalNotice from "@/pages/public-legal-notice";
+import PublicNotFound from "@/pages/public-not-found";
+import PublicLogin from "@/pages/public-login";
+import PublicRegister from "@/pages/public-register";
+import PublicForgotPassword from "@/pages/public-forgot-password";
+import PublicResetPassword from "@/pages/public-reset-password";
+import PublicAccessDenied from "@/pages/public-access-denied";
 
 // Auth-related pages - lazy loaded
-const RequestCode = lazy(() => import("@/pages/request-code"));
-const VerifyCode = lazy(() => import("@/pages/verify-code"));
+const PublicRequestCode = lazy(() => import("@/pages/public-request-code"));
+const PublicVerifyCode = lazy(() => import("@/pages/public-verify-code"));
 
 // Dashboard pages - loaded immediately for smooth navigation
 import AdminDashboard from "@/pages/admin-dashboard";
 import EmployeeDashboard from "@/pages/employee-dashboard";
 
 // Core admin pages - loaded immediately to prevent layout shifts
-import TimeTracking from "@/pages/time-tracking";
+import AdminTimeTracking from "@/pages/admin-time-tracking";
 import EmployeeTimeTracking from "@/pages/employee-time-tracking";
-import VacationRequests from "@/pages/vacation-requests";
-import VacationManagement from "@/pages/vacation-management";
-import Schedules from "@/pages/schedules";
-import Documents from "@/pages/documents";
+import EmployeeVacationRequests from "@/pages/employee-vacation-requests";
+import AdminVacationManagement from "@/pages/admin-vacation-management";
+import AdminSchedules from "@/pages/admin-schedules";
+import EmployeeDocuments from "@/pages/employee-documents";
 import AdminDocuments from "@/pages/admin-documents";
-import Messages from "@/pages/messages";
-import Reminders from "@/pages/reminders";
+import AdminEmployeeMessages from "@/pages/admin-employee-messages";
+import AdminReminders from "@/pages/admin-reminders";
 import EmployeeReminders from "@/pages/employee-reminders";
-import EmployeesSimple from "@/pages/employees-simple";
-import Settings from "@/pages/settings";
+import AdminEmployees from "@/pages/admin-employees";
+import EmployeeSettings from "@/pages/employee-settings";
 import EmployeeProfile from "@/pages/employee-profile";
 import EmployeeSchedule from "@/pages/employee-schedule";
-import NotificationDevices from "@/pages/notification-devices";
-import WorkReports from "@/pages/work-reports";
+import EmployeeNotificationDevices from "@/pages/employee-notification-devices";
+import EmployeeWorkReports from "@/pages/employee-work-reports";
 import AdminWorkReports from "@/pages/admin-work-reports";
-import AddonStore from "@/pages/addon-store";
-import Inventory from "@/pages/inventory";
+import AdminEmployeeAddonStore from "@/pages/admin-employee-addon-store";
+import AdminInventory from "@/pages/admin-inventory";
+import AdminAccounting from "@/pages/admin-accounting";
+import EmployeeExpenses from "@/pages/employee-expenses";
+import AdminCRM from "@/pages/admin-crm";
+import AccountantDashboard from "@/pages/accountant-dashboard";
+import AccountantAccounting from "@/pages/accountant-accounting";
+import AccountantDocuments from "@/pages/accountant-documents";
 
 // Super admin pages - lazy loaded (rarely accessed)
 const SuperAdminSecurity = lazy(() => import("@/pages/super-admin-security"));
@@ -95,7 +105,7 @@ const SuperAdminLandingMetrics = lazy(() => import("@/pages/super-admin-landing-
 import { SuperAdminPageLoading } from "@/components/layout/super-admin-page-loading";
 
 // Utility pages - lazy loaded
-const InvitationRegister = lazy(() => import("@/pages/invitation-register"));
+const PublicInvitationRegister = lazy(() => import("@/pages/public-invitation-register"));
 const EmployeeActivation = lazy(() => import("@/pages/employee-activation"));
 const TestEmail = lazy(() => import("@/pages/test-email"));
 
@@ -178,12 +188,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { data: trialStatus, isLoading: trialLoading } = useQuery<{ isBlocked: boolean }>({
     queryKey: ['/api/account/trial-status'],
     staleTime: 30000,
-    enabled: !!user,
+    enabled: !!user && user.role !== 'accountant',
   });
 
   useEffect(() => {
     if (!isLoading && (!user || !token)) {
-      localStorage.removeItem('authData');
+      clearAuthData();
       if (window.history?.replaceState) {
         window.history.replaceState(null, '', '/login');
       }
@@ -191,14 +201,17 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     }
   }, [user, token, isLoading, setLocation]);
 
-  if (isLoading || trialLoading) {
-    return <PageLoading />;
-  }
-
+  // Don't block rendering - let children render even while loading
+  // The page will show its own loading state (spinner) instead of full-screen block
   if (!user || !token) {
     return <PageLoading />;
   }
   
+  // Accountants are external and not tied to company trials or store
+  if (user.role === 'accountant') {
+    return <>{children}</>;
+  }
+
   const isTrialExpired = trialStatus?.isBlocked === true;
   
   if (isTrialExpired) {
@@ -219,13 +232,25 @@ function FeatureProtectedRoute({
   children: React.ReactNode; 
   feature: FeatureKey;
 }) {
-  const { company, isLoading } = useAuth();
-  const { hasAccess } = useFeatureCheck();
-  
+  const { user, company } = useAuth();
+  const { hasAccess, isLoading } = useFeatureCheck();
+
+  // Don't block rendering while feature check loads - let page render and handle restrictions
   if (isLoading) {
-    return <PageLoading />;
+    return <>{children}</>;
   }
-  
+
+  // Accountants do not depend on store/features; redirect to their routes
+  if (user?.role === 'accountant') {
+    if (feature === 'accounting') {
+      return <Redirect to={'/accountant/contabilidad'} />;
+    }
+    if (feature === 'documents') {
+      return <Redirect to={'/accountant/documentos'} />;
+    }
+    return <>{children}</>;
+  }
+
   if (!hasAccess(feature)) {
     const companyAlias = company?.companyAlias || 'test';
     return <Redirect to={`/${companyAlias}/tienda`} />;
@@ -268,14 +293,14 @@ function StoreRoute({ children }: { children: React.ReactNode }) {
   const { data: trialStatus, isLoading: trialLoading } = useQuery<{ isBlocked: boolean }>({
     queryKey: ['/api/account/trial-status'],
     staleTime: 30000,
-    enabled: !!user,
+    enabled: !!user && user.role !== 'accountant',
   });
   
   useScrollReset();
 
   useEffect(() => {
     if (!isLoading && (!user || !token)) {
-      localStorage.removeItem('authData');
+      clearAuthData();
       if (window.history?.replaceState) {
         window.history.replaceState(null, '', '/login');
       }
@@ -283,7 +308,7 @@ function StoreRoute({ children }: { children: React.ReactNode }) {
     }
   }, [user, token, isLoading, setLocation]);
 
-  if (isLoading || trialLoading) {
+  if (isLoading) {
     return <PageLoading />;
   }
 
@@ -291,6 +316,11 @@ function StoreRoute({ children }: { children: React.ReactNode }) {
     return <PageLoading />;
   }
   
+  // Accountants bypass trial/subscription entirely
+  if (user.role === 'accountant') {
+    return <>{children}</>;
+  }
+
   const isTrialExpired = trialStatus?.isBlocked === true;
   
   if (isTrialExpired) {
@@ -324,6 +354,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const { isEmployeeViewMode } = useEmployeeViewMode();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { showBanner } = useDemoBanner();
+  const isAccountant = user?.role === 'accountant';
   
   const { data: trialStatus } = useQuery<{ isBlocked: boolean }>({
     queryKey: ['/api/account/trial-status'],
@@ -380,7 +411,6 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   if (useEmployeeLayout) {
     return (
       <>
-        <ReminderBanner />
         {children}
       </>
     );
@@ -396,6 +426,32 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       >
         {children}
       </AppLayoutContent>
+    </SidebarProvider>
+  );
+}
+
+// Minimal layout for accountant: no reminder banner, no trial/subscription hooks
+function AccountantLayout({ children }: { children: React.ReactNode }) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { showBanner } = useDemoBanner();
+  useScrollReset();
+
+  const paddingTop = showBanner ? 'pt-header-banner-safe' : 'pt-header-safe';
+
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen bg-background">
+        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        <MobileHeader onMenuClick={() => setIsSidebarOpen(true)} />
+        <main 
+          className={`lg:ml-64 min-h-screen ${paddingTop}`}
+          style={{ backgroundColor: 'hsl(var(--background))' }}
+        >
+          <div className="px-6 pt-4 pb-8 min-h-screen overflow-y-auto" style={{ overflowX: 'clip' }}>
+            {children}
+          </div>
+        </main>
+      </div>
     </SidebarProvider>
   );
 }
@@ -597,7 +653,7 @@ function Router() {
             <SuperAdminSecurity />
           </Suspense>
         </Route>
-        <Route component={NotFound} />
+        <Route component={PublicNotFound} />
       </Switch>
     );
   }
@@ -606,39 +662,43 @@ function Router() {
   return (
     <Switch>
       {/* Legal pages */}
-      <Route path="/privacy">
-        <Privacy />
+      <Route path="/politica-privacidad">
+        <PublicPrivacy />
       </Route>
 
-      <Route path="/terms">
-        <Terms />
+      <Route path="/terminos">
+        <PublicTerms />
       </Route>
 
-      <Route path="/cookies" component={Cookies} />
+      <Route path="/aviso-legal">
+        <PublicLegalNotice />
+      </Route>
+
+      <Route path="/cookies" component={PublicCookies} />
 
       {/* Public routes for authentication */}
       <Route path="/login">
         <PublicRoute>
-          <Login />
+          <PublicLogin />
         </PublicRoute>
       </Route>
 
       <Route path="/forgot-password">
         <PublicRoute>
-          <ForgotPassword />
+          <PublicForgotPassword />
         </PublicRoute>
       </Route>
 
       <Route path="/reset-password">
         <PublicRoute>
-          <ResetPassword />
+          <PublicResetPassword />
         </PublicRoute>
       </Route>
 
       <Route path="/request-code">
         <PublicRoute>
           <Suspense fallback={<AuthPageLoading />}>
-            <RequestCode />
+            <PublicRequestCode />
           </Suspense>
         </PublicRoute>
       </Route>
@@ -646,21 +706,21 @@ function Router() {
       <Route path="/verify-code">
         <PublicRoute>
           <Suspense fallback={<AuthPageLoading />}>
-            <VerifyCode />
+            <PublicVerifyCode />
           </Suspense>
         </PublicRoute>
       </Route>
 
       <Route path="/register">
         <PublicRoute>
-          <Register />
+          <PublicRegister />
         </PublicRoute>
       </Route>
 
       <Route path="/registro/invitacion/:token">
         <PublicRoute>
           <Suspense fallback={<PageLoading />}>
-            <InvitationRegister />
+            <PublicInvitationRegister />
           </Suspense>
         </PublicRoute>
       </Route>
@@ -682,13 +742,13 @@ function Router() {
       {/* Company-specific routes */}
       <Route path="/:companyAlias/login">
         <PublicRoute>
-          <Login />
+          <PublicLogin />
         </PublicRoute>
       </Route>
 
       <Route path="/:companyAlias/forgot-password">
         <PublicRoute>
-          <ForgotPassword />
+          <PublicForgotPassword />
         </PublicRoute>
       </Route>
 
@@ -735,7 +795,7 @@ function Router() {
           <ManagerFeatureGate feature="timeTracking">
             <AppLayout>
               {user && (user.role === 'admin' || user.role === 'manager') ? (
-                <TimeTracking />
+                <AdminTimeTracking />
               ) : (
                 <Redirect to={`/${company?.companyAlias || 'test'}/misfichajes`} />
               )}
@@ -747,14 +807,14 @@ function Router() {
       <Route path="/:companyAlias/configuracion">
         <ProtectedRoute>
           <AppLayout>
-            <Settings />
+            <EmployeeSettings />
           </AppLayout>
         </ProtectedRoute>
       </Route>
 
       <Route path="/:companyAlias/tienda">
         <StoreRoute>
-          <AddonStore />
+          <AdminEmployeeAddonStore />
         </StoreRoute>
       </Route>
 
@@ -769,7 +829,7 @@ function Router() {
       <Route path="/:companyAlias/dispositivos">
         <ProtectedRoute>
           <AppLayout>
-            <NotificationDevices />
+            <EmployeeNotificationDevices />
           </AppLayout>
         </ProtectedRoute>
       </Route>
@@ -779,8 +839,8 @@ function Router() {
           <ManagerFeatureGate feature="vacation">
             <AppLayout>
               <RoleBasedPage 
-                adminComponent={VacationManagement} 
-                employeeComponent={VacationRequests} 
+                adminComponent={AdminVacationManagement} 
+                employeeComponent={EmployeeVacationRequests} 
               />
             </AppLayout>
           </ManagerFeatureGate>
@@ -792,7 +852,7 @@ function Router() {
           <ManagerFeatureGate feature="schedules">
             <AppLayout>
               <RoleBasedPage 
-                adminComponent={Schedules} 
+                adminComponent={AdminSchedules} 
                 employeeComponent={EmployeeSchedule} 
               />
             </AppLayout>
@@ -802,16 +862,19 @@ function Router() {
 
       <Route path="/:companyAlias/documentos">
         <ProtectedRoute>
-          <FeatureProtectedRoute feature="documents">
-            <ManagerFeatureGate feature="documents">
-              <AppLayout>
-                <RoleBasedPage 
-                  adminComponent={AdminDocuments} 
-                  employeeComponent={Documents} 
-                />
-              </AppLayout>
-            </ManagerFeatureGate>
-          </FeatureProtectedRoute>
+          <ManagerFeatureGate feature="documents">
+            <AppLayout>
+              <AdminDocuments />
+            </AppLayout>
+          </ManagerFeatureGate>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/:companyAlias/misdocumentos">
+        <ProtectedRoute>
+          <AppLayout>
+            <EmployeeDocuments />
+          </AppLayout>
         </ProtectedRoute>
       </Route>
 
@@ -820,7 +883,7 @@ function Router() {
           <FeatureProtectedRoute feature="messages">
             <ManagerFeatureGate feature="messages">
               <AppLayout>
-                <Messages />
+                <AdminEmployeeMessages />
               </AppLayout>
             </ManagerFeatureGate>
           </FeatureProtectedRoute>
@@ -833,7 +896,7 @@ function Router() {
             <ManagerFeatureGate feature="reminders">
               <AppLayout>
                 <RoleBasedPage 
-                  adminComponent={Reminders} 
+                  adminComponent={AdminReminders} 
                   employeeComponent={EmployeeReminders} 
                 />
               </AppLayout>
@@ -849,7 +912,7 @@ function Router() {
               <AppLayout>
                 <RoleBasedPage 
                   adminComponent={AdminWorkReports} 
-                  employeeComponent={WorkReports} 
+                  employeeComponent={EmployeeWorkReports} 
                 />
               </AppLayout>
             </ManagerFeatureGate>
@@ -862,52 +925,110 @@ function Router() {
           <FeatureProtectedRoute feature="inventory">
             <AppLayout>
               {/* Inventory is admin/manager only - no employee view */}
-              <Inventory />
+              <AdminInventory />
             </AppLayout>
           </FeatureProtectedRoute>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/:companyAlias/clientes-proyectos">
+        <ProtectedRoute>
+          <AppLayout>
+            <AdminCRM />
+          </AppLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/:companyAlias/contabilidad">
+        <ProtectedRoute>
+          <FeatureProtectedRoute feature="accounting">
+            <ManagerFeatureGate>
+              <AppLayout>
+                <RoleBasedPage 
+                  adminComponent={AdminAccounting} 
+                  employeeComponent={EmployeeExpenses} 
+                />
+              </AppLayout>
+            </ManagerFeatureGate>
+          </FeatureProtectedRoute>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/:companyAlias/gastos">
+        <ProtectedRoute>
+          <FeatureProtectedRoute feature="accounting">
+            <AppLayout>
+              <EmployeeExpenses />
+            </AppLayout>
+          </FeatureProtectedRoute>
+        </ProtectedRoute>
+      </Route>
+
+      {/* Accountant Dashboard - Special routes for accountant role */}
+      <Route path="/accountant">
+        <ProtectedRoute>
+          <AccountantLayout>
+            <AccountantDashboard />
+          </AccountantLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/accountant/contabilidad">
+        <ProtectedRoute>
+          <AccountantLayout>
+            <AccountantAccounting />
+          </AccountantLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/accountant/documentos">
+        <ProtectedRoute>
+          <AccountantLayout>
+            <AccountantDocuments />
+          </AccountantLayout>
         </ProtectedRoute>
       </Route>
 
       <Route path="/:companyAlias/empleados">
         <ProtectedRoute>
           <AppLayout>
-            <EmployeesSimple />
+            <AdminEmployees />
           </AppLayout>
         </ProtectedRoute>
       </Route>
 
       <Route path="/:companyAlias/access-denied">
-        <AccessDenied />
+        <PublicAccessDenied />
       </Route>
 
       {/* Login/Register routes for non-authenticated users */}
       <Route path="/login">
         <PublicRoute>
-          <Login />
+          <PublicLogin />
         </PublicRoute>
       </Route>
 
       <Route path="/forgot-password">
         <PublicRoute>
-          <ForgotPassword />
+          <PublicForgotPassword />
         </PublicRoute>
       </Route>
 
       <Route path="/reset-password">
         <PublicRoute>
-          <ResetPassword />
+          <PublicResetPassword />
         </PublicRoute>
       </Route>
 
       {/* Landing page - main entry point (must be last to avoid conflicts) */}
       <Route path="/">
         <PublicRoute>
-          <Landing />
+          <PublicLanding />
         </PublicRoute>
       </Route>
 
       {/* 404 fallback */}
-      <Route component={NotFound} />
+      <Route component={PublicNotFound} />
     </Switch>
   );
 }
@@ -917,5 +1038,42 @@ function Router() {
  * This component is a sibling to GlobalOverlays, so routing changes won't affect global UI.
  */
 export function RouterView() {
+  const { user, token, isLoading } = useAuth();
+
+  // While auth loads, show the auth loading screen
+  if (isLoading) {
+    return <AuthPageLoading />;
+  }
+
+  // If not authenticated, fall back to main router (will handle public/login)
+  if (!user || !token) {
+    return <Router />;
+  }
+
+  // Accountant-only shell: completely isolated from subscription/feature logic
+  if (user.role === 'accountant') {
+    return (
+      <SidebarScrollProvider>
+        <AccountantLayout>
+          <Switch>
+            <Route path="/accountant/contabilidad">
+              <AccountantAccounting />
+            </Route>
+            <Route path="/accountant/documentos">
+              <AccountantDocuments />
+            </Route>
+            <Route path="/accountant">
+              <AccountantDashboard />
+            </Route>
+            <Route>
+              <Redirect to="/accountant" />
+            </Route>
+          </Switch>
+        </AccountantLayout>
+      </SidebarScrollProvider>
+    );
+  }
+
+  // Default router for other roles
   return <Router />;
 }

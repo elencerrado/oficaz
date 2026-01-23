@@ -1,8 +1,10 @@
 import { storage } from './storage.js';
 import sharp from 'sharp';
 import fs from 'fs/promises';
+import fsSync from 'fs';
 import path from 'path';
 import type { ImageProcessingJob } from '@shared/schema';
+import { SimpleObjectStorageService } from './objectStorageSimple.js';
 
 class BackgroundImageProcessor {
   private isRunning = false;
@@ -92,12 +94,28 @@ class BackgroundImageProcessor {
       if (job.processingType === 'profile_picture') {
         const metadata = (job.metadata || {}) as any;
         const targetUserId = metadata.targetUserId || job.userId;
-        const profilePictureUrl = `/uploads/${path.basename(result.outputPath)}`;
+        
+        // Upload processed image to R2
+        const objectStorage = new SimpleObjectStorageService();
+        const processedBuffer = fsSync.readFileSync(result.outputPath);
+        const filename = path.basename(result.outputPath);
+        const r2Key = `profile-pictures/${filename}`;
+        
+        await objectStorage.uploadDocument(processedBuffer, 'image/jpeg', r2Key);
+        
+        // Update user with R2 URL
+        const profilePictureUrl = `/uploads/${filename}`;
         
         await storage.updateUser(targetUserId, { 
           profilePicture: profilePictureUrl 
         });
-        console.log(`👤 Updated user ${targetUserId} profile picture: ${profilePictureUrl}`);
+        
+        // Delete local processed file after uploading to R2
+        try {
+          await fs.unlink(result.outputPath);
+        } catch (cleanupError) {
+          console.warn(`⚠️ Warning: Could not delete processed file ${result.outputPath}:`, cleanupError);
+        }
       }
       
       // Mark job as completed
@@ -107,12 +125,9 @@ class BackgroundImageProcessor {
         completedAt: new Date()
       });
 
-      console.log(`✅ Completed processing job ${job.id} -> ${result.outputPath}`);
-      
       // Cleanup original file after successful processing
       try {
         await fs.unlink(job.originalFilePath);
-        console.log(`🗑️ Cleaned up original file: ${job.originalFilePath}`);
       } catch (cleanupError) {
         console.warn(`⚠️ Warning: Could not delete original file ${job.originalFilePath}:`, cleanupError);
       }
@@ -180,9 +195,6 @@ class BackgroundImageProcessor {
         outputPath = path.join(inputDir, `${inputName}_processed${inputExt}`);
       }
     }
-
-    console.log(`📸 Processing: ${resolvedInputPath} -> ${outputPath}`);
-    console.log(`📸 Config:`, config);
 
     // Process image with Sharp
     let sharpInstance = sharp(resolvedInputPath);

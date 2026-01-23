@@ -16,9 +16,9 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
   const authHeader = req.headers['authorization'];
   let token = authHeader && authHeader.split(' ')[1];
   
-  // Support token in query params for PDF viewing
+  // Disallow tokens in query params to prevent leakage in logs/referrers
   if (!token && req.query.token) {
-    token = req.query.token as string;
+    return res.status(400).json({ message: 'Token en query no permitido. Usa Authorization: Bearer.' });
   }
 
   if (!token) {
@@ -95,6 +95,35 @@ const featureToAddonKey: Record<string, string> = {
   reports: 'work_reports',
   ai_assistant: 'ai_assistant',
 };
+
+// Middleware to require a specific addon/feature to be purchased
+export function requireFeature(featureKey: string, getStorage: () => any) {
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    try {
+      const storage = getStorage();
+      const subscription = await storage.getSubscriptionByCompanyId(req.user.companyId);
+      
+      if (!subscription) {
+        return res.status(402).json({ message: 'Funcionalidad no comprada. Suscripción no encontrada.' });
+      }
+
+      // Check if feature is enabled in subscription features object
+      const features = subscription.features as Record<string, boolean> || {};
+      if (!features[featureKey]) {
+        return res.status(402).json({ message: `Funcionalidad "${featureKey}" no comprada. Adquiérela en la Tienda.` });
+      }
+
+      next();
+    } catch (error) {
+      console.error('Error checking feature requirement:', error);
+      return res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  };
+}
 
 // Middleware to check if a manager has visibility to a feature
 // Instead of blocking, this now sets req.managerAccessMode to 'full' or 'self'

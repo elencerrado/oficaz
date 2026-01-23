@@ -7,6 +7,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useChatBridge, triggerAINavigation } from "@/lib/chat-bridge";
+import { FeedbackButton } from "@/components/FeedbackButton";
 import oficazLogo from "@/assets/oficaz-logo.png";
 
 interface Message {
@@ -114,6 +115,7 @@ export function AIAssistantChat() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
+  const [pendingConfirmation, setPendingConfirmation] = useState<any>(null);
   
   // Detect when welcome modal is open via body attribute
   useEffect(() => {
@@ -277,6 +279,13 @@ export function AIAssistantChat() {
         },
       ]);
       
+      // Si hay una confirmación pendiente, guardarla para que el usuario responda
+      if (response.needsConfirmation && response.confirmationContext) {
+        setPendingConfirmation(response.confirmationContext);
+      } else {
+        setPendingConfirmation(null);
+      }
+      
       // Scroll to bottom after AI response
       setTimeout(scrollToBottom, 0);
 
@@ -407,22 +416,32 @@ export function AIAssistantChat() {
     (userSummary.role === 'admin' || userSummary.role === 'manager')
   );
 
+  const isEmployee = userSummary?.role === 'employee';
+
   // PROFESSIONAL PATTERN: Render to body, use display:none instead of conditional rendering
   // Hide completely when welcome modal is open
   if (isWelcomeModalOpen) {
     return null;
   }
   
+  // Solo mostrar si hay un usuario autenticado (no en páginas públicas)
+  const isAuthenticated = Boolean(userSummary);
+
   return createPortal(
     <>
       {hasAccess && (
         <>
+          {/* Feedback button - Discrete variant to the left of AI */}
+          <div className="fixed bottom-4 right-20 sm:bottom-6 sm:right-24 z-50 [padding-bottom:max(1rem,env(safe-area-inset-bottom))]">
+            <FeedbackButton variant="discrete" hasAI={true} />
+          </div>
+
           {/* Floating button */}
           <div
             onClick={() => setIsOpen(!isOpen)}
             data-testid="button-ai-assistant-toggle"
             className={cn(
-              "fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 cursor-pointer transition-all duration-300",
+              "fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 cursor-pointer transition-all duration-300 [padding-bottom:max(1rem,env(safe-area-inset-bottom))]",
               !isOpen && "hover:scale-110"
             )}
           >
@@ -488,6 +507,78 @@ export function AIAssistantChat() {
 
           {/* Input */}
           <div className="border-t border-gray-200 p-4 dark:border-gray-700">
+            {/* Botones de confirmación si hay una acción pendiente */}
+            {pendingConfirmation && (
+              <div className="mb-3 flex flex-col gap-2">
+                <button
+                  onClick={async () => {
+                    setInput("");
+                    setIsLoading(true);
+                    setPendingConfirmation(null);
+                    
+                    try {
+                      const { action, ...params } = pendingConfirmation;
+                      const { resolveEmployeeName, assignScheduleInRange } = await import('../../../server/ai-assistant.js');
+                      
+                      // Reenviar con forceOverwrite=true
+                      const response = await apiRequest("POST", "/api/ai-assistant/chat", {
+                        messages: [...messages],
+                        confirmAction: {
+                          ...params,
+                          forceOverwrite: true
+                        }
+                      });
+                      
+                      setMessages((prev) => [
+                        ...prev,
+                        {
+                          role: "assistant",
+                          content: response.message,
+                          functionCalled: response.functionCalled,
+                        },
+                      ]);
+                      
+                      if (response.navigateTo) {
+                        setTimeout(() => {
+                          triggerAINavigation(response.navigateTo);
+                        }, 1000);
+                      }
+                      
+                      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+                    } catch (error: any) {
+                      toast({
+                        title: "Error",
+                        description: error.message || "No se pudo completar la acción",
+                        variant: "destructive",
+                      });
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  disabled={isLoading}
+                  className="rounded-lg bg-gradient-to-br from-[#007AFF] to-[#0066CC] px-4 py-2 text-sm font-medium text-white hover:from-[#0066CC] hover:to-[#0055AA] disabled:opacity-50"
+                >
+                  ✅ Sí, eliminar los antiguos y crear los nuevos
+                </button>
+                <button
+                  onClick={() => {
+                    setPendingConfirmation(null);
+                    setMessages((prev) => [
+                      ...prev,
+                      {
+                        role: "assistant",
+                        content: "Entendido, mantengo los turnos actuales.",
+                      },
+                    ]);
+                  }}
+                  disabled={isLoading}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 disabled:opacity-50"
+                >
+                  ❌ No, mantener los turnos actuales
+                </button>
+              </div>
+            )}
+            
             <div className="flex gap-2">
               <input
                 type="text"
@@ -515,6 +606,15 @@ export function AIAssistantChat() {
             </div>
           </div>
         </div>
+        </>
+      )}
+      
+      {!hasAccess && isAuthenticated && !isEmployee && (
+        <>
+          {/* Floating feedback button when no AI access - only show if authenticated */}
+          <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 [padding-bottom:max(1rem,env(safe-area-inset-bottom))]">
+            <FeedbackButton variant="floating" />
+          </div>
         </>
       )}
     </>,

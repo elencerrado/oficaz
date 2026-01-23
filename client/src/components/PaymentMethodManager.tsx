@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { useAuth } from '@/hooks/use-auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import type { Addon, CompanyAddon } from '@shared/schema';
 
 interface PaymentMethod {
   id: string;
@@ -60,12 +61,73 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
     staleTime: 30000,
   });
 
-  // Determine the actual plan and price to display - Nuevo modelo: siempre Oficaz (39€)
+  // Get seat prices from API (fallback to hardcoded defaults)
+  const { data: seatPricesData = [] } = useQuery({
+    queryKey: ['/api/super-admin/seat-prices'],
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/super-admin/seat-prices');
+        if (!response.ok) throw new Error('Failed to fetch seat prices');
+        return response.json();
+      } catch (error) {
+        console.warn('Failed to fetch seat prices from API, using defaults:', error);
+        return [];
+      }
+    },
+    staleTime: 60000,
+  });
+
+  // Get active addons to derive the real monthly price when parent doesn't provide it
+  const { data: companyAddons = [] } = useQuery<(CompanyAddon & { addon: Addon })[]>({
+    queryKey: ['/api/company/addons'],
+    staleTime: 30000,
+    enabled: selectedPlanPrice == null, // skip if parent already passes the total
+  });
+
+  // Determine the actual plan and price to display - Nuevo modelo: siempre Oficaz
   const actualPlan = selectedPlan || subscription?.plan || "oficaz";
-  
-  // Use custom monthly price if available, otherwise use base Oficaz price (39€)
-  const standardPrice = subscription?.baseMonthlyPrice ? Number(subscription.baseMonthlyPrice) : 39.00;
-  const actualPrice = selectedPlanPrice || subscription?.customMonthlyPrice || standardPrice;
+
+  // Build seat pricing map from API data (with hardcoded fallbacks)
+  const seatPriceMap: Record<string, number> = {
+    admin: seatPricesData.find((s: any) => s.roleType === 'admin')?.monthlyPrice 
+      ? parseFloat(seatPricesData.find((s: any) => s.roleType === 'admin').monthlyPrice)
+      : 6,
+    manager: seatPricesData.find((s: any) => s.roleType === 'manager')?.monthlyPrice
+      ? parseFloat(seatPricesData.find((s: any) => s.roleType === 'manager').monthlyPrice)
+      : 4,
+    employee: seatPricesData.find((s: any) => s.roleType === 'employee')?.monthlyPrice
+      ? parseFloat(seatPricesData.find((s: any) => s.roleType === 'employee').monthlyPrice)
+      : 2,
+  };
+
+  const derivedPrice = (() => {
+    // 1) If parent already computed price (addon store), honor it
+    if (selectedPlanPrice != null) return Number(selectedPlanPrice);
+
+    // 2) SuperAdmin custom override
+    if (subscription?.customMonthlyPrice != null) {
+      return Number(subscription.customMonthlyPrice);
+    }
+
+    // 3) Base + addons + seats (modular model). Base can be 0€.
+    const base = subscription?.baseMonthlyPrice != null ? Number(subscription.baseMonthlyPrice) : 0;
+
+    const addonsTotal = companyAddons
+      .filter(ca => ca.status === 'active' || ca.status === 'pending_cancel')
+      .reduce((sum, ca) => sum + Number(ca.addon?.monthlyPrice ?? 0), 0);
+
+    const adminSeats = (subscription?.extraAdmins ?? 0) + 1; // include creator admin
+    const managerSeats = subscription?.extraManagers ?? 0;
+    const employeeSeats = subscription?.extraEmployees ?? 0;
+
+    const seatsTotal = (adminSeats * seatPriceMap.admin)
+      + (managerSeats * seatPriceMap.manager)
+      + (employeeSeats * seatPriceMap.employee);
+
+    return base + addonsTotal + seatsTotal;
+  })();
+
+  const actualPrice = derivedPrice;
 
 
 
@@ -177,7 +239,7 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
     try {
       // Only change the plan if it's different from the current one
       if (selectedPlan && actualPlan !== subscription?.plan) {
-        console.log('Checking if plan change is needed. Selected plan:', selectedPlan);
+        // console.log('Checking if plan change is needed. Selected plan:', selectedPlan);
         
         // Get current subscription status to check if plan change is needed
         try {
@@ -185,16 +247,16 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
           const currentPlan = currentSubscription?.plan;
           
           if (currentPlan !== selectedPlan) {
-            console.log('Changing plan from', currentPlan, 'to:', selectedPlan);
+            // console.log('Changing plan from', currentPlan, 'to:', selectedPlan);
             await apiRequest('PATCH', '/api/subscription/change-plan', { plan: selectedPlan });
-            console.log('Plan changed successfully to:', selectedPlan);
+            // console.log('Plan changed successfully to:', selectedPlan);
           } else {
-            console.log('Plan is already', selectedPlan, '- no change needed');
+            // console.log('Plan is already', selectedPlan, '- no change needed');
           }
         } catch (planError) {
-          console.log('Could not check current plan, attempting plan change anyway');
+          // console.log('Could not check current plan, attempting plan change anyway');
           await apiRequest('PATCH', '/api/subscription/change-plan', { plan: selectedPlan });
-          console.log('Plan changed successfully to:', selectedPlan);
+          // console.log('Plan changed successfully to:', selectedPlan);
         }
       }
       

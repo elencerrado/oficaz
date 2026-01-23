@@ -1,5 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-import { getAuthHeaders, refreshAccessToken } from "./auth";
+import { getAuthHeaders, refreshAccessToken, clearAuthData } from "./auth";
+import { logger } from "./logger";
 
 // Track auth errors to avoid redirecting on transient failures
 let consecutiveAuthErrors = 0;
@@ -29,7 +30,7 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<any> {
   const authHeaders = getAuthHeaders();
-  console.log('🔑 Auth headers for request:', authHeaders, 'URL:', url);
+  logger.debug('🔑 Auth headers for request:', authHeaders, 'URL:', url);
   const headers: Record<string, string> = {};
   
   // Solo establecer Content-Type para JSON, FormData lo maneja automáticamente
@@ -65,11 +66,11 @@ export async function apiRequest(
       cachedErrorText = await res.text();
       if (cachedErrorText.includes('Invalid or expired token') || cachedErrorText.includes('Access token required')) {
         isAuthError = true;
-        console.log('🚨 Auth error detected in API request:', url);
+        logger.warn('🚨 Auth error detected in API request:', url);
         
         // Skip refresh for login/refresh endpoints to avoid infinite loops
         if (url.includes('/api/auth/login') || url.includes('/api/auth/refresh') || url.includes('/api/super-admin/login')) {
-          console.log('🚨 Auth error during login/refresh, not attempting refresh');
+          logger.warn('🚨 Auth error during login/refresh, not attempting refresh');
           return null;
         }
         
@@ -79,11 +80,11 @@ export async function apiRequest(
         
         // Only try refresh for regular users (not super admin)
         if (!isSuperAdmin && !hasSuperAdminToken) {
-          console.log('🔄 Attempting token refresh...');
+          logger.info('🔄 Attempting token refresh...');
           const newToken = await refreshAccessToken();
           
           if (newToken) {
-            console.log('✅ Token refreshed, retrying original request...');
+            logger.info('✅ Token refreshed, retrying original request...');
             consecutiveAuthErrors = 0; // Reset counter after successful refresh
             
             // Retry the original request with new token
@@ -112,18 +113,17 @@ export async function apiRequest(
         shouldResetAuthErrorCounter();
         consecutiveAuthErrors++;
         lastAuthErrorTime = Date.now();
-        console.log(`⚠️ Auth error count: ${consecutiveAuthErrors}/${MAX_AUTH_ERRORS_BEFORE_REDIRECT}`);
+        logger.warn(`⚠️ Auth error count: ${consecutiveAuthErrors}/${MAX_AUTH_ERRORS_BEFORE_REDIRECT}`);
         
         if (!window.location.pathname.includes('/login')) {
           if (consecutiveAuthErrors >= MAX_AUTH_ERRORS_BEFORE_REDIRECT) {
             if (isSuperAdmin || hasSuperAdminToken) {
-              console.log('🔄 Redirecting to SuperAdmin login...');
+              logger.info('🔄 Redirecting to SuperAdmin login...');
               sessionStorage.removeItem('superAdminToken');
               window.location.href = '/super-admin';
             } else {
-              console.log('🔄 Redirecting to login...');
-              localStorage.removeItem('authData');
-              sessionStorage.removeItem('authData');
+              logger.info('🔄 Redirecting to login...');
+              clearAuthData();
               window.location.href = '/login';
             }
             return null;
@@ -146,8 +146,7 @@ export async function apiRequest(
             sessionStorage.removeItem('superAdminToken');
             window.location.href = '/super-admin';
           } else {
-            localStorage.removeItem('authData');
-            sessionStorage.removeItem('authData');
+            clearAuthData();
             window.location.href = '/login';
           }
           return null;
@@ -176,7 +175,25 @@ export async function apiRequest(
   if (res.status === 204) {
     return null;
   }
-  
+  // Prefer robust parsing: handle non-JSON or empty bodies gracefully
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const rawText = await res.text();
+    if (!rawText) {
+      // Empty body on success → return null
+      return null;
+    }
+    try {
+      return JSON.parse(rawText);
+    } catch {
+      // If server returned success but non-JSON text, return a simple object
+      if (res.ok) {
+        return { success: true, message: rawText };
+      }
+      // Otherwise propagate as an error
+      throw new Error(`${res.status}: ${rawText}`);
+    }
+  }
   return res.json();
 }
 
@@ -230,7 +247,7 @@ export const getQueryFn: <T>(options: {
         cachedErrorText = await res.text();
         if (cachedErrorText.includes('Invalid or expired token') || cachedErrorText.includes('Access token required')) {
           isAuthError = true;
-          console.log('🚨 Auth error in query:', queryKey[0]);
+          logger.warn('🚨 Auth error in query:', queryKey[0]);
           
           // 🔒 SECURITY: Try to refresh token before redirecting
           const isSuperAdmin = window.location.pathname.startsWith('/super-admin');
@@ -238,11 +255,11 @@ export const getQueryFn: <T>(options: {
           
           // Only try refresh for regular users (not super admin)
           if (!isSuperAdmin && !hasSuperAdminToken) {
-            console.log('🔄 Attempting token refresh from query...');
+            logger.info('🔄 Attempting token refresh from query...');
             const newToken = await refreshAccessToken();
             
             if (newToken) {
-              console.log('✅ Token refreshed, retrying query...');
+              logger.info('✅ Token refreshed, retrying query...');
               consecutiveAuthErrors = 0; // Reset counter after successful refresh
               
               // Retry the query with new token (use same URL with query params)
@@ -265,17 +282,16 @@ export const getQueryFn: <T>(options: {
           shouldResetAuthErrorCounter();
           consecutiveAuthErrors++;
           lastAuthErrorTime = Date.now();
-          console.log(`⚠️ Auth error in query count: ${consecutiveAuthErrors}/${MAX_AUTH_ERRORS_BEFORE_REDIRECT}`);
+          logger.warn(`⚠️ Auth error in query count: ${consecutiveAuthErrors}/${MAX_AUTH_ERRORS_BEFORE_REDIRECT}`);
           
           if (consecutiveAuthErrors >= MAX_AUTH_ERRORS_BEFORE_REDIRECT) {
             if (isSuperAdmin || hasSuperAdminToken) {
-              console.log('🔄 Redirecting to SuperAdmin login...');
+              logger.info('🔄 Redirecting to SuperAdmin login...');
               sessionStorage.removeItem('superAdminToken');
               window.location.href = '/super-admin';
             } else {
-              console.log('🔄 Redirecting to login...');
-              localStorage.removeItem('authData');
-              sessionStorage.removeItem('authData');
+              logger.info('🔄 Redirecting to login...');
+              clearAuthData();
               window.location.href = '/login';
             }
           }
@@ -296,8 +312,7 @@ export const getQueryFn: <T>(options: {
             sessionStorage.removeItem('superAdminToken');
             window.location.href = '/super-admin';
           } else {
-            localStorage.removeItem('authData');
-            sessionStorage.removeItem('authData');
+            clearAuthData();
             window.location.href = '/login';
           }
         }
@@ -359,7 +374,7 @@ if (typeof window !== 'undefined') {
     const thirtyMinutes = 30 * 60 * 1000;
     
     if (inactiveTime > thirtyMinutes) {
-      console.log(`🔄 Window inactive for ${Math.round(inactiveTime / 60000)} minutes - refreshing all data`);
+      // console.log(`🔄 Window inactive for ${Math.round(inactiveTime / 60000)} minutes - refreshing all data`);
       queryClient.invalidateQueries(); // Force refetch all data
       lastActivityTime = Date.now();
     }

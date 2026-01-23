@@ -8,7 +8,8 @@ import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useDemoBanner } from '@/hooks/use-demo-banner';
 import { useTheme } from '@/lib/theme-provider';
 import { useEmployeeViewMode } from '@/hooks/use-employee-view-mode';
-import oficazLogo from '@assets/oficaz logo_1750516757063.png';
+import oficazHeaderLogo from '@assets/oficaz logo_1750516757063.png';
+
 
 interface MobileHeaderProps {
   onMenuClick: () => void;
@@ -87,7 +88,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
           />
         ) : (
           <h1 className="text-sm font-medium text-foreground ml-2 lg:ml-0 lg:text-lg lg:font-semibold truncate">
-            {company?.name || 'Oficaz'}
+            {user?.role === 'accountant' ? 'Gestoría' : (company?.name || 'Oficaz')}
           </h1>
         )}
       </div>
@@ -95,9 +96,9 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
       {/* Center Section - Logo */}
       <div className="flex justify-center">
         <img 
-          src={oficazLogo} 
+          src={oficazHeaderLogo} 
           alt="Oficaz" 
-          className="h-4 w-auto lg:h-6 dark:brightness-0 dark:invert"
+          className="h-4 w-auto lg:h-6 object-contain"
         />
       </div>
       
@@ -204,3 +205,4 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
     </header>
   );
 }
+

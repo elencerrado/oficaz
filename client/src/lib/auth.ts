@@ -8,13 +8,56 @@ interface AuthData {
   subscription?: any;
 }
 
+// 🔒 SECURITY: Lightweight symmetric obfuscation for authData at rest
+// Not a replacement for CSP/SameSite cookies, but reduces trivial token theft via XSS/localStorage dumps
+const STORAGE_KEY = import.meta.env.VITE_STORAGE_KEY || 'oficaz-default-key';
+const ENC_PREFIX = 'enc:';
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+
+function xorBytes(data: Uint8Array, keyBytes: Uint8Array): Uint8Array {
+  const result = new Uint8Array(data.length);
+  for (let i = 0; i < data.length; i++) {
+    result[i] = data[i] ^ keyBytes[i % keyBytes.length];
+  }
+  return result;
+}
+
+function encryptAuthPayload(payload: AuthData): string {
+  const plaintext = encoder.encode(JSON.stringify(payload));
+  const keyBytes = encoder.encode(STORAGE_KEY);
+  const cipherBytes = xorBytes(plaintext, keyBytes);
+  const base64 = btoa(String.fromCharCode(...cipherBytes));
+  return `${ENC_PREFIX}${base64}`;
+}
+
+function decryptAuthPayload(raw: string): AuthData | null {
+  try {
+    const base64 = raw.startsWith(ENC_PREFIX) ? raw.slice(ENC_PREFIX.length) : raw;
+    const cipherBytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    const keyBytes = encoder.encode(STORAGE_KEY);
+    const plainBytes = xorBytes(cipherBytes, keyBytes);
+    const json = decoder.decode(plainBytes);
+    return JSON.parse(json);
+  } catch (error) {
+    // Fallback to legacy JSON.parse for backwards compatibility
+    try {
+      return JSON.parse(raw);
+    } catch (err) {
+      console.error('Failed to decrypt authData:', err);
+      return null;
+    }
+  }
+}
+
 export function setAuthData(data: AuthData, remember: boolean = true) {
   try {
     const storage = remember ? localStorage : sessionStorage;
     const storageType = remember ? 'localStorage' : 'sessionStorage';
     
-    console.log(`🔐 Saving auth data to ${storageType}:`, { hasToken: !!data.token, tokenLength: data.token?.length, remember });
-    storage.setItem('authData', JSON.stringify(data));
+    const encrypted = encryptAuthPayload(data);
+    storage.setItem('authData', encrypted);
     
     // Clear from the other storage to avoid conflicts
     const otherStorage = remember ? sessionStorage : localStorage;
@@ -24,12 +67,12 @@ export function setAuthData(data: AuthData, remember: boolean = true) {
     const saved = storage.getItem('authData');
     if (saved) {
       const parsed = JSON.parse(saved);
-      console.log(`✅ Auth data verification - saved successfully to ${storageType}:`, { hasToken: !!parsed.token });
+      // // console.log(`✅ Auth data verification - saved successfully to ${storageType}:`, { hasToken: !!parsed.token });
     } else {
-      console.error(`❌ Auth data was not saved to ${storageType}`);
+      // // console.error(`❌ Auth data was not saved to ${storageType}`);
     }
   } catch (error) {
-    console.error('Error saving auth data:', error);
+    // // console.error('Error saving auth data:', error);
   }
 }
 
@@ -46,11 +89,7 @@ export function getAuthData(): AuthData | null {
     return null;
   }
 
-  try {
-    return JSON.parse(authDataStr);
-  } catch {
-    return null;
-  }
+  return decryptAuthPayload(authDataStr);
 }
 
 export function clearAuthData() {
@@ -77,19 +116,19 @@ export function getAuthHeaders(): HeadersInit {
   // 🔒 SECURITY: Super admin token now stored in sessionStorage (closes on browser close)
   const superAdminToken = sessionStorage.getItem('superAdminToken');
   if (superAdminToken) {
-    console.log('🔑 Using super admin token');
+    // // console.log('🔑 Using super admin token');
     return { Authorization: `Bearer ${superAdminToken}` };
   }
   
   // Fall back to regular user token
   const authData = getAuthData();
-  console.log('🔑 Auth data:', authData ? 'exists' : 'missing', 'Token:', authData?.token ? 'exists' : 'missing');
+  // // console.log('🔑 Auth data:', authData ? 'exists' : 'missing', 'Token:', authData?.token ? 'exists' : 'missing');
   
   if (authData && authData.token) {
-    console.log('✅ Returning auth header with token');
+    // // console.log('✅ Returning auth header with token');
     return { Authorization: `Bearer ${authData.token}` };
   } else {
-    console.log('❌ No token available, returning empty headers');
+    // // console.log('❌ No token available, returning empty headers');
     return {};
   }
 }
@@ -109,14 +148,14 @@ export function isTokenExpired(token: string): boolean {
 export function clearExpiredTokens() {
   const authData = getAuthData();
   if (authData && authData.token && isTokenExpired(authData.token)) {
-    console.log('Clearing expired auth token');
+    // // console.log('Clearing expired auth token');
     clearAuthData();
   }
   
   // 🔒 SECURITY: Check sessionStorage for super admin token
   const superAdminToken = sessionStorage.getItem('superAdminToken');
   if (superAdminToken && isTokenExpired(superAdminToken)) {
-    console.log('🔒 Clearing expired super admin token');
+    // // console.log('🔒 Clearing expired super admin token');
     sessionStorage.removeItem('superAdminToken');
     // Redirect to super admin login
     if (window.location.pathname.startsWith('/super-admin')) {
@@ -139,7 +178,7 @@ let refreshPromise: Promise<string | null> | null = null;
 export async function refreshAccessToken(): Promise<string | null> {
   // Prevent multiple simultaneous refresh attempts
   if (isRefreshing && refreshPromise) {
-    console.log('🔄 Token refresh already in progress, waiting...');
+    // // console.log('🔄 Token refresh already in progress, waiting...');
     return refreshPromise;
   }
 
@@ -150,11 +189,11 @@ export async function refreshAccessToken(): Promise<string | null> {
       const authData = getAuthData();
       
       if (!authData?.refreshToken) {
-        console.log('❌ No refresh token available');
+        // // console.log('❌ No refresh token available');
         return null;
       }
 
-      console.log('🔄 Attempting to refresh access token...');
+      // // console.log('🔄 Attempting to refresh access token...');
       
       const response = await fetch('/api/auth/refresh', {
         method: 'POST',
@@ -166,7 +205,7 @@ export async function refreshAccessToken(): Promise<string | null> {
       });
 
       if (!response.ok) {
-        console.log('❌ Refresh token failed:', response.status);
+        // // console.log('❌ Refresh token failed:', response.status);
         clearAuthData();
         return null;
       }
@@ -174,8 +213,8 @@ export async function refreshAccessToken(): Promise<string | null> {
       const data = await response.json();
       
       if (data.token && data.refreshToken) {
-        console.log('✅ Access token refreshed successfully');
-        console.log('🔄 Refresh token rotated (sliding session)');
+        // // console.log('✅ Access token refreshed successfully');
+        // // console.log('🔄 Refresh token rotated (sliding session)');
         
         // 🔒 SLIDING SESSION: Update stored auth data with new access token AND new refresh token
         // Server MUST return a new refresh token (single-use) - old one is revoked
@@ -185,9 +224,9 @@ export async function refreshAccessToken(): Promise<string | null> {
           refreshToken: data.refreshToken,
         };
         
-        // Determine which storage was used
-        const storage = localStorage.getItem('authData') ? localStorage : sessionStorage;
-        storage.setItem('authData', JSON.stringify(updatedAuthData));
+        // Update encrypted auth data in appropriate storage
+        const remember = localStorage.getItem('authData') ? true : false;
+        setAuthData(updatedAuthData, remember);
         
         // 🔒 SECURITY: Notify AuthProvider of token update
         if (onTokenRefreshed) {
@@ -198,14 +237,14 @@ export async function refreshAccessToken(): Promise<string | null> {
       } else if (data.token && !data.refreshToken) {
         // 🔒 SECURITY: If server doesn't return new refresh token, the old one is revoked
         // Must fail the refresh and force re-login
-        console.warn('⚠️ Server returned access token but no refresh token - session invalid');
+        // // console.warn('⚠️ Server returned access token but no refresh token - session invalid');
         clearAuthData();
         return null;
       }
       
       return null;
     } catch (error) {
-      console.error('❌ Error refreshing token:', error);
+      // // console.error('❌ Error refreshing token:', error);
       clearAuthData();
       return null;
     } finally {

@@ -381,17 +381,17 @@ export async function getVacationBalance(
     const b = balances[0];
     return {
       success: true,
-      message: `${b.employeeName} tiene ${b.availableDays} días de vacaciones disponibles (${b.usedDays} usados, ${b.pendingDays} pendientes de aprobación, de ${b.totalDays} totales)`,
+      message: `${b.employeeName} tiene ${b.availableDays} días de ausencias disponibles (${b.usedDays} usados, ${b.pendingDays} pendientes de aprobación, de ${b.totalDays} totales)`,
       balance: b,
-      navigateTo: `/${company.companyAlias}/vacaciones?tab=calendar&employeeId=${b.employeeId}`
+      navigateTo: `/${company.companyAlias}/ausencias?tab=calendar&employeeId=${b.employeeId}`
     };
   }
   
   return {
     success: true,
-    message: `Resumen de vacaciones para ${balances.length} empleados`,
+    message: `Resumen de ausencias para ${balances.length} empleados`,
     balances,
-    navigateTo: `/${company.companyAlias}/vacaciones?tab=calendar`
+    navigateTo: `/${company.companyAlias}/ausencias?tab=calendar`
   };
 }
 
@@ -422,20 +422,30 @@ export async function getPendingApprovals(
   
   let message = "";
   const parts = [];
-  if (pendingVacations.length > 0) parts.push(`${pendingVacations.length} vacaciones`);
+  if (pendingVacations.length > 0) parts.push(`${pendingVacations.length} ausencias`);
   if (pendingTimeModifications.length > 0) parts.push(`${pendingTimeModifications.length} modificaciones de fichaje`);
   if (pendingReports.length > 0) parts.push(`${pendingReports.length} partes de trabajo`);
   
   if (totalPending === 0) {
     message = "No hay solicitudes pendientes de aprobación";
   } else {
-    message = `Tienes ${totalPending} solicitud${totalPending > 1 ? 'es' : ''} pendiente${totalPending > 1 ? 's' : ''}: ${parts.join(', ')}`;
+    // Prefer friendly, concise phrasing and avoid embedding URLs in messages.
+    if (pendingVacations.length > 0 && pendingVacations.length >= pendingTimeModifications.length && pendingVacations.length >= pendingReports.length) {
+      message = `Sí, tienes ${pendingVacations.length} solicitud${pendingVacations.length > 1 ? 'es' : ''} de ausencias pendientes — te las muestro.`;
+    } else if (pendingTimeModifications.length > 0 && pendingTimeModifications.length >= pendingReports.length) {
+      message = `Sí, tienes ${pendingTimeModifications.length} modificación${pendingTimeModifications.length > 1 ? 'es' : ''} de fichaje pendientes — te las muestro.`;
+    } else if (pendingReports.length > 0) {
+      message = `Sí, tienes ${pendingReports.length} parte${pendingReports.length > 1 ? 's' : ''} de trabajo pendiente${pendingReports.length > 1 ? 's' : ''} — te los muestro.`;
+    } else {
+      message = `Tienes ${totalPending} solicitud${totalPending > 1 ? 'es' : ''} pendiente${totalPending > 1 ? 's' : ''} — te las muestro.`;
+    }
   }
   
   // Determine navigation based on what has most pending
   let navigateTo = `/${company.companyAlias}/inicio`;
   if (pendingVacations.length >= pendingTimeModifications.length && pendingVacations.length >= pendingReports.length && pendingVacations.length > 0) {
-    navigateTo = `/${company.companyAlias}/vacaciones?tab=requests&status=pending`;
+    // Navigate to Ausencias (absences)
+    navigateTo = `/${company.companyAlias}/ausencias?tab=requests&status=pending`;
   } else if (pendingTimeModifications.length >= pendingReports.length && pendingTimeModifications.length > 0) {
     navigateTo = `/${company.companyAlias}/fichajes?tab=requests&status=pending`;
   } else if (pendingReports.length > 0) {
@@ -470,8 +480,7 @@ export async function getPendingApprovals(
       }))
     },
     navigateTo
-  };
-}
+  };}
 
 // ========================================
 // ✏️ MUTATION FUNCTIONS (Actions)
@@ -483,7 +492,7 @@ function normalizeForComparison(str: string): string {
     .toLowerCase()
     .trim()
     .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '');
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
 // ⚠️ HELPER: Calculate UTC day boundaries from YYYY-MM-DD string
@@ -569,7 +578,7 @@ export async function sendMessage(
       const { sendMessageNotification } = await import("./pushNotificationScheduler.js");
       sendMessageNotification(employeeId, admin?.fullName || "Admin", params.subject, message.id);
     } catch (error) {
-      console.error("Error sending push notification:", error);
+      // console.error("Error sending push notification:", error);
     }
   }
 
@@ -680,7 +689,7 @@ export async function approveVacationRequests(
           endDate: updated.endDate,
         });
       } catch (error) {
-        console.error("Error sending vacation notification:", error);
+        // console.error("Error sending vacation notification:", error);
       }
     }
     
@@ -743,7 +752,7 @@ export async function denyVacationRequests(
           endDate: updated.endDate,
         });
       } catch (error) {
-        console.error("Error sending vacation denial notification:", error);
+        // console.error("Error sending vacation denial notification:", error);
       }
     }
     
@@ -878,6 +887,7 @@ export async function createEmployee(
     fullName: string;
     email: string;
     dni: string;
+    role?: 'admin' | 'manager' | 'employee';
     position?: string;
     phoneNumber?: string;
     startDate?: string;
@@ -885,29 +895,90 @@ export async function createEmployee(
 ) {
   const { storage, companyId, adminUserId } = context;
 
-  // Get company to use company alias for email
-  const company = await db.select()
-    .from(schema.companies)
-    .where(eq(schema.companies.id, companyId))
-    .limit(1);
-
-  if (!company || company.length === 0) {
-    throw new Error("Company not found");
+  // Basic required fields check
+  if (!params.fullName || !params.email) {
+    return { success: false, error: 'Faltan datos: necesito nombre completo y correo.' };
   }
 
-  const companyAlias = company[0].companyAlias;
-  const companyEmail = `${params.email.split("@")[0]}@${companyAlias}.oficaz.app`;
+  const allowedRoles = new Set(['admin', 'manager', 'employee']);
+  const role: 'admin' | 'manager' | 'employee' = allowedRoles.has(params.role || '')
+    ? (params.role as any)
+    : 'employee';
 
-  // Create employee with default password
+  // Load company and subscription context
+  const company = await storage.getCompany(companyId);
+  if (!company) {
+    return { success: false, error: 'Empresa no encontrada' };
+  }
+
+  const subscription = await storage.getSubscriptionByCompanyId(companyId);
+  const users = await storage.getUsersByCompany(companyId);
+
+  // Seat capacity per role (included + extra). Fallback to legacy maxUsers if needed.
+  const seatsFor = (r: 'admin' | 'manager' | 'employee') => {
+    if (!subscription) return undefined;
+    const base =
+      (r === 'admin' ? subscription.includedAdmins : r === 'manager' ? subscription.includedManagers : subscription.includedEmployees) ?? 0;
+    const extra =
+      (r === 'admin' ? subscription.extraAdmins : r === 'manager' ? subscription.extraManagers : subscription.extraEmployees) ?? 0;
+    return base + extra;
+  };
+
+  const currentCountByRole = users.reduce<Record<string, number>>((acc, u) => {
+    const key = u.role || 'employee';
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+
+  const allowedSeats = seatsFor(role);
+  if (typeof allowedSeats === 'number' && currentCountByRole[role] >= allowedSeats) {
+    return {
+      success: false,
+      error: `No hay plazas disponibles para rol ${role}. Libera un cupo o amplía el plan.`
+    };
+  }
+
+  if (subscription && typeof subscription.maxUsers === 'number') {
+    const totalAllowed = subscription.maxUsers;
+    if (users.length >= totalAllowed) {
+      return {
+        success: false,
+        error: 'Has alcanzado el límite de usuarios de tu plan. Libera un cupo o amplía el plan.'
+      };
+    }
+  }
+
+  // Duplicate checks by email and name
+  const normalizedEmail = params.email.trim().toLowerCase();
+  const existingEmail = users.find(u => (u.personalEmail || '').toLowerCase() === normalizedEmail || (u.companyEmail || '').toLowerCase() === normalizedEmail);
+  if (existingEmail) {
+    return { success: false, error: `Ya existe un usuario con el correo ${normalizedEmail}. Usa otro correo.` };
+  }
+
+  const normalizedName = params.fullName.trim().toLowerCase();
+  const existingName = users.find(u => (u.fullName || '').trim().toLowerCase() === normalizedName);
+  if (existingName) {
+    return { success: false, error: `Ya existe un empleado llamado ${existingName.fullName}. ¿Quieres modificarlo en lugar de crear otro?` };
+  }
+
+  // Do NOT invent corporate emails; if none provided, reuse the given email
+  const providedCompanyEmail = (params as any).companyEmail as string | undefined;
+  const companyEmail = (providedCompanyEmail || params.email).trim().toLowerCase();
+  const companyEmailTaken = users.find(u => (u.companyEmail || '').toLowerCase() === companyEmail);
+  if (companyEmailTaken) {
+    return { success: false, error: `El correo ${companyEmail} ya está en uso. Indica otro correo corporativo o personal.` };
+  }
+
+  // Create employee with default password (user must change it on first login)
   const employee = await storage.createUser({
     companyId,
     personalEmail: params.email,
     companyEmail,
-    password: "DefaultPass123!", // Will need to be changed on first login
+    password: 'DefaultPass123!',
     fullName: params.fullName,
     dni: params.dni,
-    role: "employee",
-    position: params.position || "Empleado",
+    role,
+    position: params.position || 'Empleado',
     personalPhone: params.phoneNumber || null,
     startDate: params.startDate ? new Date(params.startDate) : new Date(),
     isActive: true,
@@ -921,7 +992,9 @@ export async function createEmployee(
       personalEmail: employee.personalEmail,
       companyEmail: employee.companyEmail,
       position: employee.position,
+      role: employee.role,
     },
+    message: `Empleado ${employee.fullName} creado como ${role}. Correo corporativo: ${employee.companyEmail}.`
   };
 }
 
@@ -1010,15 +1083,15 @@ export async function generateTimeReport(
     format?: 'pdf' | 'excel'; // Default: 'pdf'
   }
 ) {
-  console.log('📊 generateTimeReport called with params:', JSON.stringify(params, null, 2));
+  // console.log('📊 generateTimeReport called with params:', JSON.stringify(params, null, 2));
   const { storage, companyId } = context;
 
   // Resolve employee if name provided
   let employeeId: number | undefined;
   if (params.employeeName) {
-    console.log('📊 Resolving employee name:', params.employeeName);
+    // console.log('📊 Resolving employee name:', params.employeeName);
     const resolution = await resolveEmployeeName(storage, companyId, params.employeeName);
-    console.log('📊 Resolution result:', JSON.stringify(resolution, null, 2));
+    // console.log('📊 Resolution result:', JSON.stringify(resolution, null, 2));
     if ('error' in resolution) {
       return {
         success: false,
@@ -1026,7 +1099,7 @@ export async function generateTimeReport(
       };
     }
     employeeId = resolution.employeeId;
-    console.log('📊 Resolved employeeId:', employeeId);
+    // console.log('📊 Resolved employeeId:', employeeId);
   }
 
   // Calculate date range based on period
@@ -1096,11 +1169,13 @@ export async function generateTimeReport(
   }
 
   // Fetch work sessions with filters
-  const sessions = await storage.getWorkSessionsByCompany(companyId, 10000, 0, {
+  const sessionsResult = await storage.getWorkSessionsByCompany(companyId, 10000, 0, {
     employeeId,
     startDate,
     endDate,
   });
+
+  const sessions = sessionsResult.sessions || [];
 
   if (sessions.length === 0) {
     return {
@@ -1229,6 +1304,8 @@ export async function assignScheduleInRange(
     notes?: string;
     color?: string;
     skipWeekends?: boolean; // Default: true (skip Saturdays and Sundays)
+    excludedWeekdays?: number[]; // Optional: specific weekdays to exclude (0=Sun..6=Sat)
+    forceOverwrite?: boolean; // Optional: if true, delete existing shifts before creating new ones
   }
 ) {
   const { storage, companyId, adminUserId } = context;
@@ -1237,6 +1314,37 @@ export async function assignScheduleInRange(
   const employee = await storage.getUser(params.employeeId);
   if (!employee || employee.companyId !== companyId) {
     throw new Error("Employee not found or doesn't belong to this company");
+  }
+
+  // Check for existing shifts in the date range
+  const existingShifts = await storage.getWorkShiftsByEmployee(
+    params.employeeId,
+    params.startDate,
+    params.endDate
+  );
+
+  // If there are existing shifts and forceOverwrite is not set, ask for confirmation
+  if (existingShifts.length > 0 && !params.forceOverwrite) {
+    const firstName = employee.fullName.split(' ')[0];
+    return {
+      success: false,
+      needsConfirmation: true,
+      existingShiftsCount: existingShifts.length,
+      message: `⚠️ ${firstName} ya tiene ${existingShifts.length} turno${existingShifts.length > 1 ? 's' : ''} en esas fechas. ¿Quieres que los elimine y cree los nuevos, o prefieres mantener los actuales?`,
+      confirmationOptions: [
+        { action: 'overwrite', label: 'Eliminar los antiguos y crear los nuevos' },
+        { action: 'keep', label: 'Mantener los turnos actuales y no crear nada' },
+        { action: 'add', label: 'Añadir los nuevos turnos (se sumarán a los existentes)' }
+      ]
+    };
+  }
+
+  // If forceOverwrite is true, delete existing shifts first
+  if (params.forceOverwrite && existingShifts.length > 0) {
+    for (const shift of existingShifts) {
+      await db.delete(schema.workShifts)
+        .where(eq(schema.workShifts.id, shift.id));
+    }
   }
 
   // Auto-assign color based on employee ID if not provided
@@ -1258,6 +1366,11 @@ export async function assignScheduleInRange(
     
     // Skip weekends if enabled
     if (skipWeekends && (dayOfWeek === 0 || dayOfWeek === 6)) {
+      currentDate.setDate(currentDate.getDate() + 1);
+      continue;
+    }
+    // Skip explicitly excluded weekdays if provided
+    if (Array.isArray(params.excludedWeekdays) && params.excludedWeekdays.includes(dayOfWeek)) {
       currentDate.setDate(currentDate.getDate() + 1);
       continue;
     }
@@ -1298,11 +1411,27 @@ export async function assignScheduleInRange(
     createdShifts.push(shift[0]);
   }
 
+  const firstName = employee.fullName.split(' ')[0];
+  const weekdaysES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  const daysCreated = createdShifts.map(s => {
+    const date = new Date(s.startAt);
+    return weekdaysES[date.getDay()];
+  });
+  const uniqueDays = Array.from(new Set(daysCreated));
+  const daysText = uniqueDays.length <= 3 
+    ? uniqueDays.join(', ')
+    : `${uniqueDays.length} días`;
+
+  const replacedText = params.forceOverwrite && existingShifts.length > 0
+    ? ` (eliminé ${existingShifts.length} turno${existingShifts.length > 1 ? 's' : ''} antiguo${existingShifts.length > 1 ? 's' : ''})`
+    : '';
+
   return {
     success: true,
     createdCount: createdShifts.length,
     employeeFullName: employee.fullName,
     dateRange: `${params.startDate} a ${params.endDate}`,
+    message: `✅ Listo! He creado ${createdShifts.length} turno${createdShifts.length > 1 ? 's' : ''} para ${firstName} (${daysText}) de ${params.startTime} a ${params.endTime}${replacedText}. Te llevo al cuadrante de esa semana.`,
     shifts: createdShifts.map(s => ({
       date: new Date(s.startAt).toLocaleDateString('es-ES'),
       title: s.title
@@ -1450,7 +1579,7 @@ export async function requestDocument(
       message.id
     );
   } catch (error) {
-    console.error("Error sending push notification:", error);
+    // console.error("Error sending push notification:", error);
   }
 
   return {
@@ -1804,14 +1933,14 @@ export async function updateWorkShiftColor(
   // Parse the date using UTC to avoid timezone issues
   const { startOfDay, endOfDay, targetDate } = getUTCDayBoundaries(params.date);
 
-  console.log("🎨 UPDATE COLOR DEBUG:", {
-    employeeName: employee.fullName,
-    date: params.date,
-    newColor: params.newColor,
-    shiftTitle: params.shiftTitle,
-    startOfDay: startOfDay.toISOString(),
-    endOfDay: endOfDay.toISOString()
-  });
+  // console.log("🎨 UPDATE COLOR DEBUG:", {
+  //   employeeName: employee.fullName,
+  //   date: params.date,
+  //   newColor: params.newColor,
+  //   shiftTitle: params.shiftTitle,
+  //   startOfDay: startOfDay.toISOString(),
+  //   endOfDay: endOfDay.toISOString()
+  // });
 
   const shifts = await db.select()
     .from(schema.workShifts)
@@ -1822,13 +1951,13 @@ export async function updateWorkShiftColor(
       )
     );
 
-  console.log("🎨 All employee shifts:", shifts.map(s => ({
-    id: s.id,
-    title: s.title,
-    startAt: new Date(s.startAt).toISOString(),
-    endAt: new Date(s.endAt).toISOString(),
-    color: s.color
-  })));
+  // console.log("🎨 All employee shifts:", shifts.map(s => ({
+  //   id: s.id,
+  //   title: s.title,
+  //   startAt: new Date(s.startAt).toISOString(),
+  //   endAt: new Date(s.endAt).toISOString(),
+  //   color: s.color
+  // })));
 
   let shiftsOnDate = shifts.filter((shift: any) => {
     const shiftStart = new Date(shift.startAt);
@@ -1836,13 +1965,13 @@ export async function updateWorkShiftColor(
     return shiftStart <= endOfDay && shiftEnd >= startOfDay;
   });
 
-  console.log("🎨 Shifts on target date:", shiftsOnDate.length);
+  // console.log("🎨 Shifts on target date:", shiftsOnDate.length);
 
   if (params.shiftTitle) {
     shiftsOnDate = shiftsOnDate.filter((shift: any) => 
       shift.title?.toLowerCase().includes(params.shiftTitle!.toLowerCase())
     );
-    console.log("🎨 Shifts after title filter:", shiftsOnDate.length);
+    // console.log("🎨 Shifts after title filter:", shiftsOnDate.length);
   }
 
   if (shiftsOnDate.length === 0) {
@@ -1854,11 +1983,11 @@ export async function updateWorkShiftColor(
   }
 
   // Update color for all matching shifts
-  console.log("🎨 Updating color for shifts:", shiftsOnDate.map(s => s.id));
+  // console.log("🎨 Updating color for shifts:", shiftsOnDate.map(s => s.id));
   for (const shift of shiftsOnDate) {
     await storage.updateWorkShift(shift.id, { color: params.newColor });
   }
-  console.log("🎨 Color updated successfully");
+  // console.log("🎨 Color updated successfully");
 
   return {
     success: true,
@@ -2342,7 +2471,8 @@ export async function navigateToPage(
       break;
 
     case "vacation-requests":
-      path = `/${company.companyAlias}/vacaciones`;
+      // 'vacation' in UI is named 'Ausencias' (absences)
+      path = `/${company.companyAlias}/ausencias`;
       queryParams = `?tab=requests${params.filter ? `&status=${params.filter}` : '&status=pending'}`;
       
       const vacationRequests = await storage.getVacationRequestsByCompany(companyId);
@@ -2352,8 +2482,8 @@ export async function navigateToPage(
       
       if (params.filter === 'pending' || !params.filter) {
         description = pendingCount === 0 
-          ? "No hay solicitudes de vacaciones pendientes"
-          : `Hay ${pendingCount} solicitud${pendingCount > 1 ? 'es' : ''} de vacaciones pendiente${pendingCount > 1 ? 's' : ''}`;
+          ? "No hay solicitudes de ausencias pendientes"
+          : `Hay ${pendingCount} solicitud${pendingCount > 1 ? 'es' : ''} de ausencias pendiente${pendingCount > 1 ? 's' : ''}`;
       } else if (params.filter === 'approved') {
         description = `Hay ${approvedCount} solicitud${approvedCount > 1 ? 'es' : ''} aprobada${approvedCount > 1 ? 's' : ''}`;
       } else if (params.filter === 'denied') {
@@ -2364,13 +2494,13 @@ export async function navigateToPage(
       break;
 
     case "vacation-calendar":
-      path = `/${company.companyAlias}/vacaciones`;
+      path = `/${company.companyAlias}/ausencias`;
       queryParams = "?tab=calendar";
       if (employeeId) {
         queryParams += `&employeeId=${employeeId}`;
-        description = `Te llevo al calendario de vacaciones de ${employeeFullName}`;
+        description = `Te llevo al calendario de ausencias de ${employeeFullName}`;
       } else {
-        description = "Te llevo al calendario de vacaciones";
+        description = "Te llevo al calendario de ausencias";
       }
       break;
       
@@ -2808,6 +2938,11 @@ export const AI_FUNCTIONS = [
         startDate: {
           type: "string",
           description: "Fecha de incorporación en formato ISO (YYYY-MM-DD)",
+        },
+        role: {
+          type: "string",
+          enum: ["admin", "manager", "employee"],
+          description: "Rol del empleado. Por defecto 'employee'. Se validará capacidad del plan antes de crear",
         },
       },
       required: ["fullName", "email", "dni"],

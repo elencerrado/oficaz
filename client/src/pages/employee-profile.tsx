@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { ArrowLeft, User, Mail, Phone, Edit3, Save, X, Camera, Trash2, PenTool, RotateCcw, Check, Info, Shield } from 'lucide-react';
-import { useLocation, Link } from 'wouter';
+import { User, Mail, Phone, Edit3, Save, X, Camera, Trash2, PenTool, RotateCcw, Check, Info, Shield } from 'lucide-react';
+import { useLocation } from 'wouter';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { EmployeeTopBar } from '@/components/employee/employee-top-bar';
 
 export default function EmployeeProfile() {
   usePageTitle('Mi Perfil');
@@ -384,25 +385,7 @@ export default function EmployeeProfile() {
 
   return (
     <div className="bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white">
-      {/* Header - Exactly like other employee pages but without user name */}
-      <div className="flex items-center justify-between p-6 pb-8 h-20">
-        <Link href={`/${currentCompanyAlias}/inicio`}>
-          <Button
-            variant="ghost"
-            size="lg"
-            className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 px-6 py-3 rounded-xl bg-gray-100 dark:bg-white/10 backdrop-blur-sm transition-all duration-200 border border-gray-300 dark:border-white/20"
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            <span className="font-medium">Atrás</span>
-          </Button>
-        </Link>
-        
-        <div className="flex-1 flex flex-col items-end text-right">
-          <div className="text-gray-900 dark:text-white text-sm font-medium">
-            {company?.name || 'Test Company'}
-          </div>
-        </div>
-      </div>
+      <EmployeeTopBar homeHref={`/${currentCompanyAlias}/inicio`} />
       
       {/* Page Title */}
       <div className="px-6 pb-6">

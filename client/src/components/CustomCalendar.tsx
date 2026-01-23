@@ -43,7 +43,7 @@ export function CustomCalendar({
   pendingVacations,
   className = ''
 }: CustomCalendarProps) {
-  const [currentMonth, setCurrentMonth] = React.useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   
 
 

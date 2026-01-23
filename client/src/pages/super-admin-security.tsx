@@ -68,6 +68,7 @@ export default function SuperAdminSecurity() {
     // Read values from uncontrolled inputs
     const email = emailRef.current?.value || "";
     const password = passwordRef.current?.value || "";
+    const totpCode = (document.getElementById('totpCode') as HTMLInputElement)?.value || "";
     
     setIsLoading(true);
     setError("");
@@ -78,17 +79,27 @@ export default function SuperAdminSecurity() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, totpCode }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        if (errorData.requiresTOTP) {
+          // Show TOTP input field
+          setCurrentStep({ step: "totp_required" });
+          setError("Se requiere verificación 2FA. Introduce el código de tu autenticador.");
+          return;
+        }
         throw new Error(errorData.message || "Email o contraseña incorrectos");
       }
 
       const data = await response.json();
       
       // 🔒 SECURITY: Store super admin token in sessionStorage (expires when browser closes)
+      // This is acceptable for super-admin because:
+      // 1. Session expires when browser closes (not persistent like localStorage)
+      // 2. Super admin access requires email verification code each time
+      // 3. Token is short-lived and not exposed to XSS if properly sanitized
       sessionStorage.setItem("superAdminToken", data.token);
       
       setCurrentStep({ step: "verified" });
@@ -242,6 +253,32 @@ export default function SuperAdminSecurity() {
                 </button>
               </div>
             </div>
+
+            {/* 🔒 2FA TOTP Code Input - Conditional */}
+            {(currentStep.step === "totp_required" || currentStep.step === "login") && (
+              <div className="space-y-2">
+                <Label htmlFor="totpCode" className="flex items-center gap-2 text-white">
+                  <Shield className="h-4 w-4" />
+                  Código de Verificación (Google Authenticator/Authy)
+                </Label>
+                <Input
+                  id="totpCode"
+                  name="totpCode"
+                  type="text"
+                  placeholder="000000"
+                  maxLength={6}
+                  pattern="\d{6}"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/40 font-mono text-center tracking-widest"
+                />
+                <p className="text-xs text-white/60 text-center">
+                  {currentStep.step === "totp_required" 
+                    ? "Código requerido para completar la autenticación"
+                    : "Verifica tu autenticador para obtener el código de 6 dígitos"}
+                </p>
+              </div>
+            )}
 
             {error && currentStep.step === "login" && (
               <Alert className="bg-red-500/20 border-red-500/30 text-red-200">

@@ -28,16 +28,22 @@ if (!existsSync(envPath)) {
 
 // Determinar si es desarrollo o producción
 const isDev = process.argv.includes('dev');
+const port = Number(process.env.PORT || 5000);
 
 console.log(`🚀 Iniciando Oficaz en modo ${isDev ? 'desarrollo' : 'producción'}...`);
 console.log(`📁 Usando variables de entorno de: ${envPath}`);
+console.log(`🔗 Abrir en el navegador: http://localhost:${port}`);
 
 if (isDev) {
-  // Modo desarrollo: usar tsx
-  const child = spawn('npx', ['tsx', '--env-file=.env', 'server/index.ts'], {
+  // Modo desarrollo: usar tsx con --import (requerido por Node >=18.19/20.6)
+  const child = spawn('node', ['--env-file=.env', '--import', 'tsx', 'server/index.ts'], {
     stdio: 'inherit',
-    shell: true,
     env: { ...process.env, NODE_ENV: 'development' }
+  });
+  child.on('exit', (code, signal) => {
+    if (code !== 0) {
+      console.error(`❌ Proceso de desarrollo terminado con código ${code}${signal ? ` y señal ${signal}` : ''}`);
+    }
   });
   
   child.on('error', (err) => {
@@ -55,8 +61,12 @@ if (isDev) {
   
   const child = spawn('node', ['--env-file=.env', 'dist/index.js'], {
     stdio: 'inherit',
-    shell: true,
     env: { ...process.env, NODE_ENV: 'production' }
+  });
+  child.on('exit', (code, signal) => {
+    if (code !== 0) {
+      console.error(`❌ Proceso de producción terminado con código ${code}${signal ? ` y señal ${signal}` : ''}`);
+    }
   });
   
   child.on('error', (err) => {

@@ -3,9 +3,10 @@ import { cn } from "@/lib/utils";
 interface LoadingSpinnerProps {
   className?: string;
   size?: "xs" | "sm" | "md" | "lg";
+  color?: "blue" | "gray";
 }
 
-export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) {
+export function LoadingSpinner({ className, size = "md", color = "blue" }: LoadingSpinnerProps) {
   const config = {
     xs: { outerSize: 16, borderWidth: 4, innerSize: 4, gap: 1 },
     sm: { outerSize: 24, borderWidth: 5, innerSize: 5, gap: 2 },
@@ -14,6 +15,17 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
   };
 
   const currentConfig = config[size];
+  
+  const colorClasses = {
+    blue: {
+      border: "border-[#007AFF] dark:border-white",
+      dot: "bg-[#007AFF] dark:bg-white"
+    },
+    gray: {
+      border: "border-gray-500 dark:border-gray-400",
+      dot: "bg-gray-500 dark:bg-gray-400"
+    }
+  };
 
   return (
     <div className={cn("relative flex-shrink-0", className)} style={{ 
@@ -21,13 +33,13 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
       height: `${currentConfig.outerSize}px` 
     }}>
       <div 
-        className="absolute inset-0 rounded-full border-[#007AFF] dark:border-white"
+        className={cn("absolute inset-0 rounded-full", colorClasses[color].border)}
         style={{ borderWidth: `${currentConfig.borderWidth}px` }}
       />
       
       <div className="absolute inset-0 animate-spin">
         <div 
-          className="absolute bg-[#007AFF] dark:bg-white rounded-full"
+          className={cn("absolute rounded-full", colorClasses[color].dot)}
           style={{
             width: `${currentConfig.innerSize}px`,
             height: `${currentConfig.innerSize}px`,

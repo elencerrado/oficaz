@@ -2,6 +2,7 @@ import * as React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { UserThemeManager } from "@/components/user-theme-manager";
 import { GlobalDemoBanner } from "@/components/global-demo-banner";
+import { ReminderBanner } from "@/components/ui/reminder-banner";
 import CookieBanner from "@/components/CookieBanner";
 import { AdminWebSocketNotifications } from "@/components/AdminWebSocketNotifications";
 
@@ -17,6 +18,7 @@ export const GlobalOverlays = React.memo(function GlobalOverlays() {
     <>
       <UserThemeManager />
       <GlobalDemoBanner />
+      <ReminderBanner />
       <Toaster />
       <CookieBanner />
       <AdminWebSocketNotifications />

@@ -41,7 +41,7 @@ export const chatBridge = {
       chatBridgeState = lastValidState;
     } else if (lastValidState && !newState.userSummary && chatBridgeState.userSummary) {
       // Auth is temporarily null (refetching) - keep last valid state
-      console.log("🔒 ChatBridge: Preserving cached state during auth reload");
+      // console.log("🔒 ChatBridge: Preserving cached state during auth reload");
       return; // DON'T update state or notify listeners
     } else {
       // First load or logout - update normally

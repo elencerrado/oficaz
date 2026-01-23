@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
-import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard, AlarmClock, CalendarDays, Sun, Moon, Monitor, ClipboardList, X, PenTool, RotateCcw, CheckCircle, Shield } from 'lucide-react';
+import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard, AlarmClock, CalendarDays, Sun, Moon, Monitor, ClipboardList, X, PenTool, RotateCcw, CheckCircle, Shield, Receipt } from 'lucide-react';
 import { useEmployeeViewMode } from '@/hooks/use-employee-view-mode';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,9 +19,12 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
 import { DatePickerDay } from '@/components/ui/date-picker';
+import { z } from 'zod';
+import { getAuthData, clearAuthData } from '@/lib/auth';
+import { EmployeeWorkSessionCard, FeatureNotifications, EmployeeHeader } from '@/components/employee';
 
 interface WorkSession {
   id: number;
@@ -31,6 +34,18 @@ interface WorkSession {
   totalHours?: string;
   createdAt: string;
 }
+
+// ⚡ OPTIMIZACIÓN: Logger condicional (solo en desarrollo)
+const logger = {
+  debug: (...args: any[]) => {
+    if (import.meta.env.DEV) {
+      console.log('[Employee]', ...args);
+    }
+  },
+  error: (...args: any[]) => {
+    console.error('[Employee]', ...args);
+  }
+};
 
 // Función para traducir roles al español
 const translateRole = (role: string | undefined) => {
@@ -55,6 +70,7 @@ export default function EmployeeDashboard() {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   const { isEmployeeViewMode, disableEmployeeView } = useEmployeeViewMode();
+  const [, setLocation] = useLocation();
   useWorkAlarms(); // Initialize PWA push notifications
   
   // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
@@ -68,6 +84,33 @@ export default function EmployeeDashboard() {
   // Estado para el modal de alarmas
   const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
   
+  // Handle document signature from email link
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const signDocumentId = urlParams.get('signDocument');
+    const signatureToken = urlParams.get('token');
+    
+    if (signDocumentId && signatureToken && user && company) {
+      // Redirect to documents page with signature parameters preserved
+      logger.debug('📧 Email signature link detected, redirecting to documents...');
+      const companyAlias = company.companyAlias || 'app';
+      setLocation(`/${companyAlias}/mis-documentos?signDocument=${signDocumentId}&token=${signatureToken}`);
+    }
+  }, [user, company, setLocation]);
+  
+  // ✅ VALIDACIÓN: Schema Zod para work report form
+  const workReportSchema = z.object({
+    reportDate: z.string().min(1, 'Fecha requerida'),
+    refCode: z.string().optional(),
+    location: z.string().min(1, 'Ubicación requerida'),
+    description: z.string().min(10, 'La descripción debe tener al menos 10 caracteres'),
+    clientName: z.string().optional(),
+    notes: z.string().optional(),
+    startTime: z.string().optional(),
+    endTime: z.string().optional(),
+    signedBy: z.string().optional(),
+  });
+
   // Estado para el modal de parte de obra al fichar salida
   const [showWorkReportModal, setShowWorkReportModal] = useState(false);
   const [completedSessionData, setCompletedSessionData] = useState<{ clockIn: string; clockOut: string } | null>(null);
@@ -109,6 +152,11 @@ export default function EmployeeDashboard() {
   const [customMenuOrder, setCustomMenuOrder] = useState<number[]>(() => {
     const saved = localStorage.getItem('menuIconOrder');
     return saved ? JSON.parse(saved) : [];
+  });
+
+  // 🔒 SEGURIDAD: Estado de consentimiento de geolocalización (GDPR/LOPD)
+  const [hasLocationConsent, setHasLocationConsent] = useState<boolean>(() => {
+    return localStorage.getItem('locationConsent') === 'granted';
   });
 
   // Queries para autocompletado de partes de obra anteriores
@@ -295,16 +343,14 @@ export default function EmployeeDashboard() {
   const { data: activeSession } = useQuery<WorkSession>({
     queryKey: ['/api/work-sessions/active'],
     enabled: !!user,
-    staleTime: 10 * 1000, // 10 seconds for real-time updates
-    gcTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 30 * 1000, // 30 seconds - WebSocket handles real-time updates
+    gcTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
-    retryDelay: 500,
-    refetchInterval: 45 * 1000, // ⚡ Optimizado: poll cada 45 segundos 
-    refetchIntervalInBackground: false, // Stop background polling
+    // ⚡ OPTIMIZADO: Sin polling, WebSocket maneja actualizaciones en tiempo real
   });
 
   // Query for active break period
-  const { data: activeBreak } = useQuery({
+  const { data: activeBreak } = useQuery<any>({
     queryKey: ['/api/break-periods/active'],
     enabled: !!user && !!activeSession,
     refetchInterval: activeSession ? 60 * 1000 : false, // ⚡ Optimizado: solo cada minuto cuando hay sesión
@@ -313,7 +359,7 @@ export default function EmployeeDashboard() {
   });
 
   // Query for company work hours settings
-  const { data: companySettings } = useQuery({
+  const { data: companySettings } = useQuery<{ workingHoursPerDay?: number }>({
     queryKey: ['/api/settings/work-hours'],
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -325,9 +371,8 @@ export default function EmployeeDashboard() {
   const { data: unreadCount } = useQuery<{ count: number }>({
     queryKey: ['/api/messages/unread-count'],
     enabled: !!user,
-    refetchInterval: 2 * 60 * 1000, // ⚡ Optimizado: mensajes cada 2 minutos
-    refetchIntervalInBackground: false,
-    staleTime: 0, // Always refetch when returning to dashboard for accurate badge
+    staleTime: 60 * 1000, // 1 minute - WebSocket handles updates
+    // ⚡ OPTIMIZADO: Sin polling, WebSocket maneja message_received
   });
 
 
@@ -335,36 +380,32 @@ export default function EmployeeDashboard() {
   const { data: documents } = useQuery({
     queryKey: ['/api/documents'],
     enabled: !!user,
-    refetchInterval: 5 * 60 * 1000, // ⚡ Optimizado: documentos cada 5 minutos
-    refetchIntervalInBackground: false,
-    staleTime: 4 * 60 * 1000, // ⚡ Optimizado: cache documentos por 4 minutos
+    staleTime: 5 * 60 * 1000, // 5 minutes - WebSocket handles updates
+    // ⚡ OPTIMIZADO: Sin polling, WebSocket maneja document_uploaded
   });
 
   // Get real document notifications from database with reduced frequency
   const { data: documentNotifications } = useQuery({
     queryKey: ['/api/document-notifications'],
     enabled: !!user,
-    refetchInterval: 5 * 60 * 1000, // ⚡ Optimizado: notificaciones cada 5 minutos
-    refetchIntervalInBackground: false,
-    staleTime: 4 * 60 * 1000, // ⚡ Optimizado: cache notificaciones por 4 minutos
+    staleTime: 5 * 60 * 1000, // 5 minutes - WebSocket handles updates
+    // ⚡ OPTIMIZADO: Sin polling, WebSocket maneja document_notification
   });
 
   // Get vacation requests with reduced frequency
-  const { data: vacationRequests = [] } = useQuery({
+  const { data: vacationRequests = [] } = useQuery<any[]>({
     queryKey: ['/api/vacation-requests'],
     enabled: !!user,
-    refetchInterval: 10 * 60 * 1000, // ⚡ Optimizado: vacaciones cada 10 minutos
-    refetchIntervalInBackground: false,
-    staleTime: 8 * 60 * 1000, // ⚡ Optimizado: cache vacaciones por 8 minutos
+    staleTime: 10 * 60 * 1000, // 10 minutes - WebSocket handles updates
+    // ⚡ OPTIMIZADO: Sin polling, WebSocket maneja vacation_request_updated
   });
 
   // Get all reminders to check for overdue ones
-  const { data: allReminders = [] } = useQuery({
+  const { data: allReminders = [] } = useQuery<any[]>({
     queryKey: ['/api/reminders'],
     enabled: !!user,
-    refetchInterval: 10 * 60 * 1000, // ⚡ Optimizado: reminders cada 10 minutos
-    refetchIntervalInBackground: false,
-    staleTime: 8 * 60 * 1000, // ⚡ Optimizado: cache reminders por 8 minutos
+    staleTime: 10 * 60 * 1000, // 10 minutes - WebSocket handles updates
+    // ⚡ OPTIMIZADO: Sin polling, WebSocket maneja reminder_created/updated
   });
 
   // Check for vacation updates - clear notification when back on dashboard
@@ -381,15 +422,15 @@ export default function EmployeeDashboard() {
       const reviewDate = request.reviewedAt ? new Date(request.reviewedAt) : new Date(request.createdAt);
       const isNew = reviewDate > lastCheckDate;
       
-      console.log('Dashboard vacation check:', {
-        id: request.id,
-        status: request.status,
-        reviewedAt: request.reviewedAt,
-        reviewDate: reviewDate.toISOString(),
-        lastCheck: lastCheckDate.toISOString(),
-        isNew,
-        currentTime: new Date().toISOString()
-      });
+      // console.log('Dashboard vacation check:', {
+      //   id: request.id,
+      //   status: request.status,
+      //   reviewedAt: request.reviewedAt,
+      //   reviewDate: reviewDate.toISOString(),
+      //   lastCheck: lastCheckDate.toISOString(),
+      //   isNew,
+      //   currentTime: new Date().toISOString()
+      // });
       
       return isNew;
     });
@@ -411,7 +452,7 @@ export default function EmployeeDashboard() {
     }
     
     if (hasUpdates) {
-      console.log('Dashboard setting vacation notification flag for', newlyProcessedRequests.length, 'requests');
+      // console.log('Dashboard setting vacation notification flag for', newlyProcessedRequests.length, 'requests');
       localStorage.setItem('hasVacationUpdates', 'true');
     } else {
       setHasVacationUpdates(false);
@@ -422,7 +463,7 @@ export default function EmployeeDashboard() {
   useEffect(() => {
     if (hasVacationUpdates) {
       const timer = setTimeout(() => {
-        console.log('Dashboard: clearing vacation notifications after viewing dashboard');
+        // console.log('Dashboard: clearing vacation notifications after viewing dashboard');
         setHasVacationUpdates(false);
         localStorage.setItem('lastVacationCheck', new Date().toISOString());
         localStorage.removeItem('vacationNotificationType');
@@ -463,27 +504,27 @@ export default function EmployeeDashboard() {
     if (!documentNotifications || !documents) return;
 
     // 🔴 RED: Pending document upload requests (se quita cuando enviamos archivo)
-    const pendingRequests = (documentNotifications as any[]).filter(notification => 
+    const pendingRequests = Array.isArray(documentNotifications) ? documentNotifications.filter(notification => 
       !notification.isCompleted
-    );
+    ) : [];
     const hasPendingRequests = pendingRequests.length > 0;
     setHasDocumentRequests(hasPendingRequests);
 
     // 🟢 GREEN: New documents that user hasn't viewed yet
     // Uses isViewed field from database - badge clears when user clicks "Ver" button
-    const unviewedDocuments = (documents as any[]).filter((doc: any) => {
+    const unviewedDocuments = Array.isArray(documents) ? documents.filter(doc => {
       // Document is new if user hasn't viewed it yet
       // Check both camelCase (from Drizzle) and snake_case (raw SQL)
       const isViewed = doc.isViewed ?? doc.is_viewed ?? false;
       return !isViewed;
-    });
+    }) : [];
 
     const hasUnviewedDocuments = unviewedDocuments.length > 0;
     setHasNewDocuments(hasUnviewedDocuments);
 
     // 🟠 ORANGE: Documents that require signature but haven't been signed yet
     // Only show if user has already viewed the document (isViewed = true)
-    const unsignedDocuments = (documents as any[]).filter((doc: any) => {
+    const unsignedDocuments = Array.isArray(documents) ? documents.filter(doc => {
       const isViewed = doc.isViewed ?? doc.is_viewed ?? false;
       const requiresSignature = doc.requiresSignature ?? doc.requires_signature ?? false;
       const isAccepted = doc.isAccepted ?? doc.is_accepted ?? false;
@@ -493,19 +534,19 @@ export default function EmployeeDashboard() {
       
       // Show orange badge if: document is viewed AND (requires signature OR is payroll) AND not yet signed
       return isViewed && (requiresSignature || isPayroll) && !isAccepted;
-    });
+    }) : [];
 
     const hasUnsigned = unsignedDocuments.length > 0;
     setHasUnsignedDocuments(hasUnsigned);
 
-    console.log('📋 Document notifications check:', {
-      pendingRequests: pendingRequests.length,
-      unviewedDocuments: unviewedDocuments.length,
-      unsignedDocuments: unsignedDocuments.length,
-      hasPendingRequests,
-      hasUnviewedDocuments,
-      hasUnsigned
-    });
+    // console.log('📋 Document notifications check:', {
+    //   pendingRequests: pendingRequests.length,
+    //   unviewedDocuments: unviewedDocuments.length,
+    //   unsignedDocuments: unsignedDocuments.length,
+    //   hasPendingRequests,
+    //   hasUnviewedDocuments,
+    //   hasUnsigned
+    // });
 
   }, [documentNotifications, documents]);
 
@@ -517,7 +558,7 @@ export default function EmployeeDashboard() {
     }
 
     const now = new Date();
-    const overdueReminders = (allReminders as any[]).filter((reminder: any) => {
+    const overdueReminders = Array.isArray(allReminders) ? allReminders.filter(reminder => {
       // Skip if reminder doesn't have a due date
       if (!reminder.dueDate) return false;
       
@@ -527,27 +568,27 @@ export default function EmployeeDashboard() {
       // Check if user has completed this reminder
       const userCompleted = reminder.completedBy?.includes(user?.id);
       
-      console.log('🔔 Reminder overdue check:', {
-        id: reminder.id,
-        title: reminder.title,
-        dueDate: reminder.dueDate,
-        isOverdue,
-        userCompleted,
-        completedBy: reminder.completedBy
-      });
+      // console.log('🔔 Reminder overdue check:', {
+      //   id: reminder.id,
+      //   title: reminder.title,
+      //   dueDate: reminder.dueDate,
+      //   isOverdue,
+      //   userCompleted,
+      //   completedBy: reminder.completedBy
+      // });
       
       return isOverdue && !userCompleted;
-    });
+    }) : [];
 
     const hasOverdue = overdueReminders.length > 0;
     setHasOverdueReminders(hasOverdue);
 
-    console.log('🔔 Overdue reminders check:', {
-      totalReminders: allReminders.length,
-      overdueCount: overdueReminders.length,
-      hasOverdue,
-      overdueReminders: overdueReminders.map((r: any) => ({ id: r.id, title: r.title, dueDate: r.dueDate }))
-    });
+    // console.log('🔔 Overdue reminders check:', {
+    //   totalReminders: allReminders.length,
+    //   overdueCount: overdueReminders.length,
+    //   hasOverdue,
+    //   overdueReminders: overdueReminders.map((r: any) => ({ id: r.id, title: r.title, dueDate: r.dueDate }))
+    // });
 
   }, [allReminders, user?.id]);
 
@@ -569,13 +610,13 @@ export default function EmployeeDashboard() {
     const showNotification = unreadMessages > 0 && (!lastVisitTime || currentTime > lastVisitTime);
     setHasNewMessages(showNotification);
 
-    console.log('💬 Messages notification check:', {
-      unreadMessages,
-      lastVisitTime: lastVisitTime?.toISOString(),
-      currentTime: currentTime.toISOString(),
-      showNotification,
-      lastMessagesPageVisit
-    });
+    // console.log('💬 Messages notification check:', {
+    //   unreadMessages,
+    //   lastVisitTime: lastVisitTime?.toISOString(),
+    //   currentTime: currentTime.toISOString(),
+    //   showNotification,
+    //   lastMessagesPageVisit
+    // });
 
   }, [unreadCount]);
 
@@ -583,21 +624,20 @@ export default function EmployeeDashboard() {
   const { data: activeReminders = [] } = useQuery({
     queryKey: ['/api/reminders/active'],
     enabled: !!user,
-    refetchInterval: 10 * 60 * 1000, // ⚡ Optimizado: reminders activos cada 10 minutos
-    refetchIntervalInBackground: false,
-    staleTime: 8 * 60 * 1000, // ⚡ Optimizado: cache reminders activos por 8 minutos
+    staleTime: 10 * 60 * 1000, // 10 minutes - WebSocket handles updates
+    // ⚡ OPTIMIZADO: Sin polling, WebSocket maneja reminder events
   });
 
   // Update active reminders state
   useEffect(() => {
-    const hasActive = (activeReminders as any[]).length > 0;
+    const hasActive = Array.isArray(activeReminders) && activeReminders.length > 0;
     setHasActiveReminders(hasActive);
 
-    console.log('📋 Active reminders check:', {
-      activeCount: activeReminders.length,
-      hasActiveReminders: hasActive,
-      reminders: (activeReminders as any[]).map((r: any) => ({ id: r.id, title: r.title }))
-    });
+    // console.log('📋 Active reminders check:', {
+    //   activeCount: activeReminders.length,
+    //   hasActiveReminders: hasActive,
+    //   reminders: (activeReminders as any[]).map((r: any) => ({ id: r.id, title: r.title }))
+    // });
 
   }, [activeReminders]);
 
@@ -624,25 +664,51 @@ export default function EmployeeDashboard() {
     });
   }, [recentSessions]);
 
-  // Helper function to get current geolocation
-  const getCurrentLocation = (): Promise<{ latitude: number; longitude: number } | null> => {
+  // 🔒 SEGURIDAD: Solicitar consentimiento explícito para geolocalización (GDPR/LOPD)
+  const requestLocationConsent = async (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const consent = window.confirm(
+        'Para registrar tu ubicación en fichajes, necesitamos acceso a tu ubicación.\n\n' +
+        '¿Permites que Oficaz acceda a tu ubicación al fichar?'
+      );
+      
+      if (consent) {
+        localStorage.setItem('locationConsent', 'granted');
+        setHasLocationConsent(true);
+        resolve(true);
+      } else {
+        localStorage.setItem('locationConsent', 'denied');
+        setHasLocationConsent(false);
+        resolve(false);
+      }
+    });
+  };
+
+  // Helper function to get current geolocation (con consentimiento)
+  const getCurrentLocation = async (): Promise<{ latitude: number; longitude: number } | null> => {
+    // 🔒 SEGURIDAD: Verificar consentimiento antes de obtener ubicación
+    if (!hasLocationConsent) {
+      const consent = await requestLocationConsent();
+      if (!consent) {
+        // Usuario rechazó el consentimiento
+        return null;
+      }
+    }
+
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
-        console.log('📍 Geolocation not supported');
         resolve(null);
         return;
       }
       
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          console.log('📍 Location obtained:', position.coords.latitude, position.coords.longitude);
           resolve({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
           });
         },
         (error) => {
-          console.log('📍 Geolocation error:', error.message);
           resolve(null); // Don't block clock-in/out if location fails
         },
         {
@@ -670,20 +736,27 @@ export default function EmployeeDashboard() {
       showTemporaryMessage(message);
     },
     onError: (error: any) => {
-      if (error.message?.includes('Invalid or expired token') || error.message?.includes('403')) {
+      // 🔒 SEGURIDAD: No exponer detalles técnicos del error
+      const isAuthError = error.status === 401 || error.status === 403 || 
+                          error.message?.includes('Invalid or expired token');
+      
+      if (isAuthError) {
         toast({
           title: "Sesión expirada",
-          description: "Redirigiendo al login...",
+          description: "Por favor, inicia sesión nuevamente",
           variant: "destructive",
         });
-        localStorage.removeItem('authData');
+        // Limpiar toda la autenticación
+        clearAuthData();
+        // Preservar company alias en redirect
+        const companyAlias = window.location.pathname.split('/')[1] || 'app';
         setTimeout(() => {
-          window.location.href = '/login';
+          window.location.href = `/${companyAlias}/login`;
         }, 1000);
       } else {
         toast({ 
           title: 'Error', 
-          description: 'No se pudo registrar la entrada',
+          description: 'No se pudo registrar la entrada. Intenta de nuevo.',
           variant: 'destructive'
         });
       }
@@ -706,13 +779,6 @@ export default function EmployeeDashboard() {
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
       const message = generateDynamicMessage('salida');
       showTemporaryMessage(message);
-      
-      // Debug: verificar valores para el popup de parte de obra
-      console.log('🔍 DEBUG clockOut:', {
-        workReportMode: user?.workReportMode,
-        plan: subscription?.plan,
-        userId: user?.id
-      });
       
       // Mostrar popup de parte de obra si el usuario tiene configurado on_clockout o both
       const workReportMode = user?.workReportMode;
@@ -738,20 +804,27 @@ export default function EmployeeDashboard() {
       }
     },
     onError: (error: any) => {
-      if (error.message?.includes('Invalid or expired token') || error.message?.includes('403')) {
+      // 🔒 SEGURIDAD: No exponer detalles técnicos del error
+      const isAuthError = error.status === 401 || error.status === 403 || 
+                          error.message?.includes('Invalid or expired token');
+      
+      if (isAuthError) {
         toast({
           title: "Sesión expirada",
-          description: "Redirigiendo al login...",
+          description: "Por favor, inicia sesión nuevamente",
           variant: "destructive",
         });
-        localStorage.removeItem('authData');
+        // Limpiar toda la autenticación
+        clearAuthData();
+        // Preservar company alias en redirect
+        const companyAlias = window.location.pathname.split('/')[1] || 'app';
         setTimeout(() => {
-          window.location.href = '/login';
+          window.location.href = `/${companyAlias}/login`;
         }, 1000);
       } else {
         toast({ 
           title: 'Error', 
-          description: 'No se pudo registrar la salida',
+          description: 'No se pudo registrar la salida. Intenta de nuevo.',
           variant: 'destructive'
         });
       }
@@ -820,13 +893,26 @@ export default function EmployeeDashboard() {
 
   // Handler para enviar el parte de obra
   const handleSubmitWorkReport = () => {
-    if (!workReportForm.location.trim() || !workReportForm.description.trim()) {
-      toast({
-        title: 'Campos requeridos',
-        description: 'Por favor completa la ubicación y descripción del trabajo.',
-        variant: 'destructive'
+    // ✅ VALIDACIÓN: Usar Zod para validación robusta
+    const workReportSchema = z.object({
+      location: z.string().min(1, 'La ubicación es requerida'),
+      description: z.string().min(10, 'La descripción debe tener al menos 10 caracteres'),
+    });
+
+    try {
+      workReportSchema.parse({
+        location: workReportForm.location.trim(),
+        description: workReportForm.description.trim(),
       });
-      return;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: 'Campos requeridos',
+          description: error.errors[0].message,
+          variant: 'destructive'
+        });
+        return;
+      }
     }
 
     const reportData = {
@@ -857,9 +943,16 @@ export default function EmployeeDashboard() {
     setClientSignedBy('');
   };
 
-  // Determine session state and status 
-  const getSessionStatus = () => {
-    if (!activeSession) {
+  // 🔒 SEGURIDAD: Validar ownership antes de usar datos de sesión
+  const isSessionOwner = (session: WorkSession | null | undefined): boolean => {
+    if (!session || !user) return false;
+    return session.userId === user.id;
+  };
+
+  // ⚡ OPTIMIZACIÓN: Memoizar cálculo de estado de sesión
+  const sessionStatus = useMemo(() => {
+    // 🔒 SEGURIDAD: Validar ownership de la sesión
+    if (!activeSession || !isSessionOwner(activeSession)) {
       return { isActive: false, isIncomplete: false, isToday: false, canStartNew: true };
     }
     
@@ -867,7 +960,7 @@ export default function EmployeeDashboard() {
     const currentTime = new Date();
     const isToday = clockIn.toDateString() === currentTime.toDateString();
     const hoursFromClockIn = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
-    const maxDailyHours = (companySettings as any)?.workingHoursPerDay || 8;
+    const maxDailyHours = companySettings?.workingHoursPerDay || 8;
     const maxHoursWithOvertime = Number(maxDailyHours) + 4;
     
     // If session is from previous day and has no clock out, it's incomplete
@@ -888,13 +981,12 @@ export default function EmployeeDashboard() {
     }
     
     return { isActive: false, isIncomplete: false, isToday: false, canStartNew: true };
-  };
-
-  const sessionStatus = getSessionStatus();
+  }, [activeSession, activeSession?.clockIn, activeSession?.clockOut, companySettings?.workingHoursPerDay, user?.id]);
 
   const formatLastClockDate = () => {
+    // 🔒 SEGURIDAD: Validar ownership antes de mostrar datos
     // If there's an incomplete session from previous day, show it
-    if (sessionStatus.isIncomplete && activeSession) {
+    if (sessionStatus.isIncomplete && activeSession && isSessionOwner(activeSession)) {
       const clockInDate = new Date(activeSession.clockIn);
       const now = new Date();
       const yesterday = new Date(now);
@@ -918,7 +1010,7 @@ export default function EmployeeDashboard() {
     }
     
     // If there's an active session from today, show when they clocked in
-    if (sessionStatus.isActive && activeSession) {
+    if (sessionStatus.isActive && activeSession && isSessionOwner(activeSession)) {
       const clockInDate = new Date(activeSession.clockIn);
       const time = clockInDate.toLocaleTimeString('es-ES', { 
         hour: '2-digit', 
@@ -1011,8 +1103,8 @@ export default function EmployeeDashboard() {
     }
   };
 
-  // Get company alias from current URL or company data
-  const [location, setLocation] = useLocation();
+  // Get company alias from current URL or company data (using setLocation from top of component)
+  const [location] = useLocation();
   const urlParts = location.split('/').filter(part => part.length > 0);
   const companyAlias = urlParts[0] || company?.companyAlias || 'test';
 
@@ -1047,7 +1139,7 @@ export default function EmployeeDashboard() {
     { 
       icon: FileText, 
       title: 'Documentos', 
-      route: `/${companyAlias}/documentos`,
+      route: `/${companyAlias}/misdocumentos`,
       notification: hasDocumentRequests || hasUnsignedDocuments || hasNewDocuments,
       // Priority: RED (pending requests) > ORANGE (unsigned) > GREEN (new documents)
       notificationType: hasDocumentRequests ? 'red' : (hasUnsignedDocuments ? 'orange' : 'green'),
@@ -1079,7 +1171,27 @@ export default function EmployeeDashboard() {
         feature: 'work_reports' as const
       }
     ] : []),
+    { 
+      icon: Receipt, 
+      title: 'Gastos', 
+      route: `/${companyAlias}/gastos`,
+      notification: false,
+      notificationType: 'none',
+      feature: 'accounting' as const
+    },
   ];
+
+  const featureColors: Record<string, { bg: string; hover: string; border: string; active: string }> = {
+    time_tracking: { bg: 'bg-stone-600', hover: 'hover:bg-stone-700', border: 'border-stone-600', active: 'bg-stone-700 border-stone-700' },
+    schedules: { bg: 'bg-indigo-500', hover: 'hover:bg-indigo-600', border: 'border-indigo-500', active: 'bg-indigo-600 border-indigo-600' },
+    vacation: { bg: 'bg-sky-500', hover: 'hover:bg-sky-600', border: 'border-sky-500', active: 'bg-sky-600 border-sky-600' },
+    documents: { bg: 'bg-teal-500', hover: 'hover:bg-teal-600', border: 'border-teal-500', active: 'bg-teal-600 border-teal-600' },
+    reminders: { bg: 'bg-amber-500', hover: 'hover:bg-amber-600', border: 'border-amber-500', active: 'bg-amber-600 border-amber-600' },
+    messages: { bg: 'bg-violet-500', hover: 'hover:bg-violet-600', border: 'border-violet-500', active: 'bg-violet-600 border-violet-600' },
+    work_reports: { bg: 'bg-blue-500', hover: 'hover:bg-blue-600', border: 'border-blue-500', active: 'bg-blue-600 border-blue-600' },
+    accounting: { bg: 'bg-emerald-600', hover: 'hover:bg-emerald-700', border: 'border-emerald-600', active: 'bg-emerald-700 border-emerald-700' },
+    default: { bg: 'bg-[#007AFF]', hover: 'hover:bg-[#0056CC]', border: 'border-[#007AFF]', active: 'bg-[#0056CC] border-[#0056CC]' },
+  };
 
   // For managers in employee dashboard, bypass their admin visibility restrictions
   // They should see all company-contracted features as an employee would
@@ -1099,9 +1211,9 @@ export default function EmployeeDashboard() {
   // Dividir items en páginas de 6 (grid 3x2) - siempre mantener 6 slots por página
   const itemsPerPage = 6;
   const menuPages = useMemo(() => {
-    const pages: (typeof orderedMenuItems | null)[][] = [];
+    const pages: (typeof orderedMenuItems[0] | null)[][] = [];
     for (let i = 0; i < orderedMenuItems.length; i += itemsPerPage) {
-      const pageItems = orderedMenuItems.slice(i, i + itemsPerPage);
+      const pageItems = orderedMenuItems.slice(i, i + itemsPerPage) as (typeof orderedMenuItems[0] | null)[];
       // Rellenar con null hasta tener 6 items para mantener el grid 3x2
       while (pageItems.length < itemsPerPage) {
         pageItems.push(null as any);
@@ -1253,27 +1365,139 @@ export default function EmployeeDashboard() {
 
   // Log real-time notification status for debugging
   useEffect(() => {
-    console.log('🔔 Real-time notifications status:', {
-      hasVacationUpdates,
-      hasDocumentRequests,
-      hasNewDocuments,
-      hasUnsignedDocuments,
-      unreadMessages: unreadCount?.count || 0,
-      timestamp: new Date().toISOString()
-    });
+    // console.log('🔔 Real-time notifications status:', {
+    //   hasVacationUpdates,
+    //   hasDocumentRequests,
+    //   hasNewDocuments,
+    //   hasUnsignedDocuments,
+    //   unreadMessages: unreadCount?.count || 0,
+    //   timestamp: new Date().toISOString()
+    // });
   }, [hasVacationUpdates, hasDocumentRequests, hasNewDocuments, hasUnsignedDocuments, unreadCount]);
 
   // Log feature access for debugging
   useEffect(() => {
-    console.log('Employee dashboard feature access:', {
-      documents: hasAccess('documents'),
-      messages: hasAccess('messages'),
-      vacation: hasAccess('vacation'),
-      timeTracking: hasAccess('timeTracking')
-    });
   }, [hasAccess]);
 
+  // ⚡ OPTIMIZACIÓN: WebSocket para notificaciones en tiempo real (en lugar de polling)
+  useEffect(() => {
+    if (!user) return;
+
+    let ws: WebSocket | null = null;
+    let reconnectTimeout: NodeJS.Timeout;
+
+    const connectWebSocket = () => {
+      try {
+        const authData = getAuthData();
+        const token = authData?.token;
+        if (!token) {
+          logger.debug('No token for WebSocket');
+          return;
+        }
+
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host;
+        ws = new WebSocket(`${protocol}//${host}/ws/work-sessions?token=${token}`);
+
+        ws.onopen = () => {
+          logger.debug('✅ Employee WebSocket connected');
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            logger.debug('📡 WebSocket message:', message);
+
+            // Invalidar queries según el tipo de mensaje
+            switch (message.type) {
+              case 'work_session_started':
+              case 'work_session_ended':
+              case 'work_session_updated':
+                queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/active'] });
+                queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
+                break;
+              
+              case 'message_received':
+                queryClient.invalidateQueries({ queryKey: ['/api/messages/unread-count'] });
+                break;
+              
+              case 'vacation_request_updated':
+                queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
+                break;
+              
+              case 'document_uploaded':
+              case 'document_notification':
+                queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+                queryClient.invalidateQueries({ queryKey: ['/api/document-notifications'] });
+                break;
+              
+              case 'reminder_created':
+              case 'reminder_updated':
+                queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+                queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
+                break;
+            }
+          } catch (error) {
+            logger.error('Error parsing WebSocket message:', error);
+          }
+        };
+
+        ws.onerror = (error) => {
+          logger.error('WebSocket error:', error);
+        };
+
+        ws.onclose = () => {
+          logger.debug('WebSocket disconnected, reconnecting in 5s...');
+          reconnectTimeout = setTimeout(connectWebSocket, 5000);
+        };
+      } catch (error) {
+        logger.error('WebSocket connection error:', error);
+      }
+    };
+
+    connectWebSocket();
+
+    return () => {
+      if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+        ws.close();
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+    };
+  }, [user, queryClient]);
+
   // Work alarms are now handled automatically by PWA push notifications
+
+  // Tema visual de la card de fichaje según estado
+  const statusTheme = useMemo(() => {
+    if (sessionStatus.isActive) {
+      if (activeBreak) {
+        return {
+          label: 'En descanso',
+          color: 'text-orange-500',
+          bg: 'bg-orange-100 dark:bg-orange-900/40'
+        };
+      }
+      return {
+        label: 'Trabajando…',
+        color: 'text-emerald-600',
+        bg: 'bg-emerald-100 dark:bg-emerald-900/40'
+      };
+    }
+    if (sessionStatus.isIncomplete) {
+      return {
+        label: 'Sesión incompleta',
+        color: 'text-amber-600',
+        bg: 'bg-amber-100 dark:bg-amber-900/40'
+      };
+    }
+    return {
+      label: 'Fuera del trabajo',
+      color: 'text-slate-600 dark:text-white/70',
+      bg: 'bg-slate-100 dark:bg-slate-800'
+    };
+  }, [sessionStatus, activeBreak]);
 
   return (
     <div 
@@ -1376,7 +1600,7 @@ export default function EmployeeDashboard() {
                 <DropdownMenuItem 
                   onClick={() => {
                     const urlParts = window.location.pathname.split('/').filter((part: string) => part.length > 0);
-                    const currentCompanyAlias = urlParts[0] || company?.alias || 'test';
+                    const currentCompanyAlias = urlParts[0] || company?.companyAlias || 'test';
                     handleNavigation(`/${currentCompanyAlias}/usuario`);
                   }} 
                   className="text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/20 cursor-pointer"
@@ -1396,7 +1620,7 @@ export default function EmployeeDashboard() {
                   </DropdownMenuItem>
                 )}
                 
-                <DropdownMenuItem onClick={logout} className="text-gray-900 dark:text-white hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/20 cursor-pointer">
+                <DropdownMenuItem onClick={() => logout()} className="text-gray-900 dark:text-white hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/20 cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   Cerrar sesión
                 </DropdownMenuItem>
@@ -1413,9 +1637,15 @@ export default function EmployeeDashboard() {
                 {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
                 {shouldShowLogo ? (
                   <img 
-                    src={company.logoUrl} 
+                    src={company.logoUrl ?? undefined} 
                     alt={company.name} 
                     className="h-10 w-auto mx-auto object-contain drop-shadow-lg dark:brightness-0 dark:invert"
+                    loading="lazy"
+                    decoding="async"
+                    onError={(e) => {
+                      // Fallback si imagen falla al cargar
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                 ) : (
                   <div className="text-gray-900 dark:text-white text-base font-medium drop-shadow-lg">
@@ -1431,9 +1661,14 @@ export default function EmployeeDashboard() {
                 <div className="text-center pb-5">
                   {shouldShowLogo ? (
                     <img 
-                      src={company.logoUrl} 
+                      src={company.logoUrl ?? undefined} 
                       alt={company.name} 
                       className="h-12 w-auto mx-auto object-contain mb-4 dark:brightness-0 dark:invert"
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
                   ) : (
                     <div className="w-12 h-12 mx-auto bg-white dark:bg-white/10 rounded-2xl flex items-center justify-center mb-4 border border-gray-200 dark:border-white/20">
@@ -1530,6 +1765,11 @@ export default function EmployeeDashboard() {
                       }
                       
                       const isLongPressed = longPressItem === globalIndex;
+                      const featureColor = featureColors[item.feature] || featureColors.default;
+                      
+                      if (!item) {
+                        return <div key={index} className="flex flex-col items-center" />;
+                      }
                       
                       return (
                         <div key={index} className="flex flex-col items-center group relative">
@@ -1560,8 +1800,8 @@ export default function EmployeeDashboard() {
                             onMouseLeave={handleLongPressEnd}
                             className={`relative w-20 h-20 sm:w-[72px] sm:h-[72px] transition-all duration-200 rounded-2xl flex items-center justify-center mb-2 backdrop-blur-xl border ${
                               isLongPressed
-                                ? 'bg-[#0056CC] border-[#0056CC] scale-110 shadow-xl'
-                                : 'bg-[#007AFF] hover:bg-[#0056CC] border-[#007AFF] hover:border-[#0056CC]'
+                                ? `${featureColor.active} scale-110 shadow-xl`
+                                : `${featureColor.bg} ${featureColor.hover} ${featureColor.border}`
                             }`}
                           >
                             <item.icon className="h-10 w-10 sm:h-9 sm:w-9 transition-all duration-200 text-white drop-shadow-lg" />
@@ -1605,20 +1845,23 @@ export default function EmployeeDashboard() {
                   </button>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                  {getSwappableItems(longPressItem).map((swapItem) => (
-                    <button
-                      key={swapItem.displayIndex}
-                      onClick={() => handleSwapItems(swapItem.displayIndex)}
-                      className="flex flex-col items-center p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <div className="w-12 h-12 rounded-xl bg-[#007AFF] flex items-center justify-center mb-1">
-                        <swapItem.icon className="w-6 h-6 text-white" />
-                      </div>
-                      <span className="text-[10px] text-gray-600 dark:text-gray-300 text-center leading-tight">
-                        {swapItem.title}
-                      </span>
-                    </button>
-                  ))}
+                  {getSwappableItems(longPressItem).map((swapItem) => {
+                    const swapColor = featureColors[swapItem.feature] || featureColors.default;
+                    return (
+                      <button
+                        key={swapItem.displayIndex}
+                        onClick={() => handleSwapItems(swapItem.displayIndex)}
+                        className="flex flex-col items-center p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <div className={`w-12 h-12 rounded-xl ${swapColor.bg} flex items-center justify-center mb-1 border ${swapColor.border}`}>
+                          <swapItem.icon className="w-6 h-6 text-white" />
+                        </div>
+                        <span className="text-[10px] text-gray-600 dark:text-gray-300 text-center leading-tight">
+                          {swapItem.title}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -1645,58 +1888,28 @@ export default function EmployeeDashboard() {
 
         {/* Status Line and Last Clock In Info / Temporary Message - Compacto */}
         <div className="text-center mb-2 mt-3 flex justify-center flex-shrink-0">
-          <div className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-white/20 p-2 w-[304px] shadow-md">
+          <div className={`relative w-[320px] sm:w-[304px] max-w-full rounded-2xl border border-white/60 dark:border-white/15 ${statusTheme.bg} shadow-[0_12px_40px_rgba(0,0,0,0.08)] p-3`}>
             {/* Status Line */}
-            <div className={`text-xs mb-2 font-medium ${
-              sessionStatus.isActive 
-                ? activeBreak 
-                  ? 'text-orange-400' 
-                  : 'text-green-400'
-                : sessionStatus.isIncomplete
-                  ? 'text-yellow-400'
-                  : 'text-red-400'
-            }`}>
-              <div className="flex items-center justify-center gap-2">
-                {sessionStatus.isActive ? (
-                  activeBreak ? (
-                    <>
-                      <div className="w-2.5 h-2.5 rounded-full bg-orange-400"></div>
-                      <span>En descanso</span>
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-2.5 h-2.5 rounded-full bg-green-400"></div>
-                      <span>Trabajando...</span>
-                    </>
-                  )
-                ) : sessionStatus.isIncomplete ? (
-                  <>
-                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
-                    <span>Sesión incompleta</span>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-2.5 h-2.5 rounded-full bg-red-400"></div>
-                    <span>Fuera del trabajo</span>
-                  </>
-                )}
-              </div>
+            <div className="relative flex justify-center mb-3">
+              <span className={`text-[11px] font-semibold tracking-[0.08em] uppercase ${statusTheme.color}`}>
+                {statusTheme.label}
+              </span>
             </div>
-            
+
             {temporaryMessage ? (
-              <>
-                <div className="text-green-400 text-xs mb-1 font-medium">✓ Fichaje exitoso</div>
-                <div className="text-gray-900 dark:text-white text-sm font-medium">
+              <div className="relative text-center space-y-1">
+                <div className="text-emerald-500 text-xs font-semibold tracking-tight">✓ Fichaje exitoso</div>
+                <div className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
                   {temporaryMessage}
                 </div>
-              </>
+              </div>
             ) : (
-              <>
-                <div className="text-gray-500 dark:text-white/60 text-xs mb-1 font-medium">Tu último fichaje</div>
-                <div className="text-gray-900 dark:text-white text-sm font-medium">
+              <div className="relative text-center space-y-1">
+                <div className="text-[11px] uppercase tracking-[0.12em] text-gray-500 dark:text-white/60 font-semibold">Tu último fichaje</div>
+                <div className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
                   {formatLastClockDate() || 'Sin fichajes previos'}
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -2138,7 +2351,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
       const response = await apiRequest('GET', '/api/work-alarms');
       setAlarms(response || []);
     } catch (error) {
-      console.error('Error loading alarms:', error);
+      // console.error('Error loading alarms:', error);
     } finally {
       setIsLoading(false);
     }
@@ -2188,7 +2401,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
       setEditingAlarm(null);
       loadAlarms();
     } catch (error) {
-      console.error('Error saving alarm:', error);
+      // console.error('Error saving alarm:', error);
     } finally {
       setIsLoading(false);
     }
@@ -2208,7 +2421,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
       await apiRequest('DELETE', `/api/work-alarms/${alarmToDelete}`);
       loadAlarms();
     } catch (error) {
-      console.error('Error deleting alarm:', error);
+      // console.error('Error deleting alarm:', error);
     } finally {
       setIsLoading(false);
       setAlarmToDelete(null);

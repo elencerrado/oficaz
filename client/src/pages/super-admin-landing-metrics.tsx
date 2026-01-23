@@ -8,6 +8,11 @@ import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 
+interface DailyVisit {
+  date: string;
+  count: number;
+}
+
 export default function SuperAdminLandingMetrics() {
   const { toast } = useToast();
 
@@ -27,7 +32,7 @@ export default function SuperAdminLandingMetrics() {
     },
     staleTime: 0, // Always fetch fresh data
     refetchOnMount: true, // Refetch when component mounts
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 60000, // ⚡ Optimizado: Refetch every 60s (was 30s)
     gcTime: 0, // Don't cache (garbage collection time)
   });
 
@@ -39,7 +44,7 @@ export default function SuperAdminLandingMetrics() {
 
   // Map backend data to complete 7 days
   const completeDailyVisits = last7Days.map(dateStr => {
-    const backendData = metrics?.dailyVisits?.find((d: any) => {
+    const backendData = metrics?.dailyVisits?.find((d: DailyVisit) => {
       const backendDate = format(new Date(d.date), 'yyyy-MM-dd');
       return backendDate === dateStr;
     });

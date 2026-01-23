@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { User, Company } from '@shared/schema';
 import { getAuthData, setAuthData as saveAuthData, clearAuthData, clearExpiredTokens, setTokenRefreshCallback } from '@/lib/auth';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -29,6 +29,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const [authData, setAuthData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // 🔒 SECURITY: Inactivity timeout (30 minutes)
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutos
+
+  // Preserve whether the user chose a persistent (localStorage) or session-based login
+  const resolveRememberPreference = () => {
+    if (localStorage.getItem('authData')) return true;
+    if (sessionStorage.getItem('authData')) return false;
+    return true;
+  };
+
+  // 🔒 SECURITY: Reset inactivity timer on user activity
+  const resetInactivityTimer = (logoutFn: () => void) => {
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+    
+    inactivityTimerRef.current = setTimeout(() => {
+      console.log('⏰ INACTIVITY TIMEOUT: 30 minutos sin actividad - Sesión cerrada automáticamente');
+      logoutFn();
+    }, INACTIVITY_TIMEOUT);
+  };
 
   useEffect(() => {
     const initAuth = async () => {
@@ -36,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearExpiredTokens();
       
       const authData = getAuthData();
-      console.log('Auth init with data:', authData ? 'found' : 'none');
+      // console.log('Auth init with data:', authData ? 'found' : 'none');
       
       if (authData && authData.token) {
         try {
@@ -45,17 +68,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             headers: { Authorization: `Bearer ${authData.token}` },
           });
           
-          console.log('Auth verification response:', response.status);
+          // console.log('Auth verification response:', response.status);
           
           if (response.ok) {
             const data = await response.json();
-            console.log('Auth data verified:', { user: data.user?.fullName, company: data.company?.name, logoUrl: data.company?.logoUrl, subscription: data.subscription });
+            // console.log('Auth data verified:', { user: data.user?.fullName, company: data.company?.name, logoUrl: data.company?.logoUrl, subscription: data.subscription });
             
             // CRITICAL FIX: Check for corrupted user data (undefined role, invalid ID)
             if (!data.user || !data.user.id || data.user.id === 4 || !data.user.role) {
               console.log('🚨 CORRUPTED USER DATA DETECTED - FORCING LOGOUT');
               // Clear only auth data, preserve other localStorage items
-              localStorage.removeItem('authData');
+              clearAuthData();
               window.location.href = '/login';
               return;
             }
@@ -69,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 token: data.newToken,
                 user: data.user
               };
-              localStorage.setItem('authData', JSON.stringify(updatedAuthData));
+              saveAuthData(updatedAuthData, resolveRememberPreference());
               // Clear all cached data to prevent stale permissions
               queryClient.clear();
               // Reload page to show new dashboard with correct permissions
@@ -100,25 +123,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (errorData.code === 'ACCOUNT_CANCELLED') {
               console.log('🚫 ACCOUNT CANCELLED - BLOCKING ACCESS');
               // Clear auth data and redirect to login with a message
-              localStorage.removeItem('authData');
+              clearAuthData();
               window.location.href = '/login?message=account_cancelled';
               return;
             }
           } else {
-            console.log('Auth verification failed, clearing data');
+            // console.log('Auth verification failed, clearing data');
             clearAuthData();
             // CRITICAL: Only clear auth data, not entire localStorage
-            localStorage.removeItem('authData');
             setUser(null);
             setCompany(null);
             setToken(null);
             setAuthData(null);
           }
         } catch (error) {
-          console.log('Auth init error:', error);
+          // console.log('Auth init error:', error);
           // Clear corrupted auth data only
           clearAuthData();
-          localStorage.removeItem('authData');
           setUser(null);
           setCompany(null);
           setToken(null);
@@ -131,12 +152,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth();
   }, []);
 
+  // 🔒 SECURITY: Monitor user activity and logout after 30 minutes of inactivity
+  useEffect(() => {
+    if (!user || !token) return; // Only monitor if user is logged in
+
+    const handleActivity = () => {
+      // Reset inactivity timer on any user activity
+      // We need to pass the logout function, so we'll define it inline
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+      
+      inactivityTimerRef.current = setTimeout(() => {
+        console.log('⏰ INACTIVITY TIMEOUT: 30 minutos sin actividad - Sesión cerrada automáticamente');
+        logout(false); // false = auto logout, no revoke request (user already inactive)
+      }, INACTIVITY_TIMEOUT);
+    };
+
+    // Events that reset the inactivity timer
+    const events = ['mousemove', 'keypress', 'click', 'scroll', 'touchstart', 'touchmove'];
+    
+    events.forEach(event => {
+      document.addEventListener(event, handleActivity);
+    });
+
+    // Initial timer
+    handleActivity();
+
+    // Cleanup
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, handleActivity);
+      });
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+    };
+  }, [user, token]);
+
   const login = async (dniOrEmail: string, password: string, companyAlias?: string, remember: boolean = true) => {
     const loginData = companyAlias 
       ? { dniOrEmail, password, companyAlias }
       : { dniOrEmail, password };
       
-    console.log('🔐 Login attempt starting...');
+    // console.log('🔐 Login attempt starting...');
     
     // Make login request without using apiRequest to avoid token dependency
     const response = await fetch('/api/auth/login', {
@@ -155,14 +214,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const data = await response.json();
-    console.log('🔐 Login response received:', { 
-      hasToken: !!data.token, 
-      hasUser: !!data.user, 
-      tokenLength: data.token?.length,
-      userEmail: data.user?.email,
-      companyName: data.company?.name,
-      remember
-    });
+    // console.log('🔐 Login response received:', { 
+    //   hasToken: !!data.token, 
+    //   hasUser: !!data.user, 
+    //   tokenLength: data.token?.length,
+    //   userEmail: data.user?.email,
+    //   companyName: data.company?.name,
+    //   remember
+    // });
     
     // CRITICAL SECURITY FIX: Clear cache when logging into different company
     const previousCompanyId = company?.id;
@@ -187,47 +246,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Use the updated setAuthData function with remember parameter
     saveAuthData(authDataToSave, remember);
-    console.log(`🔐 Auth data saved to ${remember ? 'localStorage' : 'sessionStorage'} (with refresh token)`);
+    // console.log(`🔐 Auth data saved to ${remember ? 'localStorage' : 'sessionStorage'} (with refresh token)`);
     
     // Update state immediately
     setUser(data.user);
     setCompany(data.company);
     setToken(data.token);
     setAuthData(authDataToSave);
-    console.log('🔐 Auth state updated, token length:', data.token?.length);
+    // console.log('🔐 Auth state updated, token length:', data.token?.length);
     
     // Clear and invalidate queries immediately since auth is now available
     queryClient.clear();
     queryClient.invalidateQueries();
-    console.log('🔄 Queries cleared and invalidated after successful auth update');
+    // console.log('🔄 Queries cleared and invalidated after successful auth update');
     
     return data;
   };
 
   const register = async (formData: any) => {
-    console.log('🔐 Register attempt starting...');
+    // console.log('🔐 Register attempt starting...');
     const data = await apiRequest('POST', '/api/auth/register', formData);
-    console.log('🔐 Register response received:', { hasToken: !!data.token, hasUser: !!data.user });
+    // console.log('🔐 Register response received:', { hasToken: !!data.token, hasUser: !!data.user });
     
     // CRITICAL FIX: Clear ALL cached queries before setting new auth data
     // This prevents stale data from previous sessions from appearing
     queryClient.clear();
-    console.log('🔄 Queries cleared for fresh registration');
+    // console.log('🔄 Queries cleared for fresh registration');
     
-    // Save initial auth data to localStorage
-    localStorage.setItem('authData', JSON.stringify(data));
+    // Save initial auth data
     saveAuthData(data);
-    console.log('🔐 Auth data saved to localStorage');
+    // console.log('🔐 Auth data saved to storage');
     
     // Update state
     setUser(data.user);
     setCompany(data.company);
     setToken(data.token);
-    console.log('🔐 Auth state updated after registration, token length:', data.token?.length);
+    // console.log('🔐 Auth state updated after registration, token length:', data.token?.length);
     
     // Immediately refresh user data to get complete subscription info
     try {
-      console.log('🔄 Refreshing user data to get complete subscription info...');
+      // console.log('🔄 Refreshing user data to get complete subscription info...');
       const response = await fetch('/api/auth/me', {
         headers: { Authorization: `Bearer ${data.token}` },
       });
@@ -273,7 +331,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // CRITICAL: Clear localStorage FIRST to prevent re-initialization
     const theme = localStorage.getItem('theme');
-    localStorage.removeItem('authData');
+    clearAuthData();
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('company');
@@ -337,7 +395,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             company: data.company,
             subscription: data.subscription
           };
-          localStorage.setItem('authData', JSON.stringify(updatedAuthData));
+          saveAuthData(updatedAuthData, resolveRememberPreference());
           // Clear all cached data to prevent stale permissions
           queryClient.clear();
           // Reload page to show new dashboard with correct permissions
@@ -359,7 +417,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             company: data.company,
             subscription: data.subscription 
           };
-          localStorage.setItem('authData', JSON.stringify(updatedAuthData));
+          saveAuthData(updatedAuthData, resolveRememberPreference());
         }
       }
     } catch (error) {
@@ -377,7 +435,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         token: newToken
       };
       setAuthData(updatedAuthData);
-      console.log('✅ AuthProvider state updated with new token');
+      saveAuthData(updatedAuthData, resolveRememberPreference());
     }
   };
 
@@ -395,19 +453,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Build WebSocket URL using current host
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    // ⚠️ Note: WebSocket doesn't support Authorization headers, so token is passed in query
+    // This is standard practice for WebSocket auth. The token is short-lived (15min).
     const wsUrl = `${wsProtocol}//${window.location.host}/ws/work-sessions?token=${token}`;
     
     let ws: WebSocket | null = null;
     let reconnectAttempts = 0;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
+    let isCleaningUp = false; // Flag to prevent reconnection during cleanup
     const maxReconnectAttempts = 5;
     const reconnectDelay = 5000; // 5 seconds
     
     const connect = () => {
+      // Don't reconnect if we're cleaning up
+      if (isCleaningUp) return;
+      
       try {
         ws = new WebSocket(wsUrl);
         
         ws.onopen = () => {
-          console.log('🔌 WebSocket connected for real-time updates');
           reconnectAttempts = 0;
         };
         
@@ -433,7 +497,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   console.log(`🔄 ROLE CHANGE: ${data.previousRole} → ${data.newRole}`);
                   const currentAuthData = getAuthData();
                   const updatedAuthData = { ...currentAuthData, token: data.newToken };
-                  localStorage.setItem('authData', JSON.stringify(updatedAuthData));
+                  saveAuthData(updatedAuthData, resolveRememberPreference());
                   queryClient.clear();
                   window.location.reload();
                 }
@@ -441,7 +505,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               
               // Messages - refresh all message-related queries including unread count
               case 'message_received':
-                console.log('📬 New message received via WebSocket');
                 invalidateByPath('/api/messages');
                 // Also invalidate unread count for badge updates
                 queryClient.invalidateQueries({ 
@@ -456,7 +519,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               case 'work_session_created':
               case 'work_session_updated':
               case 'work_session_deleted':
-                console.log(`⏱️ Work session ${data.type.replace('work_session_', '')} via WebSocket`);
                 invalidateByPath('/api/work-sessions');
                 invalidateByPath('/api/break-periods');
                 invalidateByPath('/api/admin/dashboard');
@@ -466,7 +528,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               // Vacation requests - refresh all vacation-related queries
               case 'vacation_request_created':
               case 'vacation_request_updated':
-                console.log(`🏖️ Vacation request ${data.type.replace('vacation_request_', '')} via WebSocket`);
                 invalidateByPath('/api/vacation-requests');
                 invalidateByPath('/api/admin/dashboard');
                 break;
@@ -481,7 +542,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               // Documents - refresh all document-related queries
               case 'document_request_created':
               case 'document_uploaded':
-                console.log(`📄 Document event via WebSocket`);
                 invalidateByPath('/api/documents');
                 invalidateByPath('/api/document-notifications');
                 break;
@@ -490,13 +550,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               case 'reminder_created':
               case 'reminder_user_completed':
               case 'reminder_all_completed':
-                console.log(`🔔 Reminder event via WebSocket: ${data.type}`);
                 invalidateByPath('/api/reminders');
                 break;
               
               // Work reports
               case 'work_report_created':
-                console.log(`📝 Work report created via WebSocket`);
                 invalidateByPath('/api/admin/work-reports');
                 invalidateByPath('/api/work-reports');
                 break;
@@ -507,11 +565,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         
         ws.onclose = () => {
-          console.log('🔌 WebSocket disconnected');
-          // Attempt to reconnect if not at max attempts
-          if (reconnectAttempts < maxReconnectAttempts) {
+          // Reconnect only if not cleaning up and under max attempts
+          if (!isCleaningUp && reconnectAttempts < maxReconnectAttempts) {
             reconnectAttempts++;
-            setTimeout(connect, reconnectDelay);
+            reconnectTimeout = setTimeout(connect, reconnectDelay);
           }
         };
         
@@ -519,7 +576,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Silent error - connection will close and attempt reconnect
         };
       } catch (error) {
-        console.error('WebSocket connection error:', error);
+        // WebSocket error - will attempt reconnect
       }
     };
     
@@ -527,18 +584,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Cleanup on unmount
     return () => {
+      isCleaningUp = true; // Set flag to prevent reconnection
+      
+      // Clear any pending reconnection timeout
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+      
+      // Close WebSocket if it's open or connecting
       if (ws) {
-        ws.close();
+        if (ws.readyState === WebSocket.CONNECTING) {
+          // For connecting state, we need to wait for it to open then close
+          ws.onopen = () => ws?.close();
+        } else if (ws.readyState === WebSocket.OPEN) {
+          ws.close();
+        }
       }
     };
   }, [token, user?.id]);
 
-  console.log('AuthProvider rendering with:', {
-    user: user?.fullName,
-    company: company?.name,
-    subscription: authData?.subscription,
-    isLoading
-  });
 
   return (
     <AuthContext.Provider value={{

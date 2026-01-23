@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiRequest } from '@/lib/queryClient';
+import { getAuthData } from '@/lib/auth';
 
 interface WorkAlarm {
   id: number;
@@ -36,25 +37,18 @@ export function useWorkAlarms() {
   // Register service worker
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      // 🔒 CRITICAL: Unregister ALL old service workers first
       navigator.serviceWorker.getRegistrations().then(registrations => {
-        console.log(`🧹 Found ${registrations.length} existing service worker(s)`);
         Promise.all(registrations.map(reg => reg.unregister()))
           .then(() => {
-            console.log('✅ All old service workers unregistered');
-            // Now register the new one
             return navigator.serviceWorker.register('/service-worker.js');
           })
           .then((registration) => {
-            console.log('✅ Service Worker registered:', registration);
             setServiceWorkerRegistration(registration);
           })
           .catch((error) => {
-            console.error('❌ Service Worker registration failed:', error);
+            // Service Worker registration failed
           });
       });
-    } else {
-      console.warn('⚠️  Service Workers not supported');
     }
   }, []);
 
@@ -74,50 +68,38 @@ export function useWorkAlarms() {
       if (!serviceWorkerRegistration) return;
       
       // Get current user ID from auth
-      const authData = localStorage.getItem('authData') || sessionStorage.getItem('authData');
-      if (!authData) return;
-      
-      const parsedAuth = JSON.parse(authData);
-      const userId = parsedAuth?.user?.id;
-      
       if (!userId) return;
       
       // Reset setup if user changed
       if (currentUserId !== null && currentUserId !== userId) {
-        console.log(`🔄 User changed (${currentUserId} → ${userId}), cleaning old subscription`);
         
         // Unsubscribe old user's push subscription from this device
         try {
           const oldSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
           if (oldSubscription) {
-            console.log('🗑️  Removing old user push subscription...');
             // Try to unsubscribe from server (may fail if token expired, that's OK)
             try {
-              const authData = localStorage.getItem('authData') || sessionStorage.getItem('authData');
-              if (authData) {
-                const parsedAuth = JSON.parse(authData);
-                const oldToken = parsedAuth?.token;
-                if (oldToken) {
-                  await fetch('/api/push/unsubscribe', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${oldToken}`
-                    },
-                    body: JSON.stringify({ endpoint: oldSubscription.endpoint })
-                  });
-                }
+              const authData = getAuthData();
+              const oldToken = authData?.token;
+              if (oldToken) {
+                await fetch('/api/push/unsubscribe', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${oldToken}`
+                  },
+                  body: JSON.stringify({ endpoint: oldSubscription.endpoint })
+                });
               }
             } catch (e) {
-              console.log('⚠️ Could not unsubscribe from server (token expired), continuing...');
+              // Could not unsubscribe from server (token expired), continuing...
             }
             
             // Unsubscribe from browser
             await oldSubscription.unsubscribe();
-            console.log('✅ Old subscription removed from browser');
           }
         } catch (e) {
-          console.error('⚠️ Error removing old subscription:', e);
+          // Error removing old subscription
         }
         
         setHasSetup(false);
@@ -138,7 +120,6 @@ export function useWorkAlarms() {
         setPushPermission(permission);
         
         if (permission !== 'granted') {
-          console.log('📢 Push notification permission denied');
           return;
         }
 
@@ -151,7 +132,6 @@ export function useWorkAlarms() {
           applicationServerKey: urlBase64ToUint8Array(publicKey)
         });
 
-        console.log('✅ Push subscription created:', subscription);
         setPushSubscription(subscription);
 
         // Send subscription to server with device ID
@@ -164,13 +144,13 @@ export function useWorkAlarms() {
           deviceId: getDeviceId()
         });
 
-        console.log('✅ Push subscription saved to server');
-        
+        setPushSubscription(subscription);
+
         // Mark as subscribed in localStorage to prevent showing toast again
         localStorage.setItem('pwa-push-subscribed', 'true');
 
       } catch (error: any) {
-        console.error('❌ Error setting up push notifications:', error);
+        // Error setting up push notifications
       }
     };
 
@@ -189,9 +169,8 @@ export function useWorkAlarms() {
       setPushSubscription(null);
       // Remove from localStorage to allow re-subscription
       localStorage.removeItem('pwa-push-subscribed');
-      console.log('✅ Unsubscribed from push notifications');
     } catch (error) {
-      console.error('❌ Error unsubscribing:', error);
+      // Error unsubscribing
     }
   }, [pushSubscription]);
 

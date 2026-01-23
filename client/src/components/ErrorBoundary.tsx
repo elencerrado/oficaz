@@ -1,5 +1,4 @@
 import { Component, ReactNode } from 'react';
-import * as Sentry from '@sentry/react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface Props {
@@ -9,38 +8,22 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
-  reloadAttempts: number;
+  errorCount: number;
 }
 
-const MAX_AUTO_RELOAD_ATTEMPTS = 3;
-const RELOAD_ATTEMPT_KEY = 'errorBoundaryReloadAttempts';
-const RELOAD_TIMESTAMP_KEY = 'errorBoundaryLastReload';
-const RELOAD_TIMEOUT_MS = 60000; // Reset counter after 1 minute
+const MAX_ERROR_COUNT = 3;
+const ERROR_RESET_MS = 5000; // Reset error state after 5 seconds
 
 export class ErrorBoundary extends Component<Props, State> {
-  private reloadTimeoutId: number | null = null;
+  private resetTimeoutId: number | null = null;
+  private lastErrorTime: number = 0;
 
   constructor(props: Props) {
     super(props);
-    
-    // Get reload attempts from sessionStorage
-    const storedAttempts = sessionStorage.getItem(RELOAD_ATTEMPT_KEY);
-    const lastReload = sessionStorage.getItem(RELOAD_TIMESTAMP_KEY);
-    const now = Date.now();
-    
-    // Reset counter if more than 1 minute has passed
-    let reloadAttempts = 0;
-    if (storedAttempts && lastReload) {
-      const timeSinceLastReload = now - parseInt(lastReload);
-      if (timeSinceLastReload < RELOAD_TIMEOUT_MS) {
-        reloadAttempts = parseInt(storedAttempts);
-      }
-    }
-    
     this.state = { 
       hasError: false, 
       error: null,
-      reloadAttempts 
+      errorCount: 0
     };
   }
 
@@ -49,51 +32,40 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: any) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    const now = Date.now();
     
-    // Log to Sentry
-    Sentry.captureException(error, {
-      contexts: {
-        react: {
-          componentStack: errorInfo.componentStack,
-        },
-      },
-    });
-
-    // Auto-reload if we haven't exceeded max attempts
-    if (this.state.reloadAttempts < MAX_AUTO_RELOAD_ATTEMPTS) {
-      const newAttempts = this.state.reloadAttempts + 1;
-      
-      // Store attempt count and timestamp
-      sessionStorage.setItem(RELOAD_ATTEMPT_KEY, newAttempts.toString());
-      sessionStorage.setItem(RELOAD_TIMESTAMP_KEY, Date.now().toString());
-      
-      console.log(`Auto-reloading (attempt ${newAttempts}/${MAX_AUTO_RELOAD_ATTEMPTS})...`);
-      
-      // Auto-reload after a short delay
-      this.reloadTimeoutId = window.setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+    // Reset error count if enough time has passed
+    if (now - this.lastErrorTime > ERROR_RESET_MS) {
+      this.setState({ errorCount: 1 });
     } else {
-      // If we've exceeded max attempts, clear the counter and just show nothing
-      // The page will be blank but won't show an error screen
-      console.error('Max reload attempts exceeded. Please manually refresh the page.');
-      sessionStorage.removeItem(RELOAD_ATTEMPT_KEY);
-      sessionStorage.removeItem(RELOAD_TIMESTAMP_KEY);
+      this.setState(prev => ({ errorCount: prev.errorCount + 1 }));
+    }
+    this.lastErrorTime = now;
+    
+    // Only log errors, don't auto-reload (causes navigation issues)
+    console.error('ErrorBoundary caught an error:', error);
+    console.error('Error details:', error.message);
+    
+    // Try to recover by resetting error state after a short delay
+    // This allows React to re-attempt rendering without a full page reload
+    if (this.state.errorCount < MAX_ERROR_COUNT) {
+      this.resetTimeoutId = window.setTimeout(() => {
+        this.setState({ hasError: false, error: null });
+      }, 100);
     }
   }
 
   componentWillUnmount() {
-    if (this.reloadTimeoutId) {
-      window.clearTimeout(this.reloadTimeoutId);
+    if (this.resetTimeoutId) {
+      window.clearTimeout(this.resetTimeoutId);
     }
   }
 
   render() {
-    // NEVER show error screen - just reload automatically
-    // If error persists after max attempts, show blank page (better than error screen)
     if (this.state.hasError) {
-      if (this.state.reloadAttempts < MAX_AUTO_RELOAD_ATTEMPTS) {
+      // If errors keep happening, show a simple loading state briefly
+      // then try to render again
+      if (this.state.errorCount < MAX_ERROR_COUNT) {
         return (
           <div className="min-h-screen w-full flex items-center justify-center bg-background">
             <div className="flex flex-col items-center gap-4">
@@ -104,7 +76,8 @@ export class ErrorBoundary extends Component<Props, State> {
         );
       }
       
-      // If max attempts exceeded, show blank page (no error screen!)
+      // After max errors, just render nothing (no error screen)
+      // User can manually navigate away or refresh
       return null;
     }
 

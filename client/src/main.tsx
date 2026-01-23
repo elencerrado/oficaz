@@ -48,27 +48,7 @@ console.error = (...args) => {
   originalError.apply(console, args);
 };
 
-// Initialize Sentry
-import * as Sentry from "@sentry/react";
 
-Sentry.init({
-  dsn: "https://7691ecf280aae3fc175ec1e6bbbc3677@o4509796586422272.ingest.de.sentry.io/4509796599529552",
-  // Setting this option to true will send default PII data to Sentry.
-  // For example, automatic IP address collection on events
-  sendDefaultPii: true,
-  // Filter out Vite HMR errors from Sentry
-  beforeSend(event, hint) {
-    const error = hint.originalException;
-    if (error && typeof error === 'object' && 'message' in error) {
-      const message = String(error.message);
-      if (message.includes('localhost:undefined') || 
-          message.includes('Failed to construct \'WebSocket\'')) {
-        return null; // Don't send to Sentry
-      }
-    }
-    return event;
-  }
-});
 
 // Performance optimization - mark body as loaded to prevent FOUC
 const markAsLoaded = () => {

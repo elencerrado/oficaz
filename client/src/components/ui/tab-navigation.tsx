@@ -51,7 +51,16 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className = "" }: 
               <span className="truncate ml-1 sm:ml-2">
                 <span className="hidden sm:inline">{tab.label}</span>
                 <span className="sm:hidden">
-                  {tab.label === 'Días Festivos' ? 'Festivos' :
+                  {tab.label === 'Dashboard' ? 'Dash' :
+                   tab.label === 'Movimientos' ? 'Mov' :
+                   tab.label === 'Fiscalidad' ? 'Fisc' :
+                   tab.label === 'Categorías' ? 'Cat' :
+                   tab.label === 'General' ? 'Gral' :
+                   tab.label === 'Clientes' ? 'Cli' :
+                   tab.label === 'Proveedores' ? 'Prov' :
+                   tab.label === 'Proyectos' ? 'Proy' :
+                   tab.label === 'Códigos Ref' ? 'Ref' :
+                   tab.label === 'Días Festivos' ? 'Festivos' :
                    tab.label === 'Mi Perfil' ? 'Perfil' :
                    tab.label === 'Mi Cuenta' ? 'Cuenta' :
                    tab.label === 'Subir Documentos' ? 'Subir' :

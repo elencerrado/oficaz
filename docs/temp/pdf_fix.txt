@@ -1,0 +1,113 @@
+﻿// Crear PDF
+const pdfDoc = await PDFDocument.create();
+let currentPage = pdfDoc.addPage([595, 842]); // A4
+const pageWidth = 595;
+const pageHeight = 842;
+
+const fontSize = 12;
+const titleSize = 18;
+const headerSize = 14;
+
+// Título
+currentPage.drawText('Informe de Vacaciones', {
+  x: 50,
+  y: pageHeight - 50,
+  size: titleSize,
+  color: rgb(0, 0.3, 0.6),
+});
+
+// Información del informe
+currentPage.drawText(Empresa: , {
+  x: 50,
+  y: pageHeight - 80,
+  size: fontSize,
+});
+
+currentPage.drawText(Periodo:  - , {
+  x: 50,
+  y: pageHeight - 100,
+  size: fontSize,
+});
+
+currentPage.drawText(Fecha de generación: , {
+  x: 50,
+  y: pageHeight - 120,
+  size: fontSize,
+});
+
+// Línea separadora
+currentPage.drawLine({
+  start: { x: 50, y: pageHeight - 140 },
+  end: { x: pageWidth - 50, y: pageHeight - 140 },
+  thickness: 1,
+  color: rgb(0.7, 0.7, 0.7),
+});
+
+let yPosition = pageHeight - 170;
+
+// Agrupar solicitudes por empleado
+const requestsByEmployee = filteredRequests.reduce((acc: any, request: any) => {
+  if (!acc[request.userId]) {
+    acc[request.userId] = [];
+  }
+  acc[request.userId].push(request);
+  return acc;
+}, {});
+
+// Renderizar cada empleado y sus vacaciones
+for (const employeeId of employeeIds) {
+  const employee = await storage.getUser(parseInt(employeeId));
+  if (!employee) continue;
+
+  const employeeRequests = requestsByEmployee[employeeId] || [];
+  
+  // Verificar si necesitamos una nueva página
+  if (yPosition < 150) {
+    currentPage = pdfDoc.addPage([595, 842]);
+    yPosition = pageHeight - 50;
+  }
+
+  // Nombre del empleado
+  currentPage.drawText(employee.fullName, {
+    x: 50,
+    y: yPosition,
+    size: headerSize,
+    color: rgb(0.2, 0.2, 0.2),
+  });
+  
+  yPosition -= 25;
+
+  if (employeeRequests.length === 0) {
+    currentPage.drawText('  No hay vacaciones disfrutadas en este periodo', {
+      x: 60,
+      y: yPosition,
+      size: fontSize - 1,
+      color: rgb(0.5, 0.5, 0.5),
+    });
+    yPosition -= 20;
+  } else {
+    // Listar vacaciones
+    for (const request of employeeRequests) {
+      if (yPosition < 100) {
+        currentPage = pdfDoc.addPage([595, 842]);
+        yPosition = pageHeight - 50;
+      }
+
+      const startDateFormatted = new Date(request.startDate).toLocaleDateString('es-ES');
+      const endDateFormatted = new Date(request.endDate).toLocaleDateString('es-ES');
+      
+      currentPage.drawText(  •  -  ( días), {
+        x: 60,
+        y: yPosition,
+        size: fontSize - 1,
+      });
+      
+      yPosition -= 20;
+    }
+  }
+
+  yPosition -= 10; // Espacio entre empleados
+}
+
+// Generar el PDF
+const pdfBytes = await pdfDoc.save();

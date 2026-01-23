@@ -1,0 +1,3384 @@
+import { Link, useLocation } from 'wouter';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { usePageTitle } from '@/hooks/use-page-title';
+import { lazy, Suspense } from 'react';
+import type { CarouselApi } from '@/components/ui/carousel';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
+
+// Lazy load non-critical components for better initial load performance
+const ContactForm = lazy(() => import('@/components/contact-form'));
+
+// Optimized icon imports - critical and frequently used icons
+import { 
+  Clock, 
+  Users, 
+  Users2,
+  CheckCircle,
+  XCircle,
+  ArrowRight,
+  Play,
+  ChevronLeft,
+  ChevronRight,
+  Star,
+  Calendar,
+  CalendarClock,
+  CalendarDays,
+  FileText,
+  MessageSquare,
+  Shield,
+  TrendingUp,
+  Building2,
+  Smartphone,
+  Globe,
+  Mail,
+  Settings,
+  Zap,
+  CreditCard,
+  Bell,
+  ClipboardList,
+  Package,
+  Calculator,
+  Store,
+  Square,
+  Eye,
+  Phone,
+  MapPin,
+  Edit,
+  Trash2,
+  Search,
+  PenLine,
+  Plane,
+  Stethoscope,
+  Baby,
+  Heart,
+  Briefcase,
+  GraduationCap,
+  Scale,
+  User,
+  Sparkles,
+  Euro,
+  Paperclip
+} from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
+
+// Avatar images for employee preview
+import avatarWoman01 from '../../../attached_assets/woman01_thumb.webp';
+import avatarMan01 from '../../../attached_assets/man01_thumb.webp';
+import avatarWoman02 from '../../../attached_assets/woman02_thumb.webp';
+import avatarMan02 from '../../../attached_assets/man02_thumb.webp';
+import avatarWoman03 from '../../../attached_assets/woman03_thumb.webp';
+
+// Hero background image
+import heroBackground from '../../../attached_assets/oficaz_hero_1764771312944.webp';
+
+// Header logo
+import oficazHeaderLogo from '../../../attached_assets/Imagotipo Oficaz_1750321812493.png';
+
+// Apple-style scroll animation component
+function ScrollReveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-80px" });
+  
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+      transition={{ 
+        duration: 0.8, 
+        delay: delay,
+        ease: [0.25, 0.1, 0.25, 1] // Apple-style easing
+      }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// Extended addon descriptions for desktop carousel
+const addonExtendedDescriptions: Record<string, string> = {
+  employee_dashboard: "El panel de control personal de cada empleado. Fichar entrada y salida con un toque, gestionar descansos, y acceder a todas las funciones desde un menú intuitivo estilo iPhone. Todo en la palma de su mano.",
+  employees: "Centraliza toda la información de tu equipo en un solo lugar. Alta y baja de empleados, gestión de datos personales, asignación de roles y permisos, histórico de cambios y acceso seguro para cada miembro según su nivel.",
+  time_tracking: "Cumple con la normativa de registro horario de forma sencilla. Tus empleados fichan en dos toques desde el móvil, y tú obtienes informes detallados en PDF listos para inspección. Control total sin complicaciones.",
+  vacation: "Olvídate del caos de las hojas de cálculo. Cada empleado ve sus días disponibles, solicita fechas con un clic, y tú apruebas o rechazas al instante. Calendario visual para evitar solapamientos.",
+  schedules: "Planifica turnos arrastrando y soltando. Duplica semanas enteras, crea plantillas reutilizables, y con OficazIA genera cuadrantes optimizados en segundos. Tu equipo recibe notificaciones automáticas.",
+  messages: "Mantén la comunicación profesional separada del Whatsapp personal. Crea grupos por departamento, envía anuncios a toda la empresa, y guarda historial de conversaciones importantes.",
+  reminders: "Configura alertas para ti o para cualquier empleado. Notificaciones push que llegan aunque la app esté cerrada. Perfectas para fechas límite, renovaciones de contratos o tareas recurrentes.",
+  documents: "Sube nóminas, contratos, certificados y cualquier documento. Organización automática por empleado y categoría. Firma digital integrada y acceso controlado según permisos.",
+  work_reports: "Ideal para servicios técnicos y trabajo en campo. Tus empleados documentan cada trabajo con fotos, ubicación GPS y descripción. El cliente firma en pantalla y se genera un PDF profesional.",
+  ai_assistant: "Tu asistente inteligente disponible 24/7. Dile 'crea el horario de esta semana' y lo hace. Pregúntale 'cuántas horas trabajó Ana en octubre' y te responde al instante. Gestión por voz o texto.",
+  crm: "Gestiona clientes y proveedores desde un solo lugar. Ficha completa con datos de contacto, categorías personalizables, estados de proyecto y seguimiento de relaciones comerciales. Todo centralizado y siempre accesible.",
+  accounting: "Control de ingresos y gastos con visualización clara de tu rentabilidad. Registra movimientos, adjunta facturas, categoriza transacciones y obtén análisis financiero en tiempo real. Contabilidad simple y efectiva.",
+  inventory: "Seguimiento completo de stock en todos tus almacenes. Alertas de stock bajo, movimientos de entrada y salida, valoración de inventario y trazabilidad de productos. Gestión profesional sin complicaciones."
+};
+
+function DifficultySlider({ onSelect }: { onSelect?: (option: 'dificil' | 'normal' | 'oficaz') => void }) {
+  const [selected, setSelected] = useState<'dificil' | 'normal' | 'oficaz'>('normal');
+  const [, navigate] = useLocation();
+  
+  const handleSelect = (option: 'dificil' | 'normal' | 'oficaz') => {
+    setSelected(option);
+    onSelect?.(option);
+    if (option === 'oficaz') {
+      setTimeout(() => {
+        navigate('/request-code');
+      }, 400);
+    }
+  };
+  
+  return (
+    <div className="relative inline-flex bg-white/10 backdrop-blur-md rounded-2xl p-1.5 border border-white/20">
+      {/* Sliding background indicator */}
+      <div 
+        className="absolute top-1.5 bottom-1.5 rounded-xl transition-all duration-300 ease-out"
+        style={{
+          width: 'calc(33.333% - 4px)',
+          left: selected === 'dificil' ? '6px' : selected === 'normal' ? 'calc(33.333% + 2px)' : 'calc(66.666% - 2px)',
+          background: selected === 'oficaz' 
+            ? 'linear-gradient(135deg, #007AFF 0%, #0066DD 100%)' 
+            : selected === 'dificil'
+            ? 'rgba(239, 68, 68, 0.3)'
+            : 'rgba(255, 255, 255, 0.15)',
+          boxShadow: selected === 'oficaz' ? '0 4px 20px rgba(0, 122, 255, 0.4)' : 'none'
+        }}
+      />
+      
+      {/* Options */}
+      <button
+        onClick={() => handleSelect('dificil')}
+        className={`relative z-10 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-semibold transition-all duration-300 ${
+          selected === 'dificil' 
+            ? 'text-red-400' 
+            : 'text-white/60 hover:text-white/80'
+        }`}
+      >
+        Difícil
+      </button>
+      
+      <button
+        onClick={() => handleSelect('normal')}
+        className={`relative z-10 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-semibold transition-all duration-300 ${
+          selected === 'normal' 
+            ? 'text-white' 
+            : 'text-white/60 hover:text-white/80'
+        }`}
+      >
+        Normal
+      </button>
+      
+      <button
+        onClick={() => handleSelect('oficaz')}
+        className={`relative z-10 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold transition-all duration-300 ${
+          selected === 'oficaz' 
+            ? 'text-white' 
+            : 'text-white/60 hover:text-white/80'
+        }`}
+      >
+        Oficaz
+      </button>
+    </div>
+  );
+}
+
+// Reusable component for mobile preview content in both carousel and desktop
+function MobilePreviewContent({ addonKey }: { addonKey: string }) {
+  if (addonKey === 'time_tracking') {
+    return (
+      <div className="p-3 h-full bg-[#0a1628]">
+        <h3 className="text-white font-bold text-sm mb-0.5">Control de Tiempo</h3>
+        <p className="text-gray-400 text-[8px] mb-3">Revisa tu historial de fichajes</p>
+        
+        <div className="flex items-center justify-center gap-3 mb-3">
+          <ChevronLeft className="w-3 h-3 text-gray-400" />
+          <span className="text-white text-[10px] font-medium">octubre 2025</span>
+          <ChevronRight className="w-3 h-3 text-gray-400" />
+        </div>
+        
+        <div className="bg-[#1a2942] rounded-xl p-3 mb-3">
+          <p className="text-gray-400 text-[8px] text-center mb-1">Total del mes</p>
+          <p className="text-white font-bold text-lg text-center">160h 45m</p>
+          
+          <div className="flex justify-between mt-3 gap-1">
+            {[
+              { month: 'jul', hours: '162h', active: false },
+              { month: 'ago', hours: '158h', active: false },
+              { month: 'sep', hours: '165h', active: false },
+              { month: 'oct', hours: '160h', active: true },
+            ].map((m, i) => (
+              <div key={i} className={`flex-1 rounded-lg p-1.5 ${m.active ? 'bg-[#007AFF]/30 border border-[#007AFF]' : 'bg-[#0a1628]'}`}>
+                <div className="h-6 bg-[#007AFF] rounded-t-sm mb-1"></div>
+                <p className="text-gray-400 text-[7px] text-center">{m.month}</p>
+                <p className="text-white text-[7px] text-center font-medium">{m.hours}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="bg-[#1a2942] rounded-xl p-2">
+          <div className="flex justify-between items-center mb-2">
+            <p className="text-white text-[8px]">octubre semana del 27-02</p>
+            <span className="bg-[#007AFF]/20 text-[#007AFF] text-[7px] font-medium px-1.5 py-0.5 rounded">40h 12m</span>
+          </div>
+          <div className="space-y-1.5">
+            {[
+              { day: 'viernes', num: '31', hours: '8h 28m', breakPos: 60 },
+              { day: 'jueves', num: '30', hours: '8h 29m', breakPos: 55 },
+            ].map((entry, i) => (
+              <div key={i} className="bg-[#0a1628] rounded-md p-1.5">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-white text-[7px] font-medium">{entry.day} {entry.num}</span>
+                  <span className="text-gray-400 text-[7px]">{entry.hours}</span>
+                </div>
+                <div className="relative h-2.5 bg-[#007AFF] rounded-full">
+                  <div className="absolute top-1/2 w-1.5 h-1.5 bg-orange-400 rounded-full" style={{ left: `${entry.breakPos}%`, transform: 'translate(-50%, -50%)' }}></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (addonKey === 'vacation') {
+    return (
+      <div className="p-3 h-full bg-[#0a1628]">
+        <h3 className="text-white font-bold text-sm mb-0.5">Ausencias</h3>
+        <p className="text-gray-400 text-[8px] mb-2">Solicita y consulta el estado</p>
+        
+        {/* Summary card */}
+        <div className="bg-white/5 rounded-xl p-2 mb-2 border border-white/10">
+          <div className="grid grid-cols-3 gap-1 text-center mb-2">
+            <div>
+              <p className="text-blue-400 font-light text-base">30</p>
+              <p className="text-gray-400 text-[6px] uppercase">Total</p>
+            </div>
+            <div>
+              <p className="text-orange-400 font-light text-base">26</p>
+              <p className="text-gray-400 text-[6px] uppercase">Usados</p>
+            </div>
+            <div>
+              <p className="text-green-400 font-light text-base">4</p>
+              <p className="text-gray-400 text-[6px] uppercase">Disponibles</p>
+            </div>
+          </div>
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-gray-400 text-[7px]">Progreso anual</p>
+            <p className="text-gray-400 text-[7px]">86.7%</p>
+          </div>
+          <div className="w-full bg-white/10 rounded-full h-1.5">
+            <div className="bg-[#007AFF] h-1.5 rounded-full" style={{ width: '87%' }}></div>
+          </div>
+        </div>
+        
+        <button className="w-full bg-[#007AFF] rounded-xl p-1.5 mb-2 flex items-center justify-center gap-1">
+          <Calendar className="w-3 h-3 text-white" />
+          <span className="text-white text-[7px] font-medium">Solicitar Ausencia</span>
+        </button>
+        
+        {/* Request cards - new Apple style */}
+        <div className="space-y-1.5">
+          {[
+            { type: 'Vacaciones', period: '10 dic → 12 dic', days: '3', status: 'approved', icon: 'vacation', iconColor: 'bg-green-500/20', iconTextColor: 'text-green-400' },
+            { type: 'Permiso paternidad', period: '1 nov → 15 nov', days: '15', status: 'approved', icon: 'baby', iconColor: 'bg-pink-500/20', iconTextColor: 'text-pink-400' },
+            { type: 'Baja médica', period: '5 de noviembre', days: '1', status: 'pending', icon: 'medical', iconColor: 'bg-red-500/20', iconTextColor: 'text-red-400' },
+            { type: 'Asuntos propios', period: '20 de octubre', days: '1', status: 'approved', icon: 'briefcase', iconColor: 'bg-blue-500/20', iconTextColor: 'text-blue-400' },
+          ].map((req, i) => {
+            const IconComponent = req.icon === 'vacation' ? Plane : 
+                                  req.icon === 'medical' ? Stethoscope :
+                                  req.icon === 'baby' ? Baby :
+                                  Briefcase;
+            return (
+              <div key={i} className="bg-white/5 rounded-lg overflow-hidden border border-white/10 flex">
+                <div className="flex-1 p-1.5 flex items-center gap-1.5">
+                  <div className={`w-5 h-5 rounded-md flex items-center justify-center ${req.iconColor}`}>
+                    <IconComponent className={`w-2.5 h-2.5 ${req.iconTextColor}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-[7px] font-medium">{req.type}</p>
+                    <p className="text-gray-400 text-[5px]">{req.period} • {req.days} día{Number(req.days) > 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+                <div className={`w-8 flex flex-col items-center justify-center ${
+                  req.status === 'approved' ? 'bg-green-500/10' : 
+                  req.status === 'rejected' ? 'bg-red-500/10' : 
+                  'bg-amber-500/10'
+                }`}>
+                  {req.status === 'approved' && <CheckCircle className="w-2.5 h-2.5 text-green-400" />}
+                  {req.status === 'rejected' && <XCircle className="w-2.5 h-2.5 text-red-400" />}
+                  {req.status === 'pending' && <Clock className="w-2.5 h-2.5 text-amber-400" />}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+  
+  if (addonKey === 'employees') {
+    return (
+      <div className="p-3 h-full bg-[#0a1628]">
+        <h3 className="text-white font-bold text-sm mb-0.5">Mi Equipo</h3>
+        <p className="text-gray-400 text-[8px] mb-2">Gestiona tu plantilla</p>
+        
+        <div className="grid grid-cols-3 gap-1.5 mb-2">
+          <div className="bg-purple-500/20 border border-purple-500/30 rounded-lg p-2 text-center">
+            <p className="text-purple-400 font-bold text-sm">1</p>
+            <p className="text-purple-300/70 text-[6px]">Admin</p>
+          </div>
+          <div className="bg-[#007AFF]/20 border border-[#007AFF]/30 rounded-lg p-2 text-center">
+            <p className="text-[#007AFF] font-bold text-sm">1</p>
+            <p className="text-blue-300/70 text-[6px]">Manager</p>
+          </div>
+          <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-2 text-center">
+            <p className="text-green-400 font-bold text-sm">10</p>
+            <p className="text-green-300/70 text-[6px]">Empleados</p>
+          </div>
+        </div>
+        
+        <button className="w-full bg-[#007AFF] rounded-lg p-2 mb-2 flex items-center justify-center gap-1.5">
+          <Users className="w-3 h-3 text-white" />
+          <span className="text-white text-[8px] font-semibold">Crear usuario</span>
+        </button>
+        
+        <div className="space-y-1">
+          {[
+            { name: 'María García', role: 'Admin', avatar: avatarWoman01, roleColor: 'text-purple-400' },
+            { name: 'Carlos López', role: 'Manager', avatar: avatarMan01, roleColor: 'text-[#007AFF]' },
+            { name: 'Ana Martín', role: 'Empleado', avatar: avatarWoman02, roleColor: 'text-green-400' },
+            { name: 'Pedro Ruiz', role: 'Empleado', avatar: avatarMan02, roleColor: 'text-green-400' },
+            { name: 'Laura Sanz', role: 'Empleado', avatar: avatarWoman03, roleColor: 'text-green-400' },
+          ].map((emp, i) => (
+            <div key={i} className="bg-[#1a2942] rounded-lg p-1.5 flex items-center gap-2">
+              <img 
+                src={emp.avatar} 
+                alt={emp.name}
+                className="w-6 h-6 rounded-full object-cover"
+              />
+              <div className="flex-1">
+                <p className="text-white text-[7px] font-medium">{emp.name}</p>
+                <p className={`text-[6px] ${emp.roleColor}`}>{emp.role}</p>
+              </div>
+              <Settings className="w-2.5 h-2.5 text-gray-500" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (addonKey === 'crm') {
+    return (
+      <div className="p-3 h-full bg-[#0a1628] flex flex-col">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <p className="text-white text-[10px] font-semibold">CRM</p>
+            <p className="text-gray-400 text-[7px]">Contactos y proyectos</p>
+          </div>
+          <button className="bg-[#007AFF] text-white text-[7px] px-2 py-1 rounded-lg">+ Contacto</button>
+        </div>
+
+        <div className="flex items-center gap-1 mb-2">
+          <div className="flex-1 bg-[#1a2942] rounded-lg px-2 py-1 text-[6px] text-gray-400">Buscar nombre, email...</div>
+          <span className="text-[7px] text-gray-400">24</span>
+        </div>
+
+        <div className="space-y-1.5 flex-1 overflow-y-auto">
+          {[
+            { name: 'Repsol', role: 'client', email: 'contacto@repsol.com', phone: '+34 600 123 123', tags: ['Energia'], status: 'Activo' },
+            { name: 'Proveedor Delta', role: 'provider', email: 'ventas@delta.com', phone: '+34 910 222 333', tags: ['Mantenimiento'], status: 'Activo' },
+            { name: 'Clínica Vida', role: 'client', email: 'info@clinicavida.es', phone: '+34 650 444 555', tags: ['Salud'], status: 'Onboarding' },
+          ].map((c, i) => (
+            <div key={i} className="bg-[#1a2942] rounded-lg p-2 border border-white/5">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <User className="w-3.5 h-3.5 text-[#007AFF]" />
+                  <div className="min-w-0">
+                    <p className="text-white text-[8px] font-semibold truncate">{c.name}</p>
+                    <p className="text-gray-400 text-[6px] truncate">{c.email}</p>
+                  </div>
+                </div>
+                <span className={`text-[6px] px-1.5 py-0.5 rounded-full bg-white/10 text-gray-200 ${c.role === 'provider' ? 'text-amber-300' : 'text-green-300'}`}>
+                  {c.role === 'provider' ? 'Proveedor' : 'Cliente'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[6px] text-gray-400">
+                <div className="flex items-center gap-1">
+                  <Phone className="w-2.5 h-2.5" />
+                  <span>{c.phone}</span>
+                </div>
+                <div className="flex items-center gap-1 text-gray-300">
+                  <Square className="w-2.5 h-2.5" />
+                  <span>{c.status}</span>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {c.tags.map((tag) => (
+                  <span key={tag} className="text-[6px] text-blue-300 bg-blue-500/10 px-1.5 py-0.5 rounded-full">{tag}</span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (addonKey === 'accounting') {
+    return (
+      <div className="p-3 h-full bg-[#0a1628] flex flex-col">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <p className="text-white text-[10px] font-semibold">Contabilidad</p>
+            <p className="text-gray-400 text-[7px]">Ingresos y gastos</p>
+          </div>
+          <button className="bg-[#007AFF] text-white text-[7px] px-2 py-1 rounded-lg">+ Movimiento</button>
+        </div>
+
+        {/* Donut Chart Summary */}
+        <div className="bg-white/5 rounded-xl p-2 border border-white/10 mb-2">
+          <div className="flex items-center justify-between">
+            {/* Donut visual */}
+            <div className="relative w-14 h-14">
+              <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                {/* Background circle */}
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="#1a2942" strokeWidth="3"/>
+                {/* Income arc (green) - 60% */}
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="#22c55e" strokeWidth="3"
+                  strokeDasharray="58.4 97.4" strokeDashoffset="0"/>
+                {/* Expense arc (red) - 40% */}
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="#ef4444" strokeWidth="3"
+                  strokeDasharray="39 97.4" strokeDashoffset="-58.4"/>
+              </svg>
+              {/* Center balance */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <p className="text-green-400 text-[8px] font-bold">+13.7k</p>
+                <p className="text-gray-500 text-[5px]">Balance</p>
+              </div>
+            </div>
+            
+            {/* Legend */}
+            <div className="flex-1 ml-2 space-y-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
+                  <span className="text-gray-400 text-[6px]">Ingresos</span>
+                </div>
+                <span className="text-green-400 text-[7px] font-semibold">32.4k€</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>
+                  <span className="text-gray-400 text-[6px]">Gastos</span>
+                </div>
+                <span className="text-red-400 text-[7px] font-semibold">18.7k€</span>
+              </div>
+              <div className="flex items-center justify-between pt-0.5 border-t border-white/10">
+                <span className="text-gray-500 text-[6px]">Rentabilidad</span>
+                <span className="text-green-300 text-[6px] font-semibold">42%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 mb-2">
+          <span className="text-[6px] text-gray-400 bg-[#1a2942] px-2 py-1 rounded-lg">Filtro: mes actual</span>
+          <span className="text-[6px] text-gray-400 bg-[#1a2942] px-2 py-1 rounded-lg">Tipo: gasto</span>
+        </div>
+
+        <div className="space-y-1.5 flex-1 overflow-y-auto">
+          {[
+            { concept: 'Factura proveedor', amount: '-1.200€', category: 'Materiales', type: 'expense', status: 'aprobado', attachments: 2, date: '02 dic' },
+            { concept: 'Servicio técnico', amount: '+2.800€', category: 'Ingreso', type: 'income', status: 'registrado', attachments: 1, date: '30 nov' },
+            { concept: 'Dietas empleado', amount: '-56€', category: 'Gasto', type: 'expense', status: 'pendiente', attachments: 1, date: '28 nov' },
+          ].map((tx, i) => (
+            <div key={i} className="bg-[#1a2942] rounded-lg p-2 border border-white/5">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <FileText className="w-3.5 h-3.5 text-[#007AFF]" />
+                  <div className="min-w-0">
+                    <p className="text-white text-[8px] font-semibold truncate">{tx.concept}</p>
+                    <p className="text-gray-400 text-[6px] truncate">{tx.category}</p>
+                  </div>
+                </div>
+                <p className={`text-[8px] font-semibold ${tx.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>{tx.amount}</p>
+              </div>
+              <div className="flex items-center justify-between text-[6px] text-gray-400">
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-2.5 h-2.5" />
+                  <span>{tx.date}</span>
+                </div>
+                <div className="flex items-center gap-1 text-gray-300">
+                  <Badge className="w-2.5 h-2.5" />
+                  <span className="capitalize">{tx.status}</span>
+                  <Paperclip className="w-2.5 h-2.5" />
+                  <span>{tx.attachments}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (addonKey === 'inventory') {
+    return (
+      <div className="p-3 h-full bg-[#0a1628] flex flex-col">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <p className="text-white text-[10px] font-semibold">Inventario</p>
+            <p className="text-gray-400 text-[7px]">Productos y stock</p>
+          </div>
+          <button className="bg-[#007AFF] text-white text-[7px] px-2 py-1 rounded-lg">+ Producto</button>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-3 gap-1.5 mb-2">
+          <div className="bg-white/5 rounded-lg p-1.5 border border-white/10 text-center">
+            <p className="text-white text-sm font-bold">142</p>
+            <p className="text-gray-400 text-[6px]">SKUs</p>
+          </div>
+          <div className="bg-white/5 rounded-lg p-1.5 border border-white/10 text-center">
+            <p className="text-green-400 text-sm font-bold">58.9k</p>
+            <p className="text-gray-400 text-[6px]">Valor €</p>
+          </div>
+          <div className="bg-amber-500/10 rounded-lg p-1.5 border border-amber-500/30 text-center">
+            <p className="text-amber-300 text-sm font-bold">2</p>
+            <p className="text-amber-300/70 text-[6px]">Stock bajo</p>
+          </div>
+        </div>
+
+        {/* Mini bar chart - Stock status */}
+        <div className="bg-white/5 rounded-lg p-2 border border-white/10 mb-2">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-gray-400 text-[6px]">Estado de stock</span>
+            <span className="text-gray-500 text-[6px]">142 productos</span>
+          </div>
+          <div className="flex items-end gap-1 h-6">
+            <div className="flex-1 flex flex-col justify-end">
+              <div className="bg-green-400 rounded-t-sm" style={{ height: '75%' }}></div>
+              <p className="text-[6px] text-gray-400 text-center mt-0.5">OK</p>
+              <p className="text-[6px] text-white text-center font-semibold">124</p>
+            </div>
+            <div className="flex-1 flex flex-col justify-end">
+              <div className="bg-amber-300 rounded-t-sm" style={{ height: '25%' }}></div>
+              <p className="text-[6px] text-gray-400 text-center mt-0.5">Bajo</p>
+              <p className="text-[6px] text-white text-center font-semibold">16</p>
+            </div>
+            <div className="flex-1 flex flex-col justify-end">
+              <div className="bg-red-400 rounded-t-sm" style={{ height: '15%' }}></div>
+              <p className="text-[6px] text-gray-400 text-center mt-0.5">Sin</p>
+              <p className="text-[6px] text-white text-center font-semibold">2</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 mb-2">
+          <div className="flex-1 bg-[#1a2942] rounded-lg px-2 py-1 text-[6px] text-gray-400">Buscar SKU o nombre...</div>
+          <span className="text-[7px] text-gray-400">Almacenes: 2</span>
+        </div>
+
+        <div className="space-y-1.5 flex-1 overflow-y-auto">
+          {[
+            { name: 'Caja tornillos M4', sku: 'SKU-204', stock: 18, warehouse: 'Almacén Norte', status: 'ok' },
+            { name: 'Kit cableado red', sku: 'SKU-118', stock: 4, warehouse: 'Sede Central', status: 'bajo' },
+            { name: 'Router WiFi Pro', sku: 'SKU-066', stock: 0, warehouse: 'Almacén Sur', status: 'agotado' },
+          ].map((item, i) => (
+            <div key={i} className="bg-[#1a2942] rounded-lg p-2 border border-white/5">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Package className="w-3.5 h-3.5 text-[#007AFF]" />
+                  <div className="min-w-0">
+                    <p className="text-white text-[8px] font-semibold truncate">{item.name}</p>
+                    <p className="text-gray-500 text-[6px]">{item.sku}</p>
+                  </div>
+                </div>
+                <span className={`text-[7px] px-1.5 py-0.5 rounded-full bg-white/10 ${item.status === 'agotado' ? 'text-red-400' : item.status === 'bajo' ? 'text-amber-300' : 'text-green-300'}`}>
+                  {item.status === 'agotado' ? 'Agotado' : item.status === 'bajo' ? 'Bajo' : 'OK'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[6px] text-gray-400">
+                <div className="flex items-center gap-1">
+                  <TrendingUp className="w-2.5 h-2.5" />
+                  <span>Stock: {item.stock}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <MapPin className="w-2.5 h-2.5" />
+                  <span>{item.warehouse}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  
+  if (addonKey === 'schedules') {
+    return (
+      <div className="p-3 h-full bg-[#0a1628] flex flex-col">
+        <h3 className="text-white font-bold text-sm mb-0.5">Cuadrante</h3>
+        <p className="text-gray-400 text-[8px] mb-1.5">Consulta tus turnos asignados</p>
+        
+        <div className="bg-[#1a2942] rounded-lg p-1.5 mb-2 flex items-center justify-between">
+          <ChevronLeft className="w-2.5 h-2.5 text-gray-500" />
+          <span className="text-white text-[7px] font-medium">Semana 29 - 5 oct</span>
+          <ChevronRight className="w-2.5 h-2.5 text-gray-500" />
+        </div>
+        
+        <div className="flex-1 space-y-2">
+          {/* Lunes - 2 turnos */}
+          <div className="bg-[#1a2942] rounded-xl p-2">
+            <div className="flex justify-between items-center mb-1.5">
+              <p className="text-white text-[8px] font-semibold">Lunes <span className="text-gray-400 font-normal">29 sep</span></p>
+              <p className="text-gray-500 text-[6px]">2 turnos</p>
+            </div>
+            <div className="space-y-1.5">
+              <div className="bg-red-500 rounded-md px-2 py-1.5">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-white text-[7px] font-medium">Mañana</span>
+                  <span className="text-white/80 text-[6px]">09:00-14:00</span>
+                </div>
+                <div className="flex items-center gap-1 text-white/90">
+                  <MapPin className="w-2 h-2" />
+                  <span className="text-[5px]">Oficina Central</span>
+                </div>
+              </div>
+              <div className="bg-green-500 rounded-md px-2 py-1.5">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-white text-[7px] font-medium">Tarde</span>
+                  <span className="text-white/80 text-[6px]">15:00-20:00</span>
+                </div>
+                <div className="flex items-center gap-1 text-white/90">
+                  <MapPin className="w-2 h-2" />
+                  <span className="text-[5px]">Cliente ABC S.L.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Martes */}
+          <div className="bg-[#1a2942] rounded-xl p-2">
+            <div className="flex justify-between items-center mb-1.5">
+              <p className="text-white text-[8px] font-semibold">Martes <span className="text-gray-400 font-normal">30 sep</span></p>
+              <p className="text-gray-500 text-[6px]">1 turno</p>
+            </div>
+            <div className="bg-[#007AFF] rounded-md px-2 py-1.5">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-white text-[7px] font-medium">Completo</span>
+                <span className="text-white/80 text-[6px]">08:00-17:00</span>
+              </div>
+              <div className="flex items-center gap-1 text-white/90">
+                <MapPin className="w-2 h-2" />
+                <span className="text-[5px]">Almacén Norte</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Miércoles */}
+          <div className="bg-[#1a2942] rounded-xl p-2">
+            <div className="flex justify-between items-center mb-1.5">
+              <p className="text-white text-[8px] font-semibold">Miércoles <span className="text-gray-400 font-normal">1 oct</span></p>
+              <p className="text-gray-500 text-[6px]">1 turno</p>
+            </div>
+            <div className="bg-purple-500 rounded-md px-2 py-1.5">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-white text-[7px] font-medium">Noche</span>
+                <span className="text-white/80 text-[6px]">22:00-06:00</span>
+              </div>
+              <div className="flex items-center gap-1 text-white/90">
+                <MapPin className="w-2 h-2" />
+                <span className="text-[5px]">Fábrica Sur</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Jueves */}
+          <div className="bg-[#1a2942] rounded-xl p-2">
+            <div className="flex justify-between items-center mb-1.5">
+              <p className="text-white text-[8px] font-semibold">Jueves <span className="text-gray-400 font-normal">2 oct</span></p>
+              <p className="text-gray-500 text-[6px]">1 turno</p>
+            </div>
+            <div className="bg-orange-500 rounded-md px-2 py-1.5">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-white text-[7px] font-medium">Mañana</span>
+                <span className="text-white/80 text-[6px]">07:00-15:00</span>
+              </div>
+              <div className="flex items-center gap-1 text-white/90">
+                <MapPin className="w-2 h-2" />
+                <span className="text-[5px]">Sede Principal</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (addonKey === 'messages') {
+    return (
+      <div className="p-3 h-full bg-[#0a1628]">
+        <h3 className="text-white font-bold text-sm mb-0.5">Mensajes</h3>
+        <p className="text-gray-400 text-[8px] mb-3">Conversaciones</p>
+        <div className="bg-[#1a2942] rounded-xl overflow-hidden">
+          {[
+            { name: 'Equipo', msg: 'Reunión mañana a las 10', time: '10:30', unread: 3 },
+            { name: 'Carlos', msg: 'Terminé el informe', time: '09:15', unread: 0 },
+            { name: 'RRHH', msg: 'Recordatorio vacaciones', time: 'Ayer', unread: 1 },
+            { name: 'Ana', msg: 'Documento actualizado', time: 'Ayer', unread: 0 },
+          ].map((chat, i) => (
+            <div key={i} className="p-2 flex items-center gap-2 border-b border-[#0a1628] last:border-0">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#007AFF] to-blue-600 flex items-center justify-center text-white text-[8px] font-bold">
+                {chat.name[0]}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-center">
+                  <p className="text-white text-[8px] font-medium truncate">{chat.name}</p>
+                  <span className="text-gray-500 text-[6px]">{chat.time}</span>
+                </div>
+                <p className="text-gray-400 text-[6px] truncate">{chat.msg}</p>
+              </div>
+              {chat.unread > 0 && (
+                <span className="w-4 h-4 bg-[#007AFF] rounded-full text-white text-[6px] flex items-center justify-center">{chat.unread}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  
+  if (addonKey === 'reminders') {
+    return (
+      <div className="p-3 h-full bg-[#0a1628]">
+        <h3 className="text-white font-bold text-sm mb-0.5">Recordatorios</h3>
+        <p className="text-gray-400 text-[8px] mb-2">Gestiona tus tareas</p>
+        
+        <div className="flex gap-1.5 mb-2">
+          <div className="flex-1 bg-[#1a2942] rounded-lg px-2 py-1">
+            <p className="text-gray-500 text-[5px]">Buscar...</p>
+          </div>
+          <div className="bg-[#007AFF] rounded-lg px-2 py-1">
+            <p className="text-white text-[5px]">+ Crear</p>
+          </div>
+        </div>
+        
+        <div className="space-y-1.5">
+          {/* Card 1 - Alta prioridad (rosa suave) - compartido */}
+          <div className="bg-pink-50 rounded-xl p-2 shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-pink-500 text-[6px] font-medium">Alta</span>
+              <div className="flex items-center gap-1">
+                <Bell className="w-2 h-2 text-gray-400" />
+                <Users className="w-2 h-2 text-gray-400" />
+                <Edit className="w-2 h-2 text-gray-400" />
+                <Trash2 className="w-2 h-2 text-gray-400" />
+              </div>
+            </div>
+            <p className="text-gray-900 text-[7px] font-semibold">Renovar contrato proveedor</p>
+            <p className="text-gray-600 text-[5px] mt-0.5">Revisar condiciones y firmar antes del día 15</p>
+            <div className="flex items-center gap-1 mt-1 text-pink-400">
+              <Calendar className="w-2 h-2" />
+              <span className="text-[5px]">Mañana</span>
+            </div>
+            <div className="flex items-center justify-between mt-1.5">
+              <div className="flex -space-x-1">
+                <img src="" alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
+                <img src="" alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
+              </div>
+              <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                Completar
+              </button>
+            </div>
+          </div>
+          
+          {/* Card 2 - Media prioridad (amarillo suave) - sin compartir */}
+          <div className="bg-yellow-50 rounded-xl p-2 shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-yellow-600 text-[6px] font-medium">Media</span>
+              <div className="flex items-center gap-1">
+                <Bell className="w-2 h-2 text-gray-400" />
+                <Users className="w-2 h-2 text-gray-400" />
+                <Edit className="w-2 h-2 text-gray-400" />
+                <Trash2 className="w-2 h-2 text-gray-400" />
+              </div>
+            </div>
+            <p className="text-gray-900 text-[7px] font-semibold">Enviar nóminas noviembre</p>
+            <div className="flex items-center gap-1 mt-1 text-yellow-500">
+              <Calendar className="w-2 h-2" />
+              <span className="text-[5px]">Hace 2 días</span>
+            </div>
+            <div className="flex items-center justify-end mt-1.5">
+              <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                Completar
+              </button>
+            </div>
+          </div>
+          
+          {/* Card 3 - Baja prioridad (verde suave) - compartido con 1 persona */}
+          <div className="bg-green-50 rounded-xl p-2 shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-green-600 text-[6px] font-medium">Baja</span>
+              <div className="flex items-center gap-1">
+                <Bell className="w-2 h-2 text-gray-400" />
+                <Users className="w-2 h-2 text-gray-400" />
+                <Edit className="w-2 h-2 text-gray-400" />
+                <Trash2 className="w-2 h-2 text-gray-400" />
+              </div>
+            </div>
+            <p className="text-gray-900 text-[7px] font-semibold">Revisión equipos oficina</p>
+            <div className="flex items-center gap-1 mt-1 text-green-500">
+              <Calendar className="w-2 h-2" />
+              <span className="text-[5px]">Próxima semana</span>
+            </div>
+            <div className="flex items-center justify-between mt-1.5">
+              <div className="flex -space-x-1">
+                <img src="" alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-green-50 object-cover" />
+              </div>
+              <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                Completar
+              </button>
+            </div>
+          </div>
+          
+          {/* Card 4 - Media prioridad (amarillo suave) - sin compartir */}
+          <div className="bg-yellow-50 rounded-xl p-2 shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-yellow-600 text-[6px] font-medium">Media</span>
+              <div className="flex items-center gap-1">
+                <Bell className="w-2 h-2 text-gray-400" />
+                <Users className="w-2 h-2 text-gray-400" />
+                <Edit className="w-2 h-2 text-gray-400" />
+                <Trash2 className="w-2 h-2 text-gray-400" />
+              </div>
+            </div>
+            <p className="text-gray-900 text-[7px] font-semibold">Llamar gestoría fiscal</p>
+            <div className="flex items-center gap-1 mt-1 text-yellow-500">
+              <Calendar className="w-2 h-2" />
+              <span className="text-[5px]">Viernes</span>
+            </div>
+            <div className="flex items-center justify-end mt-1.5">
+              <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                Completar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (addonKey === 'documents') {
+    return (
+      <div className="p-3 h-full bg-[#0a1628]">
+        <h3 className="text-white font-bold text-sm mb-0.5">Documentos</h3>
+        <p className="text-gray-400 text-[8px] mb-2">Gestiona tus documentos laborales</p>
+        
+        {/* Category tabs - 2 rows */}
+        <div className="flex gap-1 mb-1">
+          <div className="flex-1 bg-[#007AFF] rounded-lg py-1 px-1 flex items-center justify-center gap-0.5">
+            <FileText className="w-2 h-2 text-white" />
+            <span className="text-white text-[5px] font-medium">Todos</span>
+          </div>
+          <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1 flex items-center justify-center gap-0.5">
+            <CreditCard className="w-2 h-2 text-gray-400" />
+            <span className="text-gray-400 text-[5px]">Nóminas</span>
+          </div>
+        </div>
+        <div className="flex gap-1 mb-2">
+          <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1 flex items-center justify-center gap-0.5">
+            <FileText className="w-2 h-2 text-gray-400" />
+            <span className="text-gray-400 text-[5px]">Contratos</span>
+          </div>
+          <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1 flex items-center justify-center gap-0.5">
+            <FileText className="w-2 h-2 text-gray-400" />
+            <span className="text-gray-400 text-[5px]">Otros...</span>
+          </div>
+        </div>
+        
+        {/* Search bar */}
+        <div className="flex items-center gap-2 bg-[#1a2942] rounded-lg px-2 py-1 mb-2">
+          <Search className="w-2.5 h-2.5 text-gray-500" />
+          <span className="text-gray-500 text-[5px] flex-1">Buscar documentos...</span>
+          <span className="text-gray-400 text-[5px]">6 docs</span>
+        </div>
+        
+        <div className="bg-[#1a2942] rounded-xl overflow-hidden">
+          {[
+            { name: 'Nómina Noviembre 2025', type: 'Nómina', signed: false, size: '120 KB', date: '24 nov' },
+            { name: 'Nómina Octubre 2025', type: 'Nómina', signed: true, size: '118 KB', date: '25 oct' },
+            { name: 'Nómina Septiembre 2025', type: 'Nómina', signed: true, size: '115 KB', date: '26 sep' },
+            { name: 'Nómina Agosto 2025', type: 'Nómina', signed: true, size: '122 KB', date: '25 ago' },
+            { name: 'Contrato trabajo', type: 'Documento', signed: true, size: '1.2 MB', date: '15 ene' },
+          ].map((doc, i) => (
+            <div key={i} className="p-2 flex items-center gap-2 border-b border-[#0a1628] last:border-0">
+              <div className="w-6 h-6 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                <FileText className="w-3 h-3 text-orange-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-[7px] font-medium truncate">{doc.name}</p>
+                <div className="flex items-center gap-1">
+                  <span className="text-orange-400 text-[6px]">{doc.type}</span>
+                  <span className={`text-[6px] ${doc.signed ? 'text-green-400' : 'text-yellow-400'}`}>
+                    {doc.signed ? '✓ Firmada' : ''}
+                  </span>
+                </div>
+                <p className="text-gray-500 text-[5px]">{doc.size} · {doc.date}</p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Eye className="w-2.5 h-2.5 text-gray-500" />
+                {!doc.signed ? (
+                  <PenLine className="w-2.5 h-2.5 text-[#007AFF]" />
+                ) : (
+                  <ArrowRight className="w-2.5 h-2.5 text-gray-500 rotate-90" />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  
+  if (addonKey === 'work_reports') {
+    return (
+      <div className="p-3 h-full bg-[#0a1628] flex flex-col">
+        <h3 className="text-white font-bold text-sm mb-0.5">Partes de Trabajo</h3>
+        <p className="text-gray-400 text-[8px] mb-2">Historial de servicios</p>
+        
+        {/* New report button */}
+        <button className="w-full bg-[#007AFF] rounded-xl p-1.5 mb-2 flex items-center justify-center gap-1">
+          <span className="text-white text-[7px] font-medium">+ Nuevo Parte</span>
+        </button>
+        
+        {/* Reports list */}
+        <div className="flex-1 space-y-1.5 overflow-y-auto">
+          {[
+            { date: 'jue, 4 dic', time: '09:00-17:00', hours: '8h', location: 'Madrid IFEMA', client: 'Repsol', desc: 'Mantenimiento', status: 'submitted', signed: false },
+            { date: 'lun, 1 dic', time: '09:00-17:00', hours: '8h', location: 'Madrid IFEMA', client: 'Repsol', desc: 'Instalación', status: 'submitted', signed: true, refCode: 'SMI0032SE' },
+            { date: 'jue, 27 nov', time: '09:00-15:00', hours: '6h', location: 'Madrid IFEMA', client: 'Repsol', desc: 'Revisión', status: 'submitted', signed: true, refCode: 'SMI0034SE' },
+          ].map((report, i) => (
+            <div key={i} className="bg-white/5 rounded-xl p-2 border border-white/10">
+              {/* Status badge + date */}
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[6px] font-medium px-1.5 py-0.5 rounded bg-green-500/20 text-green-400">Enviado</span>
+                <span className="text-gray-400 text-[6px]">{report.date}</span>
+              </div>
+              
+              {/* Time */}
+              <div className="flex items-center gap-1 text-gray-400 text-[6px] mb-1">
+                <Clock className="w-2 h-2" />
+                <span>{report.time} ({report.hours})</span>
+              </div>
+              
+              {/* Location + ref code */}
+              <div className="flex items-center gap-1 mb-1">
+                <MapPin className="w-2 h-2 text-gray-400" />
+                <span className="text-white text-[7px] font-medium">{report.location}</span>
+                {report.refCode && (
+                  <span className="text-[5px] px-1 py-0.5 rounded bg-blue-500/20 text-blue-400">{report.refCode}</span>
+                )}
+              </div>
+              
+              {/* Client */}
+              <div className="flex items-center gap-1 text-gray-400 text-[6px] mb-1">
+                <User className="w-2 h-2" />
+                <span>Cliente: {report.client}</span>
+              </div>
+              
+              {/* Description */}
+              <p className="text-gray-300 text-[6px]">{report.desc}</p>
+              
+              {/* Signature indicator */}
+              {report.signed && (
+                <div className="flex items-center gap-1 mt-1 pt-1 border-t border-white/10">
+                  <PenLine className="w-2 h-2 text-amber-400" />
+                  <span className="text-amber-400 text-[5px]">Firmado</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  
+  if (addonKey === 'ai_assistant') {
+    return (
+      <div className="p-3 h-full bg-[#0a1628] flex flex-col">
+        <h3 className="text-white font-bold text-sm mb-0.5">OficazIA</h3>
+        <p className="text-gray-400 text-[8px] mb-2">Tu asistente inteligente</p>
+        <div className="flex-1 space-y-2 overflow-y-auto">
+          {/* Usuario mensaje 1 */}
+          <div className="flex justify-end">
+            <div className="bg-[#007AFF] rounded-xl rounded-tr-sm p-2 max-w-[88%]">
+              <p className="text-white text-[8px] leading-relaxed">Ramírez tiene que trabajar la semana que viene de 9 a 14 y Marta hace los turnos de tarde</p>
+            </div>
+          </div>
+          {/* IA respuesta 1 */}
+          <div className="flex gap-1.5">
+            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+              <Zap className="w-2.5 h-2.5 text-white" />
+            </div>
+            <div className="bg-[#1a2942] rounded-xl rounded-tl-sm p-2 max-w-[85%]">
+              <p className="text-white text-[8px] leading-relaxed">¿El turno de Marta de 15 a 20? Recuerda que el viernes Marta está ausente, podría cubrirlo Marcos 🤔</p>
+            </div>
+          </div>
+          {/* Usuario mensaje 2 */}
+          <div className="flex justify-end">
+            <div className="bg-[#007AFF] rounded-xl rounded-tr-sm p-2 max-w-[88%]">
+              <p className="text-white text-[8px]">¡Exacto!</p>
+            </div>
+          </div>
+          {/* IA respuesta 2 */}
+          <div className="flex gap-1.5">
+            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+              <Zap className="w-2.5 h-2.5 text-white" />
+            </div>
+            <div className="bg-[#1a2942] rounded-xl rounded-tl-sm p-2 max-w-[85%]">
+              <p className="text-white text-[8px]">✅ Turnos creados:</p>
+              <p className="text-gray-400 text-[7px] mt-0.5">• Ramírez: L-V 9:00-14:00</p>
+              <p className="text-gray-400 text-[7px]">• Marta: L-J 15:00-20:00</p>
+              <p className="text-gray-400 text-[7px]">• Marcos: V 15:00-20:00</p>
+            </div>
+          </div>
+        </div>
+        <div className="mt-2 flex gap-1.5">
+          <input 
+            type="text" 
+            placeholder="Escribe..."
+            className="flex-1 bg-[#1a2942] rounded-full px-3 py-1.5 text-[7px] text-white border border-[#2a3952] placeholder-gray-500"
+            readOnly
+          />
+          <button className="w-6 h-6 bg-[#007AFF] rounded-full flex items-center justify-center">
+            <ArrowRight className="w-3 h-3 text-white" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  if (addonKey === 'employee_dashboard') {
+    return (
+      <div className="p-3 h-full bg-[#0a1628] flex flex-col">
+        {/* Company name */}
+        <div className="text-center mb-2">
+          <p className="text-white text-[10px] font-medium">Mi Empresa S.L.</p>
+        </div>
+        
+        {/* User header with avatar */}
+        <div className="flex items-center justify-end gap-1.5 mb-2">
+          <span className="text-white text-[7px]">Carlos López</span>
+          <img 
+            src="" 
+            alt="Avatar"
+            className="w-5 h-5 rounded-full object-cover"
+          />
+        </div>
+        
+        {/* Icon grid - 3x2 like iPhone apps */}
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          {[
+            { icon: Clock, label: 'Fichajes', color: 'bg-[#007AFF]' },
+            { icon: Calendar, label: 'Ausencias', color: 'bg-[#007AFF]' },
+            { icon: CalendarDays, label: 'Cuadrante', color: 'bg-[#007AFF]' },
+            { icon: MessageSquare, label: 'Mensajes', color: 'bg-[#007AFF]' },
+            { icon: FileText, label: 'Documentos', color: 'bg-[#007AFF]' },
+            { icon: Bell, label: 'Recordatorios', color: 'bg-[#007AFF]' },
+          ].map((item, i) => (
+            <div key={i} className="flex flex-col items-center">
+              <div className={`w-10 h-10 ${item.color} rounded-xl flex items-center justify-center mb-1`}>
+                <item.icon className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-white/80 text-[6px] text-center">{item.label}</span>
+            </div>
+          ))}
+        </div>
+        
+        {/* Status card */}
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-2 mb-3">
+          <div className="flex items-center justify-center gap-1.5 mb-1">
+            <div className="w-2 h-2 rounded-full bg-green-400"></div>
+            <span className="text-green-400 text-[8px] font-medium">Trabajando...</span>
+          </div>
+          <p className="text-gray-400 text-[6px] text-center mb-0.5">Tu último fichaje</p>
+          <p className="text-white text-[8px] text-center font-medium">Hoy a las 09:00</p>
+        </div>
+        
+        {/* Two round buttons */}
+        <div className="flex justify-center gap-3">
+          <div className="flex flex-col items-center">
+            <div className="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center">
+              <span className="text-white text-[7px] font-bold text-center leading-tight">Tomar<br/>Descanso</span>
+            </div>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="w-16 h-16 rounded-full bg-[#007AFF] flex items-center justify-center">
+              <span className="text-white text-[11px] font-bold">SALIR</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  return null;
+}
+
+export default function Landing() {
+  usePageTitle('Bienvenido a Oficaz');
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isContactFormOpen, setIsContactFormOpen] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [previewAddon, setPreviewAddon] = useState<string>('employee_dashboard');
+  const [difficultyMode, setDifficultyMode] = useState<'dificil' | 'normal' | 'oficaz'>('normal');
+
+  // Pricing calculator state - starts with 1 admin (required), employees (always included) and time_tracking selected
+  const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set(['employee_dashboard', 'employees', 'time_tracking']));
+  const [userCounts, setUserCounts] = useState({ employees: 0, managers: 0, admins: 1 });
+
+  // Defer API calls until after critical content renders
+  const [shouldLoadData, setShouldLoadData] = useState(false);
+  
+  useEffect(() => {
+    // Trigger entrance animations after mount
+    const timer = setTimeout(() => setIsLoaded(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+  
+  useEffect(() => {
+    // Defer data loading to prevent blocking initial render
+    const timer = setTimeout(() => setShouldLoadData(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Track landing page visit
+  useEffect(() => {
+    const trackVisit = async () => {
+      try {
+        await fetch('/api/track/landing-visit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            referrer: document.referrer || '',
+          }),
+        });
+      } catch (error) {
+        console.error('Failed to track visit:', error);
+      }
+    };
+    
+    trackVisit();
+  }, []);
+
+  // Check if public registration is enabled - defer after critical content loads
+  const { data: registrationSettings } = useQuery({
+    queryKey: ['/api/registration-status'],
+    queryFn: async () => {
+      const response = await fetch('/api/registration-status');
+      return response.json();
+    },
+    enabled: shouldLoadData, // Only execute after initial render
+    staleTime: 1000 * 60 * 60, // 60 minutes - much longer cache
+    gcTime: 1000 * 60 * 60 * 2, // 2 hours garbage collection time
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    refetchInterval: false, // Disable automatic refetching
+  });
+
+  // Rotating features for animated grid
+  const rotatingFeatures = useMemo(() => ([
+    { key: 'time_tracking', icon: Clock, label: 'Fichajes', desc: 'Control de tiempo' },
+    { key: 'vacation', icon: Calendar, label: 'Ausencias', desc: 'Vacaciones y bajas' },
+    { key: 'schedules', icon: CalendarClock, label: 'Cuadrante', desc: 'Turnos y horarios' },
+    { key: 'documents', icon: FileText, label: 'Documentos', desc: 'Gestión y firma' },
+    { key: 'messages', icon: Mail, label: 'Mensajes', desc: 'Comunicación interna' },
+    { key: 'reminders', icon: Bell, label: 'Recordatorios', desc: 'Avisos y tareas' },
+    { key: 'work_reports', icon: ClipboardList, label: 'Partes', desc: 'Órdenes y reportes' },
+    { key: 'inventory', icon: Package, label: 'Inventario', desc: 'Stock y movimientos' },
+    { key: 'accounting', icon: Calculator, label: 'Contabilidad', desc: 'Ingresos y gastos' },
+    { key: 'crm', icon: Briefcase, label: 'CRM', desc: 'Clientes y proyectos' },
+    { key: 'ai_assistant', icon: Sparkles, label: 'OfiCazIA', desc: 'Asistente inteligente' },
+    { key: 'employees', icon: Users, label: 'Empleados', desc: 'Perfiles y permisos' },
+  ]), []);
+
+  // Fade-wave animation: 2x3 grid rotating through all 12 features - one at a time, no duplicates
+  const [visibleOrder, setVisibleOrder] = useState<number[]>([0, 1, 2, 3, 4, 5]);
+  const [activeMask, setActiveMask] = useState<boolean[]>([true, true, false, false, true, false]);
+  
+  useEffect(() => {
+    let nextFeatureIndex = 6; // Start from index 6 (after initial 0-5)
+    
+    // Rotate one position at a time, ensuring no duplicates
+    const rotateId = setInterval(() => {
+      setVisibleOrder(prev => {
+        // Get current active mask to avoid replacing active icons
+        setActiveMask(currentMask => {
+          // Find inactive positions
+          const inactivePositions = currentMask
+            .map((active, idx) => active ? -1 : idx)
+            .filter(idx => idx !== -1);
+          
+          if (inactivePositions.length === 0) {
+            return currentMask; // No inactive positions, keep mask as is
+          }
+          
+          // Pick a random inactive position to replace
+          const positionToReplace = inactivePositions[Math.floor(Math.random() * inactivePositions.length)];
+          
+          // Find the next feature that's not currently visible
+          let candidateIndex = nextFeatureIndex % rotatingFeatures.length;
+          let attempts = 0;
+          while (prev.includes(candidateIndex) && attempts < rotatingFeatures.length) {
+            candidateIndex = (candidateIndex + 1) % rotatingFeatures.length;
+            attempts++;
+          }
+          
+          // If we found a unique feature, use it
+          if (!prev.includes(candidateIndex)) {
+            nextFeatureIndex = (candidateIndex + 1) % rotatingFeatures.length;
+            const newOrder = [...prev];
+            newOrder[positionToReplace] = candidateIndex;
+            setVisibleOrder(newOrder);
+          }
+          
+          return currentMask; // Return mask unchanged
+        });
+        
+        return prev;
+      });
+    }, 2800); // Slightly slower for more elegance
+    
+    // Change highlight mask with smooth wave pattern
+    const maskId = setInterval(() => {
+      setActiveMask(prev => {
+        // Create a smooth wave pattern instead of random
+        const newMask = new Array(6).fill(false);
+        const activeCount = 3; // Always 3 active for consistency
+        const startPos = Math.floor(Math.random() * 6);
+        
+        for (let i = 0; i < activeCount; i++) {
+          newMask[(startPos + i) % 6] = true;
+        }
+        
+        return newMask;
+      });
+    }, 2200); // Smooth, independent timing
+    
+    return () => {
+      clearInterval(rotateId);
+      clearInterval(maskId);
+    };
+  }, [rotatingFeatures.length]);
+
+  // Neutral card shell (same for all)
+  const cardBaseClasses = 'bg-white border border-gray-200 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100';
+
+  // Accent color per feature with more contrast
+  const getAccentColorClasses = useCallback((key: string) => {
+    switch (key) {
+      case 'employees':
+        return 'text-green-600 dark:text-green-400';
+      case 'time_tracking':
+        return 'text-blue-600 dark:text-blue-400';
+      case 'documents':
+        return 'text-purple-600 dark:text-purple-400';
+      case 'messages':
+        return 'text-pink-600 dark:text-pink-400';
+      case 'reminders':
+        return 'text-amber-600 dark:text-amber-400';
+      case 'work_reports':
+        return 'text-sky-600 dark:text-sky-400';
+      case 'inventory':
+        return 'text-orange-600 dark:text-orange-400';
+      case 'accounting':
+        return 'text-rose-600 dark:text-rose-400';
+      case 'vacation':
+        return 'text-cyan-600 dark:text-cyan-400';
+      case 'schedules':
+        return 'text-teal-600 dark:text-teal-400';
+      case 'crm':
+        return 'text-violet-600 dark:text-violet-400';
+      case 'ai_assistant':
+        return 'text-fuchsia-600 dark:text-fuchsia-400';
+      default:
+        return 'text-slate-700 dark:text-slate-200';
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Addon definitions for pricing calculator - employees is free and always included
+  const addons = [
+    { key: 'employee_dashboard', name: 'Panel Empleado', price: 0, icon: Smartphone, isLocked: true, description: 'El panel de control personal de cada empleado. Fichar entrada y salida con un toque, gestionar descansos, y acceder a todas las funciones desde un menú intuitivo.' },
+    { key: 'employees', name: 'Empleados', price: 0, icon: Users, isLocked: true, description: 'Centraliza toda la información de tu equipo. Alta y baja de empleados, gestión de datos, asignación de roles y acceso seguro para cada miembro.' },
+    { key: 'time_tracking', name: 'Fichajes', price: 3, icon: Clock, isLocked: false, description: 'Cumple con la normativa de registro horario. Tus empleados fichan en dos toques desde el móvil, y tú obtienes informes PDF listos para inspección.' },
+    { key: 'vacation', name: 'Ausencias', price: 3, icon: Calendar, isLocked: false, description: 'Olvídate del caos de las hojas de cálculo. Cada empleado ve sus días disponibles, solicita fechas, y tú apruebas o rechazas al instante.' },
+    { key: 'schedules', name: 'Cuadrante', price: 3, icon: CalendarDays, isLocked: false, description: 'Planifica turnos arrastrando y soltando. Duplica semanas enteras, crea plantillas, y con OficazIA genera cuadrantes optimizados en segundos.' },
+    { key: 'messages', name: 'Mensajes', price: 5, icon: MessageSquare, isLocked: false, description: 'Mantén la comunicación profesional separada del WhatsApp personal. Crea grupos por departamento y guarda historial de conversaciones.' },
+    { key: 'reminders', name: 'Recordatorios', price: 5, icon: Bell, isLocked: false, description: 'Configura alertas para ti o para cualquier empleado. Notificaciones push que llegan aunque la app esté cerrada. Perfectas para fechas límite.' },
+    { key: 'documents', name: 'Documentos', price: 10, icon: FileText, isLocked: false, description: 'Sube nóminas, contratos, certificados y cualquier documento. Organización automática por empleado y categoría. Firma digital integrada.' },
+    { key: 'crm', name: 'Clientes y Proyectos', price: 8, icon: Users2, isLocked: false, description: 'Gestiona todos tus clientes, proveedores y proyectos en un solo lugar. Vincula contactos a proyectos y ten la central de tu negocio siempre a mano.' },
+      { key: 'accounting', name: 'Contabilidad básica', price: 10, icon: Calculator, isLocked: false, description: 'Sistema contable básico integrado. Registra ingresos y gastos, categoriza movimientos automáticamente, y genera informes financieros simples.' },
+      { key: 'inventory', name: 'Inventario', price: 8, icon: Package, isLocked: false, description: 'Control completo de stock y materiales. Registra entradas y salidas, alertas de stock mínimo, seguimiento de ubicaciones.' },
+    { key: 'work_reports', name: 'Partes de Trabajo', price: 8, icon: Settings, isLocked: false, description: 'Ideal para servicios técnicos y trabajo en campo. Documenta cada trabajo con fotos, ubicación GPS y descripción. El cliente firma en pantalla.' },
+    { key: 'ai_assistant', name: 'OficazIA', price: 15, icon: Zap, isLocked: false, description: 'Tu asistente inteligente disponible 24/7. Dile "crea el horario de esta semana" y lo hace. Pregúntale cuántas horas trabajó alguien y te responde.' },
+  ];
+
+  // Calculate total price (employees is free, not counted)
+  const addonsTotal = addons.filter(a => selectedAddons.has(a.key) && a.price > 0).reduce((sum, a) => sum + a.price, 0);
+  const usersTotal = (userCounts.employees * 2) + (userCounts.managers * 4) + (userCounts.admins * 6);
+  const monthlyTotal = addonsTotal + usersTotal;
+
+  const toggleAddon = (key: string) => {
+    // Employees and employee_dashboard are always included, cannot be removed
+    if (key === 'employees' || key === 'employee_dashboard') return;
+    
+    const newSet = new Set(selectedAddons);
+    if (newSet.has(key)) {
+      newSet.delete(key);
+    } else {
+      newSet.add(key);
+    }
+    setSelectedAddons(newSet);
+  };
+
+  // Funciones principales
+  const mainFeatures = [
+    {
+      icon: Clock,
+      title: "Control horario",
+      description: "Control automático con seguimiento en tiempo real y reportes detallados"
+    },
+    {
+      icon: Calendar,
+      title: "Gestión de ausencias",
+      description: "Solicitudes digitales con flujo de aprobación y calendario integrado"
+    },
+    {
+      icon: CalendarDays,
+      title: "Cuadrante",
+      description: "Planificación visual drag & drop con turnos inteligentes y gestión semanal"
+    }
+  ];
+
+  // Funciones adicionales
+  const additionalFeatures = [
+    {
+      icon: FileText,
+      title: "Documentos",
+      description: "Subida automática con detección de empleados y categorización inteligente"
+    },
+    {
+      icon: MessageSquare,
+      title: "Mensajes",
+      description: "Comunicación empresarial estilo WhatsApp para toda la organización"
+    },
+    {
+      icon: Settings,
+      title: "Recordatorios",
+      description: "Recordatorios personalizados, tareas automáticas y notificaciones inteligentes"
+    }
+  ];
+
+  const features = [...mainFeatures, ...additionalFeatures];
+
+  const testimonials = [
+    {
+      name: "María González",
+      role: "Directora de RRHH",
+      company: "TechCorp",
+      content: "Oficaz transformó completamente nuestra gestión de empleados. Lo que antes tomaba horas ahora se hace en minutos.",
+      rating: 5
+    },
+    {
+      name: "Carlos Ruiz",
+      role: "CEO",
+      company: "StartupFlow",
+      content: "La facilidad de uso es increíble. Nuestros empleados se adaptaron en días, no semanas.",
+      rating: 5
+    },
+    {
+      name: "Ana Martín",
+      role: "Responsable de Operaciones",
+      company: "LogisticsPro",
+      content: "El control de tiempo en tiempo real nos ahorró miles de euros en el primer mes.",
+      rating: 5
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className={`border-b fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled 
+          ? 'bg-white/95 backdrop-blur-md shadow-lg shadow-black/5 border-gray-200' 
+          : 'bg-white backdrop-blur-md shadow-xl shadow-black/30 border-gray-300'
+      }`}
+      style={{
+        paddingTop: '8px',
+        paddingBottom: '8px',
+        marginTop: 'env(safe-area-inset-top, 0px)'
+      }}>
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex justify-between items-center h-10">
+            <div className="flex items-center">
+              <img src={oficazHeaderLogo} alt="Oficaz" className="h-6 md:h-7 w-auto object-contain" loading="eager" />
+            </div>
+            
+            <nav className="hidden md:flex items-center justify-between flex-1 ml-8">
+              <div className="flex items-center space-x-8">
+                <a href="#funciones" className="text-gray-700 hover:text-gray-900 transition-colors font-medium">Funciones</a>
+                <a href="#precios" className="text-gray-700 hover:text-gray-900 transition-colors font-medium">Precios</a>
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <a 
+                  href="https://wa.me/34614028600" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center mr-2"
+                >
+                  <Button 
+                    size="sm" 
+                    className="bg-[#25D366] hover:bg-[#20BA5A] text-white font-semibold px-4 py-2 shadow-lg shadow-[#25D366]/25 border-0 rounded-lg hover:shadow-xl hover:shadow-[#25D366]/30 transition-all duration-300 hover:scale-105"
+                  >
+                    <FaWhatsapp className="w-5 h-5 mr-2" />
+                    WhatsApp
+                  </Button>
+                </a>
+                {registrationSettings?.publicRegistrationEnabled ? (
+                  <Link href="/request-code">
+                    <Button size="sm" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-6 py-2 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg hover:shadow-xl hover:shadow-[#007AFF]/30 transition-all duration-300 hover:scale-105">
+                      Prueba Gratis
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button 
+                    size="sm" 
+                    onClick={() => setIsContactFormOpen(true)}
+                    className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-6 py-2 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg hover:shadow-xl hover:shadow-[#007AFF]/30 transition-all duration-300 hover:scale-105"
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    Contacta
+                  </Button>
+                )}
+                <Link href="/login">
+                  <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900 font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 hover:scale-105">
+                    Iniciar Sesión
+                  </Button>
+                </Link>
+              </div>
+            </nav>
+
+            {/* Mobile menu button */}
+            <div className="md:hidden flex items-center space-x-2">
+              {registrationSettings?.publicRegistrationEnabled ? (
+                <Link href="/request-code">
+                  <Button size="sm" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-3 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg">
+                    Registrarse
+                  </Button>
+                </Link>
+              ) : (
+                <Button 
+                  size="sm" 
+                  onClick={() => setIsContactFormOpen(true)}
+                  className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-3 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg"
+                >
+                  <Mail className="w-4 h-4" />
+                </Button>
+              )}
+              <Link href="/login">
+                <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900 font-semibold px-3 py-1.5 rounded-lg shadow-lg transition-all duration-300">
+                  Entrar
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Floating WhatsApp Button - Mobile Only */}
+      <a 
+        href="https://wa.me/34614028600" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="md:hidden fixed bottom-6 right-6 z-50 inline-flex items-center justify-center w-16 h-16 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-full shadow-2xl shadow-[#25D366]/40 transition-all duration-300 hover:scale-110 active:scale-95"
+        aria-label="Contactar por WhatsApp"
+      >
+        <FaWhatsapp className="w-8 h-8" />
+      </a>
+
+      {/* Hero Section - Static, no scroll effects */}
+      <section 
+        className="relative min-h-[88vh] md:min-h-screen flex items-center justify-center pt-14 md:pt-16"
+        style={{ 
+          backgroundImage: `url(${heroBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-slate-900/70" />
+        
+        {/* Content */}
+        <div className="relative z-10 max-w-4xl lg:max-w-5xl mx-auto px-5 sm:px-6 w-full">
+          <div className="space-y-8 md:space-y-12">
+            {/* Main Headline */}
+            <div className="text-center space-y-3">
+              <h1 
+                className="text-[2.4rem] sm:text-[2.8rem] md:text-[3.4rem] lg:text-[4rem] font-black text-white leading-[1.1] tracking-tight"
+                style={{
+                  opacity: isLoaded ? 1 : 0,
+                  transform: isLoaded ? 'translateY(0)' : 'translateY(40px)',
+                  transition: 'all 0.8s cubic-bezier(0.25, 0.1, 0.25, 1)',
+                }}
+              >
+                Pásate la vida en modo Oficaz.
+              </h1>
+              
+              <p 
+                className="text-sm sm:text-base md:text-xl font-semibold text-[#007AFF]"
+                style={{
+                  opacity: isLoaded ? 1 : 0,
+                  transform: isLoaded ? 'translateY(0)' : 'translateY(40px)',
+                  transition: 'all 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) 150ms',
+                }}
+              >
+                La app modular de gestión empresarial en un clic.
+              </p>
+            </div>
+
+            {/* Features Grid 2x3 - Fade wave (2-3 tiles lit at a time) */}
+            <div className="grid grid-cols-3 gap-1 max-w-[210px] sm:max-w-[230px] md:max-w-[250px] mx-auto">
+              {visibleOrder.map((idx, i) => {
+                const current = rotatingFeatures[idx];
+                const Icon = current.icon as React.ElementType;
+                const isActive = activeMask[i];
+                return (
+                  <motion.div 
+                    key={i}
+                    className={`aspect-square rounded-xl shadow-sm flex items-center justify-center cursor-pointer overflow-hidden relative ${cardBaseClasses}`}
+                    animate={{
+                      opacity: isActive ? 1 : 0.35,
+                      scale: isActive ? 1 : 0.96,
+                      y: isActive ? 0 : 2,
+                    }}
+                    transition={{ 
+                      duration: 1.2,
+                      ease: [0.16, 1, 0.3, 1],
+                      scale: { duration: 1.0, ease: [0.16, 1, 0.3, 1] },
+                      opacity: { duration: 1.0, ease: [0.16, 1, 0.3, 1] },
+                      y: { duration: 1.0, ease: [0.16, 1, 0.3, 1] },
+                    }}
+                    whileHover={{ 
+                      scale: 1.03,
+                      y: -4,
+                      transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] }
+                    }}
+                    style={{
+                      boxShadow: isActive 
+                        ? '0 8px 32px rgba(0, 122, 255, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08)' 
+                        : '0 2px 8px rgba(0, 0, 0, 0.04)',
+                    }}
+                  >
+                    {/* Subtle glow effect for active cards */}
+                    {isActive && (
+                      <motion.div
+                        className="absolute inset-0 rounded-xl pointer-events-none"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+                        style={{
+                          background: 'radial-gradient(circle at 50% 50%, rgba(0, 122, 255, 0.08) 0%, transparent 70%)',
+                        }}
+                      />
+                    )}
+                    
+                    {/* Icon + label with content-only animation */}
+                    <AnimatePresence mode="popLayout">
+                      <motion.div 
+                        key={`${current.key}-${idx}`}
+                        className="flex flex-col items-center gap-1.5 relative z-10"
+                        initial={{ opacity: 0, scale: 0.85 }}
+                        animate={{ 
+                          opacity: 1, 
+                          scale: 1,
+                        }}
+                        exit={{ opacity: 0, scale: 0.85 }}
+                        transition={{ 
+                          duration: 0.3, 
+                          ease: [0.16, 1, 0.3, 1] 
+                        }}
+                      >
+                        <Icon className={`w-7 h-7 md:w-8 md:h-8 ${getAccentColorClasses(current.key)} transition-all duration-1000`} 
+                          style={{
+                            filter: isActive ? 'none' : 'saturate(0.6)',
+                          }}
+                        />
+                        <span className={`text-[8px] md:text-[9px] font-semibold leading-none ${getAccentColorClasses(current.key)} transition-all duration-1000`}
+                          style={{
+                            filter: isActive ? 'none' : 'saturate(0.6)',
+                          }}
+                        >
+                          {current.label}
+                        </span>
+                      </motion.div>
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* CTA Section - Below Grid */}
+            <div className="flex flex-col items-center gap-2 md:gap-3 pt-1 md:pt-2">
+              <p className="text-base sm:text-lg md:text-xl font-semibold text-white/90">
+                Paga solo por lo que necesites
+              </p>
+              {registrationSettings?.publicRegistrationEnabled ? (
+                <Link href="/request-code">
+                  <Button className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-bold px-6 sm:px-8 py-3 text-base sm:text-lg shadow-lg shadow-[#007AFF]/30 border-0 rounded-xl transition-all duration-300 hover:scale-105">
+                    Comenzar prueba gratis
+                  </Button>
+                </Link>
+              ) : (
+                <Button
+                  onClick={() => setIsContactFormOpen(true)}
+                  className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-bold px-6 sm:px-8 py-3 text-base sm:text-lg shadow-lg shadow-[#007AFF]/30 border-0 rounded-xl transition-all duration-300 hover:scale-105"
+                >
+                  Comenzar prueba gratis
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Focus Section - Apple Style */}
+      <section className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-100 to-gray-50 relative overflow-hidden">
+        <div className="max-w-4xl mx-auto px-6 text-center py-20">
+          <ScrollReveal>
+            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-[1.1] tracking-tight mb-6">
+              Concentra tu energía<br />
+              <span className="bg-gradient-to-r from-[#007AFF] to-blue-600 bg-clip-text text-transparent">donde importa.</span>
+            </h2>
+          </ScrollReveal>
+          
+          <ScrollReveal delay={0.15}>
+            <p className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-600 mb-10 leading-tight">
+              Haz crecer tu empresa.<br className="hidden sm:block" /> Lo rutinario queda fuera de tu mesa.
+            </p>
+          </ScrollReveal>
+          
+          <ScrollReveal delay={0.3}>
+            <p className="text-lg md:text-xl text-gray-500 max-w-3xl mx-auto leading-relaxed">
+              Dirigir una empresa exige foco real, no perder horas en tareas que drenan atención y no aportan valor. Tú impulsa, decide y construye. Todo lo repetitivo, lo tedioso y lo administrativo queda en manos de Oficaz.
+            </p>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* Features Section - Two Columns with Mobile Preview */}
+      <section id="funciones" className="min-h-screen bg-white relative overflow-hidden py-16 lg:py-20">
+        <div className="max-w-7xl mx-auto px-6 h-full">
+          {/* Header */}
+          <ScrollReveal className="text-center mb-6 lg:mb-12">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 tracking-tight">
+              Funciones modulares
+            </h2>
+            <p className="text-xl text-gray-500 max-w-2xl mx-auto">
+              Activa solo lo que necesitas. Sin paquetes, sin compromisos.
+            </p>
+          </ScrollReveal>
+
+          {/* Mobile: Swipeable Carousel with Description Below */}
+          <div className="lg:hidden">
+            <div className="-mx-6 py-4">
+              <Carousel 
+                className="w-full" 
+                opts={{ align: 'center', loop: true }}
+                setApi={(api) => {
+                  if (api) {
+                    api.on('select', () => {
+                      const index = api.selectedScrollSnap();
+                      setPreviewAddon(addons[index]?.key || 'time_tracking');
+                    });
+                  }
+                }}
+              >
+                <CarouselContent className="-ml-2">
+                  {addons.map((addon, index) => (
+                    <CarouselItem key={addon.key} className="pl-2 basis-[80%] sm:basis-[65%]">
+                      <div className="flex flex-col items-center py-2">
+                        {/* Phone Preview - Taller for mobile, no shadow */}
+                        <div className="relative bg-gray-900 rounded-[2.5rem] p-2">
+                          <div className="relative bg-[#0a1628] rounded-[2rem] overflow-hidden" style={{ width: '200px', aspectRatio: '9/19.5' }}>
+                            <div className="absolute top-0 left-0 right-0 h-7 bg-[#0a1628] z-10 flex items-center justify-between px-3 pt-1">
+                              <span className="text-[10px] font-semibold text-white">17:00</span>
+                              <div className="w-3 h-1.5 bg-white rounded-sm"></div>
+                            </div>
+                            <div className="pt-7 h-full overflow-hidden">
+                              <MobilePreviewContent addonKey={addon.key} />
+                            </div>
+                          </div>
+                          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-20 h-1 bg-white/30 rounded-full"></div>
+                        </div>
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
+            </div>
+            
+            {/* Description below carousel */}
+            <div className="-mt-2 px-4">
+              {addons.map((addon) => {
+                if (addon.key !== previewAddon) return null;
+                const IconComponent = addon.icon;
+                return (
+                  <div key={addon.key} className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                    <div className="flex items-start gap-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                        addon.isLocked 
+                          ? 'bg-gradient-to-br from-green-500 to-green-600' 
+                          : 'bg-gradient-to-br from-[#007AFF] to-blue-600'
+                      }`}>
+                        <IconComponent className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-lg font-semibold text-gray-900">{addon.name}</h3>
+                        </div>
+                        <p className="text-sm text-gray-500 leading-relaxed">{addon.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Dots indicator */}
+            <div className="flex justify-center gap-1.5 mt-4">
+              {addons.map((addon, i) => (
+                <button
+                  key={addon.key}
+                  onClick={() => setPreviewAddon(addon.key)}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    previewAddon === addon.key ? 'bg-[#007AFF] w-4' : 'bg-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop: Two Column Carousel Layout - Apple Style */}
+          <div className="hidden lg:block">
+            <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center max-w-5xl mx-auto">
+              {/* Left: Feature Card with Extended Description */}
+              <div className="relative">
+                <AnimatePresence mode="wait">
+                  {addons.map((addon) => {
+                    if (addon.key !== previewAddon) return null;
+                    const IconComponent = addon.icon;
+                    const currentIndex = addons.findIndex(a => a.key === previewAddon);
+                    
+                    return (
+                      <motion.div
+                        key={addon.key}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                        className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100"
+                      >
+                        {/* Feature Header */}
+                        <div className="flex items-start gap-5 mb-6">
+                          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+                            addon.isLocked 
+                              ? 'bg-gradient-to-br from-green-500 to-green-600' 
+                              : 'bg-gradient-to-br from-[#007AFF] to-blue-600'
+                          }`}>
+                            <IconComponent className="w-8 h-8 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-2xl font-bold text-gray-900 mb-3">{addon.name}</h3>
+                            <p className="text-gray-600 text-base leading-relaxed">
+                              {addonExtendedDescriptions[addon.key]}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {/* Navigation - Apple Style */}
+                        <div className="flex items-center justify-between">
+                          {/* Arrow Navigation */}
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => {
+                                const prevIndex = currentIndex === 0 ? addons.length - 1 : currentIndex - 1;
+                                setPreviewAddon(addons[prevIndex].key);
+                              }}
+                              className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all duration-200 hover:scale-105"
+                              aria-label="Anterior"
+                            >
+                              <ChevronLeft className="w-5 h-5 text-gray-600" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                const nextIndex = currentIndex === addons.length - 1 ? 0 : currentIndex + 1;
+                                setPreviewAddon(addons[nextIndex].key);
+                              }}
+                              className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all duration-200 hover:scale-105"
+                              aria-label="Siguiente"
+                            >
+                              <ChevronRight className="w-5 h-5 text-gray-600" />
+                            </button>
+                          </div>
+                          
+                          {/* Pagination Dots */}
+                          <div className="flex items-center gap-2">
+                            {addons.map((a, i) => (
+                              <button
+                                key={a.key}
+                                onClick={() => setPreviewAddon(a.key)}
+                                className={`transition-all duration-300 rounded-full ${
+                                  a.key === previewAddon 
+                                    ? 'w-6 h-2 bg-[#007AFF]' 
+                                    : 'w-2 h-2 bg-gray-300 hover:bg-gray-400'
+                                }`}
+                                aria-label={`Ver ${a.name}`}
+                              />
+                            ))}
+                          </div>
+                          
+                          {/* Page Counter */}
+                          <span className="text-sm text-gray-400 font-medium">
+                            {currentIndex + 1} / {addons.length}
+                          </span>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+              </div>
+
+              {/* Right: Mobile Preview Mockup */}
+              <div className="flex justify-center">
+              <div className="relative">
+                {/* Phone Frame - Narrower iPhone style with enhanced shadow */}
+                <div className="relative bg-gray-900 rounded-[2.5rem] p-2 shadow-[0_25px_80px_-12px_rgba(0,0,0,0.4),0_12px_40px_-8px_rgba(0,0,0,0.3)]">
+                  {/* Screen - Dark theme like real app */}
+                  <div className="relative bg-[#0a1628] rounded-[2rem] overflow-hidden" style={{ width: '200px', aspectRatio: '9/19' }}>
+                    {/* Status Bar */}
+                    <div className="absolute top-0 left-0 right-0 h-8 bg-[#0a1628] z-10 flex items-center justify-between px-4 pt-1">
+                      <span className="text-[10px] font-semibold text-white">17:00</span>
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-1.5 bg-white rounded-sm"></div>
+                      </div>
+                    </div>
+                    
+                    {/* Dynamic Content based on selected addon */}
+                    <div className="pt-8 h-full overflow-hidden">
+                      <AnimatePresence mode="wait">
+                      {previewAddon === 'employee_dashboard' && (
+                        <motion.div
+                          key="employee_dashboard"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
+                        <div className="p-3 h-full bg-[#0a1628] flex flex-col">
+                          {/* Company name */}
+                          <div className="text-center mb-2">
+                            <p className="text-white text-[10px] font-medium">Mi Empresa S.L.</p>
+                          </div>
+                          
+                          {/* User header with avatar */}
+                          <div className="flex items-center justify-end gap-1.5 mb-2">
+                            <span className="text-white text-[7px]">Carlos López</span>
+                            <img 
+                              src="" 
+                              alt="Avatar"
+                              className="w-5 h-5 rounded-full object-cover"
+                            />
+                          </div>
+                          
+                          {/* Icon grid - 3x2 like iPhone apps */}
+                          <div className="grid grid-cols-3 gap-2 mb-3">
+                            {[
+                              { icon: Clock, label: 'Fichajes', color: 'bg-[#007AFF]' },
+                              { icon: Calendar, label: 'Ausencias', color: 'bg-[#007AFF]' },
+                              { icon: CalendarDays, label: 'Cuadrante', color: 'bg-[#007AFF]' },
+                              { icon: MessageSquare, label: 'Mensajes', color: 'bg-[#007AFF]' },
+                              { icon: FileText, label: 'Documentos', color: 'bg-[#007AFF]' },
+                              { icon: Bell, label: 'Recordatorios', color: 'bg-[#007AFF]' },
+                            ].map((item, i) => (
+                              <div key={i} className="flex flex-col items-center">
+                                <div className={`w-10 h-10 ${item.color} rounded-xl flex items-center justify-center mb-1`}>
+                                  <item.icon className="w-5 h-5 text-white" />
+                                </div>
+                                <span className="text-white/80 text-[6px] text-center">{item.label}</span>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Status card */}
+                          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-2 mb-3">
+                            <div className="flex items-center justify-center gap-1.5 mb-1">
+                              <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                              <span className="text-green-400 text-[8px] font-medium">Trabajando...</span>
+                            </div>
+                            <p className="text-gray-400 text-[6px] text-center mb-0.5">Tu último fichaje</p>
+                            <p className="text-white text-[8px] text-center font-medium">Hoy a las 09:00</p>
+                          </div>
+                          
+                          {/* Two round buttons */}
+                          <div className="flex justify-center gap-3">
+                            <div className="flex flex-col items-center">
+                              <div className="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center">
+                                <span className="text-white text-[7px] font-bold text-center leading-tight">Tomar<br/>Descanso</span>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <div className="w-16 h-16 rounded-full bg-[#007AFF] flex items-center justify-center">
+                                <span className="text-white text-[11px] font-bold">SALIR</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        </motion.div>
+                      )}
+                      
+                      {previewAddon === 'time_tracking' && (
+                        <motion.div
+                          key="time_tracking"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
+                        <div className="p-3 h-full bg-[#0a1628]">
+                          {/* Header */}
+                          <h3 className="text-white font-bold text-sm mb-0.5">Control de Tiempo</h3>
+                          <p className="text-gray-400 text-[8px] mb-3">Revisa tu historial de fichajes</p>
+                          
+                          {/* Month nav */}
+                          <div className="flex items-center justify-center gap-3 mb-3">
+                            <ChevronLeft className="w-3 h-3 text-gray-400" />
+                            <span className="text-white text-[10px] font-medium">octubre 2025</span>
+                            <ChevronRight className="w-3 h-3 text-gray-400" />
+                          </div>
+                          
+                          {/* Total del mes */}
+                          <div className="bg-[#1a2942] rounded-xl p-3 mb-3">
+                            <p className="text-gray-400 text-[8px] text-center mb-1">Total del mes</p>
+                            <p className="text-white font-bold text-lg text-center">160h 45m</p>
+                            
+                            {/* Mini month charts */}
+                            <div className="flex justify-between mt-3 gap-1">
+                              {[
+                                { month: 'jul', hours: '162h', active: false },
+                                { month: 'ago', hours: '158h', active: false },
+                                { month: 'sep', hours: '165h', active: false },
+                                { month: 'oct', hours: '160h', active: true },
+                              ].map((m, i) => (
+                                <div key={i} className={`flex-1 rounded-lg p-1.5 ${m.active ? 'bg-[#007AFF]/30 border border-[#007AFF]' : 'bg-[#0a1628]'}`}>
+                                  <div className="h-6 bg-[#007AFF] rounded-t-sm mb-1"></div>
+                                  <p className="text-gray-400 text-[7px] text-center">{m.month}</p>
+                                  <p className="text-white text-[7px] text-center font-medium">{m.hours}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          {/* Week section */}
+                          <div className="bg-[#1a2942] rounded-xl p-2">
+                            <div className="flex justify-between items-center mb-2">
+                              <p className="text-white text-[8px]">octubre semana del 27-02</p>
+                              <span className="bg-[#007AFF]/20 text-[#007AFF] text-[7px] font-medium px-1.5 py-0.5 rounded">40h 12m</span>
+                            </div>
+                            {/* Day entries with break indicators */}
+                            <div className="space-y-1.5">
+                              {[
+                                { day: 'viernes', num: '31', hours: '8h 28m', breakPos: 60 },
+                                { day: 'jueves', num: '30', hours: '8h 29m', breakPos: 55 },
+                              ].map((entry, i) => (
+                                <div key={i} className="bg-[#0a1628] rounded-md p-1.5">
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className="text-white text-[7px] font-medium">{entry.day} {entry.num}</span>
+                                    <span className="text-gray-400 text-[7px]">{entry.hours}</span>
+                                  </div>
+                                  {/* Progress bar with orange break indicator inside */}
+                                  <div className="relative h-2.5 bg-[#007AFF] rounded-full">
+                                    <div className="absolute top-1/2 w-1.5 h-1.5 bg-orange-400 rounded-full" style={{ left: `${entry.breakPos}%`, transform: 'translate(-50%, -50%)' }}></div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        </motion.div>
+                      )}
+                      
+                      {previewAddon === 'vacation' && (
+                        <motion.div
+                          key="vacation"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
+                        <div className="p-3 h-full bg-[#0a1628]">
+                          <h3 className="text-white font-bold text-sm mb-0.5">Ausencias</h3>
+                          <p className="text-gray-400 text-[8px] mb-2">Solicita y consulta el estado</p>
+                          
+                          {/* Stats row */}
+                          <div className="bg-[#1a2942] rounded-xl p-2 mb-2">
+                            <div className="grid grid-cols-3 gap-1 text-center mb-2">
+                              <div>
+                                <p className="text-[#007AFF] font-bold text-sm">30</p>
+                                <p className="text-gray-300 text-[6px]">TOTAL</p>
+                              </div>
+                              <div>
+                                <p className="text-green-400 font-bold text-sm">26</p>
+                                <p className="text-gray-300 text-[6px]">APROBADOS</p>
+                              </div>
+                              <div>
+                                <p className="text-[#007AFF] font-bold text-sm">4</p>
+                                <p className="text-gray-300 text-[6px]">DISPONIBLES</p>
+                              </div>
+                            </div>
+                            <div className="flex justify-between items-center mb-1">
+                              <p className="text-gray-400 text-[7px]">Progreso anual</p>
+                              <p className="text-gray-400 text-[7px]">86.7%</p>
+                            </div>
+                            <div className="w-full bg-[#0a1628] rounded-full h-2">
+                              <div className="bg-[#007AFF] h-2 rounded-full" style={{ width: '87%' }}></div>
+                            </div>
+                          </div>
+                          
+                          {/* Solicitar button */}
+                          <button className="w-full bg-[#007AFF] rounded-lg p-1.5 mb-2 flex items-center justify-center gap-1">
+                            <Calendar className="w-3 h-3 text-white" />
+                            <span className="text-white text-[7px] font-medium">Solicitar Ausencia</span>
+                          </button>
+                          
+                          {/* Request cards - Apple style */}
+                          <div className="space-y-1.5">
+                            {[
+                              { type: 'Vacaciones', period: '10 dic → 12 dic', days: '3', status: 'approved', icon: 'vacation', iconColor: 'bg-green-500/20', iconTextColor: 'text-green-400' },
+                              { type: 'Permiso paternidad', period: '1 nov → 15 nov', days: '15', status: 'approved', icon: 'baby', iconColor: 'bg-pink-500/20', iconTextColor: 'text-pink-400' },
+                              { type: 'Baja médica', period: '5 de noviembre', days: '1', status: 'pending', icon: 'medical', iconColor: 'bg-red-500/20', iconTextColor: 'text-red-400' },
+                              { type: 'Asuntos propios', period: '20 de octubre', days: '1', status: 'approved', icon: 'briefcase', iconColor: 'bg-blue-500/20', iconTextColor: 'text-blue-400' },
+                              { type: 'Formación', period: '15 sep → 17 sep', days: '3', status: 'rejected', icon: 'graduation', iconColor: 'bg-purple-500/20', iconTextColor: 'text-purple-400' },
+                            ].map((req, i) => {
+                              const IconComponent = req.icon === 'vacation' ? Plane : 
+                                                    req.icon === 'medical' ? Stethoscope :
+                                                    req.icon === 'baby' ? Baby :
+                                                    req.icon === 'graduation' ? GraduationCap :
+                                                    Briefcase;
+                              return (
+                                <div key={i} className="bg-white/5 rounded-lg overflow-hidden border border-white/10 flex">
+                                  <div className="flex-1 p-1.5 flex items-center gap-1.5">
+                                    <div className={`w-5 h-5 rounded-md flex items-center justify-center ${req.iconColor}`}>
+                                      <IconComponent className={`w-2.5 h-2.5 ${req.iconTextColor}`} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-white text-[7px] font-medium">{req.type}</p>
+                                      <p className="text-gray-400 text-[5px]">{req.period} • {req.days} día{Number(req.days) > 1 ? 's' : ''}</p>
+                                    </div>
+                                  </div>
+                                  <div className={`w-8 flex flex-col items-center justify-center ${
+                                    req.status === 'approved' ? 'bg-green-500/10' : 
+                                    req.status === 'rejected' ? 'bg-red-500/10' : 
+                                    'bg-amber-500/10'
+                                  }`}>
+                                    {req.status === 'approved' && <CheckCircle className="w-2.5 h-2.5 text-green-400" />}
+                                    {req.status === 'rejected' && <XCircle className="w-2.5 h-2.5 text-red-400" />}
+                                    {req.status === 'pending' && <Clock className="w-2.5 h-2.5 text-amber-400" />}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        </motion.div>
+                      )}
+                      
+                      {previewAddon === 'employees' && (
+                        <motion.div
+                          key="employees"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
+                        <div className="p-3 h-full bg-[#0a1628]">
+                          <h3 className="text-white font-bold text-sm mb-0.5">Mi Equipo</h3>
+                          <p className="text-gray-400 text-[8px] mb-2">Gestiona tu plantilla</p>
+                          
+                          {/* 3 role count cards with distinct colors */}
+                          <div className="grid grid-cols-3 gap-1.5 mb-2">
+                            <div className="bg-purple-500/20 border border-purple-500/30 rounded-lg p-2 text-center">
+                              <p className="text-purple-400 font-bold text-sm">1</p>
+                              <p className="text-purple-300/70 text-[6px]">Admin</p>
+                            </div>
+                            <div className="bg-[#007AFF]/20 border border-[#007AFF]/30 rounded-lg p-2 text-center">
+                              <p className="text-[#007AFF] font-bold text-sm">1</p>
+                              <p className="text-blue-300/70 text-[6px]">Manager</p>
+                            </div>
+                            <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-2 text-center">
+                              <p className="text-green-400 font-bold text-sm">10</p>
+                              <p className="text-green-300/70 text-[6px]">Empleados</p>
+                            </div>
+                          </div>
+                          
+                          {/* Add user button */}
+                          <button className="w-full bg-[#007AFF] rounded-lg p-2 mb-2 flex items-center justify-center gap-1.5">
+                            <Users className="w-3 h-3 text-white" />
+                            <span className="text-white text-[8px] font-semibold">Crear usuario</span>
+                          </button>
+                          
+                          {/* Employee cards */}
+                          <div className="space-y-1">
+                            {[
+                              { name: 'María García', role: 'Admin', avatar: avatarWoman01, roleColor: 'text-purple-400', swipeDir: null },
+                              { name: 'Carlos López', role: 'Manager', avatar: avatarMan01, roleColor: 'text-[#007AFF]', swipeDir: 'right' },
+                              { name: 'Ana Martín', role: 'Empleado', avatar: avatarWoman02, roleColor: 'text-green-400', swipeDir: 'left' },
+                              { name: 'Pedro Ruiz', role: 'Empleado', avatar: avatarMan02, roleColor: 'text-green-400', swipeDir: null },
+                              { name: 'Laura Sanz', role: 'Empleado', avatar: avatarWoman03, roleColor: 'text-green-400', swipeDir: null },
+                            ].map((emp, i) => (
+                              <div key={i} className="relative overflow-hidden rounded-lg">
+                                {/* Swipe left action background (call - green) - shown on right side */}
+                                {emp.swipeDir === 'left' && (
+                                  <div className="absolute inset-0 bg-green-500 flex items-center justify-end pr-2">
+                                    <Phone className="w-3 h-3 text-white" />
+                                  </div>
+                                )}
+                                {/* Swipe right action background (message - blue) - shown on left side */}
+                                {emp.swipeDir === 'right' && (
+                                  <div className="absolute inset-0 bg-[#007AFF] flex items-center justify-start pl-2">
+                                    <MessageSquare className="w-3 h-3 text-white" />
+                                  </div>
+                                )}
+                                {/* Card content */}
+                                <div 
+                                  className={`bg-[#1a2942] p-1.5 flex items-center gap-2 relative transition-transform ${
+                                    emp.swipeDir === 'left' ? 'translate-x-[-20px] rounded-r-lg' : ''
+                                  } ${
+                                    emp.swipeDir === 'right' ? 'translate-x-[20px] rounded-l-lg' : ''
+                                  }`}
+                                >
+                                  <img 
+                                    src={emp.avatar} 
+                                    alt={emp.name}
+                                    className="w-6 h-6 rounded-full object-cover"
+                                  />
+                                  <div className="flex-1">
+                                    <p className="text-white text-[7px] font-medium">{emp.name}</p>
+                                    <p className={`text-[6px] ${emp.roleColor}`}>{emp.role}</p>
+                                  </div>
+                                  <Settings className="w-2.5 h-2.5 text-gray-500" />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        </motion.div>
+                      )}
+                      
+                      {previewAddon === 'schedules' && (
+                        <motion.div
+                          key="schedules"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
+                        <div className="p-3 h-full bg-[#0a1628]">
+                          <h3 className="text-white font-bold text-sm mb-0.5">Cuadrante</h3>
+                          <p className="text-gray-400 text-[8px] mb-2">Consulta tus turnos asignados</p>
+                          
+                          {/* Week navigation */}
+                          <div className="bg-[#1a2942] rounded-lg p-1.5 mb-2 flex items-center justify-between">
+                            <span className="text-gray-500 text-[8px]">{'<'}</span>
+                            <span className="text-white text-[8px] font-medium">Semana 29 - 5 oct</span>
+                            <span className="text-gray-500 text-[8px]">{'>'}</span>
+                          </div>
+                          
+                          {/* Day with shifts - each with location */}
+                          <div className="bg-[#1a2942] rounded-xl p-2 mb-2">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <p className="text-white text-[8px] font-semibold">Lunes <span className="text-gray-400 font-normal">29 sep</span></p>
+                              <p className="text-gray-500 text-[7px]">2 turnos</p>
+                            </div>
+                            <div className="space-y-1.5">
+                              <div className="bg-red-500 rounded-md px-2 py-1.5">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-white text-[7px] font-medium">Mañana</span>
+                                  <span className="text-white/80 text-[6px]">09:00-14:00</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-white/90">
+                                  <MapPin className="w-2.5 h-2.5" />
+                                  <span className="text-[6px]">Oficina Central →</span>
+                                </div>
+                              </div>
+                              <div className="bg-green-500 rounded-md px-2 py-1.5">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-white text-[7px] font-medium">Tarde</span>
+                                  <span className="text-white/80 text-[6px]">15:00-20:00</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-white/90">
+                                  <MapPin className="w-2.5 h-2.5" />
+                                  <span className="text-[6px]">Cliente ABC S.L. →</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Second day */}
+                          <div className="bg-[#1a2942] rounded-xl p-2 mb-2">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <p className="text-white text-[8px] font-semibold">Martes <span className="text-gray-400 font-normal">30 sep</span></p>
+                              <p className="text-gray-500 text-[7px]">1 turno</p>
+                            </div>
+                            <div className="bg-[#007AFF] rounded-md px-2 py-1.5">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-white text-[7px] font-medium">Completo</span>
+                                <span className="text-white/80 text-[6px]">08:00-17:00</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-white/90">
+                                <MapPin className="w-2.5 h-2.5" />
+                                <span className="text-[6px]">Almacén Norte →</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Third day */}
+                          <div className="bg-[#1a2942] rounded-xl p-2 mb-2">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <p className="text-white text-[8px] font-semibold">Miércoles <span className="text-gray-400 font-normal">1 oct</span></p>
+                              <p className="text-gray-500 text-[7px]">1 turno</p>
+                            </div>
+                            <div className="bg-purple-500 rounded-md px-2 py-1.5">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-white text-[7px] font-medium">Noche</span>
+                                <span className="text-white/80 text-[6px]">22:00-06:00</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-white/90">
+                                <MapPin className="w-2.5 h-2.5" />
+                                <span className="text-[6px]">Fábrica Sur →</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Fourth day */}
+                          <div className="bg-[#1a2942] rounded-xl p-2">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <p className="text-white text-[8px] font-semibold">Jueves <span className="text-gray-400 font-normal">2 oct</span></p>
+                              <p className="text-gray-500 text-[7px]">1 turno</p>
+                            </div>
+                            <div className="bg-orange-500 rounded-md px-2 py-1.5">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-white text-[7px] font-medium">Mañana</span>
+                                <span className="text-white/80 text-[6px]">07:00-15:00</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-white/90">
+                                <MapPin className="w-2.5 h-2.5" />
+                                <span className="text-[6px]">Sede Principal →</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        </motion.div>
+                      )}
+                      
+                      {previewAddon === 'messages' && (
+                        <motion.div
+                          key="messages"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
+                        <div className="p-3 h-full bg-[#0a1628]">
+                          <h3 className="text-white font-bold text-sm mb-0.5">Mensajes</h3>
+                          <p className="text-gray-400 text-[8px] mb-3">Conversaciones</p>
+                          
+                          <div className="bg-[#1a2942] rounded-xl overflow-hidden">
+                            {[
+                              { name: 'Equipo', msg: 'Reunión mañana', time: '10:30', unread: 3 },
+                              { name: 'Carlos', msg: 'Terminé el informe', time: '09:15', unread: 0 },
+                              { name: 'RRHH', msg: 'Recordatorio', time: 'Ayer', unread: 1 },
+                            ].map((chat, i) => (
+                              <div key={i} className="p-2 flex items-center gap-2 border-b border-[#0a1628] last:border-0">
+                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#007AFF] to-blue-600 flex items-center justify-center text-white text-[7px] font-bold">
+                                  {chat.name[0]}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex justify-between items-center">
+                                    <p className="text-white text-[8px] font-medium truncate">{chat.name}</p>
+                                    <span className="text-gray-500 text-[7px]">{chat.time}</span>
+                                  </div>
+                                  <p className="text-gray-400 text-[7px] truncate">{chat.msg}</p>
+                                </div>
+                                {chat.unread > 0 && (
+                                  <span className="w-4 h-4 bg-[#007AFF] rounded-full text-white text-[7px] flex items-center justify-center">{chat.unread}</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        </motion.div>
+                      )}
+                      
+                      {previewAddon === 'reminders' && (
+                        <motion.div
+                          key="reminders"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
+                        <div className="p-3 h-full bg-[#0a1628]">
+                          <h3 className="text-white font-bold text-sm mb-0.5">Recordatorios</h3>
+                          <p className="text-gray-400 text-[8px] mb-2">Gestiona tus recordatorios</p>
+                          
+                          {/* Search and filter row */}
+                          <div className="flex gap-1.5 mb-2">
+                            <div className="flex-1 bg-[#1a2942] rounded-lg px-2 py-1.5">
+                              <p className="text-gray-500 text-[6px]">Buscar...</p>
+                            </div>
+                            <div className="bg-[#1a2942] rounded-lg px-2 py-1.5 flex items-center gap-1">
+                              <p className="text-gray-300 text-[6px]">Activos</p>
+                            </div>
+                            <div className="bg-[#007AFF] rounded-lg px-2 py-1.5">
+                              <p className="text-white text-[6px]">+ Nuevo</p>
+                            </div>
+                          </div>
+                          
+                          {/* Reminder cards */}
+                          <div className="space-y-1.5">
+                            {/* Card 1 - Alta prioridad (rosa suave) - compartido */}
+                            <div className="bg-pink-50 rounded-xl p-2 shadow-sm">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-pink-500 text-[6px] font-medium">Alta</span>
+                                <div className="flex items-center gap-1">
+                                  <Bell className="w-2 h-2 text-gray-400" />
+                                  <Users className="w-2 h-2 text-gray-400" />
+                                  <Edit className="w-2 h-2 text-gray-400" />
+                                  <Trash2 className="w-2 h-2 text-gray-400" />
+                                </div>
+                              </div>
+                              <p className="text-gray-900 text-[7px] font-semibold">Renovar contrato proveedor</p>
+                              <p className="text-gray-600 text-[5px] mt-0.5">Revisar condiciones y firmar antes del día 15</p>
+                              <div className="flex items-center gap-1 mt-1 text-pink-400">
+                                <Calendar className="w-2 h-2" />
+                                <span className="text-[5px]">Mañana</span>
+                              </div>
+                              <div className="flex items-center justify-between mt-1.5">
+                                <div className="flex -space-x-1">
+                                  <img src="" alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
+                                  <img src="" alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
+                                </div>
+                                <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                                  <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                                  Completar
+                                </button>
+                              </div>
+                            </div>
+                            
+                            {/* Card 2 - Media prioridad (amarillo suave) - sin compartir */}
+                            <div className="bg-yellow-50 rounded-xl p-2 shadow-sm">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-yellow-600 text-[6px] font-medium">Media</span>
+                                <div className="flex items-center gap-1">
+                                  <Bell className="w-2 h-2 text-gray-400" />
+                                  <Users className="w-2 h-2 text-gray-400" />
+                                  <Edit className="w-2 h-2 text-gray-400" />
+                                  <Trash2 className="w-2 h-2 text-gray-400" />
+                                </div>
+                              </div>
+                              <p className="text-gray-900 text-[7px] font-semibold">Enviar nóminas noviembre</p>
+                              <div className="flex items-center gap-1 mt-1 text-yellow-500">
+                                <Calendar className="w-2 h-2" />
+                                <span className="text-[5px]">Hace 2 días</span>
+                              </div>
+                              <div className="flex items-center justify-end mt-1.5">
+                                <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                                  <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                                  Completar
+                                </button>
+                              </div>
+                            </div>
+                            
+                            {/* Card 3 - Baja prioridad (verde suave) - compartido con 1 persona */}
+                            <div className="bg-green-50 rounded-xl p-2 shadow-sm">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-green-600 text-[6px] font-medium">Baja</span>
+                                <div className="flex items-center gap-1">
+                                  <Bell className="w-2 h-2 text-gray-400" />
+                                  <Users className="w-2 h-2 text-gray-400" />
+                                  <Edit className="w-2 h-2 text-gray-400" />
+                                  <Trash2 className="w-2 h-2 text-gray-400" />
+                                </div>
+                              </div>
+                              <p className="text-gray-900 text-[7px] font-semibold">Revisión equipos oficina</p>
+                              <div className="flex items-center gap-1 mt-1 text-green-500">
+                                <Calendar className="w-2 h-2" />
+                                <span className="text-[5px]">Próxima semana</span>
+                              </div>
+                              <div className="flex items-center justify-between mt-1.5">
+                                <div className="flex -space-x-1">
+                                  <img src="" alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-green-50 object-cover" />
+                                </div>
+                                <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                                  <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                                  Completar
+                                </button>
+                              </div>
+                            </div>
+                            
+                            {/* Card 4 - Media prioridad (amarillo suave) - sin compartir */}
+                            <div className="bg-yellow-50 rounded-xl p-2 shadow-sm">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-yellow-600 text-[6px] font-medium">Media</span>
+                                <div className="flex items-center gap-1">
+                                  <Bell className="w-2 h-2 text-gray-400" />
+                                  <Users className="w-2 h-2 text-gray-400" />
+                                  <Edit className="w-2 h-2 text-gray-400" />
+                                  <Trash2 className="w-2 h-2 text-gray-400" />
+                                </div>
+                              </div>
+                              <p className="text-gray-900 text-[7px] font-semibold">Llamar gestoría fiscal</p>
+                              <div className="flex items-center gap-1 mt-1 text-yellow-500">
+                                <Calendar className="w-2 h-2" />
+                                <span className="text-[5px]">Viernes</span>
+                              </div>
+                              <div className="flex items-center justify-end mt-1.5">
+                                <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
+                                  <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
+                                  Completar
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        </motion.div>
+                      )}
+                      
+                      {previewAddon === 'documents' && (
+                        <motion.div
+                          key="documents"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
+                        <div className="p-3 h-full bg-[#0a1628]">
+                          <h3 className="text-white font-bold text-sm mb-0.5">Documentos</h3>
+                          <p className="text-gray-400 text-[8px] mb-2">Gestiona tus documentos laborales</p>
+                          
+                          {/* Category tabs - 2 rows */}
+                          <div className="flex gap-1 mb-1">
+                            <div className="flex-1 bg-[#007AFF] rounded-lg py-1 px-1 flex items-center justify-center gap-0.5">
+                              <FileText className="w-2 h-2 text-white" />
+                              <span className="text-white text-[5px] font-medium">Todos</span>
+                            </div>
+                            <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1 flex items-center justify-center gap-0.5">
+                              <CreditCard className="w-2 h-2 text-gray-400" />
+                              <span className="text-gray-400 text-[5px]">Nóminas</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-1 mb-2">
+                            <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1 flex items-center justify-center gap-0.5">
+                              <FileText className="w-2 h-2 text-gray-400" />
+                              <span className="text-gray-400 text-[5px]">Contratos</span>
+                            </div>
+                            <div className="flex-1 bg-[#1a2942] rounded-lg py-1 px-1 flex items-center justify-center gap-0.5">
+                              <FileText className="w-2 h-2 text-gray-400" />
+                              <span className="text-gray-400 text-[5px]">Otros...</span>
+                            </div>
+                          </div>
+                          
+                          {/* Search bar */}
+                          <div className="flex items-center gap-2 bg-[#1a2942] rounded-lg px-2 py-1 mb-2">
+                            <Search className="w-2.5 h-2.5 text-gray-500" />
+                            <span className="text-gray-500 text-[5px] flex-1">Buscar documentos...</span>
+                            <span className="text-gray-400 text-[5px]">6 docs</span>
+                          </div>
+                          
+                          <div className="bg-[#1a2942] rounded-xl overflow-hidden">
+                            {[
+                              { name: 'Nómina Noviembre 2025', type: 'Nómina', signed: false, size: '120 KB', date: '24 nov' },
+                              { name: 'Nómina Octubre 2025', type: 'Nómina', signed: true, size: '118 KB', date: '25 oct' },
+                              { name: 'Nómina Septiembre 2025', type: 'Nómina', signed: true, size: '115 KB', date: '26 sep' },
+                              { name: 'Nómina Agosto 2025', type: 'Nómina', signed: true, size: '122 KB', date: '25 ago' },
+                              { name: 'Contrato trabajo', type: 'Documento', signed: true, size: '1.2 MB', date: '15 ene' },
+                            ].map((doc, i) => (
+                              <div key={i} className="p-2 flex items-center gap-2 border-b border-[#0a1628] last:border-0">
+                                <div className="w-6 h-6 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                                  <FileText className="w-3 h-3 text-orange-400" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-white text-[7px] font-medium truncate">{doc.name}</p>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-orange-400 text-[6px]">{doc.type}</span>
+                                    <span className={`text-[6px] ${doc.signed ? 'text-green-400' : 'text-yellow-400'}`}>
+                                      {doc.signed ? '✓ Firmada' : ''}
+                                    </span>
+                                  </div>
+                                  <p className="text-gray-500 text-[5px]">{doc.size} · {doc.date}</p>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <Eye className="w-2.5 h-2.5 text-gray-500" />
+                                  {!doc.signed ? (
+                                    <PenLine className="w-2.5 h-2.5 text-[#007AFF]" />
+                                  ) : (
+                                    <ArrowRight className="w-2.5 h-2.5 text-gray-500 rotate-90" />
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        </motion.div>
+                      )}
+                      
+                      {previewAddon === 'work_reports' && (
+                        <motion.div
+                          key="work_reports"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
+                        <div className="p-3 h-full bg-[#0a1628] flex flex-col">
+                          <h3 className="text-white font-bold text-sm mb-0.5">Partes de Trabajo</h3>
+                          <p className="text-gray-400 text-[8px] mb-2">Historial de servicios</p>
+                          
+                          {/* New report button */}
+                          <button className="w-full bg-[#007AFF] rounded-xl p-1.5 mb-2 flex items-center justify-center gap-1">
+                            <span className="text-white text-[7px] font-medium">+ Nuevo Parte</span>
+                          </button>
+                          
+                          {/* Reports list */}
+                          <div className="flex-1 space-y-1.5 overflow-y-auto">
+                            {[
+                              { date: 'jue, 4 dic', time: '09:00-17:00', hours: '8h', location: 'Madrid IFEMA', client: 'Repsol', desc: 'Mantenimiento', status: 'submitted', signed: false },
+                              { date: 'lun, 1 dic', time: '09:00-17:00', hours: '8h', location: 'Madrid IFEMA', client: 'Repsol', desc: 'Instalación', status: 'submitted', signed: true, refCode: 'SMI0032SE' },
+                              { date: 'jue, 27 nov', time: '09:00-15:00', hours: '6h', location: 'Madrid IFEMA', client: 'Repsol', desc: 'Revisión', status: 'submitted', signed: true, refCode: 'SMI0034SE' },
+                            ].map((report, i) => (
+                              <div key={i} className="bg-white/5 rounded-xl p-2 border border-white/10">
+                                {/* Status badge + date */}
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-[6px] font-medium px-1.5 py-0.5 rounded bg-green-500/20 text-green-400">Enviado</span>
+                                  <span className="text-gray-400 text-[6px]">{report.date}</span>
+                                </div>
+                                
+                                {/* Time */}
+                                <div className="flex items-center gap-1 text-gray-400 text-[6px] mb-1">
+                                  <Clock className="w-2 h-2" />
+                                  <span>{report.time} ({report.hours})</span>
+                                </div>
+                                
+                                {/* Location + ref code */}
+                                <div className="flex items-center gap-1 mb-1">
+                                  <MapPin className="w-2 h-2 text-gray-400" />
+                                  <span className="text-white text-[7px] font-medium">{report.location}</span>
+                                  {report.refCode && (
+                                    <span className="text-[5px] px-1 py-0.5 rounded bg-blue-500/20 text-blue-400">{report.refCode}</span>
+                                  )}
+                                </div>
+                                
+                                {/* Client */}
+                                <div className="flex items-center gap-1 text-gray-400 text-[6px] mb-1">
+                                  <User className="w-2 h-2" />
+                                  <span>Cliente: {report.client}</span>
+                                </div>
+                                
+                                {/* Description */}
+                                <p className="text-gray-300 text-[6px]">{report.desc}</p>
+                                
+                                {/* Signature indicator */}
+                                {report.signed && (
+                                  <div className="flex items-center gap-1 mt-1 pt-1 border-t border-white/10">
+                                    <PenLine className="w-2 h-2 text-amber-400" />
+                                    <span className="text-amber-400 text-[5px]">Firmado</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        </motion.div>
+                      )}
+                      
+                      {previewAddon === 'ai_assistant' && (
+                        <motion.div
+                          key="ai_assistant"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
+                        <div className="p-3 h-full bg-[#0a1628] flex flex-col">
+                          <h3 className="text-white font-bold text-sm mb-0.5">OficazIA</h3>
+                          <p className="text-gray-400 text-[8px] mb-2">Tu asistente inteligente</p>
+                          
+                          <div className="flex-1 space-y-2 overflow-y-auto">
+                            {/* Usuario mensaje 1 */}
+                            <div className="flex justify-end">
+                              <div className="bg-[#007AFF] rounded-xl rounded-tr-sm p-2 max-w-[88%]">
+                                <p className="text-white text-[8px] leading-relaxed">Ramírez tiene que trabajar la semana que viene de 9 a 14 y Marta hace los turnos de tarde</p>
+                              </div>
+                            </div>
+                            {/* IA respuesta 1 */}
+                            <div className="flex gap-1.5">
+                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                                <Zap className="w-2.5 h-2.5 text-white" />
+                              </div>
+                              <div className="bg-[#1a2942] rounded-xl rounded-tl-sm p-2 max-w-[85%]">
+                                <p className="text-white text-[8px] leading-relaxed">¿El turno de Marta de 15 a 20? Recuerda que el viernes Marta está ausente, podría cubrirlo Marcos 🤔</p>
+                              </div>
+                            </div>
+                            {/* Usuario mensaje 2 */}
+                            <div className="flex justify-end">
+                              <div className="bg-[#007AFF] rounded-xl rounded-tr-sm p-2 max-w-[88%]">
+                                <p className="text-white text-[8px]">¡Exacto!</p>
+                              </div>
+                            </div>
+                            {/* IA respuesta 2 */}
+                            <div className="flex gap-1.5">
+                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                                <Zap className="w-2.5 h-2.5 text-white" />
+                              </div>
+                              <div className="bg-[#1a2942] rounded-xl rounded-tl-sm p-2 max-w-[85%]">
+                                <p className="text-white text-[8px]">✅ Turnos creados:</p>
+                                <p className="text-gray-400 text-[7px] mt-0.5">• Ramírez: L-V 9:00-14:00</p>
+                                <p className="text-gray-400 text-[7px]">• Marta: L-J 15:00-20:00</p>
+                                <p className="text-gray-400 text-[7px]">• Marcos: V 15:00-20:00</p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-2 flex gap-1.5">
+                            <input 
+                              type="text" 
+                              placeholder="Escribe..."
+                              className="flex-1 bg-[#1a2942] rounded-full px-3 py-1.5 text-[7px] text-white border border-[#2a3952] placeholder-gray-500"
+                              readOnly
+                            />
+                            <button className="w-6 h-6 bg-[#007AFF] rounded-full flex items-center justify-center">
+                              <ArrowRight className="w-3 h-3 text-white" />
+                            </button>
+                          </div>
+                        </div>
+                        </motion.div>
+                      )}
+                      
+                      {previewAddon === 'crm' && (
+                        <motion.div
+                          key="crm"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
+                          <div className="p-3 h-full bg-[#0a1628] flex flex-col">
+                            <div className="flex items-center justify-between mb-2">
+                              <div>
+                                <p className="text-white text-[10px] font-semibold">CRM</p>
+                                <p className="text-gray-400 text-[7px]">Contactos y proyectos</p>
+                              </div>
+                              <button className="bg-[#007AFF] text-white text-[7px] px-2 py-1 rounded-lg">+ Contacto</button>
+                            </div>
+
+                            <div className="flex items-center gap-1 mb-2">
+                              <div className="flex-1 bg-[#1a2942] rounded-lg px-2 py-1 text-[6px] text-gray-400">Buscar nombre, email...</div>
+                              <span className="text-[7px] text-gray-400">24</span>
+                            </div>
+
+                            <div className="space-y-1.5 flex-1 overflow-y-auto">
+                              {[
+                                { name: 'Repsol', role: 'client', email: 'contacto@repsol.com', phone: '+34 600 123 123', tags: ['Energia'], status: 'Activo' },
+                                { name: 'Proveedor Delta', role: 'provider', email: 'ventas@delta.com', phone: '+34 910 222 333', tags: ['Mantenimiento'], status: 'Activo' },
+                                { name: 'Clínica Vida', role: 'client', email: 'info@clinicavida.es', phone: '+34 650 444 555', tags: ['Salud'], status: 'Onboarding' },
+                              ].map((c, i) => (
+                                <div key={i} className="bg-[#1a2942] rounded-lg p-2 border border-white/5">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                      <User className="w-3.5 h-3.5 text-[#007AFF]" />
+                                      <div className="min-w-0">
+                                        <p className="text-white text-[8px] font-semibold truncate">{c.name}</p>
+                                        <p className="text-gray-400 text-[6px] truncate">{c.email}</p>
+                                      </div>
+                                    </div>
+                                    <span className={`text-[6px] px-1.5 py-0.5 rounded-full bg-white/10 text-gray-200 ${c.role === 'provider' ? 'text-amber-300' : 'text-green-300'}`}>
+                                      {c.role === 'provider' ? 'Proveedor' : 'Cliente'}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-[6px] text-gray-400">
+                                    <div className="flex items-center gap-1">
+                                      <Phone className="w-2.5 h-2.5" />
+                                      <span>{c.phone}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-gray-300">
+                                      <Square className="w-2.5 h-2.5" />
+                                      <span>{c.status}</span>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {c.tags.map((tag) => (
+                                      <span key={tag} className="text-[6px] text-blue-300 bg-blue-500/10 px-1.5 py-0.5 rounded-full">{tag}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                      
+                      {previewAddon === 'accounting' && (
+                        <motion.div
+                          key="accounting"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
+                          <div className="p-3 h-full bg-[#0a1628] flex flex-col">
+                            <div className="flex items-center justify-between mb-2">
+                              <div>
+                                <p className="text-white text-[10px] font-semibold">Contabilidad</p>
+                                <p className="text-gray-400 text-[7px]">Ingresos y gastos</p>
+                              </div>
+                              <button className="bg-[#007AFF] text-white text-[7px] px-2 py-1 rounded-lg">+ Movimiento</button>
+                            </div>
+
+                            {/* Donut Chart Summary */}
+                            <div className="bg-white/5 rounded-xl p-2 border border-white/10 mb-2">
+                              <div className="flex items-center justify-between">
+                                {/* Donut visual */}
+                                <div className="relative w-14 h-14">
+                                  <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                                    {/* Background circle */}
+                                    <circle cx="18" cy="18" r="15.5" fill="none" stroke="#1a2942" strokeWidth="3"/>
+                                    {/* Income arc (green) - 60% */}
+                                    <circle cx="18" cy="18" r="15.5" fill="none" stroke="#22c55e" strokeWidth="3"
+                                      strokeDasharray="58.4 97.4" strokeDashoffset="0"/>
+                                    {/* Expense arc (red) - 40% */}
+                                    <circle cx="18" cy="18" r="15.5" fill="none" stroke="#ef4444" strokeWidth="3"
+                                      strokeDasharray="39 97.4" strokeDashoffset="-58.4"/>
+                                  </svg>
+                                  {/* Center balance */}
+                                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                    <p className="text-green-400 text-[8px] font-bold">+13.7k</p>
+                                    <p className="text-gray-500 text-[5px]">Balance</p>
+                                  </div>
+                                </div>
+                                
+                                {/* Legend */}
+                                <div className="flex-1 ml-2 space-y-1">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-1">
+                                      <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
+                                      <span className="text-gray-400 text-[6px]">Ingresos</span>
+                                    </div>
+                                    <span className="text-green-400 text-[7px] font-semibold">32.4k€</span>
+                                  </div>
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-1">
+                                      <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>
+                                      <span className="text-gray-400 text-[6px]">Gastos</span>
+                                    </div>
+                                    <span className="text-red-400 text-[7px] font-semibold">18.7k€</span>
+                                  </div>
+                                  <div className="flex items-center justify-between pt-0.5 border-t border-white/10">
+                                    <span className="text-gray-500 text-[6px]">Rentabilidad</span>
+                                    <span className="text-green-300 text-[6px] font-semibold">42%</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1 mb-2">
+                              <span className="text-[6px] text-gray-400 bg-[#1a2942] px-2 py-1 rounded-lg">Filtro: mes actual</span>
+                              <span className="text-[6px] text-gray-400 bg-[#1a2942] px-2 py-1 rounded-lg">Tipo: gasto</span>
+                            </div>
+
+                            <div className="space-y-1.5 flex-1 overflow-y-auto">
+                              {[
+                                { concept: 'Factura proveedor', amount: '-1.200€', category: 'Materiales', type: 'expense', status: 'aprobado', attachments: 2, date: '02 dic' },
+                                { concept: 'Servicio técnico', amount: '+2.800€', category: 'Ingreso', type: 'income', status: 'registrado', attachments: 1, date: '30 nov' },
+                                { concept: 'Dietas empleado', amount: '-56€', category: 'Gasto', type: 'expense', status: 'pendiente', attachments: 1, date: '28 nov' },
+                              ].map((tx, i) => (
+                                <div key={i} className="bg-[#1a2942] rounded-lg p-2 border border-white/5">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                      <FileText className="w-3.5 h-3.5 text-[#007AFF]" />
+                                      <div className="min-w-0">
+                                        <p className="text-white text-[8px] font-semibold truncate">{tx.concept}</p>
+                                        <p className="text-gray-400 text-[6px] truncate">{tx.category}</p>
+                                      </div>
+                                    </div>
+                                    <p className={`text-[8px] font-semibold ${tx.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>{tx.amount}</p>
+                                  </div>
+                                  <div className="flex items-center justify-between text-[6px] text-gray-400">
+                                    <div className="flex items-center gap-1">
+                                      <Calendar className="w-2.5 h-2.5" />
+                                      <span>{tx.date}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-gray-300">
+                                      <Square className="w-2.5 h-2.5" />
+                                      <span className="capitalize">{tx.status}</span>
+                                      <Paperclip className="w-2.5 h-2.5" />
+                                      <span>{tx.attachments}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                      
+                      {previewAddon === 'inventory' && (
+                        <motion.div
+                          key="inventory"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                          className="h-full"
+                        >
+                          <div className="p-3 h-full bg-[#0a1628] flex flex-col">
+                            <div className="flex items-center justify-between mb-2">
+                              <div>
+                                <p className="text-white text-[10px] font-semibold">Inventario</p>
+                                <p className="text-gray-400 text-[7px]">Productos y stock</p>
+                              </div>
+                              <button className="bg-[#007AFF] text-white text-[7px] px-2 py-1 rounded-lg">+ Producto</button>
+                            </div>
+
+                            {/* Stats Grid */}
+                            <div className="grid grid-cols-3 gap-1.5 mb-2">
+                              <div className="bg-white/5 rounded-lg p-1.5 border border-white/10 text-center">
+                                <p className="text-white text-sm font-bold">142</p>
+                                <p className="text-gray-400 text-[6px]">SKUs</p>
+                              </div>
+                              <div className="bg-white/5 rounded-lg p-1.5 border border-white/10 text-center">
+                                <p className="text-green-400 text-sm font-bold">58.9k</p>
+                                <p className="text-gray-400 text-[6px]">Valor €</p>
+                              </div>
+                              <div className="bg-amber-500/10 rounded-lg p-1.5 border border-amber-500/30 text-center">
+                                <p className="text-amber-300 text-sm font-bold">2</p>
+                                <p className="text-amber-300/70 text-[6px]">Stock bajo</p>
+                              </div>
+                            </div>
+
+                            {/* Mini bar chart - Stock status */}
+                            <div className="bg-white/5 rounded-lg p-2 border border-white/10 mb-2">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-gray-400 text-[6px]">Estado de stock</span>
+                                <span className="text-gray-500 text-[6px]">142 productos</span>
+                              </div>
+                              <div className="flex items-end gap-1 h-6">
+                                <div className="flex-1 flex flex-col justify-end">
+                                  <div className="bg-green-400 rounded-t-sm" style={{ height: '75%' }}></div>
+                                  <p className="text-[6px] text-gray-400 text-center mt-0.5">OK</p>
+                                  <p className="text-[6px] text-white text-center font-semibold">124</p>
+                                </div>
+                                <div className="flex-1 flex flex-col justify-end">
+                                  <div className="bg-amber-300 rounded-t-sm" style={{ height: '25%' }}></div>
+                                  <p className="text-[6px] text-gray-400 text-center mt-0.5">Bajo</p>
+                                  <p className="text-[6px] text-white text-center font-semibold">16</p>
+                                </div>
+                                <div className="flex-1 flex flex-col justify-end">
+                                  <div className="bg-red-400 rounded-t-sm" style={{ height: '15%' }}></div>
+                                  <p className="text-[6px] text-gray-400 text-center mt-0.5">Sin</p>
+                                  <p className="text-[6px] text-white text-center font-semibold">2</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1 mb-2">
+                              <div className="flex-1 bg-[#1a2942] rounded-lg px-2 py-1 text-[6px] text-gray-400">Buscar SKU o nombre...</div>
+                              <span className="text-[7px] text-gray-400">Almacenes: 2</span>
+                            </div>
+
+                            <div className="space-y-1.5 flex-1 overflow-y-auto">
+                              {[
+                                { name: 'Caja tornillos M4', sku: 'SKU-204', stock: 18, warehouse: 'Almacén Norte', status: 'ok' },
+                                { name: 'Kit cableado red', sku: 'SKU-118', stock: 4, warehouse: 'Sede Central', status: 'bajo' },
+                                { name: 'Router WiFi Pro', sku: 'SKU-066', stock: 0, warehouse: 'Almacén Sur', status: 'agotado' },
+                              ].map((item, i) => (
+                                <div key={i} className="bg-[#1a2942] rounded-lg p-2 border border-white/5">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                      <Package className="w-3.5 h-3.5 text-[#007AFF]" />
+                                      <div className="min-w-0">
+                                        <p className="text-white text-[8px] font-semibold truncate">{item.name}</p>
+                                        <p className="text-gray-500 text-[6px]">{item.sku}</p>
+                                      </div>
+                                    </div>
+                                    <span className={`text-[7px] px-1.5 py-0.5 rounded ${
+                                      item.status === 'ok' ? 'bg-green-500/20 text-green-300' :
+                                      item.status === 'bajo' ? 'bg-amber-500/20 text-amber-300' :
+                                      'bg-red-500/20 text-red-300'
+                                    }`}>
+                                      {item.stock} uds
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-[6px] text-gray-400">
+                                    <div className="flex items-center gap-1">
+                                      <Store className="w-2.5 h-2.5" />
+                                      <span>{item.warehouse}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                  
+                  {/* Home Indicator */}
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 bg-white/30 rounded-full"></div>
+                </div>
+                
+                {/* Decorative elements */}
+                <div className="absolute -z-10 top-1/4 -right-8 w-32 h-32 bg-[#007AFF]/10 rounded-full blur-2xl"></div>
+                <div className="absolute -z-10 bottom-1/4 -left-8 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
+              </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      {/* Pricing Section - 3 Column Layout */}
+      <section id="precios" className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 lg:py-16 flex items-center">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-8">
+          {/* Header */}
+          <ScrollReveal className="text-center mb-6 lg:mb-8">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+              Sin planes. Paga solo lo que necesitas.
+            </h2>
+            <p className="text-sm md:text-base text-gray-500">
+              Configura tu equipo y selecciona las funciones
+            </p>
+          </ScrollReveal>
+          
+          {/* 3 Column Grid */}
+          <ScrollReveal delay={0.1}>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5">
+              
+              {/* Column 1: Users */}
+              <div className="bg-white rounded-2xl p-5 shadow-xl border border-gray-100 flex flex-col">
+                <div className="mb-4">
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="text-3xl font-black text-blue-500">1</span>
+                    <h3 className="font-semibold text-gray-900">Crea tu equipo</h3>
+                  </div>
+                  <p className="text-xs text-gray-400 ml-10">Luego podrás añadir más en segundos</p>
+                </div>
+                
+                <div className="space-y-3 flex-1">
+                  {/* Employees */}
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                          <Users className="w-3.5 h-3.5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Empleados</p>
+                                                  </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, employees: Math.max(0, prev.employees - 1) }))}
+                          className="w-6 h-6 rounded-full bg-white border border-gray-200 hover:bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-xs"
+                        >
+                          -
+                        </button>
+                        <input 
+                          type="number"
+                          min="0"
+                          value={userCounts.employees}
+                          onChange={(e) => setUserCounts(prev => ({ ...prev, employees: Math.max(0, parseInt(e.target.value) || 0) }))}
+                          className="w-8 text-center font-bold text-gray-900 text-sm bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, employees: prev.employees + 1 }))}
+                          className="w-6 h-6 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-xs"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 leading-tight">Tu equipo del día a día. Fichan entrada y salida, solicitan vacaciones, consultan su horario y reciben mensajes. Todo desde el móvil.</p>
+                  </div>
+                  
+                  {/* Managers */}
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center">
+                          <Shield className="w-3.5 h-3.5 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Managers</p>
+                                                  </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, managers: Math.max(0, prev.managers - 1) }))}
+                          className="w-6 h-6 rounded-full bg-white border border-gray-200 hover:bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-xs"
+                        >
+                          -
+                        </button>
+                        <input 
+                          type="number"
+                          min="0"
+                          value={userCounts.managers}
+                          onChange={(e) => setUserCounts(prev => ({ ...prev, managers: Math.max(0, parseInt(e.target.value) || 0) }))}
+                          className="w-8 text-center font-bold text-gray-900 text-sm bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, managers: prev.managers + 1 }))}
+                          className="w-6 h-6 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-xs"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 leading-tight">Tus encargados o supervisores. Aprueban vacaciones, ven los fichajes de su equipo y gestionan horarios. Sin acceso a facturación.</p>
+                  </div>
+                  
+                  {/* Admins */}
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center">
+                          <Settings className="w-3.5 h-3.5 text-amber-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Admins</p>
+                                                  </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, admins: Math.max(1, prev.admins - 1) }))}
+                          disabled={userCounts.admins <= 1}
+                          className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${
+                            userCounts.admins <= 1 
+                              ? 'bg-gray-100 text-gray-300 cursor-not-allowed' 
+                              : 'bg-white border border-gray-200 hover:bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          -
+                        </button>
+                        <input 
+                          type="number"
+                          min="1"
+                          value={userCounts.admins}
+                          onChange={(e) => setUserCounts(prev => ({ ...prev, admins: Math.max(1, parseInt(e.target.value) || 1) }))}
+                          className="w-8 text-center font-bold text-gray-900 text-sm bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <button 
+                          onClick={() => setUserCounts(prev => ({ ...prev, admins: prev.admins + 1 }))}
+                          className="w-6 h-6 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-xs"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 leading-tight">Tú y tus socios. Control total del sistema: añadir empleados, contratar funciones, ver informes y gestionar la facturación.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Column 2: Funcionalidades - Vertical Scroll */}
+              <div className="bg-white rounded-2xl p-5 shadow-xl border border-gray-100 flex flex-col">
+                <div className="mb-4">
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="text-3xl font-black text-purple-500">2</span>
+                    <h3 className="font-semibold text-gray-900">Elige funcionalidades</h3>
+                  </div>
+                  <p className="text-xs text-gray-400 ml-10">Podrás ampliar poco a poco tu empresa</p>
+                </div>
+                
+                {/* Scrollable addon list */}
+                <div className="flex-1 overflow-y-auto max-h-[280px] lg:max-h-[320px] space-y-2 pr-1 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                  {addons.map((addon) => {
+                    const isSelected = selectedAddons.has(addon.key);
+                    const IconComponent = addon.icon;
+                    const isLocked = addon.isLocked;
+                    return (
+                      <button
+                        key={addon.key}
+                        onClick={() => toggleAddon(addon.key)}
+                        disabled={isLocked}
+                        className={`w-full p-3 rounded-xl text-left transition-all duration-200 border flex items-center gap-3 ${
+                          isLocked
+                            ? 'bg-green-50 border-green-200'
+                            : isSelected 
+                              ? 'bg-[#007AFF] border-[#007AFF] text-white shadow-md' 
+                              : 'bg-gray-50 border-gray-100 hover:border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          isLocked ? 'bg-green-500' : isSelected ? 'bg-white/20' : 'bg-white'
+                        }`}>
+                          <IconComponent className={`w-4 h-4 ${
+                            isLocked ? 'text-white' : isSelected ? 'text-white' : 'text-gray-600'
+                          }`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`font-medium text-sm ${
+                            isLocked ? 'text-green-800' : isSelected ? 'text-white' : 'text-gray-900'
+                          }`}>
+                            {addon.name}
+                          </p>
+                          <p className={`text-[10px] leading-tight mt-0.5 ${
+                            isLocked ? 'text-green-600' : isSelected ? 'text-white/70' : 'text-gray-500'
+                          }`}>
+                            {isLocked ? '✓ Incluido gratis' : addon.description}
+                          </p>
+                        </div>
+                        {isSelected && !isLocked && (
+                          <CheckCircle className="w-5 h-5 text-white flex-shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <p className="text-center text-[10px] text-gray-400 mt-3 lg:hidden">↕ Desliza para ver más</p>
+              </div>
+
+              {/* Column 3: Summary */}
+              <div className="bg-white rounded-2xl p-5 shadow-xl border border-gray-100 flex flex-col">
+                <div className="mb-4">
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="text-3xl font-black text-emerald-500">3</span>
+                    <h3 className="font-semibold text-gray-900">Tu plan perfecto</h3>
+                  </div>
+                  <p className="text-xs text-gray-400 ml-10">Nada sobra, nada falta. Justo lo que necesitas</p>
+                </div>
+                
+                {/* Price */}
+                <div className="text-center py-4 mb-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
+                  <p className="text-gray-500 text-xs mb-1">Total mensual</p>
+                  <div className="flex items-baseline justify-center gap-1">
+                    <span className="text-4xl lg:text-5xl font-black text-gray-900">€{monthlyTotal}</span>
+                    <span className="text-base text-gray-400">/mes</span>
+                  </div>
+                </div>
+                
+                {/* Selected items badges */}
+                <div className="flex flex-wrap gap-1.5 flex-1 content-start">
+                  {userCounts.employees > 0 && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                      {userCounts.employees} Empleado{userCounts.employees !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                  {userCounts.managers > 0 && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                      {userCounts.managers} Manager{userCounts.managers !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                    {userCounts.admins} Admin
+                  </span>
+                  {addons.filter(a => selectedAddons.has(a.key) || a.isLocked).map((addon) => {
+                    const IconComponent = addon.icon;
+                    return (
+                      <span 
+                        key={addon.key}
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                          addon.isLocked ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        <IconComponent className="w-3 h-3" />
+                        {addon.name}
+                      </span>
+                    );
+                  })}
+                </div>
+                
+                {/* CTA */}
+                <div className="mt-auto pt-4">
+                  {registrationSettings?.publicRegistrationEnabled ? (
+                    <Link href="/request-code">
+                      <Button className="w-full py-4 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]">
+                        Prueba 7 días gratis
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button 
+                      onClick={() => setIsContactFormOpen(true)}
+                      className="w-full py-4 text-base font-bold bg-[#007AFF] hover:bg-[#0056CC]"
+                    >
+                      Contactar
+                    </Button>
+                  )}
+                  <p className="text-center text-[10px] text-gray-400 mt-2">Sin compromiso • Cancela cuando quieras</p>
+                </div>
+              </div>
+              
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+      {/* Final CTA Section - Memorable Close */}
+      <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#007AFF] via-blue-600 to-indigo-700 relative overflow-hidden py-20 md:py-24">
+        {/* Background Elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-cyan-400/10 rounded-full blur-3xl transform -translate-x-1/3 translate-y-1/3"></div>
+        </div>
+        
+        <div className="max-w-5xl mx-auto px-6 lg:px-8 text-center relative z-10">
+          <ScrollReveal>
+            {/* The Big Question */}
+            <p className="text-xl md:text-2xl text-blue-200 font-medium mb-6">
+              Una pregunta honesta:
+            </p>
+            
+            {/* Main Statement - The Hook */}
+            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white mb-8 tracking-tight leading-[1.1]">
+              ¿Cuánto vale<br />
+              <span className="bg-gradient-to-r from-cyan-300 via-white to-blue-200 bg-clip-text text-transparent">tu hora?</span>
+            </h2>
+            
+            {/* The Insight */}
+            <p className="text-2xl md:text-3xl lg:text-4xl text-white/90 font-semibold mb-6 max-w-4xl mx-auto leading-tight">
+              Más que unos euros al mes, seguro.
+            </p>
+            
+            {/* The Philosophy */}
+            <p className="text-lg md:text-xl text-blue-100 mb-16 max-w-3xl mx-auto leading-relaxed">
+              Cada minuto que pierdes en tareas administrativas es un minuto que no dedicas a lo que realmente importa: 
+              <span className="text-white font-semibold"> hacer crecer tu negocio, cuidar a tu equipo, vivir tu vida.</span>
+            </p>
+          </ScrollReveal>
+          
+          <ScrollReveal delay={0.2}>
+            {/* CTA Button - Massive */}
+            {registrationSettings?.publicRegistrationEnabled && (
+              <div className="mb-10">
+                <Link href="/request-code">
+                  <button className="group relative bg-white text-[#007AFF] hover:bg-gray-50 font-black text-xl md:text-2xl px-12 md:px-16 py-6 md:py-7 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] hover:shadow-[0_30px_80px_-15px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-all duration-300">
+                    <span className="relative z-10 flex items-center gap-4">
+                      Recupera tu tiempo
+                      <ArrowRight className="w-7 h-7 group-hover:translate-x-2 transition-transform duration-300" />
+                    </span>
+                  </button>
+                </Link>
+              </div>
+            )}
+            
+            {/* Closing Line */}
+            <p className="text-blue-200/80 text-base md:text-lg font-medium">
+              7 días gratis. Sin tarjeta. Sin compromiso.
+            </p>
+          </ScrollReveal>
+        </div>
+      </section>
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-16">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="grid md:grid-cols-3 gap-8">
+            <div>
+              <div className="flex items-center space-x-2 mb-6">
+                <img 
+                  src="/email-logo-white.png" 
+                  alt="Oficaz" 
+                  className="h-8 w-auto"
+                  loading="lazy"
+                />
+              </div>
+              <p className="text-gray-400 mb-4">
+                La plataforma de gestión empresarial más intuitiva para empresas modernas.
+              </p>
+              <div className="text-sm text-gray-500">
+                © 2025 Oficaz. Todos los derechos reservados.
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Producto</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#features" className="hover:text-white transition-colors">Funciones</a></li>
+                <li><a href="#pricing" className="hover:text-white transition-colors">Precios</a></li>
+                <li><a href="/request-code" className="hover:text-white transition-colors">Prueba Gratis</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Legal</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><Link href="/politica-privacidad" className="hover:text-white transition-colors">Política de Privacidad</Link></li>
+                <li><Link href="/terminos" className="hover:text-white transition-colors">Términos de Servicio</Link></li>
+                <li><Link href="/aviso-legal" className="hover:text-white transition-colors">Aviso Legal</Link></li>
+                <li><Link href="/cookies" className="hover:text-white transition-colors">Política de Cookies</Link></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
+            <p>Oficaz - Gestión empresarial inteligente para empresas que lo quieren fácil</p>
+          </div>
+        </div>
+      </footer>
+      {/* Contact Form Modal - Lazy loaded */}
+      {isContactFormOpen && (
+        <Suspense fallback={<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"><div className="bg-white rounded-lg p-6">Cargando...</div></div>}>
+          <ContactForm 
+            isOpen={isContactFormOpen} 
+            onClose={() => setIsContactFormOpen(false)} 
+          />
+        </Suspense>
+      )}
+    </div>
+  );
+}
+

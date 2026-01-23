@@ -5,6 +5,7 @@ import { usePageTitle } from '@/hooks/use-page-title';
 import { usePageHeader } from '@/components/layout/page-header';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { getAuthHeaders } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,11 +14,12 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import StatsCard from '@/components/StatsCard';
+import StatsCard, { StatsCardGrid } from '@/components/StatsCard';
 import { cn } from '@/lib/utils';
-import { 
-  ClipboardList, 
-  Clock, 
+import { TabNavigation } from '@/components/ui/tab-navigation';
+import {
+  ClipboardList,
+  Clock,
   MapPin,
   Calendar as CalendarIcon,
   Search,
@@ -34,16 +36,33 @@ import {
   Settings,
   Plus,
   ArrowDown,
-  FolderKanban
+  FolderKanban,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { DatePickerPeriod } from '@/components/ui/date-picker';
+import { DatePickerDay } from '@/components/ui/date-picker';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { format, startOfMonth, endOfMonth, startOfDay, endOfDay, parseISO } from 'date-fns';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  startOfDay,
+  endOfDay,
+  parseISO,
+  addWeeks,
+  subWeeks,
+  addMonths,
+  subMonths,
+  eachDayOfInterval,
+  startOfWeek,
+  endOfWeek,
+  isSameDay
+} from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface WorkReportWithEmployee {
@@ -67,6 +86,7 @@ interface WorkReportWithEmployee {
   updatedAt: string;
   employeeName: string;
   employeeSignature?: string | null;
+  profilePicture?: string | null;
 }
 
 interface Employee {
@@ -74,6 +94,12 @@ interface Employee {
   fullName: string;
   role: string;
   workReportMode?: string;
+}
+
+interface UniqueEmployee {
+  id: number;
+  name: string;
+  profilePicture?: string | null;
 }
 
 const STATUS_STYLES = {
@@ -102,9 +128,9 @@ interface EditFormData {
 
 export default function AdminWorkReportsPage() {
   usePageTitle('Partes de Trabajo - Admin');
-  const { user, isAuthenticated, isLoading: authLoading, subscription } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const featureCheck = useFeatureCheck();
-  
+
   const workReportsAccessMode = featureCheck?.getWorkReportsAccessMode?.() || 'none';
   const isSelfAccessOnly = workReportsAccessMode === 'self';
   const { setHeader, resetHeader } = usePageHeader();
@@ -130,17 +156,15 @@ export default function AdminWorkReportsPage() {
   const [displayedCount, setDisplayedCount] = useState(5);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [showFilters, setShowFilters] = useState(false);
-  // Estados para filtro de mes desplegable
+  const [isViewModalEditMode, setIsViewModalEditMode] = useState(false);
+  const [activeTab, setActiveTab] = useState<'list' | 'grid'>('list');
+  const [gridViewMode, setGridViewMode] = useState<'week' | 'month'>('week');
+  const [gridViewDate, setGridViewDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
-  const [isMonthDialogOpen, setIsMonthDialogOpen] = useState(false);
-  // Estados para filtro de rango
-  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
-  const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<WorkReportWithEmployee | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<number | null>(null);
@@ -174,38 +198,33 @@ export default function AdminWorkReportsPage() {
     notes: ''
   });
 
-  // Calcular rango de fechas según el filtro
   const dateRangeParams = useMemo(() => {
-    const today = new Date();
     switch (dateFilter) {
-      case 'today':
-        const todayStr = format(today, 'yyyy-MM-dd');
-        return { startDate: todayStr, endDate: todayStr };
       case 'month':
         const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
         const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
-        return { 
+        return {
           startDate: format(startOfDay(monthStart), 'yyyy-MM-dd'),
           endDate: format(endOfDay(monthEnd), 'yyyy-MM-dd')
         };
-      case 'custom':
-        if (startDate && endDate) {
-          return { startDate, endDate };
+      case 'day':
+        if (selectedDay) {
+          const dayStr = format(selectedDay, 'yyyy-MM-dd');
+          return { startDate: dayStr, endDate: dayStr };
         }
         return {};
       case 'all':
       default:
         return {};
     }
-  }, [dateFilter, currentMonth, startDate, endDate]);
+  }, [dateFilter, currentMonth, selectedDay]);
 
   const { data: employees = [] } = useQuery<Employee[]>({
     queryKey: ['/api/employees'],
     enabled: isAuthenticated && !authLoading,
-    staleTime: 5 * 60 * 1000 // ⚡ Cache for 5 minutes
+    staleTime: 5 * 60 * 1000
   });
 
-  // Autocomplete data for create modal
   const { data: companyLocations = [] } = useQuery<string[]>({
     queryKey: ['/api/admin/work-reports/locations'],
     enabled: isAuthenticated && !authLoading,
@@ -224,7 +243,6 @@ export default function AdminWorkReportsPage() {
     staleTime: 60000
   });
 
-  // Filter suggestions based on input
   const filteredLocationSuggestions = useMemo(() => {
     if (!createFormData.location) return companyLocations.slice(0, 5);
     return companyLocations
@@ -254,11 +272,17 @@ export default function AdminWorkReportsPage() {
     return params.toString() ? `?${params.toString()}` : '';
   }, [dateRangeParams, employeeFilter]);
 
-  const stableQueryKey = useMemo(() => 
-    ['/api/admin/work-reports', dateFilter, currentMonth.getTime(), startDate, endDate, employeeFilter] as const,
-    [dateFilter, currentMonth, startDate, endDate, employeeFilter]
+  const stableQueryKey = useMemo(
+    () => [
+      '/api/admin/work-reports',
+      dateFilter,
+      currentMonth.getTime(),
+      selectedDay ? selectedDay.getTime() : 0,
+      employeeFilter
+    ] as const,
+    [dateFilter, currentMonth, selectedDay, employeeFilter]
   );
-  
+
   const { data: reports = [], isLoading: reportsLoading, isFetching } = useQuery<WorkReportWithEmployee[]>({
     queryKey: stableQueryKey,
     queryFn: async () => {
@@ -268,46 +292,41 @@ export default function AdminWorkReportsPage() {
       });
       if (!response.ok) throw new Error('Failed to fetch reports');
       const data = await response.json();
-      // Handle both old array format and new { reports, accessMode } format
-      return Array.isArray(data) ? data : (data?.reports || []);
+      return Array.isArray(data) ? data : data?.reports || [];
     },
     enabled: isAuthenticated && !authLoading,
     staleTime: 30000,
     placeholderData: keepPreviousData
   });
 
-  // Lista de meses que contienen partes (extraídos de los reportes)
   const availableMonths = useMemo(() => {
     const monthsSet = new Set<string>();
     reports.forEach(report => {
       const reportDate = parseISO(report.reportDate);
       monthsSet.add(format(reportDate, 'yyyy-MM'));
     });
-    // Ordenar de más reciente a más antiguo
     return Array.from(monthsSet).sort((a, b) => b.localeCompare(a));
   }, [reports]);
 
-  // Source reports - filter to user's own reports in self-access mode
   const reportsSource = useMemo(() => {
     if (isSelfAccessOnly && user?.id) {
       return reports.filter(r => r.employeeId === user.id);
     }
     return reports;
   }, [reports, isSelfAccessOnly, user?.id]);
-  
+
   const filteredReports = useMemo(() => {
     const searchLower = searchTerm.toLowerCase();
     return reportsSource.filter(report => {
-      // Filtro por proyecto (refCode)
       if (projectFilter !== 'all' && report.refCode !== projectFilter) {
         return false;
       }
-      
+
       if (searchTerm === '') return true;
-      
+
       const formattedDate = format(parseISO(report.reportDate), "d 'de' MMMM yyyy", { locale: es }).toLowerCase();
       const shortDate = format(parseISO(report.reportDate), 'dd/MM/yyyy');
-      
+
       return (
         report.location.toLowerCase().includes(searchLower) ||
         report.description.toLowerCase().includes(searchLower) ||
@@ -320,19 +339,16 @@ export default function AdminWorkReportsPage() {
     });
   }, [reportsSource, searchTerm, projectFilter]);
 
-  // Reportes visibles para infinite scroll
   const visibleReports = useMemo(() => {
     return filteredReports.slice(0, displayedCount);
   }, [filteredReports, displayedCount]);
 
   const hasMoreToDisplay = displayedCount < filteredReports.length;
 
-  // Resetear displayedCount cuando cambian los filtros
   useEffect(() => {
     setDisplayedCount(5);
   }, [dateFilter, employeeFilter, searchTerm, projectFilter]);
 
-  // Infinite scroll observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -351,21 +367,33 @@ export default function AdminWorkReportsPage() {
   }, [hasMoreToDisplay, filteredReports.length]);
 
   // Lista de empleados únicos que han enviado partes (uses reportsSource for self-access mode)
-  const uniqueEmployeesList = useMemo(() => {
-    const employeeMap = new Map<number, string>();
-    reportsSource.forEach(r => {
-      if (!employeeMap.has(r.employeeId)) {
-        employeeMap.set(r.employeeId, r.employeeName);
+  const uniqueEmployeesList = useMemo<UniqueEmployee[]>(() => {
+    const employeeMap = new Map<number, UniqueEmployee>();
+    reportsSource.forEach(report => {
+      const existing = employeeMap.get(report.employeeId);
+      if (!existing) {
+        employeeMap.set(report.employeeId, {
+          id: report.employeeId,
+          name: report.employeeName,
+          profilePicture: report.profilePicture ?? null
+        });
+      } else if (!existing.profilePicture && report.profilePicture) {
+        employeeMap.set(report.employeeId, {
+          ...existing,
+          profilePicture: report.profilePicture
+        });
       }
     });
-    return Array.from(employeeMap.entries()).map(([id, name]) => ({ id, name }));
+    return Array.from(employeeMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [reportsSource]);
 
   // Lista de proyectos únicos (refCodes) - uses reportsSource for self-access mode
   const uniqueProjectsList = useMemo(() => {
     const projects = new Set<string>();
-    reportsSource.forEach(r => {
-      if (r.refCode) projects.add(r.refCode);
+    reportsSource.forEach(report => {
+      if (report.refCode) {
+        projects.add(report.refCode);
+      }
     });
     return Array.from(projects).sort();
   }, [reportsSource]);
@@ -375,8 +403,8 @@ export default function AdminWorkReportsPage() {
     const today = new Date();
     const monthStart = startOfMonth(today);
     const monthEnd = endOfMonth(today);
-    return reportsSource.filter(r => {
-      const reportDate = parseISO(r.reportDate);
+    return reportsSource.filter(report => {
+      const reportDate = parseISO(report.reportDate);
       return reportDate >= monthStart && reportDate <= monthEnd;
     });
   }, [reportsSource]);
@@ -392,6 +420,7 @@ export default function AdminWorkReportsPage() {
       setProjectFilter('all');
       setEmployeeRotationIndex(-1);
       setProjectRotationIndex(-1);
+      setSelectedDay(null);
       return 'all';
     });
   }, []);
@@ -411,10 +440,7 @@ export default function AdminWorkReportsPage() {
       setProjectFilter('all');
       setEmployeeRotationIndex(-1);
       setProjectRotationIndex(-1);
-      setSelectedStartDate(null);
-      setSelectedEndDate(null);
-      setStartDate('');
-      setEndDate('');
+      setSelectedDay(null);
       return 'month';
     });
   }, []);
@@ -483,8 +509,8 @@ export default function AdminWorkReportsPage() {
     setIsExporting(true);
     try {
       const params = new URLSearchParams();
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
+      if (dateRangeParams.startDate) params.append('startDate', dateRangeParams.startDate);
+      if (dateRangeParams.endDate) params.append('endDate', dateRangeParams.endDate);
       if (employeeFilter !== 'all') params.append('employeeId', employeeFilter);
 
       const response = await fetch(`/api/admin/work-reports/export/${format}?${params}`, {
@@ -497,7 +523,16 @@ export default function AdminWorkReportsPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `partes-trabajo-${startDate || 'all'}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
+      const exportLabel = (() => {
+        if (dateFilter === 'month') {
+          return format(currentMonth, 'yyyy-MM');
+        }
+        if (dateFilter === 'day' && selectedDay) {
+          return format(selectedDay, 'yyyy-MM-dd');
+        }
+        return 'all';
+      })();
+      a.download = `partes-trabajo-${exportLabel}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -565,6 +600,7 @@ export default function AdminWorkReportsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/work-reports'], exact: false });
       setEditModalOpen(false);
+      setIsViewModalEditMode(false);
       setEditingReport(null);
       toast({ title: 'Parte actualizado', description: 'Los cambios se han guardado correctamente.' });
     },
@@ -596,20 +632,17 @@ export default function AdminWorkReportsPage() {
 
   const filterTitle = useMemo(() => {
     switch (dateFilter) {
-      case 'today':
-        return 'Partes de hoy';
       case 'month':
         return `Partes de ${format(currentMonth, 'MMMM yyyy', { locale: es })}`;
-      case 'custom':
-        if (startDate && endDate) {
-          return `Partes del ${format(new Date(startDate), 'd MMM', { locale: es })} al ${format(new Date(endDate), 'd MMM yyyy', { locale: es })}`;
-        }
-        return 'Partes personalizados';
+      case 'day':
+        return selectedDay
+          ? `Partes del ${format(selectedDay, 'd MMM yyyy', { locale: es })}`
+          : 'Partes por día';
       case 'all':
       default:
         return 'Todos los partes';
     }
-  }, [dateFilter, currentMonth, startDate, endDate]);
+  }, [dateFilter, currentMonth, selectedDay]);
 
   if (authLoading) {
     return (
@@ -634,7 +667,7 @@ export default function AdminWorkReportsPage() {
     <div className={`transition-opacity duration-300 ${reportsLoading ? 'opacity-60' : 'opacity-100'}`}>
       {/* Stats Cards - Simplified for self-access mode */}
       {isSelfAccessOnly ? (
-        <div className="grid grid-cols-2 gap-2 md:gap-6 mb-3">
+        <StatsCardGrid columns={2}>
           {/* Card 1: Mis Partes */}
           <StatsCard
             title="Mis Partes"
@@ -647,7 +680,6 @@ export default function AdminWorkReportsPage() {
             isLoading={reportsLoading}
             index={0}
           />
-          
           {/* Card 2: Este Mes */}
           <StatsCard
             title="Este Mes"
@@ -660,9 +692,9 @@ export default function AdminWorkReportsPage() {
             isLoading={reportsLoading}
             index={1}
           />
-        </div>
+        </StatsCardGrid>
       ) : (
-        <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">
+        <StatsCardGrid columns={4}>
           {/* Card 1: Total de partes */}
           <StatsCard
             title="Total Partes"
@@ -675,7 +707,6 @@ export default function AdminWorkReportsPage() {
             isLoading={reportsLoading}
             index={0}
           />
-          
           {/* Card 2: Partes este mes */}
           <StatsCard
             title="Este Mes"
@@ -688,7 +719,6 @@ export default function AdminWorkReportsPage() {
             isLoading={reportsLoading}
             index={1}
           />
-          
           {/* Card 3: Empleados - click rota, doble click todos */}
           <StatsCard
             title={employeeRotationIndex >= 0 && uniqueEmployeesList[employeeRotationIndex] 
@@ -704,7 +734,6 @@ export default function AdminWorkReportsPage() {
             isLoading={reportsLoading}
             index={2}
           />
-          
           {/* Card 4: Proyectos - click rota, doble click todos */}
           <StatsCard
             title={projectRotationIndex >= 0 && uniqueProjectsList[projectRotationIndex] 
@@ -720,9 +749,22 @@ export default function AdminWorkReportsPage() {
             isLoading={reportsLoading}
             index={3}
           />
-        </div>
+        </StatsCardGrid>
       )}
 
+      {/* Tab Navigation */}
+      <TabNavigation
+        tabs={[
+          { id: 'list', label: 'Lista de Partes', icon: ClipboardList },
+          { id: 'grid', label: 'Cuadrante', icon: CalendarIcon }
+        ]}
+        activeTab={activeTab}
+        onTabChange={(tab) => setActiveTab(tab as 'list' | 'grid')}
+      />
+
+      {/* Reports List */}
+      {activeTab === 'list' && (
+        <>
       {/* Filters Section */}
       <div className="mb-4">
         <div className="flex flex-col gap-3">
@@ -884,138 +926,94 @@ export default function AdminWorkReportsPage() {
               )}
               <div className="flex flex-col space-y-2">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Período</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {/* Botón Hoy */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setDateFilter('today');
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Select
+                    value={dateFilter === 'month' ? format(currentMonth, 'yyyy-MM') : 'all'}
+                    onValueChange={(value) => {
                       setActiveStatsFilter(null);
                       setEmployeeRotationIndex(-1);
                       setProjectRotationIndex(-1);
-                      setSelectedStartDate(null);
-                      setSelectedEndDate(null);
-                      setStartDate('');
-                      setEndDate('');
+                      setSelectedDay(null);
+                      setDisplayedCount(5);
+                      if (value === 'all') {
+                        setDateFilter('all');
+                        return;
+                      }
+                      const [year, month] = value.split('-');
+                      const parsedMonth = new Date(Number(year), Number(month) - 1, 1);
+                      setCurrentMonth(parsedMonth);
+                      setDateFilter('month');
                     }}
-                    className={cn(
-                      "h-10 text-xs font-normal",
-                      dateFilter === 'today' 
-                        ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
-                        : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    )}
                   >
-                    Hoy
-                  </Button>
-                  
-                  {/* Desplegable Mes */}
-                  <Popover open={isMonthDialogOpen} onOpenChange={setIsMonthDialogOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={cn(
-                          "h-10 text-xs font-normal whitespace-nowrap text-center",
-                          dateFilter === 'month' 
-                            ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
-                            : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        )}
-                      >
-                        {dateFilter === 'month' ? format(currentMonth, 'MMM yy', { locale: es }) : 'Mes'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-48 p-2" align="start" sideOffset={4}>
-                      <div className="space-y-1 max-h-60 overflow-y-auto">
-                        {availableMonths.map((monthKey: string) => {
+                    <SelectTrigger className="h-10 text-xs" aria-label="Seleccionar mes con partes">
+                      <CalendarIcon className="w-4 h-4 mr-2 text-gray-500" />
+                      <SelectValue placeholder="Meses con partes" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los meses</SelectItem>
+                      {availableMonths.length === 0 ? (
+                        <SelectItem value="none" disabled>
+                          Sin registros
+                        </SelectItem>
+                      ) : (
+                        availableMonths.map((monthKey) => {
                           const [year, month] = monthKey.split('-');
-                          const monthDate = new Date(parseInt(year), parseInt(month) - 1);
+                          const monthDate = new Date(Number(year), Number(month) - 1);
                           return (
-                            <Button
-                              key={monthKey}
-                              variant="ghost"
-                              className="w-full justify-start text-sm capitalize"
-                              onClick={() => {
-                                setCurrentMonth(monthDate);
-                                setDateFilter('month');
-                                setIsMonthDialogOpen(false);
-                                setActiveStatsFilter('month');
-                                setEmployeeRotationIndex(-1);
-                                setProjectRotationIndex(-1);
-                                setSelectedStartDate(null);
-                                setSelectedEndDate(null);
-                                setStartDate('');
-                                setEndDate('');
-                              }}
-                            >
+                            <SelectItem key={monthKey} value={monthKey} className="capitalize">
                               {format(monthDate, 'MMMM yyyy', { locale: es })}
-                            </Button>
+                            </SelectItem>
                           );
-                        })}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  
-                  {/* Selector de Rango */}
-                  <DatePickerPeriod
-                    startDate={selectedStartDate || undefined}
-                    endDate={selectedEndDate || undefined}
-                    onStartDateChange={(date) => {
-                      setSelectedStartDate(date || null);
-                      setStartDate(date ? format(date, 'yyyy-MM-dd') : '');
-                      if (date && selectedEndDate) {
-                        setDateFilter('custom');
-                        setActiveStatsFilter(null);
+                        })
+                      )}
+                    </SelectContent>
+                  </Select>
+
+                  <DatePickerDay
+                    date={selectedDay || undefined}
+                    onDateChange={(date) => {
+                      setActiveStatsFilter(null);
+                      setEmployeeRotationIndex(-1);
+                      setProjectRotationIndex(-1);
+                      setDisplayedCount(5);
+                      if (date) {
+                        setSelectedDay(date);
+                        setDateFilter('day');
+                      } else {
+                        setSelectedDay(null);
+                        setDateFilter('all');
                       }
                     }}
-                    onEndDateChange={(date) => {
-                      setSelectedEndDate(date || null);
-                      setEndDate(date ? format(date, 'yyyy-MM-dd') : '');
-                      if (date && selectedStartDate) {
-                        setDateFilter('custom');
-                        setActiveStatsFilter(null);
-                        setEmployeeRotationIndex(-1);
-                        setProjectRotationIndex(-1);
-                      }
-                    }}
+                    placeholder="Seleccionar día"
                     className={cn(
-                      "h-10 text-xs font-normal whitespace-nowrap text-center",
-                      dateFilter === 'custom' 
+                      "h-10 text-xs font-normal w-full justify-center",
+                      dateFilter === 'day'
                         ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
                         : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
                     )}
                   />
-                  
-                  {/* Botón Todo */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setDateFilter('all');
-                      setActiveStatsFilter(null);
-                      setEmployeeRotationIndex(-1);
-                      setProjectRotationIndex(-1);
-                      setSelectedStartDate(null);
-                      setSelectedEndDate(null);
-                      setStartDate('');
-                      setEndDate('');
-                    }}
-                    className={cn(
-                      "h-10 text-xs font-normal",
-                      dateFilter === 'all' 
-                        ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
-                        : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    )}
-                  >
-                    Todo
-                  </Button>
                 </div>
+              </div>
+              {/* Project filter */}
+              <div className="flex flex-col space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Proyecto (Cód. ref.)</label>
+                <Select value={projectFilter} onValueChange={setProjectFilter}>
+                  <SelectTrigger className="h-10" data-testid="select-project-filter">
+                    <FolderKanban className="w-4 h-4 mr-2 text-gray-500" />
+                    <SelectValue placeholder="Filtrar por código de referencia" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los proyectos</SelectItem>
+                    {uniqueProjectsList.map((project) => (
+                      <SelectItem key={project} value={project}>{project}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
         )}
       
-      {/* Reports List */}
       {filteredReports.length === 0 ? (
         <div className="py-12 text-center px-4">
           <ClipboardList className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
@@ -1035,110 +1033,102 @@ export default function AdminWorkReportsPage() {
             return (
               <div 
                 key={report.id} 
-                className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                onClick={() => handleViewReport(report)}
+                className="bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 shadow-sm transition-colors overflow-hidden cursor-pointer"
                 data-testid={`card-admin-report-${report.id}`}
               >
-                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div className="flex items-center gap-2 text-gray-900 dark:text-white min-w-0">
-                      <User className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                      <span className="font-semibold truncate">{report.employeeName}</span>
+                {/* Compact Header */}
+                <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <UserAvatar 
+                      fullName={report.employeeName}
+                      size="sm"
+                      userId={report.employeeId}
+                      profilePicture={report.profilePicture}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{report.employeeName}</p>
                       {report.refCode && (
-                        <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs flex-shrink-0">
-                          {report.refCode}
-                        </Badge>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{report.refCode}</p>
                       )}
-                    </div>
-                    <div className="flex items-center gap-1 sm:gap-2 self-end sm:self-auto">
-                      {!isSelfAccessOnly && (
-                        <button
-                          onClick={() => handleEditReport(report)}
-                          className="p-2 sm:p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
-                          title="Editar parte"
-                          data-testid={`button-edit-report-${report.id}`}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleViewReport(report)}
-                        className="p-2 sm:p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
-                        title="Ver parte completo"
-                        data-testid={`button-view-report-${report.id}`}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDownloadPdf(report)}
-                        disabled={isDownloadingPdf === report.id}
-                        className="p-2 sm:p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400 disabled:opacity-50"
-                        title="Descargar PDF"
-                        data-testid={`button-download-pdf-${report.id}`}
-                      >
-                        <Download className={`w-4 h-4 ${isDownloadingPdf === report.id ? 'animate-pulse' : ''}`} />
-                      </button>
                     </div>
                   </div>
                 </div>
-                
-                <div className="p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
-                      <div>
-                        <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
-                          <CalendarIcon className="w-3.5 h-3.5" />
-                          Fecha
-                        </div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                          {format(parseISO(report.reportDate), 'EEE, d MMM yyyy', { locale: es })}
-                        </p>
+
+                {/* Main content - clean grid layout */}
+                <div className="px-6 py-5 space-y-5">
+                  {/* Row 1: Date, Time, Location, Client, Work Description */}
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    {/* Date */}
+                    <div>
+                      <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs font-medium mb-2">
+                        <CalendarIcon className="w-4 h-4" />
+                        Fecha
                       </div>
-                      <div>
-                        <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
-                          <Clock className="w-3.5 h-3.5" />
-                          Horario
-                        </div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          {report.startTime} - {report.endTime}
-                          <span className="ml-1 text-xs text-blue-600 dark:text-blue-400 font-medium">
-                            ({formatDuration(report.durationMinutes)})
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
-                      <div>
-                        <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
-                          <MapPin className="w-3.5 h-3.5" />
-                          Ubicación
-                        </div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{report.location}</p>
-                      </div>
-                      {report.clientName && (
-                        <div>
-                          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-0.5">
-                            <User className="w-3.5 h-3.5" />
-                            Cliente
-                          </div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">{report.clientName}</p>
-                        </div>
-                      )}
+                      <p className="text-base font-semibold text-gray-900 dark:text-white">
+                        {format(parseISO(report.reportDate), 'd MMM', { locale: es })}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {format(parseISO(report.reportDate), 'EEEE', { locale: es })}
+                      </p>
                     </div>
 
-                    <div className="md:col-span-2 bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-                      <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
-                        <FileText className="w-3.5 h-3.5" />
+                    {/* Time */}
+                    <div>
+                      <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs font-medium mb-2">
+                        <Clock className="w-4 h-4" />
+                        Horario
+                      </div>
+                      <p className="text-base font-semibold text-gray-900 dark:text-white">
+                        {report.startTime.substring(0, 5)} - {report.endTime.substring(0, 5)}
+                      </p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-0.5">
+                        {formatDuration(report.durationMinutes)}
+                      </p>
+                    </div>
+
+                    {/* Location */}
+                    <div>
+                      <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs font-medium mb-2">
+                        <MapPin className="w-4 h-4" />
+                        Ubicación
+                      </div>
+                      <p className="text-base font-semibold text-gray-900 dark:text-white line-clamp-2">
+                        {report.location}
+                      </p>
+                    </div>
+
+                    {/* Client */}
+                    {report.clientName && (
+                      <div>
+                        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs font-medium mb-2">
+                          <User className="w-4 h-4" />
+                          Cliente
+                        </div>
+                        <p className="text-base font-semibold text-gray-900 dark:text-white line-clamp-2">
+                          {report.clientName}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Work description */}
+                    <div>
+                      <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs font-medium mb-2">
+                        <FileText className="w-4 h-4" />
                         Trabajo realizado
                       </div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">{report.description}</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
+                        {report.description}
+                      </p>
                     </div>
                   </div>
-                  
+
+                  {/* Notes - if present */}
                   {report.notes && (
-                    <div className="mt-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 border-l-4 border-amber-400">
-                      <p className="text-sm text-amber-800 dark:text-amber-200">
-                        <span className="font-medium">Notas:</span> {report.notes}
+                    <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Notas: </span>
+                        {report.notes}
                       </p>
                     </div>
                   )}
@@ -1165,6 +1155,260 @@ export default function AdminWorkReportsPage() {
           </div>
         </div>
       ) : null}
+        </>
+      )}
+
+      {/* Vista de Cuadrante */}
+      {activeTab === 'grid' && (
+        <div className="space-y-4">
+          {/* Controles */}
+          <div className="flex items-center justify-between gap-4">
+            {/* Selector Semana/Mes */}
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 relative inline-flex">
+              <div 
+                className="absolute top-1 bottom-1 bg-primary rounded-md transition-all duration-300"
+                style={{
+                  left: gridViewMode === 'week' ? '4px' : 'calc(50% + 2px)',
+                  width: 'calc(50% - 6px)'
+                }}
+              />
+              <div className="relative flex">
+                <button
+                  onClick={() => setGridViewMode('week')}
+                  className={cn(
+                    "w-[70px] py-2 text-sm font-medium transition-colors relative z-10 flex items-center justify-center rounded",
+                    gridViewMode === 'week' ? 'text-white' : 'text-gray-600 dark:text-gray-400'
+                  )}
+                >
+                  Semana
+                </button>
+                <button
+                  onClick={() => setGridViewMode('month')}
+                  className={cn(
+                    "w-[70px] py-2 text-sm font-medium transition-colors relative z-10 flex items-center justify-center rounded",
+                    gridViewMode === 'month' ? 'text-white' : 'text-gray-600 dark:text-gray-400'
+                  )}
+                >
+                  Mes
+                </button>
+              </div>
+            </div>
+
+            {/* Navegación de fechas */}
+            <div className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2">
+              <button
+                onClick={() => {
+                  if (gridViewMode === 'week') {
+                    setGridViewDate(prev => subWeeks(prev, 1));
+                  } else {
+                    setGridViewDate(prev => subMonths(prev, 1));
+                  }
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              
+              <h3 className="font-semibold text-gray-900 dark:text-white min-w-[200px] text-center">
+                {gridViewMode === 'week' 
+                  ? `${format(startOfWeek(gridViewDate, { locale: es }), 'd MMM', { locale: es })} - ${format(endOfWeek(gridViewDate, { locale: es }), 'd MMM yyyy', { locale: es })}`
+                  : format(gridViewDate, 'MMMM yyyy', { locale: es })}
+              </h3>
+              
+              <button
+                onClick={() => {
+                  if (gridViewMode === 'week') {
+                    setGridViewDate(prev => addWeeks(prev, 1));
+                  } else {
+                    setGridViewDate(prev => addMonths(prev, 1));
+                  }
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Cuadrante de partes */}
+          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div 
+              className="overflow-x-auto cursor-grab active:cursor-grabbing user-select-none"
+              onMouseDown={(e) => {
+                const el = e.currentTarget;
+                let isDown = true;
+                let startX = e.pageX - el.offsetLeft;
+                let scrollLeft = el.scrollLeft;
+                
+                const handleMouseMove = (e: MouseEvent) => {
+                  if (!isDown) return;
+                  e.preventDefault();
+                  const x = e.pageX - el.offsetLeft;
+                  const walk = (x - startX) * 2;
+                  el.scrollLeft = scrollLeft - walk;
+                };
+                
+                const handleMouseUp = () => {
+                  isDown = false;
+                  document.removeEventListener('mousemove', handleMouseMove);
+                  document.removeEventListener('mouseup', handleMouseUp);
+                };
+                
+                const handleSelectStart = (e: Event) => {
+                  e.preventDefault();
+                };
+                
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+                document.addEventListener('selectstart', handleSelectStart);
+              }}>
+              <table className="w-full table-fixed">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-gray-700">
+                    <th className="px-3 py-3 text-center font-semibold text-gray-700 dark:text-gray-300 w-[120px] min-w-[120px] max-w-[120px] sticky left-0 bg-gray-50 dark:bg-gray-800">
+                      Empleado
+                    </th>
+                    {(() => {
+                      const days = gridViewMode === 'week'
+                        ? eachDayOfInterval({
+                            start: startOfWeek(gridViewDate, { locale: es }),
+                            end: endOfWeek(gridViewDate, { locale: es })
+                          })
+                        : eachDayOfInterval({
+                            start: startOfMonth(gridViewDate),
+                            end: endOfMonth(gridViewDate)
+                          });
+                      
+                      return days.map(day => (
+                        <th
+                          key={day.toISOString()}
+                          className={cn(
+                            "px-1 py-2 text-center font-semibold text-gray-700 dark:text-gray-300",
+                            gridViewMode === 'week'
+                              ? 'w-[100px] min-w-[100px] max-w-[100px]'
+                              : 'min-w-[60px]'
+                          )}
+                        >
+                          <div className="flex flex-col items-center">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {format(day, 'EEE', { locale: es })}
+                            </span>
+                            <span className="text-sm">{format(day, 'd', { locale: es })}</span>
+                          </div>
+                        </th>
+                      ));
+                    })()}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {uniqueEmployeesList.map(employee => {
+                    const days = gridViewMode === 'week'
+                      ? eachDayOfInterval({
+                          start: startOfWeek(gridViewDate, { locale: es }),
+                          end: endOfWeek(gridViewDate, { locale: es })
+                        })
+                      : eachDayOfInterval({
+                          start: startOfMonth(gridViewDate),
+                          end: endOfMonth(gridViewDate)
+                        });
+                    
+                    // Calcular total de horas
+                    const employeeReportsInPeriod = reportsSource.filter(r => {
+                      const reportDate = parseISO(r.reportDate);
+                      if (r.employeeId !== employee.id) return false;
+                      
+                      if (gridViewMode === 'week') {
+                        return reportDate >= startOfWeek(gridViewDate, { locale: es }) && 
+                               reportDate <= endOfWeek(gridViewDate, { locale: es });
+                      } else {
+                        return reportDate >= startOfMonth(gridViewDate) && 
+                               reportDate <= endOfMonth(gridViewDate);
+                      }
+                    });
+                    const totalMinutes = employeeReportsInPeriod.reduce((sum, r) => sum + r.durationMinutes, 0);
+                    
+                    return (
+                      <tr key={employee.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 h-[120px]">
+                        <td className="px-3 py-2 sticky left-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 w-[120px] min-w-[120px] max-w-[120px] h-full">
+                          <div className="flex flex-col items-center gap-1.5 h-full justify-center">
+                            <UserAvatar 
+                              fullName={employee.name}
+                              size="sm"
+                              userId={employee.id}
+                              profilePicture={employee.profilePicture}
+                            />
+                            <span className="font-medium text-gray-900 dark:text-white text-xs text-center leading-tight">
+                              {employee.name}
+                            </span>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold">
+                              {formatDuration(totalMinutes)}
+                            </div>
+                          </div>
+                        </td>
+                        {days.map(day => {
+                          const dayReports = reportsSource.filter(r => 
+                            r.employeeId === employee.id && 
+                            isSameDay(parseISO(r.reportDate), day)
+                          );
+                          
+                          const totalMinutes = dayReports.reduce((sum, r) => sum + r.durationMinutes, 0);
+                          
+                          return (
+                            <td key={day.toISOString()} className={cn(
+                              "text-center min-h-[100px] p-1",
+                              gridViewMode === 'week' ? 'w-[100px] min-w-[100px] max-w-[100px] overflow-hidden' : ''
+                            )}>
+                              {dayReports.length > 0 ? (
+                                gridViewMode === 'week' ? (
+                                  <div className="h-full flex flex-col gap-1">
+                                    {dayReports.map(report => {
+                                      const startFormatted = report.startTime.substring(0, 5);
+                                      const endFormatted = report.endTime.substring(0, 5);
+                                      const duration = formatDuration(report.durationMinutes);
+                                      return (
+                                        <button
+                                          key={report.id}
+                                          onClick={() => handleViewReport(report)}
+                                          className="flex-1 px-2 text-xs rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors overflow-hidden flex flex-col items-center justify-center gap-0.5"
+                                          title={`${report.startTime}-${report.endTime} · ${report.location}`}
+                                        >
+                                          <div className="font-semibold leading-tight">{duration}</div>
+                                          <div className="font-medium text-xs leading-tight">{startFormatted}-{endFormatted}</div>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                ) : (
+                                  <div className="h-full flex flex-col gap-1 items-center justify-center">
+                                    {dayReports.map(report => (
+                                      <button
+                                        key={report.id}
+                                        onClick={() => handleViewReport(report)}
+                                        className="px-2 py-1 text-xs rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors whitespace-nowrap"
+                                        title={`${report.startTime}-${report.endTime} · ${report.location}`}
+                                      >
+                                        <div className="font-semibold">{formatDuration(report.durationMinutes)}</div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )
+                              ) : (
+                                <div className="h-full flex items-center justify-center">
+                                  <span className="text-gray-300 dark:text-gray-600 text-xs">-</span>
+                                </div>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de visualización del parte */}
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
@@ -1296,15 +1540,29 @@ export default function AdminWorkReportsPage() {
                 </div>
               </div>
 
-              {/* Botón de descarga */}
-              <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+              {/* Botones de acción */}
+              <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                {!isViewModalEditMode && !isSelfAccessOnly && (
+                  <Button
+                    onClick={() => {
+                      setIsViewModalEditMode(true);
+                      if (selectedReport) {
+                        handleEditReport(selectedReport);
+                      }
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Editar
+                  </Button>
+                )}
                 <Button
-                  onClick={() => handleDownloadPdf(selectedReport)}
-                  disabled={isDownloadingPdf === selectedReport.id}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => handleDownloadPdf(selectedReport!)}
+                  disabled={isDownloadingPdf === selectedReport?.id}
+                  className="bg-green-600 hover:bg-green-700 text-white"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  {isDownloadingPdf === selectedReport.id ? 'Generando...' : 'Descargar PDF'}
+                  {isDownloadingPdf === selectedReport?.id ? 'Generando...' : 'Descargar PDF'}
                 </Button>
               </div>
             </div>
@@ -1313,7 +1571,15 @@ export default function AdminWorkReportsPage() {
       </Dialog>
 
       {/* Modal de edición */}
-      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+      <Dialog 
+        open={editModalOpen} 
+        onOpenChange={(open) => {
+          setEditModalOpen(open);
+          if (!open) {
+            setIsViewModalEditMode(false);
+          }
+        }}
+      >
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
           <DialogHeader className="border-b border-gray-200 dark:border-gray-700 pb-4">
             <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">

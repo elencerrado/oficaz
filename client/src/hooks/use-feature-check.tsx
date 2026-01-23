@@ -16,13 +16,14 @@ const featureToAddonKey: Record<string, string> = {
   reports: 'work_reports',
   ai_assistant: 'ai_assistant',
   inventory: 'inventory',
+  accounting: 'accounting',
 };
 
 // Employee-specific routes where managers should have full access to company features
 const EMPLOYEE_ROUTES = [
   '/inicio',
   '/misfichajes', 
-  '/documentos',
+  '/misdocumentos',
   '/recordatorios',
   '/mensajes',
   '/cuadrante',

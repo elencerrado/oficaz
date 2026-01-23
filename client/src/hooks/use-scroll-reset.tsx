@@ -9,28 +9,32 @@ export function useScrollReset() {
   const [location] = useLocation();
   
   useEffect(() => {
-    // Use setTimeout to ensure DOM is fully rendered before scrolling
+    // Use longer delay to ensure DOM is fully rendered and stable
     const timer = setTimeout(() => {
       // Scroll main window
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       
-      // Also scroll any potential scrollable containers (EXCEPT those marked to preserve)
-      const scrollableElements = document.querySelectorAll('[data-scroll-container], .overflow-auto, .overflow-y-auto, main');
+      // Reset all overflow-y-auto EXCEPT sidebar (nav element with data-preserve-scroll)
+      const scrollableElements = document.querySelectorAll('.overflow-y-auto, [data-scroll-container]');
       
       scrollableElements.forEach(element => {
         if (element instanceof HTMLElement) {
-          // CRITICAL: Skip AI chat and other elements that need to preserve scroll
+          // Skip sidebar - it has data-preserve-scroll attribute
           if (element.hasAttribute('data-preserve-scroll')) {
             return;
           }
-          element.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+          // Skip nav elements (sidebar)
+          if (element.tagName === 'NAV') {
+            return;
+          }
+          element.scrollTop = 0;
         }
       });
       
       // Reset document body scroll as well
       document.body.scrollTop = 0;
       document.documentElement.scrollTop = 0;
-    }, 0);
+    }, 50);
     
     return () => clearTimeout(timer);
   }, [location]);

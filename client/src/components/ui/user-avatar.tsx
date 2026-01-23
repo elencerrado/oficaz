@@ -39,10 +39,13 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
   const [processingJobId, setProcessingJobId] = useState<number | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string | null>(null);
   const [pollingTimeoutId, setPollingTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const [cacheBuster, setCacheBuster] = useState<number>(0);
   
   // Sincronizar estado local con props cuando cambian
   useEffect(() => {
     setLocalProfilePicture(profilePicture || null);
+    // Only update cache buster when actual image reference changes
+    setCacheBuster((v) => v + 1);
   }, [profilePicture]);
 
   // Cleanup polling on unmount
@@ -64,10 +67,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
         // Job completed successfully
         if (response.profilePicture) {
           setLocalProfilePicture(response.profilePicture);
-          // Force re-render with small delay
-          setTimeout(() => {
-            setLocalProfilePicture(response.profilePicture);
-          }, 100);
+          setCacheBuster((v) => v + 1);
         }
         
         // Update auth context and invalidate queries
@@ -131,9 +131,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       } else if (data?.profilePicture) {
         // Legacy direct response (fallback)
         setLocalProfilePicture(data.profilePicture);
-        setTimeout(() => {
-          setLocalProfilePicture(data.profilePicture);
-        }, 100);
+        setCacheBuster((v) => v + 1);
         
         refreshUser();
         queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
@@ -201,7 +199,8 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
   };
 
   // Extraer iniciales del nombre completo - Lógica mejorada para nombres españoles
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | undefined | null) => {
+    if (!name) return 'U'; // Default to 'U' if name is undefined or null
     const words = name.trim().split(/\s+/);
     
     if (words.length === 1) {
@@ -521,7 +520,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
         {/* Imagen encima del fondo */}
         <img 
           src={(localProfilePicture || profilePicture) 
-            ? `${localProfilePicture || profilePicture}?v=${Date.now()}` 
+            ? `${localProfilePicture || profilePicture}${cacheBuster ? `?v=${cacheBuster}` : ''}` 
             : `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`} 
           alt={fullName}
           style={{

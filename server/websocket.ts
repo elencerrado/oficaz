@@ -14,7 +14,7 @@ interface WSMessage {
   type: 'work_session_updated' | 'work_session_created' | 'work_session_deleted' | 
         'vacation_request_created' | 'vacation_request_updated' | 
         'modification_request_created' | 'modification_request_updated' |
-        'document_request_created' | 'document_uploaded' |
+        'document_request_created' | 'document_uploaded' | 'document_signed' |
         'message_received' | 'work_report_created' | 
         'reminder_created' | 'reminder_all_completed' |
         'role_changed';
@@ -42,7 +42,7 @@ class WorkSessionWebSocketServer {
     });
 
     this.wss.on('connection', this.handleConnection.bind(this));
-    console.log('✓ WebSocket server initialized at /ws/work-sessions');
+    // console.log('✓ WebSocket server initialized at /ws/work-sessions');
   }
 
   private handleConnection(ws: AuthenticatedWebSocket, req: any) {
@@ -77,7 +77,7 @@ class WorkSessionWebSocketServer {
       }
       this.userClients.get(ws.userId!)!.add(ws);
 
-      console.log(`✓ WebSocket client connected: userId=${ws.userId}, companyId=${ws.companyId}, role=${ws.role}`);
+      // console.log(`✓ WebSocket client connected: userId=${ws.userId}, companyId=${ws.companyId}, role=${ws.role}`);
 
       // Send welcome message
       ws.send(JSON.stringify({ type: 'connected', message: 'WebSocket connection established' }));
@@ -88,25 +88,30 @@ class WorkSessionWebSocketServer {
           const data = JSON.parse(message.toString());
           this.handleMessage(ws, data);
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
+          // console.error('Error parsing WebSocket message:', error);
         }
       });
 
       // Handle disconnection
       ws.on('close', () => {
         this.removeClient(ws);
-        console.log(`✗ WebSocket client disconnected: userId=${ws.userId}, companyId=${ws.companyId}`);
+        // console.log(`✗ WebSocket client disconnected: userId=${ws.userId}, companyId=${ws.companyId}`);
       });
 
       // Handle errors
       ws.on('error', (error) => {
-        console.error('WebSocket error:', error);
+        // console.error('WebSocket error:', error);
         this.removeClient(ws);
       });
 
-    } catch (error) {
-      console.error('WebSocket authentication error:', error);
-      ws.close(1008, 'Invalid token');
+    } catch (error: any) {
+      if (error.name === 'TokenExpiredError') {
+        // console.log('WebSocket: Token expired, client needs to refresh');
+        ws.close(1008, 'Token expired - please refresh');
+      } else {
+        // console.error('WebSocket authentication error:', error);
+        ws.close(1008, 'Invalid token');
+      }
     }
   }
 
@@ -156,7 +161,7 @@ class WorkSessionWebSocketServer {
       }
     });
 
-    console.log(`📡 Broadcast to company ${companyId}: ${message.type} (${sentCount} clients)`);
+    // console.log(`📡 Broadcast to company ${companyId}: ${message.type} (${sentCount} clients)`);
   }
 
   // Get connected clients count for a company
@@ -169,7 +174,7 @@ class WorkSessionWebSocketServer {
     const userSockets = this.userClients.get(userId);
     
     if (!userSockets || userSockets.size === 0) {
-      console.log(`📡 No WebSocket clients connected for user ${userId}`);
+      // console.log(`📡 No WebSocket clients connected for user ${userId}`);
       return false;
     }
 
@@ -183,7 +188,7 @@ class WorkSessionWebSocketServer {
       }
     });
 
-    console.log(`📡 Sent to user ${userId}: ${message.type} (${sentCount} devices)`);
+    // console.log(`📡 Sent to user ${userId}: ${message.type} (${sentCount} devices)`);
     return sentCount > 0;
   }
 

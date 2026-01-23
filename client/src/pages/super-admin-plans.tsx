@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { usePageTitle } from '@/hooks/use-page-title';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -82,6 +82,16 @@ const featureLabels = {
   employee_time_edit_permission: 'Permisos de Edición',
 };
 
+interface FeatureDisplay {
+  key: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  id: number;
+  basicEnabled: boolean;
+  proEnabled: boolean;
+  masterEnabled: boolean;
+}
+
 export default function SuperAdminPlans() {
   usePageTitle('SuperAdmin - Planes');
   const { toast } = useToast();
@@ -126,7 +136,7 @@ export default function SuperAdminPlans() {
   });
 
   const updatePlanMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+    mutationFn: async ({ id, data }: { id: number; data: Partial<SubscriptionPlan> }) => {
       const response = await fetch(`/api/super-admin/subscription-plans/${id}`, {
         method: 'PATCH',
         headers: {
@@ -162,7 +172,7 @@ export default function SuperAdminPlans() {
   });
 
   const updateFeatureMutation = useMutation({
-    mutationFn: async ({ featureId, data }: { featureId: number; data: any }) => {
+    mutationFn: async ({ featureId, data }: { featureId: number; data: Partial<Feature> }) => {
       const response = await fetch(`/api/super-admin/features/${featureId}`, {
         method: 'PATCH',
         headers: {
@@ -204,7 +214,7 @@ export default function SuperAdminPlans() {
     const plan = plans?.find((p: SubscriptionPlan) => p.id === planId);
     if (!plan) return;
 
-    let updateData: any = {};
+    let updateData: Record<string, boolean> = {};
     
     // Determinar qué columna actualizar según el nombre del plan
     switch (plan.name.toLowerCase()) {
@@ -360,7 +370,7 @@ export default function SuperAdminPlans() {
                   </tr>
                 </thead>
                 <tbody>
-                  {features.map((feature: any) => (
+                  {features.map((feature: FeatureDisplay) => (
                     <tr key={feature.key} className="border-b border-white/10 hover:bg-white/5">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">

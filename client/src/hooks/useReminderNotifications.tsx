@@ -106,7 +106,7 @@ export function useReminderNotifications() {
         },
       });
     } catch (error) {
-      console.error('Error marking notification as shown:', error);
+      // Error marking notification as shown
     }
   };
 }

@@ -23,7 +23,6 @@ import {
   Save, 
   X,
   RefreshCw,
-  ArrowLeft,
   LogOut,
   Edit,
   Plus,
@@ -36,7 +35,8 @@ import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useToast } from '@/hooks/use-toast';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import { apiRequest } from '@/lib/queryClient';
-import { Link, useLocation } from 'wouter';
+import { useLocation } from 'wouter';
+import { EmployeeTopBar } from '@/components/employee/employee-top-bar';
 
 // Interfaces
 interface WorkSession {
@@ -70,9 +70,6 @@ export default function EmployeeTimeTracking() {
   const { hasAccess } = useFeatureCheck();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
-  const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
   
   // Get company alias from URL
   const [location] = useLocation();
@@ -376,8 +373,18 @@ export default function EmployeeTimeTracking() {
       const clockInTime = new Date(session.clockIn);
       const maxHours = companySettings?.workingHoursPerDay || 8;
       
-      // Add max working hours to clock in time
-      const suggestedClockOut = new Date(clockInTime.getTime() + (maxHours * 60 * 60 * 1000));
+      // Calculate suggested time: clockIn + maxHours
+      const suggestedClockOut = new Date(clockInTime);
+      suggestedClockOut.setHours(clockInTime.getHours() + maxHours, clockInTime.getMinutes(), 0, 0);
+      
+      // If it exceeds 23:59 of the same day, cap it at 23:59
+      const endOfDay = new Date(clockInTime);
+      endOfDay.setHours(23, 59, 0, 0);
+      
+      if (suggestedClockOut > endOfDay) {
+        suggestedClockOut.setHours(23, 59, 0, 0);
+      }
+      
       const suggestedTime = suggestedClockOut.toTimeString().slice(0, 5); // Format: "HH:MM"
       setClockOutTime(suggestedTime);
     } else {
@@ -782,37 +789,7 @@ export default function EmployeeTimeTracking() {
       className="min-h-screen bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white overflow-x-hidden" 
       style={{ overflowX: 'clip' }}
     >
-      {/* Header - Standard employee pattern */}
-      <div className="flex items-center justify-between p-6 pb-8 h-20">
-        <Link href={`/${companyAlias}/inicio`}>
-          <Button
-            variant="ghost"
-            size="lg"
-            className="text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 px-6 py-3 rounded-xl bg-gray-100 dark:bg-white/10 backdrop-blur-sm transition-all duration-200 border border-gray-300 dark:border-white/20"
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            <span className="font-medium">Atrás</span>
-          </Button>
-        </Link>
-        
-        <div className="flex-1 flex flex-col items-end text-right">
-          {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
-          {shouldShowLogo ? (
-            <img 
-              src={company.logoUrl || ''} 
-              alt={company.name} 
-              className="h-8 w-auto mb-1 object-contain filter dark:brightness-0 dark:invert"
-            />
-          ) : (
-            <div className="text-gray-900 dark:text-white text-sm font-medium mb-1">
-              {company?.name || 'Mi Empresa'}
-            </div>
-          )}
-          <div className="text-gray-600 dark:text-white/70 text-xs">
-            {user?.fullName}
-          </div>
-        </div>
-      </div>
+      <EmployeeTopBar homeHref={`/${companyAlias}/inicio`} />
 
       {/* Page title */}
       <div className="px-6 pb-6">
@@ -869,59 +846,59 @@ export default function EmployeeTimeTracking() {
               const handleMonthClick = () => {
                 setCurrentMonth(monthDate);
               };
-              
-              return (
-                <div 
-                  key={monthData.month}
-                  onClick={handleMonthClick}
-                  className={`relative bg-gray-100 dark:bg-white/5 backdrop-blur-sm rounded-lg p-3 border transition-all duration-500 cursor-pointer hover:scale-105 ${
-                    isViewingThisMonth 
-                      ? 'ring-2 ring-blue-400 bg-blue-500/20 border-blue-400/50' 
-                      : monthData.isCurrentMonth 
-                        ? 'ring-1 ring-green-400/50 bg-green-500/10 border-green-400/30' 
-                        : 'border-gray-300 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/30'
-                  }`}
-                  style={{
-                    animationDelay: `${index * 100}ms`,
-                    animation: 'fadeInUp 0.6s ease-out forwards',
-                    opacity: 0
-                  }}
-                >
-                  {/* Red dot indicator for incomplete sessions */}
-                  {monthData.hasIncomplete && (
-                    <div 
-                      className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"
-                      title="Este mes tiene fichajes incompletos"
-                    />
-                  )}
-                  
-                  <div className="text-center">
-                    <p className={`text-xs mb-1 font-medium ${
-                      isViewingThisMonth ? 'text-blue-300' : 'text-gray-600 dark:text-white/60'
-                    }`}>
-                      {monthData.month}
-                    </p>
-                    <div className="relative h-10 mb-1 px-1">
-                      <div className={`absolute bottom-0 left-0 right-0 rounded-t-sm transition-all duration-700 ${
-                        isViewingThisMonth ? 'bg-blue-400' : 'bg-blue-400'
-                      }`}
-                           style={{ 
-                             '--final-height': `${(monthData.hours / Math.max(...getLast4MonthsData().map(m => m.hours), 1)) * 100}%`,
-                             height: '0px',
-                             minHeight: monthData.hours > 0 ? '6px' : '0px',
-                             animationDelay: `${index * 150 + 300}ms`,
-                             animation: 'growHeight 1.2s ease-out forwards'
-                           } as React.CSSProperties}
+                
+                return (
+                  <div 
+                    key={monthData.month}
+                    onClick={handleMonthClick}
+                    className={`relative bg-gray-100 dark:bg-white/5 backdrop-blur-sm rounded-lg p-3 border transition-all duration-500 cursor-pointer hover:scale-105 ${
+                      isViewingThisMonth 
+                        ? 'ring-2 ring-blue-400 bg-blue-500/20 border-blue-400/50' 
+                        : monthData.isCurrentMonth 
+                          ? 'ring-1 ring-green-400/50 bg-green-500/10 border-green-400/30' 
+                          : 'border-gray-300 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/30'
+                    }`}
+                    style={{
+                      animationDelay: `${index * 100}ms`,
+                      animation: 'fadeInUp 0.6s ease-out forwards',
+                      opacity: 0
+                    }}
+                  >
+                    {/* Red dot indicator for incomplete sessions */}
+                    {monthData.hasIncomplete && (
+                      <div 
+                        className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"
+                        title="Este mes tiene fichajes incompletos"
                       />
+                    )}
+                    
+                    <div className="text-center">
+                      <p className={`text-xs mb-1 font-medium ${
+                        isViewingThisMonth ? 'text-blue-300' : 'text-gray-600 dark:text-white/60'
+                      }`}>
+                        {monthData.month}
+                      </p>
+                      <div className="relative h-10 mb-1 px-1">
+                        <div className={`absolute bottom-0 left-0 right-0 rounded-t-sm transition-all duration-700 ${
+                          isViewingThisMonth ? 'bg-blue-400' : 'bg-blue-400'
+                        }`}
+                             style={{ 
+                               '--final-height': `${(monthData.hours / Math.max(...getLast4MonthsData().map(m => m.hours), 1)) * 100}%`,
+                               height: '0px',
+                               minHeight: monthData.hours > 0 ? '6px' : '0px',
+                               animationDelay: `${index * 150 + 300}ms`,
+                               animation: 'growHeight 1.2s ease-out forwards'
+                             } as React.CSSProperties}
+                        />
+                      </div>
+                      <p className={`text-xs font-mono ${
+                        isViewingThisMonth ? 'text-blue-200' : 'text-gray-900 dark:text-white'
+                      }`}>
+                        {monthData.hours.toFixed(0)}h
+                      </p>
                     </div>
-                    <p className={`text-xs font-mono ${
-                      isViewingThisMonth ? 'text-blue-200' : 'text-gray-900 dark:text-white'
-                    }`}>
-                      {monthData.hours.toFixed(0)}h
-                    </p>
                   </div>
-                </div>
-              );
+                );
             })}
           </div>
         </div>
@@ -1233,7 +1210,7 @@ export default function EmployeeTimeTracking() {
           setWizardStep('date');
           setExistingSession(null);
         }}
-        className="fixed bottom-6 right-6 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-full px-6 py-4 shadow-lg transition-all duration-200 transform hover:scale-110 z-50 flex items-center gap-3"
+        className="fixed bottom-6 right-6 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-full px-6 py-4 shadow-lg transition-all duration-200 transform hover:scale-110 z-50 flex items-center gap-3 [padding-bottom:max(1.5rem,env(safe-area-inset-bottom))]"
         data-testid="button-request-modification"
       >
         <Edit className="h-6 w-6" />
@@ -1248,7 +1225,7 @@ export default function EmployeeTimeTracking() {
           setExistingSession(null);
         }
       }}>
-        <DialogContent className="sm:max-w-md max-w-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700">
+        <DialogContent className="sm:max-w-md max-w-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 rounded-lg">
           <DialogHeader>
             <DialogTitle className="text-center text-gray-900 dark:text-white">
               {wizardStep === 'date' ? 'Seleccionar Fecha' : 

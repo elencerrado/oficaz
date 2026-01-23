@@ -1,34 +1,41 @@
 {
-  "name": "Oficaz - Gestión Empresarial",
+  "name": "Oficaz - Gestión de Empleados",
   "short_name": "Oficaz",
-  "description": "Sistema integral de gestión empresarial",
-  "start_url": "/",
+  "description": "Sistema completo de gestión de empleados: fichaje, vacaciones, documentos y más",
+  "start_url": "/login",
   "display": "standalone",
-  "background_color": "#f9fafb",
-  "theme_color": "#007AFF",
+  "background_color": "#2A3441",
+  "theme_color": "#2A3441",
   "orientation": "portrait-primary",
-  "scope": "/",
   "icons": [
-    {
-      "src": "/favicon-16x16.png",
-      "sizes": "16x16",
-      "type": "image/png"
-    },
-    {
-      "src": "/favicon-32x32.png", 
-      "sizes": "32x32",
-      "type": "image/png"
-    },
-    {
-      "src": "/favicon.png",
-      "sizes": "64x64",
-      "type": "image/png"
-    },
     {
       "src": "/apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Fichar",
+      "short_name": "Fichar",
+      "description": "Registrar entrada/salida",
+      "url": "/employee",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

@@ -13,7 +13,7 @@ export function ClockWidget() {
 
   const { data: activeSession, isLoading } = useQuery({
     queryKey: ['/api/work-sessions/active'],
-    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchInterval: 30000, // ⚡ Optimizado: Refetch every 30 seconds (was 10s)
   });
 
   const { data: companySettings } = useQuery({

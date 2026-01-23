@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useSearch } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
@@ -9,13 +9,16 @@ import { PageWrapper } from '@/components/ui/page-wrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { DocumentSignatureModal } from '@/components/document-signature-modal';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { SignaturePositionEditor } from '@/components/signature-position-editor';
+import { useQuery, useMutation, useInfiniteQuery } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -41,19 +44,22 @@ import {
   AlertTriangle,
   Trash2,
   List,
-  Grid3X3,
   Folder,
   FolderOpen,
   Receipt,
   FileSignature,
   Loader2,
   Undo2,
-  Clock
+  Clock,
+  Home,
+  ArrowLeft,
+  ImageIcon
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { analyzeFileName, documentTypes as importedDocumentTypes } from '@/utils/documentUtils';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { DocumentPreviewModal } from '@/components/DocumentPreviewModal';
 
 interface Employee {
   id: number;
@@ -74,21 +80,13 @@ interface Document {
   acceptedAt?: string;
   signedAt?: string;
   requiresSignature?: boolean;
+  folderId?: number | null;
+  accountingType?: 'expense' | 'income' | null;
   user?: {
     fullName: string;
     profilePicture?: string;
   };
 }
-
-// Use documentTypes from shared utilities with icons
-const documentTypes = importedDocumentTypes.map(type => ({
-  ...type,
-  icon: type.id === 'dni' ? User :
-        type.id === 'nomina' ? DollarSign :
-        type.id === 'contrato' ? FileText :
-        type.id === 'justificante' ? FileCheck :
-        File
-}));
 
 // Function to get type badge color
 const getTypeBadgeColor = (type: string) => {
@@ -107,39 +105,23 @@ export default function AdminDocuments() {
   const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan, getDocumentAccessMode } = useFeatureCheck();
   const { setHeader, resetHeader } = usePageHeader();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const search = useSearch();
+  
+  // Use documentTypes from shared utilities with icons - moved inside component
+  const documentTypes = useMemo(() => (importedDocumentTypes || []).map(type => ({
+    ...type,
+    icon: type.id === 'dni' ? User :
+          type.id === 'nomina' ? DollarSign :
+          type.id === 'contrato' ? FileText :
+          type.id === 'justificante' ? FileCheck :
+          File
+  })), []);
   
   // Get document access mode: 'full', 'self', or 'none'
   const documentAccessMode = getDocumentAccessMode();
   const isSelfAccessOnly = documentAccessMode === 'self';
-
-  // Set page header based on access mode
-  useEffect(() => {
-    setHeader({
-      title: isSelfAccessOnly ? 'Mis Documentos' : 'Gestión de Documentos',
-      subtitle: isSelfAccessOnly ? 'Visualiza tus documentos personales' : 'Gestiona documentos de empleados y envía solicitudes'
-    });
-    return resetHeader;
-  }, [isSelfAccessOnly]);
-  
-  console.log('Admin Documents page: checking access...', { documentAccessMode });
-  
-  // Only block if no access at all (subscription not active)
-  if (documentAccessMode === 'none') {
-    console.log('Admin Documents: Access denied - no subscription');
-    return (
-      <FeatureRestrictedPage
-        featureName="Documentos"
-        description="Gestión y almacenamiento de documentos de la empresa"
-        requiredPlan={getRequiredPlan('documents')}
-        icon={FileText}
-      />
-    );
-  }
-  
-  console.log('Admin Documents: Access granted', { mode: documentAccessMode });
-  const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const search = useSearch();
   
   const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
   const [documentType, setDocumentType] = useState('');
@@ -147,14 +129,20 @@ export default function AdminDocuments() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
   const [filterPendingSignature, setFilterPendingSignature] = useState(false); // Filter for unsigned payrolls
+  
+  // Estados para filtros de requests
+  const [requestEmployeeFilter, setRequestEmployeeFilter] = useState<string>('all');
+  const [requestEmployeeSearch, setRequestEmployeeSearch] = useState('');
+  const [requestTypeFilter, setRequestTypeFilter] = useState('all');
+  const [requestStatusFilter, setRequestStatusFilter] = useState('all');
   const [isUploading, setIsUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [uploadAnalysis, setUploadAnalysis] = useState<any[]>([]);
   const [showUploadPreview, setShowUploadPreview] = useState(false);
   // For self-access only mode, start on explorer tab (their own files)
   const [activeTab, setActiveTab] = useState(isSelfAccessOnly ? 'explorer' : 'upload'); // 'upload', 'explorer', 'requests'
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'list' | 'folders'>('list');
+  const [currentFolderPath, setCurrentFolderPath] = useState<string>('');
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; docId: number | null; docName: string }>({
     show: false,
     docId: null,
@@ -176,15 +164,19 @@ export default function AdminDocuments() {
 
   // Request dialog state
   const [showRequestDialog, setShowRequestDialog] = useState(false);
-  const [sendMode, setSendMode] = useState<'individual' | 'circular'>('individual');
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
-  const [requiresSignature, setRequiresSignature] = useState(false);
   
   // Upload Preview Dialog state - Individual/Circular mode
   const [uploadMode, setUploadMode] = useState<'individual' | 'circular'>('individual');
   const [uploadRequiresSignature, setUploadRequiresSignature] = useState(false);
   const [uploadSelectedEmployees, setUploadSelectedEmployees] = useState<number[]>([]);
   const [uploadEmployeeSearch, setUploadEmployeeSearch] = useState('');
+  
+  // Signature position editor state
+  const [signaturePosition, setSignaturePosition] = useState<{ x: number; y: number; width: number; height: number; page: number } | null>(null);
+  const [showSignatureEditor, setShowSignatureEditor] = useState(false);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   
   // Last circular upload tracking for undo functionality
   const [lastCircularUpload, setLastCircularUpload] = useState<{
@@ -195,6 +187,29 @@ export default function AdminDocuments() {
   } | null>(null);
   const [showUndoConfirm, setShowUndoConfirm] = useState(false);
   
+  // Folder expansion state for folder view
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+
+  // Set page header based on access mode
+  useEffect(() => {
+    setHeader({
+      title: isSelfAccessOnly ? 'Mis Documentos' : 'Gestión de Documentos',
+      subtitle: isSelfAccessOnly ? 'Visualiza tus documentos personales' : 'Gestiona documentos de empleados y envía solicitudes'
+    });
+    return () => resetHeader();
+  }, [isSelfAccessOnly, setHeader, resetHeader]);
+  
+  // Only block if no access at all (subscription not active)
+  if (documentAccessMode === 'none') {
+    return (
+      <FeatureRestrictedPage
+        featureName="Documentos"
+        description="Gestión y almacenamiento de documentos de la empresa"
+        icon={FileText}
+      />
+    );
+  }
+  
   // Loading state for document operations
   const [viewingDocId, setViewingDocId] = useState<number | null>(null);
   const [downloadingDocId, setDownloadingDocId] = useState<number | null>(null);
@@ -203,6 +218,7 @@ export default function AdminDocuments() {
   const { data: employees = [], isLoading: loadingEmployees } = useQuery<Employee[]>({
     queryKey: ['/api/employees'],
     staleTime: 5 * 60 * 1000, // ⚡ Cache for 5 minutes
+    select: (data: Employee[] = []) => data.filter((e: any) => !e?.isPendingActivation)
   });
 
   // Fetch document notifications (sent requests)
@@ -213,18 +229,209 @@ export default function AdminDocuments() {
     gcTime: 120000,
   });
 
+  // Memoize filtered requests to avoid recalculation on every render
+  const filteredRequests = useMemo(() => {
+    return (sentRequests || []).filter((request: any) => {
+      const matchesEmployee = requestEmployeeFilter === "all" || request.userId === parseInt(requestEmployeeFilter);
+      const matchesType = requestTypeFilter === "all" || request.documentType === requestTypeFilter;
+      
+      // Determinar el estado de la solicitud
+      let requestStatus: string;
+      if (!request.isCompleted) {
+        requestStatus = 'pending';
+      } else if (request.document) {
+        requestStatus = 'completed';
+      } else {
+        requestStatus = 'incomplete';
+      }
+      
+      const matchesStatus = requestStatusFilter === "all" || requestStatus === requestStatusFilter;
+      
+      return matchesEmployee && matchesType && matchesStatus;
+    });
+  }, [sentRequests, requestEmployeeFilter, requestTypeFilter, requestStatusFilter]);
+
   // Fetch all documents - WebSocket handles real-time updates
-  const { data: allDocuments = [], isLoading: loadingDocuments } = useQuery<any[]>({
+  // Infinite scroll state
+  const [displayedCount, setDisplayedCount] = useState(10);
+  const [displayedRequestsCount, setDisplayedRequestsCount] = useState(10);
+  const [previewModal, setPreviewModal] = useState<{ open: boolean; url: string; filename: string; mimeType?: string | null; docId: number | null }>({ open: false, url: '', filename: '', mimeType: null, docId: null });
+  const DOCUMENTS_PER_PAGE = 50;
+  const ITEMS_PER_LOAD = 10;
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const loadMoreRequestsRef = useRef<HTMLDivElement>(null);
+
+  // useInfiniteQuery for proper infinite scroll
+  const {
+    data: infiniteData,
+    isLoading: loadingDocuments,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
     queryKey: ['/api/documents/all'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/documents/all');
-      // Handle both old array format and new { documents, accessMode } format
-      return Array.isArray(response) ? response : (response?.documents || []);
+    queryFn: async ({ pageParam = 0 }) => {
+      const url = `/api/documents/all?limit=${DOCUMENTS_PER_PAGE}&offset=${pageParam}`;
+      const response = await apiRequest('GET', url);
+      const documents = Array.isArray(response) ? response : (response?.documents || []);
+      const totalCount = response?.totalCount || documents.length;
+      return {
+        documents,
+        totalCount,
+        hasMore: documents.length === DOCUMENTS_PER_PAGE
+      };
     },
-    staleTime: 60000, // Cache for 1 min - WebSocket invalidates on changes
-    refetchOnWindowFocus: false,
-    refetchOnMount: true,
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage.hasMore) return undefined;
+      return allPages.length * DOCUMENTS_PER_PAGE;
+    },
+    staleTime: 30000, // Cache for 30s
+    gcTime: 10 * 60 * 1000,
+    retry: 2,
+    refetchOnMount: 'always', // Always refetch when component mounts
   });
+
+  // Flatten all pages into single documents array
+  const allDocuments = useMemo(() => {
+    if (!infiniteData?.pages) return [];
+    return infiniteData.pages.flatMap(page => page.documents || []);
+  }, [infiniteData]);
+
+  // Get total count from last page
+  const totalDocumentsCount = infiniteData?.pages?.[infiniteData.pages.length - 1]?.totalCount || 0;
+
+  // Helper function for text normalization
+  const normalizeText = (text: string): string => {
+    return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  };
+
+  // For self-access mode, only show user's own documents
+  const documentsSource = isSelfAccessOnly 
+    ? allDocuments.filter((doc: Document) => doc.userId === user?.id)
+    : allDocuments;
+    
+  const filteredDocuments = documentsSource.filter((doc: Document) => {
+    const normalizedFileName = normalizeText(doc.originalName || '');
+    const normalizedEmployeeName = normalizeText(doc.user?.fullName || '');
+    const combinedText = `${normalizedFileName} ${normalizedEmployeeName}`;
+    
+    // Split search term into words and check if ALL words are found
+    const searchWords = normalizeText(searchTerm).split(/\s+/).filter(word => word.length > 0);
+    const matchesSearch = searchWords.length === 0 || 
+                         searchWords.every(word => combinedText.includes(word));
+    
+    // In self-access mode, don't filter by employee (already filtered to self)
+    const matchesEmployee = isSelfAccessOnly || selectedEmployee === 'all' || doc.userId.toString() === selectedEmployee;
+    
+    // Filter by pending signature (unsigned payrolls OR documents with requiresSignature flag)
+    let matchesPendingSignature = true;
+    if (filterPendingSignature && employees && employees.length > 0) {
+      const fileName = doc.originalName || doc.fileName || '';
+      const analysis = analyzeFileName(fileName, employees);
+      const isPayroll = analysis.documentType === 'Nómina';
+      const requiresSignature = (doc as any).requiresSignature === true;
+      matchesPendingSignature = (isPayroll || requiresSignature) && !doc.signedAt;
+    }
+    
+    return matchesSearch && matchesEmployee && matchesPendingSignature;
+  });
+
+  // hasMore is true if we have more items to display (either locally or on server)
+  const hasMoreToDisplay = displayedCount < totalDocumentsCount || (hasNextPage ?? false);
+
+  // Apply pagination for display (limit shown documents)
+  const displayedDocuments = filteredDocuments.slice(0, displayedCount);
+
+  // Load more function for infinite scroll - first show more from loaded data, then fetch from server
+  const loadMoreDocuments = useCallback(() => {
+    console.log('📜 loadMoreDocuments called', { 
+      displayedCount, 
+      filteredLength: filteredDocuments.length, 
+      hasNextPage, 
+      isFetchingNextPage 
+    });
+    
+    // First, check if we have more documents loaded that we haven't displayed yet
+    if (displayedCount < filteredDocuments.length) {
+      const newCount = Math.min(displayedCount + ITEMS_PER_LOAD, filteredDocuments.length);
+      setDisplayedCount(newCount);
+      return;
+    }
+
+    // If we've displayed all loaded documents and there are more on the server, fetch next page
+    if (!isFetchingNextPage && hasNextPage) {
+      fetchNextPage();
+      return;
+    }
+
+    // Fallback: if server reports more total items than we have loaded, try fetch next page
+    if (!isFetchingNextPage && displayedCount < totalDocumentsCount) {
+      fetchNextPage();
+    }
+  }, [displayedCount, filteredDocuments.length, hasNextPage, isFetchingNextPage, fetchNextPage, ITEMS_PER_LOAD, totalDocumentsCount]);
+
+  // Reset displayed count when filters change
+  useEffect(() => {
+    setDisplayedCount(10);
+  }, [searchTerm, selectedEmployee, filterPendingSignature]);
+
+  // Infinite scroll with IntersectionObserver
+  useEffect(() => {
+    // Only set up observer when in explorer tab
+    if (activeTab !== 'explorer') return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some(entry => entry.isIntersecting) && !loadingDocuments && !isFetchingNextPage && hasMoreToDisplay) {
+          loadMoreDocuments();
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+    
+    const timeoutId = setTimeout(() => {
+      if (loadMoreRef.current) {
+        observer.observe(loadMoreRef.current);
+      }
+    }, 50);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, [loadingDocuments, isFetchingNextPage, hasMoreToDisplay, activeTab, loadMoreDocuments, displayedCount, totalDocumentsCount]);
+
+  // Infinite scroll for requests tab
+  useEffect(() => {
+    // Only set up observer when in requests tab
+    if (activeTab !== 'requests') return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some(entry => entry.isIntersecting) && filteredRequests.length > displayedRequestsCount) {
+          setDisplayedRequestsCount(prev => Math.min(prev + ITEMS_PER_LOAD, filteredRequests.length));
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+    
+    const timeoutId = setTimeout(() => {
+      if (loadMoreRequestsRef.current) {
+        observer.observe(loadMoreRequestsRef.current);
+      }
+    }, 50);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, [activeTab, filteredRequests.length, displayedRequestsCount, ITEMS_PER_LOAD]);
+
+  // Reset displayed requests count when filters change
+  useEffect(() => {
+    setDisplayedRequestsCount(10);
+  }, [requestEmployeeFilter, requestTypeFilter, requestStatusFilter]);
 
   // Auto-activate filter from URL parameters (dashboard navigation)
   useEffect(() => {
@@ -258,16 +465,12 @@ export default function AdminDocuments() {
       queryClient.refetchQueries({ queryKey: ['/api/documents/all'] });
       
       toast({
-        title: sendMode === 'circular' ? 'Circular enviada' : 'Solicitud enviada',
-        description: sendMode === 'circular' 
-          ? `Se ha enviado la circular a ${selectedEmployees.length} empleados`
-          : 'Se ha enviado la solicitud de documento a los empleados seleccionados',
+        title: 'Solicitud enviada',
+        description: 'Se ha enviado la solicitud de documento a los empleados seleccionados',
       });
       setSelectedEmployees([]);
       setDocumentType('');
       setMessage('');
-      setRequiresSignature(false);
-      setSendMode('individual');
       setEmployeeSearchTerm('');
       setShowRequestDialog(false);
     },
@@ -281,17 +484,6 @@ export default function AdminDocuments() {
   });
 
   // Helper: Handle mode change
-  const handleModeChange = (mode: 'individual' | 'circular') => {
-    setSendMode(mode);
-    if (mode === 'circular') {
-      // Select all employees in circular mode
-      setSelectedEmployees(employees.map((e: Employee) => e.id));
-    } else {
-      // Clear selection in individual mode
-      setSelectedEmployees([]);
-    }
-  };
-
   // Filter employees by search term
   const filteredEmployeesForDialog = employees.filter((employee: Employee) =>
     employee.fullName.toLowerCase().includes(employeeSearchTerm.toLowerCase()) ||
@@ -532,7 +724,7 @@ export default function AdminDocuments() {
     return `${docTypeName}${dateInfo}${specialKeyword} - ${cleanEmployeeName}.${extension}`;
   };
 
-  const handleFileUpload = async (file: File, targetEmployeeId?: number, cleanFileName?: string, requiresSignature?: boolean) => {
+  const handleFileUpload = async (file: File, targetEmployeeId?: number, cleanFileName?: string, requiresSignature?: boolean, signaturePosition?: { x: number; y: number; width: number; height: number; page: number }) => {
     if (!file) return;
     
     const formData = new FormData();
@@ -552,6 +744,10 @@ export default function AdminDocuments() {
     // Send requires signature flag
     if (requiresSignature) {
       formData.append('requiresSignature', 'true');
+      // Send signature position if available
+      if (signaturePosition) {
+        formData.append('signaturePosition', JSON.stringify(signaturePosition));
+      }
     }
     
     // Use mutateAsync to wait for each upload to complete
@@ -574,6 +770,10 @@ export default function AdminDocuments() {
           formData.append('employeeIds', JSON.stringify(uploadSelectedEmployees));
           if (uploadRequiresSignature) {
             formData.append('requiresSignature', 'true');
+            // Send signature position if available
+            if (signaturePosition) {
+              formData.append('signaturePosition', JSON.stringify(signaturePosition));
+            }
           }
           
           const response = await fetch('/api/documents/upload-circular', {
@@ -621,7 +821,7 @@ export default function AdminDocuments() {
               analysis.employee, 
               analysis.documentType
             );
-            await handleFileUpload(analysis.file, analysis.employee.id, cleanFileName, uploadRequiresSignature);
+            await handleFileUpload(analysis.file, analysis.employee.id, cleanFileName, uploadRequiresSignature, signaturePosition || undefined);
           }
         }
         
@@ -792,48 +992,192 @@ export default function AdminDocuments() {
     sendDocumentMutation.mutate({
       employeeIds: selectedEmployees,
       documentType: documentTypeName,
-      message: message || (sendMode === 'circular' 
-        ? `Circular: ${documentTypeName}` 
-        : `Por favor, sube tu ${documentTypeName.toLowerCase()}`),
-      requiresSignature,
-      isCircular: sendMode === 'circular',
+      message: message || `Por favor, sube tu ${documentTypeName.toLowerCase()}`,
+      requiresSignature: false,
+      isCircular: false,
     });
   };
 
-  const normalizeText = (text: string): string => {
-    return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  // Organize documents into folder structure for file browser view
+  const organizeFolderStructure = () => {
+    interface FolderStructure {
+      [key: string]: {
+        name: string;
+        icon: any;
+        documents: Document[];
+        subfolders?: FolderStructure;
+        employeeData?: { userId: number; fullName: string; profilePicture: string | null };
+      };
+    }
+
+    const structure: FolderStructure = {};
+
+    // 1. Contabilidad folder (accounting documents with folderId)
+    const accountingDocs = filteredDocuments.filter((doc: any) => {
+      // Document must have a folderId
+      if (!doc.folderId) return false;
+      
+      // If we have folder.path info, only include contabilidad paths
+      // If we don't have folder.path yet, include all documents with folderId (backward compatibility)
+      if (doc.folder?.path) {
+        return doc.folder.path.startsWith('contabilidad');
+      }
+      
+      // Fallback: include any document with folderId
+      return true;
+    });
+    
+    if (accountingDocs.length > 0) {
+      const yearSubfolders: FolderStructure = {};
+      
+      // Organize by year and month
+      accountingDocs.forEach((doc: any) => {
+        const pathParts = doc.folder?.path?.split('/') || [];
+        
+        // If we don't have path info, put in a default location
+        if (pathParts.length < 3) {
+          return; // Skip if no proper path
+        }
+        
+        const year = pathParts[1]; // e.g., "2025"
+        const month = pathParts[2]; // e.g., "12"
+        
+        // Create year folder if doesn't exist
+        if (!yearSubfolders[year]) {
+          yearSubfolders[year] = {
+            name: year,
+            icon: Folder,
+            documents: [],
+            subfolders: {}
+          };
+        }
+        
+        // Create month folder if doesn't exist
+        if (month && !yearSubfolders[year].subfolders![month]) {
+          const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                             'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+          const monthIndex = parseInt(month) - 1;
+          
+          yearSubfolders[year].subfolders![month] = {
+            name: monthNames[monthIndex] || month,
+            icon: Folder,
+            documents: []
+          };
+        }
+        
+        // Add document to month folder
+        if (month) {
+          yearSubfolders[year].subfolders![month].documents.push(doc);
+        }
+      });
+      
+      structure['contabilidad'] = {
+        name: 'Contabilidad',
+        icon: Receipt,
+        documents: [],
+        subfolders: yearSubfolders
+      };
+    }
+
+    // 2. Empleados folder (employee documents)
+    const employeeDocs = filteredDocuments.filter((doc: Document) => !doc.folderId && doc.userId !== user?.id);
+    if (employeeDocs.length > 0 && !isSelfAccessOnly) {
+      const employeeSubfolders: FolderStructure = {};
+      
+      // Group by employee
+      employeeDocs.forEach((doc: Document) => {
+        const employeeId = `employee-${doc.userId}`;
+        const employeeName = doc.user?.fullName || 'Empleado desconocido';
+        
+        if (!employeeSubfolders[employeeId]) {
+          employeeSubfolders[employeeId] = {
+            name: employeeName,
+            icon: User,
+            documents: [],
+            subfolders: {},
+            employeeData: {
+              userId: doc.userId,
+              fullName: employeeName,
+              profilePicture: doc.user?.profilePicture || null
+            }
+          };
+        }
+        
+        // Categorize by document type within employee
+        const fileName = doc.originalName || doc.fileName || '';
+        const analysis = analyzeFileName(fileName, employees);
+        const foundDocType = documentTypes.find(dt => dt.name === analysis.documentType);
+        const type = foundDocType ? foundDocType.id : 'otros';
+        
+        if (!employeeSubfolders[employeeId].subfolders![type]) {
+          const typeNames: { [key: string]: string } = {
+            dni: 'DNI',
+            nomina: 'Nóminas',
+            contrato: 'Contratos',
+            justificante: 'Justificantes',
+            otros: 'Otros'
+          };
+          
+          employeeSubfolders[employeeId].subfolders![type] = {
+            name: typeNames[type] || 'Otros',
+            icon: foundDocType?.icon || File,
+            documents: []
+          };
+        }
+        
+        employeeSubfolders[employeeId].subfolders![type].documents.push(doc);
+      });
+      
+      structure['empleados'] = {
+        name: 'Empleados',
+        icon: Users,
+        documents: [],
+        subfolders: employeeSubfolders
+      };
+    }
+
+    // 3. Mis Documentos (current user's documents)
+    const myDocs = filteredDocuments.filter((doc: Document) => !doc.folderId && doc.userId === user?.id);
+    if (myDocs.length > 0) {
+      const mySubfolders: FolderStructure = {};
+      
+      myDocs.forEach((doc: Document) => {
+        const fileName = doc.originalName || doc.fileName || '';
+        const analysis = analyzeFileName(fileName, employees);
+        const foundDocType = documentTypes.find(dt => dt.name === analysis.documentType);
+        const type = foundDocType ? foundDocType.id : 'otros';
+        
+        if (!mySubfolders[type]) {
+          const typeNames: { [key: string]: string } = {
+            dni: 'DNI',
+            nomina: 'Nóminas',
+            contrato: 'Contratos',
+            justificante: 'Justificantes',
+            otros: 'Otros'
+          };
+          
+          mySubfolders[type] = {
+            name: typeNames[type] || 'Otros',
+            icon: foundDocType?.icon || File,
+            documents: []
+          };
+        }
+        
+        mySubfolders[type].documents.push(doc);
+      });
+      
+      structure['mis-documentos'] = {
+        name: 'Mis Documentos',
+        icon: Folder,
+        documents: [],
+        subfolders: mySubfolders
+      };
+    }
+
+    return structure;
   };
 
-  // For self-access mode, only show user's own documents
-  const documentsSource = isSelfAccessOnly 
-    ? allDocuments.filter((doc: Document) => doc.userId === user?.id)
-    : allDocuments;
-    
-  const filteredDocuments = documentsSource.filter((doc: Document) => {
-    const normalizedFileName = normalizeText(doc.originalName || '');
-    const normalizedEmployeeName = normalizeText(doc.user?.fullName || '');
-    const combinedText = `${normalizedFileName} ${normalizedEmployeeName}`;
-    
-    // Split search term into words and check if ALL words are found
-    const searchWords = normalizeText(searchTerm).split(/\s+/).filter(word => word.length > 0);
-    const matchesSearch = searchWords.length === 0 || 
-                         searchWords.every(word => combinedText.includes(word));
-    
-    // In self-access mode, don't filter by employee (already filtered to self)
-    const matchesEmployee = isSelfAccessOnly || selectedEmployee === 'all' || doc.userId.toString() === selectedEmployee;
-    
-    // Filter by pending signature (unsigned payrolls OR documents with requiresSignature flag)
-    let matchesPendingSignature = true;
-    if (filterPendingSignature) {
-      const fileName = doc.originalName || doc.fileName || '';
-      const analysis = analyzeFileName(fileName, employees);
-      const isPayroll = analysis.documentType === 'Nómina';
-      const requiresSignature = (doc as any).requiresSignature === true;
-      matchesPendingSignature = (isPayroll || requiresSignature) && !doc.isAccepted;
-    }
-    
-    return matchesSearch && matchesEmployee && matchesPendingSignature;
-  });
+  const folderStructure = organizeFolderStructure();
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -845,7 +1189,9 @@ export default function AdminDocuments() {
 
   const getFileIcon = (fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase();
-    return FileText; // Simplified for now
+    if (extension === 'pdf') return FileText;
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension || '')) return ImageIcon;
+    return FileText;
   };
 
 
@@ -875,8 +1221,6 @@ export default function AdminDocuments() {
         setDownloadingDocId(null);
         return;
       }
-
-      console.log('[SECURITY] Using signed URL for download');
 
       // Fetch document using signed URL
       const response = await fetch(signedUrl);
@@ -941,29 +1285,19 @@ export default function AdminDocuments() {
     setViewingDocId(docId);
     
     try {
-      // 🔒 SECURITY: Use signed URL instead of JWT token
       const signedUrl = await generateSignedUrl(docId);
       if (!signedUrl) {
         setViewingDocId(null);
         return;
       }
-
-      console.log('[SECURITY] Using signed URL for view');
-
-      // Use direct link approach for all browsers - prevents popup blocking
-      const url = new URL(signedUrl, window.location.origin);
-      url.searchParams.set('preview', 'true');
-      
-      // Create a temporary link element and click it
-      // This approach works reliably and isn't blocked as a popup
-      const link = document.createElement('a');
-      link.href = url.toString();
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
+      const docToView = allDocuments?.find((d: any) => d.id === docId);
+      setPreviewModal({
+        open: true,
+        url: signedUrl,
+        filename: docToView?.folderId ? docToView.fileName : (docToView?.originalName || docToView?.fileName || 'Documento'),
+        mimeType: docToView?.mimeType,
+        docId: docId,
+      });
     } catch (error: any) {
       toast({
         title: "Error al visualizar",
@@ -1125,10 +1459,10 @@ export default function AdminDocuments() {
 
         {/* Tab Content */}
         {activeTab === 'upload' && (
-          <>
+          <div className="space-y-4">
             {/* Undo Last Circular Upload */}
             {lastCircularUpload && (
-              <Alert className="mb-4 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700">
+              <Alert className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700">
                 <Undo2 className="h-4 w-4 text-amber-600" />
                 <AlertDescription className="flex items-center justify-between">
                   <span className="text-amber-700 dark:text-amber-300">
@@ -1293,238 +1627,639 @@ export default function AdminDocuments() {
               </div>
             </DialogContent>
           </Dialog>
-          </>
+          </div>
         )}
 
         {activeTab === 'explorer' && (
           <div className="space-y-4">
-              {/* Filters Section - Same style as time-tracking */}
-              <div className="p-4 bg-card dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
-                <div className="flex flex-col md:flex-row gap-4">
-                  {/* 1. Search Bar - Takes remaining space */}
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
-                      <Input
-                        placeholder="Buscar por nombre de archivo o empleado..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 w-full h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* 2. Employee Filter - Hidden in self-access mode */}
-                  {!isSelfAccessOnly && (
-                    <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                      <SelectTrigger className="w-full md:w-64 h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos los empleados</SelectItem>
-                        {employees.map((employee: Employee) => (
-                          <SelectItem key={employee.id} value={employee.id.toString()}>
-                            {employee.fullName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  
-                  {/* 3. View Mode Toggle Buttons */}
-                  <div className="flex bg-muted rounded-lg p-1">
-                    <Button
-                      variant={viewMode === 'list' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('list')}
-                      className="px-3"
-                    >
-                      <List className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('grid')}
-                      className="px-3"
-                    >
-                      <Grid3X3 className="h-4 w-4" />
-                    </Button>
+            {/* Filters Section - una sola fila (wrap en móvil) */}
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap items-center gap-2 w-full">
+                {/* Contador */}
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
+                  <span className="text-sm font-medium text-foreground">{totalDocumentsCount}</span>
+                  <span className="text-sm text-muted-foreground">documento{totalDocumentsCount !== 1 ? 's' : ''}</span>
+                </div>
+
+                {/* Filtro empleado */}
+                {!isSelfAccessOnly && (
+                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                    <SelectTrigger className="w-[180px] sm:w-[200px]">
+                      <SelectValue placeholder="Todos los empleados" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los empleados</SelectItem>
+                      {employees.map((employee: Employee) => (
+                        <SelectItem key={employee.id} value={employee.id.toString()}>
+                          {employee.fullName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
+                {/* Buscador */}
+                <div className="flex-1 min-w-[200px]">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+                    <Input
+                      placeholder="Buscar documentos..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
                   </div>
                 </div>
+
+                {/* Toggle vista */}
+                <div className="flex bg-muted rounded-lg p-0.5 ml-auto">
+                  <Button
+                    variant={viewMode === 'list' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('list')}
+                    className="px-3 h-9"
+                    title="Vista de lista"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'folders' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('folders')}
+                    className="px-3 h-9"
+                    title="Vista de carpetas"
+                  >
+                    <Folder className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
+            </div>
+            
+            {/* Toggle Pending Signature Filter */}
+            {filterPendingSignature && (
+              <Alert className="bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800 -mt-1">
+                <FileSignature className="h-4 w-4 text-orange-600" />
+                <AlertDescription className="flex items-center justify-between">
+                  <span className="text-orange-700 dark:text-orange-300">
+                    Mostrando solo nóminas pendientes de firma
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFilterPendingSignature(false)}
+                    className="text-orange-600 hover:text-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/30 h-7"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Limpiar filtro
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
 
-              {/* Active filter indicator */}
-              {filterPendingSignature && (
-                <Alert className="bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800">
-                  <FileSignature className="h-4 w-4 text-orange-600" />
-                  <AlertDescription className="flex items-center justify-between">
-                    <span className="text-orange-700 dark:text-orange-300">
-                      Mostrando solo nóminas pendientes de firma
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setFilterPendingSignature(false)}
-                      className="text-orange-600 hover:text-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/30 h-7"
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Limpiar filtro
-                    </Button>
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {/* Results count */}
-              <div className="text-sm text-muted-foreground">
-                Mostrando {(filteredDocuments || []).length} documento{(filteredDocuments || []).length !== 1 ? 's' : ''}
-              </div>
-
-              {/* Documents Display */}
-              {(filteredDocuments || []).length > 0 ? (
+            {/* Documents Display */}
+            {(filteredDocuments || []).length > 0 ? (
                 viewMode === 'list' ? (
-                  /* Lista tradicional */
-                  <div className="space-y-3">
-                    {filteredDocuments.map((document: Document) => {
+                  /* Lista consistente con vista de carpetas */
+                  <div className="space-y-2">
+                    {displayedDocuments.map((document: Document) => {
                       const FileIcon = getFileIcon(document.originalName);
                       return (
-                        <div
-                          key={document.id}
-                          className="flex flex-col sm:flex-row p-4 bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 gap-3"
+                        <div 
+                          key={document.id} 
+                          className="bg-card dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600"
                         >
-                          {/* Header section - icon and title */}
-                          <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className="p-2 rounded-lg bg-muted flex-shrink-0">
-                              <FileIcon className="h-6 w-6 text-muted-foreground" />
+                          <div className="flex items-stretch">
+                            {/* Columna de icono - centrado verticalmente */}
+                            <div className="flex items-center justify-center px-2 md:px-3 flex-shrink-0">
+                              <FileIcon className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <h3 className="font-medium text-foreground truncate">
-                                {document.originalName || document.fileName || 'Documento sin nombre'}
-                              </h3>
-                              <div className="text-sm text-muted-foreground">
-                                {document.user?.fullName || 'Empleado desconocido'}
+                            
+                            {/* Contenido principal */}
+                            <div 
+                              className="flex items-start p-2 md:p-3 py-2 min-w-0 flex-1 cursor-pointer"
+                              onClick={() => handleViewDocument(document.id)}
+                            >
+                              <div className="min-w-0 flex-1 space-y-1">
+                                <p className="font-medium text-sm md:text-base text-gray-900 dark:text-gray-100 line-clamp-2 md:truncate leading-tight">
+                                  {document.folderId ? document.fileName : (document.originalName || document.fileName)}
+                                </p>
+                                {/* Info en layout adaptativo */}
+                                <div className="flex flex-col md:flex-row md:items-center gap-0.5 md:gap-2 text-xs md:text-sm">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-semibold text-muted-foreground">{formatFileSize(document.fileSize)}</span>
+                                    <span className="text-muted-foreground/60">•</span>
+                                    <span className="text-muted-foreground">{format(new Date(document.createdAt), 'd MMM yyyy', { locale: es })}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                                    <span className="hidden md:inline text-muted-foreground/60">•</span>
+                                    <span className="truncate">Por: {document.user?.fullName || 'Usuario desconocido'}</span>
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                          </div>
-
-                          {/* Metadata section - fixed width columns for alignment */}
-                          <div className="hidden sm:flex items-center text-sm text-muted-foreground">
-                            <span className="w-20 text-right">{formatFileSize(document.fileSize)}</span>
-                            <span className="w-36 text-center">
-                              {(() => {
-                                const utcDate = new Date(document.createdAt);
-                                const localDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
-                                return format(localDate, 'd MMM yyyy HH:mm', { locale: es });
-                              })()}
-                            </span>
-                            <span className="w-28 text-center">
+                          
+                            {/* Botones de acción: solo Firmar cuando aplica (descargar/borrar se mueven al modal) */}
+                            <div className="flex gap-0.5 md:gap-1 items-center px-1 md:px-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                              {/* Firmar (solo si aplica) */}
                               {(() => {
                                 const fileName = document.originalName || document.fileName || '';
                                 const analysis = analyzeFileName(fileName, employees);
-                                const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
-                                return requiresSignatureBadge ? (
-                                  <Badge 
-                                    variant={document.isAccepted ? 'default' : 'outline'}
-                                    className={`text-xs ${
-                                      document.isAccepted 
-                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' 
-                                        : 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300'
-                                    }`}
+                                const requiresSignature = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                return requiresSignature && 
+                                       document.userId === user?.id && 
+                                       !document.isAccepted && 
+                                       document.isViewed ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleSignDocument(document.id, document.originalName || document.fileName);
+                                    }}
+                                    className="h-8 w-8 p-0 text-gray-500 hover:text-green-500 dark:text-gray-500 dark:hover:text-green-400 transition-colors"
                                   >
-                                    {document.isAccepted ? '✓ Firmada' : 'Pendiente'}
-                                  </Badge>
+                                    <FileSignature className="h-4 w-4" />
+                                  </Button>
                                 ) : null;
                               })()}
-                            </span>
-                          </div>
-                          {/* Mobile: stacked layout */}
-                          <div className="sm:hidden flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                            <span>{formatFileSize(document.fileSize)}</span>
-                            <span>•</span>
-                            <span>
-                              {(() => {
-                                const utcDate = new Date(document.createdAt);
-                                const localDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
-                                return format(localDate, 'd MMM yyyy', { locale: es });
-                              })()}
-                            </span>
-                            {(() => {
+                              
+                              {/* Descargar/Borrar removidos en la lista; disponibles en el modal de vista previa */}
+                            </div>
+                          
+                            {/* Sección coloreada de estado - extremo derecho, ultra compacta en móvil */}
+                            <div className={`hidden md:flex md:w-[110px] flex items-center justify-center flex-shrink-0 px-2 md:px-3 ${
+                              (() => {
+                                // Si es documento de contabilidad, color según tipo de movimiento
+                                if (document.folderId && document.accountingType) {
+                                  return document.accountingType === 'expense' 
+                                    ? 'bg-red-100 dark:bg-red-900/40' 
+                                    : 'bg-green-100 dark:bg-green-900/40';
+                                }
+                                // Para otros documentos, color según estado de firma
+                                const fileName = document.originalName || document.fileName || '';
+                                const analysis = analyzeFileName(fileName, employees);
+                                const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                if (requiresSignatureBadge) {
+                                  return document.isAccepted 
+                                    ? 'bg-green-100 dark:bg-green-900/40' 
+                                    : 'bg-yellow-100 dark:bg-yellow-900/40';
+                                }
+                                // Por defecto, fondo gris suave
+                                return 'bg-gray-100 dark:bg-gray-800';
+                              })()
+                            }`}>
+                              <span className={`text-[10px] md:text-xs font-semibold text-center leading-tight ${
+                                (() => {
+                                  // Si es documento de contabilidad
+                                  if (document.folderId && document.accountingType) {
+                                    return document.accountingType === 'expense' 
+                                      ? 'text-red-700 dark:text-red-300' 
+                                      : 'text-green-700 dark:text-green-300';
+                                  }
+                                  // Para otros documentos, color según estado de firma
+                                  const fileName = document.originalName || document.fileName || '';
+                                  const analysis = analyzeFileName(fileName, employees);
+                                  const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                  if (requiresSignatureBadge) {
+                                    return document.isAccepted 
+                                      ? 'text-green-700 dark:text-green-300' 
+                                      : 'text-yellow-700 dark:text-yellow-300';
+                                  }
+                                  return 'text-gray-600 dark:text-gray-400';
+                                })()
+                              }`}>
+                                {(() => {
+                                  // Si es documento de contabilidad
+                                  if (document.folderId && document.accountingType) {
+                                    return document.accountingType === 'expense' ? 'Gasto' : 'Ingreso';
+                                  }
+                                  // Para otros documentos, mostrar estado de firma
+                                  const fileName = document.originalName || document.fileName || '';
+                                  const analysis = analyzeFileName(fileName, employees);
+                                  const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                  if (requiresSignatureBadge) {
+                                    return document.signedAt ? '✓ Firmada' : 'Pendiente firma';
+                                  }
+                                  return 'Documento';
+                                })()}
+                              </span>
+                            </div>
+
+                            {/* Indicador compacto móvil - Ocupa toda la altura */}
+                            <div className={`md:hidden flex items-stretch flex-shrink-0 w-1 rounded-full ${
+                              (() => {
+                                // Si es documento de contabilidad, color según tipo de movimiento
+                                if (document.folderId && document.accountingType) {
+                                  return document.accountingType === 'expense' 
+                                    ? 'bg-red-500 dark:bg-red-600' 
+                                    : 'bg-green-500 dark:bg-green-600';
+                                }
+                                // Para otros documentos, color según estado de firma
+                                const fileName = document.originalName || document.fileName || '';
+                                const analysis = analyzeFileName(fileName, employees);
+                                const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                if (requiresSignatureBadge) {
+                                  return document.signedAt 
+                                    ? 'bg-green-500 dark:bg-green-600' 
+                                    : 'bg-amber-500 dark:bg-amber-600';
+                                }
+                                // Por defecto, gris
+                                return 'bg-gray-400 dark:bg-gray-600';
+                              })()
+                            }`} title={(() => {
+                              // Si es documento de contabilidad
+                              if (document.folderId && document.accountingType) {
+                                return document.accountingType === 'expense' ? 'Gasto' : 'Ingreso';
+                              }
+                              // Para otros documentos, mostrar estado de firma
                               const fileName = document.originalName || document.fileName || '';
                               const analysis = analyzeFileName(fileName, employees);
                               const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
-                              return requiresSignatureBadge && (
-                                <Badge 
-                                  variant={document.isAccepted ? 'default' : 'outline'}
-                                  className={`text-xs ${
-                                    document.isAccepted 
-                                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' 
-                                      : 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300'
-                                  }`}
-                                >
-                                  {document.isAccepted ? '✓ Firmada' : 'Pendiente'}
-                                </Badge>
-                              );
-                            })()}
-                          </div>
-
-                          {/* Actions section - fixed width for alignment */}
-                          <div className="flex items-center justify-end gap-1 flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50 sm:w-36">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleViewDocument(document.id)}
-                              className="h-8 w-8 p-0"
-                              disabled={viewingDocId === document.id}
-                            >
-                              {viewingDocId === document.id ? (
-                                <LoadingSpinner size="xs" />
-                              ) : (
-                                <Eye className="h-4 w-4" />
-                              )}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDownload(document.id, document.originalName)}
-                              className="h-8 w-8 p-0"
-                              disabled={downloadingDocId === document.id}
-                            >
-                              {downloadingDocId === document.id ? (
-                                <LoadingSpinner size="xs" />
-                              ) : (
-                                <Download className="h-4 w-4" />
-                              )}
-                            </Button>
-                            {/* Sign button for documents requiring signature owned by current user */}
-                            {(() => {
-                              const fileName = document.originalName || document.fileName || '';
-                              const analysis = analyzeFileName(fileName, employees);
-                              const requiresSignature = analysis.documentType === 'Nómina' || document.requiresSignature;
-                              return requiresSignature && 
-                                     document.userId === user?.id && 
-                                     !document.isAccepted && 
-                                     document.isViewed && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleSignDocument(document.id, document.originalName || document.fileName)}
-                                  className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                >
-                                  <FileSignature className="h-4 w-4" />
-                                </Button>
-                              );
-                            })()}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => confirmDelete(document.id, document.originalName)}
-                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                              if (requiresSignatureBadge) {
+                                return document.signedAt ? '✓ Firmada' : 'Pendiente firma';
+                              }
+                              return 'Documento';
+                            })()} />
                           </div>
                         </div>
                       );
                     })}
+                    
+                    {/* Elemento observador para scroll infinito */}
+                    {hasMoreToDisplay && (
+                      <div ref={loadMoreRef} className="py-4">
+                        <div className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
+                          {isFetchingNextPage ? (
+                            <>
+                              <LoadingSpinner size="sm" />
+                              <span>Cargando más documentos...</span>
+                            </>
+                          ) : (
+                            <span>Mostrando {displayedDocuments.length} de {filteredDocuments.length}</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : viewMode === 'folders' ? (
+                  /* Vista de navegador de archivos con carpetas */
+                  <div className="space-y-4">
+                    {/* Breadcrumb navigation - Always visible */}
+                    <div className="flex items-center gap-3">
+                      {/* Icon buttons without borders */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCurrentFolderPath('');
+                        }}
+                        type="button"
+                        className="p-2 hover:bg-muted rounded-lg transition-colors"
+                        title="Inicio"
+                      >
+                        <Home className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const parts = currentFolderPath.split('/');
+                          parts.pop();
+                          setCurrentFolderPath(parts.join('/'));
+                        }}
+                        type="button"
+                        disabled={!currentFolderPath}
+                        className="p-2 hover:bg-muted rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Atrás"
+                      >
+                        <ArrowLeft className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+                      </button>
+                      
+                      {/* Breadcrumb with proper names */}
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        {!currentFolderPath ? (
+                          <span className="font-medium">Inicio</span>
+                        ) : (
+                          (() => {
+                            const parts = currentFolderPath.split('/');
+                            const breadcrumbData: { name: string; path: string }[] = [];
+                            let tempPath = '';
+                            let tempLevel: any = folderStructure;
+                            
+                            for (const part of parts) {
+                              tempPath = tempPath ? `${tempPath}/${part}` : part;
+                              
+                              if (tempLevel[part]) {
+                                breadcrumbData.push({ name: tempLevel[part].name, path: tempPath });
+                                tempLevel = tempLevel[part];
+                              } else if (tempLevel.subfolders && tempLevel.subfolders[part]) {
+                                breadcrumbData.push({ name: tempLevel.subfolders[part].name, path: tempPath });
+                                tempLevel = tempLevel.subfolders[part];
+                              } else {
+                                breadcrumbData.push({ name: part, path: tempPath });
+                              }
+                            }
+                            
+                            return (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setCurrentFolderPath('');
+                                  }}
+                                  className="hover:text-foreground transition-colors"
+                                >
+                                  Inicio
+                                </button>
+                                {breadcrumbData.map((item, idx) => (
+                                  <span key={idx} className="flex items-center gap-2">
+                                    <span>/</span>
+                                    {idx === breadcrumbData.length - 1 ? (
+                                      <span className="font-medium text-foreground">
+                                        {item.name}
+                                      </span>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          setCurrentFolderPath(item.path);
+                                        }}
+                                        className="hover:text-foreground transition-colors"
+                                      >
+                                        {item.name}
+                                      </button>
+                                    )}
+                                  </span>
+                                ))}
+                              </>
+                            );
+                          })()
+                        )}
+                      </div>
+                    </div>
+                    
+                    {(() => {
+                      // Show root folders or navigate into subfolder
+                      if (!currentFolderPath) {
+                        // Root level - show main folders
+                        return (
+                          <div className="space-y-2">
+                            {Object.entries(folderStructure).map(([folderId, folderData]) => {
+                              const FolderIcon = folderData.icon;
+                              const totalDocs = folderData.documents.length + 
+                                (folderData.subfolders ? Object.values(folderData.subfolders).reduce((sum: number, sf: any) => 
+                                  sum + (sf.documents?.length || 0) + (sf.subfolders ? Object.values(sf.subfolders).reduce((s: number, ssf: any) => s + (ssf.documents?.length || 0), 0) : 0), 0) : 0);
+                              
+                              return (
+                                <button
+                                  key={folderId}
+                                  type="button"
+                                  className="w-full flex items-center justify-between p-3 bg-card dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition-all"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setCurrentFolderPath(folderId);
+                                  }}
+                                >
+                                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                                    <Folder className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                                    <div className="min-w-0 flex-1 text-left">
+                                      <p className="font-medium text-foreground truncate">{folderData.name}</p>
+                                      <p className="text-sm text-muted-foreground">{totalDocs} archivo{totalDocs !== 1 ? 's' : ''}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex-shrink-0">
+                                    <FolderIcon className="h-5 w-5 text-muted-foreground" />
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        );
+                      }
+                      
+                      // Navigate into folders
+                      const pathParts = currentFolderPath.split('/');
+                      let currentLevel: any = folderStructure;
+                      
+                      // Navigate to current folder
+                      for (const part of pathParts) {
+                        if (currentLevel[part]) {
+                          currentLevel = currentLevel[part];
+                        } else if (currentLevel.subfolders && currentLevel.subfolders[part]) {
+                          currentLevel = currentLevel.subfolders[part];
+                        } else {
+                          // Invalid path, go back to root
+                          setCurrentFolderPath('');
+                          return null;
+                        }
+                      }
+                      
+                      // Show subfolders and documents at current level
+                      return (
+                        <div className="space-y-4">
+                          {/* Subfolders */}
+                          {currentLevel.subfolders && Object.keys(currentLevel.subfolders).length > 0 && (
+                            <div className="space-y-2">
+                              {Object.entries(currentLevel.subfolders).map(([subfolderId, subfolderData]: [string, any]) => {
+                                const SubfolderIcon = subfolderData.icon;
+                                const subfolderTotalDocs = subfolderData.documents.length + 
+                                  (subfolderData.subfolders ? Object.values(subfolderData.subfolders).reduce((s: number, ssf: any) => s + (ssf.documents?.length || 0), 0) : 0);
+                                
+                                // Check if this is an employee folder
+                                const isEmployeeFolder = subfolderData.employeeData;
+                                
+                                return (
+                                  <button
+                                    key={subfolderId}
+                                    type="button"
+                                    className="w-full flex items-center justify-between p-3 bg-card dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition-all"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setCurrentFolderPath(`${currentFolderPath}/${subfolderId}`);
+                                    }}
+                                  >
+                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                      {isEmployeeFolder && subfolderData.employeeData ? (
+                                        <UserAvatar
+                                          fullName={subfolderData.employeeData.fullName}
+                                          userId={subfolderData.employeeData.userId}
+                                          profilePicture={subfolderData.employeeData.profilePicture}
+                                          size="sm"
+                                        />
+                                      ) : (
+                                        <Folder className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                                      )}
+                                      <div className="min-w-0 flex-1 text-left">
+                                        <p className="font-medium text-foreground truncate">{subfolderData.name}</p>
+                                        <p className="text-sm text-muted-foreground">{subfolderTotalDocs} archivo{subfolderTotalDocs !== 1 ? 's' : ''}</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex-shrink-0">
+                                      <SubfolderIcon className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                          
+                          {/* Documents */}
+                          {currentLevel.documents && currentLevel.documents.length > 0 && (
+                            <div className="space-y-2">
+                                {currentLevel.documents.map((document: Document) => {
+                                  const FileIcon = getFileIcon(document.originalName);
+                                  return (
+                                    <div 
+                                      key={document.id} 
+                                      className="bg-card dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600"
+                                    >
+                                      <div className="flex items-stretch">
+                                        {/* Columna de icono - centrado verticalmente */}
+                                        <div className="flex items-center justify-center px-2 md:px-3 flex-shrink-0">
+                                          <FileIcon className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
+                                        </div>
+                                        
+                                        {/* Contenido principal */}
+                                        <div 
+                                          className="flex items-start p-2 md:p-3 py-2 min-w-0 flex-1 cursor-pointer"
+                                          onClick={() => handleViewDocument(document.id)}
+                                        >
+                                          <div className="min-w-0 flex-1 space-y-1">
+                                            <p className="font-medium text-sm md:text-base text-gray-900 dark:text-gray-100 line-clamp-2 md:truncate leading-tight">
+                                              {document.folderId ? document.fileName : (document.originalName || document.fileName)}
+                                            </p>
+                                            {/* Info en layout adaptativo */}
+                                            <div className="flex flex-col md:flex-row md:items-center gap-0.5 md:gap-2 text-xs md:text-sm">
+                                              <div className="flex items-center gap-1.5">
+                                                <span className="font-semibold text-muted-foreground">{formatFileSize(document.fileSize)}</span>
+                                                <span className="text-muted-foreground/60">•</span>
+                                                <span className="text-muted-foreground">{format(new Date(document.createdAt), 'd MMM yyyy', { locale: es })}</span>
+                                              </div>
+                                              <div className="flex items-center gap-1.5 text-muted-foreground">
+                                                <span className="hidden md:inline text-muted-foreground/60">•</span>
+                                                <span className="truncate">Por: {document.user?.fullName || 'Usuario desconocido'}</span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      
+                                        {/* Botones de acción removidos en la lista; disponibles en el modal de vista previa */}
+                                        <div className="flex gap-0.5 md:gap-1 items-center px-1 md:px-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                                          {/* Acciones trasladadas al modal de vista previa */}
+                                        </div>
+                                      
+                                        {/* Sección coloreada de estado - extremo derecho, ultra compacta en móvil */}
+                                        <div className={`hidden md:flex md:w-[110px] flex items-center justify-center flex-shrink-0 px-2 md:px-3 ${
+                                          (() => {
+                                            // Si es documento de contabilidad, color según tipo de movimiento
+                                            if (document.folderId && document.accountingType) {
+                                              return document.accountingType === 'expense' 
+                                                ? 'bg-red-100 dark:bg-red-900/40' 
+                                                : 'bg-green-100 dark:bg-green-900/40';
+                                            }
+                                            // Para otros documentos, color según estado de firma
+                                            const fileName = document.originalName || document.fileName || '';
+                                            const analysis = analyzeFileName(fileName, employees);
+                                            const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                            if (requiresSignatureBadge) {
+                                              return document.isAccepted 
+                                                ? 'bg-green-100 dark:bg-green-900/40' 
+                                                : 'bg-yellow-100 dark:bg-yellow-900/40';
+                                            }
+                                            // Por defecto, fondo gris suave
+                                            return 'bg-gray-100 dark:bg-gray-800';
+                                          })()
+                                        }`}>
+                                          <span className={`text-[10px] md:text-xs font-semibold text-center leading-tight ${
+                                            (() => {
+                                              // Si es documento de contabilidad
+                                              if (document.folderId && document.accountingType) {
+                                                return document.accountingType === 'expense' 
+                                                  ? 'text-red-700 dark:text-red-300' 
+                                                  : 'text-green-700 dark:text-green-300';
+                                              }
+                                              // Para otros documentos, color según estado de firma
+                                              const fileName = document.originalName || document.fileName || '';
+                                              const analysis = analyzeFileName(fileName, employees);
+                                              const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                              if (requiresSignatureBadge) {
+                                                return document.isAccepted 
+                                                  ? 'text-green-700 dark:text-green-300' 
+                                                  : 'text-yellow-700 dark:text-yellow-300';
+                                              }
+                                              return 'text-gray-600 dark:text-gray-400';
+                                            })()
+                                          }`}>
+                                            {(() => {
+                                              // Si es documento de contabilidad
+                                              if (document.folderId && document.accountingType) {
+                                                return document.accountingType === 'expense' ? 'Gasto' : 'Ingreso';
+                                              }
+                                              // Para otros documentos, mostrar estado de firma
+                                              const fileName = document.originalName || document.fileName || '';
+                                              const analysis = analyzeFileName(fileName, employees);
+                                              const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                              if (requiresSignatureBadge) {
+                                                return document.signedAt ? '✓ Firmada' : 'Pendiente firma';
+                                              }
+                                              return 'Documento';
+                                            })()}
+                                          </span>
+                                        </div>
+
+                                        {/* Indicador compacto móvil - Ocupa toda la altura */}
+                                        <div className={`md:hidden flex items-stretch flex-shrink-0 w-1 rounded-full ${
+                                          (() => {
+                                            // Si es documento de contabilidad, color según tipo de movimiento
+                                            if (document.folderId && document.accountingType) {
+                                              return document.accountingType === 'expense' 
+                                                ? 'bg-red-500 dark:bg-red-600' 
+                                                : 'bg-green-500 dark:bg-green-600';
+                                            }
+                                            // Para otros documentos, color según estado de firma
+                                            const fileName = document.originalName || document.fileName || '';
+                                            const analysis = analyzeFileName(fileName, employees);
+                                            const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                            if (requiresSignatureBadge) {
+                                              return document.isAccepted 
+                                                ? 'bg-green-500 dark:bg-green-600' 
+                                                : 'bg-amber-500 dark:bg-amber-600';
+                                            }
+                                            // Por defecto, gris
+                                            return 'bg-gray-400 dark:bg-gray-600';
+                                          })()
+                                        }`} title={(() => {
+                                          // Si es documento de contabilidad
+                                          if (document.folderId && document.accountingType) {
+                                            return document.accountingType === 'expense' ? 'Gasto' : 'Ingreso';
+                                          }
+                                          // Para otros documentos, mostrar estado de firma
+                                          const fileName = document.originalName || document.fileName || '';
+                                          const analysis = analyzeFileName(fileName, employees);
+                                          const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                          if (requiresSignatureBadge) {
+                                            return document.isAccepted ? '✓ Firmada' : 'Pendiente firma';
+                                          }
+                                          return 'Documento';
+                                        })()} />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                            </div>
+                          )}
+                          
+                          {/* Empty state */}
+                          {(!currentLevel.subfolders || Object.keys(currentLevel.subfolders).length === 0) && 
+                           (!currentLevel.documents || currentLevel.documents.length === 0) && (
+                            <div className="text-center py-12 text-muted-foreground">
+                              <Folder className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                              <p>Esta carpeta está vacía</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 ) : (
                   /* Vista de cuadrícula por empleado */
@@ -1655,39 +2390,15 @@ export default function AdminDocuments() {
                                             return (
                                               <div
                                                 key={document.id}
-                                                className="bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600"
+                                                className="bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 cursor-pointer"
+                                                onClick={() => handleViewDocument(document.id)}
                                               >
                                                 <div className="flex items-start justify-between mb-2">
                                                   <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
                                                     <FileIcon className="h-4 w-4 text-gray-600 dark:text-gray-300" />
                                                   </div>
-                                                  <div className="flex gap-1">
-                                                    <Button
-                                                      variant="outline"
-                                                      size="sm"
-                                                      onClick={() => handleViewDocument(document.id)}
-                                                      className="h-7 w-7 p-0"
-                                                      disabled={viewingDocId === document.id}
-                                                    >
-                                                      {viewingDocId === document.id ? (
-                                                        <LoadingSpinner size="xs" />
-                                                      ) : (
-                                                        <Eye className="h-3 w-3" />
-                                                      )}
-                                                    </Button>
-                                                    <Button
-                                                      variant="outline"
-                                                      size="sm"
-                                                      onClick={() => handleDownload(document.id, document.originalName)}
-                                                      className="h-7 w-7 p-0"
-                                                      disabled={downloadingDocId === document.id}
-                                                    >
-                                                      {downloadingDocId === document.id ? (
-                                                        <LoadingSpinner size="xs" />
-                                                      ) : (
-                                                        <Download className="h-3 w-3" />
-                                                      )}
-                                                    </Button>
+                                                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                                                    {/* Descargar/Borrar removidos en la tarjeta; disponibles en el modal */}
                                                     {/* Sign button for documents requiring signature owned by current user in grid view */}
                                                     {(type === 'nomina' || document.requiresSignature) && 
                                                      document.userId === user?.id && 
@@ -1696,20 +2407,16 @@ export default function AdminDocuments() {
                                                       <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        onClick={() => handleSignDocument(document.id, document.originalName || document.fileName)}
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          handleSignDocument(document.id, document.originalName || document.fileName);
+                                                        }}
                                                         className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                                       >
                                                         <FileSignature className="h-3 w-3" />
                                                       </Button>
                                                     )}
-                                                    <Button
-                                                      variant="outline"
-                                                      size="sm"
-                                                      onClick={() => confirmDelete(document.id, document.originalName)}
-                                                      className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                    >
-                                                      <Trash2 className="h-3 w-3" />
-                                                    </Button>
+                                                    {/* Eliminar trasladado al modal de vista previa */}
                                                   </div>
                                                 </div>
                                                 <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate mb-1">
@@ -1718,24 +2425,20 @@ export default function AdminDocuments() {
                                                 <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
                                                   <div>{formatFileSize(document.fileSize)}</div>
                                                   <div>
-                                                    {(() => {
-                                                      const utcDate = new Date(document.createdAt);
-                                                      const localDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
-                                                      return format(localDate, 'd MMM yyyy', { locale: es });
-                                                    })()}
+                                                    {format(new Date(document.createdAt), 'd MMM yyyy', { locale: es })}
                                                   </div>
                                                   {/* Signature status for nóminas or documents requiring signature in grid view */}
                                                   {(type === 'nomina' || document.requiresSignature) && (
                                                     <div>
                                                       <Badge 
-                                                        variant={document.isAccepted ? 'default' : 'outline'}
+                                                        variant={document.signedAt ? 'default' : 'outline'}
                                                         className={`text-xs ${
-                                                          document.isAccepted 
+                                                          document.signedAt 
                                                             ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' 
                                                             : 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300'
                                                         }`}
                                                       >
-                                                        {document.isAccepted ? '✓ Firmada' : 'Pendiente firma'}
+                                                        {document.signedAt ? '✓ Firmada' : 'Pendiente firma'}
                                                       </Badge>
                                                     </div>
                                                   )}
@@ -1754,6 +2457,22 @@ export default function AdminDocuments() {
                         );
                       });
                     })()}
+                    
+                    {/* Elemento observador para scroll infinito */}
+                    {hasMoreToDisplay && (
+                      <div ref={loadMoreRef} className="py-4">
+                        <div className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
+                          {isFetchingNextPage ? (
+                            <>
+                              <LoadingSpinner size="sm" />
+                              <span>Cargando más documentos...</span>
+                            </>
+                          ) : (
+                            <span>Mostrando {displayedDocuments.length} de {filteredDocuments.length}</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )
               ) : (
@@ -1774,150 +2493,301 @@ export default function AdminDocuments() {
 
         {activeTab === 'requests' && (
           <div className="space-y-4">
-            {/* Header Section - Same style as time-tracking */}
-            <div className="p-4 bg-card dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                    <Send className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100">Historial de Solicitudes</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{(sentRequests || []).length} solicitudes</p>
-                  </div>
+            {/* Filtros - Optimizado para móvil */}
+            <div className="flex flex-col gap-3">
+              {/* Fila 1: Contador, empleado (desktop) y botón nueva solicitud (móvil) */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Contador de solicitudes */}
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
+                  <span className="text-sm font-medium text-foreground">{filteredRequests.length}</span>
+                  <span className="text-sm text-muted-foreground">solicitudes</span>
                 </div>
+                
+                {/* Filtro Empleado - Solo desktop */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-[180px] justify-between font-normal hidden md:flex">
+                      <span className="truncate">
+                        {requestEmployeeFilter === "all" 
+                          ? "Todos los empleados" 
+                          : employees.find((e: Employee) => e.id === parseInt(requestEmployeeFilter))?.fullName || "Empleado"}
+                      </span>
+                      <User className="w-4 h-4 ml-2 flex-shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[240px] p-0" align="start">
+                    <div className="p-2 border-b">
+                      <Input
+                        placeholder="Buscar empleado..."
+                        value={requestEmployeeSearch}
+                        onChange={(e) => setRequestEmployeeSearch(e.target.value)}
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="max-h-[200px] overflow-y-auto p-1">
+                      <button
+                        onClick={() => { setRequestEmployeeFilter("all"); setRequestEmployeeSearch(""); }}
+                        className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors ${requestEmployeeFilter === "all" ? "bg-muted font-medium" : ""}`}
+                      >
+                        Todos los empleados
+                      </button>
+                      {employees
+                        .filter((emp: Employee) => !requestEmployeeSearch || emp.fullName.toLowerCase().includes(requestEmployeeSearch.toLowerCase()))
+                        .map((emp: Employee) => (
+                          <button
+                            key={`request-emp-${emp.id}`}
+                            onClick={() => { setRequestEmployeeFilter(emp.id.toString()); setRequestEmployeeSearch(""); }}
+                            className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors truncate ${requestEmployeeFilter === emp.id.toString() ? "bg-muted font-medium" : ""}`}
+                          >
+                            {emp.fullName}
+                          </button>
+                        ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                
+                {/* Filtro Tipo de Documento - Solo desktop */}
+                <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
+                  <SelectTrigger className="w-[160px] hidden md:flex">
+                    <SelectValue placeholder="Tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los tipos</SelectItem>
+                    {documentTypes.map((type) => (
+                      <SelectItem key={`request-type-${type.id}`} value={type.name}>{type.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* Filtro Estado - Solo desktop */}
+                <Select value={requestStatusFilter} onValueChange={setRequestStatusFilter}>
+                  <SelectTrigger className="w-[130px] hidden md:flex">
+                    <SelectValue placeholder="Estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="pending">Pendientes</SelectItem>
+                    <SelectItem value="completed">Completadas</SelectItem>
+                    <SelectItem value="incomplete">Sin archivo</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                {/* Botón Nueva Solicitud - Compacto en móvil */}
                 <Button 
                   onClick={() => setShowRequestDialog(true)}
                   data-testid="button-new-request"
-                  className="rounded-xl"
+                  className="ml-auto rounded-xl h-8 md:h-10 px-2 md:px-4 text-xs md:text-sm"
                 >
-                  <Send className="mr-2 h-4 w-4" />
-                  Nueva Solicitud
+                  <Send className="mr-0 md:mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Nueva Solicitud</span>
                 </Button>
+              </div>
+              
+              {/* Fila 2: Filtros móviles */}
+              <div className="flex md:hidden items-center gap-2">
+                {/* Filtro Empleado móvil */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="flex-1 justify-between font-normal text-xs h-9">
+                      <span className="truncate">
+                        {requestEmployeeFilter === "all" 
+                          ? "Todos" 
+                          : employees.find((e: Employee) => e.id === parseInt(requestEmployeeFilter))?.fullName || "Empleado"}
+                      </span>
+                      <User className="w-3.5 h-3.5 ml-1 flex-shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[240px] p-0" align="start">
+                    <div className="p-2 border-b">
+                      <Input
+                        placeholder="Buscar empleado..."
+                        value={requestEmployeeSearch}
+                        onChange={(e) => setRequestEmployeeSearch(e.target.value)}
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="max-h-[200px] overflow-y-auto p-1">
+                      <button
+                        onClick={() => { setRequestEmployeeFilter("all"); setRequestEmployeeSearch(""); }}
+                        className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors ${requestEmployeeFilter === "all" ? "bg-muted font-medium" : ""}`}
+                      >
+                        Todos
+                      </button>
+                      {employees
+                        .filter((emp: Employee) => !requestEmployeeSearch || emp.fullName.toLowerCase().includes(requestEmployeeSearch.toLowerCase()))
+                        .map((emp: Employee) => (
+                          <button
+                            key={`request-emp-mob-${emp.id}`}
+                            onClick={() => { setRequestEmployeeFilter(emp.id.toString()); setRequestEmployeeSearch(""); }}
+                            className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors truncate ${requestEmployeeFilter === emp.id.toString() ? "bg-muted font-medium" : ""}`}
+                          >
+                            {emp.fullName}
+                          </button>
+                        ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                
+                {/* Filtro Tipo móvil */}
+                <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
+                  <SelectTrigger className="w-[100px] text-xs h-9">
+                    <SelectValue placeholder="Tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {documentTypes.map((type) => (
+                      <SelectItem key={`request-type-mob-${type.id}`} value={type.name}>{type.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* Filtro Estado móvil */}
+                <Select value={requestStatusFilter} onValueChange={setRequestStatusFilter}>
+                  <SelectTrigger className="w-[100px] text-xs h-9">
+                    <SelectValue placeholder="Estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="pending">Pendientes</SelectItem>
+                    <SelectItem value="completed">Completadas</SelectItem>
+                    <SelectItem value="incomplete">Sin archivo</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
-            {/* Request Cards */}
-            {(sentRequests || []).length > 0 ? (
-              <div className="space-y-3">
-                {sentRequests.map((request: any) => (
-                  <div 
-                    key={request.id} 
-                    className="bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600"
-                  >
-                    <div className="p-4">
-                      {/* Top Row: Avatar, Name, Status, Actions */}
-                      <div className="flex items-start justify-between gap-4 mb-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                            request.isCompleted 
-                              ? request.document 
-                                ? 'bg-green-100 dark:bg-green-900/30' 
-                                : 'bg-red-100 dark:bg-red-900/30'
-                              : 'bg-amber-100 dark:bg-amber-900/30'
-                          }`}>
-                            {request.isCompleted ? (
-                              request.document ? (
-                                <FileCheck className="h-5 w-5 text-green-600 dark:text-green-400" />
-                              ) : (
-                                <X className="h-5 w-5 text-red-600 dark:text-red-400" />
-                              )
-                            ) : (
-                              <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
-                                {request.user?.fullName || 'Empleado'}
-                              </span>
-                              <Badge 
-                                variant={request.isCompleted ? 'default' : 'secondary'}
-                                className={`text-xs ${
-                                  request.isCompleted 
-                                    ? request.document
-                                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                                      : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                                }`}
-                              >
-                                {request.isCompleted ? (request.document ? 'Completada' : 'Sin archivo') : 'Pendiente'}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                              <span>{request.documentType}</span>
-                              <span>•</span>
-                              <span>
-                                {(() => {
-                                  const utcDate = new Date(request.createdAt);
-                                  const localDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
-                                  return format(localDate, 'd MMM yyyy', { locale: es });
-                                })()}
-                              </span>
+            {/* Request Cards - Optimizado para móvil */}
+            {filteredRequests.length > 0 ? (
+              <div className="space-y-2" key={`cards-${filteredRequests.length}`}>
+                {filteredRequests.slice(0, displayedRequestsCount).map((request: any) => {
+                  const FileIcon = getFileIcon(request.documentType);
+                  return (
+                    <div 
+                      key={`request-card-${request.id}`} 
+                      className="bg-card dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600"
+                    >
+                      <div className="flex items-stretch">
+                        {/* Columna de icono - centrado verticalmente */}
+                        <div className="flex items-center justify-center px-2 md:px-3 flex-shrink-0">
+                          <FileIcon className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
+                        </div>
+                        
+                        {/* Contenido principal - clickeable si hay documento */}
+                        <div 
+                          className={`flex items-start p-2 md:p-3 py-2 min-w-0 flex-1 ${request.document ? 'cursor-pointer' : ''}`}
+                          onClick={() => request.document && handleViewDocument(request.document.id)}
+                        >
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <p className="font-medium text-sm md:text-base text-gray-900 dark:text-gray-100 line-clamp-2 md:truncate leading-tight">
+                              {request.documentType} - {request.user?.fullName || 'Empleado'}
+                            </p>
+                            {/* Info en layout adaptativo */}
+                            <div className="flex flex-col md:flex-row md:items-center gap-0.5 md:gap-2 text-xs md:text-sm">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-muted-foreground">{format(new Date(request.createdAt), 'd MMM yyyy', { locale: es })}</span>
+                              </div>
+                              {request.message && (
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
+                                  <span className="hidden md:inline text-muted-foreground/60">•</span>
+                                  <span className="italic truncate">"{request.message}"</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
                         
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-1 flex-shrink-0">
+                        {/* Botones de acción: Descargar, Borrar - compactos en móvil */}
+                        <div className="flex gap-0.5 md:gap-1 items-center px-1 md:px-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                          {/* Descargar (solo si hay documento) */}
                           {request.document && (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleViewDocument(request.document.id)}
-                                className="h-8 w-8 p-0 rounded-lg"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDownload(request.document.id, request.document.originalName)}
-                                className="h-8 w-8 p-0 rounded-lg"
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                            </>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownload(request.document.id, request.document.originalName);
+                              }}
+                              className="h-7 w-7 md:h-8 md:w-8 p-0 text-gray-500 hover:text-gray-900 dark:text-gray-500 dark:hover:text-white transition-colors"
+                              title="Descargar"
+                            >
+                              <Download className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                            </Button>
                           )}
+                          
+                          {/* Eliminar */}
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteRequest(request.id, request.documentType)}
-                            className="h-8 w-8 p-0 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteRequest(request.id, request.documentType);
+                            }}
+                            className="h-7 w-7 md:h-8 md:w-8 p-0 text-gray-500 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors"
+                            title="Eliminar solicitud"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
                           </Button>
                         </div>
-                      </div>
-
-                      {/* Message if exists */}
-                      {request.message && (
-                        <div className="mt-2 p-2.5 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
-                          <p className="text-sm text-gray-600 dark:text-gray-400 italic">
-                            "{request.message}"
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Document info if received */}
-                      {request.document && (
-                        <div className="mt-2 p-2.5 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                          <span className="text-sm text-green-700 dark:text-green-300 truncate">
-                            {request.document.originalName}
+                        
+                        {/* Badge de estado - extremo derecho, ultra compacto en móvil */}
+                        <div className={`hidden md:flex md:w-[110px] flex items-center justify-center flex-shrink-0 px-2 md:px-3 ${
+                          request.isCompleted 
+                            ? request.document
+                              ? 'bg-green-100 dark:bg-green-900/40'
+                              : 'bg-red-100 dark:bg-red-900/40'
+                            : 'bg-yellow-100 dark:bg-yellow-900/40'
+                        }`}>
+                          <span className={`text-[10px] md:text-xs font-semibold text-center leading-tight ${
+                            request.isCompleted 
+                              ? request.document
+                                ? 'text-green-700 dark:text-green-300'
+                                : 'text-red-700 dark:text-red-300'
+                              : 'text-yellow-700 dark:text-yellow-300'
+                          }`}>
+                            {request.isCompleted ? (
+                              request.document ? '✓ Completada' : 'Sin archivo'
+                            ) : (
+                              'Pendiente'
+                            )}
                           </span>
                         </div>
-                      )}
+
+                        {/* Indicador compacto móvil - Ocupa toda la altura */}
+                        <div className={`md:hidden flex items-stretch flex-shrink-0 w-1 rounded-full ${
+                          request.isCompleted 
+                            ? request.document
+                              ? 'bg-green-500 dark:bg-green-600'
+                              : 'bg-red-500 dark:bg-red-600'
+                            : 'bg-yellow-500 dark:bg-yellow-600'
+                        }`} title={
+                          request.isCompleted ? (
+                            request.document ? '✓ Completada' : 'Sin archivo'
+                          ) : (
+                            'Pendiente'
+                          )
+                        } />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+                
+                {/* Load more trigger */}
+                {displayedRequestsCount < filteredRequests.length && (
+                  <div ref={loadMoreRequestsRef} className="h-px" />
+                )}
               </div>
             ) : (
               <div className="text-center py-12 bg-card dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
                 <Send className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
-                <p className="font-medium text-gray-900 dark:text-gray-100">No hay solicitudes enviadas</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Las solicitudes que envíes aparecerán aquí</p>
+                <p className="font-medium text-gray-900 dark:text-gray-100">
+                  {requestStatusFilter === 'pending' && 'No hay solicitudes pendientes'}
+                  {requestStatusFilter === 'completed' && 'No hay solicitudes completadas'}
+                  {requestStatusFilter === 'incomplete' && 'No hay solicitudes sin archivo'}
+                  {requestStatusFilter === 'all' && 'No hay solicitudes enviadas'}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {requestStatusFilter !== 'all' ? 'Ajusta los filtros para ver más resultados' : 'Las solicitudes que envíes aparecerán aquí'}
+                </p>
               </div>
             )}
           </div>
@@ -1933,9 +2803,9 @@ export default function AdminDocuments() {
         }}>
           <DialogContent className="max-w-xl max-h-[85vh] overflow-hidden p-0 flex flex-col">
             {/* Compact Header */}
-            <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
-              <DialogTitle className="text-base font-semibold text-foreground flex items-center justify-between">
-                Subir Documento
+            <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0 relative">
+              <DialogTitle className="text-base font-semibold text-foreground flex items-center gap-2 pr-12">
+                <span>Subir Documento</span>
                 <span className="text-xs font-normal text-muted-foreground">
                   {uploadAnalysis.length} archivo{uploadAnalysis.length !== 1 ? 's' : ''}
                 </span>
@@ -2117,7 +2987,31 @@ export default function AdminDocuments() {
 
               {/* Signature Toggle - Apple-style switch row */}
               <div 
-                onClick={() => setUploadRequiresSignature(!uploadRequiresSignature)}
+                onClick={() => {
+                  const newValue = !uploadRequiresSignature;
+                  setUploadRequiresSignature(newValue);
+                  
+                  // If enabling signature and we have a PDF, show position editor
+                  if (newValue && uploadAnalysis.length > 0) {
+                    const firstPdf = uploadAnalysis.find(a => a.file.type === 'application/pdf');
+                    if (firstPdf) {
+                      // Store the file directly
+                      setPdfFile(firstPdf.file);
+                      const url = URL.createObjectURL(firstPdf.file);
+                      setPdfPreviewUrl(url);
+                      setShowSignatureEditor(true);
+                      
+                      // Set default signature position (bottom right)
+                      setSignaturePosition({
+                        x: 75,  // percentage from left
+                        y: 80,  // percentage from top
+                        width: 18, // percentage width - más estrecha
+                        height: 15, // percentage height - más alta para firma + texto
+                        page: 1    // first page by default
+                      });
+                    }
+                  }
+                }}
                 className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl cursor-pointer"
                 data-testid="upload-requires-signature"
               >
@@ -2169,6 +3063,40 @@ export default function AdminDocuments() {
                   </Button>
                 </div>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Signature Position Editor Dialog */}
+        <Dialog open={showSignatureEditor} onOpenChange={setShowSignatureEditor}>
+          <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col p-0 w-[90vw]">
+            <DialogHeader className="px-6 pt-6 pb-4">
+              <DialogTitle>Posicionar Firma en el Documento</DialogTitle>
+            </DialogHeader>
+            
+            <div className="flex-1 min-h-0 overflow-hidden px-6 pb-6">
+              {pdfPreviewUrl && signaturePosition && (
+                <SignaturePositionEditor
+                  pdfUrl={pdfPreviewUrl}
+                  pdfFile={pdfFile || undefined}
+                  signaturePosition={signaturePosition}
+                  onPositionChange={setSignaturePosition}
+                  onClose={() => {
+                    setShowSignatureEditor(false);
+                    setPdfFile(null);
+                    setPdfPreviewUrl('');
+                    toast({
+                      title: 'Posición guardada',
+                      description: 'La firma se colocará en la posición indicada',
+                    });
+                  }}
+                />
+              )}
+              {!pdfPreviewUrl && (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-muted-foreground">Cargando PDF...</p>
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
@@ -2259,65 +3187,32 @@ export default function AdminDocuments() {
           </DialogContent>
         </Dialog>
 
-        {/* Send Request Dialog - Enhanced with Individual/Circular modes */}
+        {/* Request Document Dialog - SOLICITAR documento al empleado */}
         <Dialog open={showRequestDialog} onOpenChange={(open) => {
           if (!open) {
+            setSelectedEmployees([]);
+            setDocumentType('');
+            setMessage('');
             setEmployeeSearchTerm('');
-            setSendMode('individual');
-            setRequiresSignature(false);
           }
           setShowRequestDialog(open);
         }}>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center">
                 <Send className="h-5 w-5 mr-2" />
-                {sendMode === 'circular' ? 'Enviar Circular / Documento Masivo' : 'Enviar Documento Individual'}
+                Solicitar Documento
               </DialogTitle>
             </DialogHeader>
             
             <div className="space-y-4">
-              {/* Mode Toggle: Individual vs Circular */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Tipo de Envío
-                </label>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={sendMode === 'individual' ? 'default' : 'outline'}
-                    className="flex-1"
-                    onClick={() => handleModeChange('individual')}
-                    data-testid="button-mode-individual"
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Individual
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={sendMode === 'circular' ? 'default' : 'outline'}
-                    className="flex-1"
-                    onClick={() => handleModeChange('circular')}
-                    data-testid="button-mode-circular"
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    Circular (Todos)
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {sendMode === 'circular' 
-                    ? 'Envía un documento a todos los empleados. Puedes desmarcar los que no lo necesiten.'
-                    : 'Envía un documento a empleados específicos seleccionándolos manualmente.'}
-                </p>
-              </div>
-
               {/* Document Type Selection */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Tipo de Documento
+                  Tipo de Documento *
                 </label>
                 <Select value={documentType} onValueChange={setDocumentType}>
-                  <SelectTrigger data-testid="select-document-type">
+                  <SelectTrigger>
                     <SelectValue placeholder="Selecciona el tipo de documento" />
                   </SelectTrigger>
                   <SelectContent>
@@ -2333,65 +3228,11 @@ export default function AdminDocuments() {
                 </Select>
               </div>
 
-              {/* Message */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  {sendMode === 'circular' ? 'Descripción de la Circular' : 'Mensaje (opcional)'}
-                </label>
-                <Input
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder={sendMode === 'circular' 
-                    ? "Ej: Nuevas condiciones laborales, Circular informativa..."
-                    : "Mensaje personalizado para los empleados"}
-                  data-testid="input-request-message"
-                />
-              </div>
-
-              {/* Requires Signature Checkbox */}
-              <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg border">
-                <div
-                  onClick={() => setRequiresSignature(!requiresSignature)}
-                  className={`w-5 h-5 border-2 rounded flex items-center justify-center cursor-pointer transition-colors ${
-                    requiresSignature
-                      ? 'bg-blue-600 border-blue-600'
-                      : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'
-                  }`}
-                  data-testid="checkbox-requires-signature"
-                >
-                  {requiresSignature && (
-                    <Check className="h-3 w-3 text-white" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium text-foreground flex items-center">
-                    <FileSignature className="h-4 w-4 mr-2 text-blue-600" />
-                    Requiere Firma Digital
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Los empleados deberán firmar digitalmente el documento para confirmarlo
-                  </p>
-                </div>
-              </div>
-
               {/* Employee Selection with Search */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-foreground">
-                    Empleados ({selectedEmployees.length} de {employees.length} seleccionados)
-                  </label>
-                  {sendMode === 'circular' && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedEmployees(employees.map((e: Employee) => e.id))}
-                      className="text-xs h-7"
-                    >
-                      Seleccionar todos
-                    </Button>
-                  )}
-                </div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Empleados * ({selectedEmployees.length} seleccionados)
+                </label>
                 
                 {/* Search Input */}
                 <div className="relative mb-2">
@@ -2399,13 +3240,12 @@ export default function AdminDocuments() {
                   <Input
                     value={employeeSearchTerm}
                     onChange={(e) => setEmployeeSearchTerm(e.target.value)}
-                    placeholder="Buscar empleado por nombre o email..."
+                    placeholder="Buscar empleado..."
                     className="pl-9"
-                    data-testid="input-employee-search"
                   />
                 </div>
                 
-                <div className="max-h-48 overflow-y-auto border rounded-lg p-2 space-y-1 bg-card">
+                <div className="max-h-48 overflow-y-auto border rounded-lg p-2 space-y-1">
                   {filteredEmployeesForDialog.length === 0 ? (
                     <div className="text-center py-4 text-muted-foreground text-sm">
                       No se encontraron empleados
@@ -2417,23 +3257,22 @@ export default function AdminDocuments() {
                         onClick={() => toggleEmployee(employee.id)}
                         className={`flex items-center p-2 rounded cursor-pointer transition-colors ${
                           selectedEmployees.includes(employee.id)
-                            ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700'
-                            : 'hover:bg-muted border border-transparent'
+                            ? 'bg-blue-50 dark:bg-blue-900/30'
+                            : 'hover:bg-muted'
                         }`}
-                        data-testid={`employee-item-${employee.id}`}
                       >
-                        <div className={`w-4 h-4 border rounded mr-3 flex items-center justify-center transition-colors ${
+                        <div className={`w-4 h-4 border rounded mr-3 flex items-center justify-center ${
                           selectedEmployees.includes(employee.id)
                             ? 'bg-blue-600 border-blue-600'
-                            : 'border-gray-300 dark:border-gray-600'
+                            : 'border-gray-300'
                         }`}>
                           {selectedEmployees.includes(employee.id) && (
                             <Check className="h-3 w-3 text-white" />
                           )}
                         </div>
                         <div className="flex-1">
-                          <div className="font-medium text-foreground">{employee.fullName}</div>
-                          <div className="text-sm text-muted-foreground">{employee.email}</div>
+                          <div className="font-medium text-sm">{employee.fullName}</div>
+                          <div className="text-xs text-muted-foreground">{employee.email}</div>
                         </div>
                       </div>
                     ))
@@ -2441,19 +3280,24 @@ export default function AdminDocuments() {
                 </div>
               </div>
 
-              {/* Summary before sending */}
+              {/* Message */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Mensaje (opcional)
+                </label>
+                <Input
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Mensaje personalizado para los empleados"
+                />
+              </div>
+
+              {/* Summary */}
               {selectedEmployees.length > 0 && documentType && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
                   <div className="text-sm text-blue-800 dark:text-blue-200">
-                    <strong>Resumen:</strong> Se enviará {sendMode === 'circular' ? 'la circular' : 'la solicitud'} de{' '}
-                    <span className="font-medium">{documentTypes.find(t => t.id === documentType)?.name}</span>
+                    Se solicitará <span className="font-medium">{documentTypes.find(t => t.id === documentType)?.name}</span>
                     {' '}a <span className="font-medium">{selectedEmployees.length} empleado{selectedEmployees.length !== 1 ? 's' : ''}</span>
-                    {requiresSignature && (
-                      <span className="ml-1">
-                        <FileSignature className="h-3 w-3 inline mr-1" />
-                        (requiere firma)
-                      </span>
-                    )}
                   </div>
                 </div>
               )}
@@ -2463,20 +3307,14 @@ export default function AdminDocuments() {
                   variant="outline" 
                   onClick={() => setShowRequestDialog(false)}
                   disabled={sendDocumentMutation.isPending}
-                  data-testid="button-cancel-request"
                 >
                   Cancelar
                 </Button>
                 <Button
                   onClick={handleSendRequest}
                   disabled={sendDocumentMutation.isPending || selectedEmployees.length === 0 || !documentType}
-                  data-testid="button-send-request"
                 >
-                  {sendDocumentMutation.isPending 
-                    ? 'Enviando...' 
-                    : sendMode === 'circular'
-                      ? `Enviar Circular (${selectedEmployees.length})`
-                      : 'Enviar Solicitud'}
+                  {sendDocumentMutation.isPending ? 'Enviando...' : 'Enviar Solicitud'}
                 </Button>
               </div>
             </div>
@@ -2490,6 +3328,20 @@ export default function AdminDocuments() {
           onSign={handleSignature}
           documentName={signatureModal.documentName}
           isLoading={signDocumentMutation.isPending}
+        />
+
+        {/* Document Preview Modal */}
+        <DocumentPreviewModal
+          open={previewModal.open}
+          url={previewModal.url}
+          filename={previewModal.filename}
+          mimeType={previewModal.mimeType}
+          docId={previewModal.docId ?? null}
+          onDelete={(id) => {
+            const docName = previewModal.filename || 'Documento';
+            confirmDelete(id, docName);
+          }}
+          onClose={() => setPreviewModal({ open: false, url: '', filename: '', mimeType: null, docId: null })}
         />
     </div>
     </PageWrapper>

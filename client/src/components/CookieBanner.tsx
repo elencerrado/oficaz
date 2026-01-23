@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Cookie, Settings, Shield, BarChart3, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,25 +42,7 @@ const CookieBanner = () => {
   }, [isAuthenticated]);
 
   const applyCookieSettings = (prefs: CookiePreferences) => {
-    if (prefs.analytics) {
-      console.log('Analytics cookies enabled');
-    } else {
-      console.log('Analytics cookies disabled');
-    }
-    
-    if (prefs.marketing) {
-      console.log('Marketing cookies enabled');
-    } else {
-      console.log('Marketing cookies disabled');
-    }
-    
-    if (prefs.functional) {
-      console.log('Functional cookies enabled');
-    } else {
-      console.log('Functional cookies disabled');
-    }
-    
-    console.log('Cookie preferences applied:', prefs);
+    // Cookie preferences applied silently
   };
 
   const savePreferences = (prefs: CookiePreferences) => {
@@ -259,7 +241,7 @@ const CookieBanner = () => {
                 <p>
                   Puedes cambiar estas preferencias en cualquier momento desde la 
                   configuración de tu cuenta o visitando nuestra{' '}
-                  <a href="/privacy" className="text-[#007AFF] hover:underline">
+                  <a href="/politica-privacidad" className="text-[#007AFF] hover:underline">
                     Política de Privacidad
                   </a>.
                 </p>
@@ -289,7 +271,7 @@ const CookieBanner = () => {
                     Política de Cookies
                   </a>{' '}
                   y{' '}
-                  <a href="/privacy" className="text-[#007AFF] hover:underline font-medium">
+                  <a href="/politica-privacidad" className="text-[#007AFF] hover:underline font-medium">
                     Política de Privacidad
                   </a>.
                 </p>

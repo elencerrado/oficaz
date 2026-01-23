@@ -1,7 +1,6 @@
 // Oficaz PWA Service Worker - v3.0 (FAST STARTUP + FIXED NOTIFICATIONS)
 const CACHE_NAME = 'oficaz-v3';
 const SW_INSTANCE_ID = `SW-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-console.log(`[${SW_INSTANCE_ID}] Service Worker v3.0 initializing...`);
 
 // Essential assets to cache on install for instant startup
 const PRECACHE_ASSETS = [
@@ -13,12 +12,10 @@ const PRECACHE_ASSETS = [
 
 // Install event - precache essential assets
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing service worker...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Precaching essential assets...');
       return cache.addAll(PRECACHE_ASSETS).catch(err => {
-        console.warn('[SW] Precache failed (non-critical):', err);
+        // Precache failed (non-critical)
       });
     }).then(() => self.skipWaiting())
   );
@@ -26,7 +23,6 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean old caches
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating service worker...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -64,8 +60,12 @@ self.addEventListener('fetch', (event) => {
             }
             return networkResponse;
           }).catch(() => {
-            // Network failed, return cached if available
-            return cachedResponse;
+            // Network failed, return cached if available, or a proper error response
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            // Return a proper error Response instead of undefined
+            return new Response('Network error', { status: 503, statusText: 'Service Unavailable' });
           });
           
           // Return cached immediately, update in background
@@ -88,7 +88,13 @@ self.addEventListener('fetch', (event) => {
       }).catch(() => {
         // Offline - try cache
         return caches.match(event.request).then((cachedResponse) => {
-          return cachedResponse || caches.match('/');
+          if (cachedResponse) return cachedResponse;
+          // Try root cache
+          return caches.match('/').then((rootResponse) => {
+            if (rootResponse) return rootResponse;
+            // Return a proper error Response instead of undefined
+            return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+          });
         });
       })
     );
@@ -98,8 +104,6 @@ self.addEventListener('fetch', (event) => {
 
 // Push event - Receive push notifications
 self.addEventListener('push', (event) => {
-  console.log(`[${SW_INSTANCE_ID}] Push notification received:`, event);
-  
   let notificationData = {
     title: 'Oficaz',
     body: 'Nueva notificación',
@@ -113,12 +117,6 @@ self.addEventListener('push', (event) => {
   if (event.data) {
     try {
       const data = event.data.json();
-      console.log('[SW] Push data received:', {
-        title: data.title,
-        body: data.body,
-        actionsCount: data.actions?.length || 0,
-        actions: data.actions
-      });
       
       notificationData = {
         title: data.title || 'Oficaz',
@@ -131,31 +129,25 @@ self.addEventListener('push', (event) => {
         tag: data.tag || 'oficaz-notification',
         actions: data.actions || []
       };
-      
-      console.log('[SW] Notification will show with', notificationData.actions.length, 'action(s)');
     } catch (e) {
-      console.error('[SW] Error parsing push data:', e);
       notificationData.body = event.data.text();
     }
   }
 
-  console.log(`[${SW_INSTANCE_ID}] 🔔 About to show notification with tag:`, notificationData.tag);
   
   event.waitUntil(
     self.registration.showNotification(notificationData.title, notificationData)
       .then(() => {
-        console.log(`[${SW_INSTANCE_ID}] ✅ Notification displayed successfully with tag:`, notificationData.tag);
+        // Notification displayed successfully
       })
       .catch(err => {
-        console.error(`[${SW_INSTANCE_ID}] ❌ Error showing notification:`, err);
+        console.error('Error showing notification:', err);
       })
   );
 });
 
 // Notification click event - Handle both notification and action clicks
 self.addEventListener('notificationclick', (event) => {
-  console.log('[SW] Notification clicked:', event);
-  
   event.notification.close();
 
   // Get notification data
@@ -189,7 +181,6 @@ self.addEventListener('notificationclick', (event) => {
     // Get auth token from notification data for work actions
     const authToken = notificationData.authToken;
     if (!authToken) {
-      console.error('[SW] No auth token in notification data');
       return;
     }
     
@@ -209,15 +200,12 @@ self.addEventListener('notificationclick', (event) => {
         })
       })
       .then(response => {
-        console.log('[SW] Response status:', response.status);
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
         return response.json();
       })
       .then(data => {
-        console.log('[SW] Action completed successfully:', data);
-        
         // Show confirmation notification
         const messages = {
           'clock_in': '✅ Fichado entrada correctamente',
@@ -236,8 +224,6 @@ self.addEventListener('notificationclick', (event) => {
         });
       })
       .catch(error => {
-        console.error('[SW] Error performing action:', error);
-        
         // Show error notification
         return self.registration.showNotification('Oficaz', {
           body: '❌ Error: ' + error.message + '. Abre la app para intentarlo de nuevo.',
@@ -275,8 +261,6 @@ self.addEventListener('notificationclick', (event) => {
 
 // Message event - Communication with main app
 self.addEventListener('message', (event) => {
-  console.log('[SW] Message received:', event.data);
-  
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }

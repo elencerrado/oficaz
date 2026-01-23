@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'dark' | 'light' | 'system';
 
@@ -13,7 +13,7 @@ const ThemeProviderContext = createContext<ThemeProviderContextType | undefined>
 // IMPORTANT: These must match the actual page backgrounds
 export const THEME_COLORS = {
   employeeLight: '#f9fafb',  // gray-50
-  employeeDark: '#2A3441',   // bg-employee-gradient - matches employee dashboard dark mode
+  employeeDark: '#0f172a',   // align employee dark with admin dark palette
   adminLight: '#FFFFFF',     // white
   adminDark: '#0f172a',      // hsl(222, 47%, 11%) - slate-900, matches admin CSS .dark --background
 };
@@ -63,8 +63,6 @@ const isAdminRoute = () => {
     '/employee-dashboard', 
     '/time-tracking',
     '/employee-time-tracking',
-    '/vacation-requests',
-    '/vacation-management',
     '/documents',
     '/admin-documents',
     '/messages',
@@ -80,6 +78,13 @@ const isAdminRoute = () => {
     '/tienda',
     '/inventory',
     '/inventario',
+    '/accounting',
+    '/contabilidad',
+    '/clientes-proyectos',
+    '/crm',
+    '/accountant',
+    '/accountant/contabilidad',
+    '/accountant/documentos',
     // Direct employee routes (Spanish)
     '/inicio',
     '/fichajes',
@@ -87,10 +92,12 @@ const isAdminRoute = () => {
     '/horas',
     '/ausencias',
     '/documentos',
+    '/misdocumentos',
     '/mensajes',
     '/cuadrante',
     '/partes-trabajo',
     '/usuario',
+    '/gastos',
     // Direct admin routes for company alias paths
     '/recordatorios',
     '/empleados',
@@ -100,8 +107,6 @@ const isAdminRoute = () => {
     '/oficaz/employee-dashboard', 
     '/oficaz/time-tracking',
     '/oficaz/employee-time-tracking',
-    '/oficaz/vacation-requests',
-    '/oficaz/vacation-management',
     '/oficaz/documents',
     '/oficaz/admin-documents',
     '/oficaz/messages',
@@ -118,21 +123,31 @@ const isAdminRoute = () => {
     '/oficaz/tienda',
     '/oficaz/inventory',
     '/oficaz/inventario',
+    '/oficaz/accounting',
+    '/oficaz/contabilidad',
+    '/oficaz/clientes-proyectos',
+    '/oficaz/crm',
+    '/oficaz/accountant',
+    '/oficaz/accountant/contabilidad',
+    '/oficaz/accountant/documentos',
     // Employee routes patterns
     '/oficaz/inicio',
     '/oficaz/fichajes',
+    '/oficaz/misfichajes',
     '/oficaz/horas',
     '/oficaz/ausencias',
     '/oficaz/documentos',
+    '/oficaz/misdocumentos',
     '/oficaz/mensajes',
     '/oficaz/cuadrante',
     '/oficaz/partes-trabajo',
-    '/oficaz/usuario'
+    '/oficaz/usuario',
+    '/oficaz/gastos'
   ];
   
   // Also check for company alias patterns like /companyName/recordatorios, /companyName/empleados
   // Support both Spanish and English route names
-  const hasCompanyAliasAdminRoute = /^\/[^\/]+\/(recordatorios|empleados|inicio|fichajes|misfichajes|horas|ausencias|documentos|documents|mensajes|messages|cuadrante|configuracion|usuario|settings|profile|reminders|employees|time-tracking|vacation-requests|vacation-management|admin-documents|employee-dashboard|admin-dashboard|partes-trabajo|work-reports|dispositivos|control-tiempo|schedules|addon-store|tienda|inventario|inventory)/.test(path);
+  const hasCompanyAliasAdminRoute = /^\/[^\/]+\/(recordatorios|empleados|inicio|fichajes|misfichajes|horas|ausencias|documentos|misdocumentos|documents|mensajes|messages|cuadrante|configuracion|usuario|settings|profile|reminders|employees|time-tracking|vacation-requests|vacation-management|admin-documents|employee-dashboard|admin-dashboard|partes-trabajo|work-reports|dispositivos|control-tiempo|schedules|addon-store|tienda|inventario|inventory|contabilidad|accounting|gastos|crm|clientes-proyectos)/.test(path);
   
   return adminRoutes.some(route => path.startsWith(route)) || hasCompanyAliasAdminRoute;
 };

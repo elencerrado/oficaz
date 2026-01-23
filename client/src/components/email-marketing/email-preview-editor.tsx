@@ -11,6 +11,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+// 🔒 SECURITY: Sanitize HTML to prevent XSS attacks
+function sanitizeHtml(html: string): string {
+  const tempDiv = document.createElement('div');
+  tempDiv.textContent = html;
+  return tempDiv.innerHTML.replace(/\n/g, '<br>');
+}
+
 interface EmailContent {
   subtitle: string;
   heading: string;
@@ -123,21 +130,21 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
   useEffect(() => {
     if (subtitleRef.current) {
       const displayText = content.subtitle || placeholders.subtitle || '';
-      const displayHtml = displayText.replace(/\n/g, '<br>');
+      const displayHtml = sanitizeHtml(displayText);
       if (subtitleRef.current.innerHTML !== displayHtml) {
         subtitleRef.current.innerHTML = displayHtml;
       }
     }
     if (headingRef.current) {
       const displayText = content.heading || placeholders.heading || '';
-      const displayHtml = displayText.replace(/\n/g, '<br>');
+      const displayHtml = sanitizeHtml(displayText);
       if (headingRef.current.innerHTML !== displayHtml) {
         headingRef.current.innerHTML = displayHtml;
       }
     }
     if (paragraphRef.current) {
       const displayText = content.paragraph || placeholders.paragraph || '';
-      const displayHtml = displayText.replace(/\n/g, '<br>');
+      const displayHtml = sanitizeHtml(displayText);
       if (paragraphRef.current.innerHTML !== displayHtml) {
         paragraphRef.current.innerHTML = displayHtml;
       }
@@ -150,7 +157,7 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
     }
     if (signatureRef.current) {
       const displayText = content.signature || placeholders.signature || '';
-      const displayHtml = displayText.replace(/\n/g, '<br>');
+      const displayHtml = sanitizeHtml(displayText);
       if (signatureRef.current.innerHTML !== displayHtml) {
         signatureRef.current.innerHTML = displayHtml;
       }

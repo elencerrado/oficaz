@@ -62,7 +62,7 @@ export function PWAInstallPrompt() {
       // Chrome/Edge installation
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      console.log(`User response to install prompt: ${outcome}`);
+      // console.log(`User response to install prompt: ${outcome}`);
       setDeferredPrompt(null);
       setShowPrompt(false);
     }

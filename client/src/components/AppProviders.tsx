@@ -5,6 +5,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { ChatBridge } from "@/components/ChatBridge";
 import { EmployeeViewModeProvider } from "@/hooks/use-employee-view-mode";
+import { SidebarScrollProvider } from "@/hooks/use-sidebar-scroll";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -12,10 +13,12 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <EmployeeViewModeProvider>
-            <ChatBridge />
-            <TooltipProvider>
-              {children}
-            </TooltipProvider>
+            <SidebarScrollProvider>
+              <ChatBridge />
+              <TooltipProvider>
+                {children}
+              </TooltipProvider>
+            </SidebarScrollProvider>
           </EmployeeViewModeProvider>
         </AuthProvider>
       </QueryClientProvider>

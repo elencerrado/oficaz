@@ -59,8 +59,14 @@ export class ObjectNotFoundError extends Error {
 export class SimpleObjectStorageService {
   constructor() {}
 
-  // Gets the public object search paths (Replit only)
+  // Gets the public object search paths (R2 or legacy Replit)
   getPublicObjectSearchPaths(): Array<string> {
+    // If using R2, return R2 bucket path
+    if (useR2 && r2BucketName) {
+      return [`${r2BucketName}/public`];
+    }
+    
+    // Legacy Replit fallback (not needed in production)
     const pathsStr = process.env.PUBLIC_OBJECT_SEARCH_PATHS || "";
     const paths = Array.from(
       new Set(
@@ -70,11 +76,6 @@ export class SimpleObjectStorageService {
           .filter((path) => path.length > 0)
       )
     );
-    if (paths.length === 0 && !useR2) {
-      throw new Error(
-        "PUBLIC_OBJECT_SEARCH_PATHS not set. Create a bucket in 'Object Storage' tool."
-      );
-    }
     return paths;
   }
 
@@ -226,6 +227,107 @@ export class SimpleObjectStorageService {
     return `/public-objects/signatures/${filename}`;
   }
 
+  // Upload a document to object storage (R2 or Replit)
+  async uploadDocument(
+    buffer: Buffer,
+    contentType: string,
+    filenameOrKey: string // Can be just filename or full key like "profile-pictures/file.jpg"
+  ): Promise<string> {
+    // Determine if this is a full key (contains /) or just a filename
+    const isFullKey = filenameOrKey.includes('/');
+    const key = isFullKey ? filenameOrKey : `documents/${filenameOrKey}`;
+    const filename = isFullKey ? filenameOrKey.split('/').pop()! : filenameOrKey;
+    
+    // R2 upload
+    if (useR2 && r2Client) {
+      const command = new PutObjectCommand({
+        Bucket: r2BucketName,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+        CacheControl: "private, max-age=0", // Documents are private, no caching
+      });
+
+      await r2Client.send(command);
+      console.log(`📄 Uploaded document to R2: ${filename}`);
+
+      // Return the R2 key for database storage
+      return key;
+    }
+
+    // Replit fallback
+    const searchPaths = this.getPublicObjectSearchPaths();
+    if (searchPaths.length === 0) {
+      throw new Error("No public search paths configured");
+    }
+
+    const publicPath = searchPaths[0];
+    const fullPath = `${publicPath}/documents/${filename}`;
+    const { bucketName, objectName } = this.parseObjectPath(fullPath);
+
+    const bucket = objectStorageClient.bucket(bucketName);
+    const file = bucket.file(objectName);
+
+    await file.save(buffer, {
+      contentType,
+      metadata: {
+        cacheControl: "private, max-age=0",
+      },
+    });
+
+    console.log(`📄 Uploaded document to Replit Object Storage: ${filename}`);
+    return `documents/${filename}`;
+  }
+
+  // Download a document from object storage (R2 or Replit)
+  async downloadDocument(key: string): Promise<{ buffer: Buffer; contentType: string } | null> {
+    try {
+      // R2 download
+      if (useR2 && r2Client) {
+        const command = new GetObjectCommand({
+          Bucket: r2BucketName,
+          Key: key,
+        });
+
+        const response = await r2Client.send(command);
+        
+        if (response.Body) {
+          // Convert stream to buffer
+          const chunks: Uint8Array[] = [];
+          for await (const chunk of response.Body as any) {
+            chunks.push(chunk);
+          }
+          const buffer = Buffer.concat(chunks);
+          const contentType = response.ContentType || 'application/octet-stream';
+          
+          return { buffer, contentType };
+        }
+        return null;
+      }
+
+      // Replit fallback
+      const { bucketName, objectName } = this.parseObjectPath(`/${key}`);
+      const bucket = objectStorageClient.bucket(bucketName);
+      const file = bucket.file(objectName);
+
+      const [exists] = await file.exists();
+      if (!exists) {
+        return null;
+      }
+
+      const [buffer] = await file.download();
+      const [metadata] = await file.getMetadata();
+      const contentType = metadata.contentType || 'application/octet-stream';
+      
+      return { buffer, contentType };
+    } catch (error: any) {
+      if (error.name === 'NotFound' || error.name === 'NoSuchKey') {
+        return null;
+      }
+      throw error;
+    }
+  }
+
   // Download an object as buffer (for PDF generation, etc.)
   async downloadObjectAsBuffer(filePath: string): Promise<Buffer | null> {
     try {
@@ -320,3 +422,6 @@ export class SimpleObjectStorageService {
     }
   }
 }
+
+// Export a singleton instance for easy use
+export const simpleObjectStorage = new SimpleObjectStorageService();

@@ -14,11 +14,18 @@ interface BlockedAccountOverlayProps {
   };
 }
 
+interface PaymentMethod {
+  id: string;
+  type: string;
+  last4?: string;
+  brand?: string;
+}
+
 export default function BlockedAccountOverlay({ trialStatus }: BlockedAccountOverlayProps) {
   const queryClient = useQueryClient();
   const [showPaymentManager, setShowPaymentManager] = useState(false);
 
-  const { data: paymentMethods = [] } = useQuery({
+  const { data: paymentMethods = [] } = useQuery<PaymentMethod[]>({
     queryKey: ['/api/account/payment-methods'],
     retry: false,
   });

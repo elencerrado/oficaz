@@ -29,7 +29,7 @@ export const documentTypes = [
   { 
     id: 'justificante', 
     name: 'Justificante',
-    keywords: ['justificante', 'certificado', 'comprobante', 'vacaciones', 'vacation', 'holiday', 'permiso', 'baja', 'medico']
+    keywords: ['justificante', 'certificado', 'comprobante', 'vacaciones', 'vacation', 'holiday', 'permiso', 'baja', 'medico', 'bajamedica', 'asuntospersonales', 'asuntoslaborales', 'paternidad', 'maternidad', 'paternidadmaternidad', 'formacion', 'deberinexcusable', 'incapacidadtemporal', 'ausencia']
   },
   { 
     id: 'otros', 

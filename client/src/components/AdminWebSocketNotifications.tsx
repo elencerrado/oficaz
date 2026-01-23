@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { getAuthData } from "@/lib/auth";
 import { formatVacationPeriod } from "@/utils/dateUtils";
 
 export function AdminWebSocketNotifications() {
@@ -12,8 +13,7 @@ export function AdminWebSocketNotifications() {
   const reconnectTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token') || 
-      JSON.parse(localStorage.getItem('authData') || '{}')?.token;
+    const token = getAuthData()?.token;
     
     if (!token || !user || (user.role !== 'admin' && user.role !== 'manager')) {
       return;
@@ -56,6 +56,17 @@ export function AdminWebSocketNotifications() {
               description: `${message.data.employeeName} ha subido un documento${docType}`,
               duration: 8000
             });
+            queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/admin/dashboard/summary'] });
+          }
+          
+          if (message.type === 'document_signed' && message.data) {
+            toast({
+              title: "✍️ Documento firmado",
+              description: `${message.data.userName} ha firmado: ${message.data.fileName}`,
+              duration: 8000
+            });
+            queryClient.invalidateQueries({ queryKey: ['/api/documents/all'] });
             queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
             queryClient.invalidateQueries({ queryKey: ['/api/admin/dashboard/summary'] });
           }

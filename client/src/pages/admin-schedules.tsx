@@ -6,9 +6,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePageTitle } from '@/hooks/use-page-title';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Users, Plus, ChevronLeft, ChevronRight, ChevronDown, Clock, Copy, Trash2, MapPin, X, Plane, Loader2 } from "lucide-react";
+import { Users, Plus, ChevronLeft, ChevronRight, ChevronDown, Clock, Copy, Trash2, MapPin, X, Plane, Loader2, AlertTriangle } from "lucide-react";
 import { format, differenceInDays, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, addWeeks, subWeeks, getDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
@@ -33,9 +33,17 @@ import {
   DragOverlay,
   useDraggable,
   useDroppable,
-  defaultDropAnimationSideEffects
+  defaultDropAnimationSideEffects,
+  Modifier
 } from '@dnd-kit/core';
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { 
+  SortableContext, 
+  horizontalListSortingStrategy,
+  useSortable,
+  sortableKeyboardCoordinates,
+  arrayMove
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface WorkShift {
   id: number;
@@ -77,14 +85,18 @@ interface Holiday {
 }
 
 interface ShiftTemplate {
-  id: string;
+  id: number;
+  companyId: number;
   title: string;
   startTime: string;
   endTime: string;
   color: string;
   location?: string;
   notes?: string;
-  sourceShiftId?: number;
+  displayOrder: number;
+  createdBy?: number;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 const SHIFT_COLORS = [
@@ -99,6 +111,11 @@ const SHIFT_COLORS = [
 ];
 
 const MIN_SHIFT_DURATION_MINUTES = 15;
+
+// Helper to get weekday number (0 = Sunday, 6 = Saturday)
+const getWeekdayNumber = (date: Date): number => {
+  return getDay(date);
+};
 
 export default function Schedules() {
   // Core hooks - must be called unconditionally
@@ -235,7 +252,8 @@ export default function Schedules() {
       return results.map(result => result.status === 'fulfilled' ? result.value : { success: false, error: 'Error interno' });
     },
     onSuccess: (results) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+      // ⭐ OPTIMIZACIÓN: Invalidar solo la semana actual en lugar de todas
+      invalidateCurrentWeekShifts();
       refetchShifts();
       
       const successes = results.filter(r => r.success).length;
@@ -263,7 +281,8 @@ export default function Schedules() {
       return apiRequest('DELETE', `/api/work-shifts/${shiftId}`);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+      // ⭐ OPTIMIZACIÓN: Invalidar solo la semana actual
+      invalidateCurrentWeekShifts();
       await refetchShifts();
       setShowShiftModal(false);
       setSelectedShift(null);
@@ -429,7 +448,8 @@ export default function Schedules() {
       return { results, conflictsToQueue };
     },
     onSuccess: ({ results, conflictsToQueue }) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+      // ⭐ OPTIMIZACIÓN: Invalidar solo la semana actual
+      invalidateCurrentWeekShifts();
       refetchShifts();
       
       // Cerrar modal de nuevo turno
@@ -485,7 +505,8 @@ export default function Schedules() {
       return Promise.all(deletePromises);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+      // ⭐ OPTIMIZACIÓN: Invalidar solo la semana actual
+      invalidateCurrentWeekShifts();
       refetchShifts();
       toast({
         title: 'Turnos eliminados',
@@ -563,7 +584,8 @@ export default function Schedules() {
       return Promise.all(createPromises);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+      // ⭐ OPTIMIZACIÓN: Invalidar solo la semana actual
+      invalidateCurrentWeekShifts();
       refetchShifts();
     },
     onError: (error: any) => {
@@ -616,11 +638,10 @@ export default function Schedules() {
   
   // Estado para días seleccionados (1=Lun, 2=Mar, 3=Mié, 4=Jue, 5=Vie, 6=Sáb, 7=Dom)
   const [selectedDays, setSelectedDays] = useState<Set<number>>(new Set());
-  const [showTemplateBar, setShowTemplateBar] = useState(true);
+  const [showTemplateBar, setShowTemplateBar] = useState(false);
   const templatesScrollRef = useRef<HTMLDivElement | null>(null);
-   const [userTemplates, setUserTemplates] = useState<ShiftTemplate[]>([]);
    const [showTemplateDialog, setShowTemplateDialog] = useState(false);
-   const [templateBeingEdited, setTemplateBeingEdited] = useState<ShiftTemplate | null>(null);
+   const [templateBeingEdited, setTemplateBeingEdited] = useState<any>(null);
    const [templateBeingCreated, setTemplateBeingCreated] = useState<{
      title: string;
      startTime: string;
@@ -633,34 +654,81 @@ export default function Schedules() {
    // Nombres de días para UI
    const dayNames = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
-   // Cargar plantillas del localStorage al montar
-   useEffect(() => {
-     const savedTemplates = localStorage.getItem('shift-templates');
-     if (savedTemplates) {
-       try {
-         setUserTemplates(JSON.parse(savedTemplates));
-       } catch (e) {
-         console.error('Error loading templates:', e);
-       }
-     }
-   }, []);
+   // Query para cargar plantillas de la BD
+   const { data: userTemplates = [], isLoading: isLoadingTemplates } = useQuery({
+     queryKey: ['/api/shift-templates'],
+     queryFn: () => apiRequest('GET', '/api/shift-templates'),
+     enabled: !hasNoAccess,
+   });
 
-   // Guardar plantillas en localStorage cuando cambien
-   const saveTemplates = (templates: ShiftTemplate[]) => {
-     setUserTemplates(templates);
-     localStorage.setItem('shift-templates', JSON.stringify(templates));
+   // Mutation para crear plantilla
+   const createTemplateMutation = useMutation({
+     mutationFn: (template: any) => apiRequest('POST', '/api/shift-templates', template),
+     onSuccess: () => {
+       queryClient.invalidateQueries({ queryKey: ['/api/shift-templates'] });
+       toast({ title: 'Plantilla creada', description: 'La plantilla se ha guardado correctamente' });
+     },
+     onError: (error: any) => {
+       toast({ title: 'Error', description: error.message, variant: 'destructive' });
+     },
+   });
+
+   // Mutation para actualizar plantilla
+   const updateTemplateMutation = useMutation({
+     mutationFn: ({ id, ...data }: any) => apiRequest('PUT', `/api/shift-templates/${id}`, data),
+     onSuccess: () => {
+       queryClient.invalidateQueries({ queryKey: ['/api/shift-templates'] });
+       toast({ title: 'Plantilla actualizada', description: 'Los cambios se han guardado correctamente' });
+     },
+     onError: (error: any) => {
+       toast({ title: 'Error', description: error.message, variant: 'destructive' });
+     },
+   });
+
+   // Mutation para eliminar plantilla
+   const deleteTemplateMutation = useMutation({
+     mutationFn: (id: number) => apiRequest('DELETE', `/api/shift-templates/${id}`),
+     onSuccess: () => {
+       queryClient.invalidateQueries({ queryKey: ['/api/shift-templates'] });
+       toast({ title: 'Plantilla eliminada', description: 'La plantilla se ha eliminado correctamente' });
+     },
+     onError: (error: any) => {
+       toast({ title: 'Error', description: error.message, variant: 'destructive' });
+     },
+   });
+
+   // Mutation para reordenar plantillas
+   const reorderTemplatesMutation = useMutation({
+     mutationFn: (templates: Array<{ id: number; displayOrder: number }>) => 
+       apiRequest('PUT', '/api/shift-templates/reorder', { templates }),
+     onSuccess: () => {
+       queryClient.invalidateQueries({ queryKey: ['/api/shift-templates'] });
+     },
+     onError: (error: any) => {
+       toast({ title: 'Error al reordenar', description: error.message, variant: 'destructive' });
+     },
+   });
+
+   // Helpers para compatibilidad con código existente
+   const addTemplate = (template: any) => {
+     createTemplateMutation.mutate(template);
    };
 
-   const addTemplate = (template: ShiftTemplate) => {
-     saveTemplates([...userTemplates, template]);
+   const deleteTemplate = (templateId: string | number) => {
+     deleteTemplateMutation.mutate(typeof templateId === 'string' ? Number(templateId) : templateId);
    };
 
-   const deleteTemplate = (templateId: string) => {
-     saveTemplates(userTemplates.filter(t => t.id !== templateId));
+   const updateTemplate = (updatedTemplate: any) => {
+     updateTemplateMutation.mutate(updatedTemplate);
    };
 
-   const updateTemplate = (updatedTemplate: ShiftTemplate) => {
-     saveTemplates(userTemplates.map(t => t.id === updatedTemplate.id ? updatedTemplate : t));
+   const saveTemplates = (templates: any[]) => {
+     // Actualizar el orden de visualización
+     const templatesWithOrder = templates.map((t, index) => ({
+       id: t.id,
+       displayOrder: index,
+     }));
+     reorderTemplatesMutation.mutate(templatesWithOrder);
    };
 
    // Helper para verificar conflictos de horario
@@ -729,6 +797,12 @@ export default function Schedules() {
   const [activeShift, setActiveShift] = useState<WorkShift | null>(null);
   const [activeTemplate, setActiveTemplate] = useState<ShiftTemplate | null>(null);
   const [dragOverCellId, setDragOverCellId] = useState<string | null>(null);
+  const [dragAnchor, setDragAnchor] = useState<{
+    width: number;
+    height: number;
+    offsetX: number;
+    offsetY: number;
+  } | null>(null);
   
   // Estados para el modal de conflictos
   const [showConflictModal, setShowConflictModal] = useState(false);
@@ -786,6 +860,22 @@ export default function Schedules() {
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     const dragData = active.data.current as any;
+    const activatorEvent = event.activatorEvent as PointerEvent | MouseEvent | TouchEvent | undefined;
+    const rect = active.rect?.current?.initial;
+    if (rect && activatorEvent) {
+      const clientX = 'touches' in activatorEvent ? activatorEvent.touches?.[0]?.clientX : (activatorEvent as MouseEvent).clientX;
+      const clientY = 'touches' in activatorEvent ? activatorEvent.touches?.[0]?.clientY : (activatorEvent as MouseEvent).clientY;
+      if (typeof clientX === 'number' && typeof clientY === 'number') {
+        setDragAnchor({
+          width: rect.width,
+          height: rect.height,
+          offsetX: clientX - rect.left,
+          offsetY: clientY - rect.top,
+        });
+      }
+    } else {
+      setDragAnchor(null);
+    }
 
     if (dragData?.type === 'template') {
       setActiveShift(null);
@@ -813,6 +903,7 @@ export default function Schedules() {
     setActiveShift(null);
     setActiveTemplate(null);
     setDragOverCellId(null);
+    setDragAnchor(null);
     // Restaurar scroll del body
     document.body.style.overflow = '';
     document.body.style.touchAction = '';
@@ -830,12 +921,30 @@ export default function Schedules() {
     setActiveShift(null);
     setActiveTemplate(null);
     setDragOverCellId(null);
+    setDragAnchor(null);
     
     // Restaurar scroll del body después del drag
     document.body.style.overflow = '';
     document.body.style.touchAction = '';
 
     if (!over || (!draggedShift && !draggedTemplate)) return;
+
+    // Handle template reordering (plantilla a plantilla)
+    if (isTemplateDrag && String(over.id).startsWith('template-')) {
+      const activeId = String(active.id);
+      const overId = String(over.id);
+      
+      if (activeId !== overId) {
+        const oldIndex = userTemplates.findIndex((t: ShiftTemplate) => t.id === Number(activeId));
+        const newIndex = userTemplates.findIndex((t: ShiftTemplate) => t.id === Number(overId));
+        
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const reorderedTemplates = arrayMove(userTemplates, oldIndex, newIndex);
+          saveTemplates(reorderedTemplates);
+        }
+      }
+      return;
+    }
 
     // Verificar si se dropea sobre la zona de plantillas para crear una plantilla
     // IMPORTANTE: Solo se puede crear plantilla desde un shift, NO desde otra plantilla
@@ -844,31 +953,24 @@ export default function Schedules() {
       const startTime = format(parseISO(draggedShift.startAt), 'HH:mm');
       const endTime = format(parseISO(draggedShift.endAt), 'HH:mm');
       
-      const newTemplate: ShiftTemplate = {
-        id: `template-${Date.now()}`,
+      const newTemplateData = {
         title: draggedShift.title,
         startTime,
         endTime,
         color: draggedShift.color,
-        location: draggedShift.location,
-        notes: draggedShift.notes,
+        location: draggedShift.location || '',
+        notes: draggedShift.notes || '',
+        displayOrder: userTemplates.length,
       };
       
-      addTemplate(newTemplate);
-      toast({
-        title: 'Plantilla creada',
-        description: `La plantilla "${newTemplate.title}" se ha creado automáticamente`,
-      });
+      createTemplateMutation.mutate(newTemplateData);
       return;
     }
 
     // Prevenir que se intente crear plantilla desde otra plantilla
     if (String(over.id) === 'templates-drop-zone' && isTemplateDrag) {
-      toast({
-        title: 'Acción no válida',
-        description: 'No se puede crear una plantilla desde otra plantilla. Arrastra un turno en su lugar.',
-        variant: 'destructive',
-      });
+      // Simply cancel the action without showing toast
+      setDragAnchor(null);
       return;
     }
 
@@ -887,14 +989,12 @@ export default function Schedules() {
     const targetDate = parseISO(dateStr);
     
     if (draggedShift) {
-      // Don't duplicate if dropped on the same cell
-      if (targetEmployeeId === draggedShift.employeeId && 
-          format(targetDate, 'yyyy-MM-dd') === format(parseISO(draggedShift.startAt), 'yyyy-MM-dd')) {
-        toast({
-          title: 'Operación cancelada',
-          description: 'Soltaste el turno en el mismo sitio. Arrastra a otro empleado o fecha para duplicarlo.',
-          variant: 'default',
-        });
+      // Check if it's the same cell where the shift was picked up
+      const isDropOnSameCell = targetEmployeeId === draggedShift.employeeId && 
+          format(targetDate, 'yyyy-MM-dd') === format(parseISO(draggedShift.startAt), 'yyyy-MM-dd');
+      
+      if (isDropOnSameCell) {
+        // Simply cancel the action without showing toast
         return;
       }
     }
@@ -925,12 +1025,54 @@ export default function Schedules() {
         newEnd.setDate(newEnd.getDate() + 1);
       }
 
-      if (hasTimeConflict(targetEmployeeId, targetDate, draggedTemplate.startTime, draggedTemplate.endTime)) {
-        toast({
-          title: 'Conflicto de horario',
-          description: 'Ya existe un turno en esa franja para este empleado.',
-          variant: 'destructive',
+      // Check for real time conflicts (overlapping hours) on the same day
+      const existingShifts = getShiftsForEmployee(targetEmployeeId);
+      const targetDateStr = format(targetDate, 'yyyy-MM-dd');
+      
+      // Helper function to check if two shifts have overlapping times
+      const hasTimeConflictOverlap = (shift: WorkShift, newStart: Date, newEnd: Date): boolean => {
+        const shiftStart = parseISO(shift.startAt);
+        const shiftEnd = parseISO(shift.endAt);
+        
+        // Check if times overlap: (start1 < end2) && (start2 < end1)
+        return shiftStart < newEnd && newStart < shiftEnd;
+      };
+      
+      // Find shifts with actual time conflicts
+      const conflictingShifts = existingShifts.filter((shift: WorkShift) => {
+        const shiftStart = parseISO(shift.startAt);
+        const shiftEnd = parseISO(shift.endAt);
+        const shiftStartDateStr = format(shiftStart, 'yyyy-MM-dd');
+        const shiftEndDateStr = format(shiftEnd, 'yyyy-MM-dd');
+        
+        // Check if the shift overlaps with the target date
+        const shiftOverlapsTargetDate = shiftStartDateStr === targetDateStr || shiftEndDateStr === targetDateStr;
+        
+        return shiftOverlapsTargetDate && hasTimeConflictOverlap(shift, newStart, newEnd);
+      });
+
+      // If there are time conflicts, show confirmation modal
+      if (conflictingShifts.length > 0) {
+        // Create a pseudo-shift from template to show in conflict modal
+        const pseudoShift: WorkShift = {
+          id: -1,
+          employeeId: targetEmployeeId,
+          startAt: newStart.toISOString(),
+          endAt: newEnd.toISOString(),
+          title: draggedTemplate.title,
+          location: draggedTemplate.location || '',
+          notes: draggedTemplate.notes || '',
+          color: draggedTemplate.color,
+        };
+        
+        setConflictData({
+          sourceShift: pseudoShift,
+          targetEmployeeId,
+          targetEmployeeName: targetEmployee.fullName,
+          targetDate,
+          existingShifts: conflictingShifts
         });
+        setShowConflictModal(true);
         return;
       }
 
@@ -979,6 +1121,7 @@ export default function Schedules() {
     };
     
     // Calculate the new shift's start and end times
+    if (!draggedShift) return;
     const originalStart = parseISO(draggedShift.startAt);
     const originalEnd = parseISO(draggedShift.endAt);
     const newStart = new Date(targetDate);
@@ -1089,7 +1232,8 @@ export default function Schedules() {
     try {
       await apiRequest('POST', '/api/work-shifts', duplicateData);
       // Success - refresh to get real ID from server
-      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+      // ⭐ OPTIMIZACIÓN: Invalidar solo la semana actual
+      invalidateCurrentWeekShifts();
     } catch (error) {
       // Error - remove optimistic shift from cache
       queryClient.setQueryData(queryKey, (oldData: any) => {
@@ -1135,7 +1279,8 @@ export default function Schedules() {
 
     try {
       await apiRequest('POST', '/api/work-shifts', payload);
-      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+      // ⭐ OPTIMIZACIÓN: Invalidar solo la semana actual
+      invalidateCurrentWeekShifts();
     } catch (error) {
       queryClient.setQueryData(queryKey, (oldData: any) => {
         if (!oldData) return oldData;
@@ -1245,8 +1390,8 @@ export default function Schedules() {
       for (const shift of conflictData.existingShifts) {
         try {
           await apiRequest('DELETE', `/api/work-shifts/${shift.id}`);
-          // Invalidate cache immediately after each deletion
-          queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+          // ⭐ OPTIMIZACIÓN: Invalidate cache immediately after each deletion (solo la semana actual)
+          invalidateCurrentWeekShifts();
         } catch (error: any) {
           // If shift is already deleted (404), continue
           if (error.status === 404) {
@@ -1541,8 +1686,8 @@ export default function Schedules() {
         });
       }
 
-      // Invalidar cache
-      await queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+      // ⭐ OPTIMIZACIÓN: Invalidar solo la semana actual
+      invalidateCurrentWeekShifts();
 
       toast({
         title: 'Turnos adaptados',
@@ -1767,6 +1912,8 @@ export default function Schedules() {
   const { data: workShifts = [], isLoading: loadingShifts, refetch: refetchShifts } = useQuery<WorkShift[]>({
     queryKey: ['/api/work-shifts/company', format(weekRange.start, 'yyyy-MM-dd'), format(weekRange.end, 'yyyy-MM-dd')],
     enabled: !!weekRange.start && !!weekRange.end,
+    staleTime: 10 * 60 * 1000, // ⭐ Cache válido por 10 minutos (una semana rara vez cambia tan rápido)
+    gcTime: 7 * 24 * 60 * 60 * 1000, // ⭐ Guardar en caché 7 días (permite navegar sin refetch)
     select: (data: any) => {
       // Handle both old array format and new { shifts, accessMode } format
       return Array.isArray(data) ? data : (data?.shifts || []);
@@ -1786,6 +1933,8 @@ export default function Schedules() {
   // Query para obtener solicitudes de vacaciones aprobadas
   const { data: vacationRequests = [] } = useQuery<VacationRequest[]>({
     queryKey: ['/api/vacation-requests/company'],
+    staleTime: 60 * 60 * 1000, // ⭐ Cache 1 hora (vacaciones no cambian cada minuto)
+    gcTime: 7 * 24 * 60 * 60 * 1000, // ⭐ Guardar 7 días
     select: (data: any) => {
       // Handle both old array format and new { requests, accessMode } format
       const requests = Array.isArray(data) ? data : (data?.requests || []);
@@ -1796,7 +1945,20 @@ export default function Schedules() {
   // Query para obtener días festivos
   const { data: holidays = [] } = useQuery<Holiday[]>({
     queryKey: ['/api/holidays/custom'],
+    staleTime: 60 * 60 * 1000, // ⭐ Cache 1 hora (festivos no cambian frecuentemente)
+    gcTime: 30 * 24 * 60 * 60 * 1000, // ⭐ Guardar 30 días
   });
+
+  // ⭐ Helper para invalidar solo la semana actual (no todas las semanas cacheadas)
+  const getShiftsQueryKey = (start?: Date, end?: Date) => [
+    '/api/work-shifts/company',
+    start ? format(start, 'yyyy-MM-dd') : format(weekRange.start, 'yyyy-MM-dd'),
+    end ? format(end, 'yyyy-MM-dd') : format(weekRange.end, 'yyyy-MM-dd')
+  ];
+
+  const invalidateCurrentWeekShifts = () => {
+    queryClient.invalidateQueries({ queryKey: getShiftsQueryKey() });
+  };
 
   // ⚠️ OPTIMIZACIÓN: Memoizar filtros de días para evitar recálculos en cada renderizado
   const filteredDays = useMemo(() => {
@@ -1895,7 +2057,8 @@ export default function Schedules() {
     const hasDrag = !!activeShift || !!activeTemplate;
     
     // No permitir drop en la celda de origen (no tiene sentido duplicar en el mismo sitio)
-    const effectiveDisabled = isDisabled || isOriginCell;
+    // Pero permitir que se vea el indicador visual de "cancelar"
+    const effectiveDisabled = isDisabled;
     
     const {
       isOver,
@@ -1909,13 +2072,24 @@ export default function Schedules() {
     const getDropStyles = () => {
       if (!hasDrag) return {};
       
-      // Si es la celda de origen, no mostrar estilos de drop
+      const isValidDrop = !effectiveDisabled;
+      
+      // Si es la celda de origen, mostrar indicador de "cancelar"
+      if (isOriginCell && isOver) {
+        return {
+          backgroundColor: 'rgba(239, 68, 68, 0.15)', // red with opacity
+          borderColor: 'rgb(239, 68, 68)', // red-500
+          borderWidth: '2px',
+          borderStyle: 'solid',
+          boxShadow: '0 0 0 3px rgba(239, 68, 68, 0.1)',
+          transform: 'scale(0.98)',
+          transition: 'all 0.2s ease'
+        };
+      }
+      
       if (isOriginCell) return {};
       
-      const isValidDrop = !effectiveDisabled;
-      const isDraggedOver = isOver;
-      
-      if (isDraggedOver) {
+      if (isOver) {
         if (isValidDrop) {
           // Valid drop zone - green highlight
           return {
@@ -1976,6 +2150,14 @@ export default function Schedules() {
         }
       >
         {children}
+        {/* Visual indicator for cancel when dragging over origin cell */}
+        {activeShift && isOriginCell && isDraggedOver && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1000 }}>
+            <div className="bg-red-500 text-white px-2 py-1 rounded flex items-center justify-center shadow-md">
+              <span className="text-xs font-semibold">✕ Cancelar</span>
+            </div>
+          </div>
+        )}
         {/* Visual indicator for valid drop zones */}
         {activeShift && isDraggedOver && isValidDrop && !isOriginCell && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1000 }}>
@@ -1998,11 +2180,24 @@ export default function Schedules() {
 
   // Plantilla arrastrable para la barra superior
   function TemplateBadge({ template, disabled = false, onEdit, onDelete }: { template: ShiftTemplate; disabled?: boolean; onEdit?: (template: ShiftTemplate) => void; onDelete?: (templateId: string) => void; }) {
-    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging
+    } = useSortable({
       id: template.id,
       data: { type: 'template', template },
       disabled,
     });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+    };
 
     return (
       <div
@@ -2011,7 +2206,7 @@ export default function Schedules() {
         {...attributes}
         onClick={() => !isDragging && onEdit && onEdit(template)}
         className={`group flex-none relative min-w-[170px] max-w-[220px] rounded-[7px] flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1 select-none cursor-grab hover:opacity-90 dark:hover:opacity-80 hover:shadow-md active:cursor-grabbing transition-all duration-200`}
-        style={{ backgroundColor: template.color }}
+        style={{ backgroundColor: template.color, ...style }}
         title={`Click para editar | Arrastra para duplicar | ${template.title} • ${template.startTime}-${template.endTime}${template.location ? `\n📍 ${template.location}` : ''}${template.notes ? `\n📝 ${template.notes}` : ''}`}
       >
         <div className="text-[10px] md:text-[11px] font-semibold leading-tight text-center truncate w-full">{template.title}</div>
@@ -2035,11 +2230,12 @@ export default function Schedules() {
         
         {!disabled && !isDragging && (
           <button
-            className="absolute top-0.5 left-0.5 w-4 h-4 opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center bg-white/90 dark:bg-gray-800/90 rounded-full shadow-sm hover:bg-red-100 dark:hover:bg-red-900/50"
+            type="button"
+            className="absolute top-0.5 right-0.5 w-4 h-4 opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center bg-white/90 dark:bg-gray-800/90 rounded-full shadow-sm hover:bg-red-100 dark:hover:bg-red-900/50"
             style={{ zIndex: 1001 }}
             onClick={(e) => {
               e.stopPropagation();
-              onDelete?.(template.id);
+              onDelete?.(String(template.id));
             }}
             title="Eliminar plantilla"
           >
@@ -2051,7 +2247,7 @@ export default function Schedules() {
   }
 
   // Zona droppable para crear plantillas desde shifts
-  function TemplatesDropZone({ userTemplates, deleteTemplate, isViewOnly, onEditTemplate }: { userTemplates: ShiftTemplate[]; deleteTemplate: (id: string) => void; isViewOnly: boolean; onEditTemplate?: (template: ShiftTemplate) => void; }) {
+  function TemplatesDropZone({ userTemplates, deleteTemplate, isViewOnly, showTemplateBar, setShowTemplateBar, onEditTemplate }: { userTemplates: ShiftTemplate[]; deleteTemplate: (id: string) => void; isViewOnly: boolean; showTemplateBar: boolean; setShowTemplateBar: (value: boolean | ((prev: boolean) => boolean)) => void; onEditTemplate?: (template: ShiftTemplate) => void; }) {
     const { setNodeRef, isOver } = useDroppable({
       id: 'templates-drop-zone',
       disabled: isViewOnly // No permitir drop si estás en modo lectura
@@ -2059,39 +2255,61 @@ export default function Schedules() {
 
     // Solo permitir drag de shifts, no de plantillas
     const canAcceptDrop = isOver && activeShift && !activeTemplate;
+    const isInvalidDrop = isOver && activeTemplate;
 
     return (
-      <div 
-        ref={setNodeRef} 
-        className={`transition-all duration-200 ${
+      <Card 
+        ref={setNodeRef}
+        className={`bg-card border-border shadow-sm transition-all duration-200 relative ${
           canAcceptDrop 
-            ? 'bg-blue-100/60 dark:bg-blue-900/30 border-2 border-dashed border-blue-400 dark:border-blue-500 rounded-lg' 
-            : isOver 
+            ? 'bg-blue-100/60 dark:bg-blue-900/30 border-2 border-dashed border-blue-400 dark:border-blue-500' 
+            : isInvalidDrop
               ? 'bg-red-50/50 dark:bg-red-900/10 border-2 border-dashed border-red-400/50' 
               : ''
         }`}
       >
-        <div className="px-3 pb-3 space-y-2">
-          {/* Mensaje de feedback cuando se arrastra algo */}
-          {isOver && activeTemplate && (
-            <div className="text-center py-2">
-              <p className="text-xs text-red-600 dark:text-red-400 font-medium">
-                ⚠️ No se puede crear plantilla desde otra plantilla
-              </p>
+        {/* Indicador de cancelar cuando se arrastra una plantilla */}
+        {isInvalidDrop && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1000 }}>
+            <div className="bg-red-500 text-white px-2 py-1 rounded flex items-center justify-center shadow-md">
+              <span className="text-xs font-semibold">✕ Cancelar</span>
             </div>
-          )}
-          {isOver && activeShift && !activeTemplate && (
-            <div className="text-center py-1">
-              <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                ✓ Suelta para crear plantilla
-              </p>
+          </div>
+        )}
+        
+        {/* Indicador superpuesto cuando se arrastra un shift válido */}
+        {canAcceptDrop && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1000 }}>
+            <div className="bg-blue-500 text-white px-2 py-1 rounded flex items-center justify-center shadow-md">
+              <span className="text-xs font-semibold">✓ Crear plantilla</span>
             </div>
-          )}
-          
-          <div className="flex gap-2 overflow-x-auto pb-2 px-1 scrollbar-thin scrollbar-thumb-muted/60">
+          </div>
+        )}
+
+        <CardContent className="p-0">
+          <button
+            type="button"
+            className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/60 transition-colors"
+            onClick={() => setShowTemplateBar((v) => !v)}
+          >
+            <div className="flex items-center gap-2 text-left">
+              <Copy className="w-4 h-4 text-blue-500" />
+              <div>
+                <div className="text-sm font-semibold">Plantillas de turnos</div>
+              </div>
+            </div>
+            <ChevronDown
+              className={`w-4 h-4 text-muted-foreground transition-transform ${showTemplateBar ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {showTemplateBar && (
+            <div className="px-3 pb-3 space-y-2">
+              <div className="flex gap-2 overflow-x-auto pb-2 px-1 scrollbar-thin scrollbar-thumb-muted/60">
           {/* Tarjeta para crear nueva plantilla */}
           {!isViewOnly && (
             <button
+              type="button"
               onClick={() => {
                 setTemplateBeingCreated({
                   title: '',
@@ -2114,12 +2332,16 @@ export default function Schedules() {
           )}
 
           {/* Plantillas existentes */}
-          {userTemplates.map((template) => (
-            <TemplateBadge key={template.id} template={template} disabled={isViewOnly} onEdit={onEditTemplate} onDelete={deleteTemplate} />
-          ))}
-          </div>
-        </div>
-      </div>
+          <SortableContext items={userTemplates.map(t => t.id)} strategy={horizontalListSortingStrategy}>
+            {userTemplates.map((template) => (
+              <TemplateBadge key={template.id} template={template} disabled={isViewOnly} onEdit={onEditTemplate} onDelete={deleteTemplate} />
+            ))}
+          </SortableContext>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     );
   }
 
@@ -2170,6 +2392,7 @@ export default function Schedules() {
     return (
       <div
         ref={setNodeRef}
+        data-id={shift.id}
         {...listeners}
         {...attributes}
         className={`group absolute rounded-[7px] flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1 select-none cursor-grab hover:opacity-90 dark:hover:opacity-80 hover:shadow-md active:cursor-grabbing ${className || ''}`}
@@ -2178,7 +2401,10 @@ export default function Schedules() {
           ...enhancedDragStyles,
           backgroundColor: shift.color || '#007AFF',
         }}
-        onClick={onClick}
+        onClick={(e) => {
+          e.preventDefault();
+          onClick(e);
+        }}
         title={`${title} (Click para editar, arrastrar para duplicar)`}
       >
         {/* Diseño: nombre, hora, y ubicación (si existe) */}
@@ -2209,7 +2435,8 @@ export default function Schedules() {
         {/* Delete button - only visible on hover when not dragging */}
         {!isDragging && onDelete && !isDeleting && (
           <button
-            className="absolute top-0.5 left-0.5 w-4 h-4 opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center bg-white/90 dark:bg-gray-800/90 rounded-full shadow-sm hover:bg-red-100 dark:hover:bg-red-900/50"
+            type="button"
+            className="absolute top-0.5 right-0.5 w-4 h-4 opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center bg-white/90 dark:bg-gray-800/90 rounded-full shadow-sm hover:bg-red-100 dark:hover:bg-red-900/50"
             style={{ zIndex: 1001 }}
             onClick={(e) => {
               e.stopPropagation();
@@ -2340,7 +2567,7 @@ export default function Schedules() {
       }
       
       return (
-        <>
+        <div className="absolute inset-0">
           {/* ⏰ REGLA DE HORAS - Referencia visual cronológica */}
           <div className="absolute top-0 left-0 right-0 h-6 border-b border-border/30 bg-muted/5 dark:bg-muted/10 flex items-end z-5">
             {Array.from({ length: TIMELINE_TOTAL_HOURS + 1 }, (_, i) => {
@@ -2389,7 +2616,7 @@ export default function Schedules() {
               isDeleting={deletingShiftId === shift.id}
             />
           ))}
-        </>
+        </div>
       );
     }
     
@@ -2518,22 +2745,22 @@ export default function Schedules() {
           No hay empleados registrados
         </div>
       ) : (
-        <div className={`space-y-4 transition-opacity duration-300 ${loadingEmployees ? 'opacity-60' : 'opacity-100'}`}>
+        <div className={`space-y-3 transition-opacity duration-300 ${loadingEmployees ? 'opacity-60' : 'opacity-100'}`}>
           {/* Card 1: Navegación del mes */}
           <Card className="bg-card border-border shadow-sm">
-            <CardContent className="py-3 px-4">
-              <div className="flex items-center justify-between">
+            <CardContent className="p-0">
+              <div className="flex items-center justify-between px-4 py-3">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => navigateWeek('prev')}
-                  className="h-9 w-9 p-0 rounded-full hover:bg-muted"
+                  className="h-auto w-auto p-0 hover:bg-transparent"
                   data-testid="button-prev-week"
                 >
-                  <ChevronLeft className="w-5 h-5" />
+                  <ChevronLeft className="w-4 h-4" />
                 </Button>
                 
-                <h2 className="text-lg font-semibold text-foreground capitalize">
+                <h2 className="text-sm font-semibold text-foreground capitalize">
                   {format(weekRange.start, "MMMM yyyy", { locale: es })}
                 </h2>
                 
@@ -2541,17 +2768,17 @@ export default function Schedules() {
                   variant="ghost"
                   size="sm"
                   onClick={() => navigateWeek('next')}
-                  className="h-9 w-9 p-0 rounded-full hover:bg-muted"
+                  className="h-auto w-auto p-0 hover:bg-transparent"
                   data-testid="button-next-week"
                 >
-                  <ChevronRight className="w-5 h-5" />
+                  <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
             </CardContent>
           </Card>
 
           {/* Fila de días de la semana - Cards individuales alineadas con turnos */}
-          <div className={`grid gap-2 p-3 ${viewMode === 'day' ? 'sm:grid-cols-[120px_minmax(0,1fr)] grid-cols-1' : viewMode === 'workweek' ? 'grid-cols-[120px_repeat(5,minmax(0,1fr))]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
+          <div className={`grid gap-1 md:gap-4 px-3 ${viewMode === 'day' ? 'sm:grid-cols-[120px_minmax(0,1fr)] grid-cols-1' : viewMode === 'workweek' ? 'grid-cols-[120px_repeat(5,minmax(0,1fr))]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
             {/* Selector de vista en la columna de avatares */}
             <div className={`flex items-center justify-center ${viewMode === 'day' ? 'hidden sm:flex' : ''}`}>
               <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-1 relative hidden sm:block">
@@ -2570,6 +2797,7 @@ export default function Schedules() {
                     const labels = { day: '1', workweek: '5', week: '7' };
                     return (
                       <button
+                        type="button"
                         key={mode}
                         onClick={() => {
                           if (window.innerWidth >= 640 || mode === 'day' || mode === 'workweek') {
@@ -2596,71 +2824,36 @@ export default function Schedules() {
               const isToday = format(new Date(), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
               const isWeekend = day.getDay() === 0 || day.getDay() === 6;
               
+              const abbrs = ['DOM','LUN','MAR','MIE','JUE','VIE','SAB'] as const;
+              const abbr = abbrs[day.getDay()];
+              const colorClass = isToday
+                ? 'text-blue-600 dark:text-blue-400'
+                : isWeekend
+                  ? 'text-muted-foreground/70'
+                  : 'text-muted-foreground';
+              
               return (
-                <Card key={index} className={`bg-card border-border shadow-sm py-2 ${isToday ? 'ring-2 ring-blue-500/50' : ''}`}>
-                  <CardContent className="p-0 flex flex-col items-center justify-center min-h-[48px]">
-                    <div className={`text-[10px] md:text-xs font-medium uppercase tracking-wide leading-none ${
-                      isToday 
-                        ? 'text-blue-600 dark:text-blue-400' 
-                        : isWeekend 
-                          ? 'text-muted-foreground/70' 
-                          : 'text-muted-foreground'
-                    }`}>
-                      {viewMode === 'day' 
-                        ? format(day, 'EEEE', { locale: es })
-                        : format(day, 'EEE', { locale: es })
-                      }
-                    </div>
-                    
-                    <div className={`text-sm font-semibold rounded-full w-7 h-7 flex items-center justify-center leading-none mt-1 ${
-                      isToday 
-                        ? 'bg-blue-500 text-white shadow' 
-                        : isWeekend 
-                          ? 'text-muted-foreground/70' 
-                          : 'text-foreground'
-                    }`}>
-                      {format(day, 'd')}
-                    </div>
-                  </CardContent>
-                </Card>
+                <div key={index} className={`flex items-center justify-center py-1.5 px-3 rounded-lg border bg-card border-border dark:border-gray-700 dark:bg-gray-800/50 shadow-sm ${isToday ? 'ring-2 ring-blue-500/50' : ''}`}>
+                  <span className={`text-sm font-semibold uppercase tracking-wide ${colorClass}`}>
+                    {`${abbr} ${format(day, 'd')}`}
+                  </span>
+                </div>
               );
             })}
           </div>
 
           {/* Barra superior de plantillas reutilizables */}
-          <Card className="bg-card border-border shadow-sm">
-            <CardContent className="p-0">
-              <button
-                className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/60 transition-colors"
-                onClick={() => setShowTemplateBar((v) => !v)}
-              >
-                <div className="flex items-center gap-2 text-left">
-                  <Copy className="w-4 h-4 text-blue-500" />
-                  <div>
-                    <div className="text-sm font-semibold">Plantillas de turnos</div>
-                  </div>
-                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                    {userTemplates.length} disponibles
-                  </span>
-                </div>
-                <ChevronDown
-                  className={`w-4 h-4 text-muted-foreground transition-transform ${showTemplateBar ? 'rotate-180' : ''}`}
-                />
-              </button>
-
-              {showTemplateBar && (
-                <TemplatesDropZone 
-                  userTemplates={userTemplates} 
-                  deleteTemplate={deleteTemplate} 
-                  isViewOnly={isViewOnly}
-                  onEditTemplate={(template) => {
-                    setTemplateBeingEdited(template);
-                    setShowTemplateDialog(true);
-                  }}
-                />
-              )}
-            </CardContent>
-          </Card>
+          <TemplatesDropZone 
+            userTemplates={userTemplates} 
+            deleteTemplate={deleteTemplate} 
+            isViewOnly={isViewOnly}
+            showTemplateBar={showTemplateBar}
+            setShowTemplateBar={setShowTemplateBar}
+            onEditTemplate={(template) => {
+              setTemplateBeingEdited(template);
+              setShowTemplateDialog(true);
+            }}
+          />
 
           {/* Contenedor de empleados con scroll */}
           <div className="space-y-2 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
@@ -2738,6 +2931,7 @@ export default function Schedules() {
                                   {/* Botón "+" como badge - posicionado abajo a la derecha */}
                                   {!isViewOnly && !isDisabled && (
                                     <button
+                                      type="button"
                                       className="absolute w-5 h-5 rounded-[5px] bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500 hover:text-gray-700 dark:hover:text-gray-100 transition-colors flex items-center justify-center text-xs font-medium shadow-sm"
                                       style={{ bottom: '4px', right: '4px' }}
                                       onClick={(e) => {
@@ -2790,6 +2984,7 @@ export default function Schedules() {
                         {!isViewOnly && (viewMode === 'week' || viewMode === 'workweek') && (
                           <div className="flex items-center gap-1 mt-1">
                             <button
+                              type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setWeekActionEmployee(employee);
@@ -2802,6 +2997,7 @@ export default function Schedules() {
                               <Copy className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400" />
                             </button>
                             <button
+                              type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setWeekActionEmployee(employee);
@@ -2868,6 +3064,7 @@ export default function Schedules() {
                                 return isEmpty ? (
                                   /* Celda vacía: "+" grande centrado */
                                   <button
+                                    type="button"
                                     className="absolute inset-0 flex items-center justify-center text-gray-300 dark:text-gray-600 hover:text-gray-400 dark:hover:text-gray-500 transition-all opacity-0 group-hover:opacity-100"
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -2886,6 +3083,7 @@ export default function Schedules() {
                                 ) : (
                                   /* Celda con turnos: botón pequeño abajo centrado */
                                   <button
+                                    type="button"
                                     className="absolute left-1/2 -translate-x-1/2 h-5 px-4 rounded-[5px] bg-blue-500 dark:bg-blue-600 text-white hover:bg-blue-600 dark:hover:bg-blue-700 transition-all flex items-center justify-center text-xs font-medium shadow-sm opacity-0 group-hover:opacity-100 z-20"
                                     style={{ bottom: '10px' }}
                                     onClick={(e) => {
@@ -2952,10 +3150,11 @@ export default function Schedules() {
             <div className="w-16 bg-muted/30 p-2 flex flex-col gap-1">
               {SHIFT_COLORS.map((color, index) => (
                 <button
+                  type="button"
                   key={color}
                   onClick={() => {
                     if (templateBeingEdited) {
-                      setTemplateBeingEdited(prev => prev ? { ...prev, color } : null);
+                      setTemplateBeingEdited((prev: any) => prev ? { ...prev, color } : null);
                     } else {
                       setTemplateBeingCreated(prev => prev ? { ...prev, color } : null);
                     }
@@ -2979,7 +3178,7 @@ export default function Schedules() {
                 value={templateBeingEdited?.title || templateBeingCreated?.title || ''}
                 onChange={(e) => {
                   if (templateBeingEdited) {
-                    setTemplateBeingEdited(prev => prev ? { ...prev, title: e.target.value } : null);
+                    setTemplateBeingEdited((prev: any) => prev ? { ...prev, title: e.target.value } : null);
                   } else {
                     setTemplateBeingCreated(prev => prev ? { ...prev, title: e.target.value } : null);
                   }
@@ -2995,7 +3194,7 @@ export default function Schedules() {
                   value={templateBeingEdited?.startTime || templateBeingCreated?.startTime || '09:00'}
                   onChange={(e) => {
                     if (templateBeingEdited) {
-                      setTemplateBeingEdited(prev => prev ? { ...prev, startTime: e.target.value } : null);
+                      setTemplateBeingEdited((prev: any) => prev ? { ...prev, startTime: e.target.value } : null);
                     } else {
                       setTemplateBeingCreated(prev => prev ? { ...prev, startTime: e.target.value } : null);
                     }
@@ -3007,7 +3206,7 @@ export default function Schedules() {
                   value={templateBeingEdited?.endTime || templateBeingCreated?.endTime || '17:00'}
                   onChange={(e) => {
                     if (templateBeingEdited) {
-                      setTemplateBeingEdited(prev => prev ? { ...prev, endTime: e.target.value } : null);
+                      setTemplateBeingEdited((prev: any) => prev ? { ...prev, endTime: e.target.value } : null);
                     } else {
                       setTemplateBeingCreated(prev => prev ? { ...prev, endTime: e.target.value } : null);
                     }
@@ -3022,7 +3221,7 @@ export default function Schedules() {
                 value={templateBeingEdited?.location || templateBeingCreated?.location || ''}
                 onChange={(e) => {
                   if (templateBeingEdited) {
-                    setTemplateBeingEdited(prev => prev ? { ...prev, location: e.target.value } : null);
+                    setTemplateBeingEdited((prev: any) => prev ? { ...prev, location: e.target.value } : null);
                   } else {
                     setTemplateBeingCreated(prev => prev ? { ...prev, location: e.target.value } : null);
                   }
@@ -3036,7 +3235,7 @@ export default function Schedules() {
                 value={templateBeingEdited?.notes || templateBeingCreated?.notes || ''}
                 onChange={(e) => {
                   if (templateBeingEdited) {
-                    setTemplateBeingEdited(prev => prev ? { ...prev, notes: e.target.value } : null);
+                    setTemplateBeingEdited((prev: any) => prev ? { ...prev, notes: e.target.value } : null);
                   } else {
                     setTemplateBeingCreated(prev => prev ? { ...prev, notes: e.target.value } : null);
                   }
@@ -3064,25 +3263,17 @@ export default function Schedules() {
                   onClick={() => {
                     if (templateBeingEdited) {
                       updateTemplate(templateBeingEdited);
-                      toast({
-                        title: 'Plantilla actualizada',
-                        description: `La plantilla "${templateBeingEdited.title}" se ha actualizado`,
-                      });
                     } else if (templateBeingCreated) {
-                      const newTemplate: ShiftTemplate = {
-                        id: `template-${Date.now()}`,
+                      const newTemplateData = {
                         title: templateBeingCreated.title || 'Sin nombre',
                         startTime: templateBeingCreated.startTime,
                         endTime: templateBeingCreated.endTime,
                         color: templateBeingCreated.color,
-                        location: templateBeingCreated.location,
-                        notes: templateBeingCreated.notes,
+                        location: templateBeingCreated.location || '',
+                        notes: templateBeingCreated.notes || '',
+                        displayOrder: userTemplates.length,
                       };
-                      addTemplate(newTemplate);
-                      toast({
-                        title: 'Plantilla creada',
-                        description: `La plantilla "${newTemplate.title}" está lista para usar`,
-                      });
+                      createTemplateMutation.mutate(newTemplateData);
                     }
                     setShowTemplateDialog(false);
                     setTemplateBeingEdited(null);
@@ -3100,6 +3291,7 @@ export default function Schedules() {
       {/* Modal para nuevo turno - DISEÑO VISUAL TIPO BADGE */}
       <Dialog open={showNewShiftModal} onOpenChange={setShowNewShiftModal}>
         <DialogContent className="max-w-lg p-0 gap-0 bg-background border-0 overflow-visible">
+          <DialogTitle className="sr-only">Crear nuevo turno</DialogTitle>
           {/* Header con preview del badge */}
           <div 
             className="px-6 py-4 text-white relative overflow-hidden rounded-t-lg"
@@ -3127,6 +3319,7 @@ export default function Schedules() {
             <div className="w-16 bg-muted/30 p-2 flex flex-col gap-1">
               {SHIFT_COLORS.map((color, index) => (
                 <button
+                  type="button"
                   key={color}
                   onClick={() => setNewShift(prev => ({ ...prev, color }))}
                   className={`w-12 h-8 rounded border-2 transition-all hover:scale-105 ${
@@ -3318,6 +3511,7 @@ export default function Schedules() {
       {/* Modal para editar turno - DISEÑO VISUAL TIPO BADGE */}
       <Dialog open={showShiftModal} onOpenChange={setShowShiftModal}>
         <DialogContent className="max-w-lg p-0 gap-0 bg-background border-0 overflow-visible">
+          <DialogTitle className="sr-only">Editar turno</DialogTitle>
           {/* Header con preview del badge */}
           <div 
             className="px-6 py-4 text-white relative overflow-hidden rounded-t-lg"
@@ -3346,6 +3540,7 @@ export default function Schedules() {
               <div className="w-16 bg-muted/30 p-2 flex flex-col gap-1">
                 {SHIFT_COLORS.map((color, index) => (
                   <button
+                    type="button"
                     key={color}
                     onClick={() => setEditShift(prev => ({ ...prev, color }))}
                     className={`w-12 h-8 rounded border-2 transition-all hover:scale-105 ${
@@ -3560,153 +3755,269 @@ export default function Schedules() {
       {/* Modal de conflictos de turnos */}
       <Dialog open={showConflictModal} onOpenChange={setShowConflictModal}>
         <DialogContent className="max-w-md p-0 gap-0 bg-background border-0 overflow-hidden">
+          <DialogTitle className="sr-only">Conflicto de turnos</DialogTitle>
           {/* Header */}
           <div className="px-6 py-4 bg-orange-500 text-white">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                <span className="text-sm">⚠️</span>
-              </div>
+              <AlertTriangle className="w-5 h-5" />
               <h3 className="text-lg font-semibold">Conflicto de turnos</h3>
             </div>
-            <p className="text-sm opacity-90 mt-1">
-              {conflictData?.targetEmployeeName} ya tiene turnos asignados en esta fecha
-            </p>
           </div>
 
           {/* Body */}
           <div className="p-6">
-            <div className="mb-4">
-              <p className="text-sm text-muted-foreground mb-3">
-                <strong>{conflictData?.targetEmployeeName}</strong> ya tiene {conflictData?.existingShifts.length} turno(s) el{' '}
-                <strong>{conflictData?.targetDate && format(conflictData.targetDate, "EEEE d 'de' MMMM", { locale: es })}</strong>:
-              </p>
-              
-              {/* Lista de turnos existentes */}
-              <div className="space-y-2 mb-4">
-                {conflictData?.existingShifts.map((shift, index) => (
-                  <div
-                    key={shift.id}
-                    className="p-3 rounded border flex items-center justify-between"
-                    style={{ borderLeftWidth: '4px', borderLeftColor: shift.color }}
-                  >
-                    <div>
-                      <div className="font-medium text-sm">{shift.title}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {format(parseISO(shift.startAt), 'HH:mm')} - {format(parseISO(shift.endAt), 'HH:mm')}
-                        {shift.location && ` • ${shift.location}`}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <p className="text-sm text-muted-foreground mb-4 text-center">
+              <strong>{conflictData?.targetEmployeeName}</strong> ya tiene {conflictData?.existingShifts.length} turno(s) el{' '}
+              <strong>{conflictData?.targetDate && format(conflictData.targetDate, "EEEE d 'de' MMMM", { locale: es })}</strong>
+            </p>
 
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
-                <div className="flex items-center gap-2 mb-1">
-                  <div
-                    className="w-3 h-3 rounded"
-                    style={{ backgroundColor: conflictData?.sourceShift.color }}
-                  />
-                  <span className="font-medium text-sm">Nuevo turno a añadir:</span>
-                </div>
-                <div className="text-sm">
-                  <strong>{conflictData?.sourceShift.title}</strong>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {conflictData?.sourceShift && format(parseISO(conflictData.sourceShift.startAt), 'HH:mm')} -{' '}
-                  {conflictData?.sourceShift && format(parseISO(conflictData.sourceShift.endAt), 'HH:mm')}
-                  {conflictData?.sourceShift.location && ` • ${conflictData.sourceShift.location}`}
-                </div>
-              </div>
-            </div>
-
-            {/* Preview de adaptación */}
+            {/* Simulaciones visuales en dos columnas */}
             {(() => {
               const adapted = calculateAdaptedShifts();
               if (!adapted) return null;
-              
-              const hasAdaptations = adapted.toUpdate.length > 0 || (adapted.toCreate.length > 1);
-              
-              if (hasAdaptations) {
+
+              // Obtener TODOS los turnos del empleado en ese día (no solo los que tienen conflicto)
+              const dayString = format(conflictData!.targetDate, 'yyyy-MM-dd');
+              const allEmployeeShiftsThisDay = workShifts.filter(shift => {
+                if (shift.employeeId !== conflictData!.targetEmployeeId) return false;
+                const shiftDate = format(parseISO(shift.startAt), 'yyyy-MM-dd');
+                return shiftDate === dayString;
+              });
+
+              // Construir lista completa de turnos resultantes para "Adaptar"
+              const allAdaptedShifts = [
+                // Turnos nuevos creados (incluye el nuevo turno y fragmentos)
+                ...adapted.toCreate.map(shift => ({
+                  ...shift,
+                  isCreated: true,
+                  isUpdated: false,
+                  isDeleted: false
+                })),
+                // Turnos existentes actualizados con nuevos horarios
+                ...adapted.toUpdate.map(update => {
+                  const original = conflictData!.existingShifts.find(s => s.id === update.id);
+                  if (!original) return null;
+                  return {
+                    id: original.id,
+                    employeeId: original.employeeId,
+                    startAt: update.startAt,
+                    endAt: update.endAt,
+                    title: original.title,
+                    location: original.location,
+                    notes: original.notes,
+                    color: original.color,
+                    isCreated: false,
+                    isUpdated: true,
+                    isDeleted: false
+                  };
+                }).filter(Boolean),
+                // Turnos que se eliminarán (mostrar en gris)
+                ...adapted.toDelete.map(shiftId => {
+                  const original = conflictData!.existingShifts.find(s => s.id === shiftId);
+                  if (!original) return null;
+                  return {
+                    ...original,
+                    isCreated: false,
+                    isUpdated: false,
+                    isDeleted: true
+                  };
+                }).filter(Boolean),
+                // Turnos del día que NO tienen conflicto (se mantienen igual)
+                ...allEmployeeShiftsThisDay
+                  .filter(shift => !conflictData!.existingShifts.some(es => es.id === shift.id))
+                  .map(shift => ({
+                    ...shift,
+                    isCreated: false,
+                    isUpdated: false,
+                    isDeleted: false
+                  }))
+              ];
+
+              // Ordenar todos por hora de inicio
+              allAdaptedShifts.sort((a, b) => {
+                if (!a || !b) return 0;
+                return parseISO(a.startAt).getTime() - parseISO(b.startAt).getTime();
+              });
+
+              console.log('� ADAPTAR preview shifts:', {
+                total: allAdaptedShifts.length,
+                created: allAdaptedShifts.filter((s: any) => s && s.isCreated).length,
+                updated: allAdaptedShifts.filter((s: any) => s && s.isUpdated).length,
+                unchanged: allAdaptedShifts.filter((s: any) => s && !s.isCreated && !s.isUpdated).length,
+                shifts: allAdaptedShifts
+              });
+
+              // Componente reutilizable para renderizar turnos como en el cuadrante
+              const renderShiftsPreview = (shifts: any[]) => {
+                const totalVisible = shifts.length;
+                const MARGIN = 4;
+                const GAP = 3;
+                const totalGaps = totalVisible > 1 ? (totalVisible - 1) * GAP : 0;
+
                 return (
-                  <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm">🔄</span>
-                      <span className="font-medium text-sm text-green-700 dark:text-green-400">Si adaptas, quedaría así:</span>
-                    </div>
-                    <div className="space-y-1.5 text-xs">
-                      {adapted.toCreate.map((shift, idx) => (
-                        <div key={`create-${idx}`} className="flex items-center gap-2">
-                          <div
-                            className="w-2 h-2 rounded"
-                            style={{ backgroundColor: shift.color }}
-                          />
-                          <span className={shift.isNew ? 'font-medium text-blue-600 dark:text-blue-400' : ''}>
-                            {shift.title}: {format(parseISO(shift.startAt), 'HH:mm')}-{format(parseISO(shift.endAt), 'HH:mm')}
-                            {shift.isNew && ' (nuevo)'}
-                          </span>
-                        </div>
-                      ))}
-                      {adapted.toUpdate.map((update, idx) => {
-                        const original = conflictData?.existingShifts.find(s => s.id === update.id);
-                        return (
-                          <div key={`update-${idx}`} className="flex items-center gap-2">
-                            <div
-                              className="w-2 h-2 rounded"
-                              style={{ backgroundColor: original?.color || '#666' }}
-                            />
-                            <span className="text-amber-600 dark:text-amber-400">
-                              {original?.title}: {format(parseISO(update.startAt), 'HH:mm')}-{format(parseISO(update.endAt), 'HH:mm')}
-                              {' (ajustado)'}
-                            </span>
+                  <div className="relative overflow-hidden flex-1 min-h-[180px] bg-white/50 dark:bg-black/20 rounded">
+                    {shifts.map((shift, index) => {
+                      const shiftStart = parseISO(shift.startAt);
+                      const shiftEnd = parseISO(shift.endAt);
+                      const startTime = format(shiftStart, 'HH:mm');
+                      const endTime = format(shiftEnd, 'HH:mm');
+
+                      return (
+                        <div
+                          key={`preview-${index}`}
+                          className={`absolute group rounded-[7px] flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1 select-none ${
+                            shift.isDeleted ? 'opacity-40' : ''
+                          }`}
+                          style={{
+                            backgroundColor: shift.color,
+                            left: `${MARGIN}px`,
+                            right: `${MARGIN}px`,
+                            top: index === 0 
+                              ? `${MARGIN}px` 
+                              : `calc(${MARGIN}px + ${index} * ((100% - ${MARGIN * 2 + totalGaps}px) / ${totalVisible} + ${GAP}px))`,
+                            height: `calc((100% - ${MARGIN * 2 + totalGaps}px) / ${totalVisible})`,
+                            zIndex: 10,
+                            boxSizing: 'border-box',
+                            transition: '0.2s',
+                            textDecoration: shift.isDeleted ? 'line-through' : 'none'
+                          }}
+                        >
+                          <div className="text-[10px] md:text-[11px] font-semibold leading-tight text-center truncate w-full">
+                            {shift.title}
                           </div>
-                        );
-                      })}
+                          <div className="text-[8px] md:text-[9px] opacity-90 leading-tight text-center truncate w-full mt-0.5">
+                            {startTime}-{endTime}
+                          </div>
+                          {shift.location && (
+                            <a 
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shift.location)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[7px] md:text-[8px] opacity-80 leading-tight text-center truncate w-full mt-0.5 flex items-center justify-center gap-0.5 hover:opacity-100 hover:underline"
+                              title={`Abrir en Google Maps: ${shift.location}`}
+                            >
+                              <MapPin className="w-2 h-2 flex-shrink-0" />
+                              <span className="truncate">{shift.location}</span>
+                            </a>
+                          )}
+                          {(shift.isCreated || shift.isUpdated) && (
+                            <div className="absolute inset-0 rounded-[7px] pointer-events-none"
+                              style={{
+                                boxShadow: shift.isUpdated 
+                                  ? '0 0 0 2px rgb(251, 146, 60), 0 0 0 4px rgb(255, 255, 255)' 
+                                  : '0 0 0 2px rgb(59, 130, 246), 0 0 0 4px rgb(255, 255, 255)'
+                              }}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              };
+
+              // Verificar si ADAPTAR tiene sentido: debe haber cambios significativos
+              // Solo mostrar ADAPTAR si:
+              // 1. Hay turnos que se recortan (toUpdate.length > 0)
+              // 2. O hay fragmentos creados además del turno nuevo (toCreate.length > 1)
+              const hasAdaptChanges = adapted.toUpdate.length > 0 || adapted.toCreate.length > 1;
+
+              return (
+                <div className={`${hasAdaptChanges ? 'grid grid-cols-2' : 'grid grid-cols-1'} gap-3 mb-4`}>
+                  {/* Opción 1: ADAPTAR - Solo mostrar si tiene sentido */}
+                  {hasAdaptChanges && (
+                  <button
+                    type="button"
+                    onClick={handleConfirmAdapt}
+                    disabled={isAdapting || isOverriding}
+                    className="flex flex-col border-2 border-green-500 dark:border-green-600 rounded-lg overflow-hidden hover:border-green-600 dark:hover:border-green-500 transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {/* Badges de turnos */}
+                    <div className="bg-green-50 dark:bg-green-900/20 p-3 flex-1 min-h-[200px] flex flex-col">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-sm">🔄</span>
+                        <span className="font-semibold text-sm text-green-700 dark:text-green-400">Adaptar</span>
+                      </div>
+                      
+                      {/* Preview de turnos como en cuadrante */}
+                      {renderShiftsPreview(allAdaptedShifts)}
+
+                      {/* Info adicional */}
                       {adapted.toDelete.length > 0 && (
-                        <div className="text-red-500 dark:text-red-400 mt-1">
-                          {adapted.toDelete.length} turno(s) eliminado(s) por duración insuficiente (&lt;{MIN_SHIFT_DURATION_MINUTES} min)
+                        <div className="mt-2 text-xs text-red-500 dark:text-red-400 text-center">
+                          ⚠️ {adapted.toDelete.length} turno(s) eliminado(s) por duración insuficiente
                         </div>
                       )}
                     </div>
-                  </div>
-                );
-              }
-              return null;
+
+                    {/* Botón integrado */}
+                    <div className="bg-green-600 hover:bg-green-700 text-white py-2 px-3 text-sm font-medium text-center transition-colors">
+                      {isAdapting ? 'Adaptando...' : 'Seleccionar Adaptar'}
+                    </div>
+                  </button>
+                  )}
+
+                  {/* Opción 2: SOBRESCRIBIR */}
+                  <button
+                    type="button"
+                    onClick={handleConfirmOverride}
+                    disabled={isOverriding || isAdapting}
+                    className="flex flex-col border-2 border-orange-500 dark:border-orange-600 rounded-lg overflow-hidden hover:border-orange-600 dark:hover:border-orange-500 transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {/* Badges de turnos */}
+                    <div className="bg-orange-50 dark:bg-orange-900/20 p-3 flex-1 min-h-[200px] flex flex-col">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-sm">⚠️</span>
+                        <span className="font-semibold text-sm text-orange-700 dark:text-orange-400">Sobrescribir</span>
+                      </div>
+                      
+                      {/* Preview de turnos como en cuadrante */}
+                      {(() => {
+                        // Construir lista de turnos resultantes para "Sobrescribir"
+                        const overrideShifts = [
+                          // El nuevo turno que se añade
+                          {
+                            ...conflictData!.sourceShift,
+                            isCreated: true,
+                            isUpdated: false
+                          },
+                          // Turnos del día que NO tienen conflicto (no se eliminan)
+                          ...allEmployeeShiftsThisDay
+                            .filter(shift => !conflictData!.existingShifts.some(es => es.id === shift.id))
+                            .map(shift => ({
+                              ...shift,
+                              isCreated: false,
+                              isUpdated: false
+                            }))
+                        ];
+
+                        // Ordenar todos por hora de inicio
+                        overrideShifts.sort((a, b) => 
+                          parseISO(a.startAt).getTime() - parseISO(b.startAt).getTime()
+                        );
+
+                        return renderShiftsPreview(overrideShifts);
+                      })()}
+                    </div>
+
+                    {/* Botón integrado */}
+                    <div className="bg-orange-500 hover:bg-orange-600 text-white py-2 px-3 text-sm font-medium text-center transition-colors">
+                      {isOverriding ? 'Sobrescribiendo...' : 'Seleccionar Sobrescribir'}
+                    </div>
+                  </button>
+                </div>
+              );
             })()}
 
-            <p className="text-sm text-muted-foreground mb-4">
-              ¿Qué deseas hacer?
-            </p>
-
-            {/* Botones */}
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCancelConflict}
-                  className="flex-1"
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={handleConfirmAdapt}
-                  disabled={isAdapting || isOverriding}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                >
-                  {isAdapting ? 'Adaptando...' : 'Adaptar turnos'}
-                </Button>
-              </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleConfirmOverride}
-                disabled={isOverriding || isAdapting}
-                className="w-full bg-orange-500 hover:bg-orange-600"
-              >
-                {isOverriding ? 'Sobrescribiendo...' : 'Sobrescribir (elimina existentes)'}
-              </Button>
-            </div>
+            {/* Botón Cancelar centrado */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCancelConflict}
+              className="w-full"
+            >
+              Cancelar
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -3803,6 +4114,20 @@ export default function Schedules() {
           }),
         }}
         style={{ cursor: 'grabbing' }}
+        modifiers={[
+          ({ transform, activeNodeRect }) => {
+            const w = dragAnchor?.width ?? activeNodeRect?.width;
+            const h = dragAnchor?.height ?? activeNodeRect?.height;
+            if (!w || !h) return transform;
+            const dx = (dragAnchor?.offsetX ?? w / 2) - w / 2;
+            const dy = (dragAnchor?.offsetY ?? h / 2) - h / 2;
+            return {
+              ...transform,
+              x: transform.x - dx,
+              y: transform.y - dy,
+            };
+          },
+        ]}
       >
         {activeShift ? (
           <div
@@ -3812,8 +4137,8 @@ export default function Schedules() {
               transform: 'scale(1.05)',
               boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
               border: '2px solid rgba(255, 255, 255, 0.8)',
-              minWidth: '80px',
-              maxWidth: '180px',
+              width: dragAnchor?.width,
+              height: dragAnchor?.height,
             }}
           >
             <div className="text-[11px] font-semibold leading-tight text-center truncate">
@@ -3834,8 +4159,8 @@ export default function Schedules() {
               transform: 'scale(1.05)',
               boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
               border: '2px solid rgba(255, 255, 255, 0.8)',
-              minWidth: '80px',
-              maxWidth: '180px',
+              width: dragAnchor?.width,
+              height: dragAnchor?.height,
             }}
           >
             <div className="text-[11px] font-semibold leading-tight text-center truncate">

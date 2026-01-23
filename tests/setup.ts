@@ -9,12 +9,17 @@ const localStorageMock = {
   clear: vi.fn(),
 };
 
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
-});
+// Guard to avoid errors when running in Node environment (no `window`)
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'localStorage', {
+    value: localStorageMock,
+  });
+}
 
-// Mock global de fetch para tests de API
-global.fetch = vi.fn();
+// Mock global de fetch para tests de API (solo en entornos con `window`, p.ej. jsdom)
+if (typeof window !== 'undefined') {
+  global.fetch = vi.fn();
+}
 
 // Configurar timezone para tests consistentes
 process.env.TZ = 'Europe/Madrid';

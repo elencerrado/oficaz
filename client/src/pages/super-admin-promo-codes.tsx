@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { DatePickerDay } from '@/components/ui/date-picker';
 import { Switch } from '@/components/ui/switch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -56,6 +57,16 @@ interface CreatePromotionalCodeData {
   validUntil: string | null;
 }
 
+interface FormData {
+  code: string;
+  description: string;
+  trialDurationDays: number;
+  isActive: boolean;
+  maxUses: number | null;
+  validFrom: Date | undefined;
+  validUntil: Date | undefined;
+}
+
 const SuperAdminPromoCodes = () => {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -65,14 +76,14 @@ const SuperAdminPromoCodes = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingCode, setEditingCode] = useState<PromotionalCode | null>(null);
   
-  const [formData, setFormData] = useState<CreatePromotionalCodeData>({
+  const [formData, setFormData] = useState<FormData>({
     code: '',
     description: '',
     trialDurationDays: 60,
     isActive: true,
     maxUses: null,
-    validFrom: null,
-    validUntil: null
+    validFrom: undefined,
+    validUntil: undefined
   });
 
   // Fetch promotional codes
@@ -206,14 +217,18 @@ const SuperAdminPromoCodes = () => {
       trialDurationDays: code.trialDurationDays,
       isActive: code.isActive,
       maxUses: code.maxUses,
-      validFrom: code.validFrom ? code.validFrom.split('T')[0] : null,
-      validUntil: code.validUntil ? code.validUntil.split('T')[0] : null
+      validFrom: code.validFrom ? new Date(code.validFrom) : undefined,
+      validUntil: code.validUntil ? new Date(code.validUntil) : undefined
     });
     setIsEditDialogOpen(true);
   };
-
   const handleCreate = () => {
-    createMutation.mutate(formData);
+    const payload: CreatePromotionalCodeData = {
+      ...formData,
+      validFrom: formData.validFrom ? formData.validFrom.toISOString().split('T')[0] : null,
+      validUntil: formData.validUntil ? formData.validUntil.toISOString().split('T')[0] : null,
+    };
+    createMutation.mutate(payload);
   };
 
   const handleUpdate = () => {
@@ -307,26 +322,22 @@ const SuperAdminPromoCodes = () => {
               </div>
               
               <div className="grid grid-cols-2 gap-4">
-                <div className="relative">
-                  <label className="text-sm font-medium block mb-1">Válido desde</label>
-                  <Input
-                    type="date"
-                    value={formData.validFrom || ''}
-                    onChange={(e) => setFormData({ ...formData, validFrom: e.target.value ? e.target.value : null })}
-                    data-testid="input-valid-from"
-                    className="w-full"
-                    style={{ position: 'relative', zIndex: 1 }}
+                <div>
+                  <label className="text-sm font-medium block mb-2">Válido desde</label>
+                  <DatePickerDay
+                    date={formData.validFrom}
+                    onDateChange={(date) => setFormData({ ...formData, validFrom: date })}
+                    placeholder="Fecha inicio"
+                    className="w-full justify-start h-10 bg-white/10 border-white/20 text-white"
                   />
                 </div>
-                <div className="relative">
-                  <label className="text-sm font-medium block mb-1">Válido hasta</label>
-                  <Input
-                    type="date"
-                    value={formData.validUntil || ''}
-                    onChange={(e) => setFormData({ ...formData, validUntil: e.target.value ? e.target.value : null })}
-                    data-testid="input-valid-until"
-                    className="w-full"
-                    style={{ position: 'relative', zIndex: 1 }}
+                <div>
+                  <label className="text-sm font-medium block mb-2">Válido hasta</label>
+                  <DatePickerDay
+                    date={formData.validUntil}
+                    onDateChange={(date) => setFormData({ ...formData, validUntil: date })}
+                    placeholder="Fecha fin"
+                    className="w-full justify-start h-10 bg-white/10 border-white/20 text-white"
                   />
                 </div>
               </div>
@@ -530,26 +541,22 @@ const SuperAdminPromoCodes = () => {
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              <div className="relative">
-                <label className="text-sm font-medium block mb-1">Válido desde</label>
-                <Input
-                  type="date"
-                  value={formData.validFrom || ''}
-                  onChange={(e) => setFormData({ ...formData, validFrom: e.target.value ? e.target.value : null })}
-                  data-testid="input-edit-valid-from"
-                  className="w-full"
-                  style={{ position: 'relative', zIndex: 1 }}
+              <div>
+                <label className="text-sm font-medium block mb-2">Válido desde</label>
+                <DatePickerDay
+                  date={formData.validFrom}
+                  onDateChange={(date) => setFormData({ ...formData, validFrom: date })}
+                  placeholder="Fecha inicio"
+                  className="w-full justify-start h-10 bg-white/10 border-white/20 text-white"
                 />
               </div>
-              <div className="relative">
-                <label className="text-sm font-medium block mb-1">Válido hasta</label>
-                <Input
-                  type="date"
-                  value={formData.validUntil || ''}
-                  onChange={(e) => setFormData({ ...formData, validUntil: e.target.value ? e.target.value : null })}
-                  data-testid="input-edit-valid-until"
-                  className="w-full"
-                  style={{ position: 'relative', zIndex: 1 }}
+              <div>
+                <label className="text-sm font-medium block mb-2">Válido hasta</label>
+                <DatePickerDay
+                  date={formData.validUntil}
+                  onDateChange={(date) => setFormData({ ...formData, validUntil: date })}
+                  placeholder="Fecha fin"
+                  className="w-full justify-start h-10 bg-white/10 border-white/20 text-white"
                 />
               </div>
             </div>

@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Users, Clock, Palmtree, Calendar, Star, Sparkles } from 'lucide-react';
-import oficazFavicon from '@assets/favicon oficaz_1757056517547.png';
+
 import { useEffect } from 'react';
 
 interface WelcomeModalProps {
@@ -34,7 +34,7 @@ export function WelcomeModal({ isOpen, onClose, companyName, trialDays = 7 }: We
           {/* Logo - Favicon de Oficaz */}
           <div className="flex justify-center mb-5">
             <img 
-              src={oficazFavicon} 
+              src="/favicon.png" 
               alt="Oficaz" 
               className="h-16 w-16"
             />
@@ -122,3 +122,4 @@ export function WelcomeModal({ isOpen, onClose, companyName, trialDays = 7 }: We
     </Dialog>
   );
 }
+

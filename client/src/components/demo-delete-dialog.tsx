@@ -1,10 +1,11 @@
-import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Trash2, Users } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 
 interface DemoDeleteDialogProps {
   isOpen: boolean;
@@ -13,6 +14,8 @@ interface DemoDeleteDialogProps {
 
 export function DemoDeleteDialog({ isOpen, onClose }: DemoDeleteDialogProps) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { logout } = useAuth();
   
   const deleteDemoDataMutation = useMutation({
     mutationFn: () => apiRequest('DELETE', '/api/demo-data/clear'),
@@ -29,10 +32,24 @@ export function DemoDeleteDialog({ isOpen, onClose }: DemoDeleteDialogProps) {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
       queryClient.invalidateQueries({ queryKey: ['/api/document-notifications'] });
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
-      onClose();
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/dashboard/summary'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/shift-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/holidays/custom'] });
+      
+      toast({
+        title: 'Éxito',
+        description: 'Los datos de demostración han sido eliminados correctamente.',
+      });
+      
+      // Close dialog and wait for queries to refresh
+      setTimeout(() => {
+        onClose();
+      }, 500);
     },
-    onError: (error) => {
-      console.error('Error deleting demo data:', error);
+    onError: (error: any) => {
+      // Si falla, hacer logout sin mostrar error al usuario
+      console.error('Error deleting demo data - forcing logout:', error);
+      logout(false);
     }
   });
 

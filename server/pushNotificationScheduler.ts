@@ -1,5 +1,6 @@
 import webpush from 'web-push';
 import jwt from 'jsonwebtoken';
+import cron from 'node-cron';
 import { db } from './db';
 import { eq, and, isNull, sql, lte, inArray, gte, lt } from 'drizzle-orm';
 import { workAlarms, pushSubscriptions, workSessions, breakPeriods, users, reminders, systemNotifications } from '@shared/schema';
@@ -30,6 +31,283 @@ interface WorkStatus {
 
 const checkedAlarms = new Map<string, Date>();
 const sentIncompleteSessionNotifications = new Map<string, Date>(); // Track daily incomplete session notifications
+const scheduledAlarmTimeouts = new Map<number, NodeJS.Timeout>(); // Store alarm timeouts for cleanup
+const scheduledReminderTimeouts = new Map<number, NodeJS.Timeout>(); // Store reminder timeouts for cleanup (event-driven)
+
+// Helper: Calculate next trigger time for an alarm
+function calculateNextAlarmTime(alarmTime: string, weekdays: number[]): Date {
+  const [hours, minutes] = alarmTime.split(':').map(Number);
+  const now = getSpainTime();
+  
+  // Start with today
+  let nextDate = new Date(now);
+  nextDate.setHours(hours, minutes, 0, 0);
+  
+  // If today's time has already passed, start from tomorrow
+  if (nextDate <= now) {
+    nextDate.setDate(nextDate.getDate() + 1);
+  }
+  
+  // Find the next day that matches the weekdays
+  let daysToCheck = 0;
+  while (daysToCheck < 7) {
+    const dayOfWeek = nextDate.getDay() === 0 ? 7 : nextDate.getDay();
+    if (weekdays.includes(dayOfWeek)) {
+      break;
+    }
+    nextDate.setDate(nextDate.getDate() + 1);
+    daysToCheck++;
+  }
+  
+  return nextDate;
+}
+
+// Schedule a single alarm with setTimeout
+function scheduleAlarm(alarm: typeof workAlarms.$inferSelect): void {
+  // Clear any existing timeout for this alarm
+  if (scheduledAlarmTimeouts.has(alarm.id)) {
+    clearTimeout(scheduledAlarmTimeouts.get(alarm.id)!);
+  }
+  
+  const nextTime = calculateNextAlarmTime(alarm.time, alarm.weekdays);
+  const delayMs = nextTime.getTime() - getSpainTime().getTime();
+  
+  if (delayMs > 0) {
+    const timeout = setTimeout(async () => {
+      try {
+        console.log(`⏰ ALARM TRIGGERED: ${alarm.title} for user ${alarm.userId} at ${alarm.time}`);
+        await sendPushNotification(alarm.userId, alarm.title, alarm.type as 'clock_in' | 'clock_out', alarm.id);
+        
+        // Reschedule for next occurrence
+        scheduleAlarm(alarm);
+      } catch (error) {
+        console.error(`❌ Error triggering alarm ${alarm.id}:`, error);
+        // Retry in 1 minute
+        const retryTimeout = setTimeout(() => scheduleAlarm(alarm), 60000);
+        scheduledAlarmTimeouts.set(alarm.id, retryTimeout);
+      }
+    }, delayMs);
+    
+    scheduledAlarmTimeouts.set(alarm.id, timeout);
+    if (process.env.DEBUG_ALARMS) {
+      console.log(`⏳ Scheduled alarm ${alarm.id} (${alarm.title}) for ${nextTime.toLocaleString('es-ES')}`);
+    }
+  }
+}
+
+// Load and schedule all active alarms
+async function loadAndScheduleAllAlarms(): Promise<void> {
+  try {
+    const activeAlarms = await db.select()
+      .from(workAlarms)
+      .where(eq(workAlarms.isActive, true));
+    
+    if (process.env.DEBUG_SCHEDULER) {
+      console.log(`📍 Loading ${activeAlarms.length} active alarm(s)...`);
+    }
+    
+    // 🔒 CRITICAL: Clear all existing alarm timeouts before reloading
+    // Prevents duplicate alarms if loadAndScheduleAllAlarms is called multiple times
+    for (const [alarmId, timeout] of scheduledAlarmTimeouts.entries()) {
+      clearTimeout(timeout);
+      scheduledAlarmTimeouts.delete(alarmId);
+    }
+    
+    for (const alarm of activeAlarms) {
+      scheduleAlarm(alarm);
+    }
+  } catch (error) {
+    console.error('❌ Error loading alarms:', error);
+  }
+}
+
+// Public function to reload alarms (call after create/update)
+export async function reloadAlarms(): Promise<void> {
+  console.log(`🔄 Reloading alarms (triggered by create/update)...`);
+  
+  // Clear all existing timeouts
+  for (const timeout of scheduledAlarmTimeouts.values()) {
+    clearTimeout(timeout);
+  }
+  scheduledAlarmTimeouts.clear();
+  
+  // Reload all alarms
+  await loadAndScheduleAllAlarms();
+}
+
+// ===== EVENT-DRIVEN REMINDERS (no polling) =====
+
+// Schedule a single reminder with setTimeout (like alarms)
+function scheduleReminder(reminder: typeof reminders.$inferSelect): void {
+  // Clear any existing timeout for this reminder
+  if (scheduledReminderTimeouts.has(reminder.id)) {
+    clearTimeout(scheduledReminderTimeouts.get(reminder.id)!);
+  }
+  
+  // Skip if:
+  // - No date set
+  // - Already notified
+  // - Completed or archived
+  // - Notifications disabled
+  if (!reminder.reminderDate || 
+      reminder.notificationShown || 
+      reminder.isCompleted || 
+      reminder.isArchived || 
+      !reminder.enableNotifications) {
+    return;
+  }
+  
+  const nowSpain = getSpainTime();
+  const delayMs = new Date(reminder.reminderDate).getTime() - nowSpain.getTime();
+  
+  // Only schedule if in the future
+  if (delayMs > 0) {
+    const timeout = setTimeout(async () => {
+      try {
+        console.log(`🔔 REMINDER TRIGGERED: "${reminder.title}" (ID: ${reminder.id})`);
+        
+        // Get all assigned users (or just creator if no assignments)
+        const userIds = reminder.assignedUserIds && reminder.assignedUserIds.length > 0
+          ? reminder.assignedUserIds
+          : [reminder.userId];
+        
+        // Send notification to each assigned user
+        for (const userId of userIds) {
+          const subscriptions = await db.select()
+            .from(pushSubscriptions)
+            .where(eq(pushSubscriptions.userId, userId));
+          
+          if (subscriptions.length === 0) continue;
+          
+          // Filter to unique devices
+          const deviceMap = new Map<string, typeof subscriptions[0]>();
+          for (const sub of subscriptions) {
+            const deviceKey = sub.deviceId || sub.endpoint;
+            const existing = deviceMap.get(deviceKey);
+            if (!existing || new Date(sub.updatedAt) > new Date(existing.updatedAt)) {
+              deviceMap.set(deviceKey, sub);
+            }
+          }
+          
+          const uniqueSubscriptions = Array.from(deviceMap.values());
+          
+          const payload = JSON.stringify({
+            title: 'Recordatorio',
+            body: reminder.title,
+            icon: '/icon-192.png',
+            badge: '/icon-192.png',
+            vibrate: [200, 100, 200],
+            requireInteraction: true,
+            tag: `reminder-due-${reminder.id}`,
+            data: {
+              url: '/employee',
+              type: 'reminder_due',
+              timestamp: Date.now(),
+              userId,
+              reminderId: reminder.id
+            },
+            actions: [
+              { action: 'view', title: 'Ver recordatorio', icon: '/icon-192.png' }
+            ]
+          });
+          
+          // Send to all unique devices
+          for (const sub of uniqueSubscriptions) {
+            try {
+              await webpush.sendNotification(
+                {
+                  endpoint: sub.endpoint,
+                  keys: {
+                    p256dh: sub.p256dh,
+                    auth: sub.auth
+                  }
+                },
+                payload
+              );
+              console.log(`✅ Reminder notification sent to user ${userId}`);
+            } catch (error: any) {
+              if (error.statusCode === 410 || error.statusCode === 404) {
+                console.log(`🗑️  Removing invalid subscription for user ${userId}`);
+                await db.delete(pushSubscriptions)
+                  .where(eq(pushSubscriptions.endpoint, sub.endpoint));
+              } else {
+                console.error(`❌ Error sending reminder notification to user ${userId}:`, error);
+              }
+            }
+          }
+        }
+        
+        // Mark reminder as notified
+        await db.update(reminders)
+          .set({ notificationShown: true })
+          .where(eq(reminders.id, reminder.id));
+        
+        console.log(`✅ Marked reminder ${reminder.id} as notified`);
+        
+        // Remove from scheduled timeouts
+        scheduledReminderTimeouts.delete(reminder.id);
+      } catch (error) {
+        console.error(`❌ Error triggering reminder ${reminder.id}:`, error);
+        // Retry in 1 minute
+        const retryTimeout = setTimeout(() => scheduleReminder(reminder), 60000);
+        scheduledReminderTimeouts.set(reminder.id, retryTimeout);
+      }
+    }, delayMs);
+    
+    scheduledReminderTimeouts.set(reminder.id, timeout);
+    if (process.env.DEBUG_SCHEDULER) {
+      console.log(`⏳ Scheduled reminder ${reminder.id} ("${reminder.title}") for ${new Date(reminder.reminderDate).toLocaleString('es-ES')}`);
+    }
+  }
+}
+
+// Load and schedule all future reminders
+async function loadAndScheduleAllReminders(): Promise<void> {
+  try {
+    const nowSpain = getSpainTime();
+    
+    // Get all future reminders that:
+    // - Have notifications enabled
+    // - Haven't been notified yet
+    // - Are not completed or archived
+    // - Have a date in the future
+    const futureReminders = await db.select()
+      .from(reminders)
+      .where(
+        and(
+          eq(reminders.enableNotifications, true),
+          eq(reminders.notificationShown, false),
+          eq(reminders.isCompleted, false),
+          eq(reminders.isArchived, false),
+          gte(reminders.reminderDate, nowSpain)
+        )
+      );
+    
+    if (process.env.DEBUG_SCHEDULER) {
+      console.log(`📍 Loading ${futureReminders.length} future reminder(s) for event-driven scheduling...`);
+    }
+    
+    for (const reminder of futureReminders) {
+      scheduleReminder(reminder);
+    }
+  } catch (error) {
+    console.error('❌ Error loading reminders:', error);
+  }
+}
+
+// Public function to reload reminders (call after create/update/delete)
+export async function reloadReminders(): Promise<void> {
+  console.log(`🔄 Reloading reminders (triggered by create/update)...`);
+  
+  // Clear all existing timeouts
+  for (const timeout of scheduledReminderTimeouts.values()) {
+    clearTimeout(timeout);
+  }
+  scheduledReminderTimeouts.clear();
+  
+  // Reload all reminders
+  await loadAndScheduleAllReminders();
+}
 
 // Auto-process expired trials every 5 minutes
 async function processExpiredTrials(): Promise<void> {
@@ -253,9 +531,9 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
     console.log(`🔔 Preparing notification with ${actions.length} action(s):`, actions.map(a => a.action));
 
     // 🔒 CRITICAL: Use alarm-specific tag to deduplicate across multiple service workers
-    // Tag format: alarm-{alarmId}-{minute} - iOS will show only ONE notification even with duplicate SWs
-    const currentMinute = `${new Date().getFullYear()}-${new Date().getMonth()}-${new Date().getDate()}-${new Date().getHours()}:${new Date().getMinutes()}`;
-    const notificationTag = `alarm-${alarmId}-${currentMinute}`;
+    // Tag format: alarm-{alarmId}-{second} - prevents duplicate notifications in same second
+    const now = new Date();
+    const notificationTag = `alarm-${alarmId}-${now.getTime()}`;
     
     const payload = JSON.stringify({
       title: 'Alarma',
@@ -279,15 +557,16 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
     });
 
     // Send to all user's devices
-    const now = Date.now();
+    const nowMs = Date.now();
     
     const promises = subscriptions.map(async (sub) => {
-      // 🔒 CRITICAL: Prevent duplicate sends to same endpoint within throttle period
-      const throttleKey = `${userId}-${sub.endpoint}-${alarmType}-${currentMinute}`;
+      // 🔒 CRITICAL: Prevent duplicate sends to same alarm+endpoint combination
+      // Use more granular key: alarm+endpoint (not minute-based)
+      const throttleKey = `alarm-${alarmId}-${sub.endpoint}`;
       const lastSend = recentPushSends.get(throttleKey);
       
-      if (lastSend && (now - lastSend) < PUSH_SEND_THROTTLE_MS) {
-        console.log(`⏭️  SKIPPING duplicate push send to endpoint (last sent ${now - lastSend}ms ago)`);
+      if (lastSend && (nowMs - lastSend) < PUSH_SEND_THROTTLE_MS) {
+        console.log(`⏭️  SKIPPING duplicate push to alarm ${alarmId} on endpoint (last sent ${nowMs - lastSend}ms ago)`);
         return;
       }
       
@@ -303,12 +582,12 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
           payload
         );
         
-        // Mark this send in the throttle cache
-        recentPushSends.set(throttleKey, now);
+        // Mark this send in the throttle map
+        recentPushSends.set(throttleKey, nowMs);
         
         // Clean up old entries (older than throttle period)
         for (const [key, timestamp] of Array.from(recentPushSends.entries())) {
-          if (now - timestamp > PUSH_SEND_THROTTLE_MS) {
+          if (nowMs - timestamp > PUSH_SEND_THROTTLE_MS) {
             recentPushSends.delete(key);
           }
         }
@@ -631,7 +910,8 @@ async function checkIncompleteSessions() {
   }
 }
 
-// Main scheduler function - runs every 30 seconds
+// Main scheduler function - NOW DEPRECATED for alarms (using event-driven setTimeout instead)
+// Kept for backward compatibility if needed, but not called for alarm checking
 export async function checkWorkAlarms() {
   try {
     const now = getSpainTime(); // ⚠️ CRITICAL: Use Spain time, not server UTC
@@ -643,7 +923,9 @@ export async function checkWorkAlarms() {
       .from(workAlarms)
       .where(eq(workAlarms.isActive, true));
     
-    console.log(`📱 Checking alarms at ${currentTime} (${activeAlarms.length} active alarms)`);
+    if (process.env.DEBUG_ALARMS) {
+      console.log(`📱 Checking alarms at ${currentTime} (${activeAlarms.length} active alarms)`);
+    }
 
     for (const alarm of activeAlarms) {
       // Create unique key for this alarm using the ALARM'S scheduled time (not current minute)
@@ -658,7 +940,9 @@ export async function checkWorkAlarms() {
 
       // Check if alarm should trigger (now includes 5-minute catch-up window)
       const shouldTrigger = shouldTriggerAlarm(alarm.time, alarm.weekdays);
-      console.log(`🔍 Alarm ${alarm.id} (${alarm.title}) at ${alarm.time}: shouldTrigger=${shouldTrigger}`);
+      if (process.env.DEBUG_ALARMS) {
+        console.log(`🔍 Alarm ${alarm.id} (${alarm.title}) at ${alarm.time}: shouldTrigger=${shouldTrigger}`);
+      }
       
       if (shouldTrigger) {
         console.log(`⏰ TRIGGERING ALARM: ${alarm.title} for user ${alarm.userId} at ${currentTime}`);
@@ -801,6 +1085,72 @@ export async function sendPayrollNotification(userId: number, documentName: stri
   try {
     console.log(`📱 Sending payroll notification to user ${userId} for document ${documentId || 'unknown'}`);
     
+    // 📧 QUEUE EMAIL NOTIFICATION
+    if (documentId) {
+      try {
+        console.log(`📧 [EMAIL DEBUG] Starting email queue process for user ${userId}, document ${documentId}`);
+        const { queueEmail, createDocumentSignatureToken } = await import('./emailQueue');
+        const { storage } = await import('./storage');
+        
+        console.log(`📧 [EMAIL DEBUG] Fetching user ${userId} data...`);
+        // Get user and company info
+        const user = await storage.getUser(userId);
+        
+        // Priority: personalEmail > companyEmail (work email)
+        const userEmail = user?.personalEmail || user?.companyEmail;
+        
+        console.log(`📧 [EMAIL DEBUG] User data:`, user ? `${user.fullName} (companyEmail: ${user.companyEmail || 'none'}, personalEmail: ${user.personalEmail || 'none'})` : 'NOT FOUND');
+        console.log(`📧 [EMAIL DEBUG] Selected email (priority personal):`, userEmail);
+        
+        if (user && userEmail) {
+          console.log(`📧 [EMAIL DEBUG] Fetching company ${user.companyId} data...`);
+          const company = await storage.getCompany(user.companyId);
+          console.log(`📧 [EMAIL DEBUG] Company data:`, company ? `${company.name} (${company.companyAlias})` : 'NOT FOUND');
+          
+          // Generate signature token for direct email link
+          console.log(`📧 [EMAIL DEBUG] Creating signature token...`);
+          const signatureToken = await createDocumentSignatureToken(
+            documentId,
+            userId,
+            user.companyId
+          );
+          console.log(`📧 [EMAIL DEBUG] Signature token created:`, signatureToken.substring(0, 20) + '...');
+          
+          // Build direct signature URL
+          const companyAlias = company?.companyAlias || 'app';
+          const signatureUrl = `${process.env.VITE_APP_URL || 'http://localhost:5000'}/${companyAlias}/inicio?signDocument=${documentId}&token=${signatureToken}`;
+          console.log(`📧 [EMAIL DEBUG] Signature URL:`, signatureUrl);
+          
+          // Queue email with high priority
+          console.log(`📧 [EMAIL DEBUG] Queueing email to ${userEmail}...`);
+          await queueEmail({
+            userId,
+            toEmail: userEmail,
+            toName: user.fullName,
+            subject: 'Nueva Nómina Pendiente de Firma',
+            templateType: 'payroll_available',
+            templateData: {
+              userName: user.fullName,
+              documentName,
+              documentId,
+              signatureUrl,
+              companyName: company?.name || 'Tu empresa'
+            },
+            companyId: user.companyId,
+            priority: 1, // High priority
+          });
+          
+          console.log(`📧 Payroll email queued for user ${userId} to ${userEmail}`);
+        } else {
+          console.error(`❌ [EMAIL DEBUG] User ${userId} not found or has no email (work or personal)`);
+        }
+      } catch (error) {
+        console.error('❌ Error queueing payroll email:', error);
+        console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+        // Don't fail the entire notification if email fails
+      }
+    }
+    
     // Get push subscriptions for the user
     const subscriptions = await db.select()
       .from(pushSubscriptions)
@@ -884,6 +1234,72 @@ export async function sendPayrollNotification(userId: number, documentName: stri
 export async function sendNewDocumentNotification(userId: number, documentName: string, documentId?: number) {
   try {
     console.log(`📱 Sending new document notification to user ${userId} for document ${documentId || 'unknown'}`);
+    
+    // 📧 QUEUE EMAIL NOTIFICATION
+    if (documentId) {
+      try {
+        console.log(`📧 [EMAIL DEBUG] Starting email queue process for user ${userId}, document ${documentId}`);
+        const { queueEmail, createDocumentSignatureToken } = await import('./emailQueue');
+        const { storage } = await import('./storage');
+        
+        console.log(`📧 [EMAIL DEBUG] Fetching user ${userId} data...`);
+        // Get user and company info
+        const user = await storage.getUser(userId);
+        
+        // Priority: personalEmail > companyEmail (work email)
+        const userEmail = user?.personalEmail || user?.companyEmail;
+        
+        console.log(`📧 [EMAIL DEBUG] User data:`, user ? `${user.fullName} (companyEmail: ${user.companyEmail || 'none'}, personalEmail: ${user.personalEmail || 'none'})` : 'NOT FOUND');
+        console.log(`📧 [EMAIL DEBUG] Selected email (priority personal):`, userEmail);
+        
+        if (user && userEmail) {
+          console.log(`📧 [EMAIL DEBUG] Fetching company ${user.companyId} data...`);
+          const company = await storage.getCompany(user.companyId);
+          console.log(`📧 [EMAIL DEBUG] Company data:`, company ? `${company.name} (${company.companyAlias})` : 'NOT FOUND');
+          
+          // Generate signature token for direct email link
+          console.log(`📧 [EMAIL DEBUG] Creating signature token...`);
+          const signatureToken = await createDocumentSignatureToken(
+            documentId,
+            userId,
+            user.companyId
+          );
+          console.log(`📧 [EMAIL DEBUG] Signature token created:`, signatureToken.substring(0, 20) + '...');
+          
+          // Build direct signature URL
+          const companyAlias = company?.companyAlias || 'app';
+          const signatureUrl = `${process.env.VITE_APP_URL || 'http://localhost:5000'}/${companyAlias}/inicio?signDocument=${documentId}&token=${signatureToken}`;
+          console.log(`📧 [EMAIL DEBUG] Signature URL:`, signatureUrl);
+          
+          // Queue email
+          console.log(`📧 [EMAIL DEBUG] Queueing email to ${userEmail}...`);
+          await queueEmail({
+            userId,
+            toEmail: userEmail,
+            toName: user.fullName,
+            subject: 'Nuevo Documento Pendiente de Firma',
+            templateType: 'document_signature_required',
+            templateData: {
+              userName: user.fullName,
+              documentName,
+              documentId,
+              signatureUrl,
+              companyName: company?.name || 'Tu empresa'
+            },
+            companyId: user.companyId,
+            priority: 3, // Normal priority
+          });
+          
+          console.log(`📧 Document email queued for user ${userId} to ${userEmail}`);
+        } else {
+          console.error(`❌ [EMAIL DEBUG] User ${userId} not found or has no email (work or personal)`);
+        }
+      } catch (error) {
+        console.error('❌ Error queueing document email:', error);
+        console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+        // Don't fail the entire notification if email fails
+      }
+    }
     
     // Get push subscriptions for the user
     const subscriptions = await db.select()
@@ -1206,7 +1622,9 @@ async function checkReminders() {
   try {
     // ⚠️ CRITICAL: Get Spain time for comparison
     const nowSpain = getSpainTime();
-    console.log(`🔔 Checking reminders at ${formatInTimeZone(nowSpain, SPAIN_TZ, 'HH:mm:ss')} (Spain time)`);
+    if (process.env.DEBUG_ALARMS) {
+      console.log(`🔔 Checking reminders at ${formatInTimeZone(nowSpain, SPAIN_TZ, 'HH:mm:ss')} (Spain time)`);
+    }
     
     // Get all reminders that:
     // 1. Have enableNotifications = true
@@ -1215,7 +1633,9 @@ async function checkReminders() {
     // 4. Are not completed or archived
     const oneMinuteFromNow = new Date(nowSpain.getTime() + 60000);
     
-    console.log(`🔍 Debug - nowSpain: ${nowSpain.toISOString()}, oneMinuteFromNow: ${oneMinuteFromNow.toISOString()}`);
+    if (process.env.DEBUG_ALARMS) {
+      console.log(`🔍 Debug - nowSpain: ${nowSpain.toISOString()}, oneMinuteFromNow: ${oneMinuteFromNow.toISOString()}`);
+    }
     
     const remindersToNotify = await db.select()
       .from(reminders)
@@ -1345,9 +1765,9 @@ async function checkReminders() {
 // 🔒 PROTECTED: Use global process to persist scheduler state across hot reloads
 // DO NOT MODIFY - This prevents duplicate notifications from module reloads
 declare global {
-  var pushSchedulerAlarmInterval: NodeJS.Timeout | undefined;
-  var pushSchedulerIncompleteInterval: NodeJS.Timeout | undefined;
-  var pushSchedulerReminderInterval: NodeJS.Timeout | undefined;
+  var pushSchedulerIncompleteTask: cron.ScheduledTask | undefined;
+  var pushSchedulerTrialTask: cron.ScheduledTask | undefined;
+  var pushSchedulerDeletionTask: cron.ScheduledTask | undefined;
   var pushSchedulerRunning: boolean | undefined;
 }
 
@@ -1355,99 +1775,114 @@ declare global {
 let startCallCount = 0;
 
 // Start the scheduler
-export function startPushNotificationScheduler() {
+export async function startPushNotificationScheduler() {
   startCallCount++;
   const processId = `PID-${process.pid}`;
   const callNum = startCallCount;
-  console.log(`🚀 [CALL #${callNum}] Starting Push Notification Scheduler... [${processId}]`);
-  console.log(`📊 [CALL #${callNum}] Call stack:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
+  
+  // Silenced startup logs - only show critical info
+  if (process.env.DEBUG_SCHEDULER) {
+    console.log(`🚀 [CALL #${callNum}] Starting Push Notification Scheduler... [${processId}]`);
+    console.log(`📊 [CALL #${callNum}] Call stack:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
+  }
   
   // 🔒 CRITICAL: Only ONE instance should run - prevent duplicates
   if (global.pushSchedulerRunning) {
-    console.log(`⚠️  [CALL #${callNum}] Push Notification Scheduler already running - skipping [${processId}]`);
+    if (process.env.DEBUG_SCHEDULER) {
+      console.log(`⚠️  [CALL #${callNum}] Push Notification Scheduler already running - skipping [${processId}]`);
+    }
     return {
-      alarmInterval: global.pushSchedulerAlarmInterval,
-      incompleteSessionInterval: global.pushSchedulerIncompleteInterval,
-      reminderInterval: global.pushSchedulerReminderInterval
+      incompleteSessionTask: global.pushSchedulerIncompleteTask,
+      trialTask: global.pushSchedulerTrialTask,
+      deletionTask: global.pushSchedulerDeletionTask
     };
   }
   
-  // 🔒 CRITICAL: ALWAYS clear existing intervals (prevents duplicates from hot reloads)
-  // This is MORE important than checking if scheduler is running, because hot reloads
-  // can leave orphaned intervals running even after the module reloads
-  if (global.pushSchedulerAlarmInterval) {
-    console.log(`🧹 Forcefully clearing old alarm interval (hot reload cleanup) [${processId}]`);
-    clearInterval(global.pushSchedulerAlarmInterval);
-    global.pushSchedulerAlarmInterval = undefined;
+  // 🔒 CRITICAL: ALWAYS stop existing cron tasks (prevents duplicates from hot reloads)
+  if (global.pushSchedulerIncompleteTask) {
+    if (process.env.DEBUG_SCHEDULER) {
+      console.log(`🧹 Stopping old incomplete session task (hot reload cleanup) [${processId}]`);
+    }
+    global.pushSchedulerIncompleteTask.stop();
+    global.pushSchedulerIncompleteTask = undefined;
   }
-  if (global.pushSchedulerIncompleteInterval) {
-    console.log(`🧹 Forcefully clearing old incomplete session interval (hot reload cleanup) [${processId}]`);
-    clearInterval(global.pushSchedulerIncompleteInterval);
-    global.pushSchedulerIncompleteInterval = undefined;
+  if (global.pushSchedulerTrialTask) {
+    if (process.env.DEBUG_SCHEDULER) {
+      console.log(`🧹 Stopping old trial task (hot reload cleanup) [${processId}]`);
+    }
+    global.pushSchedulerTrialTask.stop();
+    global.pushSchedulerTrialTask = undefined;
   }
-  if (global.pushSchedulerReminderInterval) {
-    console.log(`🧹 Forcefully clearing old reminder interval (hot reload cleanup) [${processId}]`);
-    clearInterval(global.pushSchedulerReminderInterval);
-    global.pushSchedulerReminderInterval = undefined;
-  }
-  if (global.pushSchedulerTrialInterval) {
-    console.log(`🧹 Forcefully clearing old trial interval (hot reload cleanup) [${processId}]`);
-    clearInterval(global.pushSchedulerTrialInterval);
-    global.pushSchedulerTrialInterval = undefined;
+  if (global.pushSchedulerDeletionTask) {
+    if (process.env.DEBUG_SCHEDULER) {
+      console.log(`🧹 Stopping old deletion task (hot reload cleanup) [${processId}]`);
+    }
+    global.pushSchedulerDeletionTask.stop();
+    global.pushSchedulerDeletionTask = undefined;
   }
   
-  // Mark as running BEFORE creating intervals
+  // Mark as running BEFORE creating cron tasks
   global.pushSchedulerRunning = true;
   
-  // Check every 30 seconds for work alarms
-  const intervalId = Math.random().toString(36).substring(7);
-  console.log(`🔵 Creating new alarm interval with ID: ${intervalId}`);
-  global.pushSchedulerAlarmInterval = setInterval(() => {
-    console.log(`🔵 Alarm interval ${intervalId} executing`);
-    checkWorkAlarms().catch(err => {
-      console.error('❌ Error in scheduled alarm check:', err);
-    });
-  }, 30000);
+  // Load and schedule all alarms with setTimeout (event-driven, no polling)
+  await loadAndScheduleAllAlarms();
   
-  // Check every 5 minutes for incomplete sessions (will only notify at 9 AM)
-  global.pushSchedulerIncompleteInterval = setInterval(() => {
-    checkIncompleteSessions().catch(err => {
+  // ✅ Load and schedule all reminders with setTimeout (event-driven, no polling)
+  await loadAndScheduleAllReminders();
+  
+  // 📋 Schedule batch tasks with cron (production-ready, timezone-aware)
+  
+  // ✅ Cron #1: Incomplete sessions notification (daily at 9:00 AM Spain time)
+  global.pushSchedulerIncompleteTask = cron.schedule('0 9 * * *', async () => {
+    if (process.env.DEBUG_SCHEDULER) {
+      console.log('🕘 Running daily incomplete sessions check (9:00 AM Spain time)');
+    }
+    await checkIncompleteSessions().catch(err => {
       console.error('❌ Error checking incomplete sessions:', err);
     });
-  }, 5 * 60 * 1000); // Every 5 minutes
+  }, {
+    timezone: 'Europe/Madrid',
+    scheduled: true
+  });
   
-  // Check every minute for reminders
-  global.pushSchedulerReminderInterval = setInterval(() => {
-    checkReminders().catch(err => {
-      console.error('❌ Error checking reminders:', err);
-    });
-  }, 60000); // Every 1 minute
-  
-  // Check every 5 minutes for expired trials to auto-process payments
-  global.pushSchedulerTrialInterval = setInterval(() => {
-    processExpiredTrials().catch(err => {
+  // ✅ Cron #2: Process expired trials (every hour - TODO: replace with Stripe webhooks)
+  global.pushSchedulerTrialTask = cron.schedule('0 * * * *', async () => {
+    if (process.env.DEBUG_SCHEDULER) {
+      console.log('💳 Running trial expiration check (every hour)');
+    }
+    await processExpiredTrials().catch(err => {
       console.error('❌ Error processing expired trials:', err);
     });
-  }, 5 * 60 * 1000); // Every 5 minutes
+  }, {
+    scheduled: true
+  });
   
-  // Check every hour for scheduled deletions (companies past 30-day grace period)
-  global.pushSchedulerDeletionInterval = setInterval(() => {
-    processScheduledDeletions().catch(err => {
+  // ✅ Cron #4: Process scheduled deletions (daily at 2:00 AM Spain time)
+  global.pushSchedulerDeletionTask = cron.schedule('0 2 * * *', async () => {
+    if (process.env.DEBUG_SCHEDULER) {
+      console.log('🗑️ Running deletion check (2:00 AM Spain time)');
+    }
+    await processScheduledDeletions().catch(err => {
       console.error('❌ Error processing scheduled deletions:', err);
     });
-  }, 60 * 60 * 1000); // Every 1 hour
+  }, {
+    timezone: 'Europe/Madrid',
+    scheduled: true
+  });
   
-  // Mark as running
-  global.pushSchedulerRunning = true;
-  
-  // ⚠️ DO NOT run immediately on start to avoid duplicate notifications
-  // Let the interval handle all checks consistently
-  
-  console.log('✅ Push Notification Scheduler started - checking alarms every 30s, incomplete sessions every 5min, reminders every 1min, expired trials every 5min, scheduled deletions every 1hr');
+  console.log('✅ Scheduler started: Alarms+Reminders=event-driven, Incomplete/Deletions=daily-cron, Trials=hourly-cron');
+  if (process.env.DEBUG_SCHEDULER) {
+    console.log(`   • Alarms: Event-driven (setTimeout per alarm)`);
+    console.log(`   • Reminders: Event-driven (setTimeout per reminder) ✅ NO POLLING`);
+    console.log(`   • Incomplete sessions: 09:00 Europe/Madrid (daily)`);
+    console.log(`   • Deletions: 02:00 Europe/Madrid (daily)`);
+    console.log(`   • Trials: 0 * * * * (hourly - TODO: Stripe webhooks)`);
+  }
   
   return { 
-    alarmInterval: global.pushSchedulerAlarmInterval, 
-    incompleteSessionInterval: global.pushSchedulerIncompleteInterval,
-    reminderInterval: global.pushSchedulerReminderInterval
+    incompleteSessionTask: global.pushSchedulerIncompleteTask,
+    trialTask: global.pushSchedulerTrialTask,
+    deletionTask: global.pushSchedulerDeletionTask
   };
 }
+

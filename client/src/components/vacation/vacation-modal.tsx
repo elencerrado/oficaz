@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { DatePickerDay } from '@/components/ui/date-picker';
 import { Label } from '@/components/ui/label';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -15,8 +16,8 @@ interface VacationModalProps {
 }
 
 export function VacationModal({ isOpen, onClose }: VacationModalProps) {
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [reason, setReason] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -44,8 +45,8 @@ export function VacationModal({ isOpen, onClose }: VacationModalProps) {
   });
 
   const resetForm = () => {
-    setStartDate('');
-    setEndDate('');
+    setStartDate(undefined);
+    setEndDate(undefined);
     setReason('');
   };
 
@@ -61,7 +62,7 @@ export function VacationModal({ isOpen, onClose }: VacationModalProps) {
       return;
     }
 
-    if (new Date(startDate) > new Date(endDate)) {
+    if (startDate > endDate) {
       toast({
         title: 'Error',
         description: 'End date must be after start date.',
@@ -71,8 +72,8 @@ export function VacationModal({ isOpen, onClose }: VacationModalProps) {
     }
 
     createVacationRequest.mutate({
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate,
+      endDate,
       reason: reason.trim() || null,
     });
   };
@@ -92,25 +93,21 @@ export function VacationModal({ isOpen, onClose }: VacationModalProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="startDate">Start Date</Label>
-            <Input
-              id="startDate"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              min={format(new Date(), 'yyyy-MM-dd')}
-              required
+            <DatePickerDay
+              date={startDate}
+              onDateChange={setStartDate}
+              placeholder="Select start date"
+              className="w-full justify-start h-10"
             />
           </div>
           
           <div>
             <Label htmlFor="endDate">End Date</Label>
-            <Input
-              id="endDate"
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              min={startDate || format(new Date(), 'yyyy-MM-dd')}
-              required
+            <DatePickerDay
+              date={endDate}
+              onDateChange={setEndDate}
+              placeholder="Select end date"
+              className="w-full justify-start h-10"
             />
           </div>
           
