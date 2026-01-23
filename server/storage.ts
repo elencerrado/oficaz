@@ -11,6 +11,7 @@ import type {
   CustomHoliday, InsertCustomHoliday,
   WorkAlarm, InsertWorkAlarm,
   WorkShift, InsertWorkShift,
+  ShiftTemplate, InsertShiftTemplate,
   PromotionalCode, InsertPromotionalCode,
   ImageProcessingJob, InsertImageProcessingJob,
   EmailCampaign, InsertEmailCampaign,
@@ -103,6 +104,7 @@ export interface IStorage {
 
   // Vacation/Absence Requests
   createVacationRequest(request: InsertVacationRequest): Promise<VacationRequest>;
+  getVacationRequestById(id: number): Promise<VacationRequest | undefined>;
   getVacationRequestsByUser(userId: number): Promise<VacationRequest[]>;
   getVacationRequestsByCompany(companyId: number): Promise<VacationRequest[]>;
   updateVacationRequest(id: number, updates: Partial<InsertVacationRequest>): Promise<VacationRequest | undefined>;
@@ -118,7 +120,9 @@ export interface IStorage {
   // Documents
   createDocument(document: InsertDocument): Promise<Document>;
   getDocumentsByUser(userId: number): Promise<Document[]>;
+  getDocumentsByUserPaginated(userId: number, limit: number, cursor?: { createdAt: Date; id: number }): Promise<Document[]>;
   getDocumentsByCompany(companyId: number): Promise<any[]>;
+  getDocumentsByCompanyPaginated(companyId: number, limit: number, offset: number): Promise<{ documents: any[]; totalCount: number }>;
   getDocument(id: number): Promise<Document | undefined>;
   deleteDocument(id: number): Promise<boolean>;
   deleteOrphanedDocuments(documentIds: number[]): Promise<{ deleted: number; failed: number[] }>;
@@ -246,12 +250,20 @@ export interface IStorage {
 
   // Work Shifts (Cuadrante) operations
   createWorkShift(shift: InsertWorkShift): Promise<WorkShift>;
+  getWorkShiftById(id: number): Promise<WorkShift | undefined>;
   getWorkShiftsByCompany(companyId: number, startDate?: string, endDate?: string): Promise<WorkShift[]>;
   getWorkShiftsByEmployee(employeeId: number, startDate?: string, endDate?: string): Promise<WorkShift[]>;
   updateWorkShift(id: number, updates: Partial<InsertWorkShift>): Promise<WorkShift | undefined>;
   deleteWorkShift(id: number): Promise<boolean>;
   replicateWeekShifts(companyId: number, weekStart: string, offsetWeeks?: number, employeeIds?: number[]): Promise<WorkShift[]>;
   swapEmployeeShifts(employeeAId: number, employeeBId: number, startDate?: string, endDate?: string): Promise<{ success: boolean; swappedCount: number; conflicts?: string[] }>;
+
+  // Shift Templates operations
+  createShiftTemplate(template: InsertShiftTemplate): Promise<ShiftTemplate>;
+  getShiftTemplateById(id: number): Promise<ShiftTemplate | undefined>;
+  getShiftTemplatesByCompany(companyId: number): Promise<ShiftTemplate[]>;
+  updateShiftTemplate(id: number, updates: Partial<InsertShiftTemplate>): Promise<ShiftTemplate | undefined>;
+  deleteShiftTemplate(id: number): Promise<boolean>;
 
   // Promotional Codes
   createPromotionalCode(code: InsertPromotionalCode): Promise<PromotionalCode>;
@@ -302,7 +314,7 @@ export interface IStorage {
   createWorkReport(report: schema.InsertWorkReport & { durationMinutes: number }): Promise<schema.WorkReport>;
   getWorkReport(id: number): Promise<schema.WorkReport | undefined>;
   getWorkReportsByUser(userId: number, filters?: { startDate?: string; endDate?: string }): Promise<schema.WorkReport[]>;
-  getWorkReportsByCompany(companyId: number, filters?: { employeeId?: number; startDate?: string; endDate?: string }): Promise<(schema.WorkReport & { employeeName: string; employeeSignature?: string | null })[]>;
+  getWorkReportsByCompany(companyId: number, filters?: { employeeId?: number; startDate?: string; endDate?: string }): Promise<(schema.WorkReport & { employeeName: string; employeeSignature?: string | null; profilePicture?: string | null })[]>;
   updateWorkReport(id: number, updates: Partial<schema.InsertWorkReport> & { durationMinutes?: number }): Promise<schema.WorkReport | undefined>;
   deleteWorkReport(id: number): Promise<boolean>;
   
@@ -488,46 +500,46 @@ export class DrizzleStorage implements IStorage {
     return user;
   }
 
-  // Calculate vacation days based on Spanish labor law and company policy
+  // Calculate vacation entitlement for the current period using company cutoff (default Feb 1 -> Jan 31)
   async calculateVacationDays(userId: number): Promise<number> {
     const user = await this.getUser(userId);
     if (!user) return 0;
 
     const company = await this.getCompany(user.companyId);
-    // Use vacationDaysPerMonth as primary source, fallback to defaultVacationPolicy for backwards compatibility
     const companyDaysPerMonth = parseFloat(company?.vacationDaysPerMonth || company?.defaultVacationPolicy || '2.5');
     const userDaysPerMonth = user.vacationDaysPerMonth ? parseFloat(user.vacationDaysPerMonth) : companyDaysPerMonth;
-    
+
+    const cutoff = (company as any)?.vacationCutoffDay || '01-31'; // MM-DD
+    const [mmStr, ddStr] = cutoff.split('-');
+    const mm = Math.max(1, Math.min(12, parseInt(mmStr || '1', 10))) - 1; // zero-based month
+    const dd = Math.max(1, Math.min(31, parseInt(ddStr || '31', 10)));
+
     const startDate = new Date(user.startDate);
-    const currentDate = new Date();
-    
-    // Spanish labor law: vacation period calculation
-    const oneYearFromStart = new Date(startDate);
-    oneYearFromStart.setFullYear(startDate.getFullYear() + 1);
-    
-    let calculatedDays: number;
-    
-    if (currentDate >= oneYearFromStart) {
-      // Employee has more than 1 year: vacation period is Feb 1 - Jan 31 (12 months max)
-      // Use full year allowance (12 months worth)
-      calculatedDays = Math.round((12 * userDaysPerMonth) * 10) / 10;
-    } else {
-      // Employee has less than 1 year: from start date to Jan 31 of next year
-      const nextJan31 = new Date(startDate.getFullYear() + 1, 0, 31); // Jan 31 of next year
-      const endDate = currentDate > nextJan31 ? nextJan31 : currentDate;
-      
-      // Calculate months from start date to end date (proportional)
-      const monthsWorked = (endDate.getFullYear() - startDate.getFullYear()) * 12 + 
-                           (endDate.getMonth() - startDate.getMonth()) + 
-                           (endDate.getDate() >= startDate.getDate() ? 1 : 0);
-      
-      // Cap at 12 months maximum
-      const cappedMonths = Math.min(12, monthsWorked);
-      calculatedDays = Math.round((cappedMonths * userDaysPerMonth) * 10) / 10;
+    const today = new Date();
+
+    // Determine current vacation period boundaries using cutoff (period ends on cutoff; starts next day previous year)
+    const currentYear = today.getFullYear();
+    const cutoffThisYear = new Date(currentYear, mm, dd);
+    const periodEnd = today <= cutoffThisYear ? cutoffThisYear : new Date(currentYear + 1, mm, dd);
+    const periodStart = new Date(periodEnd);
+    periodStart.setFullYear(periodEnd.getFullYear() - 1);
+    periodStart.setDate(periodStart.getDate() + 1); // day after previous cutoff
+
+    // Accrual starts at later of hire date or period start
+    const accrualStart = startDate > periodStart ? startDate : periodStart;
+    if (accrualStart > periodEnd) {
+      return 0;
     }
-    
+
+    // Months worked within the period (inclusive), capped to 12
+    const monthsWorked = (periodEnd.getFullYear() - accrualStart.getFullYear()) * 12 +
+      (periodEnd.getMonth() - accrualStart.getMonth()) +
+      (periodEnd.getDate() >= accrualStart.getDate() ? 1 : 0);
+    const cappedMonths = Math.max(0, Math.min(12, monthsWorked));
+
+    const calculatedDays = Math.round((cappedMonths * userDaysPerMonth) * 10) / 10;
     const adjustment = parseFloat(user.vacationDaysAdjustment || '0');
-    
+
     return Math.max(0, calculatedDays + adjustment);
   }
 
@@ -1044,6 +1056,11 @@ export class DrizzleStorage implements IStorage {
     return result;
   }
 
+  async getVacationRequestById(id: number): Promise<VacationRequest | undefined> {
+    const [result] = await db.select().from(schema.vacationRequests).where(eq(schema.vacationRequests.id, id));
+    return result;
+  }
+
   async getVacationRequestsByUser(userId: number): Promise<VacationRequest[]> {
     return db.select().from(schema.vacationRequests)
       .where(eq(schema.vacationRequests.userId, userId))
@@ -1166,14 +1183,34 @@ export class DrizzleStorage implements IStorage {
       .orderBy(desc(schema.documents.createdAt));
   }
 
+  async getDocumentsByUserPaginated(userId: number, limit: number, cursor?: { createdAt: Date; id: number }): Promise<Document[]> {
+    const constraints = [eq(schema.documents.userId, userId)];
+
+    if (cursor) {
+      // Orden descendente por fecha e id para evitar duplicados
+      constraints.push(or(
+        lt(schema.documents.createdAt, cursor.createdAt),
+        and(eq(schema.documents.createdAt, cursor.createdAt), lt(schema.documents.id, cursor.id))
+      ));
+    }
+
+    return db.select().from(schema.documents)
+      .where(and(...constraints))
+      .orderBy(desc(schema.documents.createdAt), desc(schema.documents.id))
+      .limit(limit + 1); // +1 para calcular next cursor
+  }
+
   async getDocumentsByCompany(companyId: number): Promise<any[]> {
     // Simple query using SQL to avoid Drizzle issues
     const result = await db.execute(sql`
       SELECT 
         d.id,
         d.user_id as "userId",
+        d.company_id as "companyId",
+        d.folder_id as "folderId",
         d.file_name as "fileName", 
         d.original_name as "originalName",
+        d.file_path as "filePath",
         d.file_size as "fileSize",
         d.created_at as "createdAt",
         d.is_viewed as "isViewed",
@@ -1182,19 +1219,58 @@ export class DrizzleStorage implements IStorage {
         d.signed_at as "signedAt",
         d.requires_signature as "requiresSignature",
         u.full_name as "userFullName",
-        u.profile_picture as "userProfilePicture"
+        u.profile_picture as "userProfilePicture",
+        f.name as "folderName",
+        f.path as "folderPath",
+        f.parent_id as "folderParentId"
       FROM documents d 
       LEFT JOIN users u ON d.user_id = u.id 
+      LEFT JOIN document_folders f ON d.folder_id = f.id
       WHERE u.company_id = ${companyId}
       ORDER BY d.created_at DESC
     `);
+    
+    // Get accounting types for documents in contabilidad folders
+    const accountingFolderDocs = result.rows.filter((row: any) => 
+      row.folderPath && row.folderPath.startsWith('contabilidad')
+    );
+    
+    const accountingTypes = new Map<number, string>();
+    
+    if (accountingFolderDocs.length > 0) {
+      // Get accounting entry types by matching file_path (R2 key) with accounting attachments
+      const accountingData = await db.execute(sql`
+        SELECT 
+          aa.file_path,
+          ae.type
+        FROM accounting_attachments aa
+        JOIN accounting_entries ae ON aa.entry_id = ae.id
+        WHERE ae.company_id = ${companyId}
+      `);
+      
+      // Create a map of filePath (R2 key) -> type
+      const filePathToType = new Map<string, string>();
+      accountingData.rows.forEach((row: any) => {
+        filePathToType.set(row.file_path, row.type);
+      });
+      
+      // Match documents with accounting entries by R2 file path
+      accountingFolderDocs.forEach((doc: any) => {
+        if (doc.filePath && filePathToType.has(doc.filePath)) {
+          accountingTypes.set(doc.id, filePathToType.get(doc.filePath)!);
+        }
+      });
+    }
     
     // Transform to expected format
     return result.rows.map((row: any) => ({
       id: row.id,
       userId: row.userId,
+      companyId: row.companyId,
+      folderId: row.folderId,
       fileName: row.fileName,
       originalName: row.originalName,
+      filePath: row.filePath,
       fileSize: row.fileSize,
       createdAt: row.createdAt,
       isViewed: row.isViewed || false,
@@ -1202,11 +1278,123 @@ export class DrizzleStorage implements IStorage {
       acceptedAt: row.acceptedAt,
       signedAt: row.signedAt,
       requiresSignature: row.requiresSignature || false,
+      accountingType: accountingTypes.get(row.id) || null,
       user: {
         fullName: row.userFullName || 'Usuario desconocido',
         profilePicture: row.userProfilePicture || null
-      }
+      },
+      folder: row.folderId ? {
+        id: row.folderId,
+        name: row.folderName,
+        path: row.folderPath,
+        parentId: row.folderParentId
+      } : null
     }));
+  }
+
+  async getDocumentsByCompanyPaginated(companyId: number, limit: number, offset: number): Promise<{ documents: any[]; totalCount: number }> {
+    // Get total count first
+    const countResult = await db.execute(sql`
+      SELECT COUNT(*) as total
+      FROM documents d 
+      LEFT JOIN users u ON d.user_id = u.id 
+      WHERE u.company_id = ${companyId}
+    `);
+    const totalCount = Number(countResult.rows[0]?.total || 0);
+
+    // Get paginated documents
+    const result = await db.execute(sql`
+      SELECT 
+        d.id,
+        d.user_id as "userId",
+        d.company_id as "companyId",
+        d.folder_id as "folderId",
+        d.file_name as "fileName", 
+        d.original_name as "originalName",
+        d.file_path as "filePath",
+        d.file_size as "fileSize",
+        d.created_at as "createdAt",
+        d.is_viewed as "isViewed",
+        d.is_accepted as "isAccepted",
+        d.accepted_at as "acceptedAt",
+        d.signed_at as "signedAt",
+        d.requires_signature as "requiresSignature",
+        u.full_name as "userFullName",
+        u.profile_picture as "userProfilePicture",
+        f.name as "folderName",
+        f.path as "folderPath",
+        f.parent_id as "folderParentId"
+      FROM documents d 
+      LEFT JOIN users u ON d.user_id = u.id 
+      LEFT JOIN document_folders f ON d.folder_id = f.id
+      WHERE u.company_id = ${companyId}
+      ORDER BY d.created_at DESC
+      LIMIT ${limit}
+      OFFSET ${offset}
+    `);
+    
+    // Get accounting types for documents in contabilidad folders
+    const accountingFolderDocs = result.rows.filter((row: any) => 
+      row.folderPath && row.folderPath.startsWith('contabilidad')
+    );
+    
+    const accountingTypes = new Map<number, string>();
+    
+    if (accountingFolderDocs.length > 0) {
+      // Get accounting entry types by matching file_path (R2 key) with accounting attachments
+      const accountingData = await db.execute(sql`
+        SELECT 
+          aa.file_path,
+          ae.type
+        FROM accounting_attachments aa
+        JOIN accounting_entries ae ON aa.entry_id = ae.id
+        WHERE ae.company_id = ${companyId}
+      `);
+      
+      // Create a map of filePath (R2 key) -> type
+      const filePathToType = new Map<string, string>();
+      accountingData.rows.forEach((row: any) => {
+        filePathToType.set(row.file_path, row.type);
+      });
+      
+      // Match documents with accounting entries by R2 file path
+      accountingFolderDocs.forEach((doc: any) => {
+        if (doc.filePath && filePathToType.has(doc.filePath)) {
+          accountingTypes.set(doc.id, filePathToType.get(doc.filePath)!);
+        }
+      });
+    }
+    
+    // Transform to expected format
+    const documents = result.rows.map((row: any) => ({
+      id: row.id,
+      userId: row.userId,
+      companyId: row.companyId,
+      folderId: row.folderId,
+      fileName: row.fileName,
+      originalName: row.originalName,
+      filePath: row.filePath,
+      fileSize: row.fileSize,
+      createdAt: row.createdAt,
+      isViewed: row.isViewed || false,
+      isAccepted: row.isAccepted || false,
+      acceptedAt: row.acceptedAt,
+      signedAt: row.signedAt,
+      requiresSignature: row.requiresSignature || false,
+      accountingType: accountingTypes.get(row.id) || null,
+      user: {
+        fullName: row.userFullName || 'Usuario desconocido',
+        profilePicture: row.userProfilePicture || null
+      },
+      folder: row.folderId ? {
+        id: row.folderId,
+        name: row.folderName,
+        path: row.folderPath,
+        parentId: row.folderParentId
+      } : null
+    }));
+
+    return { documents, totalCount };
   }
 
   async getDocument(id: number): Promise<Document | undefined> {
@@ -1316,11 +1504,7 @@ export class DrizzleStorage implements IStorage {
         d.created_at as "documentCreatedAt"
       FROM notifications n
       LEFT JOIN users u ON n.user_id = u.id  
-      LEFT JOIN documents d ON (
-        d.user_id = n.user_id AND 
-        d.created_at > n.created_at AND
-        n.is_completed = true
-      )
+      LEFT JOIN documents d ON d.id = n.document_id
       WHERE u.company_id = ${companyId} AND n.type = 'document'
       ORDER BY n.created_at DESC
     `);
@@ -1337,6 +1521,7 @@ export class DrizzleStorage implements IStorage {
       priority: row.priority,
       isRead: row.is_read,
       isCompleted: row.is_completed,
+      documentId: row.document_id,
       metadata: row.metadata,
       createdBy: row.created_by,
       createdAt: row.created_at,
@@ -1567,38 +1752,52 @@ export class DrizzleStorage implements IStorage {
     // Total active users across all companies
     const usersCount = await db.select({ count: sql<number>`count(*)` }).from(schema.users);
     
-    // Get all subscription stats (including trial and active)
-    const allSubscriptionStats = await db
+    // Get subscription status stats (trial, active, cancelled)
+    const companyStatsResult = await db
       .select({
-        plan: schema.subscriptions.plan,
+        isTrialActive: schema.companies.isTrialActive,
         count: sql<number>`count(*)`,
       })
+      .from(schema.companies)
+      .groupBy(schema.companies.isTrialActive);
+
+    const subscriptionStatsMap = {
+      trial: 0,
+      active: 0,
+      cancelled: 0,
+    };
+
+    // Count trial companies
+    const trialCompanies = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.companies)
+      .where(
+        and(
+          eq(schema.companies.isTrialActive, true),
+          isNull(schema.companies.deletionInfo)
+        )
+      );
+
+    // Count active (paid) subscriptions
+    const activeSubscriptions = await db
+      .select({ count: sql<number>`count(*)` })
       .from(schema.subscriptions)
-      .groupBy(schema.subscriptions.plan);
+      .where(
+        and(
+          eq(schema.subscriptions.status, 'active'),
+          sql`${schema.subscriptions.stripeSubscriptionId} IS NOT NULL`
+        )
+      );
 
-    const planCounts = allSubscriptionStats.reduce((acc, row) => {
-      acc[row.plan as keyof typeof acc] = row.count;
-      return acc;
-    }, { free: 0, basic: 0, pro: 0, master: 0 });
-
-    // Get only active subscriptions for paid count
-    const activeSubscriptionStats = await db
-      .select({
-        plan: schema.subscriptions.plan,
-        status: schema.subscriptions.status,
-        count: sql<number>`count(*)`,
-      })
+    // Count cancelled subscriptions
+    const cancelledSubscriptions = await db
+      .select({ count: sql<number>`count(*)` })
       .from(schema.subscriptions)
-      .where(eq(schema.subscriptions.status, 'active'))
-      .groupBy(schema.subscriptions.plan, schema.subscriptions.status);
+      .where(eq(schema.subscriptions.status, 'cancelled'));
 
-    // Calculate active paid subscriptions (excluding free)
-    const activePaidSubscriptions = activeSubscriptionStats.reduce((acc, row) => {
-      if (row.plan !== 'free' && row.status === 'active') {
-        acc += row.count;
-      }
-      return acc;
-    }, 0);
+    subscriptionStatsMap.trial = trialCompanies[0]?.count || 0;
+    subscriptionStatsMap.active = activeSubscriptions[0]?.count || 0;
+    subscriptionStatsMap.cancelled = cancelledSubscriptions[0]?.count || 0;
 
     // Get real pricing from Stripe for accurate revenue calculation
     let monthlyRevenue = 0;
@@ -1679,14 +1878,14 @@ export class DrizzleStorage implements IStorage {
     return {
       totalCompanies: companiesCount[0]?.count || 0,
       totalUsers: usersCount[0]?.count || 0,
-      activePaidSubscriptions,
+      activePaidSubscriptions: subscriptionStatsMap.active,
       monthlyRevenue,
       yearlyRevenue,
       totalAccumulatedRevenue,
       currentMonthRevenue,
-      planDistribution: planCounts,
+      subscriptionStats: subscriptionStatsMap,
       // Legacy field for backward compatibility
-      activeSubscriptions: activePaidSubscriptions,
+      activeSubscriptions: subscriptionStatsMap.active,
       revenue: monthlyRevenue,
     };
   }
@@ -3130,13 +3329,20 @@ export class DrizzleStorage implements IStorage {
     return newShift;
   }
 
+  async getWorkShiftById(id: number): Promise<WorkShift | undefined> {
+    try {
+      const [shift] = await db.select()
+        .from(schema.workShifts)
+        .where(eq(schema.workShifts.id, id));
+      return shift;
+    } catch (error) {
+      console.error('Error fetching work shift by id:', error);
+      return undefined;
+    }
+  }
+
   async getWorkShiftsByCompany(companyId: number, startDate?: string, endDate?: string): Promise<WorkShift[]> {
     try {
-      let query = db.select()
-        .from(schema.workShifts)
-        .where(eq(schema.workShifts.companyId, companyId));
-
-      // Add date filtering if provided
       const conditions = [eq(schema.workShifts.companyId, companyId)];
       
       if (startDate) {
@@ -3144,7 +3350,10 @@ export class DrizzleStorage implements IStorage {
       }
       
       if (endDate) {
-        conditions.push(lte(schema.workShifts.endAt, new Date(endDate)));
+        // Include all shifts that start on or before the end date
+        const endDatePlusOne = new Date(endDate);
+        endDatePlusOne.setDate(endDatePlusOne.getDate() + 1);
+        conditions.push(lt(schema.workShifts.startAt, endDatePlusOne));
       }
 
       return await db.select()
@@ -3153,6 +3362,39 @@ export class DrizzleStorage implements IStorage {
         .orderBy(asc(schema.workShifts.startAt));
     } catch (error) {
       console.error('Error fetching work shifts by company:', error);
+      return [];
+    }
+  }
+
+  async getWorkShiftsByCompanyWithEmployees(companyId: number, startDate?: string, endDate?: string): Promise<(WorkShift & { employeeName: string })[]> {
+    try {
+      const conditions = [eq(schema.workShifts.companyId, companyId)];
+      
+      if (startDate) {
+        conditions.push(gte(schema.workShifts.startAt, new Date(startDate)));
+      }
+      
+      if (endDate) {
+        const endDatePlusOne = new Date(endDate);
+        endDatePlusOne.setDate(endDatePlusOne.getDate() + 1);
+        conditions.push(lt(schema.workShifts.startAt, endDatePlusOne));
+      }
+
+      // ⭐ OPTIMIZACIÓN CRÍTICA: Usar LEFT JOIN en lugar de Promise.all
+      // Reduce queries de N+1 (1 + shiftsCount) a solo 1 query única
+      const result = await db.select()
+        .from(schema.workShifts)
+        .leftJoin(schema.users, eq(schema.workShifts.employeeId, schema.users.id))
+        .where(and(...conditions))
+        .orderBy(asc(schema.workShifts.startAt));
+
+      // Mapear para devolver el formato esperado
+      return result.map((row: any) => ({
+        ...row.work_shifts,
+        employeeName: row.users?.fullName || 'Empleado desconocido'
+      }));
+    } catch (error) {
+      console.error('Error fetching work shifts by company with employees:', error);
       return [];
     }
   }
@@ -3333,6 +3575,43 @@ export class DrizzleStorage implements IStorage {
         conflicts: [(error as Error).message],
       };
     }
+  }
+
+  // Shift Templates operations
+  async createShiftTemplate(template: InsertShiftTemplate): Promise<ShiftTemplate> {
+    const [result] = await db.insert(schema.shiftTemplates)
+      .values(template)
+      .returning();
+    return result;
+  }
+
+  async getShiftTemplateById(id: number): Promise<ShiftTemplate | undefined> {
+    const [template] = await db.select()
+      .from(schema.shiftTemplates)
+      .where(eq(schema.shiftTemplates.id, id));
+    return template;
+  }
+
+  async getShiftTemplatesByCompany(companyId: number): Promise<ShiftTemplate[]> {
+    const templates = await db.select()
+      .from(schema.shiftTemplates)
+      .where(eq(schema.shiftTemplates.companyId, companyId))
+      .orderBy(asc(schema.shiftTemplates.displayOrder), asc(schema.shiftTemplates.createdAt));
+    return templates;
+  }
+
+  async updateShiftTemplate(id: number, updates: Partial<InsertShiftTemplate>): Promise<ShiftTemplate | undefined> {
+    const [result] = await db.update(schema.shiftTemplates)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.shiftTemplates.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteShiftTemplate(id: number): Promise<boolean> {
+    const result = await db.delete(schema.shiftTemplates)
+      .where(eq(schema.shiftTemplates.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
   }
 
   // Promotional Codes
@@ -3913,7 +4192,7 @@ export class DrizzleStorage implements IStorage {
   async getWorkReportsByCompany(
     companyId: number, 
     filters?: { employeeId?: number; startDate?: string; endDate?: string }
-  ): Promise<(schema.WorkReport & { employeeName: string; employeeSignature?: string | null })[]> {
+  ): Promise<(schema.WorkReport & { employeeName: string; employeeSignature?: string | null; profilePicture?: string | null })[]> {
     const conditions = [eq(schema.workReports.companyId, companyId)];
     
     if (filters?.employeeId) {
@@ -3947,6 +4226,7 @@ export class DrizzleStorage implements IStorage {
       updatedAt: schema.workReports.updatedAt,
       employeeName: schema.users.fullName,
       employeeSignature: schema.users.signatureImage,
+      profilePicture: schema.users.profilePicture,
     })
       .from(schema.workReports)
       .innerJoin(schema.users, eq(schema.workReports.employeeId, schema.users.id))

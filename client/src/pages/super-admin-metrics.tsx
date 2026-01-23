@@ -22,10 +22,10 @@ interface SuperAdminStats {
   yearlyRevenue: number;
   totalAccumulatedRevenue: number;
   currentMonthRevenue: number;
-  planDistribution: {
-    basic: number;
-    pro: number;
-    master: number;
+  subscriptionStats: {
+    trial: number;
+    active: number;
+    cancelled: number;
   };
 }
 
@@ -165,7 +165,7 @@ export default function SuperAdminMetrics() {
                     <Building2 className="w-4 h-4 md:w-5 md:h-5 text-white" />
                   </div>
                 </div>
-                <div className="text-2xl md:text-4xl font-bold text-white mb-1 md:mb-2">{stats?.planDistribution?.basic || 0}</div>
+                <div className="text-2xl md:text-4xl font-bold text-white mb-1 md:mb-2">{stats?.subscriptionStats?.trial || 0}</div>
                 <p className="text-xs md:text-sm text-blue-200">Empresas en periodo de prueba</p>
               </div>
 
@@ -176,7 +176,7 @@ export default function SuperAdminMetrics() {
                     <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-white" />
                   </div>
                 </div>
-                <div className="text-2xl md:text-4xl font-bold text-white mb-1 md:mb-2">{stats?.planDistribution?.pro || 0}</div>
+                <div className="text-2xl md:text-4xl font-bold text-white mb-1 md:mb-2">{stats?.subscriptionStats?.active || 0}</div>
                 <p className="text-xs md:text-sm text-purple-200">Empresas con suscripción activa</p>
               </div>
 
@@ -187,7 +187,7 @@ export default function SuperAdminMetrics() {
                     <CreditCard className="w-4 h-4 md:w-5 md:h-5 text-white" />
                   </div>
                 </div>
-                <div className="text-2xl md:text-4xl font-bold text-white mb-1 md:mb-2">{stats?.planDistribution?.master || 0}</div>
+                <div className="text-2xl md:text-4xl font-bold text-white mb-1 md:mb-2">{stats?.subscriptionStats?.cancelled || 0}</div>
                 <p className="text-xs md:text-sm text-yellow-200">Empresas con suscripción cancelada</p>
               </div>
             </div>

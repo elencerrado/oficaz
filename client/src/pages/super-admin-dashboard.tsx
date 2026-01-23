@@ -47,23 +47,20 @@ interface SuperAdminStats {
   yearlyRevenue: number;
   totalAccumulatedRevenue: number;
   currentMonthRevenue: number;
-  planDistribution: {
-    basic: number;
-    pro: number;
-    master: number;
+  subscriptionStats: {
+    trial: number;
+    active: number;
+    cancelled: number;
   };
 }
 
-const planColors = {
-  basic: "bg-blue-500", 
-  pro: "bg-purple-500",
-  master: "bg-gradient-to-r from-yellow-400 to-yellow-600"
-};
-
-const planLabels = {
-  basic: "Basic", 
-  pro: "Pro",
-  master: "Master"
+// Subscription status colors (plan is now unified as 'Oficaz' with addons)
+const subscriptionStatusColors = {
+  active: 'bg-emerald-500',
+  trial: 'bg-blue-500',
+  expired: 'bg-gray-600',
+  cancelled: 'bg-orange-600',
+  deleted: 'bg-red-900'
 };
 
 export default function SuperAdminDashboard() {
@@ -218,28 +215,12 @@ export default function SuperAdminDashboard() {
 
               {/* Plan Distribution - Compact */}
               <div className="border-t border-white/10 pt-3">
-                <p className="text-xs text-white/60 mb-2">Distribución por Plan</p>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-gradient-to-br from-blue-500/15 to-blue-600/15 backdrop-blur-xl rounded-lg p-2 border border-blue-400/30 text-center">
-                    <div className="w-8 h-8 bg-blue-500 rounded-md mx-auto mb-1 flex items-center justify-center">
-                      <span className="text-white font-bold text-xs">{stats?.planDistribution?.basic || 0}</span>
-                    </div>
-                    <p className="text-[10px] text-white/70 font-medium">Basic</p>
+                <p className="text-xs text-white/60 mb-2">Plan Activo</p>
+                <div className="bg-gradient-to-br from-emerald-500/15 to-emerald-600/15 backdrop-blur-xl rounded-lg p-3 border border-emerald-400/30 text-center">
+                  <div className="w-12 h-12 bg-emerald-500 rounded-md mx-auto mb-2 flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">{stats?.totalCompanies || 0}</span>
                   </div>
-
-                  <div className="bg-gradient-to-br from-purple-500/15 to-purple-600/15 backdrop-blur-xl rounded-lg p-2 border border-purple-400/30 text-center">
-                    <div className="w-8 h-8 bg-purple-500 rounded-md mx-auto mb-1 flex items-center justify-center">
-                      <span className="text-white font-bold text-xs">{stats?.planDistribution?.pro || 0}</span>
-                    </div>
-                    <p className="text-[10px] text-white/70 font-medium">Pro</p>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-yellow-500/15 to-yellow-600/15 backdrop-blur-xl rounded-lg p-2 border border-yellow-400/30 text-center">
-                    <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-md mx-auto mb-1 flex items-center justify-center">
-                      <span className="text-white font-bold text-xs">{stats?.planDistribution?.master || 0}</span>
-                    </div>
-                    <p className="text-[10px] text-white/70 font-medium">Master</p>
-                  </div>
+                  <p className="text-xs text-white/70 font-medium">Empresas con Oficaz</p>
                 </div>
               </div>
             </CardContent>

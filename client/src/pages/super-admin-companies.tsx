@@ -530,9 +530,9 @@ export default function SuperAdminCompanies() {
                   </div>
                 </div>
                 <Badge 
-                  className={`${planColors[company.subscription.plan as keyof typeof planColors]} text-white`}
+                  className="bg-emerald-500 text-white"
                 >
-                  {planLabels[company.subscription.plan as keyof typeof planLabels]}
+                  Oficaz
                 </Badge>
               </div>
             </CardHeader>
@@ -575,8 +575,8 @@ export default function SuperAdminCompanies() {
                       </>
                     ) : (
                       <>
-                        <Badge className={`${planColors[company.subscription.plan as keyof typeof planColors]} text-white flex-1 justify-center`}>
-                          {planLabels[company.subscription.plan as keyof typeof planLabels]}
+                        <Badge className="bg-emerald-500 text-white flex-1 justify-center">
+                          Oficaz
                         </Badge>
                         <Button size="sm" variant="ghost" onClick={() => setEditingPlanField(true)} className="!text-white/60">
                           <Edit2 className="w-4 h-4" />
@@ -1110,10 +1110,10 @@ export default function SuperAdminCompanies() {
                         ) : (
                           <>
                             <Badge 
-                              className={`${planColors[company.subscription.plan as keyof typeof planColors]} text-white cursor-pointer hover:opacity-80`}
+                              className="bg-emerald-500 text-white cursor-pointer hover:opacity-80"
                               onClick={() => handlePlanChange(company.id, company.subscription.plan)}
                             >
-                              {planLabels[company.subscription.plan as keyof typeof planLabels]}
+                              Oficaz
                             </Badge>
                             {(() => {
                               const badge = getSubscriptionBadge(company);
