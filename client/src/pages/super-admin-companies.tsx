@@ -120,16 +120,13 @@ const featureLabels = {
   api: 'API',
 };
 
-const planColors = {
-  basic: "bg-blue-500", 
-  pro: "bg-purple-500",
-  master: "bg-gradient-to-r from-yellow-400 to-yellow-600"
-};
-
-const planLabels = {
-  basic: "Basic", 
-  pro: "Pro",
-  master: "Master"
+// Subscription status badge colors (plan is now unified as 'Oficaz' with addons)
+const subscriptionStatusColors = {
+  active: 'bg-emerald-500',
+  trial: 'bg-blue-500',
+  expired: 'bg-gray-600',
+  cancelled: 'bg-orange-600',
+  deleted: 'bg-red-900'
 };
 
 // Helper function to get subscription status badge info
@@ -186,7 +183,6 @@ export default function SuperAdminCompanies() {
   usePageTitle('SuperAdmin - Empresas');
   const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterPlan, setFilterPlan] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [editingCompany, setEditingCompany] = useState<number | null>(null);
   const [newPlan, setNewPlan] = useState<string>("");
@@ -386,10 +382,9 @@ export default function SuperAdminCompanies() {
       company.cif.toLowerCase().includes(searchTerm.toLowerCase()) ||
       company.email.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesPlan = filterPlan === "all" || company.subscription.plan === filterPlan;
     const matchesStatus = filterStatus === "all" || company.subscription.status === filterStatus;
     
-    return matchesSearch && matchesPlan && matchesStatus;
+    return matchesSearch && matchesStatus;
   }) || [];
 
   const handlePlanChange = (companyId: number, currentPlan: string) => {
@@ -1054,17 +1049,6 @@ export default function SuperAdminCompanies() {
                   />
                 </div>
               </div>
-              <Select value={filterPlan} onValueChange={setFilterPlan}>
-                <SelectTrigger className="w-48 !bg-white/10 !border-white/20 !text-white">
-                  <SelectValue placeholder="Filtrar por plan" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los planes</SelectItem>
-                  <SelectItem value="basic">Basic</SelectItem>
-                  <SelectItem value="pro">Pro</SelectItem>
-                  <SelectItem value="master">Master</SelectItem>
-                </SelectContent>
-              </Select>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
                 <SelectTrigger className="w-48 !bg-white/10 !border-white/20 !text-white">
                   <SelectValue placeholder="Filtrar por estado" />
@@ -1106,16 +1090,6 @@ export default function SuperAdminCompanies() {
                         <h3 className="font-semibold !text-white">{company.name}</h3>
                         {editingCompany === company.id ? (
                           <div className="flex items-center gap-2">
-                            <Select value={newPlan} onValueChange={setNewPlan}>
-                              <SelectTrigger className="w-32 !bg-white/10 !border-white/20 !text-white">
-                                <SelectValue placeholder="Seleccionar plan" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="basic">Basic</SelectItem>
-                                <SelectItem value="pro">Pro</SelectItem>
-                                <SelectItem value="master">Master</SelectItem>
-                              </SelectContent>
-                            </Select>
                             <Button
                               size="sm"
                               onClick={() => savePlanChange(company.id)}

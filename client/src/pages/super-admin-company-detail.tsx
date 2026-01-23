@@ -30,16 +30,13 @@ const featureLabels = {
   api: 'API',
 };
 
-const planColors = {
-  basic: 'bg-blue-500',
-  pro: 'bg-purple-500',
-  master: 'bg-yellow-500'
-};
-
-const planLabels = {
-  basic: 'Basic',
-  pro: 'Pro',
-  master: 'Master'
+// Subscription status colors (plan is now unified as 'Oficaz' with addons)
+const subscriptionStatusColors = {
+  active: 'bg-emerald-500',
+  trial: 'bg-blue-500',
+  expired: 'bg-gray-600',
+  cancelled: 'bg-orange-600',
+  deleted: 'bg-red-900'
 };
 
 export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProps) {
@@ -90,9 +87,14 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
     retry: false,
   });
 
+  interface CompanySubscriptionUpdate {
+    trialDurationDays?: number;
+    features?: Record<string, boolean>;
+  }
+
   // Update company subscription mutation
   const updateCompanyMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: CompanySubscriptionUpdate) => {
       const response = await fetch(`/api/super-admin/companies/${companyId}/subscription`, {
         method: 'PATCH',
         headers: {
@@ -367,9 +369,9 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
                 </div>
               </div>
               <Badge 
-                className={`${planColors[company.subscription.plan as keyof typeof planColors]} text-white`}
+                className="bg-emerald-500 text-white"
               >
-                {planLabels[company.subscription.plan as keyof typeof planLabels]}
+                Oficaz
               </Badge>
             </div>
           </CardHeader>
@@ -412,8 +414,8 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
                     </>
                   ) : (
                     <>
-                      <Badge className={`${planColors[company.subscription.plan as keyof typeof planColors]} text-white flex-1 justify-center`}>
-                        {planLabels[company.subscription.plan as keyof typeof planLabels]}
+                      <Badge className="bg-emerald-500 text-white flex-1 justify-center">
+                        Oficaz
                       </Badge>
                       <Button size="sm" variant="ghost" onClick={() => setEditingPlan(true)} className="text-white/60">
                         <Edit2 className="w-4 h-4" />
