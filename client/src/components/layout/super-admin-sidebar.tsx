@@ -8,7 +8,8 @@ import {
   Crown,
   LogOut,
   Send,
-  TrendingUp
+  TrendingUp,
+  DollarSign
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
@@ -41,6 +42,11 @@ export function SuperAdminSidebar({ isOpen, onClose }: SuperAdminSidebarProps) {
       name: 'Planes', 
       href: '/super-admin/plans', 
       icon: Settings
+    },
+    { 
+      name: 'Gestión de Precios', 
+      href: '/super-admin/pricing', 
+      icon: DollarSign
     },
     { 
       name: 'Invitaciones', 

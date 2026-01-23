@@ -94,6 +94,7 @@ const SuperAdminSecurity = lazy(() => import("@/pages/super-admin-security"));
 const SuperAdminDashboard = lazy(() => import("@/pages/super-admin-dashboard"));
 const SuperAdminMetrics = lazy(() => import("@/pages/super-admin-metrics"));
 const SuperAdminPlans = lazy(() => import("@/pages/super-admin-plans"));
+const SuperAdminPricing = lazy(() => import("@/pages/super-admin-pricing"));
 const SuperAdminCompanyDetail = lazy(() => import("@/pages/super-admin-company-detail"));
 const SuperAdminCompanies = lazy(() => import("@/pages/super-admin-companies"));
 const SuperAdminInvitations = lazy(() => import("@/pages/super-admin-invitations"));
@@ -614,6 +615,11 @@ function Router() {
         <Route path="/super-admin/plans">
           <Suspense fallback={<SuperAdminPageLoading />}>
             <SuperAdminPlans />
+          </Suspense>
+        </Route>
+        <Route path="/super-admin/pricing">
+          <Suspense fallback={<SuperAdminPageLoading />}>
+            <SuperAdminPricing />
           </Suspense>
         </Route>
         <Route path="/super-admin/companies">
