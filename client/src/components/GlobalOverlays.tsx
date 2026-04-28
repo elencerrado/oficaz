@@ -5,6 +5,7 @@ import { GlobalDemoBanner } from "@/components/global-demo-banner";
 import { ReminderBanner } from "@/components/ui/reminder-banner";
 import CookieBanner from "@/components/CookieBanner";
 import { AdminWebSocketNotifications } from "@/components/AdminWebSocketNotifications";
+import { isNativeAndroid } from "@/lib/server-config";
 
 /**
  * GlobalOverlays: Persistent UI elements that should never re-render due to routing.
@@ -14,13 +15,15 @@ import { AdminWebSocketNotifications } from "@/components/AdminWebSocketNotifica
  * to guarantee 100% isolation from route navigation.
  */
 export const GlobalOverlays = React.memo(function GlobalOverlays() {
+  const hideCookieBanner = isNativeAndroid();
+
   return (
     <>
       <UserThemeManager />
       <GlobalDemoBanner />
       <ReminderBanner />
       <Toaster />
-      <CookieBanner />
+      {!hideCookieBanner && <CookieBanner />}
       <AdminWebSocketNotifications />
     </>
   );

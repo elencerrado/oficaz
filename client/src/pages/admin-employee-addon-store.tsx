@@ -40,7 +40,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { getAddonColorClasses, getAddonIconComponent } from '@/lib/addon-visuals';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Capacitor } from '@capacitor/core';
+import { isNativeAndroid as detectNativeAndroid } from '@/lib/server-config';
 import type { Addon, CompanyAddon } from '@shared/schema';
 
 interface AddonWithStatus extends Omit<Addon, 'isFreeFeature'> {
@@ -82,7 +82,7 @@ export default function AddonStore() {
   
   const isAdmin = user?.role === 'admin';
   const isManager = user?.role === 'manager';
-  const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+  const isNativeAndroid = detectNativeAndroid();
   const companyAliasFromPath = typeof window !== 'undefined'
     ? window.location.pathname.split('/').filter(Boolean)[0]
     : '';
@@ -266,6 +266,9 @@ export default function AddonStore() {
 
   const purchaseMutation = useMutation({
     mutationFn: async (addonId: number) => {
+      if (isNativeAndroid) {
+        throw new Error('Gestion disponible solo en la web');
+      }
       return await apiRequest('POST', `/api/addons/${addonId}/purchase`);
     },
     onSuccess: async () => {
@@ -292,6 +295,9 @@ export default function AddonStore() {
 
   const cancelMutation = useMutation({
     mutationFn: async (addonId: number) => {
+      if (isNativeAndroid) {
+        throw new Error('Gestion disponible solo en la web');
+      }
       return await apiRequest('POST', `/api/addons/${addonId}/cancel`);
     },
     onSuccess: async () => {
@@ -322,6 +328,10 @@ export default function AddonStore() {
   // Mutation for updating seats (handles both increase and decrease)
   const updateSeatsMutation = useMutation({
     mutationFn: async (data: { action: 'set'; seats: { employees: number; managers: number; admins: number } }) => {
+      if (isNativeAndroid) {
+        throw new Error('Gestion disponible solo en la web');
+      }
+
       // All seats are paid, calculate difference from current
       const diff = {
         employees: data.seats.employees - contractedSeats.employees,
