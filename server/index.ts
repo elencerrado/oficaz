@@ -1,559 +1,370 @@
-// Load environment variables from .env file (for local development outside Replit)
-import 'dotenv/config';
+// ⚡⚡⚡ ULTRA-FAST STARTUP: Server listens FIRST, then loads everything else
+import http from "http";
 
-import express, { type Request, Response, NextFunction } from "express";
-import cors from "cors";
-import rateLimit from "express-rate-limit";
-import helmet from "helmet";
-import { registerRoutes, startBackgroundServices } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
-import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
-import { backgroundImageProcessor } from "./backgroundWorker";
+// Detect deployment environment
+const isDeployed = process.env.REPLIT_DEPLOYMENT === '1';
+const isProduction = isDeployed || process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT || 5000);
 
-// Get __dirname equivalent for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const app = express();
-
-// 🔧 Configure Trust Proxy for Replit and production environments
-// This is essential for rate limiting and IP detection behind reverse proxies
-if (process.env.NODE_ENV === 'production' || process.env.REPLIT_DOMAINS) {
-  app.set('trust proxy', 1); // Trust first proxy (Replit or load balancer)
-} else if (process.env.NODE_ENV === 'development' && !process.env.REPLIT_DOMAINS) {
-  app.set('trust proxy', false);
+const enableDebugLogs = process.env.OFICAZ_DEBUG_LOGS === 'true' || process.env.APP_DEBUG_LOGS === 'true';
+if (!enableDebugLogs && isProduction) {
+  console.log = () => {};
+  console.info = () => {};
+  console.debug = () => {};
 }
 
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        // Stripe + Google Maps
-        scriptSrc: [
-          "'self'",
-          "https://js.stripe.com",
-          "https://maps.googleapis.com",
-          "https://maps.gstatic.com",
-          ...(process.env.NODE_ENV === "development"
-            ? [
-                "https://replit.com/public/js/replit-dev-banner.js",
-                "'unsafe-inline'",
-                "'unsafe-eval'",
-              ]
-            : []),
-        ],
-        // Tailwind/styled-components require inline styles; allowed
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        // Images from self, data URIs, blobs, HTTPS, and UI Avatars
-        imgSrc: [
-          "'self'",
-          "data:",
-          "blob:",
-          "https:",
-          "https://ui-avatars.com",
-        ],
-        // API calls and WebSockets - restrict in production
-        connectSrc: [
-          "'self'",
-          "wss:",
-          "ws:",
-          "https://api.stripe.com",
-          "https://js.stripe.com",
-          "https://maps.googleapis.com",
-          "https://fcm.googleapis.com",
-          "https://web.push.apple.com",
-          ...(process.env.NODE_ENV === "development"
-            ? ["http://localhost:*", "ws://localhost:*", "https://*.trycloudflareaccess.com"]
-            : []),
-        ],
-        // Fonts (Google Fonts)
-        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
-        // Frames (Stripe) + blob: for previews
-        frameSrc: [
-          "'self'",
-          "blob:",
-          "https://js.stripe.com",
-          "https://hooks.stripe.com",
-        ],
-        // Allow blob: for PDF object/embed previews
-        objectSrc: ["'self'", "blob:"],
-        // Workers for SW and PDF.js
-        workerSrc: ["'self'", "blob:"],
-        // Base URI restricted to self
-        baseUri: ["'self'"],
-        // Forms only submit to self or Stripe
-        formAction: ["'self'", "https://js.stripe.com"],
-        // Frame ancestors restriction
-        frameAncestors: ["'self'"],
-        // Upgrade insecure requests in production
-        ...(process.env.NODE_ENV === "production"
-          ? { upgradeInsecureRequests: [] }
-          : {}),
-      },
-    },
-    crossOriginEmbedderPolicy: false,
-    hsts:
-      process.env.NODE_ENV === "production"
-        ? {
-            maxAge: 31536000,
-            includeSubDomains: true,
-            preload: true,
-          }
-        : undefined,
-  })
-);
+// Track if Express is ready
+let expressReady = false;
+let expressApp: any = null;
 
-// CORS configuration
-const isReplit = !!process.env.REPLIT_DOMAINS;
-// 🔒 SECURITY: Only treat as development if explicitly set, not just Replit
-const isDevelopment = process.env.NODE_ENV === 'development';
-const isLocalDevelopment = isDevelopment && !isReplit;
-
-const allowedOrigins =
-  isLocalDevelopment || isReplit
-    ? [
-        "http://localhost:3000",
-        "http://localhost:5000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5000",
-        "http://127.0.0.1:5173",
-        // Cloudflare Tunnel
-        /^https:\/\/[a-zA-Z0-9-]+\.trycloudflareaccess\.com$/,
-        // Replit development domains (match subdomains and root)
-        ...(process.env.REPLIT_DOMAINS
-          ? process.env.REPLIT_DOMAINS.split(",").map(
-              (domain) => new RegExp(`^https://.*${domain.replace(/\./g, '\\.')}(:[0-9]+)?$`),
-            )
-          : []),
-      ]
-    : [
-        // Replit domains
-        ...(process.env.REPLIT_DOMAINS
-          ? process.env.REPLIT_DOMAINS.split(",").map(
-              (domain) => `https://${domain}`,
-            )
-          : []),
-        // Custom domain
-        "https://oficaz.es",
-        "https://www.oficaz.es",
-      ];
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // En desarrollo o Replit, ser muy permisivo
-      if (isDevelopment) {
-        return callback(null, true);
-      }
-      
-      // En producción, ser restrictivo
-      // Permitir sin origin (mobile apps, etc)
-      if (!origin) return callback(null, true);
-      
-      // Permitir matches exactos (strings)
-      const exactMatch = allowedOrigins.find(o => typeof o === 'string' && o === origin);
-      if (exactMatch) return callback(null, true);
-      
-      // Permitir matches regex (Cloudflare, etc)
-      const regexMatch = allowedOrigins.find(o => o instanceof RegExp && o.test(origin));
-      if (regexMatch) return callback(null, true);
-      
-      // Denegar si no coincide
-      return callback(new Error('CORS no permitido'));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  }),
-);
-
-// Minimal CSRF guard: validate Origin/Referer on state-changing requests when present
-const csrfOriginGuard = (req: Request, res: Response, next: NextFunction) => {
-  const method = req.method.toUpperCase();
-  if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') return next();
-
-  // Log all POST requests for debugging
-  console.log(`📨 ${method} ${req.path} - Origin: ${req.headers.origin}, Referer: ${req.headers.referer}`);
-
-  // 🔒 SECURITY: En desarrollo local (no Replit), ser permisivo para facilitar testing
-  if (process.env.NODE_ENV === 'development' && !isReplit) {
-    console.log(`✅ Local development mode - allowing request`);
-    return next();
-  }
-
-  const headerOrigin = req.headers.origin || req.headers.referer;
-  if (!headerOrigin) return next(); // Non-browser or missing headers
-
-  try {
-    const originUrl = new URL(headerOrigin);
-    const originValue = `${originUrl.protocol}//${originUrl.host}`;
-    
-    // Permitir matches exactos
-    const exactMatch = allowedOrigins.find(o => typeof o === 'string' && o === originValue);
-    if (exactMatch) return next();
-    
-    // Permitir matches regex
-    const regexMatch = allowedOrigins.find(o => o instanceof RegExp && o.test(originValue));
-    if (regexMatch) return next();
-    
-    return res.status(403).json({ message: 'Origen no permitido' });
-  } catch (err) {
-    return res.status(400).json({ message: 'Cabeceras de origen inválidas' });
-  }
-
-  next();
-};
-
-app.use(csrfOriginGuard);
-
-// Force HTTPS in production and set security headers
-if (process.env.NODE_ENV === "production") {
-  app.use((req, res, next) => {
-    // ⚠️ EXCLUDE SEO routes from HTTPS redirect - they must be handled by interceptor
-    if (req.path === "/robots.txt" || req.path === "/sitemap.xml") {
-      console.log(`🚨 HTTPS REDIRECT BYPASS for SEO route: ${req.path}`);
-      return next(); // Skip HTTPS redirect for SEO files
-    }
-    
-    const host = req.header("host");
-    const proto =
-      req.header("x-forwarded-proto") ||
-      req.header("x-forwarded-protocol") ||
-      req.protocol;
-
-    // Redirect HTTP to HTTPS for all domains including custom domains
-    if (proto !== "https" && host !== "localhost") {
-      return res.redirect(301, `https://${host}${req.url}`);
-    }
-
-    // Set additional security headers for HTTPS
-    res.setHeader(
-      "Strict-Transport-Security",
-      "max-age=31536000; includeSubDomains; preload",
-    );
-    res.setHeader("X-Content-Type-Options", "nosniff");
-    res.setHeader("X-Frame-Options", "SAMEORIGIN"); // Changed from DENY to SAMEORIGIN
-    res.setHeader("X-XSS-Protection", "1; mode=block");
-    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-
-    // Additional header for custom domains
-    if (host === "oficaz.es" || host === "www.oficaz.es") {
-      res.setHeader("Access-Control-Allow-Origin", `https://${host}`);
-    }
-
-    next();
-  });
-}
-
-// Global rate limiting (skip in dev to avoid local 429s on reload)
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // limit each IP to 1000 requests per windowMs
-  message: { error: "Too many requests, please try again later." },
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: (req) => process.env.NODE_ENV === 'development' && !process.env.REPLIT_DOMAINS,
-});
-
-if (process.env.NODE_ENV === 'production') {
-  app.use(globalLimiter);
-} else {
-  console.warn('Skipping global rate limiter in non-production environment');
-}
-
-// Body parsing with size limits
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: false, limit: "10mb" }));
-
-// 📦 Object Storage: Validate configuration on startup (deferred to after server starts)
-function validateObjectStorageConfig() {
-  // R2 is now the primary storage, no need for PUBLIC_OBJECT_SEARCH_PATHS
-  const r2Configured = process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY && process.env.R2_BUCKET_NAME;
+// Create raw HTTP server that responds to health checks IMMEDIATELY
+const server = http.createServer((req, res) => {
+  const url = req.url || '/';
+  const method = req.method || 'GET';
   
-  if (!r2Configured) {
-    console.warn('⚠️  Cloudflare R2 not configured. File storage will not work.');
-    console.warn('   Configure R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME in .env');
-    return false;
-  }
-  
-  console.log('✓ Object Storage configured: Cloudflare R2');
-  console.log(`  • Bucket: ${process.env.R2_BUCKET_NAME}`);
-  return true;
-}
-
-// Don't validate on startup - do it after server is listening
-
-// Serve uploaded files with R2/Object Storage priority, local fallback
-// Priority: R2 → Replit Object Storage → Local filesystem
-app.get("/uploads/:filename", async (req, res, next) => {
-  const filename = req.params.filename;
-  const localPath = path.join(process.cwd(), "uploads", filename);
-  
-  // Try R2/Object Storage first (primary storage)
-  try {
-    const { SimpleObjectStorageService } = await import('./objectStorageSimple.js');
-    const objectStorage = new SimpleObjectStorageService();
-    
-    // Try profile-pictures folder first (user avatars)
-    let objectPath = `profile-pictures/${filename}`;
-    let file = await objectStorage.searchPublicObject(objectPath);
-    
-    // If not in profile-pictures/, try documents folder (migrated files)
-    if (!file) {
-      objectPath = `documents/${filename}`;
-      file = await objectStorage.searchPublicObject(objectPath);
-    }
-    
-    // If not in documents/, try email-marketing/ (for email images)
-    if (!file) {
-      objectPath = `email-marketing/${filename}`;
-      file = await objectStorage.searchPublicObject(objectPath);
-    }
-    
-    if (file) {
-      console.log(`📦 Serving ${filename} from Cloud Storage`);
-      return await objectStorage.downloadObject(file, res);
-    }
-  } catch (error) {
-    console.error(`Error searching Cloud Storage for ${filename}:`, error);
-  }
-  
-  // Fallback to local filesystem (legacy files)
-  if (fs.existsSync(localPath)) {
-    console.log(`📁 Serving ${filename} from local filesystem (fallback)`);
-    return res.sendFile(localPath);
-  }
-  
-  // If not found anywhere, return 404
-  res.status(404).send('File not found');
-});
-
-// Serve public files (like email logo) statically
-app.use(express.static(path.join(process.cwd(), "public")));
-
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
-    }
-  });
-
-  next();
-});
-
-// ⚠️ CRITICAL SEO CDN REDIRECTS - DO NOT MODIFY
-// Redirect SEO files to external CDN with proper content-types
-app.get('/robots.txt', (req, res) => {
-  console.log('🔄 Serving robots.txt from client/public');
-  const robotsPath = path.join(__dirname, '..', 'client', 'public', 'robots.txt');
-  
-  // Production-ready approach: Direct serving with optimized headers
-  res.writeHead(200, {
-    'Content-Type': 'text/plain; charset=utf-8',
-    'Cache-Control': 'public, max-age=86400',
-    'X-Content-Type-Options': 'nosniff',
-    'Access-Control-Allow-Origin': '*'
-  });
-  
-  // Serve the file from client/public
-  fs.createReadStream(robotsPath).pipe(res);
-});
-
-app.get('/sitemap.xml', (req, res) => {
-  console.log('🔄 Serving sitemap.xml from client/public');
-  const sitemapPath = path.join(__dirname, '..', 'client', 'public', 'sitemap.xml');
-  
-  // Production-ready approach: Direct serving with optimized headers
-  res.writeHead(200, {
-    'Content-Type': 'application/xml; charset=utf-8',
-    'Cache-Control': 'public, max-age=86400',
-    'X-Content-Type-Options': 'nosniff',
-    'Access-Control-Allow-Origin': '*'
-  });
-  
-  // Serve the file from client/public
-  fs.createReadStream(sitemapPath).pipe(res);
-});
-
-// Handle only specific Neon database WebSocket errors that cause morning crashes
-// Other errors should crash and trigger supervisor restart
-process.on('unhandledRejection', (reason: any, promise) => {
-  const message = reason?.message || String(reason);
-  
-  // Only suppress the specific Neon stale WebSocket connection error
-  const isNeonWebSocketError = 
-    (message.includes('Cannot set property message') && message.includes('ErrorEvent')) ||
-    (message.includes('WebSocket') && message.includes('connect'));
-  
-  if (isNeonWebSocketError) {
-    console.error('🔄 Neon WebSocket error (auto-recovering):', message);
-    // Don't exit - pool will create new connection on next query
+  // INSTANT health check responses for dedicated endpoints
+  if (method === 'GET' && (url === '/health' || url === '/__health')) {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('OK');
     return;
   }
   
-  // For all other errors, crash for supervised restart
-  console.error('🚨 UNHANDLED REJECTION - CRASHING FOR RESTART:', reason);
+  // For root path while Express is NOT ready yet, always show an HTML loader
+  // This avoids occasional plain-text responses being rendered as a blank page
+  if (method === 'GET' && url === '/' && !expressReady) {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end('<html><body><h1>Loading...</h1><script>setTimeout(()=>location.reload(),1000)</script></body></html>');
+    return;
+  }
+  
+  // Pass to Express if ready
+  if (expressReady && expressApp) {
+    expressApp(req, res);
+  } else {
+    // Express not ready - return 503 for non-root paths
+    res.writeHead(503, { 'Content-Type': 'text/plain' });
+    res.end('Service starting...');
+  }
+});
+
+// START LISTENING IMMEDIATELY - health checks work instantly
+server.listen(port, '0.0.0.0', () => {
+  console.log(`✅ Server listening on port ${port} - health checks ready!`);
+  
+  // NOW load Express and everything else asynchronously
+  initializeExpress().catch(err => {
+    console.error('Failed to initialize Express:', err);
+  });
+});
+
+// Handle errors gracefully
+process.on('unhandledRejection', (reason: any) => {
+  const message = reason?.message || String(reason);
+  
+  // Only suppress Neon WebSocket errors
+  if (message.includes('Cannot set property message') || 
+      (message.includes('WebSocket') && message.includes('connect'))) {
+    console.error('🔄 Neon WebSocket error (auto-recovering):', message);
+    return;
+  }
+  
+  console.error('🚨 UNHANDLED REJECTION:', reason);
   process.exit(1);
 });
 
-(async () => {
-  const server = await registerRoutes(app);
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down...');
+  server.close(() => process.exit(0));
+});
 
-  app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down...');
+  server.close(() => process.exit(0));
+});
 
-    // Log error details for debugging
-    console.error('🚨 Server Error:', {
-      path: req.path,
-      method: req.method,
-      status,
-      message,
-      stack: err.stack
+// ============================================================================
+// ASYNC INITIALIZATION - runs AFTER server is already listening
+// ============================================================================
+async function initializeExpress() {
+  console.log('📦 Loading Express and modules...');
+  
+  // Load dotenv first
+  await import('dotenv/config');
+  
+  // Load all required modules
+  const express = (await import('express')).default;
+  const cors = (await import('cors')).default;
+  const rateLimit = (await import('express-rate-limit')).default;
+  const helmet = (await import('helmet')).default;
+  const path = (await import('path')).default;
+  const fs = (await import('fs')).default;
+  const { fileURLToPath } = await import('url');
+  
+  // Load app-specific modules
+  const { registerRoutes, startBackgroundServices } = await import('./routes');
+  const { setupVite, serveStatic, log } = await import('./vite');
+  const { backgroundImageProcessor } = await import('./backgroundWorker');
+  
+  // Get __dirname equivalent
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  
+  const app = express();
+  
+  console.log(`🔍 Environment: isDeployed=${isDeployed}, isProduction=${isProduction}`);
+
+  // Configure Trust Proxy
+  if (isProduction || process.env.REPLIT_DOMAINS) {
+    app.set('trust proxy', 1);
+  } else {
+    app.set('trust proxy', false);
+  }
+
+  // Security headers
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: [
+            "'self'",
+            "https://js.stripe.com",
+            "https://maps.googleapis.com",
+            "https://maps.gstatic.com",
+            ...(process.env.NODE_ENV === "development"
+              ? ["https://replit.com/public/js/replit-dev-banner.js", "'unsafe-inline'", "'unsafe-eval'", "data:"]
+              : []),
+          ],
+          styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+          imgSrc: ["'self'", "data:", "blob:", "https:", "https://ui-avatars.com"],
+          connectSrc: [
+            "'self'",
+            "wss:",
+            "ws:",
+            "https://api.stripe.com",
+            "https://js.stripe.com",
+            "https://maps.googleapis.com",
+            "https://fcm.googleapis.com",
+            "https://web.push.apple.com",
+            ...(process.env.NODE_ENV === "development"
+              ? ["http://localhost:*", "ws://localhost:*", "https://*.trycloudflareaccess.com"]
+              : []),
+          ],
+          fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+          frameSrc: [
+            "'self'",
+            "blob:",
+            "https://js.stripe.com",
+            "https://hooks.stripe.com",
+            "https://www.youtube.com",
+            "https://www.youtube-nocookie.com",
+          ],
+          objectSrc: ["'self'", "blob:"],
+          workerSrc: ["'self'", "blob:"],
+          baseUri: ["'self'"],
+          formAction: ["'self'", "https://js.stripe.com"],
+          frameAncestors: ["'self'"],
+          ...(process.env.NODE_ENV === "production"
+            ? { upgradeInsecureRequests: [] }
+            : { upgradeInsecureRequests: null }),
+        },
+      },
+      crossOriginEmbedderPolicy: false,
+      hsts: process.env.NODE_ENV === "production"
+        ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+        : undefined,
+    })
+  );
+
+  // CORS configuration
+  const isReplit = !!process.env.REPLIT_DOMAINS;
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isLocalDevelopment = isDevelopment && !isReplit;
+
+  const allowedOrigins = isLocalDevelopment || isReplit
+    ? [
+        "http://localhost:5000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5000",
+        ...(process.env.REPLIT_DOMAINS?.split(",").map((d: string) => `https://${d}`) || []),
+      ]
+    : [];
+
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.some((allowed) => origin.includes(allowed.replace("https://", "").replace("http://", "")))) {
+          callback(null, true);
+        } else if (process.env.NODE_ENV !== 'production') {
+          // Allow all origins in non-production environments
+          callback(null, true);
+        } else {
+          // 🔒 SECURITY: Block unknown cross-origins in production
+          callback(new Error('CORS: Origin not allowed'));
+        }
+      },
+      credentials: true,
+    })
+  );
+
+  // Rate limiting
+  if (process.env.NODE_ENV === "production") {
+    const limiter = rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 500,
+      message: { message: "Too many requests, please try again later." },
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
+    app.use(limiter);
+  }
+
+  // Body parsers
+  // 🔒 SECURITY: Limit JSON body size to prevent DoS via large payloads.
+  // Routes that handle file uploads use their own multer parsers with explicit size limits.
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+
+  // Request logging
+  app.use((req, res, next) => {
+    const start = Date.now();
+    const reqPath = req.path;
+    let capturedJsonResponse: Record<string, any> | undefined = undefined;
+
+    const originalResJson = res.json;
+    res.json = function (bodyJson, ...args) {
+      capturedJsonResponse = bodyJson;
+      return originalResJson.apply(res, [bodyJson, ...args]);
+    };
+
+    res.on("finish", () => {
+      const duration = Date.now() - start;
+      if (reqPath.startsWith("/api")) {
+        let logLine = `${req.method} ${reqPath} ${res.statusCode} in ${duration}ms`;
+        if (capturedJsonResponse) {
+          logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+        }
+        if (logLine.length > 80) {
+          logLine = logLine.slice(0, 79) + "…";
+        }
+        log(logLine);
+      }
     });
 
-    // Send error response to client
+    next();
+  });
+
+  // SEO files
+  app.get('/robots.txt', (req, res) => {
+    const robotsPath = path.join(__dirname, '..', 'client', 'public', 'robots.txt');
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'public, max-age=86400',
+    });
+    fs.createReadStream(robotsPath).pipe(res);
+  });
+
+  app.get('/sitemap.xml', (req, res) => {
+    const sitemapPath = path.join(__dirname, '..', 'client', 'public', 'sitemap.xml');
+    res.writeHead(200, {
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': 'public, max-age=86400',
+    });
+    fs.createReadStream(sitemapPath).pipe(res);
+  });
+
+  // Minimal client crash/error telemetry endpoint (non-blocking, sanitized logs only)
+  app.post('/api/telemetry/client-error', (req, res) => {
+    const body = req.body ?? {};
+
+    const sanitizeString = (value: unknown, max = 500) => {
+      if (typeof value !== 'string') return undefined;
+      return value.slice(0, max);
+    };
+
+    const payload = {
+      type: sanitizeString(body.type, 60) ?? 'client_error',
+      message: sanitizeString(body.message, 1000) ?? 'Unknown client error',
+      stack: sanitizeString(body.stack, 4000),
+      url: sanitizeString(body.url, 1000),
+      userAgent: sanitizeString(body.userAgent, 500),
+      source: sanitizeString(body.source, 500),
+      line: Number.isFinite(body.line) ? Number(body.line) : undefined,
+      column: Number.isFinite(body.column) ? Number(body.column) : undefined,
+      timestamp: sanitizeString(body.timestamp, 60),
+      appVersion: sanitizeString(body.appVersion, 80),
+    };
+
+    console.error('🧭 Client telemetry error:', payload);
+    res.status(204).end();
+  });
+
+  // R2 Object Storage validation (lazy, won't block)
+  const validateObjectStorageConfig = () => {
+    const requiredVars = ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET_NAME'];
+    const missing = requiredVars.filter(v => !process.env[v]);
+    if (missing.length > 0) {
+      console.warn('⚠️ R2 Object Storage not fully configured. Missing:', missing.join(', '));
+    } else {
+      console.log('✅ R2 Object Storage configuration validated');
+    }
+  };
+
+  // Register all API routes
+  await registerRoutes(app);
+
+  // Error handler
+  app.use((err: any, req: any, res: any, _next: any) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+    console.error('🚨 Server Error:', { path: req.path, method: req.method, status, message });
     if (!res.headersSent) {
       res.status(status).json({ message });
     }
-    
-    // DO NOT throw err - this would crash the server!
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  const isDevelopment = process.env.NODE_ENV === "development" || app.get("env") === "development";
-  console.log(`🔍 Environment: NODE_ENV=${process.env.NODE_ENV}, app.get("env")=${app.get("env")}, isDevelopment=${isDevelopment}`);
+  // Setup Vite or static files
+  const useVite = !isDeployed && !isProduction && (process.env.NODE_ENV === "development" || app.get("env") === "development");
+  console.log(`🔍 Vite decision: isDeployed=${isDeployed}, isProduction=${isProduction}, useVite=${useVite}`);
   
-  if (isDevelopment) {
+  if (useVite) {
     try {
       console.log('🚀 Starting Vite server...');
       await setupVite(app, server);
-      console.log('✅ Vite setup completed successfully');
+      console.log('✅ Vite setup completed');
     } catch (error) {
       console.error('❌ Error setting up Vite:', error);
-      console.error('Stack:', error);
-      // Don't exit, continue serving without Vite
     }
   } else {
     console.log('📦 Serving static build files...');
     serveStatic(app);
   }
 
-  // Use PORT from environment (Replit sets this automatically)
-  const port = Number(process.env.PORT || 5000);
-  
-  if (!process.env.PORT && isReplit) {
-    console.warn('⚠️  PORT not set in Replit environment, using default 5000');
-  }
-  
-  // Determine host based on platform and environment
-  // Replit needs 0.0.0.0 to accept external connections
-  const isReplit = process.env.REPLIT_DOMAINS !== undefined || process.env.REPL_ID !== undefined;
-  let host: string;
-  
-  if (isReplit) {
-    host = '0.0.0.0'; // Replit requires binding to all interfaces
-    console.log('🔧 Detected Replit environment, binding to 0.0.0.0 on port', port);
-  } else if (process.platform === 'win32') {
-    host = '127.0.0.1'; // Windows local development
-  } else {
-    // Prefer localhost binding on macOS/dev machines to avoid
-    // platform-specific socket option issues (ENOTSUP).
-    host = '127.0.0.1';
-  }
+  // Mark Express as ready - now requests will be handled by Express
+  expressApp = app;
+  expressReady = true;
+  console.log('✅ Express ready - accepting all requests');
 
-  // Only enable SO_REUSEPORT on Linux where it's consistently supported
-  const listenOptions: any = {
-    port,
-    host,
-  };
-  if (process.platform === "linux") {
-    listenOptions.reusePort = true;
-  }
-
-  server.listen(
-    listenOptions,
-    async () => {
-      const hostDisplay = process.platform === 'win32' ? 'localhost' : (listenOptions.host || '0.0.0.0');
-      const url = `http://${hostDisplay}:${port}`;
-      log(`serving on port ${port}`);
-      console.log(`🔗 Open in browser: ${url}`);
-      console.log('✅ Server is ready to accept health checks');
-      
-      // NOW that server is listening, start background services asynchronously
-      // This ensures health checks pass quickly during deployment
-      // Services start in the background without blocking the response
-      
-      // Initialize all background services asynchronously
-      setImmediate(async () => {
-        try {
-          // Validate R2 configuration
-          console.log('[init] Validating object storage...');
-          validateObjectStorageConfig();
-          
-          // Start background services (email queue, push notifications)
-          console.log('[init] Starting background services...');
-          await startBackgroundServices();
-          console.log('[init] ✓ Background services started');
-          
-          // Initialize background image processor
-          console.log('[init] Starting background worker...');
-          await backgroundImageProcessor.start();
-          console.log('[init] ✓ Background worker started');
-          
-          console.log('🎉 All services initialized - application ready');
-        } catch (error) {
-          console.error('❌ Background initialization error:', error);
-          // Don't crash - services can retry or work in degraded mode
-        }
-      });
-    },
-  );
-  
-  // Keep process alive and handle shutdown gracefully
-  process.on('SIGTERM', () => {
-    if (process.env.NODE_ENV === 'production') {
-      console.log('SIGTERM received, shutting down gracefully...');
-      server.close(() => {
-        console.log('Server closed');
-        process.exit(0);
-      });
+  // Defer background services with a delay
+  setTimeout(async () => {
+    console.log('[init] Validating object storage...');
+    validateObjectStorageConfig();
+    
+    console.log('[init] Starting background services...');
+    try {
+      await startBackgroundServices();
+    } catch (error) {
+      console.error('[init] Background services failed:', error);
     }
-  });
-  
-  // Prevent auto-shutdown in development
-  if (process.env.NODE_ENV === 'production') {
-    process.on('SIGINT', () => {
-      console.log('SIGINT received, shutting down gracefully...');
-      server.close(() => {
-        console.log('Server closed');
-        process.exit(0);
-      });
-    });
-  }
-})();
+    
+    console.log('[init] Starting background worker...');
+    try {
+      await backgroundImageProcessor.start();
+    } catch (error) {
+      console.error('❌ Failed to start background image processor:', error);
+    }
+    
+    console.log('🎉 All services initialized');
+  }, 1000);
+}
