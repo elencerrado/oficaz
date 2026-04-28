@@ -1,19 +1,44 @@
 import { useState, useRef, useEffect, memo, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
-import { Send, Minimize2, RotateCcw } from "lucide-react";
+import { Send, Minimize2, RotateCcw, Mic, MicOff } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useChatBridge, triggerAINavigation } from "@/lib/chat-bridge";
 import { FeedbackButton } from "@/components/FeedbackButton";
+import { useVoiceInput } from "@/hooks/useVoiceInput";
 import oficazLogo from "@/assets/oficaz-logo.png";
+import { AIConfirmationModal } from "@/components/AIConfirmationModal";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
   functionCalled?: string | null;
+  suggestions?: string[];
+}
+
+interface ProfessionalConfirmation {
+  message?: string;
+  needsConfirmation?: boolean;
+  confirmationModal?: {
+    title: string;
+    description?: string;
+    icon: "warning" | "check" | "info";
+    items: Array<{
+      label: string;
+      value: string | number;
+      icon?: string;
+      highlight?: boolean;
+    }>;
+    confirmText?: string;
+    cancelText?: string;
+  };
+  confirmationContext?: {
+    action: string;
+    [key: string]: any;
+  };
 }
 
 // Componente de animación del asistente de IA
@@ -115,7 +140,24 @@ export function AIAssistantChat() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
-  const [pendingConfirmation, setPendingConfirmation] = useState<any>(null);
+    const [pendingConfirmation, setPendingConfirmation] = useState<ProfessionalConfirmation | null>(null);
+  
+  // Initialize voice input hook with callback to set input text
+  const { 
+    isRecording, 
+    isListening, 
+    transcript, 
+    error: voiceError, 
+    startRecording, 
+    stopRecording, 
+    clearTranscript,
+    supportsWebSpeechAPI
+  } = useVoiceInput({
+    onTranscriptionComplete: (text) => {
+      setInput(text);
+    },
+    language: 'es-ES'
+  });
   
   // Detect when welcome modal is open via body attribute
   useEffect(() => {
@@ -145,7 +187,7 @@ export function AIAssistantChat() {
     const defaultMessage = {
       role: "assistant" as const,
       content:
-        "¡Hola! Puedo ayudarte a gestionar cuadrantes, enviar mensajes y crear recordatorios. ¿En qué te ayudo?",
+        "¡Hola! Puedo ayudarte a gestionar cuadrantes, enviar mensajes y crear tareas. ¿En qué te ayudo?",
     };
 
     const savedMessages = localStorage.getItem("ai_assistant_chat_history");
@@ -181,26 +223,42 @@ export function AIAssistantChat() {
 
   // Memoize rendered messages to prevent re-renders
   const renderedMessages = useMemo(() => messages.map((message, index) => (
-    <div
-      key={index}
-      className={cn(
-        "flex",
-        message.role === "user" ? "justify-end" : "justify-start"
-      )}
-      data-testid={`message-${message.role}-${index}`}
-    >
+    <div key={index} className="flex flex-col">
       <div
         className={cn(
-          "max-w-[85%] rounded-2xl px-4 py-3 text-sm",
-          message.role === "user"
-            ? "bg-gradient-to-br from-[#007AFF] to-[#0066CC] text-white dark:from-[#0A84FF] dark:to-[#0066CC]"
-            : "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100"
+          "flex",
+          message.role === "user" ? "justify-end" : "justify-start"
         )}
+        data-testid={`message-${message.role}-${index}`}
       >
-        <p className="whitespace-pre-wrap break-words">
-          {message.content}
-        </p>
+        <div
+          className={cn(
+            "max-w-[85%] rounded-2xl px-4 py-3 text-sm",
+            message.role === "user"
+              ? "bg-gradient-to-br from-[#007AFF] to-[#0066CC] text-white dark:from-[#0A84FF] dark:to-[#0066CC]"
+              : "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100"
+          )}
+        >
+          <p className="whitespace-pre-wrap break-words">
+            {message.content}
+          </p>
+        </div>
       </div>
+      {message.role === "assistant" && message.suggestions && message.suggestions.length > 0 && (
+        <div className="flex justify-start px-0 mt-1.5">
+          <div className="flex flex-wrap gap-1.5 max-w-[85%]">
+            {message.suggestions.map((s, i) => (
+              <button
+                key={i}
+                onClick={() => setInput(s)}
+                className="text-xs px-2.5 py-1 rounded-full border border-[#007AFF]/30 text-[#007AFF] bg-white hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:bg-gray-900 dark:hover:bg-blue-900/30 transition-colors shadow-sm"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )), [messages]);
   
@@ -278,10 +336,21 @@ export function AIAssistantChat() {
           functionCalled: response.functionCalled,
         },
       ]);
+      // Store suggestions from server response (context-aware follow-up chips)
+      if (response.suggestions && response.suggestions.length > 0) {
+        setMessages((prev) => {
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          if (last && last.role === "assistant") {
+            updated[updated.length - 1] = { ...last, suggestions: response.suggestions };
+          }
+          return updated;
+        });
+      }
       
       // Si hay una confirmación pendiente, guardarla para que el usuario responda
       if (response.needsConfirmation && response.confirmationContext) {
-        setPendingConfirmation(response.confirmationContext);
+        setPendingConfirmation(response);
       } else {
         setPendingConfirmation(null);
       }
@@ -361,6 +430,19 @@ export function AIAssistantChat() {
               // Invalidate document notifications
               queryClient.invalidateQueries({ queryKey: ['/api/document-notifications'] });
               break;
+            case "createCRMContact":
+              queryClient.invalidateQueries({ queryKey: ['/api/crm/contacts'] });
+              break;
+            case "addCRMInteraction":
+              queryClient.invalidateQueries({ queryKey: ['/api/crm/contacts'] });
+              break;
+            case "createWorkReport":
+              queryClient.invalidateQueries({ queryKey: ['/api/work-reports'] });
+              break;
+            case "createVacationRequest":
+              queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
+              break;
             case "generateTimeReport":
               // No query invalidation needed for reports
               break;
@@ -400,7 +482,7 @@ export function AIAssistantChat() {
     const defaultMessage = {
       role: "assistant" as const,
       content:
-        "¡Hola! Puedo ayudarte a gestionar cuadrantes, enviar mensajes y crear recordatorios. ¿En qué te ayudo?",
+        "¡Hola! Puedo ayudarte a gestionar cuadrantes, enviar mensajes y crear tareas. ¿En qué te ayudo?",
     };
     setMessages([defaultMessage]);
     localStorage.setItem("ai_assistant_chat_history", JSON.stringify([defaultMessage]));
@@ -431,8 +513,8 @@ export function AIAssistantChat() {
     <>
       {hasAccess && (
         <>
-          {/* Feedback button - Discrete variant to the left of AI */}
-          <div className="fixed bottom-4 right-20 sm:bottom-6 sm:right-24 z-50 [padding-bottom:max(1rem,env(safe-area-inset-bottom))]">
+          {/* Feedback button - Mobile: above AI. Desktop: offset to the left of AI */}
+          <div className="fixed right-4 sm:right-24 z-[60] [bottom:calc(env(safe-area-inset-bottom)+6.25rem)] sm:bottom-6">
             <FeedbackButton variant="discrete" hasAI={true} />
           </div>
 
@@ -441,7 +523,7 @@ export function AIAssistantChat() {
             onClick={() => setIsOpen(!isOpen)}
             data-testid="button-ai-assistant-toggle"
             className={cn(
-              "fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 cursor-pointer transition-all duration-300 [padding-bottom:max(1rem,env(safe-area-inset-bottom))]",
+              "fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 cursor-pointer transition-all duration-300 [padding-bottom:max(1rem,env(safe-area-inset-bottom))] scale-90 sm:scale-100",
               !isOpen && "hover:scale-110"
             )}
           >
@@ -507,6 +589,42 @@ export function AIAssistantChat() {
 
           {/* Input */}
           <div className="border-t border-gray-200 p-4 dark:border-gray-700">
+            {/* Voice recording indicator and transcript preview */}
+            {(isRecording || isListening || transcript) && (
+              <div className="mb-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                {isRecording && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                      🎤 Grabando audio...
+                    </span>
+                  </div>
+                )}
+                {isListening && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-xs font-medium text-green-700 dark:text-green-300">
+                      👂 Escuchando...
+                    </span>
+                  </div>
+                )}
+                {transcript && (
+                  <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    {transcript}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Voice error display */}
+            {voiceError && (
+              <div className="mb-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                <p className="text-sm text-red-700 dark:text-red-300">
+                  ⚠️ {voiceError}
+                </p>
+              </div>
+            )}
+            
             {/* Botones de confirmación si hay una acción pendiente */}
             {pendingConfirmation && (
               <div className="mb-3 flex flex-col gap-2">
@@ -517,9 +635,8 @@ export function AIAssistantChat() {
                     setPendingConfirmation(null);
                     
                     try {
-                      const { action, ...params } = pendingConfirmation;
-                      const { resolveEmployeeName, assignScheduleInRange } = await import('../../../server/ai-assistant.js');
-                      
+                      const params = pendingConfirmation.confirmationContext || {};
+
                       // Reenviar con forceOverwrite=true
                       const response = await apiRequest("POST", "/api/ai-assistant/chat", {
                         messages: [...messages],
@@ -579,17 +696,107 @@ export function AIAssistantChat() {
               </div>
             )}
             
+              {/* Professional confirmation modal */}
+              {pendingConfirmation?.confirmationModal && (
+                <AIConfirmationModal
+                  title={pendingConfirmation.confirmationModal.title}
+                  description={pendingConfirmation.confirmationModal.description}
+                  icon={pendingConfirmation.confirmationModal.icon}
+                  items={pendingConfirmation.confirmationModal.items}
+                  confirmText={pendingConfirmation.confirmationModal.confirmText || "✅ Confirmar"}
+                  cancelText={pendingConfirmation.confirmationModal.cancelText || "❌ Cancelar"}
+                  isLoading={isLoading}
+                  onConfirm={async () => {
+                    setIsLoading(true);
+                    try {
+                      const response = await apiRequest("POST", "/api/ai-assistant/chat", {
+                        messages: [...messages],
+                        confirmAction: pendingConfirmation.confirmationContext
+                      });
+                    
+                      setMessages((prev) => [
+                        ...prev,
+                        {
+                          role: "assistant",
+                          content: response.message,
+                          functionCalled: response.functionCalled,
+                          suggestions: response.suggestions,
+                        },
+                      ]);
+                    
+                      setPendingConfirmation(null);
+                    
+                      // Navigation if needed
+                      if (response.navigateTo) {
+                        setTimeout(() => {
+                          triggerAINavigation(response.navigateTo);
+                        }, 1000);
+                      }
+                    
+                      // Invalidate relevant queries
+                      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+                      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
+                      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
+                    
+                    } catch (error: any) {
+                      toast({
+                        title: "Error",
+                        description: error.message || "No se pudo completar la acción",
+                        variant: "destructive",
+                      });
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  onCancel={() => {
+                    setPendingConfirmation(null);
+                    setMessages((prev) => [
+                      ...prev,
+                      {
+                        role: "assistant",
+                        content: "Entendido, cancelo la acción.",
+                      },
+                    ]);
+                  }}
+                />
+              )}
+            
             <div className="flex gap-2">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Escribe tu mensaje..."
-                disabled={isLoading}
+                placeholder={isRecording ? "Hablando..." : "Escribe o habla tu mensaje..."}
+                disabled={isLoading || isRecording}
                 data-testid="input-ai-message"
                 className="flex-1 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-[#0A84FF] dark:focus:ring-[#0A84FF]/20"
               />
+
+              {/* Voice Input Button */}
+              {supportsWebSpeechAPI && (
+                <Button
+                  onClick={isRecording ? stopRecording : startRecording}
+                  disabled={isLoading}
+                  title={isRecording ? "Detener grabación" : "Grabar audio (pulsa para hablar)"}
+                  data-testid="button-voice-input"
+                  className={cn(
+                    "h-10 w-10 rounded-full p-0 transition-all duration-200",
+                    isRecording
+                      ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+                      : "bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700",
+                    "disabled:cursor-not-allowed disabled:opacity-50"
+                  )}
+                >
+                  {isRecording ? (
+                    <MicOff className="h-4 w-4" />
+                  ) : (
+                    <Mic className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
+
+              {/* Send Button */}
               <Button
                 onClick={sendMessage}
                 disabled={!input.trim() || isLoading}

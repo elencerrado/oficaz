@@ -9,6 +9,9 @@ import { spawn, exec } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { promisify } from 'util';
+import { rmSync } from 'fs';
+import path from 'path';
+import os from 'os';
 
 const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
@@ -17,6 +20,16 @@ const __dirname = dirname(__filename);
 console.log('🚀 Iniciando Oficaz en Replit...');
 console.log('📁 Directorio:', __dirname);
 console.log('🔧 NODE_ENV:', process.env.NODE_ENV || 'development');
+
+// Limpiar caché de Vite en Replit para evitar problemas con deps obsoletos
+const viteCacheDir = path.join(os.tmpdir(), 'vite-cache-oficaz');
+console.log(`🧹 Limpiando caché de Vite: ${viteCacheDir}`);
+try {
+  rmSync(viteCacheDir, { recursive: true, force: true });
+  console.log('✅ Caché de Vite limpiado');
+} catch (err) {
+  console.warn('⚠️ No se pudo limpiar caché de Vite:', err.message);
+}
 
 // Matar procesos anteriores en el puerto
 const PORT = process.env.PORT || '5000';

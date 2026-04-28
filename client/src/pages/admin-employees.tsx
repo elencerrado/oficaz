@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useLocation } from 'wouter';
@@ -43,6 +43,7 @@ import {
   LayoutGrid,
   Eye,
   ShieldCheck
+  ,X
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -52,9 +53,23 @@ import { logger } from '@/lib/logger';
 import { useToast } from '@/hooks/use-toast';
 import { usePageHeader } from '@/components/layout/page-header';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
+import { useTeams, resolveTeamMemberIds, type TeamWithMembers } from '@/hooks/use-teams';
+import { useStandardInfiniteScroll } from '@/hooks/use-standard-infinite-scroll';
+import { useIncrementalList } from '@/hooks/use-incremental-list';
+import { InfiniteListFooter } from '@/components/ui/infinite-list-footer';
+import { ListLoadingState } from '@/components/ui/list-loading-state';
+import { ModalActionButton } from '@/components/ui/modal-action-button';
+import { ModalHeaderWithActions } from '@/components/ui/modal-header-with-actions';
+import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  FILTER_LABEL_CLASS,
+  FILTER_PANEL_CLASS,
+  FILTER_SELECT_TRIGGER_CLASS,
+} from '@/lib/filter-styles';
 
 export default function EmployeesSimple() {
   const { user, token } = useAuth();
+  const isMobile = useIsMobile();
   const { setHeader, resetHeader } = usePageHeader();
   const { hasAccess } = useFeatureCheck();
 
@@ -79,6 +94,14 @@ export default function EmployeesSimple() {
   const [limitMessage, setLimitMessage] = useState('');
   const [activeTab, setActiveTab] = useState('employees');
   const [showFilters, setShowFilters] = useState(false);
+  const loadMoreEmployeesRef = useRef<HTMLDivElement | null>(null);
+  const teamEditorRef = useRef<HTMLDivElement | null>(null);
+  const [editingTeamId, setEditingTeamId] = useState<number | null>(null);
+  const [isTeamFormEditable, setIsTeamFormEditable] = useState(true);
+  const [teamName, setTeamName] = useState('');
+  const [teamDescription, setTeamDescription] = useState('');
+  const [teamSelectedMembers, setTeamSelectedMembers] = useState<number[]>([]);
+  const [teamMemberSearchTerm, setTeamMemberSearchTerm] = useState('');
   const [managerPermissions, setManagerPermissions] = useState({
     canCreateDeleteEmployees: true,
     canCreateDeleteManagers: false,
@@ -87,6 +110,18 @@ export default function EmployeesSimple() {
     canEditCompanyData: false,
     visibleFeatures: [] as string[],
   });
+
+  const hasTeamDraft = teamName.trim().length > 0 || teamDescription.trim().length > 0 || teamSelectedMembers.length > 0;
+  const showTeamHeaderActions = editingTeamId !== null || hasTeamDraft;
+
+  const focusTeamEditorOnMobile = () => {
+    if (!isMobile || !teamEditorRef.current) return;
+    requestAnimationFrame(() => {
+      teamEditorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+
+  const managerPermissionSwitchClass = "h-7 w-12 !border-0 shadow-inner data-[state=unchecked]:bg-gray-300 dark:data-[state=unchecked]:bg-gray-600 data-[state=checked]:bg-emerald-500 dark:data-[state=checked]:bg-emerald-400 focus-visible:ring-0 focus-visible:ring-offset-0";
   const [editEmployee, setEditEmployee] = useState({
     companyEmail: '',
     companyPhone: '',
@@ -119,6 +154,12 @@ export default function EmployeesSimple() {
     emergencyContactPhone: '',
   });
 
+  const normalizeWorkReportMode = (mode?: string | null): 'disabled' | 'manual' | 'both' => {
+    if (mode === 'disabled') return 'disabled';
+    if (mode === 'both' || mode === 'on_clockout') return 'both';
+    return 'manual';
+  };
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -133,6 +174,10 @@ export default function EmployeesSimple() {
   const { data: allProjects = [] } = useQuery<Array<{ project: { id: number; name: string; code?: string } } | { id: number; name: string; code?: string }>>({
     queryKey: ['/api/crm/projects'],
     enabled: !!selectedEmployee && !!showEditModal && canUseCrm,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Fetch projects assigned to selected employee
@@ -140,6 +185,10 @@ export default function EmployeesSimple() {
     queryKey: ['/api/crm/users', selectedEmployee?.id, 'projects'],
     enabled: !!selectedEmployee && !!showEditModal && canUseCrm,
     select: (rows: any) => Array.isArray(rows) ? rows : [],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Sync local assigned projects state when query changes
@@ -212,6 +261,10 @@ export default function EmployeesSimple() {
   const { data: permissionsData } = useQuery<any>({
     queryKey: ['/api/settings/manager-permissions'],
     enabled: user?.role === 'admin' || user?.role === 'manager',
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Query for company addons (to show which features are contracted)
@@ -223,8 +276,46 @@ export default function EmployeesSimple() {
   }>>({
     queryKey: ['/api/company/addons'],
     enabled: user?.role === 'admin',
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
   const hasAbsencesAddon = !!companyAddons?.some((ca) => ca.status === 'active' && ca.addon?.key === 'vacation');
+
+  const { data: teams = [], isLoading: loadingTeams } = useTeams(!!user && (user.role === 'admin' || user.role === 'manager'));
+
+  const translateRoleToSpanish = (role?: string) => {
+    switch (role) {
+      case 'admin':
+        return 'Administrador';
+      case 'manager':
+        return 'Manager';
+      case 'employee':
+        return 'Empleado';
+      case 'accountant':
+        return 'Contable';
+      default:
+        return role || 'Sin rol';
+    }
+  };
+
+  const memberTeamNamesByEmployeeId = useMemo(() => {
+    const map = new Map<number, string[]>();
+
+    (teams || []).forEach((team) => {
+      const memberIds = Array.isArray(team.memberIds)
+        ? team.memberIds
+        : (team.members || []).map((member) => member.id);
+
+      memberIds.forEach((memberId) => {
+        const current = map.get(memberId) || [];
+        map.set(memberId, [...current, team.name]);
+      });
+    });
+
+    return map;
+  }, [teams]);
 
   // Absence requests (to reflect current status in listing)
   const { data: companyAbsences = [] } = useQuery<any[]>({
@@ -279,10 +370,6 @@ export default function EmployeesSimple() {
       apiRequest('PATCH', '/api/settings/manager-permissions', { managerPermissions: permissions }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/settings/manager-permissions'] });
-      toast({
-        title: 'Permisos Actualizados',
-        description: 'Los permisos de managers se han guardado correctamente.',
-      });
     },
     onError: (error: any) => {
       toast({
@@ -296,8 +383,31 @@ export default function EmployeesSimple() {
   // Mutation for updating employee
   const updateEmployeeMutation = useMutation({
     mutationFn: (data: any) => apiRequest('PATCH', `/api/employees/${selectedEmployee?.id}`, data),
-    onSuccess: () => {
+    onSuccess: (response: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/employees', selectedEmployee?.id] });
+
+      const updatedEmployee = response?.user;
+      if (updatedEmployee) {
+        setSelectedEmployee((previous: any) => previous ? { ...previous, ...updatedEmployee } : updatedEmployee);
+        setEditEmployee((previous) => ({
+          ...previous,
+          companyEmail: updatedEmployee.companyEmail || '',
+          companyPhone: updatedEmployee.companyPhone || '',
+          position: updatedEmployee.position || updatedEmployee.role || '',
+          startDate: updatedEmployee.startDate ? new Date(updatedEmployee.startDate) : previous.startDate,
+          status: updatedEmployee.status || 'active',
+          role: updatedEmployee.role || 'employee',
+          vacationDaysAdjustment: Number(updatedEmployee.vacationDaysAdjustment || 0),
+          personalEmail: updatedEmployee.personalEmail || '',
+          personalPhone: updatedEmployee.personalPhone || '',
+          address: updatedEmployee.address || '',
+          emergencyContactName: updatedEmployee.emergencyContactName || '',
+          emergencyContactPhone: updatedEmployee.emergencyContactPhone || '',
+          workReportMode: normalizeWorkReportMode(updatedEmployee.workReportMode),
+        }));
+      }
+
       toast({
         title: 'Empleado Actualizado',
         description: 'Los cambios se han guardado exitosamente.',
@@ -331,6 +441,70 @@ export default function EmployeesSimple() {
       toast({
         title: 'Error',
         description: error.message || 'No se pudo eliminar el empleado.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const saveTeamMutation = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        name: teamName.trim(),
+        description: teamDescription.trim(),
+        memberIds: teamSelectedMembers,
+      };
+
+      if (!payload.name) {
+        throw new Error('El nombre del equipo es obligatorio');
+      }
+
+      if (editingTeamId) {
+        return apiRequest('PATCH', `/api/teams/${editingTeamId}`, payload);
+      }
+
+      return apiRequest('POST', '/api/teams', payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
+      setEditingTeamId(null);
+      setIsTeamFormEditable(true);
+      setTeamName('');
+      setTeamDescription('');
+      setTeamSelectedMembers([]);
+      toast({
+        title: 'Equipo guardado',
+        description: 'Los cambios del equipo se han guardado correctamente.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error al guardar equipo',
+        description: error.message || 'No se pudo guardar el equipo.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const deleteTeamMutation = useMutation({
+    mutationFn: async (teamId: number) => apiRequest('DELETE', `/api/teams/${teamId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
+      if (editingTeamId) {
+        setEditingTeamId(null);
+        setIsTeamFormEditable(true);
+        setTeamName('');
+        setTeamDescription('');
+        setTeamSelectedMembers([]);
+      }
+      toast({
+        title: 'Equipo eliminado',
+        description: 'El equipo se ha eliminado correctamente.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error al eliminar equipo',
+        description: error.message || 'No se pudo eliminar el equipo.',
         variant: 'destructive',
       });
     },
@@ -374,6 +548,10 @@ export default function EmployeesSimple() {
   // Function to save employee changes
   const handleSaveEmployee = () => {
     if (!selectedEmployee) return;
+
+    const roleToPersist = isSelectedEmployeeOriginalAdmin
+      ? (selectedEmployeeDetail?.role || selectedEmployee?.role || 'admin')
+      : editEmployee.role;
     
     updateEmployeeMutation.mutate({
       companyEmail: editEmployee.companyEmail,
@@ -383,14 +561,14 @@ export default function EmployeesSimple() {
         ? editEmployee.startDate.toISOString().split('T')[0]
         : editEmployee.startDate,
       status: editEmployee.status,
-      role: editEmployee.role,
+      role: roleToPersist,
       vacationDaysAdjustment: editEmployee.vacationDaysAdjustment,
       personalEmail: editEmployee.personalEmail,
       personalPhone: editEmployee.personalPhone,
       address: editEmployee.address,
       emergencyContactName: editEmployee.emergencyContactName,
       emergencyContactPhone: editEmployee.emergencyContactPhone,
-      workReportMode: editEmployee.workReportMode === 'disabled' ? null : editEmployee.workReportMode,
+      workReportMode: editEmployee.workReportMode,
     });
   };
 
@@ -532,15 +710,22 @@ export default function EmployeesSimple() {
     });
   };
 
-  const { data: employees = [] } = useQuery<any>({
+  const { data: employees = [], isLoading: isLoadingEmployees } = useQuery<any>({
     queryKey: ['/api/employees'],
-    enabled: !!user && (user.role === 'admin' || user.role === 'manager')
+    enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Query to get subscription info for user limits
   const { data: subscription } = useQuery<any>({
     queryKey: ['/api/account/subscription'],
-    staleTime: 0, // Always fetch fresh data for user limits
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Query to get detailed user limits (includes extra seats purchased)
@@ -554,7 +739,10 @@ export default function EmployeesSimple() {
   }>({
     queryKey: ['/api/subscription/info'],
     enabled: !!user && user.role === 'admin',
-    staleTime: 0,
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Function to calculate role limits and availability
@@ -651,93 +839,144 @@ export default function EmployeesSimple() {
   }, [employees, activeAbsenceByEmployee]);
 
   const employeeList = computedEmployees;
-  const filteredEmployees = (employeeList || []).filter((employee: any) => {
-    // Filter by role if selected
-    const matchesRole = roleFilter === 'todos' || employee.role === roleFilter;
-    if (!matchesRole) return false;
-    
-    const matchesSearch = employee.fullName?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Check if employee is pending activation
-    const isPending = employee.isPendingActivation === true;
-    
-    // Convert filter selection to actual database values
-    const statusMap: Record<string, string> = {
-      'activos': 'active',
-      'inactivos': 'inactive', 
-      'pendientes': 'pending',
-      'de baja': 'leave',
-      'de vacaciones': 'vacation',
-      'ausencia': 'absence'
-    };
-    
-    const employeeStatus = employee.computedStatus || employee.status || 'active'; // Default to 'active' if no status
-    
-    // Handle both Spanish and English status values for compatibility
-    const normalizedEmployeeStatus = (() => {
-      // First check if pending activation
-      if (isPending) return 'pending';
-      
-      const value = (employeeStatus || '').toLowerCase();
-      switch (value) {
-        case 'activo': return 'active';
-        case 'inactivo': return 'inactive';
-        case 'on_leave':
-        case 'leave':
-        case 'de baja':
-          return 'leave';
-        case 'on_vacation':
-        case 'vacation':
-        case 'de vacaciones':
-          return 'vacation';
-        case 'ausencia':
-        case 'absence':
-          return 'absence';
-        default:
-          return value || 'active';
-      }
-    })();
-    
-    // Check status match
-    const matchesStatus = statusFilter === 'todos' || 
-               normalizedEmployeeStatus === statusMap[statusFilter] ||
-               normalizedEmployeeStatus === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  }).sort((a: any, b: any) => {
-    // Custom status priority: pendientes > activos > de vacaciones > inactivos
-    const getPriority = (employee: any) => {
+  const filteredTeamMembers = useMemo(() => {
+    const baseMembers = (employeeList || []).filter((emp: any) => emp.role !== 'accountant');
+    const query = teamMemberSearchTerm.trim().toLowerCase();
+
+    if (!query) return baseMembers;
+
+    return baseMembers.filter((emp: any) => {
+      const roleLabel = translateRoleToSpanish(emp.role).toLowerCase();
+      const teamNames = (memberTeamNamesByEmployeeId.get(emp.id) || []).join(' ').toLowerCase();
+      const fullName = String(emp.fullName || '').toLowerCase();
+
+      return fullName.includes(query) || roleLabel.includes(query) || teamNames.includes(query);
+    });
+  }, [employeeList, teamMemberSearchTerm, memberTeamNamesByEmployeeId]);
+
+  const filteredEmployees = useMemo(() => {
+    return (employeeList || []).filter((employee: any) => {
+      // Filter by role if selected
+      const matchesRole = roleFilter === 'todos' || employee.role === roleFilter;
+      if (!matchesRole) return false;
+
+      const matchesSearch = employee.fullName?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Check if employee is pending activation
       const isPending = employee.isPendingActivation === true;
-      if (isPending) return 1; // Pendientes primero
-      
-      const status = (employee.computedStatus || employee.status || 'active').toLowerCase();
-      
-      if (status === 'active' || status === 'activo') return 2; // Activos segundo
-      if (status === 'vacation' || status === 'on_vacation' || status === 'de vacaciones') return 3; // Vacaciones tercero
-      return 4; // Inactivos y otros al final
-    };
-    
-    const priorityA = getPriority(a);
-    const priorityB = getPriority(b);
-    
-    // Sort by priority (lower number = higher priority)
-    if (priorityA !== priorityB) {
-      return priorityA - priorityB;
-    }
-    
-    // If same priority, sort alphabetically by name
-    return (a.fullName || '').localeCompare(b.fullName || '');
-  });
+
+      // Convert filter selection to actual database values
+      const statusMap: Record<string, string> = {
+        'activos': 'active',
+        'inactivos': 'inactive',
+        'pendientes': 'pending',
+        'de baja': 'leave',
+        'de vacaciones': 'vacation',
+        'ausencia': 'absence'
+      };
+
+      const employeeStatus = employee.computedStatus || employee.status || 'active'; // Default to 'active' if no status
+
+      // Handle both Spanish and English status values for compatibility
+      const normalizedEmployeeStatus = (() => {
+        // First check if pending activation
+        if (isPending) return 'pending';
+
+        const value = (employeeStatus || '').toLowerCase();
+        switch (value) {
+          case 'activo': return 'active';
+          case 'inactivo': return 'inactive';
+          case 'on_leave':
+          case 'leave':
+          case 'de baja':
+            return 'leave';
+          case 'on_vacation':
+          case 'vacation':
+          case 'de vacaciones':
+            return 'vacation';
+          case 'ausencia':
+          case 'absence':
+            return 'absence';
+          default:
+            return value || 'active';
+        }
+      })();
+
+      // Check status match
+      const matchesStatus = statusFilter === 'todos' ||
+        normalizedEmployeeStatus === statusMap[statusFilter] ||
+        normalizedEmployeeStatus === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    }).sort((a: any, b: any) => {
+      // Custom status priority: pendientes > activos > de vacaciones > inactivos
+      const getPriority = (employee: any) => {
+        const isPending = employee.isPendingActivation === true;
+        if (isPending) return 1; // Pendientes primero
+
+        const status = (employee.computedStatus || employee.status || 'active').toLowerCase();
+
+        if (status === 'active' || status === 'activo') return 2; // Activos segundo
+        if (status === 'vacation' || status === 'on_vacation' || status === 'de vacaciones') return 3; // Vacaciones tercero
+        return 4; // Inactivos y otros al final
+      };
+
+      const priorityA = getPriority(a);
+      const priorityB = getPriority(b);
+
+      // Sort by priority (lower number = higher priority)
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+
+      // If same priority, sort alphabetically by name
+      return (a.fullName || '').localeCompare(b.fullName || '');
+    });
+  }, [employeeList, roleFilter, searchTerm, statusFilter]);
 
   const displaySelectedStatus = selectedEmployee
     ? selectedEmployee.isPendingActivation ? 'pending' : (selectedEmployee.computedStatus || selectedEmployee.status || 'active')
     : 'active';
 
+  const {
+    displayedCount: displayedEmployeesCount,
+    visibleItems: visibleEmployees,
+    hasMore: hasMoreEmployeesToDisplay,
+    loadMore: loadMoreEmployees,
+  } = useIncrementalList({
+    items: filteredEmployees,
+    mobileInitialCount: 10,
+    desktopInitialCount: 20,
+    resetKey: `${searchTerm}-${statusFilter}-${roleFilter}-${activeTab}`,
+  });
+
+  useStandardInfiniteScroll({
+    targetRef: loadMoreEmployeesRef,
+    enabled: activeTab === 'employees',
+    canLoadMore: hasMoreEmployeesToDisplay,
+    onLoadMore: loadMoreEmployees,
+    dependencyKey: `${activeTab}-${displayedEmployeesCount}-${filteredEmployees.length}`,
+    rootMargin: '100px',
+  });
+
   // Fetch detailed employee info for modal (ensures DNI available)
   const { data: selectedEmployeeDetail } = useQuery<any>({
     queryKey: ['/api/employees', selectedEmployee?.id],
     enabled: !!selectedEmployee && !!showEditModal,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
+
+  const isSelectedEmployeeOriginalAdmin = useMemo(() => {
+    const employeeData = selectedEmployeeDetail || selectedEmployee;
+    if (!employeeData) return false;
+    return Boolean(
+      employeeData.isOriginalAdmin ||
+      (employeeData.role === 'admin' && employeeData.createdBy === null)
+    );
+  }, [selectedEmployeeDetail, selectedEmployee]);
 
   const totalUsers = (employeeList || []).length;
 
@@ -800,9 +1039,55 @@ export default function EmployeesSimple() {
       address: employee.address || '',
       emergencyContactName: employee.emergencyContactName || '',
       emergencyContactPhone: employee.emergencyContactPhone || '',
-      workReportMode: employee.workReportMode === 'on_clockout' ? 'both' : (employee.workReportMode || 'manual'),
+      workReportMode: normalizeWorkReportMode(employee.workReportMode),
     });
     setShowEditModal(true);
+  };
+
+  const handleOpenCreateUserModal = async () => {
+    // Fetch once through React Query cache to avoid duplicate request paths
+    const freshSubscription = await queryClient.fetchQuery<any>({
+      queryKey: ['/api/account/subscription'],
+    });
+
+    const maxUsers = freshSubscription?.maxUsers || freshSubscription?.max_users || freshSubscription?.dynamic_max_users;
+    const currentUserCount = employeeList?.length || 0;
+
+    const usersByRole = (employeeList || []).reduce((acc: Record<string, number>, emp: any) => {
+      acc[emp.role] = (acc[emp.role] || 0) + 1;
+      return acc;
+    }, {});
+
+    logger.debug('USER LIMIT CHECK:', {
+      maxUsers,
+      currentUserCount,
+      usersByRole,
+      freshSubscription,
+    });
+
+    if (maxUsers && currentUserCount >= maxUsers) {
+      setLimitMessage(`No puedes añadir más usuarios.\n\nTu suscripción permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nAñade más usuarios desde la Tienda.`);
+      setShowLimitDialog(true);
+      return;
+    }
+
+    const extraAdmins = freshSubscription?.extraAdmins || 0;
+    const extraManagers = freshSubscription?.extraManagers || 0;
+    const extraEmployees = freshSubscription?.extraEmployees || 0;
+
+    const adminSeatsTotal = subscriptionInfo?.userLimits?.admins?.total ?? (extraAdmins + 1);
+    const managerSeatsTotal = subscriptionInfo?.userLimits?.managers?.total ?? extraManagers;
+    const employeeSeatsTotal = subscriptionInfo?.userLimits?.employees?.total ?? extraEmployees;
+
+    const currentPlanLimits = {
+      admin: adminSeatsTotal,
+      manager: managerSeatsTotal,
+      employee: employeeSeatsTotal,
+    };
+    logger.debug('ROLE LIMITS FOR PLAN:', currentPlanLimits);
+
+    (window as any).currentRoleLimits = { planLimits: currentPlanLimits, usersByRole };
+    setShowCreateModal(true);
   };
 
   // Helper function to translate status
@@ -908,8 +1193,9 @@ export default function EmployeesSimple() {
       {user?.role === 'admin' ? (
         <TabNavigation
           tabs={[
-            { id: 'employees', label: 'Lista de Empleados', icon: Users },
-            { id: 'managers', label: 'Gestión de Managers', icon: ShieldCheck },
+            { id: 'employees', label: isMobile ? 'Empleados' : 'Lista de Empleados', icon: Users },
+            { id: 'teams', label: 'Equipos', icon: Users },
+            { id: 'managers', label: isMobile ? 'Managers' : 'Gestión de Managers', icon: ShieldCheck },
           ]}
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -943,57 +1229,7 @@ export default function EmployeesSimple() {
                 <Filter className="w-4 h-4" />
                 Filtros
               </Button>
-              <Button onClick={async () => {
-              // CRITICAL: Force fresh subscription data
-              queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
-              
-              // Get fresh data directly from API with auth token
-              const freshSubscription = await fetch('/api/account/subscription', {
-                headers: {
-                  'Authorization': `Bearer ${token}`
-                }
-              }).then(r => r.json());
-              
-              const maxUsers = freshSubscription?.maxUsers || freshSubscription?.max_users || freshSubscription?.dynamic_max_users;
-              const currentUserCount = employeeList?.length || 0;
-              
-              // Count users by role for validation
-              const usersByRole = (employeeList || []).reduce((acc: Record<string, number>, emp: any) => {
-                acc[emp.role] = (acc[emp.role] || 0) + 1;
-                return acc;
-              }, {});
-              
-              logger.debug('USER LIMIT CHECK:', { 
-                maxUsers, 
-                currentUserCount,
-                usersByRole,
-                freshSubscription 
-              });
-              
-              // Check total user limit first
-              if (maxUsers && currentUserCount >= maxUsers) {
-                setLimitMessage(`No puedes añadir más usuarios.\n\nTu suscripción permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nAñade más usuarios desde la Tienda.`);
-                setShowLimitDialog(true);
-                return; // Do NOT open modal
-              }
-              
-              // All seats are paid - extraXXX contains the contracted seats
-              const extraAdmins = freshSubscription?.extraAdmins || 1; // Minimum 1 admin
-              const extraManagers = freshSubscription?.extraManagers || 0;
-              const extraEmployees = freshSubscription?.extraEmployees || 0;
-              
-              const currentPlanLimits = {
-                admin: extraAdmins,
-                manager: extraManagers,
-                employee: extraEmployees
-              };
-              logger.debug('ROLE LIMITS FOR PLAN:', currentPlanLimits);
-              
-              // Store in component state for modal use
-              (window as any).currentRoleLimits = { planLimits: currentPlanLimits, usersByRole };
-              
-              setShowCreateModal(true);
-            }} size="sm" className="bg-oficaz-primary hover:bg-oficaz-primary/90">
+              <Button onClick={handleOpenCreateUserModal} size="sm" className="bg-oficaz-primary hover:bg-oficaz-primary/90">
               <UserPlus className="h-4 w-4 mr-2" />
               Crear Usuario
             </Button>
@@ -1020,24 +1256,7 @@ export default function EmployeesSimple() {
                   <Filter className="w-4 h-4" />
                   <span className="text-xs">Filtros</span>
                 </Button>
-                <Button size="sm" className="bg-oficaz-primary hover:bg-oficaz-primary/90" onClick={async () => {
-                  queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
-                  const freshSubscription = await fetch('/api/account/subscription', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json());
-                  const maxUsers = freshSubscription?.maxUsers || freshSubscription?.max_users || freshSubscription?.dynamic_max_users;
-                  const currentUserCount = employeeList?.length || 0;
-                  if (maxUsers && currentUserCount >= maxUsers) {
-                    setLimitMessage(`No puedes añadir más usuarios.\n\nTu suscripción permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nAñade más usuarios desde la Tienda.`);
-                    setShowLimitDialog(true);
-                    return;
-                  }
-                  const extraAdmins = freshSubscription?.extraAdmins || 1;
-                  const extraManagers = freshSubscription?.extraManagers || 0;
-                  const extraEmployees = freshSubscription?.extraEmployees || 0;
-                  const currentPlanLimits = { admin: extraAdmins, manager: extraManagers, employee: extraEmployees };
-                  const usersByRole = (employeeList || []).reduce((acc: Record<string, number>, emp: any) => { acc[emp.role] = (acc[emp.role] || 0) + 1; return acc; }, {});
-                  (window as any).currentRoleLimits = { planLimits: currentPlanLimits, usersByRole };
-                  setShowCreateModal(true);
-                }}>
+                <Button size="sm" className="bg-oficaz-primary hover:bg-oficaz-primary/90" onClick={handleOpenCreateUserModal}>
                   <UserPlus className="h-4 w-4 mr-2" />
                   Crear
                 </Button>
@@ -1047,12 +1266,12 @@ export default function EmployeesSimple() {
 
           {/* Filters Section - role + status */}
           {showFilters && (
-            <div className="p-4 bg-card dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+            <div className={FILTER_PANEL_CLASS}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Rol</label>
+                  <label className={FILTER_LABEL_CLASS}>Rol</label>
                   <Select value={roleFilter} onValueChange={(v: any) => setRoleFilter(v)}>
-                    <SelectTrigger className="h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+                    <SelectTrigger className={FILTER_SELECT_TRIGGER_CLASS}>
                       <SelectValue placeholder="Seleccionar rol" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1064,9 +1283,9 @@ export default function EmployeesSimple() {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
+                  <label className={FILTER_LABEL_CLASS}>Estado</label>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+                    <SelectTrigger className={FILTER_SELECT_TRIGGER_CLASS}>
                       <SelectValue placeholder="Filtrar por estado" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1085,10 +1304,17 @@ export default function EmployeesSimple() {
           )}
           
           <div className="space-y-3">
-            {filteredEmployees.map((employee: any) => {
+            {isLoadingEmployees ? (
+              <ListLoadingState message="empleados" />
+            ) : filteredEmployees.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                No hay empleados que coincidan con los filtros seleccionados.
+              </div>
+            ) : (
+              visibleEmployees.map((employee: any) => {
               const displayStatus = employee.isPendingActivation ? 'pending' : (employee.computedStatus || employee.status || 'active');
               return (
-              <div key={employee.id} className="relative bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors overflow-hidden">
+              <div key={employee.id} className="relative bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600">
                 {/* Mobile Swipe Container */}
                 <div className="sm:hidden">
                   {/* Background Colors - Full width to prevent white showing */}
@@ -1113,7 +1339,7 @@ export default function EmployeesSimple() {
 
                   {/* Swipeable Content */}
                   <div 
-                    className="employee-card bg-card border rounded-lg relative z-10 p-4"
+                    className="employee-card bg-card dark:bg-gray-800 relative z-10 p-4"
                     onDoubleClick={() => handleEditEmployee(employee)}
                     onTouchStart={(e) => {
                       const touch = e.touches[0];
@@ -1346,7 +1572,222 @@ export default function EmployeesSimple() {
                 </div>
               </div>
               );
-            })}
+            })
+            )}
+
+            {!isLoadingEmployees ? (
+              <InfiniteListFooter
+                hasMore={hasMoreEmployeesToDisplay}
+                sentinelRef={loadMoreEmployeesRef}
+                onLoadMore={loadMoreEmployees}
+                hintText={`Mostrando ${visibleEmployees.length} de ${filteredEmployees.length} empleados`}
+              />
+            ) : null}
+          </div>
+        </div>
+      )}
+
+      {/* Tab Content: Teams - Admin only */}
+      {activeTab === 'teams' && user?.role === 'admin' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+          <div ref={teamEditorRef}>
+          <Card className="bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between gap-3 min-h-8">
+                <CardTitle className="text-base sm:text-lg tracking-tight">
+                  {editingTeamId ? 'Detalle del equipo' : 'Crear equipo'}
+                </CardTitle>
+                <div
+                  className={`h-8 w-[108px] flex items-center justify-end gap-1.5 ${showTeamHeaderActions ? '' : 'invisible pointer-events-none'}`}
+                  aria-hidden={!showTeamHeaderActions}
+                >
+                  {showTeamHeaderActions ? (
+                    <>
+                    <ModalActionButton
+                      intent="neutral"
+                      title="Cancelar"
+                      onClick={() => {
+                        setEditingTeamId(null);
+                        setIsTeamFormEditable(true);
+                        setTeamName('');
+                        setTeamDescription('');
+                        setTeamSelectedMembers([]);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </ModalActionButton>
+
+                    {(editingTeamId === null || isTeamFormEditable) ? (
+                      <ModalActionButton
+                        intent="save"
+                        title="Guardar"
+                        onClick={() => saveTeamMutation.mutate()}
+                        disabled={saveTeamMutation.isPending || !teamName.trim() || !isTeamFormEditable}
+                      >
+                        <Check className="h-4 w-4" />
+                      </ModalActionButton>
+                    ) : null}
+
+                    {editingTeamId !== null && !isTeamFormEditable ? (
+                      <ModalActionButton
+                        intent="edit"
+                        title="Editar"
+                        onClick={() => setIsTeamFormEditable(true)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </ModalActionButton>
+                    ) : null}
+
+                    </>
+                  ) : null}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-slate-600 dark:text-slate-300">Nombre del equipo</Label>
+                  <Input
+                    value={teamName}
+                    onChange={(e) => setTeamName(e.target.value)}
+                    placeholder="Ej: Equipo Norte"
+                    className="h-11 rounded-2xl border-slate-300/80 dark:border-slate-600/80 bg-white/90 dark:bg-slate-950/70"
+                    disabled={!isTeamFormEditable}
+                  />
+                </div>
+                <div>
+                  <Label className="text-slate-600 dark:text-slate-300">Descripción (opcional)</Label>
+                  <Input
+                    value={teamDescription}
+                    onChange={(e) => setTeamDescription(e.target.value)}
+                    placeholder="Zona o función del equipo"
+                    className="h-11 rounded-2xl border-slate-300/80 dark:border-slate-600/80 bg-white/90 dark:bg-slate-950/70"
+                    disabled={!isTeamFormEditable}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-slate-600 dark:text-slate-300">Miembros</Label>
+                <div className="mt-2 mb-2 relative">
+                  <Search className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Input
+                    value={teamMemberSearchTerm}
+                    onChange={(e) => setTeamMemberSearchTerm(e.target.value)}
+                    placeholder="Buscar por nombre, rol o grupo"
+                    className="h-10 pl-9 rounded-xl border-slate-300/80 dark:border-slate-600/80 bg-white/90 dark:bg-slate-950/70"
+                    disabled={!isTeamFormEditable}
+                  />
+                </div>
+                <div className="mt-2 max-h-56 overflow-y-auto rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-900/60 p-2 space-y-1.5">
+                  {filteredTeamMembers.map((emp: any) => {
+                    const selected = teamSelectedMembers.includes(emp.id);
+                    const memberTeamNames = memberTeamNamesByEmployeeId.get(emp.id) || [];
+                    return (
+                      <button
+                        key={`team-member-${emp.id}`}
+                        type="button"
+                        onClick={() => {
+                          if (!isTeamFormEditable) return;
+                          setTeamSelectedMembers((prev) =>
+                            prev.includes(emp.id) ? prev.filter((id) => id !== emp.id) : [...prev, emp.id]
+                          );
+                        }}
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all ${
+                          selected
+                            ? 'bg-white dark:bg-slate-800 border border-sky-300/70 dark:border-sky-700/70 shadow-sm'
+                            : 'border border-transparent hover:bg-white/80 dark:hover:bg-slate-800/70'
+                        }`}
+                        disabled={!isTeamFormEditable}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <UserAvatar fullName={emp.fullName || ''} size="sm" userId={emp.id} profilePicture={emp.profilePicture} role={emp.role} />
+                          <div className="truncate">
+                            <p className="text-sm font-medium truncate">{emp.fullName}</p>
+                            <p className="text-xs text-muted-foreground truncate">{translateRoleToSpanish(emp.role)}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {teams.length > 0 ? (
+                            <div className="flex items-center gap-1">
+                              {memberTeamNames.length > 0 ? (
+                                memberTeamNames.slice(0, 2).map((teamName) => (
+                                  <span
+                                    key={`employee-${emp.id}-team-${teamName}`}
+                                    className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-700/80 text-slate-700 dark:text-slate-200 max-w-[96px] truncate"
+                                  >
+                                    {teamName}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-200/60 dark:bg-slate-700/60 text-slate-500 dark:text-slate-300">
+                                  Sin grupo
+                                </span>
+                              )}
+                              {memberTeamNames.length > 2 ? (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-300/80 dark:bg-slate-600/80 text-slate-700 dark:text-slate-200">
+                                  +{memberTeamNames.length - 2}
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : null}
+
+                          <span className="inline-flex w-4 h-4 items-center justify-center">
+                            {selected ? <Check className="h-4 w-4 text-blue-600" /> : null}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                  {filteredTeamMembers.length === 0 ? (
+                    <p className="text-xs text-muted-foreground px-2 py-2">No se encontraron empleados con ese criterio.</p>
+                  ) : null}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          </div>
+
+          <div className="space-y-3">
+            <div className="px-1">
+              <h3 className="text-base sm:text-lg font-semibold tracking-tight text-foreground">Equipos creados</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Selecciona un equipo para verlo y editarlo en la columna izquierda.</p>
+            </div>
+
+            {loadingTeams ? (
+              <p className="text-sm text-muted-foreground px-1">Cargando equipos...</p>
+            ) : teams.length === 0 ? (
+              <p className="text-sm text-muted-foreground px-1">Todavía no hay equipos creados.</p>
+            ) : (
+              <div className="space-y-3">
+                {teams.map((team: TeamWithMembers) => (
+                  <button
+                    key={team.id}
+                    type="button"
+                    onClick={() => {
+                      setEditingTeamId(team.id);
+                      setIsTeamFormEditable(false);
+                      setTeamName(team.name || '');
+                      setTeamDescription(team.description || '');
+                      setTeamSelectedMembers(resolveTeamMemberIds(teams, team.id));
+                      focusTeamEditorOnMobile();
+                    }}
+                    className={`w-full bg-card dark:bg-gray-800 rounded-2xl shadow-sm border px-4 py-3.5 text-left transition-all ${
+                      editingTeamId === team.id
+                        ? 'border-sky-300/70 dark:border-sky-700/70 ring-1 ring-sky-200/80 dark:ring-sky-800/80'
+                        : 'border-gray-200 dark:border-gray-700 hover:shadow-md'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{team.name}</p>
+                      <Badge variant="outline" className="rounded-full border-slate-300/80 dark:border-slate-600/80 text-slate-700 dark:text-slate-300">
+                        {team.memberCount} {team.memberCount === 1 ? 'persona' : 'personas'}
+                      </Badge>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1398,19 +1839,11 @@ export default function EmployeesSimple() {
                           default: return <Settings className="h-6 w-6" />;
                         }
                       };
-                      const getFeatureColor = (key: string, active: boolean) => {
-                        if (!active) return 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600 border-gray-200 dark:border-gray-700';
-                        switch (key) {
-                          case 'time_tracking': return 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400 border-green-300 dark:border-green-700';
-                          case 'vacation': return 'bg-cyan-100 text-cyan-600 dark:bg-cyan-900/40 dark:text-cyan-400 border-cyan-300 dark:border-cyan-700';
-                          case 'schedules': return 'bg-teal-100 text-teal-600 dark:bg-teal-900/40 dark:text-teal-400 border-teal-300 dark:border-teal-700';
-                          case 'messages': return 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400 border-indigo-300 dark:border-indigo-700';
-                          case 'reminders': return 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400 border-amber-300 dark:border-amber-700';
-                          case 'work_reports': return 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 border-blue-300 dark:border-blue-700';
-                          case 'documents': return 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700';
-                          case 'ai_assistant': return 'bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400 border-purple-300 dark:border-purple-700';
-                          default: return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-gray-300 dark:border-gray-600';
+                      const getFeatureColor = (_key: string, active: boolean) => {
+                        if (!active) {
+                          return 'bg-gray-200/90 text-gray-500 dark:bg-gray-800/90 dark:text-gray-500 border border-transparent shadow-none';
                         }
+                        return 'bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 border border-gray-200/90 dark:border-gray-700/90 shadow-[0_4px_12px_rgba(15,23,42,0.08)] dark:shadow-[0_4px_14px_rgba(0,0,0,0.35)]';
                       };
                       const getFeatureName = (key: string) => {
                         switch (key) {
@@ -1418,7 +1851,7 @@ export default function EmployeesSimple() {
                           case 'vacation': return 'Vacaciones';
                           case 'schedules': return 'Cuadrante';
                           case 'messages': return 'Mensajes';
-                          case 'reminders': return 'Recordatorios';
+                          case 'reminders': return 'Tareas';
                           case 'work_reports': return 'Partes';
                           case 'documents': return 'Documentos';
                           case 'ai_assistant': return 'OficazIA';
@@ -1443,7 +1876,7 @@ export default function EmployeesSimple() {
                             setManagerPermissions(newPermissions);
                             updatePermissionsMutation.mutate(newPermissions);
                           }}
-                          className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-200 border-2 ${getFeatureColor(ca.addon.key, isVisible)} ${isVisible ? 'ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-gray-900' : 'opacity-60 hover:opacity-80'}`}
+                          className={`flex flex-col items-center justify-center p-4 rounded-2xl transition-all duration-200 ${getFeatureColor(ca.addon.key, isVisible)} ${isVisible ? 'scale-[1.01]' : 'opacity-75 hover:opacity-95'}`}
                           title={isVisible 
                             ? `Restringir ${getFeatureName(ca.addon.key)} a solo lectura con datos propios` 
                             : `Dar acceso completo a ${getFeatureName(ca.addon.key)}`}
@@ -1489,7 +1922,7 @@ export default function EmployeesSimple() {
                         setManagerPermissions(newPermissions);
                         updatePermissionsMutation.mutate(newPermissions);
                       }}
-                      className="data-[state=checked]:bg-blue-500"
+                      className={managerPermissionSwitchClass}
                     />
                   </div>
 
@@ -1510,7 +1943,7 @@ export default function EmployeesSimple() {
                         setManagerPermissions(newPermissions);
                         updatePermissionsMutation.mutate(newPermissions);
                       }}
-                      className="data-[state=checked]:bg-blue-500"
+                      className={managerPermissionSwitchClass}
                     />
                   </div>
 
@@ -1531,7 +1964,7 @@ export default function EmployeesSimple() {
                         setManagerPermissions(newPermissions);
                         updatePermissionsMutation.mutate(newPermissions);
                       }}
-                      className="data-[state=checked]:bg-blue-500"
+                      className={managerPermissionSwitchClass}
                     />
                   </div>
 
@@ -1552,7 +1985,7 @@ export default function EmployeesSimple() {
                         setManagerPermissions(newPermissions);
                         updatePermissionsMutation.mutate(newPermissions);
                       }}
-                      className="data-[state=checked]:bg-blue-500"
+                      className={managerPermissionSwitchClass}
                     />
                   </div>
 
@@ -1573,7 +2006,7 @@ export default function EmployeesSimple() {
                         setManagerPermissions(newPermissions);
                         updatePermissionsMutation.mutate(newPermissions);
                       }}
-                      className="data-[state=checked]:bg-blue-500"
+                      className={managerPermissionSwitchClass}
                     />
                   </div>
                 </div>
@@ -1802,49 +2235,72 @@ export default function EmployeesSimple() {
 
       {/* Edit Employee Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-4xl w-full max-h-[95vh] overflow-hidden">
-          <DialogHeader className="pb-2">
-            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">
-              Editar Empleado
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent showCloseButton={false} className="max-w-7xl w-[96vw] max-h-[94vh] overflow-hidden p-0 rounded-2xl sm:rounded-[28px] border border-black/10 dark:border-white/10 bg-[#f8f8fa] dark:bg-[#111216] shadow-2xl">
+          <ModalHeaderWithActions
+            title="Editar Empleado"
+            className="px-5 md:px-6 py-4 border-b border-black/5 dark:border-white/10 bg-white/75 dark:bg-zinc-950/75 backdrop-blur-xl"
+            titleClassName="text-xl font-semibold text-gray-900 dark:text-gray-100"
+            actions={(
+              <>
+                <ModalActionButton
+                  intent="neutral"
+                  title="Cerrar"
+                  onClick={() => setShowEditModal(false)}
+                  disabled={updateEmployeeMutation.isPending}
+                >
+                  <X className="h-4 w-4" />
+                </ModalActionButton>
+                <ModalActionButton
+                  intent="save"
+                  title="Guardar cambios"
+                  onClick={handleSaveEmployee}
+                  disabled={updateEmployeeMutation.isPending}
+                >
+                  <Check className="h-4 w-4" />
+                </ModalActionButton>
+              </>
+            )}
+          />
           
           {selectedEmployee && (
-            <div className="overflow-y-auto max-h-[calc(95vh-140px)] px-1">
+            <div className="overflow-y-auto max-h-[calc(94vh-72px)] px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-5">
               {/* Employee Header */}
-              <div className="bg-gradient-to-r from-oficaz-primary/5 to-blue-50 dark:from-oficaz-primary/10 dark:to-blue-950/30 p-4 rounded-lg mb-4">
-                <div className="flex items-center gap-3">
-                  <UserAvatar fullName={selectedEmployee.fullName || ''} size="lg" userId={selectedEmployee.id} profilePicture={selectedEmployee.profilePicture} showUpload={true} />
+              <div className="bg-gradient-to-r from-oficaz-primary/8 via-white to-sky-50 dark:from-oficaz-primary/12 dark:via-zinc-900 dark:to-sky-950/30 p-3 sm:p-5 rounded-[20px] sm:rounded-[24px] mb-4 sm:mb-5 border border-black/5 dark:border-white/10 shadow-sm">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="hidden sm:block"><UserAvatar fullName={selectedEmployee.fullName || ''} size="lg" userId={selectedEmployee.id} profilePicture={selectedEmployee.profilePicture} showUpload={true} /></div>
+                  <div className="block sm:hidden"><UserAvatar fullName={selectedEmployee.fullName || ''} size="md" userId={selectedEmployee.id} profilePicture={selectedEmployee.profilePicture} showUpload={false} /></div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100 truncate">{selectedEmployee.fullName}</h3>
-                    <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <h3 className="font-semibold text-base sm:text-xl text-gray-900 dark:text-gray-100 truncate">{selectedEmployee.fullName}</h3>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm text-gray-600 dark:text-gray-400 mt-1 sm:mt-1.5">
                       <div className="flex items-center gap-1">
                         <IdCard className="h-3 w-3" />
                         <span>{selectedEmployeeDetail?.dni || selectedEmployee?.dni || ''}</span>
                       </div>
+                      <div className="flex items-center gap-1">
+                        <Shield className="h-3 w-3" />
+                        <span>{translateRoleToSpanish(editEmployee.role)}</span>
+                      </div>
                     </div>
                   </div>
                   <div>
-                    <Badge className={`${getStatusColor(displaySelectedStatus)} capitalize border-0`}>
+                    <Badge className={`${getStatusColor(displaySelectedStatus)} capitalize border-0 rounded-full px-3 py-1`}>
                       {translateStatus(displaySelectedStatus)}
                     </Badge>
                   </div>
                 </div>
               </div>
 
-              {/* Two Column Layout */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Left Column - Corporate Fields */}
-                <div className="space-y-4">
-                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 items-start xl:items-stretch">
+                <div className="bg-white/88 dark:bg-zinc-900/88 border border-black/5 dark:border-white/10 rounded-[24px] p-5 shadow-sm backdrop-blur h-full">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-4">
+                    <div className="w-7 h-7 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
                         <Shield className="h-3 w-3 text-blue-600 dark:text-blue-400" />
                       </div>
-                      Información Corporativa
-                    </h4>
-                    
-                    <div className="space-y-3">
+                    Entorno laboral
+                  </h4>
+
+                  <div className="space-y-4">
+                    <div className="space-y-3 rounded-2xl bg-slate-50/90 dark:bg-zinc-950/70 border border-black/5 dark:border-white/10 p-4">
                       <div>
                         <Label htmlFor="companyEmail" className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Corporativo</Label>
                         <Input
@@ -1853,7 +2309,7 @@ export default function EmployeesSimple() {
                           value={editEmployee.companyEmail}
                           onChange={(e) => setEditEmployee({ ...editEmployee, companyEmail: e.target.value })}
                           placeholder="empleado@empresa.com"
-                          className="mt-1"
+                          className="mt-1 rounded-xl"
                         />
                       </div>
                       
@@ -1864,7 +2320,7 @@ export default function EmployeesSimple() {
                           value={editEmployee.companyPhone}
                           onChange={(e) => setEditEmployee({ ...editEmployee, companyPhone: e.target.value })}
                           placeholder="666 666 666"
-                          className="mt-1"
+                          className="mt-1 rounded-xl"
                         />
                       </div>
                       
@@ -1875,13 +2331,13 @@ export default function EmployeesSimple() {
                           value={editEmployee.position}
                           onChange={(e) => setEditEmployee({ ...editEmployee, position: e.target.value })}
                           placeholder="Administrativo, Técnico, etc."
-                          className="mt-1"
+                          className="mt-1 rounded-xl"
                         />
                       </div>
                       
                       <div>
                         <Label htmlFor="startDate" className="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Incorporación</Label>
-                        <div className="mt-1">
+                        <div className="mt-1 rounded-xl overflow-hidden">
                           <DatePickerDayEmployee
                             date={editEmployee.startDate}
                             onDateChange={(date) => setEditEmployee({ ...editEmployee, startDate: date || new Date() })}
@@ -1896,7 +2352,7 @@ export default function EmployeesSimple() {
                           value={editEmployee.status}
                           onValueChange={(value) => setEditEmployee({ ...editEmployee, status: value })}
                         >
-                          <SelectTrigger className="w-full mt-1">
+                          <SelectTrigger className="w-full mt-1 rounded-xl">
                             <SelectValue placeholder="Seleccionar estado" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1908,12 +2364,15 @@ export default function EmployeesSimple() {
                         </Select>
                       </div>
 
+                    </div>
+
+                    <div className="space-y-3 rounded-2xl bg-slate-50/90 dark:bg-zinc-950/70 border border-black/5 dark:border-white/10 p-4">
                       <div>
                         <Label htmlFor="role" className="text-sm font-medium text-gray-700 dark:text-gray-300">Tipo de Usuario</Label>
                         {/* ⚠️ PROTECTED: Original admin (createdBy === null) cannot have role changed */}
-                        {selectedEmployee?.createdBy === null ? (
+                        {isSelectedEmployeeOriginalAdmin ? (
                           <div className="mt-1">
-                            <div className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md">
+                            <div className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
                               <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Administrador Original</span>
                               <Badge variant="secondary" className="bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300">
                                 Protegido
@@ -1928,7 +2387,7 @@ export default function EmployeesSimple() {
                             value={editEmployee.role}
                             onValueChange={(value) => setEditEmployee({ ...editEmployee, role: value })}
                           >
-                            <SelectTrigger className="w-full mt-1">
+                            <SelectTrigger className="w-full mt-1 rounded-xl">
                               <SelectValue placeholder="Seleccionar tipo" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1957,7 +2416,7 @@ export default function EmployeesSimple() {
                             value={editEmployee.role}
                             onValueChange={(value) => setEditEmployee({ ...editEmployee, role: value })}
                           >
-                            <SelectTrigger className="w-full mt-1">
+                            <SelectTrigger className="w-full mt-1 rounded-xl">
                               <SelectValue placeholder="Seleccionar tipo" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1976,7 +2435,7 @@ export default function EmployeesSimple() {
                             </SelectContent>
                           </Select>
                         )}
-                        {user?.role === 'manager' && selectedEmployee?.createdBy !== null && (
+                        {user?.role === 'manager' && !isSelectedEmployeeOriginalAdmin && (
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             Como manager, no puedes asignar rol de administrador
                           </p>
@@ -1984,11 +2443,84 @@ export default function EmployeesSimple() {
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  {/* Work Reports Configuration */}
-                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+                <div className="bg-white/88 dark:bg-zinc-900/88 border border-black/5 dark:border-white/10 rounded-[24px] p-5 shadow-sm backdrop-blur h-full">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-4">
+                    <div className="w-7 h-7 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
+                      <User className="h-3 w-3 text-green-600 dark:text-green-400" />
+                    </div>
+                    Información personal
+                  </h4>
+
+                  <div className="space-y-4">
+                    <div className="space-y-3 rounded-2xl bg-slate-50/90 dark:bg-zinc-950/70 border border-black/5 dark:border-white/10 p-4">
+                      <div>
+                        <Label htmlFor="personalEmail" className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Personal</Label>
+                        <Input
+                          id="personalEmail"
+                          type="email"
+                          value={editEmployee.personalEmail}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, personalEmail: e.target.value })}
+                          placeholder="email@personal.com"
+                          className="mt-1 rounded-xl"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="personalPhone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono Personal</Label>
+                        <Input
+                          id="personalPhone"
+                          value={editEmployee.personalPhone}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, personalPhone: e.target.value })}
+                          placeholder="+34 666 666 666"
+                          className="mt-1 rounded-xl"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="address" className="text-sm font-medium text-gray-700 dark:text-gray-300">Dirección</Label>
+                        <Input
+                          id="address"
+                          value={editEmployee.address}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, address: e.target.value })}
+                          placeholder="Calle, número, ciudad..."
+                          className="mt-1 rounded-xl"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 rounded-2xl bg-slate-50/90 dark:bg-zinc-950/70 border border-black/5 dark:border-white/10 p-4">
+                      <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Contacto de emergencia</h5>
+                      <div>
+                        <Label htmlFor="emergencyContactName" className="text-sm font-medium text-gray-700 dark:text-gray-300">Persona de Contacto</Label>
+                        <Input
+                          id="emergencyContactName"
+                          value={editEmployee.emergencyContactName}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, emergencyContactName: e.target.value })}
+                          placeholder="Nombre del contacto de emergencia"
+                          className="mt-1 rounded-xl"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="emergencyContactPhone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono de Contacto</Label>
+                        <Input
+                          id="emergencyContactPhone"
+                          value={editEmployee.emergencyContactPhone}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, emergencyContactPhone: e.target.value })}
+                          placeholder="+34 666 666 666"
+                          className="mt-1 rounded-xl"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 h-full">
+                  <div className="bg-white/88 dark:bg-zinc-900/88 border border-black/5 dark:border-white/10 rounded-[24px] p-5 shadow-sm backdrop-blur">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-4">
+                      <div className="w-7 h-7 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center">
                         <ClipboardList className="h-3 w-3 text-orange-600 dark:text-orange-400" />
                       </div>
                       Partes de Obra
@@ -2000,7 +2532,7 @@ export default function EmployeesSimple() {
                       </p>
                       
                       <div className="space-y-2">
-                        <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
+                        <label className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
                           <input
                             type="radio"
                             name="workReportMode"
@@ -2015,7 +2547,7 @@ export default function EmployeesSimple() {
                           </div>
                         </label>
                         
-                        <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
+                        <label className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
                           <input
                             type="radio"
                             name="workReportMode"
@@ -2030,7 +2562,7 @@ export default function EmployeesSimple() {
                           </div>
                         </label>
                         
-                        <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
+                        <label className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
                           <input
                             type="radio"
                             name="workReportMode"
@@ -2047,81 +2579,10 @@ export default function EmployeesSimple() {
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Right Column - Personal Info */}
-                <div className="space-y-4">
-                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                        <User className="h-3 w-3 text-green-600 dark:text-green-400" />
-                      </div>
-                      Información Personal
-                    </h4>
-                    
-                    <div className="space-y-3">
-                      <div>
-                        <Label htmlFor="personalEmail" className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Personal</Label>
-                        <Input
-                          id="personalEmail"
-                          type="email"
-                          value={editEmployee.personalEmail}
-                          onChange={(e) => setEditEmployee({ ...editEmployee, personalEmail: e.target.value })}
-                          placeholder="email@personal.com"
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="personalPhone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono Personal</Label>
-                        <Input
-                          id="personalPhone"
-                          value={editEmployee.personalPhone}
-                          onChange={(e) => setEditEmployee({ ...editEmployee, personalPhone: e.target.value })}
-                          placeholder="+34 666 666 666"
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="address" className="text-sm font-medium text-gray-700 dark:text-gray-300">Dirección</Label>
-                        <Input
-                          id="address"
-                          value={editEmployee.address}
-                          onChange={(e) => setEditEmployee({ ...editEmployee, address: e.target.value })}
-                          placeholder="Calle, número, ciudad..."
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="emergencyContactName" className="text-sm font-medium text-gray-700 dark:text-gray-300">Persona de Contacto</Label>
-                        <Input
-                          id="emergencyContactName"
-                          value={editEmployee.emergencyContactName}
-                          onChange={(e) => setEditEmployee({ ...editEmployee, emergencyContactName: e.target.value })}
-                          placeholder="Nombre del contacto de emergencia"
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="emergencyContactPhone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono de Contacto</Label>
-                        <Input
-                          id="emergencyContactPhone"
-                          value={editEmployee.emergencyContactPhone}
-                          onChange={(e) => setEditEmployee({ ...editEmployee, emergencyContactPhone: e.target.value })}
-                          placeholder="+34 666 666 666"
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Vacation Management */}
-                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                  <div className="bg-white/88 dark:bg-zinc-900/88 border border-black/5 dark:border-white/10 rounded-[24px] p-5 shadow-sm backdrop-blur">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-4">
+                      <div className="w-7 h-7 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
                         <Calendar className="h-3 w-3 text-green-600 dark:text-green-400" />
                       </div>
                       Gestión de Vacaciones
@@ -2129,7 +2590,7 @@ export default function EmployeesSimple() {
                     
                     <div className="space-y-3">
                       {/* Current Vacation Status */}
-                      <div className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/30 dark:to-green-900/30 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
+                      <div className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/30 dark:to-green-900/30 p-3 rounded-2xl border border-blue-100 dark:border-blue-800">
                         <div className="grid grid-cols-3 gap-2 text-center">
                           <div>
                             <p className="text-lg font-bold text-blue-600">
@@ -2166,7 +2627,7 @@ export default function EmployeesSimple() {
                         <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                           Ajuste Manual
                         </Label>
-                        <div className="bg-muted p-3 rounded-lg">
+                        <div className="bg-muted p-3 rounded-2xl">
                           <div className="flex items-center justify-center gap-2">
                             <Button
                               type="button"
@@ -2212,11 +2673,10 @@ export default function EmployeesSimple() {
                     </div>
                   </div>
 
-                  {/* CRM Projects assignment (only if CRM is enabled) */}
                   {canUseCrm && (
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-3">
-                        <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                    <div className="bg-white/88 dark:bg-zinc-900/88 border border-black/5 dark:border-white/10 rounded-[24px] p-5 shadow-sm backdrop-blur">
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-3">
+                        <div className="w-7 h-7 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
                           <Users className="h-3 w-3 text-blue-600 dark:text-blue-400" />
                         </div>
                         Proyectos (CRM)
@@ -2232,12 +2692,12 @@ export default function EmployeesSimple() {
                           placeholder="Buscar proyecto..."
                           value={employeeProjectSearch}
                           onChange={(e) => setEmployeeProjectSearch(e.target.value)}
-                          className="pl-10 h-9 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                          className="pl-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
                         />
                       </div>
 
                       {/* Dos columnas: Disponibles | Asignados */}
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Disponibles */}
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
@@ -2255,7 +2715,7 @@ export default function EmployeesSimple() {
                               </button>
                             )}
                           </div>
-                          <div className="h-64 overflow-y-auto space-y-1 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-2 border border-gray-200 dark:border-gray-700">
+                          <div className="h-64 overflow-y-auto space-y-1 bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-2 border border-gray-200 dark:border-gray-700">
                             {filteredAvailableProjects.length === 0 ? (
                               <div className="text-center py-8 text-xs text-gray-500 dark:text-gray-400">
                                 {employeeProjectSearch ? 'No hay proyectos que coincidan' : 'Todos asignados'}
@@ -2295,7 +2755,7 @@ export default function EmployeesSimple() {
                               </button>
                             )}
                           </div>
-                          <div className="h-64 overflow-y-auto space-y-1 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl p-2 border border-blue-200 dark:border-blue-800">
+                          <div className="h-64 overflow-y-auto space-y-1 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl p-2 border border-blue-200 dark:border-blue-800">
                             {filteredAssignedProjects.length === 0 ? (
                               <div className="text-center py-8 text-xs text-gray-500 dark:text-gray-400">
                                 {employeeProjectSearch ? 'No hay proyectos que coincidan' : 'Ningún proyecto asignado'}
@@ -2326,7 +2786,7 @@ export default function EmployeesSimple() {
               </div>
 
               {/* Action Buttons - Responsive layout */}
-              <div className="flex flex-col sm:flex-row sm:justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-3 pt-4 sm:pt-5 border-t border-black/5 dark:border-white/10 mt-4 sm:mt-6">
                 {/* Delete Button */}
                 <Button 
                   variant="destructive" 

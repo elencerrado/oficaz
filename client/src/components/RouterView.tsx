@@ -2,7 +2,7 @@ import { Switch, Route, Redirect, useLocation } from "wouter";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useFeatureCheck } from "@/hooks/use-feature-check";
-import { clearAuthData } from "@/lib/auth";
+import { clearAuthData, isTokenExpired } from "@/lib/auth";
 import { useEmployeeViewMode } from "@/hooks/use-employee-view-mode";
 import { PageLoading } from "@/components/ui/page-loading";
 import { AuthPageLoading } from "@/components/ui/auth-page-loading";
@@ -101,6 +101,7 @@ const SuperAdminInvitations = lazy(() => import("@/pages/super-admin-invitations
 const SuperAdminPromoCodes = lazy(() => import("@/pages/super-admin-promo-codes"));
 const SuperAdminMarketing = lazy(() => import("@/pages/super-admin-marketing"));
 const SuperAdminLandingMetrics = lazy(() => import("@/pages/super-admin-landing-metrics"));
+const SuperAdminIncidents = lazy(() => import("@/pages/super-admin-incidents"));
 
 // SuperAdmin specific loading component
 import { SuperAdminPageLoading } from "@/components/layout/super-admin-page-loading";
@@ -186,14 +187,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, company, isLoading, token } = useAuth();
   const [, setLocation] = useLocation();
   
-  const { data: trialStatus, isLoading: trialLoading } = useQuery<{ isBlocked: boolean }>({
+  const { data: trialStatus, isLoading: trialLoading } = useQuery<{ isBlocked: boolean; subscriptionInFlight?: boolean }>({
     queryKey: ['/api/account/trial-status'],
     staleTime: 30000,
     enabled: !!user && user.role !== 'accountant',
   });
 
   useEffect(() => {
-    if (!isLoading && (!user || !token)) {
+    if (!isLoading && (!user || !token || (token && isTokenExpired(token)))) {
       clearAuthData();
       if (window.history?.replaceState) {
         window.history.replaceState(null, '', '/login');
@@ -204,7 +205,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   // Don't block rendering - let children render even while loading
   // The page will show its own loading state (spinner) instead of full-screen block
-  if (!user || !token) {
+  if (!user || !token || (token && isTokenExpired(token))) {
     return <PageLoading />;
   }
   
@@ -213,9 +214,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  const isTrialExpired = trialStatus?.isBlocked === true;
+  // Check if subscription is in flight - don't block if it's being created
+  const isSubscriptionInFlight = trialStatus?.subscriptionInFlight === true;
+  const isTrialExpired = trialStatus?.isBlocked === true && !isSubscriptionInFlight;
   
-  if (isTrialExpired) {
+  if (isTrialExpired || isSubscriptionInFlight) {
     if (user.role === 'admin') {
       const companyAlias = company?.companyAlias || 'test';
       return <Redirect to={`/${companyAlias}/tienda`} />;
@@ -234,10 +237,10 @@ function FeatureProtectedRoute({
   feature: FeatureKey;
 }) {
   const { user, company } = useAuth();
-  const { hasAccess, isLoading } = useFeatureCheck();
+  const { hasAccess, isManagerPermissionsLoading } = useFeatureCheck();
 
   // Don't block rendering while feature check loads - let page render and handle restrictions
-  if (isLoading) {
+  if (isManagerPermissionsLoading) {
     return <>{children}</>;
   }
 
@@ -265,7 +268,7 @@ function ManagerFeatureGate({
   feature 
 }: { 
   children: React.ReactNode; 
-  feature: string;
+  feature?: string;
 }) {
   // Managers can always access pages - the access level (full vs read-only) 
   // is controlled within each page via useFeatureCheck hooks.
@@ -291,7 +294,7 @@ function StoreRoute({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { showBanner } = useDemoBanner();
   
-  const { data: trialStatus, isLoading: trialLoading } = useQuery<{ isBlocked: boolean }>({
+  const { data: trialStatus, isLoading: trialLoading } = useQuery<{ isBlocked: boolean; subscriptionInFlight?: boolean }>({
     queryKey: ['/api/account/trial-status'],
     staleTime: 30000,
     enabled: !!user && user.role !== 'accountant',
@@ -322,9 +325,11 @@ function StoreRoute({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  const isTrialExpired = trialStatus?.isBlocked === true;
+  // Check if subscription is in flight - don't block if it's being created
+  const isSubscriptionInFlight = trialStatus?.subscriptionInFlight === true;
+  const isTrialExpired = trialStatus?.isBlocked === true && !isSubscriptionInFlight;
   
-  if (isTrialExpired) {
+  if (isTrialExpired || isSubscriptionInFlight) {
     if (user.role === 'admin') {
       return (
         <TrialExpiredLayout>
@@ -612,11 +617,6 @@ function Router() {
             <SuperAdminMetrics />
           </Suspense>
         </Route>
-        <Route path="/super-admin/plans">
-          <Suspense fallback={<SuperAdminPageLoading />}>
-            <SuperAdminPlans />
-          </Suspense>
-        </Route>
         <Route path="/super-admin/pricing">
           <Suspense fallback={<SuperAdminPageLoading />}>
             <SuperAdminPricing />
@@ -647,6 +647,11 @@ function Router() {
         <Route path="/super-admin/marketing">
           <Suspense fallback={<SuperAdminPageLoading />}>
             <SuperAdminMarketing />
+          </Suspense>
+        </Route>
+        <Route path="/super-admin/incidencias">
+          <Suspense fallback={<SuperAdminPageLoading />}>
+            <SuperAdminIncidents />
           </Suspense>
         </Route>
         <Route path="/super-admin/landing-metrics">
@@ -877,6 +882,14 @@ function Router() {
       </Route>
 
       <Route path="/:companyAlias/misdocumentos">
+        <ProtectedRoute>
+          <AppLayout>
+            <EmployeeDocuments />
+          </AppLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/:companyAlias/mis-documentos">
         <ProtectedRoute>
           <AppLayout>
             <EmployeeDocuments />

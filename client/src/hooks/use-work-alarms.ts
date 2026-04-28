@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { getAuthData } from '@/lib/auth';
+import { useAuth } from '@/hooks/use-auth';
 
 interface WorkAlarm {
   id: number;
@@ -16,6 +17,9 @@ interface WorkAlarm {
 }
 
 export function useWorkAlarms() {
+  const { user } = useAuth();
+  const userId = user?.id;
+  
   const [pushSubscription, setPushSubscription] = useState<PushSubscription | null>(null);
   const [serviceWorkerRegistration, setServiceWorkerRegistration] = useState<ServiceWorkerRegistration | null>(null);
   const [pushPermission, setPushPermission] = useState<'granted' | 'denied' | 'default'>('default');

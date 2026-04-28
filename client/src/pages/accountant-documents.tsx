@@ -53,6 +53,9 @@ export default function AccountantDocuments() {
     queryKey: ['/api/accountant/companies'],
     enabled: user?.role === 'accountant',
     refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
   });
 
   const selectedCompany = useMemo(
@@ -71,6 +74,9 @@ export default function AccountantDocuments() {
       return response.json();
     },
     refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
   });
 
   const { data: documents = [], isLoading: isLoadingDocuments } = useQuery<Document[]>({
@@ -86,6 +92,9 @@ export default function AccountantDocuments() {
       return response.json();
     },
     refetchOnWindowFocus: false,
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
   });
 
   if (user?.role !== 'accountant') {

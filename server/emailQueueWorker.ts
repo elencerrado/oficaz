@@ -14,7 +14,7 @@
 import { processEmailQueue, cleanupOldEmails, cleanupExpiredTokens } from './emailQueue';
 
 const BATCH_SIZE = 10; // Process 10 emails per batch
-const PROCESS_INTERVAL = 10000; // Check every 10 seconds
+const PROCESS_INTERVAL = 60000; // Check every 60 seconds (emails are not real-time; reduces Neon compute)
 const CLEANUP_INTERVAL = 60 * 60 * 1000; // Cleanup every hour
 const RATE_LIMIT_DELAY = 100; // 100ms delay between batches to avoid rate limiting
 

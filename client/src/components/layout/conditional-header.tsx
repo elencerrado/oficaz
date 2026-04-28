@@ -15,7 +15,7 @@ export function ConditionalHeader() {
     const path = window.location.pathname;
     const titleMap: Record<string, { title: string; subtitle: string }> = {
       '/messages': { title: 'Mensajes', subtitle: 'Comunicación interna de la empresa' },
-      '/reminders': { title: 'Recordatorios', subtitle: 'Gestiona recordatorios y tareas' },
+      '/reminders': { title: 'Tareas', subtitle: 'Gestiona tus tareas y avisos' },
       '/employees-simple': { title: 'Empleados', subtitle: 'Gestión de empleados' },
       '/settings': { title: 'Configuración', subtitle: 'Configuración de la empresa' },
       '/notifications': { title: 'Notificaciones', subtitle: 'Centro de notificaciones' },
@@ -28,7 +28,7 @@ export function ConditionalHeader() {
       const page = aliasMatch[1];
       const aliasMap: Record<string, { title: string; subtitle: string }> = {
         'mensajes': { title: 'Mensajes', subtitle: 'Comunicación interna de la empresa' },
-        'recordatorios': { title: 'Recordatorios', subtitle: 'Gestiona recordatorios y tareas' },
+        'recordatorios': { title: 'Tareas', subtitle: 'Gestiona tus tareas y avisos' },
         'empleados': { title: 'Empleados', subtitle: 'Gestión de empleados' },
         'configuracion': { title: 'Configuración', subtitle: 'Configuración de la empresa' },
       };

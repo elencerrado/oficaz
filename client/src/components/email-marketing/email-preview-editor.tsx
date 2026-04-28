@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Monitor, Smartphone, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { openWhatsApp } from '@/lib/whatsapp';
+import { getAuthHeaders } from '@/lib/auth';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Dialog,
@@ -90,18 +92,9 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
       formData.append('image', pendingFile);
       formData.append('width', width.toString());
 
-      // Get super admin token
-      const token = sessionStorage.getItem('superAdminToken');
-
-      if (!token) {
-        throw new Error('Sesión expirada. Por favor, vuelve a iniciar sesión.');
-      }
-
       const response = await fetch('/api/super-admin/email-marketing/upload-image', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
         body: formData,
       });
 
@@ -516,8 +509,7 @@ export function EmailPreviewEditor({ content, onChange, audienceType = 'subscrib
                 <td style={{ padding: '24px 40px', textAlign: 'center', backgroundColor: '#ffffff' }}>
                   <a 
                     href="https://wa.me/34614028600" 
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    onClick={(event) => openWhatsApp('34614028600', { event })}
                     style={{ 
                       display: 'inline-block',
                       backgroundColor: '#25D366', 

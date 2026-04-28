@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Clock, Mail, MailOpen, MousePointerClick } from "lucide-react";
 import { format, parseISO, isSameDay } from "date-fns";
 import { es } from "date-fns/locale";
+import { getAuthHeaders } from '@/lib/auth';
 
 interface CampaignHistoryDialogProps {
   campaignId: number;
@@ -25,11 +26,8 @@ export function CampaignHistoryDialog({ campaignId, campaignName, open, onOpenCh
   const { data: sends = [], isLoading } = useQuery<EmailSend[]>({
     queryKey: ['/api/super-admin/email-campaigns', campaignId, 'history'],
     queryFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-campaigns/${campaignId}/history`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch campaign history');
       return response.json();

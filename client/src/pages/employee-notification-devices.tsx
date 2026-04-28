@@ -56,6 +56,10 @@ export default function NotificationDevices() {
 
   const { data: subscriptions, isLoading } = useQuery<PushSubscription[]>({
     queryKey: ["/api/push/subscriptions"],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const deleteMutation = useMutation({

@@ -4,6 +4,7 @@ import { SuperAdminSidebar } from './super-admin-sidebar';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { isTokenExpired } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 interface SuperAdminLayoutProps {
   children: React.ReactNode;
@@ -11,21 +12,21 @@ interface SuperAdminLayoutProps {
 
 export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
 
   useEffect(() => {
     const token = sessionStorage.getItem('superAdminToken');
     
     // If no token exists, redirect to login
     if (!token) {
-      console.log('🚨 No SuperAdmin token found, redirecting to login');
+      logger.log('🚨 No SuperAdmin token found, redirecting to login');
       setLocation('/super-admin');
       return;
     }
     
     // If token exists but is expired, clear it and redirect
     if (isTokenExpired(token)) {
-      console.log('🚨 SuperAdmin token expired, redirecting to login');
+      logger.log('🚨 SuperAdmin token expired, redirecting to login');
       sessionStorage.removeItem('superAdminToken');
       setLocation('/super-admin');
       return;
@@ -35,7 +36,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
     const intervalId = setInterval(() => {
       const currentToken = sessionStorage.getItem('superAdminToken');
       if (!currentToken || isTokenExpired(currentToken)) {
-        console.log('🚨 SuperAdmin token expired (periodic check), redirecting to login');
+        logger.log('🚨 SuperAdmin token expired (periodic check), redirecting to login');
         sessionStorage.removeItem('superAdminToken');
         setLocation('/super-admin');
       }
@@ -43,6 +44,23 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
     
     return () => clearInterval(intervalId);
   }, [setLocation]);
+
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location]);
+
+  useEffect(() => {
+    if (!isSidebarOpen) return;
+
+    const handleEscClose = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscClose);
+    return () => window.removeEventListener('keydown', handleEscClose);
+  }, [isSidebarOpen]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
@@ -54,6 +72,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
           variant="ghost"
           size="sm"
           onClick={() => setIsSidebarOpen(true)}
+          aria-label="Abrir menú de superadmin"
           className="text-white hover:bg-white/10"
         >
           <Menu className="h-6 w-6" />

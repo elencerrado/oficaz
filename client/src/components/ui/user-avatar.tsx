@@ -29,6 +29,41 @@ const getRoleIndicator = (role?: 'admin' | 'manager' | 'employee') => {
   return roleConfig[role];
 };
 
+const normalizeProfilePictureUrl = (value?: string | null): string | null => {
+  if (!value) return null;
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  if (
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:') ||
+    /^https?:\/\//i.test(trimmed)
+  ) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith('/uploads/') || trimmed.startsWith('/public-objects/')) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith('uploads/') || trimmed.startsWith('public-objects/')) {
+    return `/${trimmed}`;
+  }
+
+  if (trimmed.startsWith('/')) {
+    return trimmed;
+  }
+
+  return `/public-objects/${trimmed.replace(/^\/+/, '')}`;
+};
+
+const appendCacheBuster = (url: string, version: number): string => {
+  if (!version) return url;
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}v=${version}`;
+};
+
 export function UserAvatar({ fullName, size = 'md', className = '', userId, profilePicture, showUpload = false, role }: UserAvatarProps) {
   const { toast } = useToast();
   const { refreshUser } = useAuth();
@@ -40,12 +75,18 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
   const [processingStatus, setProcessingStatus] = useState<string | null>(null);
   const [pollingTimeoutId, setPollingTimeoutId] = useState<NodeJS.Timeout | null>(null);
   const [cacheBuster, setCacheBuster] = useState<number>(0);
+  const previousProfilePictureRef = useRef<string | null | undefined>(profilePicture);
+  const resolvedProfilePicture = normalizeProfilePictureUrl(localProfilePicture || profilePicture);
   
   // Sincronizar estado local con props cuando cambian
   useEffect(() => {
-    setLocalProfilePicture(profilePicture || null);
-    // Only update cache buster when actual image reference changes
-    setCacheBuster((v) => v + 1);
+    // Solo actualizar si la imagen realmente cambió a algo diferente
+    // Ignorar cambios a undefined/null si ya tenemos una imagen cargada
+    if (profilePicture && profilePicture !== previousProfilePictureRef.current) {
+      setLocalProfilePicture(profilePicture);
+      setCacheBuster((v) => v + 1);
+      previousProfilePictureRef.current = profilePicture;
+    }
   }, [profilePicture]);
 
   // Cleanup polling on unmount
@@ -311,9 +352,9 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
         />
         
         {/* Mostrar foto real si está disponible */}
-        {(localProfilePicture || profilePicture) ? (
+        {resolvedProfilePicture ? (
           <img 
-            src={(localProfilePicture || profilePicture) as string} 
+            src={resolvedProfilePicture} 
             alt={fullName}
             style={{
               position: 'absolute',
@@ -519,8 +560,8 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
         />
         {/* Imagen encima del fondo */}
         <img 
-          src={(localProfilePicture || profilePicture) 
-            ? `${localProfilePicture || profilePicture}${cacheBuster ? `?v=${cacheBuster}` : ''}` 
+          src={resolvedProfilePicture
+            ? appendCacheBuster(resolvedProfilePicture, cacheBuster)
             : `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`} 
           alt={fullName}
           style={{

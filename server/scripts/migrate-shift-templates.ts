@@ -8,6 +8,8 @@ import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 import * as fs from 'fs';
 import * as path from 'path';
+import { db } from '../db.js';
+import { sql } from 'drizzle-orm';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,10 +19,6 @@ const envPath = resolve(__dirname, '../../.env');
 if (fs.existsSync(envPath)) {
   config({ path: envPath });
 }
-
-// Importar db después de cargar las variables de entorno
-const { db } = await import('../db.js');
-const { sql } = await import('drizzle-orm');
 
 async function runShiftTemplatesMigration() {
   try {

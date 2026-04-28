@@ -1,8 +1,9 @@
 // Heuristics and model routing helper for OficazIA
 // Exports helpers to pick a model and decide if we should escalate to a stronger model
 
-const DEFAULT_FAST_MODEL = process.env.AI_INTEGRATIONS_OPENAI_FAST_MODEL || "gpt-4o-mini";
-const DEFAULT_STRONG_MODEL = process.env.AI_INTEGRATIONS_OPENAI_STRONG_MODEL || "gpt-4o";
+const DEFAULT_FAST_MODEL = process.env.AI_INTEGRATIONS_OPENAI_FAST_MODEL || "gpt-4o-mini";  // ~$0.00015/1k tokens
+const DEFAULT_MIDDLE_MODEL = process.env.AI_INTEGRATIONS_OPENAI_MIDDLE_MODEL || "gpt-4-turbo"; // ~$0.003/1k tokens (cheaper than 4o)
+const DEFAULT_STRONG_MODEL = process.env.AI_INTEGRATIONS_OPENAI_STRONG_MODEL || "gpt-4o";     // ~$0.006/1k tokens
 
 // Set of function names considered mutations (write / potentially destructive)
 export const MUTATION_FUNCTIONS = new Set<string>([
@@ -21,7 +22,8 @@ export const MUTATION_FUNCTIONS = new Set<string>([
 // Simple keyword-based heuristic to detect complexity
 const COMPLEXITY_KEYWORDS = [
   'crear', 'crear empleado', 'crear usuario', 'modificar', 'update', 'borrar', 'eliminar', 'aprobar', 'denegar', 'rotación', 'rotativo', 'rotar',
-  'cuadrante', 'cuadrantes', 'json', 'base de datos', 'db', 'bulk', 'masivo', 'estadísticas', 'reporte', 'report', 'integración', 'configurar', 'configuración'
+  'cuadrante', 'cuadrantes', 'json', 'base de datos', 'db', 'bulk', 'masivo', 'estadísticas', 'reporte', 'report', 'integración', 'configurar', 'configuración',
+  'cliente', 'proveedor', 'contacto', 'crm', 'factura', 'gasto', 'ingreso', 'contabilidad', 'parte de trabajo', 'parte trabajo', 'nota crm', 'interacción'
 ];
 
 export function getPreferredModel(messages: Array<{role:string, content?: string}>) {
@@ -93,21 +95,47 @@ export async function pickAvailableModel(openaiClient: any, preferred: string, f
 export function shouldEscalate(assistantMessage: any) {
   if (!assistantMessage) return false;
 
-  // If assistant attempted a function call that is a mutation → escalate
-  if (assistantMessage.function_call && assistantMessage.function_call.name) {
-    const fname = assistantMessage.function_call.name;
-    if (MUTATION_FUNCTIONS.has(fname)) return true;
+  const rawContent = typeof assistantMessage.content === 'string' ? assistantMessage.content : '';
+  const content = rawContent.toLowerCase();
+  const hasUncertainty = /no puedo|no tengo acceso|necesito más información|necesito acceso|no(?: )?estoy seguro|tampoco puedo|hubo un error|fall[óo]/i.test(content);
+  const hasExplicitConfirmation = rawContent.trim().length > 0;
+
+  // OpenAI tool-calling (new format)
+  const toolCallNames = Array.isArray(assistantMessage.tool_calls)
+    ? assistantMessage.tool_calls
+        .map((tc: any) => tc?.function?.name)
+        .filter((name: any) => typeof name === 'string')
+    : [];
+
+  // Legacy function_call fallback
+  if (assistantMessage.function_call?.name) {
+    toolCallNames.push(assistantMessage.function_call.name);
   }
 
-  // If assistant states uncertainty about performing an action or requests privileged access
-  const content = (assistantMessage.content || '').toLowerCase();
-  if (/no puedo|no tengo acceso|necesito más información|necesito acceso|no(?: )?estoy seguro|tampoco puedo/i.test(content)) {
+  const hasMutationToolCall = toolCallNames.some((name: string) => MUTATION_FUNCTIONS.has(name));
+
+  // If a mutation is requested but there is no textual confirmation, escalate to verify outcome.
+  if (hasMutationToolCall && !hasExplicitConfirmation) {
     return true;
   }
+
+  // Escalate when there is uncertainty/error signal.
+  // This avoids always escalating successful mutation calls and reduces cost/latency.
+  if (hasMutationToolCall && hasUncertainty) {
+    return true;
+  }
+
+  // No tool calls but response is uncertain -> escalate for a second opinion.
+  if (!hasMutationToolCall && hasUncertainty) return true;
 
   return false;
 }
 
 export function getStrongModel() {
   return DEFAULT_STRONG_MODEL;
+}
+
+// Get middle-tier model for first escalation (cheaper than strong model)
+export function getMiddleModel() {
+  return DEFAULT_MIDDLE_MODEL;
 }

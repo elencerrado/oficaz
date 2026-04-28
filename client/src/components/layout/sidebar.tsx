@@ -30,6 +30,14 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+interface SidebarNavItem {
+  name: string;
+  href: string;
+  icon: any;
+  feature?: string;
+  badge?: number;
+}
+
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [location] = useLocation();
   const { user, company, subscription, logout } = useAuth();
@@ -65,9 +73,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     };
   }, [saveScroll]);
 
-  const { data: unreadCount } = useQuery({
+  const { data: unreadCount = 0 } = useQuery<number>({
     queryKey: ['/api/messages/unread-count'],
     staleTime: 60000, // Cache for 1 minute - WebSocket handles real-time updates
+  });
+
+  const { data: pendingAbsencesCount = 0 } = useQuery<number>({
+    queryKey: ['/api/vacation-requests/pending-assigned-count'],
+    staleTime: 60000, // Cache for 1 minute
+    enabled: user?.role === 'employee', // Only fetch for employees
   });
 
   const { data: managerPermissionsData } = useQuery<{ managerPermissions: { visibleFeatures?: string[]; canBuyRemoveFeatures?: boolean; canBuyRemoveUsers?: boolean } }>({
@@ -114,7 +128,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   ];
 
   // Menú normal para otros roles
-  const navigation = [
+  const navigation: SidebarNavItem[] = [
     { 
       name: 'Panel Principal', 
       href: `/${companyAlias}/inicio`, 
@@ -139,6 +153,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       name: 'Ausencias', 
       href: `/${companyAlias}/ausencias`, 
       icon: Calendar,
+      badge: user?.role === 'employee' ? pendingAbsencesCount : undefined,
       feature: 'vacation' as const
     },
     ...(user?.role === 'admin' || user?.role === 'manager' ? [
@@ -163,7 +178,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       feature: 'messages' as const
     },
     { 
-      name: 'Recordatorios', 
+      name: 'Tareas', 
       href: `/${companyAlias}/recordatorios`, 
       icon: Bell,
       feature: 'reminders' as const
@@ -205,7 +220,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   ];
 
   // Usar menú de accountant si es accountant, sino menú normal
-  const activeNavigation = user?.role === 'accountant' ? accountantNavigation : navigation;
+  const activeNavigation: SidebarNavItem[] = user?.role === 'accountant' ? accountantNavigation : navigation;
 
   const footerItems = [
     ...(user?.role === 'admin' || user?.role === 'manager' ? [
@@ -273,7 +288,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                    gap: 'clamp(0.3rem, 1.2vh, 0.8rem)'
                  }}>
               {activeNavigation
-                .filter((item) => !item.feature || hasAccess(item.feature, { bypassManagerRestrictions: true }))
+                .filter((item) => !item.feature || hasAccess(item.feature as any, { bypassManagerRestrictions: true }))
                 .map((item) => {
                 const isActive = location === item.href;
                 const Icon = item.icon;

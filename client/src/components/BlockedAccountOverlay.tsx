@@ -11,19 +11,56 @@ interface BlockedAccountOverlayProps {
     trialEndDate: string;
     daysRemaining: number;
     isBlocked: boolean;
+    subscriptionInFlight?: boolean; // True if subscription is being created
   };
 }
 
 interface PaymentMethod {
   id: string;
-  type: string;
-  last4?: string;
-  brand?: string;
+  card_brand: string;
+  card_last_four: string;
+  card_exp_month: number;
+  card_exp_year: number;
+  is_default: boolean;
 }
 
 export default function BlockedAccountOverlay({ trialStatus }: BlockedAccountOverlayProps) {
   const queryClient = useQueryClient();
   const [showPaymentManager, setShowPaymentManager] = useState(false);
+
+  // If subscription is in flight, show processing overlay instead of blocked
+  if (trialStatus.subscriptionInFlight) {
+    return (
+      <div className="light">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-2xl border-blue-200 bg-white shadow-2xl">
+            <CardHeader className="text-center space-y-4 pb-6">
+              <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center animate-pulse">
+                <CreditCard className="w-8 h-8 text-blue-600 animate-spin" />
+              </div>
+              
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold text-gray-900">Procesando Suscripción</h2>
+                <p className="text-gray-600">Tu suscripción está siendo activada en estos momentos.</p>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6 pb-6">
+              <div className="bg-blue-50 rounded-lg p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
+                  <p className="text-sm text-gray-700">Creando tu suscripción...</p>
+                </div>
+                <div className="w-full bg-blue-200 rounded-full h-2 overflow-hidden">
+                  <div className="bg-blue-600 h-full rounded-full animate-pulse" style={{ width: '70%' }} />
+                </div>
+                <p className="text-xs text-gray-500 text-center">Por favor, no cierres esta ventana</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   const { data: paymentMethods = [] } = useQuery<PaymentMethod[]>({
     queryKey: ['/api/account/payment-methods'],
@@ -39,6 +76,7 @@ export default function BlockedAccountOverlay({ trialStatus }: BlockedAccountOve
     await queryClient.invalidateQueries({ queryKey: ['/api/companies/custom-features'] });
     await queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
     await queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+    await queryClient.invalidateQueries({ queryKey: ['/api/documents/all'] });
     await queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
     await queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
     await queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });

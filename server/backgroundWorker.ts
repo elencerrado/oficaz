@@ -6,10 +6,15 @@ import path from 'path';
 import type { ImageProcessingJob } from '@shared/schema';
 import { SimpleObjectStorageService } from './objectStorageSimple.js';
 
+// Safety fallback interval: scans for stranded jobs that were never notified.
+// 5 min is long enough to not disturb Neon autosuspend (Neon suspends after 5 min idle).
+const SAFETY_SCAN_INTERVAL_MS = 5 * 60 * 1000;
+
 class BackgroundImageProcessor {
   private isRunning = false;
-  private processingInterval: NodeJS.Timeout | null = null;
-  private readonly PROCESSING_INTERVAL = Number(process.env.IMAGE_PROCESSING_INTERVAL_MS ?? '1000'); // Check every 1 second
+  // No continuous polling interval — processing is event-driven via notifyNewJob().
+  // A 5-min safety fallback catches any jobs that missed their notification.
+  private safetyInterval: NodeJS.Timeout | null = null;
   private readonly MAX_CONCURRENT_JOBS = 2; // Limit concurrent processing
   private currentlyProcessing = new Set<number>();
 
@@ -20,14 +25,14 @@ class BackgroundImageProcessor {
     }
 
     this.isRunning = true;
-    console.log('🚀 Background image processor started');
+    console.log('🚀 Background image processor started (event-driven, safety scan every 5 min)');
     
-    // Start the processing loop
-    this.processingInterval = setInterval(async () => {
+    // Safety fallback: catch any jobs missed by event notifications
+    this.safetyInterval = setInterval(async () => {
       await this.processNextJob();
-    }, this.PROCESSING_INTERVAL);
+    }, SAFETY_SCAN_INTERVAL_MS);
     
-    // Process any existing jobs immediately
+    // Process any pending jobs that existed before startup
     await this.processNextJob();
   }
 
@@ -39,9 +44,9 @@ class BackgroundImageProcessor {
     this.isRunning = false;
     console.log('⏹️ Background image processor stopped');
     
-    if (this.processingInterval) {
-      clearInterval(this.processingInterval);
-      this.processingInterval = null;
+    if (this.safetyInterval) {
+      clearInterval(this.safetyInterval);
+      this.safetyInterval = null;
     }
     
     // Wait for current jobs to finish (max 30 seconds)
@@ -101,10 +106,11 @@ class BackgroundImageProcessor {
         const filename = path.basename(result.outputPath);
         const r2Key = `profile-pictures/${filename}`;
         
-        await objectStorage.uploadDocument(processedBuffer, 'image/jpeg', r2Key);
-        
-        // Update user with R2 URL
-        const profilePictureUrl = `/uploads/${filename}`;
+        const uploadedKey = await objectStorage.uploadDocument(processedBuffer, 'image/jpeg', r2Key);
+
+        // Persist canonical app-served URL for profile pictures across storage backends.
+        const normalizedUploadedKey = uploadedKey.replace(/^\/+/, '').replace(/^public-objects\//, '');
+        const profilePictureUrl = `/public-objects/${normalizedUploadedKey}`;
         
         await storage.updateUser(targetUserId, { 
           profilePicture: profilePictureUrl 

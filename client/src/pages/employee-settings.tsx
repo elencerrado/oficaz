@@ -40,7 +40,7 @@ import {
   Smartphone,
   AlertTriangle
 } from 'lucide-react';
-import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb, Info, MessageSquare, Send, Paperclip, HardDrive, Sparkles, Calculator } from 'lucide-react';
+import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb, Info, MessageSquare, Send, Paperclip, HardDrive, Sparkles, Calculator, Copy, Link2, Gift } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useQuery } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -62,7 +62,8 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
 import iconFlam from '@assets/icon flam_1751450814463.png';
-
+import oficazLogo from '@/assets/oficaz-logo.png';
+import { GlobalScheduleConfig } from '@/components/admin/GlobalScheduleConfig';
 
 import { usePageHeader } from '@/components/layout/page-header';
 
@@ -256,11 +257,12 @@ const LogoutAllDevicesButton = () => {
 
     setIsLoading(true);
     try {
+      const authHeaders = getAuthHeaders();
       const response = await fetch('/api/auth/logout-all-devices', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')}`
+          ...(authHeaders as Record<string, string>),
         }
       });
 
@@ -299,10 +301,12 @@ const LogoutAllDevicesButton = () => {
       onClick={handleLogoutAllDevices}
       disabled={isLoading}
       variant="destructive"
-      className="w-full sm:w-auto"
+      className="w-full sm:w-auto h-auto py-2 whitespace-normal text-left justify-start"
     >
-      <LogOut className="h-4 w-4 mr-2" />
-      {isLoading ? 'Cerrando sesiones...' : 'Cerrar Sesión en Todos los Dispositivos'}
+      <LogOut className="h-4 w-4 mr-2 flex-shrink-0" />
+      <span className="leading-snug break-words">
+        {isLoading ? 'Cerrando sesiones...' : 'Cerrar Sesión en Todos los Dispositivos'}
+      </span>
     </Button>
   );
 };
@@ -320,6 +324,7 @@ const AccountManagement = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [confirmationText, setConfirmationText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCopyingReferral, setIsCopyingReferral] = useState(false);
 
   // Delete account mutation
   const deleteAccountMutation = useMutation({
@@ -422,9 +427,10 @@ const AccountManagement = () => {
   const { data: subscriptionData } = useQuery<any>({
     queryKey: ['/api/account/subscription'],
     retry: false,
-    staleTime: 30000, // 30 seconds
-    refetchInterval: 30000, // ⚡ Optimizado: auto-refresh every 30s (was 5s)
-    refetchOnWindowFocus: true,
+    staleTime: 120_000, // 2 minutes
+    gcTime: 10 * 60 * 1000,
+    refetchInterval: 120_000, // Refresh every 2 minutes (was 30s)
+    refetchOnWindowFocus: false,
     refetchOnReconnect: true,
   });
 
@@ -444,8 +450,9 @@ const AccountManagement = () => {
     queryKey: ['/api/account/usage-stats'],
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 30000, // ⚡ Optimizado: auto-refresh every 30s (was 5s)
-    refetchOnWindowFocus: true,
+    gcTime: 10 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes (was 30s)
+    refetchOnWindowFocus: false,
     refetchOnReconnect: true,
   });
 
@@ -469,6 +476,45 @@ const AccountManagement = () => {
     retry: false,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
+
+  const { data: referralData, isLoading: isLoadingReferralData } = useQuery<{
+    eligible: boolean;
+    reason: string | null;
+    referralCode: string | null;
+    referralLink: string | null;
+    stats: {
+      paidActiveReferrals: number;
+      pendingReferrals: number;
+      discountPercent: number;
+    };
+    tiers: Array<{ min: number; max: number | null; discountPercent: number }>;
+  }>({
+    queryKey: ['/api/account/referrals'],
+    retry: false,
+    staleTime: 60000,
+    enabled: user?.role === 'admin',
+  });
+
+  const handleCopyReferralLink = async () => {
+    if (!referralData?.referralLink || isCopyingReferral) return;
+
+    try {
+      setIsCopyingReferral(true);
+      await navigator.clipboard.writeText(referralData.referralLink);
+      toast({
+        title: 'Enlace copiado',
+        description: 'El enlace de referido se ha copiado al portapapeles.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'No se pudo copiar',
+        description: error?.message || 'Copia el enlace manualmente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCopyingReferral(false);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     try {
@@ -745,6 +791,90 @@ const AccountManagement = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Referral Program */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Gift className="h-5 w-5 text-emerald-500" />
+            <span>Programa de referidos</span>
+          </CardTitle>
+          <CardDescription>
+            Comparte tu enlace y consigue un descuento porcentual en tu suscripción según los referidos activos de pago.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {isLoadingReferralData ? (
+            <div className="flex items-center justify-center py-4">
+              <LoadingSpinner size="sm" />
+            </div>
+          ) : !referralData?.eligible ? (
+            <div className="p-4 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800/50 dark:bg-amber-950/20">
+              <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+                El enlace de referidos se activa tras el primer pago de tu suscripción.
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                Una vez activo, aquí podrás copiar tu enlace y ver tus descuentos acumulados.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="p-3 rounded-lg border bg-muted/40">
+                  <p className="text-xs text-muted-foreground">Referidos activos</p>
+                  <p className="text-xl font-semibold">{referralData.stats.paidActiveReferrals}</p>
+                </div>
+                <div className="p-3 rounded-lg border bg-muted/40">
+                  <p className="text-xs text-muted-foreground">Pendientes de primer pago</p>
+                  <p className="text-xl font-semibold">{referralData.stats.pendingReferrals}</p>
+                </div>
+                <div className="p-3 rounded-lg border bg-muted/40">
+                  <p className="text-xs text-muted-foreground">Descuento actual</p>
+                  <p className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">
+                    {referralData.stats.discountPercent}%
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Tu enlace de referido</Label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="relative flex-1">
+                    <Link2 className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Input
+                      readOnly
+                      value={referralData.referralLink || ''}
+                      className="pl-9"
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={handleCopyReferralLink}
+                    disabled={!referralData.referralLink || isCopyingReferral}
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    {isCopyingReferral ? 'Copiando...' : 'Copiar'}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-lg border bg-muted/30">
+                <p className="text-sm font-medium mb-2">Escalado de descuento</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                  {referralData.tiers.map((tier, index) => (
+                    <div key={`${tier.min}-${tier.max ?? 'plus'}-${index}`} className="rounded-md border p-2 bg-background">
+                      <p className="font-medium">
+                        {tier.max === null ? `${tier.min}+` : tier.min === tier.max ? `${tier.min}` : `${tier.min}-${tier.max}`} referidos
+                      </p>
+                      <p className="text-emerald-600 dark:text-emerald-400">{tier.discountPercent}%</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
       
       {/* Contact Oficaz */}
       <Card>
@@ -898,11 +1028,11 @@ const AccountManagement = () => {
           <div className="flex flex-wrap gap-2">
             <Button 
               variant="outline" 
-              className="justify-start"
+              className="w-full sm:w-auto h-auto py-2 justify-start whitespace-normal text-left"
               onClick={() => setIsPaymentModalOpen(true)}
             >
-              <CreditCard className="mr-2 h-4 w-4" />
-              Actualizar método de pago
+              <CreditCard className="mr-2 h-4 w-4 flex-shrink-0" />
+              <span className="leading-snug break-words">Actualizar método de pago</span>
             </Button>
           </div>
         </CardContent>
@@ -994,21 +1124,23 @@ const AccountManagement = () => {
               {cancellationStatus?.scheduledForDeletion ? (
                 <Button 
                   variant="outline" 
-                  className="justify-start border-green-200 dark:border-green-800/50 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/30"
+                  className="w-full sm:w-auto h-auto py-2 justify-start whitespace-normal text-left border-green-200 dark:border-green-800/50 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/30"
                   onClick={handleCancelDeletion}
                   disabled={cancelDeletionMutation.isPending}
                 >
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  {cancelDeletionMutation.isPending ? 'Cancelando...' : 'Cancelar eliminación programada'}
+                  <CheckCircle className="mr-2 h-4 w-4 flex-shrink-0" />
+                  <span className="leading-snug break-words">
+                    {cancelDeletionMutation.isPending ? 'Cancelando...' : 'Cancelar eliminación programada'}
+                  </span>
                 </Button>
               ) : (
                 <Button 
                   variant="outline" 
-                  className="justify-start border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 dark:hover:border-red-700"
+                  className="w-full sm:w-auto h-auto py-2 justify-start whitespace-normal text-left border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 dark:hover:border-red-700"
                   onClick={() => setIsDeleteModalOpen(true)}
                 >
-                  <X className="mr-2 h-4 w-4" />
-                  Cancelar cuenta
+                  <X className="mr-2 h-4 w-4 flex-shrink-0" />
+                  <span className="leading-snug break-words">Cancelar cuenta</span>
                 </Button>
               )}
             </div>
@@ -1250,16 +1382,21 @@ const ChangePasswordModalComponent = () => {
                 id="currentPassword"
                 type={showCurrentPassword ? 'text' : 'password'}
                 placeholder="Introduce tu contraseña actual"
+                autoComplete="current-password"
+                spellCheck={false}
                 {...form.register('currentPassword')}
                 className="pr-10"
               />
-              <button
+              <Button
                 type="button"
-                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                variant="ghost"
+                size="sm"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setShowCurrentPassword((prev) => !prev)}
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
               >
                 {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+              </Button>
             </div>
             {form.formState.errors.currentPassword && (
               <p className="text-sm text-red-500 mt-1">{form.formState.errors.currentPassword.message}</p>
@@ -1274,16 +1411,21 @@ const ChangePasswordModalComponent = () => {
                 id="newPassword"
                 type={showNewPassword ? 'text' : 'password'}
                 placeholder="Introduce tu nueva contraseña"
+                autoComplete="new-password"
+                spellCheck={false}
                 {...form.register('newPassword')}
                 className="pr-10"
               />
-              <button
+              <Button
                 type="button"
-                onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                variant="ghost"
+                size="sm"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setShowNewPassword((prev) => !prev)}
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
               >
                 {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+              </Button>
             </div>
             
             {/* Indicador de fuerza de contraseña */}
@@ -1345,16 +1487,21 @@ const ChangePasswordModalComponent = () => {
                 id="confirmPassword"
                 type={showConfirmPassword ? 'text' : 'password'}
                 placeholder="Confirma tu nueva contraseña"
+                autoComplete="new-password"
+                spellCheck={false}
                 {...form.register('confirmPassword')}
                 className="pr-10"
               />
-              <button
+              <Button
                 type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                variant="ghost"
+                size="sm"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
               >
                 {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+              </Button>
             </div>
             {form.formState.errors.confirmPassword && (
               <p className="text-sm text-red-500 mt-1">{form.formState.errors.confirmPassword.message}</p>
@@ -1717,9 +1864,17 @@ export default function Settings() {
     // Configuration settings
     defaultVacationDays: 30,
     vacationDaysPerMonth: 2.5,
+    vacationDaysNatural: 30,
+    vacationDaysWorking: 22,
     workingHoursPerDay: 8,
     // employeeTimeEditPermission movido a sistema de features
   });
+
+  const [vacationCalculationMode, setVacationCalculationMode] = useState<'natural' | 'working'>('natural');
+  const [vacationCalculationPreviousMode, setVacationCalculationPreviousMode] = useState<'natural' | 'working' | null>(null);
+  const [vacationCalculationEffectiveFrom, setVacationCalculationEffectiveFrom] = useState<Date | null>(null);
+  const [pendingCalculationMode, setPendingCalculationMode] = useState<'natural' | 'working' | null>(null);
+  const [showCalculationModeDialog, setShowCalculationModeDialog] = useState(false);
 
   // Corte de vacaciones configurable (MM-DD)
   const [vacationCutoffMonth, setVacationCutoffMonth] = useState('01');
@@ -1794,11 +1949,12 @@ export default function Settings() {
 
   // Estado para editar políticas de ausencias
   const [editingPolicies, setEditingPolicies] = useState<Record<number, number | null>>({});
+  const [editingRecoveryPercentage, setEditingRecoveryPercentage] = useState<number | null>(null);
 
   // Mutación para actualizar política de ausencia
   const updateAbsencePolicyMutation = useMutation({
-    mutationFn: async ({ id, maxDays }: { id: number; maxDays: number | null }) => {
-      return apiRequest('PATCH', `/api/absence-policies/${id}`, { maxDays });
+    mutationFn: async ({ id, maxDays, recoveryPercentage }: { id: number; maxDays?: number | null; recoveryPercentage?: number }) => {
+      return apiRequest('PATCH', `/api/absence-policies/${id}`, { maxDays, recoveryPercentage });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/absence-policies'] });
@@ -1824,7 +1980,23 @@ export default function Settings() {
         workingHoursPerDay: companySettings.workingHoursPerDay || 8,
         defaultVacationDays: companySettings.defaultVacationDays || 30,
         vacationDaysPerMonth: parseFloat(companySettings.vacationDaysPerMonth || '2.5'),
+        vacationDaysNatural: companySettings.vacationDaysNatural || 30,
+        vacationDaysWorking: companySettings.vacationDaysWorking || 22,
       }));
+
+      const normalizedMode = companySettings.absenceDayCalculationMode === 'working' ? 'working' : 'natural';
+      const normalizedPrevious = companySettings.absenceDayCalculationModePrevious === 'working'
+        ? 'working'
+        : companySettings.absenceDayCalculationModePrevious === 'natural'
+          ? 'natural'
+          : null;
+      setVacationCalculationMode(normalizedMode);
+      setVacationCalculationPreviousMode(normalizedPrevious);
+      setVacationCalculationEffectiveFrom(
+        companySettings.absenceDayCalculationModeEffectiveFrom
+          ? new Date(companySettings.absenceDayCalculationModeEffectiveFrom)
+          : null
+      );
     }
   }, [companySettings]);
 
@@ -1844,6 +2016,8 @@ export default function Settings() {
         workingHoursPerDay: Number(company.workingHoursPerDay) || 8,
         defaultVacationDays: Number(company.defaultVacationDays) || 30,
         vacationDaysPerMonth: Number(company.vacationDaysPerMonth) || 2.5,
+        vacationDaysNatural: Number(company.vacationDaysNatural) || 30,
+        vacationDaysWorking: Number(company.vacationDaysWorking) || 22,
       });
       
       // Clear any preview when company data changes
@@ -2017,6 +2191,63 @@ export default function Settings() {
       });
     }
   });
+
+  const updateCalculationModeMutation = useMutation({
+    mutationFn: async ({ mode, applyToPast }: { mode: 'natural' | 'working'; applyToPast: boolean }) => {
+      return apiRequest('PATCH', '/api/settings/vacation-calculation-mode', { mode, applyToPast });
+    },
+    onSuccess: (data: any) => {
+      setVacationCalculationMode(data.mode === 'working' ? 'working' : 'natural');
+      setVacationCalculationPreviousMode(
+        data.previousMode === 'working' ? 'working' : data.previousMode === 'natural' ? 'natural' : null
+      );
+      setVacationCalculationEffectiveFrom(data.effectiveFrom ? new Date(data.effectiveFrom) : null);
+      queryClient.invalidateQueries({ queryKey: ['/api/settings/work-hours'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/company/config'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      queryClient.refetchQueries({ queryKey: ['/api/settings/work-hours'] });
+      queryClient.refetchQueries({ queryKey: ['/api/vacation-requests'] });
+      queryClient.refetchQueries({ queryKey: ['/api/vacation-requests/company'] });
+      queryClient.refetchQueries({ queryKey: ['/api/company/config'] });
+      queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
+      queryClient.refetchQueries({ queryKey: ['/api/employees'] });
+      toast({
+        title: 'Modo de calculo actualizado',
+        description: data.message || 'La configuracion se ha actualizado correctamente.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error?.message || 'No se pudo actualizar el modo de calculo.',
+        variant: 'destructive',
+      });
+    }
+  });
+
+  const calculationModeLabels: Record<'natural' | 'working', string> = {
+    natural: 'Dias naturales',
+    working: 'Dias laborables',
+  };
+
+  const requestCalculationModeChange = (nextMode: 'natural' | 'working') => {
+    if (nextMode === vacationCalculationMode) return;
+    setPendingCalculationMode(nextMode);
+    setShowCalculationModeDialog(true);
+  };
+
+  const confirmCalculationModeChange = async () => {
+    if (!pendingCalculationMode) return;
+    await updateCalculationModeMutation.mutateAsync({
+      mode: pendingCalculationMode,
+      applyToPast: true,
+    });
+    setShowCalculationModeDialog(false);
+    setPendingCalculationMode(null);
+  };
 
   const handleDeleteLogo = async () => {
     setIsUploading(true);
@@ -2504,7 +2735,7 @@ export default function Settings() {
                                 </div>
                                 <div className="mt-3 p-2 bg-white dark:bg-gray-800 rounded border border-border flex items-center space-x-2">
                                   <img 
-                                    src="/favicon.png" 
+                                    src={oficazLogo} 
                                     alt="Ejemplo de imagotipo" 
                                     className="h-5 w-auto object-contain"
                                   />
@@ -2846,6 +3077,11 @@ export default function Settings() {
                       </p>
                     </div>
                   </div>
+
+                  {/* Global Schedule Config - Tabla de horarios por día */}
+                  <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <GlobalScheduleConfig isAdmin={user?.role === 'admin'} />
+                  </div>
                 </CardContent>
               </Card>
 
@@ -2859,7 +3095,10 @@ export default function Settings() {
                       </CardTitle>
                       <CardDescription>Política de vacaciones según normativa</CardDescription>
                     </div>
-                    {user?.role === 'admin' && Number(companyData.vacationDaysPerMonth) !== Number(company?.vacationDaysPerMonth || 2.5) && (
+                    {user?.role === 'admin' && (
+                      Number(companyData.vacationDaysNatural) !== Number(company?.vacationDaysNatural || 30) ||
+                      Number(companyData.vacationDaysWorking) !== Number(company?.vacationDaysWorking || 22)
+                    ) && (
                       <Button
                         size="sm"
                         onClick={() => updateCompanyMutation.mutate(companyData)}
@@ -2872,71 +3111,144 @@ export default function Settings() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-lg p-4">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                      <span className="font-medium text-blue-900 dark:text-blue-100">Normativa española</span>
+                  <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                        <Calculator className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          Metodo de calculo de vacaciones
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Define si se cuentan dias naturales o solo dias laborables.
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-sm text-blue-800 dark:text-blue-300">
-                      El sistema calcula automáticamente los días de vacaciones desde la fecha de incorporación del empleado.
-                      El mínimo legal son 22 días laborables (30 días naturales = 2.5 días por mes).
-                    </p>
+
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="text-sm text-gray-700 dark:text-gray-300">
+                        Modo actual: <span className="font-semibold">{calculationModeLabels[vacationCalculationMode]}</span>
+                      </div>
+                      <Select
+                        value={vacationCalculationMode}
+                        onValueChange={(value) => requestCalculationModeChange(value as 'natural' | 'working')}
+                        disabled={user?.role !== 'admin' || updateCalculationModeMutation.isPending}
+                      >
+                        <SelectTrigger className="w-full sm:w-56 bg-white dark:bg-slate-900">
+                          <SelectValue placeholder="Selecciona modo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="natural">Dias naturales</SelectItem>
+                          <SelectItem value="working">Dias laborables</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {vacationCalculationEffectiveFrom && vacationCalculationPreviousMode && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Cambio activo desde {format(vacationCalculationEffectiveFrom, 'd MMM yyyy', { locale: es })}. Antes: {calculationModeLabels[vacationCalculationPreviousMode]}.
+                      </p>
+                    )}
                   </div>
-                  
+
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
                       <div className="flex items-center space-x-2 mb-3">
                         <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
                           <CalendarIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <Label htmlFor="vacationDaysPerMonth" className="text-base font-medium text-gray-900 dark:text-gray-100">
-                          Días por mes trabajado
+                        <Label htmlFor="vacationDaysNatural" className="text-base font-medium text-gray-900 dark:text-gray-100">
+                          Días naturales
                         </Label>
                       </div>
                       <Input
-                        id="vacationDaysPerMonth"
+                        id="vacationDaysNatural"
                         type="number"
-                        step="0.1"
-                        min="1.8"
-                        max="3"
-                        value={companyData.vacationDaysPerMonth}
+                        min="0"
+                        max="40"
+                        value={companyData.vacationDaysNatural}
                         onChange={(e) => {
-                          const daysPerMonth = parseFloat(e.target.value) || 2.5;
-                          const annualDays = Math.round(daysPerMonth * 12);
+                          const days = parseInt(e.target.value) || 30;
                           setCompanyData(prev => ({ 
                             ...prev, 
-                            vacationDaysPerMonth: daysPerMonth,
-                            defaultVacationDays: annualDays
+                            vacationDaysNatural: days
                           }));
                         }}
                         className="text-lg h-12 font-medium"
                         disabled={user?.role !== 'admin'}
                       />
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                        Estándar: 2.5 días · Mínimo legal: 1.83 días
-                      </p>
                     </div>
                     
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border border-blue-200 dark:border-blue-800/50 rounded-xl p-5">
+                    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
                       <div className="flex items-center space-x-2 mb-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-600 dark:bg-blue-500 flex items-center justify-center">
-                          <Calculator className="h-4 w-4 text-white" />
+                        <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                          <CalendarIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
                         </div>
-                        <Label className="text-base font-medium text-gray-900 dark:text-gray-100">
-                          Días anuales calculados
+                        <Label htmlFor="vacationDaysWorking" className="text-base font-medium text-gray-900 dark:text-gray-100">
+                          Días laborables
                         </Label>
                       </div>
-                      <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-1">
-                        {Math.round(companyData.vacationDaysPerMonth * 12)}
-                        <span className="text-lg font-normal text-gray-500 dark:text-gray-400 ml-2">días</span>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {companyData.vacationDaysPerMonth} días × 12 meses
-                      </p>
+                      <Input
+                        id="vacationDaysWorking"
+                        type="number"
+                        min="0"
+                        max="30"
+                        value={companyData.vacationDaysWorking}
+                        onChange={(e) => {
+                          const days = parseInt(e.target.value) || 22;
+                          setCompanyData(prev => ({ 
+                            ...prev, 
+                            vacationDaysWorking: days
+                          }));
+                        }}
+                        className="text-lg h-12 font-medium"
+                        disabled={user?.role !== 'admin'}
+                      />
                     </div>
                   </div>
 
-                  <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+                  <Dialog
+                    open={showCalculationModeDialog}
+                    onOpenChange={(open) => {
+                      if (!open) {
+                        setShowCalculationModeDialog(false);
+                        setPendingCalculationMode(null);
+                      }
+                    }}
+                  >
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Confirmar cambio de calculo</DialogTitle>
+                        <DialogDescription>
+                          Vas a cambiar el modo a{' '}
+                          <span className="font-semibold">{pendingCalculationMode ? calculationModeLabels[pendingCalculationMode] : ''}</span>.
+                          El historico se recalculara automaticamente.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-3">
+                        <Button
+                          className="w-full"
+                          onClick={confirmCalculationModeChange}
+                          disabled={updateCalculationModeMutation.isPending}
+                        >
+                          Recalcular historico
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => {
+                            setShowCalculationModeDialog(false);
+                            setPendingCalculationMode(null);
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -2957,7 +3269,7 @@ export default function Settings() {
                             onValueChange={setVacationCutoffMonth}
                             disabled={user?.role !== 'admin' || loadingCompanyConfig || updateCutoffMutation.isPending}
                           >
-                            <SelectTrigger className="w-32 bg-white dark:bg-slate-900">
+                            <SelectTrigger className="w-32 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                               <SelectValue placeholder="Mes" />
                             </SelectTrigger>
                             <SelectContent>
@@ -2973,7 +3285,7 @@ export default function Settings() {
                             onValueChange={setVacationCutoffDay}
                             disabled={user?.role !== 'admin' || loadingCompanyConfig || updateCutoffMutation.isPending}
                           >
-                            <SelectTrigger className="w-24 bg-white dark:bg-slate-900">
+                            <SelectTrigger className="w-24 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                               <SelectValue placeholder="Día" />
                             </SelectTrigger>
                             <SelectContent>
@@ -2997,6 +3309,70 @@ export default function Settings() {
                         </Button>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-yellow-100 dark:bg-yellow-900/40 flex items-center justify-center">
+                        <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          Computo de horas de incidencias
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Porcentaje de horas de inclemencias que cuentan como vacaciones.
+                        </p>
+                      </div>
+                    </div>
+
+                    {(() => {
+                      const adversePolicy = absencePolicies.find((p: any) => p.absenceType === 'adverse_weather');
+                      const currentValue = editingRecoveryPercentage ?? (adversePolicy?.recoveryPercentage ?? 70);
+                      const hasChanges = adversePolicy && currentValue !== adversePolicy.recoveryPercentage;
+
+                      return (
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          {user?.role === 'admin' ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={currentValue}
+                                onChange={(e) => {
+                                  const value = e.target.value === '' ? null : Math.max(0, Math.min(100, parseInt(e.target.value, 10)));
+                                  setEditingRecoveryPercentage(value);
+                                }}
+                                className="w-24 h-10 text-center font-medium"
+                                disabled={!adversePolicy}
+                              />
+                              <span className="text-gray-500 dark:text-gray-400 text-sm">%</span>
+                              {hasChanges && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    if (!adversePolicy) return;
+                                    updateAbsencePolicyMutation.mutate({
+                                      id: adversePolicy.id,
+                                      recoveryPercentage: currentValue ?? 70,
+                                    });
+                                    setEditingRecoveryPercentage(null);
+                                  }}
+                                  disabled={updateAbsencePolicyMutation.isPending}
+                                >
+                                  <Save className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                              {currentValue}%
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </CardContent>
               </Card>
@@ -3109,7 +3485,6 @@ export default function Settings() {
                   )}
                 </CardContent>
               </Card>
-
             </div>
           )}
 
@@ -3258,6 +3633,7 @@ export default function Settings() {
                         </p>
                       </div>
                     </div>
+
                   </div>
 
                   {/* Información personal */}

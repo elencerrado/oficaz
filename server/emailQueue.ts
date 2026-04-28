@@ -21,7 +21,8 @@ export type EmailTemplateType =
   | 'document_signature_required'
   | 'payroll_available'
   | 'document_uploaded'
-  | 'signature_reminder';
+  | 'signature_reminder'
+  | 'incomplete_session_weekly_reminder';
 
 interface EmailQueueItem {
   id: number;
@@ -37,6 +38,14 @@ interface EmailQueueItem {
   attempts: number;
   maxAttempts: number;
   companyId: number;
+}
+
+function maskEmail(email?: string | null): string {
+  if (!email) return 'none';
+  const [local, domain] = email.split('@');
+  if (!domain) return 'invalid-email';
+  if (local.length <= 2) return `***@${domain}`;
+  return `${local.slice(0, 2)}***@${domain}`;
 }
 
 // Configure email transporter (using your existing SMTP settings)
@@ -92,7 +101,7 @@ export async function queueEmail(params: {
   `);
 
   const emailId = (result.rows[0] as any).id;
-  console.log(`📧 Email queued: ID ${emailId}, Type: ${params.templateType}, To: ${params.toEmail}`);
+  console.log(`📧 Email queued: ID ${emailId}, Type: ${params.templateType}, To: ${maskEmail(params.toEmail)}`);
   
   return emailId;
 }
@@ -191,6 +200,9 @@ function renderEmailTemplate(
         ? `Tu nómina <strong>${data.documentName}</strong> está disponible para revisar y firmar.`
         : `Tienes un nuevo documento <strong>${data.documentName}</strong> que requiere tu firma.`;
       
+      // Use loginUrl if provided, otherwise build it from companyAlias
+      const actionUrl = data.loginUrl || (data.companyAlias ? `${process.env.VITE_APP_URL || 'http://localhost:5000'}/${data.companyAlias}/inicio` : '#');
+      
       return `
         <!DOCTYPE html>
         <html>
@@ -218,13 +230,13 @@ function renderEmailTemplate(
               </div>
               
               <center>
-                <a href="${data.signatureUrl}" class="button">
-                  Firmar Documento
+                <a href="${actionUrl}" class="button">
+                  Iniciar Sesión y Firmar
                 </a>
               </center>
               
               <p style="color: #6b7280; font-size: 13px; margin-top: 30px;">
-                Este enlace es válido por 7 días y solo puede usarse una vez. Si tienes problemas, contacta con tu administrador.
+                Una vez que inicies sesión, encontrarás el documento en la sección "Documentos" de tu panel.
               </p>
             </div>
             <div class="footer">
@@ -238,6 +250,9 @@ function renderEmailTemplate(
       `;
 
     case 'signature_reminder':
+      const urgentClass = data.isUrgent ? 'style="background: #fef2f2; border-left-color: #ef4444;"' : '';
+      const urgentBadge = data.isUrgent ? '<span style="display: inline-block; background: #ef4444; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-left: 8px;">URGENTE</span>' : '';
+      
       return `
         <!DOCTYPE html>
         <html>
@@ -249,26 +264,115 @@ function renderEmailTemplate(
         <body>
           <div class="container">
             <div class="header">
-              <h1>Recordatorio de Firma Pendiente</h1>
+              <h1>${data.reminderNumber === 4 ? '⚠️ ' : ''}Recordatorio de Firma Pendiente${urgentBadge}</h1>
             </div>
             <div class="content">
               <p>Hola <strong>${data.userName}</strong>,</p>
-              <p>Te recordamos que tienes un documento pendiente de firma.</p>
+              <p>${data.reminderNumber === 4 
+                ? 'Este es nuestro <strong>recordatorio final</strong>. Aún tienes un documento pendiente de firma.' 
+                : `Te enviamos este ${data.reminderLabel} sobre un documento que requiere tu firma.`}</p>
+              
+              <div class="info-box" ${urgentClass}>
+                <strong>Acción requerida:</strong> Este documento necesita tu firma electrónica para completar el proceso.
+              </div>
               
               <div class="doc-info">
                 <strong>Documento:</strong> ${data.documentName}<br>
-                <strong>Días pendiente:</strong> ${data.daysPending}
+                <strong>Empresa:</strong> ${companyName}
               </div>
               
               <center>
-                <a href="${data.signatureUrl}" class="button">
-                  Firmar Ahora
+                <a href="${data.loginUrl}" class="button" style="${data.isUrgent ? 'background: #ef4444;' : ''}">
+                  ${data.isUrgent ? 'Firmar Ahora (Urgente)' : 'Iniciar Sesión y Firmar'}
                 </a>
               </center>
+              
+              <p style="color: #6b7280; font-size: 13px; margin-top: 30px;">
+                Una vez que inicies sesión, encontrarás el documento en la sección "Documentos" de tu panel.
+              </p>
+              
+              ${data.reminderNumber === 4 ? '<p style="color: #dc2626; font-weight: 600; margin-top: 20px;">⚠️ Este es nuestro último recordatorio. Si necesitas ayuda, contacta con tu administrador.</p>' : ''}
             </div>
             <div class="footer">
               <p><strong>${companyName}</strong></p>
               <p style="margin-top: 8px;">Powered by Oficaz</p>
+              <p style="font-size: 12px; margin-top: 8px; color: #9ca3af;">Este es un correo automático, por favor no respondas directamente.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+    case 'incomplete_session_weekly_reminder':
+      return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          ${baseStyles}
+        </head>
+        <body>
+          <div class="container">
+            <div class="header" style="background: #f59e0b;">
+              <h1>⏰ Recordatorio: Sesiones de Trabajo Pendientes</h1>
+            </div>
+            <div class="content">
+              <p>Hola <strong>${data.userName}</strong>,</p>
+              <p>Te escribimos para recordarte que tienes <strong>${data.sessionCount} ${data.sessionCount === 1 ? 'sesión de trabajo sin cerrar' : 'sesiones de trabajo sin cerrar'}</strong> de la semana pasada.</p>
+              
+              <div class="info-box" style="background: #fef3c7; border-left-color: #f59e0b;">
+                <strong>¿Por qué es importante cerrar tus sesiones?</strong><br>
+                • Asegura un registro correcto de tus horas trabajadas<br>
+                • Permite calcular correctamente tu nómina<br>
+                • Mantiene tus fichajes organizados
+              </div>
+              
+              ${data.sessions && data.sessions.length > 0 ? `
+              <div class="doc-info">
+                <strong>Sesiones pendientes:</strong>
+                <ul style="margin: 12px 0 0 0; padding-left: 20px; color: #374151;">
+                  ${data.sessions.slice(0, 5).map((s: any) => `
+                    <li style="margin-bottom: 8px;">
+                      <strong>${s.clockInDate}</strong> a las ${s.clockInTime}
+                      ${s.hoursElapsed ? ` <span style="color: #6b7280; font-size: 13px;">(hace ${s.hoursElapsed} horas)</span>` : ''}
+                    </li>
+                  `).join('')}
+                  ${data.sessions.length > 5 ? `<li style="color: #6b7280; margin-top: 8px;">...y ${data.sessions.length - 5} más</li>` : ''}
+                </ul>
+              </div>
+              ` : ''}
+              
+              <div class="info-box" style="background: #e0f2fe; border-left-color: #0284c7;">
+                <strong>¿Cómo cerrar tus sesiones? ${data.isEmployee ? '(Modo Empleado)' : ''}</strong>
+                <ol style="margin: 12px 0 0 0; padding-left: 20px; color: #374151;">
+                  <li style="margin-bottom: 8px;">Inicia sesión en tu cuenta</li>
+                  <li style="margin-bottom: 8px;">Ve a la sección <strong>"Mis Fichajes"</strong></li>
+                  <li style="margin-bottom: 8px;">Busca las sesiones sin cerrar (aparecen en naranja)</li>
+                  <li style="margin-bottom: 8px;">Haz clic en el icono de edición (lápiz)</li>
+                  <li style="margin-bottom: 8px;">Añade la hora de salida correspondiente</li>
+                  <li>Guarda los cambios</li>
+                </ol>
+              </div>
+              
+              <center>
+                <a href="${data.timeTrackingUrl}" class="button" style="background: #f59e0b;">
+                  Ir a Mis Fichajes
+                </a>
+              </center>
+              
+              <p style="color: #6b7280; font-size: 13px; margin-top: 30px;">
+                💡 <strong>Consejo:</strong> Tómate solo unos segundos cada día para cerrar tus fichajes cuando terminas tu jornada. ¡Te ahorrará este recordatorio!
+              </p>
+              
+              <p style="color: #6b7280; font-size: 13px; margin-top: 20px;">
+                Si tienes alguna duda o necesitas ayuda, contacta con tu administrador.
+              </p>
+            </div>
+            <div class="footer">
+              <p><strong>${companyName}</strong></p>
+              <p style="margin-top: 8px;">Powered by Oficaz</p>
+              <p style="font-size: 12px; margin-top: 8px; color: #9ca3af;">Este es un correo automático, por favor no respondas directamente.</p>
             </div>
           </div>
         </body>

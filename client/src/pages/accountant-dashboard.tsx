@@ -30,7 +30,7 @@ interface AccountingEntry {
   taxBase?: string;
   taxAmount?: string;
   totalAmount: string;
-  status: 'pending' | 'submitted' | 'approved' | 'rejected';
+  status: 'pending' | 'submitted' | 'approved' | 'rejected' | 'approved_accountant';
   refCode?: string;
   accountantNotes?: string;
   accountantReviewedAt?: string;
@@ -62,12 +62,20 @@ export default function AccountantDashboard() {
   const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ['/api/accountant/companies'],
     enabled: user?.role === 'accountant',
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Query para obtener los ÚLTIMOS MOVIMIENTOS de TODAS las empresas (mezclados)
   const { data: recentEntries = [], isLoading } = useQuery<EntryWithCompany[]>({
     queryKey: ['/api/accountant/recent-entries'],
     enabled: user?.role === 'accountant',
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Mutation para revisar entrada

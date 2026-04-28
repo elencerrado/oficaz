@@ -36,6 +36,9 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 import { EmployeeTopBar } from '@/components/employee/employee-top-bar';
+import { useTeams, resolveTeamMemberIds } from '@/hooks/use-teams';
+import { useStandardInfiniteScroll } from '@/hooks/use-standard-infinite-scroll';
+import { useIsMobile } from '@/hooks/use-mobile';
 interface Message {
   id: number;
   senderId: number;
@@ -97,12 +100,18 @@ export default function Messages() {
   const [modalMessage, setModalMessage] = useState('');
   const [modalSearchTerm, setModalSearchTerm] = useState('');
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const isMobile = useIsMobile();
+  const CONVERSATIONS_PER_LOAD = isMobile ? 10 : 18;
+  const [displayedConversationsCount, setDisplayedConversationsCount] = useState(CONVERSATIONS_PER_LOAD);
 
   // All refs together
   const desktopMessagesContainerRef = useRef<HTMLDivElement>(null);
   const mobileMessagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const loadMoreConversationsDesktopRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreConversationsMobileRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreConversationsEmployeeRef = useRef<HTMLDivElement | null>(null);
 
   // All queries together
   const { data: messages = [], isLoading: messagesLoading } = useQuery<Message[]>({
@@ -123,6 +132,8 @@ export default function Messages() {
     staleTime: 60000,
     select: (data: any[]) => (Array.isArray(data) ? data.filter(e => !e?.isPendingActivation) : [])
   });
+
+  const { data: teams = [] } = useTeams(!!user && (user.role === 'admin' || user.role === 'manager'));
 
   // Handle URL chat parameter - moved from state initialization to prevent navigation interference
   useEffect(() => {
@@ -215,18 +226,6 @@ export default function Messages() {
       // console.error('Error sending employee message:', error);
     }
   }, [newMessage, selectedChat, sendMessageMutation]);
-
-  // All effects together
-  useEffect(() => {
-    if (selectedChat) {
-      // console.log('Selected chat is now:', selectedChat);
-      const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
-      const selectedEmployee = contactList.find(e => e.id === selectedChat);
-      if (selectedEmployee) {
-        // console.log('Found employee for chat:', selectedEmployee.fullName);
-      }
-    }
-  }, [selectedChat, user?.role, managers, employees]);
 
   useEffect(() => {
     if (selectedChat && messages && messages.length > 0 && !markAsReadMutation.isPending) {
@@ -405,6 +404,67 @@ export default function Messages() {
     person.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) && person.id !== user?.id
   );
 
+  // Sidebar: show only users with an existing conversation (at least one message exchanged)
+  const filteredConversationEmployees = useMemo(() => {
+    const allMessages = (messages as Message[] || []);
+    const conversationIds = new Set<number>();
+
+    allMessages.forEach((msg) => {
+      if (msg.senderId === user?.id) conversationIds.add(msg.receiverId);
+      if (msg.receiverId === user?.id) conversationIds.add(msg.senderId);
+    });
+
+    conversationIds.delete(user?.id || -1);
+
+    return contactList.filter(person =>
+      person.id !== user?.id &&
+      conversationIds.has(person.id) &&
+      person.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [messages, user?.id, contactList, searchTerm]);
+
+  const visibleConversationEmployees = useMemo(
+    () => filteredConversationEmployees.slice(0, displayedConversationsCount),
+    [filteredConversationEmployees, displayedConversationsCount]
+  );
+
+  const hasMoreConversationsToDisplay = displayedConversationsCount < filteredConversationEmployees.length;
+
+  useEffect(() => {
+    setDisplayedConversationsCount(CONVERSATIONS_PER_LOAD);
+  }, [CONVERSATIONS_PER_LOAD, searchTerm, selectedChat, filteredConversationEmployees.length]);
+
+  const loadMoreConversations = useCallback(() => {
+    setDisplayedConversationsCount((prev) => Math.min(prev + CONVERSATIONS_PER_LOAD, filteredConversationEmployees.length));
+  }, [CONVERSATIONS_PER_LOAD, filteredConversationEmployees.length]);
+
+  useStandardInfiniteScroll({
+    targetRef: loadMoreConversationsDesktopRef,
+    enabled: (user?.role === 'admin' || user?.role === 'manager') && !messagesLoading,
+    canLoadMore: hasMoreConversationsToDisplay,
+    onLoadMore: loadMoreConversations,
+    dependencyKey: `desktop-${displayedConversationsCount}-${filteredConversationEmployees.length}-${selectedChat}`,
+    rootMargin: '100px',
+  });
+
+  useStandardInfiniteScroll({
+    targetRef: loadMoreConversationsMobileRef,
+    enabled: (user?.role === 'admin' || user?.role === 'manager') && !selectedChat && !messagesLoading,
+    canLoadMore: hasMoreConversationsToDisplay,
+    onLoadMore: loadMoreConversations,
+    dependencyKey: `mobile-${displayedConversationsCount}-${filteredConversationEmployees.length}-${selectedChat}`,
+    rootMargin: '100px',
+  });
+
+  useStandardInfiniteScroll({
+    targetRef: loadMoreConversationsEmployeeRef,
+    enabled: user?.role === 'employee' && !selectedChat,
+    canLoadMore: hasMoreConversationsToDisplay,
+    onLoadMore: loadMoreConversations,
+    dependencyKey: `employee-${displayedConversationsCount}-${filteredConversationEmployees.length}-${selectedChat}`,
+    rootMargin: '100px',
+  });
+
   // CRITICAL: selectedChatUser for EMPLOYEE chat header - DO NOT MODIFY
   const selectedChatUser = useMemo(() => {
     if (!selectedChat) return null;
@@ -412,13 +472,6 @@ export default function Messages() {
     // Get the correct list based on user role
     const list = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
     const foundUser = list.find(person => person.id === selectedChat);
-    
-    // console.log('Chat user lookup:', {
-    //   selectedChat,
-    //   userRole: user?.role,
-    //   listLength: list.length,
-    //   foundUser: foundUser?.fullName
-    // });
     
     return foundUser || null;
   }, [selectedChat, user?.role, managers, employees]);
@@ -506,6 +559,18 @@ export default function Messages() {
         ? prev.filter(id => id !== employeeId)
         : [...prev, employeeId]
     );
+  };
+
+  const toggleModalTeamSelection = (teamId: number) => {
+    const memberIds = resolveTeamMemberIds(teams, teamId).filter((id) => id !== user?.id);
+    if (memberIds.length === 0) return;
+
+    const allSelected = memberIds.every((id) => modalSelectedEmployees.includes(id));
+    if (allSelected) {
+      setModalSelectedEmployees((prev) => prev.filter((id) => !memberIds.includes(id)));
+      return;
+    }
+    setModalSelectedEmployees((prev) => Array.from(new Set([...prev, ...memberIds])));
   };
 
   const openAddChatModal = () => {
@@ -670,7 +735,7 @@ export default function Messages() {
                 </div>
                 
                 <div className="space-y-2">
-                  {filteredEmployees.map((employee) => {
+                  {visibleConversationEmployees.map((employee) => {
                     const unreadCount = (messages as Message[] || []).filter(
                       m => !m.isRead && m.senderId === employee.id
                     ).length;
@@ -720,6 +785,14 @@ export default function Messages() {
                     );
                   })}
                 </div>
+
+                {hasMoreConversationsToDisplay && (
+                  <div ref={loadMoreConversationsDesktopRef} className="pt-2 text-center">
+                    <Button type="button" variant="outline" size="sm" onClick={loadMoreConversations}>
+                      Cargar más
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -731,17 +804,17 @@ export default function Messages() {
                   <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                     <div className="flex items-center space-x-3">
                       <UserAvatar 
-                        fullName={filteredEmployees.find(e => e.id === selectedChat)?.fullName || ''} 
+                        fullName={contactList.find(e => e.id === selectedChat)?.fullName || ''} 
                         size="md" 
                         userId={selectedChat}
-                        profilePicture={filteredEmployees.find(e => e.id === selectedChat)?.profilePicture}
+                        profilePicture={contactList.find(e => e.id === selectedChat)?.profilePicture}
                       />
                       <div>
                         <h3 className="font-semibold text-foreground">
-                          {filteredEmployees.find(e => e.id === selectedChat)?.fullName}
+                          {contactList.find(e => e.id === selectedChat)?.fullName}
                         </h3>
                         <div className="text-sm text-muted-foreground">
-                          {getRoleDisplay(filteredEmployees.find(e => e.id === selectedChat))}
+                          {getRoleDisplay(contactList.find(e => e.id === selectedChat))}
                         </div>
                       </div>
                     </div>
@@ -899,7 +972,7 @@ export default function Messages() {
               </div>
               <div className={`flex-1 overflow-y-auto transition-opacity duration-300 ${messagesLoading ? 'opacity-50' : ''}`}>
                 <div className="space-y-2 py-4">
-                  {filteredEmployees.map((employee) => {
+                  {visibleConversationEmployees.map((employee) => {
                     const unreadCount = (messages as Message[] || []).filter(
                       m => !m.isRead && m.senderId === employee.id
                     ).length;
@@ -936,6 +1009,15 @@ export default function Messages() {
                     );
                   })}
                 </div>
+
+                {hasMoreConversationsToDisplay && (
+                  <div className="pt-2 text-center">
+                    <div ref={loadMoreConversationsMobileRef} className="h-px w-full" />
+                    <Button type="button" variant="outline" size="sm" className="mt-2" onClick={loadMoreConversations}>
+                      Cargar más
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>)
           ) : (
@@ -1137,11 +1219,29 @@ export default function Messages() {
                 
                 {modalGroupMode && (
                   <div className="flex space-x-2">
+                    {teams.length > 0 ? (
+                      <div className="hidden lg:flex items-center gap-2">
+                        {teams.map((team) => {
+                          const ids = resolveTeamMemberIds(teams, team.id).filter((id) => id !== user?.id);
+                          const active = ids.length > 0 && ids.every((id) => modalSelectedEmployees.includes(id));
+                          return (
+                            <Button
+                              key={`messages-team-${team.id}`}
+                              size="sm"
+                              variant={active ? 'default' : 'outline'}
+                              onClick={() => toggleModalTeamSelection(team.id)}
+                            >
+                              {team.name}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => setModalSelectedEmployees(
-                        filteredEmployees
+                        contactList
                           .filter(employee => 
                             employee.fullName?.toLowerCase().includes(modalSearchTerm.toLowerCase()) && employee.id !== user?.id
                           )
@@ -1208,6 +1308,30 @@ export default function Messages() {
 
                 {/* Right Column: Employee selection */}
                 <div className="space-y-4">
+                  {modalGroupMode && teams.length > 0 ? (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-2">Equipos</p>
+                      <div className="flex flex-wrap gap-2">
+                        {teams.map((team) => {
+                          const ids = resolveTeamMemberIds(teams, team.id).filter((id) => id !== user?.id);
+                          const active = ids.length > 0 && ids.every((id) => modalSelectedEmployees.includes(id));
+                          return (
+                            <Button
+                              key={`messages-team-mobile-${team.id}`}
+                              type="button"
+                              variant={active ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => toggleModalTeamSelection(team.id)}
+                              className="h-7 text-xs"
+                            >
+                              {team.name}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
                     <Input
@@ -1220,7 +1344,7 @@ export default function Messages() {
                   </div>
 
                   <div className="max-h-60 lg:max-h-80 overflow-y-auto space-y-2">
-                    {filteredEmployees
+                    {contactList
                       .filter(employee => 
                         employee.fullName?.toLowerCase().includes(modalSearchTerm.toLowerCase()) && employee.id !== user?.id
                       )
@@ -1316,9 +1440,9 @@ export default function Messages() {
           <div className="space-y-3">
             <h2 className="text-gray-700 dark:text-white/90 text-sm font-medium px-2">Conversaciones</h2>
             
-            {filteredEmployees.length > 0 ? (
+            {filteredConversationEmployees.length > 0 ? (
               <div className="space-y-2">
-                {filteredEmployees.map((manager) => {
+                {visibleConversationEmployees.map((manager) => {
                   const unreadCount = (messages as Message[] || []).filter(msg => 
                     !msg.isRead && msg.senderId === manager.id && msg.receiverId === user?.id
                   ).length;
@@ -1366,6 +1490,15 @@ export default function Messages() {
                     </div>
                   );
                 })}
+
+                {hasMoreConversationsToDisplay && (
+                  <div className="pt-2 text-center">
+                    <div ref={loadMoreConversationsEmployeeRef} className="h-px w-full" />
+                    <Button type="button" variant="outline" size="sm" className="mt-2" onClick={loadMoreConversations}>
+                      Cargar más
+                    </Button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-8">

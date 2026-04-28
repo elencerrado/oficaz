@@ -1,9 +1,14 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { usePageHeader } from '@/components/layout/page-header';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { useTodayClockingStatus } from '@/hooks/use-today-clocking-status';
+import { useStandardInfiniteScroll } from '@/hooks/use-standard-infinite-scroll';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useTeams, resolveTeamMemberIds } from '@/hooks/use-teams';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatsCard, { StatsCardGrid } from '@/components/StatsCard';
@@ -12,15 +17,17 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ListLoadingState } from '@/components/ui/list-loading-state';
 import { ListEmptyState } from '@/components/ui/list-empty-state';
 import { TabNavigation } from '@/components/ui/tab-navigation';
+import { NotClockedInCard } from '@/components/time-tracking/NotClockedInCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { getAuthData } from '@/lib/auth';
+import { getAuthHeaders } from '@/lib/auth';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
 import { DatePickerPeriod, DatePickerDay } from '@/components/ui/date-picker';
+import { EmployeeScopeDropdown } from '@/components/ui/employee-scope-dropdown';
 import { 
   Search, 
   Users,
@@ -48,7 +55,8 @@ import {
   ExternalLink,
   User,
   List,
-  Grid3x3
+  Grid3x3,
+  ChevronsUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, startOfWeek, addDays, subDays, differenceInMinutes, startOfDay, endOfDay, endOfWeek, startOfMonth, endOfMonth, isToday, addMonths, subMonths, addHours, subWeeks, addWeeks, eachDayOfInterval, isSameDay, parseISO } from 'date-fns';
@@ -137,6 +145,7 @@ export default function TimeTracking() {
   const [selectedEmployee, setSelectedEmployee] = useState(() => 
     isSelfAccessOnly && user?.id ? user.id.toString() : 'all'
   );
+  const [selectedEmployeeTeamFilter, setSelectedEmployeeTeamFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -154,6 +163,7 @@ export default function TimeTracking() {
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [tooltipContent, setTooltipContent] = useState('');
   const [activeStatsFilter, setActiveStatsFilter] = useState<'today' | 'week' | 'month' | 'incomplete' | null>(null);
+  const [showNotClockedIn, setShowNotClockedIn] = useState(false); // Desactivado por defecto para no sobrecargar
   
   // Tab state
   const [activeTab, setActiveTab] = useState('sessions');
@@ -173,8 +183,8 @@ export default function TimeTracking() {
   // Requests tab filter states
   const [requestsStatus, setRequestsStatus] = useState('pending');
   const [requestsEmployeeId, setRequestsEmployeeId] = useState('all');
+  const [requestsEmployeeTeamFilter, setRequestsEmployeeTeamFilter] = useState('all');
   const [requestsType, setRequestsType] = useState('all');
-  const [requestsEmployeeSearchTerm, setRequestsEmployeeSearchTerm] = useState('');
   
   // Modification & Audit states
   const [showManualEntryDialog, setShowManualEntryDialog] = useState(false);
@@ -185,6 +195,7 @@ export default function TimeTracking() {
   const [showIncompleteWarningDialog, setShowIncompleteWarningDialog] = useState(false);
   const [pendingExportType, setPendingExportType] = useState<'pdf' | 'excel' | null>(null);
   const [incompleteSessionsCount, setIncompleteSessionsCount] = useState(0);
+  const isMobile = useIsMobile();
   
   // Close incomplete session dialog state
   const [showCloseIncompleteDialog, setShowCloseIncompleteDialog] = useState(false);
@@ -197,13 +208,145 @@ export default function TimeTracking() {
   } | null>(null);
   
   // Infinite scroll state
-  const [displayedCount, setDisplayedCount] = useState(15);
-  const ITEMS_PER_LOAD = 15;
+  const INITIAL_SESSIONS_TO_SHOW = isMobile ? 10 : 18;
+  const ITEMS_PER_LOAD = isMobile ? 10 : 18;
+  const [displayedCount, setDisplayedCount] = useState(INITIAL_SESSIONS_TO_SHOW);
   
   // Expandable rows state
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const loadMoreDesktopRef = useRef<HTMLDivElement>(null);
   const loadMoreMobileRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const scrollContainerRef = useRef<HTMLElement | null>(null);
+  const listAreaRef = useRef<HTMLDivElement>(null);
+  const [scrollButtonLeft, setScrollButtonLeft] = useState<number | null>(null);
+
+  const findScrollableParent = useCallback((element: Element | null): HTMLElement | null => {
+    let parent = element?.parentElement ?? null;
+
+    while (parent) {
+      const styles = window.getComputedStyle(parent);
+      const overflowY = styles.overflowY;
+      const canScroll = overflowY === 'auto' || overflowY === 'scroll';
+
+      if (canScroll && parent.scrollHeight > parent.clientHeight) {
+        return parent;
+      }
+
+      parent = parent.parentElement;
+    }
+
+    return null;
+  }, []);
+
+  const getFichajesScrollContainer = useCallback((): HTMLElement | null => {
+    const desktopTarget = loadMoreDesktopRef.current;
+    const mobileTarget = loadMoreMobileRef.current;
+
+    // Prefer the target that exists and is visible in current breakpoint.
+    const visibleDesktop = desktopTarget && desktopTarget.offsetParent !== null ? desktopTarget : null;
+    const visibleMobile = mobileTarget && mobileTarget.offsetParent !== null ? mobileTarget : null;
+
+    return (
+      findScrollableParent(visibleDesktop) ||
+      findScrollableParent(visibleMobile) ||
+      findScrollableParent(desktopTarget) ||
+      findScrollableParent(mobileTarget)
+    );
+  }, [findScrollableParent]);
+
+  const updateScrollButtonPosition = useCallback((container: HTMLElement | null) => {
+    if (listAreaRef.current) {
+      const rect = listAreaRef.current.getBoundingClientRect();
+      setScrollButtonLeft(rect.left + rect.width / 2);
+      return;
+    }
+
+    if (!container) {
+      setScrollButtonLeft(null);
+      return;
+    }
+
+    const rect = container.getBoundingClientRect();
+    setScrollButtonLeft(rect.left + rect.width / 2);
+  }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'sessions') {
+      setShowScrollButton(false);
+      return;
+    }
+
+    let container: HTMLElement | null = null;
+
+    const handleScroll = () => {
+      if (!container) return;
+      setShowScrollButton(container.scrollTop > 160);
+    };
+
+    const attachListener = () => {
+      container = getFichajesScrollContainer();
+      if (!container) return false;
+
+      scrollContainerRef.current = container;
+      container.addEventListener('scroll', handleScroll, { passive: true });
+      updateScrollButtonPosition(container);
+      handleScroll();
+      return true;
+    };
+
+    const handleResize = () => {
+      updateScrollButtonPosition(scrollContainerRef.current);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (listAreaRef.current && typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        updateScrollButtonPosition(scrollContainerRef.current);
+      });
+      resizeObserver.observe(listAreaRef.current);
+    }
+
+    if (attachListener()) {
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        resizeObserver?.disconnect();
+        if (container) {
+          container.removeEventListener('scroll', handleScroll);
+        }
+      };
+    }
+
+    // Retry while list containers mount/render (desktop/mobile and data loading)
+    const retryTimer = window.setInterval(() => {
+      if (attachListener()) {
+        window.clearInterval(retryTimer);
+      }
+    }, 200);
+
+    return () => {
+      window.clearInterval(retryTimer);
+      window.removeEventListener('resize', handleResize);
+      resizeObserver?.disconnect();
+      if (container) {
+        container.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [activeTab, activeViewMode, getFichajesScrollContainer, updateScrollButtonPosition]);
+
+  const handleBackToTop = useCallback(() => {
+    const container = getFichajesScrollContainer();
+
+    if (container) {
+      container.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // Fallback only if container is not found.
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [getFichajesScrollContainer]);
   
   // Track first load completion for wave animation (only show animation on initial load)
   const [manualEntryData, setManualEntryData] = useState({
@@ -219,7 +362,7 @@ export default function TimeTracking() {
     const params = new URLSearchParams();
     
     // Employee filter
-    if (selectedEmployee !== 'all') {
+    if (selectedEmployee !== 'all' && selectedEmployeeTeamFilter === 'all') {
       params.append('employeeId', selectedEmployee);
     }
     
@@ -253,10 +396,10 @@ export default function TimeTracking() {
     }
     
     return params.toString();
-  }, [selectedEmployee, dateFilter, startDate, endDate, currentDate, currentMonth, activeStatsFilter, activeViewMode, gridViewDate]);
+  }, [selectedEmployee, selectedEmployeeTeamFilter, dateFilter, startDate, endDate, currentDate, currentMonth, activeStatsFilter, activeViewMode, gridViewDate]);
 
   // Server-side pagination with useInfiniteQuery
-  const SESSIONS_PER_PAGE = 50;
+  const SESSIONS_PER_PAGE = activeViewMode === 'grid' ? 200 : 50;
 
   // useInfiniteQuery for proper infinite scroll
   const {
@@ -269,14 +412,9 @@ export default function TimeTracking() {
     queryKey: ['/api/work-sessions/company', queryParams],
     queryFn: async ({ pageParam = 0 }) => {
       const url = `/api/work-sessions/company?${queryParams}&limit=${SESSIONS_PER_PAGE}&offset=${pageParam}`;
-      const token = getAuthData()?.token || '';
       const response = await fetch(url, {
         credentials: 'include',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch sessions');
       return await response.json();
@@ -337,6 +475,15 @@ export default function TimeTracking() {
     }
   }, [displayedCount, allSessions.length, hasNextPage, isFetchingNextPage, fetchNextPage, toast]);
 
+  useEffect(() => {
+    if (activeViewMode !== 'grid') return;
+    if (isLoading || isFetchingNextPage) return;
+    if (!hasNextPage) return;
+    if (allSessions.length >= MAX_SESSIONS_LOADED) return;
+
+    fetchNextPage();
+  }, [activeViewMode, isLoading, isFetchingNextPage, hasNextPage, allSessions.length, fetchNextPage]);
+
   // For backwards compatibility
   const sessions = allSessions;
 
@@ -347,7 +494,77 @@ export default function TimeTracking() {
     staleTime: 2 * 60 * 1000, // 2 minutes cache (más fresco)
     gcTime: 15 * 60 * 1000, // 15 minutes
     retry: 1,
-    refetchOnWindowFocus: true, // Actualizar al volver a la ventana
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: teams = [] } = useTeams(
+    !!user && (user.role === 'admin' || user.role === 'manager') && !isSelfAccessOnly,
+  );
+
+  const selectedEmployeeTeamId = useMemo(
+    () => (selectedEmployeeTeamFilter !== 'all' ? Number.parseInt(selectedEmployeeTeamFilter, 10) : null),
+    [selectedEmployeeTeamFilter],
+  );
+
+  const selectedEmployeeTeamMemberIds = useMemo(
+    () => (selectedEmployeeTeamId ? new Set(resolveTeamMemberIds(teams, selectedEmployeeTeamId)) : null),
+    [selectedEmployeeTeamId, teams],
+  );
+
+  const requestsEmployeeTeamId = useMemo(
+    () => (requestsEmployeeTeamFilter !== 'all' ? Number.parseInt(requestsEmployeeTeamFilter, 10) : null),
+    [requestsEmployeeTeamFilter],
+  );
+
+  const requestsEmployeeTeamMemberIds = useMemo(
+    () => (requestsEmployeeTeamId ? new Set(resolveTeamMemberIds(teams, requestsEmployeeTeamId)) : null),
+    [requestsEmployeeTeamId, teams],
+  );
+
+  // Calculate date range DINÁMICAMENTE basado en las sesiones VISIBLES (para scroll progresivo)
+  const visibleDateRange = useMemo(() => {
+    if (!showNotClockedIn || isSelfAccessOnly || allSessions.length === 0) {
+      return null;
+    }
+
+    // Si hay filtro de fechas manual, usarlo (pero limitado)
+    if (selectedStartDate && selectedEndDate) {
+      // Limitar a máximo 7 días para evitar sobrecarga
+      const daysDiff = Math.ceil((selectedEndDate.getTime() - selectedStartDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysDiff > 7) {
+        // Si el rango es mayor a 7 días, solo calcular los primeros 7
+        const limitedEnd = new Date(selectedStartDate);
+        limitedEnd.setDate(limitedEnd.getDate() + 7);
+        return { startDate: selectedStartDate, endDate: limitedEnd };
+      }
+      return { startDate: selectedStartDate, endDate: selectedEndDate };
+    }
+
+    // Calcular el rango de fechas de las sesiones VISIBLES actualmente
+    const visibleSessions = allSessions.slice(0, displayedCount);
+    if (visibleSessions.length === 0) {
+      // Si no hay sesiones visibles, solo calcular hoy
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return { startDate: today, endDate: today };
+    }
+
+    // Encontrar la fecha más antigua y más reciente de las sesiones visibles
+    const dates = visibleSessions.map(s => new Date(s.clockIn));
+    const oldestDate = new Date(Math.min(...dates.map(d => d.getTime())));
+    const newestDate = new Date(Math.max(...dates.map(d => d.getTime())));
+    
+    oldestDate.setHours(0, 0, 0, 0);
+    newestDate.setHours(23, 59, 59, 999);
+
+    return { startDate: oldestDate, endDate: newestDate };
+  }, [showNotClockedIn, isSelfAccessOnly, allSessions, displayedCount, selectedStartDate, selectedEndDate]);
+
+  // 🎯 Clocking status - Calculado PROGRESIVAMENTE según scroll
+  const { data: todayStatus = [], isLoading: isLoadingTodayStatus } = useTodayClockingStatus({
+    startDate: visibleDateRange?.startDate,
+    endDate: visibleDateRange?.endDate,
+    enabled: showNotClockedIn && !isSelfAccessOnly && visibleDateRange !== null
   });
 
   // Company settings with maximum caching
@@ -394,13 +611,28 @@ export default function TimeTracking() {
     queryKey: ['/api/admin/work-sessions/modification-requests/count'],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
     staleTime: 60000, // Cache for 1 min - WebSocket invalidates on changes
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
   const pendingRequestsCount = pendingRequestsData?.count || 0;
+  
+  // Count employees who haven't clocked in today
+  const notClockedInCount = useMemo(() => {
+    if (!Array.isArray(todayStatus)) {
+      return 0;
+    }
+    return todayStatus.filter(s => s.status === 'not_clocked_in').length;
+  }, [todayStatus]);
   
   // Modification requests (when tab is active or dialog is open)
   const { data: modificationRequests = [], isLoading: isLoadingModificationRequests, isFetching: isFetchingModificationRequests } = useQuery<any[]>({
     queryKey: ['/api/admin/work-sessions/modification-requests'],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager') && (activeTab === 'requests' || showRequestsDialog),
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
   
   // Track if data has been shown at least once (for wave animation)
@@ -427,48 +659,6 @@ export default function TimeTracking() {
   const showSessionsWaveLoading = !sessionsHaveBeenShown && allSessions.length > 0;
   const showRequestsWaveLoading = !requestsHaveBeenShown && modificationRequests.length > 0;
   
-  // WebSocket connection for real-time updates (Performance Optimization)
-  useEffect(() => {
-    if (!user || (user.role !== 'admin' && user.role !== 'manager')) return;
-
-    // Get auth token for WebSocket authentication
-    const authData = getAuthData();
-    if (!authData?.token) return;
-    const { token } = authData;
-    
-    // Build WebSocket URL dynamically from current window location
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host; // Already includes port if needed
-    const wsUrl = `${protocol}//${host}/ws/work-sessions?token=${token}`;
-
-    const ws = new WebSocket(wsUrl);
-
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        
-        if (message.type === 'work_session_created' || message.type === 'work_session_updated') {
-          queryClient.invalidateQueries({ 
-            queryKey: ['/api/work-sessions/company'],
-            refetchType: 'none'
-          });
-          queryClient.invalidateQueries({ 
-            queryKey: ['/api/work-sessions/summary-stats'],
-            refetchType: 'none'
-          });
-          queryClient.invalidateQueries({ queryKey: ['/api/admin/work-sessions/modification-requests/count'] });
-        }
-      } catch {
-        // Silent fail for malformed messages
-      }
-    };
-
-    // Cleanup on unmount
-    return () => {
-      ws.close();
-    };
-  }, [user, queryClient]);
-
   // Lazy loading of audit logs - only when dialog is opened
   const { data: auditLogs = [], isLoading: isLoadingAuditLogs } = useQuery<any[]>({
     queryKey: [`/api/admin/work-sessions/${selectedSessionForAudit}/audit-log`],
@@ -478,38 +668,28 @@ export default function TimeTracking() {
 
   // Reset displayed count when filters change
   useEffect(() => {
-    setDisplayedCount(15);
-  }, [selectedEmployee, dateFilter, startDate, endDate, currentDate, currentMonth, activeStatsFilter]);
+    setDisplayedCount(INITIAL_SESSIONS_TO_SHOW);
+  }, [selectedEmployee, selectedEmployeeTeamFilter, dateFilter, startDate, endDate, currentDate, currentMonth, activeStatsFilter, INITIAL_SESSIONS_TO_SHOW]);
 
-  // Infinite scroll with IntersectionObserver - triggers fetchNextPage
-  useEffect(() => {
-    // Only set up observer when in sessions tab
-    if (activeTab !== 'sessions') return;
-    
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some(entry => entry.isIntersecting) && !isLoading && !isFetchingNextPage && hasMoreToDisplay) {
-          loadMoreSessions();
-        }
-      },
-      { threshold: 0.1, rootMargin: '100px' }
-    );
-    
-    // Small delay to ensure refs are mounted after tab switch
-    const timeoutId = setTimeout(() => {
-      if (loadMoreDesktopRef.current) {
-        observer.observe(loadMoreDesktopRef.current);
-      }
-      if (loadMoreMobileRef.current) {
-        observer.observe(loadMoreMobileRef.current);
-      }
-    }, 50);
-    
-    return () => {
-      clearTimeout(timeoutId);
-      observer.disconnect();
-    };
-  }, [isLoading, isFetchingNextPage, hasMoreToDisplay, activeTab, loadMoreSessions]);
+  useStandardInfiniteScroll({
+    targetRef: loadMoreDesktopRef,
+    enabled: activeTab === 'sessions' && !isLoading,
+    canLoadMore: hasMoreToDisplay,
+    isLoadingMore: isFetchingNextPage,
+    onLoadMore: loadMoreSessions,
+    dependencyKey: `${activeTab}-${displayedCount}-${allSessions.length}`,
+    rootMargin: '100px',
+  });
+
+  useStandardInfiniteScroll({
+    targetRef: loadMoreMobileRef,
+    enabled: activeTab === 'sessions' && !isLoading,
+    canLoadMore: hasMoreToDisplay,
+    isLoadingMore: isFetchingNextPage,
+    onLoadMore: loadMoreSessions,
+    dependencyKey: `${activeTab}-${displayedCount}-${allSessions.length}`,
+    rootMargin: '100px',
+  });
 
   // Helper function to check if a specific session is incomplete
   const isSessionIncomplete = useCallback((session: any) => {
@@ -649,6 +829,7 @@ export default function TimeTracking() {
   const handleResetFilters = useCallback(() => {
     setDateFilter('all');
     setSelectedEmployee('all');
+    setSelectedEmployeeTeamFilter('all');
     setStartDate('');
     setEndDate('');
     setSelectedStartDate(null);
@@ -675,6 +856,7 @@ export default function TimeTracking() {
       setActiveStatsFilter('week');
       setDateFilter('custom');
       setSelectedEmployee('all');
+      setSelectedEmployeeTeamFilter('all');
       setStartDate(format(startOfDay(weekStart), 'yyyy-MM-dd'));
       setEndDate(format(endOfDay(weekEnd), 'yyyy-MM-dd'));
       setSelectedStartDate(startOfDay(weekStart));
@@ -702,6 +884,7 @@ export default function TimeTracking() {
       setActiveStatsFilter('month');
       setDateFilter('custom');
       setSelectedEmployee('all');
+      setSelectedEmployeeTeamFilter('all');
       setStartDate(format(startOfDay(monthStart), 'yyyy-MM-dd'));
       setEndDate(format(endOfDay(monthEnd), 'yyyy-MM-dd'));
       setSelectedStartDate(startOfDay(monthStart));
@@ -725,6 +908,7 @@ export default function TimeTracking() {
       // Activar filtro de sesiones incompletas - no cambiar fechas, solo filtrar por estado
       setActiveStatsFilter('incomplete');
       setSelectedEmployee('all');
+      setSelectedEmployeeTeamFilter('all');
     }
   }, [activeStatsFilter]);
 
@@ -746,12 +930,9 @@ export default function TimeTracking() {
   const { data: availableMonthsData } = useQuery({
     queryKey: ['/api/work-sessions/available-months'],
     queryFn: async () => {
-      const token = getAuthData()?.token || '';
       const response = await fetch('/api/work-sessions/available-months', {
         credentials: 'include',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch available months');
       return await response.json();
@@ -777,10 +958,43 @@ export default function TimeTracking() {
     };
   }, [employees, sessions]);
 
+  const scopedEmployeesList = useMemo(() => {
+    if (selectedEmployee !== 'all') {
+      return employeesList.filter((employee) => employee.id.toString() === selectedEmployee);
+    }
+
+    if (selectedEmployeeTeamMemberIds) {
+      return employeesList.filter((employee) => selectedEmployeeTeamMemberIds.has(employee.id));
+    }
+
+    return employeesList;
+  }, [employeesList, selectedEmployee, selectedEmployeeTeamMemberIds]);
+
+  const isSingleEmployeeScope = selectedEmployee !== 'all' && selectedEmployeeTeamFilter === 'all';
+
+  const selectedScopeLabel = useMemo(() => {
+    if (selectedEmployee !== 'all') {
+      return employeesList.find((employee) => employee.id.toString() === selectedEmployee)?.fullName || 'Empleado';
+    }
+
+    if (selectedEmployeeTeamId) {
+      return teams.find((team) => team.id === selectedEmployeeTeamId)?.name || 'Equipo';
+    }
+
+    return 'Todos los empleados';
+  }, [employeesList, selectedEmployee, selectedEmployeeTeamId, teams]);
+
   // Client-side filtering only for search text (date/employee filters are handled server-side)
   // Server already filters by date, employee, and status via queryParams
   const filteredSessions = useMemo(() => {
     return sessionsList.filter((session: any) => {
+      const matchesSelectedEmployee = selectedEmployee === 'all' || session.userId?.toString() === selectedEmployee;
+      const matchesSelectedTeam = !selectedEmployeeTeamMemberIds || selectedEmployeeTeamMemberIds.has(session.userId);
+
+      if (!matchesSelectedEmployee || !matchesSelectedTeam) {
+        return false;
+      }
+
       // Only filter by search text - everything else is handled by server
       const matchesSearch = !searchTerm || session.userName?.toLowerCase().includes(searchTerm.toLowerCase());
       
@@ -799,7 +1013,44 @@ export default function TimeTracking() {
       
       return matchesSearch;
     });
-  }, [sessionsList, searchTerm, activeStatsFilter, companySettings]);
+  }, [sessionsList, selectedEmployee, selectedEmployeeTeamMemberIds, searchTerm, activeStatsFilter, companySettings]);
+
+  // Mezclar sesiones reales con empleados sin fichar
+  const sessionsWithNotClockedIn = useMemo(() => {
+    if (!showNotClockedIn || isSelfAccessOnly) {
+      return filteredSessions;
+    }
+
+    // Filtrar empleados sin fichar que coincidan con el filtro actual
+    const notClockedInEntries = (todayStatus || []).filter(s => {
+      const matchesStatus = s.status === 'not_clocked_in';
+      const matchesSearch = !searchTerm || s.name?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSelectedEmployee = selectedEmployee === 'all' || s.employeeId?.toString() === selectedEmployee;
+      const matchesSelectedTeam = !selectedEmployeeTeamMemberIds || selectedEmployeeTeamMemberIds.has(s.employeeId);
+      return matchesStatus && matchesSearch && matchesSelectedEmployee && matchesSelectedTeam;
+    });
+
+    // Crear sesiones "virtuales" para empleados sin fichar (cada día con su fecha)
+    const virtualSessions = notClockedInEntries.map(emp => ({
+      id: `not-clocked-${emp.employeeId}-${emp.date}`,
+      userId: emp.employeeId,
+      userName: emp.name,
+      profilePicture: null, // Se cargará del objeto employee
+      clockIn: emp.expectedEntryTime ? `${emp.date}T${emp.expectedEntryTime}:00` : `${emp.date}T09:00:00`,
+      clockOut: null,
+      isVirtual: true, // Marcador para distinguir de sesiones reales
+      notClockedIn: true,
+      expectedEntryTime: emp.expectedEntryTime,
+      timeSinceExpectedMinutes: emp.timeSinceExpectedMinutes,
+      pattern: emp.pattern
+    }));
+
+    // Combinar virtuales y reales, y ordenar todas juntas por fecha
+    const combined = [...virtualSessions, ...filteredSessions];
+    return combined.sort((a: any, b: any) => 
+      new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime()
+    );
+  }, [filteredSessions, todayStatus, showNotClockedIn, searchTerm, isSelfAccessOnly, selectedEmployee, selectedEmployeeTeamMemberIds]);
 
   // Generate dynamic title based on filter - text only (number shown separately)
   const getFilterTitle = () => {
@@ -878,6 +1129,14 @@ export default function TimeTracking() {
 
     // Calculate incomplete sessions - sessions without clockOut that exceed working hours
     const incompleteSessionsCount = (sessionsList || []).filter((session: any) => {
+      if (selectedEmployee !== 'all' && session.userId?.toString() !== selectedEmployee) {
+        return false;
+      }
+
+      if (selectedEmployeeTeamMemberIds && !selectedEmployeeTeamMemberIds.has(session.userId)) {
+        return false;
+      }
+
       if (session.clockOut) return false; // Has clockOut, not incomplete
       
       const clockInTime = new Date(session.clockIn).getTime();
@@ -890,19 +1149,18 @@ export default function TimeTracking() {
     
     return {
       employeesWithSessions: uniqueEmployees,
-      totalEmployees: employeesList.length,
+      totalEmployees: scopedEmployeesList.length,
       averageHoursPerEmployee: averageHoursPerDay,
       averageHoursPerWeek: averageHoursWeekly,
       averageHoursPerMonth: averageHoursMonthly,
       incompleteSessions: incompleteSessionsCount
     };
-  }, [filteredSessions, employeesList.length, calculateHours, sessionsList, companySettings]);
+  }, [filteredSessions, scopedEmployeesList.length, calculateHours, sessionsList, companySettings, selectedEmployee, selectedEmployeeTeamMemberIds]);
   // ⚠️ END PROTECTED SECTION
 
   // ⚠️ PROTECTED: PDF generation function - CRITICAL FOR REPORTING
   const executeExportPDF = useCallback(async () => {
-    // Get auth token for API calls
-    const authToken = getAuthData()?.token || '';
+    const authHeaders = getAuthHeaders();
     
     // First, load audit logs for sessions that have them
     const sessionsWithAuditLogs = await Promise.all(
@@ -912,7 +1170,7 @@ export default function TimeTracking() {
             const response = await fetch(`/api/admin/work-sessions/${session.id}/audit-log`, {
               credentials: 'include',
               headers: {
-                'Authorization': `Bearer ${authToken}`,
+                ...authHeaders,
                 'Content-Type': 'application/json',
               },
             });
@@ -1546,7 +1804,7 @@ export default function TimeTracking() {
       addFooter();
     };
 
-    if (selectedEmployee !== 'all') {
+    if (isSingleEmployeeScope) {
       // Single employee PDF
       const employee = employeesList.find(emp => emp.id.toString() === selectedEmployee);
       createEmployeePage(employee, sessionsWithAuditLogs, true);
@@ -1565,11 +1823,7 @@ export default function TimeTracking() {
     // Generate friendly filename format: Employee - Time filter - Export date/time
     const generateFriendlyFileName = () => {
       // Employee part
-      let employeePart = 'Todos los empleados';
-      if (selectedEmployee !== 'all') {
-        const employee = employeesList?.find(emp => emp.id.toString() === selectedEmployee);
-        employeePart = employee?.fullName || 'Empleado';
-      }
+      const employeePart = selectedScopeLabel;
       
       // Time filter part
       let timePart = 'todos los fichajes';
@@ -1607,7 +1861,7 @@ export default function TimeTracking() {
       title: "PDF exportado correctamente",
       description: `El archivo ${fileName} se ha descargado`,
     });
-  }, [filteredSessions, selectedEmployee, employeesList, dateFilter, currentDate, currentMonth, startDate, endDate, calculateHours, toast]);
+  }, [filteredSessions, isSingleEmployeeScope, selectedEmployee, employeesList, selectedScopeLabel, dateFilter, currentDate, currentMonth, startDate, endDate, calculateHours, toast]);
 
   // Export to Excel function
   const executeExportExcel = useCallback(() => {
@@ -1621,7 +1875,7 @@ export default function TimeTracking() {
     }
 
     // Check if exporting all employees
-    const isAllEmployees = !selectedEmployee || selectedEmployee === 'all';
+    const isAllEmployees = !selectedEmployee || (selectedEmployee === 'all' && selectedEmployeeTeamFilter === 'all');
     
     // Create workbook
     const workbook = XLSX.utils.book_new();
@@ -1707,13 +1961,7 @@ export default function TimeTracking() {
     }
 
     // Generate filename
-    let employeePart = 'todos-empleados';
-    if (selectedEmployee && selectedEmployee !== 'all') {
-      const employee = employeesList.find((e: any) => e.id.toString() === selectedEmployee);
-      if (employee) {
-        employeePart = employee.fullName.toLowerCase().replace(/\s+/g, '-');
-      }
-    }
+    const employeePart = selectedScopeLabel.toLowerCase().replace(/\s+/g, '-');
 
     let timePart = 'todos-registros';
     if (dateFilter === 'day') {
@@ -1743,7 +1991,7 @@ export default function TimeTracking() {
       title: "Excel exportado correctamente",
       description: `El archivo ${fileName} se ha descargado`,
     });
-  }, [filteredSessions, selectedEmployee, employeesList, dateFilter, currentDate, currentMonth, startDate, endDate, toast]);
+  }, [filteredSessions, selectedEmployee, selectedEmployeeTeamFilter, selectedScopeLabel, dateFilter, currentDate, currentMonth, startDate, endDate, toast]);
 
   // Handlers for export that check for incomplete sessions first
   const handleExportPDF = useCallback(async () => {
@@ -2749,7 +2997,7 @@ export default function TimeTracking() {
         tabs={isSelfAccessOnly 
           ? [{ id: 'sessions', label: 'Mis Fichajes', icon: Users }]
           : [
-              { id: 'sessions', label: 'Fichajes', icon: Users },
+              { id: 'sessions', label: 'Fichajes', icon: Users, badge: notClockedInCount > 0 ? notClockedInCount : undefined },
               { id: 'requests', label: 'Solicitudes', icon: Bell, badge: pendingRequestsCount },
               { id: 'summary', label: 'Resumen', icon: BarChart3 }
             ]
@@ -2861,40 +3109,44 @@ export default function TimeTracking() {
 
           {/* Filters Section */}
           {showFilters && (
-            <div className="p-4 bg-card dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
-            <div className={cn("grid gap-4 items-end", isSelfAccessOnly ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-3")}>
+            <div className="py-4 bg-muted/50 rounded-lg px-4 mb-4">
+              <div className={cn("grid gap-4 items-end", isSelfAccessOnly ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-3")}>
               {/* Left side - Employee Filter - Hidden in self-access mode */}
               {!isSelfAccessOnly && (
                 <div className="flex flex-col space-y-2">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Empleado</label>
-                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                    <SelectTrigger className="h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
-                      <SelectValue placeholder="Seleccionar empleado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <div className="p-2">
-                        <div className="relative mb-2">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <Input
-                            placeholder="Buscar empleado..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 h-8"
-                          />
-                        </div>
-                      </div>
-                      <SelectItem value="all">Todos los empleados</SelectItem>
-                      {(employeesList || [])
-                        .filter((employee: any) => 
-                          employee.fullName.toLowerCase().includes(searchTerm.toLowerCase())
-                        )
-                        .map((employee: any) => (
-                        <SelectItem key={employee.id} value={employee.id.toString()}>
-                          {employee.fullName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <EmployeeScopeDropdown
+                    employees={employeesList.map((employee) => ({ id: employee.id, fullName: employee.fullName }))}
+                    teams={teams.map((team) => ({ id: team.id, name: team.name }))}
+                    value={
+                      selectedEmployeeTeamFilter !== 'all'
+                        ? { type: 'team', id: Number.parseInt(selectedEmployeeTeamFilter, 10) }
+                        : selectedEmployee !== 'all'
+                          ? { type: 'employee', id: Number.parseInt(selectedEmployee, 10) }
+                          : { type: 'all' }
+                    }
+                    onChange={(value) => {
+                      if (value.type === 'all') {
+                        setSelectedEmployee('all');
+                        setSelectedEmployeeTeamFilter('all');
+                        return;
+                      }
+
+                      if (value.type === 'team') {
+                        setSelectedEmployee('all');
+                        setSelectedEmployeeTeamFilter(String(value.id));
+                        return;
+                      }
+
+                      setSelectedEmployee(String(value.id));
+                      setSelectedEmployeeTeamFilter('all');
+                    }}
+                    allLabel="Todos los empleados"
+                    buttonPlaceholder="Empleado"
+                    searchPlaceholder="Buscar empleado..."
+                    buttonClassName="h-10 w-full justify-between font-normal"
+                    contentClassName="w-[240px] p-0"
+                  />
                 </div>
               )}
 
@@ -3020,6 +3272,7 @@ export default function TimeTracking() {
                     onClick={() => {
                       setDateFilter('all');
                       setSelectedEmployee('all');
+                      setSelectedEmployeeTeamFilter('all');
                       setSelectedStartDate(null);
                       setSelectedEndDate(null);
                       setStartDate('');
@@ -3152,6 +3405,7 @@ export default function TimeTracking() {
                       onClick={() => {
                         setDateFilter('all');
                         setSelectedEmployee('all');
+                        setSelectedEmployeeTeamFilter('all');
                         setSelectedStartDate(null);
                         setSelectedEndDate(null);
                         setStartDate('');
@@ -3171,15 +3425,15 @@ export default function TimeTracking() {
         )}
 
           {/* Cards Container */}
-          <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'}`}>
+          <div ref={listAreaRef} className={`transition-opacity duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'}`}>
             {/* Desktop List View */}
             {activeViewMode === 'list' && (
             <div className="hidden md:block space-y-3">
                 {(() => {
-                  const sortedSessions = filteredSessions
-                    .sort((a: any, b: any) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
+                  // Todas las sesiones ya vienen ordenadas (reales + virtuales mezcladas)
+                  const sortedSessions = sessionsWithNotClockedIn;
                   
-                  const showSummaries = selectedEmployee !== 'all';
+                  const showSummaries = isSingleEmployeeScope;
                   let currentWeekStart: Date | null = null;
                   let previousWeekStart: Date | null = null;
                   let currentMonth: string | null = null;
@@ -3187,6 +3441,7 @@ export default function TimeTracking() {
                   
                   const calculateWeekTotal = (weekStart: Date) => 
                     (sortedSessions || [])
+                      .filter(session => !session.isVirtual && !session.notClockedIn) // Excluir virtuales
                       .filter(session => {
                         const sessionWeekStart = startOfWeek(new Date(session.clockIn), { weekStartsOn: 1 });
                         return sessionWeekStart.getTime() === weekStart.getTime();
@@ -3209,6 +3464,7 @@ export default function TimeTracking() {
                   
                   const calculateMonthTotal = (monthKey: string) => 
                     (sortedSessions || [])
+                      .filter(session => !session.isVirtual && !session.notClockedIn) // Excluir virtuales
                       .filter(session => format(new Date(session.clockIn), 'yyyy-MM') === monthKey)
                       .reduce((total: number, session: any) => {
                         let totalSessionHours = calculateHours(session.clockIn, session.clockOut);
@@ -3226,7 +3482,7 @@ export default function TimeTracking() {
                         return total + Math.max(0, totalSessionHours - breakHours);
                       }, 0);
                   
-                  // Agrupar sesiones por empleado y día
+                  // Agrupar TODAS las sesiones por empleado y día (reales y virtuales juntas)
                   const sessionsByDay = sortedSessions.reduce((acc: any, session: any) => {
                     const dayKey = `${session.userId}-${format(new Date(session.clockIn), 'yyyy-MM-dd')}`;
                     if (!acc[dayKey]) {
@@ -3234,15 +3490,19 @@ export default function TimeTracking() {
                         date: format(new Date(session.clockIn), 'yyyy-MM-dd'),
                         userId: session.userId,
                         userName: session.userName,
-                        profilePicture: session.profilePicture, // ← CRITICAL FIX: Include profilePicture in grouping
+                        profilePicture: session.profilePicture,
                         sessions: [],
-                        hasAutoCompleted: false // Track if any session in this day was auto-completed
+                        hasAutoCompleted: false,
+                        isVirtual: session.isVirtual || session.notClockedIn // Marcar día completo como virtual
                       };
                     }
-                    acc[dayKey].sessions.push(session);
-                    // Check if this session was auto-completed
-                    if (session.autoCompleted) {
-                      acc[dayKey].hasAutoCompleted = true;
+                    // Solo agregar sesiones reales al array (las virtuales solo marcan el día)
+                    if (!session.isVirtual && !session.notClockedIn) {
+                      acc[dayKey].sessions.push(session);
+                      // Check if this session was auto-completed
+                      if (session.autoCompleted) {
+                        acc[dayKey].hasAutoCompleted = true;
+                      }
                     }
                     return acc;
                   }, {});
@@ -3259,7 +3519,7 @@ export default function TimeTracking() {
 
                   const result: JSX.Element[] = [];
                   
-                  // Limitar a displayedCount para infinite scroll
+                  // Todas las sesiones (reales y virtuales) con infinite scroll
                   const visibleEntries = dailyEntries.slice(0, displayedCount);
                   
                   visibleEntries.forEach((dayData: any, index: number) => {
@@ -3352,16 +3612,21 @@ export default function TimeTracking() {
                     result.push(
                       <div 
                         key={rowKey} 
-                        className={`bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600${showSessionsWaveLoading ? ` row-wave-loading row-wave-${index % 15}` : ''}`}
+                        className={cn(
+                          "bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600",
+                          dayData.isVirtual && "opacity-40", // Opacidad para tarjetas virtuales
+                          showSessionsWaveLoading && `row-wave-loading row-wave-${index % 15}`
+                        )}
                       >
                         {/* Card Header - clickable to expand - GRID LAYOUT for column alignment */}
                         <div 
                           className={cn(
-                            "grid items-center px-4 py-3.5 min-h-[72px] cursor-pointer select-none transition-colors gap-3",
+                            "grid items-center px-4 py-3.5 min-h-[72px] select-none transition-colors gap-3",
+                            !dayData.isVirtual && "cursor-pointer", // Solo clickeable si no es virtual
                             isExpanded && "bg-gray-50 dark:bg-gray-900/50"
                           )}
                           style={{ gridTemplateColumns: 'minmax(220px,280px) 90px minmax(120px,1fr) 60px 36px 20px' }}
-                          onClick={toggleExpand}
+                          onClick={dayData.isVirtual ? undefined : toggleExpand} // No expandir virtuales
                         >
                           {/* Col 1: Avatar + Name (flexible width) */}
                           <div className="flex items-center gap-2 min-w-0">
@@ -3375,7 +3640,7 @@ export default function TimeTracking() {
                               <span className="font-medium text-gray-900 dark:text-gray-100 text-sm pl-[2px] pr-[2px]">
                                 {dayData.userName || 'Usuario Desconocido'}
                               </span>
-                              {dayData.hasAutoCompleted && (
+                              {!dayData.isVirtual && dayData.hasAutoCompleted && (
                                 <div title="Esta sesión fue cerrada automáticamente por el sistema">
                                   <AlertTriangle className="w-3 h-3 text-amber-500 flex-shrink-0" />
                                 </div>
@@ -3390,19 +3655,25 @@ export default function TimeTracking() {
                             </span>
                           </div>
                           
-                          {/* Col 3: Timeline Bar (flexible) */}
+                          {/* Col 3: Timeline Bar O "SIN FICHAJE" si es virtual */}
                           <div className="w-full">
-                            <DailyTimelineBar dayData={dayData} />
+                            {dayData.isVirtual ? (
+                              <div className="text-center text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                SIN FICHAJE
+                              </div>
+                            ) : (
+                              <DailyTimelineBar dayData={dayData} />
+                            )}
                           </div>
                           
                           {/* Col 4: Total Hours (fixed width) */}
                           <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm text-right">
-                            {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
+                            {dayData.isVirtual ? '0h' : (totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-')}
                           </div>
                           
-                          {/* Col 5: Action Button (fixed width) */}
+                          {/* Col 5: Action Button (fixed width) - solo para no virtuales */}
                           <div className="justify-self-end" onClick={(e) => e.stopPropagation()}>
-                            {(() => {
+                            {!dayData.isVirtual && (() => {
                               const incompleteSession = dayData.sessions.find((s: any) => s.status === 'incomplete');
                               const activeSession = dayData.sessions.find((s: any) => !s.clockOut);
                               const session = incompleteSession || activeSession || dayData.sessions[0];
@@ -3452,15 +3723,17 @@ export default function TimeTracking() {
                             })()}
                           </div>
                           
-                          {/* Col 6: Chevron (fixed width, right side) */}
-                          <ChevronDown className={cn(
-                            "w-4 h-4 text-gray-400 transition-transform duration-200 justify-self-end",
-                            isExpanded && "transform rotate-180"
-                          )} />
+                          {/* Col 6: Chevron (fixed width, right side) - solo para no virtuales */}
+                          {!dayData.isVirtual && (
+                            <ChevronDown className={cn(
+                              "w-4 h-4 text-gray-400 transition-transform duration-200 justify-self-end",
+                              isExpanded && "transform rotate-180"
+                            )} />
+                          )}
                         </div>
                         
-                        {/* Expanded details - inside the card */}
-                        {isExpanded && (
+                        {/* Expanded details - inside the card - solo para no virtuales */}
+                        {!dayData.isVirtual && isExpanded && (
                           <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-4">
                             <div className="space-y-3">
                               {dayData.sessions.map((session: any, sessionIndex: number) => {
@@ -3542,7 +3815,7 @@ export default function TimeTracking() {
                                             )}
                                           </>
                                         ) : session.status === 'incomplete' ? (
-                                          <span className="text-sm text-red-500 font-medium">Incompleto</span>
+                                          <span className="text-sm text-red-500 font-medium">Incompleta</span>
                                         ) : (
                                           <span className="text-sm text-gray-400">En curso...</span>
                                         )}
@@ -3632,10 +3905,20 @@ export default function TimeTracking() {
                             {isFetchingNextPage ? (
                               <span>Cargando más fichajes...</span>
                             ) : (
-                              <>
-                                <ArrowDown className="w-4 h-4 animate-bounce" />
-                                <span>Desplaza para ver más ({totalCount - Math.min(displayedCount, allSessions.length)} restantes de {totalCount})</span>
-                              </>
+                              <div className="flex flex-col items-center gap-2">
+                                <div className="flex items-center gap-2">
+                                  <ArrowDown className="w-4 h-4 animate-bounce" />
+                                  <span>Desplaza para ver más ({totalCount - Math.min(displayedCount, allSessions.length)} restantes de {totalCount})</span>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={loadMoreSessions}
+                                >
+                                  Cargar más
+                                </Button>
+                              </div>
                             )}
                           </>
                         ) : (
@@ -3648,7 +3931,7 @@ export default function TimeTracking() {
                   return result;
                 })()}
                 
-                {filteredSessions.length === 0 && (
+                {sessionsWithNotClockedIn.length === 0 && (
                   isLoading ? (
                     <ListLoadingState message="fichajes" />
                   ) : (
@@ -3665,10 +3948,15 @@ export default function TimeTracking() {
           {activeViewMode === 'list' && (
           <div className="md:hidden space-y-2">
             {(() => {
-              const sortedSessions = filteredSessions
+              // Separar sesiones virtuales (sin fichar) de sesiones reales
+              const virtualSessions = sessionsWithNotClockedIn.filter((s: any) => s.isVirtual || s.notClockedIn);
+              const realSessions = sessionsWithNotClockedIn.filter((s: any) => !s.isVirtual && !s.notClockedIn);
+              
+              // Ordenar solo las sesiones reales
+              const sortedSessions = realSessions
                 .sort((a: any, b: any) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
               
-              const showSummaries = selectedEmployee !== 'all';
+              const showSummaries = isSingleEmployeeScope;
               let currentWeekStart: Date | null = null;
               let previousWeekStart: Date | null = null;
               let currentMonth: string | null = null;
@@ -3705,7 +3993,7 @@ export default function TimeTracking() {
                     return total + Math.max(0, totalSessionHours - breakHours);
                   }, 0);
               
-              // Group sessions by day
+              // Group only REAL sessions by day (virtuales se manejan aparte)
               const sessionsByDay = sortedSessions.reduce((acc: any, session: any) => {
                 const dayKey = `${session.userId}-${format(new Date(session.clockIn), 'yyyy-MM-dd')}`;
                 if (!acc[dayKey]) {
@@ -3735,7 +4023,49 @@ export default function TimeTracking() {
 
               const result: JSX.Element[] = [];
               
-              // Limitar a displayedCount para infinite scroll
+              // Primero añadir las cards de empleados sin fichar (virtuales) - SIEMPRE visibles
+              virtualSessions.forEach((virtualSession: any) => {
+                const virtualMobileKey = `virtual-mobile-${virtualSession.userId}`;
+                result.push(
+                  <div 
+                    key={virtualMobileKey} 
+                    className="opacity-40 bg-card dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm"
+                  >
+                    <div className="flex items-center justify-between px-3 py-3">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <AlertTriangle className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                        <UserAvatar 
+                          fullName={virtualSession.userName || 'Usuario Desconocido'} 
+                          size="sm"
+                          userId={virtualSession.userId}
+                        />
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
+                            {virtualSession.userName}
+                          </span>
+                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                            SIN FICHAJE
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        {virtualSession.expectedEntryTime && (
+                          <div className="text-xs text-gray-600 dark:text-gray-400">
+                            Esperado: {virtualSession.expectedEntryTime}
+                          </div>
+                        )}
+                        {virtualSession.timeSinceExpectedMinutes > 0 && (
+                          <div className="text-xs font-semibold text-red-600 dark:text-red-400">
+                            {Math.floor(virtualSession.timeSinceExpectedMinutes / 60)}h {virtualSession.timeSinceExpectedMinutes % 60}m de retraso
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              });
+              
+              // Luego añadir las sesiones reales con infinite scroll
               const visibleEntries = dailyEntries.slice(0, displayedCount);
               
               visibleEntries.forEach((dayData: any, index: number) => {
@@ -3940,9 +4270,13 @@ export default function TimeTracking() {
                                   <span className="text-xs font-medium text-muted-foreground">
                                     Sesión {sessIndex + 1}
                                   </span>
-                                  {sess.status === 'incomplete' && (
+                                  {sess.status === 'incomplete' ? (
                                     <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">Incompleta</span>
-                                  )}
+                                  ) : sess.autoCompleted ? (
+                                    <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                                      <AlertTriangle className="w-3 h-3" /> Auto
+                                    </span>
+                                  ) : null}
                                 </div>
                               )}
                               
@@ -3988,6 +4322,8 @@ export default function TimeTracking() {
                                         </a>
                                       )}
                                     </>
+                                  ) : sess.status === 'incomplete' ? (
+                                    <span className="text-sm text-red-500 font-medium">Incompleta</span>
                                   ) : (
                                     <span className="text-sm text-muted-foreground">En curso...</span>
                                   )}
@@ -4008,6 +4344,23 @@ export default function TimeTracking() {
                                   </div>
                                 </div>
                               )}
+
+                              {/* Duración */}
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">Duración</div>
+                                <div className="text-sm font-medium">
+                                  {(() => {
+                                    if (!sess.clockOut) return '-';
+                                    let hours = calculateHours(sess.clockIn, sess.clockOut);
+                                    if (hours > 24) hours = 24;
+                                    const breakHours = sess.breakPeriods
+                                      ? sess.breakPeriods.reduce((total: number, bp: any) => total + calculateHours(bp.breakStart, bp.breakEnd), 0)
+                                      : 0;
+                                    const netHours = Math.max(0, hours - breakHours);
+                                    return netHours > 0 ? `${netHours.toFixed(1)}h` : '-';
+                                  })()}
+                                </div>
+                              </div>
                             </div>
                           );
                         })}
@@ -4053,10 +4406,20 @@ export default function TimeTracking() {
                         {isFetchingNextPage ? (
                           <span>Cargando más fichajes...</span>
                         ) : (
-                          <>
-                            <ArrowDown className="w-4 h-4 animate-bounce" />
-                            <span>Desplaza para ver más ({totalCount - Math.min(displayedCount, allSessions.length)} restantes de {totalCount})</span>
-                          </>
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="flex items-center gap-2">
+                              <ArrowDown className="w-4 h-4 animate-bounce" />
+                              <span>Desplaza para ver más ({totalCount - Math.min(displayedCount, allSessions.length)} restantes de {totalCount})</span>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={loadMoreSessions}
+                            >
+                              Cargar más
+                            </Button>
+                          </div>
                         )}
                       </>
                     ) : (
@@ -4069,7 +4432,7 @@ export default function TimeTracking() {
               return result;
             })()}
             
-            {filteredSessions.length === 0 && (
+            {sessionsWithNotClockedIn.length === 0 && (
               isLoading ? (
                 <ListLoadingState message="fichajes" />
               ) : (
@@ -4133,9 +4496,7 @@ export default function TimeTracking() {
                   <tbody>
                     {(() => {
                       // En grid mode, mostrar todos los empleados (filtrados si hay selección)
-                      const allEmployees = selectedEmployee !== 'all'
-                        ? employees.filter(emp => emp.id.toString() === selectedEmployee)
-                        : employees;
+                      const allEmployees = scopedEmployeesList;
                       
                       const uniqueEmployees = allEmployees.map(emp => ({
                         id: emp.id,
@@ -4200,8 +4561,8 @@ export default function TimeTracking() {
                               
                               const hasIncomplete = daySessions.some((s: any) => s.status === 'incomplete');
                               
-                              // Detectar sesiones activas (trabajando o en descanso)
-                              const activeSession = daySessions.find((s: any) => !s.clockOut);
+                              // Detectar sesiones activas (trabajando o en descanso) - EXCLUIR incompletas
+                              const activeSession = daySessions.find((s: any) => !s.clockOut && s.status !== 'incomplete');
                               const isOnBreak = activeSession?.breakPeriods?.some((bp: any) => bp.breakStart && !bp.breakEnd);
                               const isWorking = activeSession && !isOnBreak;
 
@@ -4229,7 +4590,7 @@ export default function TimeTracking() {
                                       )}
                                     </div>
                                   ) : (
-                                    <span className="text-gray-300 dark:text-gray-600">-</span>
+                                    <span className="text-xs text-gray-400 dark:text-gray-500">sin fichaje</span>
                                   )}
                                 </td>
                               );
@@ -4242,7 +4603,7 @@ export default function TimeTracking() {
                 </table>
               </div>
 
-              {filteredSessions.length === 0 && (
+              {sessionsWithNotClockedIn.length === 0 && (
                 <ListEmptyState 
                   title="No hay fichajes en esta semana" 
                   subtitle="Selecciona otra semana para ver los fichajes" 
@@ -4352,7 +4713,7 @@ export default function TimeTracking() {
                                       )}
                                     </>
                                   ) : session.status === 'incomplete' ? (
-                                    <span className="text-sm text-red-500 font-medium">Incompleto</span>
+                                    <span className="text-sm text-red-500 font-medium">Incompleta</span>
                                   ) : (
                                     <span className="text-sm text-gray-400">En curso...</span>
                                   )}
@@ -4577,6 +4938,7 @@ export default function TimeTracking() {
           )}
         </div>
       )}
+      {/* Tab Content: Sin Fichaje - Smart detection tab */}
       {/* Tab Content: Solicitudes de Modificación */}
       {activeTab === 'requests' && (
         <div className="space-y-4">
@@ -4584,7 +4946,11 @@ export default function TimeTracking() {
           {(() => {
             const filteredModificationRequests = modificationRequests.filter((request: any) => {
               const matchesStatus = requestsStatus === "all" || request.status === requestsStatus;
-              const matchesEmployee = requestsEmployeeId === "all" || request.employeeId === parseInt(requestsEmployeeId);
+              const matchesEmployee = requestsEmployeeId !== "all"
+                ? request.employeeId === Number.parseInt(requestsEmployeeId, 10)
+                : requestsEmployeeTeamMemberIds
+                  ? requestsEmployeeTeamMemberIds.has(request.employeeId)
+                  : true;
               const matchesType = requestsType === "all" || request.requestType === requestsType || (requestsType === "modification" && request.requestType !== "forgotten_checkin");
               return matchesStatus && matchesEmployee && matchesType;
             });
@@ -4601,51 +4967,38 @@ export default function TimeTracking() {
                   
                   {/* Filtros - right side */}
                   <div className="flex items-center gap-2">
-                  {/* Filtro Empleado con buscador */}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="w-[180px] h-9 justify-between font-normal">
-                        <span className="truncate">
-                          {requestsEmployeeId === "all" 
-                            ? "Todos los empleados" 
-                            : employees.find((e: any) => e.id === parseInt(requestsEmployeeId))?.fullName || "Empleado"}
-                        </span>
-                        <User className="w-4 h-4 ml-2 flex-shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[240px] p-0" align="start">
-                      <div className="p-2 border-b">
-                        <Input
-                          placeholder="Buscar empleado..."
-                          value={requestsEmployeeSearchTerm}
-                          onChange={(e) => setRequestsEmployeeSearchTerm(e.target.value)}
-                          className="h-8"
-                        />
-                      </div>
-                      <div className="max-h-[200px] overflow-y-auto p-1">
-                        <button
-                          onClick={() => { setRequestsEmployeeId("all"); setRequestsEmployeeSearchTerm(""); }}
-                          className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors ${requestsEmployeeId === "all" ? "bg-muted font-medium" : ""}`}
-                        >
-                          Todos los empleados
-                        </button>
-                        {(employees || [])
-                          .filter((emp: any) => 
-                            requestsEmployeeSearchTerm === '' || 
-                            emp.fullName.toLowerCase().includes(requestsEmployeeSearchTerm.toLowerCase())
-                          )
-                          .map((emp: any) => (
-                            <button
-                              key={emp.id}
-                              onClick={() => { setRequestsEmployeeId(emp.id.toString()); setRequestsEmployeeSearchTerm(""); }}
-                              className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors truncate ${requestsEmployeeId === emp.id.toString() ? "bg-muted font-medium" : ""}`}
-                            >
-                              {emp.fullName}
-                            </button>
-                          ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                    <EmployeeScopeDropdown
+                      employees={employeesList.map((employee) => ({ id: employee.id, fullName: employee.fullName }))}
+                      teams={teams.map((team) => ({ id: team.id, name: team.name }))}
+                      value={
+                        requestsEmployeeTeamFilter !== 'all'
+                          ? { type: 'team', id: Number.parseInt(requestsEmployeeTeamFilter, 10) }
+                          : requestsEmployeeId !== 'all'
+                            ? { type: 'employee', id: Number.parseInt(requestsEmployeeId, 10) }
+                            : { type: 'all' }
+                      }
+                      onChange={(value) => {
+                        if (value.type === 'all') {
+                          setRequestsEmployeeId('all');
+                          setRequestsEmployeeTeamFilter('all');
+                          return;
+                        }
+
+                        if (value.type === 'team') {
+                          setRequestsEmployeeId('all');
+                          setRequestsEmployeeTeamFilter(String(value.id));
+                          return;
+                        }
+
+                        setRequestsEmployeeId(String(value.id));
+                        setRequestsEmployeeTeamFilter('all');
+                      }}
+                      allLabel="Todos los empleados"
+                      buttonPlaceholder="Empleado"
+                      searchPlaceholder="Buscar empleado..."
+                      buttonClassName="w-[180px] h-9 justify-between font-normal"
+                      contentClassName="w-[240px] p-0"
+                    />
                   
                   {/* Filtro Tipo de Solicitud */}
                   <Select value={requestsType} onValueChange={setRequestsType}>
@@ -4686,51 +5039,38 @@ export default function TimeTracking() {
                   
                   {/* Segunda fila: Filtros en grid 2x2 */}
                   <div className="grid grid-cols-2 gap-2">
-                    {/* Filtro Empleado */}
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-between font-normal text-xs h-9">
-                          <span className="truncate">
-                            {requestsEmployeeId === "all" 
-                              ? "Empleado" 
-                              : employees.find((e: any) => e.id === parseInt(requestsEmployeeId))?.fullName?.split(' ')[0] || "Empleado"}
-                          </span>
-                          <User className="w-3.5 h-3.5 ml-1 flex-shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[220px] p-0" align="start">
-                        <div className="p-2 border-b">
-                          <Input
-                            placeholder="Buscar..."
-                            value={requestsEmployeeSearchTerm}
-                            onChange={(e) => setRequestsEmployeeSearchTerm(e.target.value)}
-                            className="h-8"
-                          />
-                        </div>
-                        <div className="max-h-[180px] overflow-y-auto p-1">
-                          <button
-                            onClick={() => { setRequestsEmployeeId("all"); setRequestsEmployeeSearchTerm(""); }}
-                            className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted ${requestsEmployeeId === "all" ? "bg-muted font-medium" : ""}`}
-                          >
-                            Todos
-                          </button>
-                          {(employees || [])
-                            .filter((emp: any) => 
-                              requestsEmployeeSearchTerm === '' || 
-                              emp.fullName.toLowerCase().includes(requestsEmployeeSearchTerm.toLowerCase())
-                            )
-                            .map((emp: any) => (
-                              <button
-                                key={emp.id}
-                                onClick={() => { setRequestsEmployeeId(emp.id.toString()); setRequestsEmployeeSearchTerm(""); }}
-                                className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted truncate ${requestsEmployeeId === emp.id.toString() ? "bg-muted font-medium" : ""}`}
-                              >
-                                {emp.fullName}
-                              </button>
-                            ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                    <EmployeeScopeDropdown
+                      employees={employeesList.map((employee) => ({ id: employee.id, fullName: employee.fullName }))}
+                      teams={teams.map((team) => ({ id: team.id, name: team.name }))}
+                      value={
+                        requestsEmployeeTeamFilter !== 'all'
+                          ? { type: 'team', id: Number.parseInt(requestsEmployeeTeamFilter, 10) }
+                          : requestsEmployeeId !== 'all'
+                            ? { type: 'employee', id: Number.parseInt(requestsEmployeeId, 10) }
+                            : { type: 'all' }
+                      }
+                      onChange={(value) => {
+                        if (value.type === 'all') {
+                          setRequestsEmployeeId('all');
+                          setRequestsEmployeeTeamFilter('all');
+                          return;
+                        }
+
+                        if (value.type === 'team') {
+                          setRequestsEmployeeId('all');
+                          setRequestsEmployeeTeamFilter(String(value.id));
+                          return;
+                        }
+
+                        setRequestsEmployeeId(String(value.id));
+                        setRequestsEmployeeTeamFilter('all');
+                      }}
+                      allLabel="Todos los empleados"
+                      buttonPlaceholder="Empleado"
+                      searchPlaceholder="Buscar..."
+                      buttonClassName="w-full justify-between font-normal text-xs h-9"
+                      contentClassName="w-[220px] p-0"
+                    />
                     
                     {/* Filtro Tipo */}
                     <Select value={requestsType} onValueChange={setRequestsType}>
@@ -5152,7 +5492,7 @@ export default function TimeTracking() {
                             <span className="text-muted-foreground">Salida:</span>
                             <span className="font-medium">{format(new Date(request.requestedClockOut), 'HH:mm')}</span>
                           </div>
-                        )}
+                              )}
                         {request.requestedClockOut && (() => {
                           const totalMs = new Date(request.requestedClockOut).getTime() - new Date(request.requestedClockIn).getTime();
                           const hours = Math.floor(totalMs / (1000 * 60 * 60));
@@ -5365,6 +5705,31 @@ export default function TimeTracking() {
           </div>
         </DialogContent>
       </Dialog>
+      {activeTab === 'sessions' && typeof document !== 'undefined' && createPortal(
+        <div
+          className={cn(
+            'fixed z-[2147483647] -translate-x-1/2 transform-gpu transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform',
+            showScrollButton
+              ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto'
+              : 'opacity-0 translate-y-8 scale-95 pointer-events-none'
+          )}
+          style={{
+            bottom: 'max(1rem, env(safe-area-inset-bottom))',
+            left: scrollButtonLeft ? `${scrollButtonLeft}px` : '50%'
+          }}
+        >
+          <Button
+            type="button"
+            onClick={handleBackToTop}
+            className="h-12 w-12 rounded-full border border-white/30 bg-white/15 text-white shadow-xl backdrop-blur-md hover:bg-white/25"
+            data-testid="button-back-to-top-admin"
+            aria-label="Subir"
+          >
+            <ChevronsUp className="h-5 w-5" />
+          </Button>
+        </div>,
+        document.body
+      )}
       {/* Incomplete Sessions Warning Dialog */}
       <Dialog open={showIncompleteWarningDialog} onOpenChange={setShowIncompleteWarningDialog}>
         <DialogContent className="max-w-md">

@@ -1,14 +1,32 @@
 import { createRoot } from "react-dom/client";
 import { lazy, Suspense } from "react";
+import * as Sentry from "@sentry/react";
 import "./index.css";
 
 const enableDebugLogs = window.localStorage.getItem('oficaz_debug_logs') === 'true';
 const enableErrorTelemetry = import.meta.env.PROD || import.meta.env.VITE_ENABLE_CLIENT_TELEMETRY === 'true';
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
+
+if (sentryDsn) {
+  Sentry.init({
+    dsn: sentryDsn,
+    environment: import.meta.env.MODE,
+    release: import.meta.env.VITE_APP_VERSION || 'unknown',
+    tracesSampleRate: 0.05,
+  });
+}
 
 const sendClientTelemetry = (payload: Record<string, unknown>) => {
   if (!enableErrorTelemetry) return;
 
   try {
+    if (sentryDsn) {
+      Sentry.captureMessage(String(payload.message || 'Client telemetry event'), {
+        level: 'error',
+        extra: payload,
+      });
+    }
+
     const body = JSON.stringify({
       ...payload,
       timestamp: new Date().toISOString(),

@@ -1,23 +1,8 @@
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
-import { checkFeatureAccess, getRequiredPlanForFeature, type FeatureKey } from '@/lib/feature-restrictions';
+import { checkFeatureAccess, getRequiredPlanForFeature, normalizeFeatureKey, type FeatureKey } from '@/lib/feature-restrictions';
 import { useEmployeeViewMode } from '@/hooks/use-employee-view-mode';
-
-const featureToAddonKey: Record<string, string> = {
-  time_tracking: 'time_tracking',
-  timeTracking: 'time_tracking',
-  vacation: 'vacation',
-  schedules: 'schedules',
-  documents: 'documents',
-  messages: 'messages',
-  reminders: 'reminders',
-  work_reports: 'work_reports',
-  reports: 'work_reports',
-  ai_assistant: 'ai_assistant',
-  inventory: 'inventory',
-  accounting: 'accounting',
-};
 
 // Employee-specific routes where managers should have full access to company features
 const EMPLOYEE_ROUTES = [
@@ -64,7 +49,7 @@ export function useFeatureCheck() {
     }
 
     if (user?.role === 'manager') {
-      const addonKey = featureToAddonKey[feature] || feature;
+      const addonKey = normalizeFeatureKey(feature);
       
       // Messages and reminders are ALWAYS enabled for managers
       if (alwaysEnabledForManagers.includes(addonKey)) {

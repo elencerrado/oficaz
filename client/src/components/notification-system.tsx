@@ -48,7 +48,7 @@ const categoryNames = {
   messages: 'Mensajes',
   vacations: 'Vacaciones',
   system: 'Sistema',
-  reminders: 'Recordatorios',
+  reminders: 'Tareas',
   'time-tracking': 'Fichajes'
 };
 
@@ -58,47 +58,19 @@ export function NotificationSystem() {
   // Fetch all notifications
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['/api/notifications'],
-    queryFn: async () => {
-      const response = await fetch('/api/notifications', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch notifications');
-      return response.json();
-    }
+    queryFn: async () => apiRequest('GET', '/api/notifications')
   });
 
   // Fetch unread count - WebSocket handles real-time updates for most notifications
   const { data: unreadData } = useQuery({
     queryKey: ['/api/notifications/unread-count'],
-    queryFn: async () => {
-      const response = await fetch('/api/notifications/unread-count', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch unread count');
-      return response.json();
-    },
+    queryFn: async () => apiRequest('GET', '/api/notifications/unread-count'),
     staleTime: 60000, // Cache for 1 min - WebSocket invalidates on real events
   });
 
   // Mark as read mutation
   const markAsReadMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await fetch(`/api/notifications/${id}/read`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!response.ok) throw new Error('Failed to mark as read');
-      return response.json();
-    },
+    mutationFn: async (id: number) => apiRequest('PATCH', `/api/notifications/${id}/read`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
       queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread-count'] });
@@ -107,17 +79,7 @@ export function NotificationSystem() {
 
   // Mark as completed mutation
   const markAsCompletedMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await fetch(`/api/notifications/${id}/complete`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!response.ok) throw new Error('Failed to mark as completed');
-      return response.json();
-    },
+    mutationFn: async (id: number) => apiRequest('PATCH', `/api/notifications/${id}/complete`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
       queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread-count'] });

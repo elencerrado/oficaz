@@ -9,6 +9,7 @@ import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 import * as fs from 'fs';
 import * as path from 'path';
+import { sql } from 'drizzle-orm';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,12 +23,131 @@ if (fs.existsSync(envPath)) {
   console.log('⚠️  No se encontró .env, intentando con variables del sistema...');
 }
 
-// Importar db después de cargar las variables de entorno
-const { db } = await import('../db.js');
-const { sql } = await import('drizzle-orm');
+function splitSqlStatements(sqlText: string): string[] {
+  const statements: string[] = [];
+  let current = '';
+  let inSingleQuote = false;
+  let inDoubleQuote = false;
+  let inLineComment = false;
+  let inBlockComment = false;
+  let dollarTag: string | null = null;
+
+  for (let index = 0; index < sqlText.length; index += 1) {
+    const char = sqlText[index];
+    const nextChar = sqlText[index + 1];
+    const remaining = sqlText.slice(index);
+
+    if (inLineComment) {
+      current += char;
+      if (char === '\n') {
+        inLineComment = false;
+      }
+      continue;
+    }
+
+    if (inBlockComment) {
+      current += char;
+      if (char === '*' && nextChar === '/') {
+        current += nextChar;
+        index += 1;
+        inBlockComment = false;
+      }
+      continue;
+    }
+
+    if (dollarTag) {
+      if (remaining.startsWith(dollarTag)) {
+        current += dollarTag;
+        index += dollarTag.length - 1;
+        dollarTag = null;
+      } else {
+        current += char;
+      }
+      continue;
+    }
+
+    if (inSingleQuote) {
+      current += char;
+      if (char === '\'' && nextChar === '\'') {
+        current += nextChar;
+        index += 1;
+      } else if (char === '\'') {
+        inSingleQuote = false;
+      }
+      continue;
+    }
+
+    if (inDoubleQuote) {
+      current += char;
+      if (char === '"' && nextChar === '"') {
+        current += nextChar;
+        index += 1;
+      } else if (char === '"') {
+        inDoubleQuote = false;
+      }
+      continue;
+    }
+
+    if (char === '-' && nextChar === '-') {
+      current += char + nextChar;
+      index += 1;
+      inLineComment = true;
+      continue;
+    }
+
+    if (char === '/' && nextChar === '*') {
+      current += char + nextChar;
+      index += 1;
+      inBlockComment = true;
+      continue;
+    }
+
+    if (char === '\'') {
+      current += char;
+      inSingleQuote = true;
+      continue;
+    }
+
+    if (char === '"') {
+      current += char;
+      inDoubleQuote = true;
+      continue;
+    }
+
+    if (char === '$') {
+      const dollarMatch = remaining.match(/^\$[A-Za-z0-9_]*\$/);
+      if (dollarMatch) {
+        dollarTag = dollarMatch[0];
+        current += dollarTag;
+        index += dollarTag.length - 1;
+        continue;
+      }
+    }
+
+    if (char === ';') {
+      const statement = current.trim();
+      if (statement) {
+        statements.push(statement);
+      }
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  const trailingStatement = current.trim();
+  if (trailingStatement) {
+    statements.push(trailingStatement);
+  }
+
+  return statements;
+}
 
 async function runMigrations() {
   try {
+    const { db } = await import('../db.js');
+
     console.log('🔍 Buscando migraciones SQL...');
     
     const migrationsDir = path.join(__dirname, '../../migrations');
@@ -41,9 +161,12 @@ async function runMigrations() {
       console.log(`\n▶️  Ejecutando: ${file}`);
       const migrationPath = path.join(migrationsDir, file);
       const migrationSQL = fs.readFileSync(migrationPath, 'utf-8');
+      const statements = splitSqlStatements(migrationSQL);
       
       try {
-        await db.execute(sql.raw(migrationSQL));
+        for (const statement of statements) {
+          await db.execute(sql.raw(statement));
+        }
         console.log(`✅ ${file} ejecutada correctamente`);
       } catch (error: any) {
         // Ignorar errores si la tabla ya existe

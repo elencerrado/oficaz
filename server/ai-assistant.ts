@@ -1,6 +1,8 @@
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, gte, lte, ilike, desc, sql as sqlTag } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import type { DrizzleStorage } from "./storage.js";
+import crypto from 'crypto';
+import { sendEmployeeWelcomeEmail } from './email.js';
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 
@@ -19,6 +21,26 @@ export interface AIFunctionContext {
   storage: DrizzleStorage;
   companyId: number;
   adminUserId: number;
+}
+
+async function logAIAuditAction(
+  context: AIFunctionContext,
+  action: string,
+  details: string
+) {
+  try {
+    const adminUser = await context.storage.getUser(context.adminUserId);
+    await context.storage.createAuditLog({
+      timestamp: new Date(),
+      ip: 'ai-assistant',
+      action,
+      email: adminUser?.companyEmail || adminUser?.personalEmail || undefined,
+      success: true,
+      details,
+    });
+  } catch (error: any) {
+    console.error('⚠️ [AI AUDIT] Could not persist audit log:', error?.message || error);
+  }
 }
 
 // ========================================
@@ -516,25 +538,158 @@ export async function resolveEmployeeName(
 ): Promise<{ employeeId: number; message?: string } | { error: string }> {
   // Get all employees from the company
   const allEmployees = await storage.getUsersByCompany(companyId);
-  
-  // Search for employees with matching names (case-insensitive, accent-insensitive, partial match)
-  const normalizedSearch = normalizeForComparison(employeeName);
-  const matches = allEmployees.filter(emp => 
-    normalizeForComparison(emp.fullName).includes(normalizedSearch)
-  );
+
+  // Search with weighted matching to reduce ambiguous partial-name collisions.
+  const normalizedSearch = normalizeForComparison(employeeName).trim();
+  const searchWords = normalizedSearch.split(/\s+/).filter(Boolean);
+
+  const scoredMatches = allEmployees
+    .map(emp => {
+      const normalizedFullName = normalizeForComparison(emp.fullName).trim();
+      const fullNameWords = normalizedFullName.split(/\s+/).filter(Boolean);
+
+      if (normalizedFullName === normalizedSearch) {
+        return { employee: emp, score: 1 };
+      }
+
+      const matchedWords = searchWords.filter(searchWord =>
+        fullNameWords.some(nameWord =>
+          nameWord === searchWord ||
+          nameWord.startsWith(searchWord) ||
+          searchWord.startsWith(nameWord)
+        )
+      ).length;
+
+      const coverage = searchWords.length > 0 ? matchedWords / searchWords.length : 0;
+      const containsBonus = normalizedFullName.includes(normalizedSearch) ? 0.1 : 0;
+      const score = Math.min(1, coverage + containsBonus);
+
+      return { employee: emp, score };
+    })
+    .filter(item => item.score >= 0.6)
+    .sort((a, b) => b.score - a.score);
+
+  const matches = scoredMatches.map(item => item.employee);
   
   if (matches.length === 0) {
     return { error: `No encontré ningún empleado con el nombre "${employeeName}". Por favor, verifica el nombre e intenta de nuevo.` };
   }
-  
-  if (matches.length === 1) {
+
+  if (matches.length === 1 || (scoredMatches[0]?.score ?? 0) >= 0.95) {
     return { employeeId: matches[0].id };
   }
-  
+
+  // Resolve if best match is clearly above second candidate
+  if ((scoredMatches[0]?.score ?? 0) - (scoredMatches[1]?.score ?? 0) >= 0.2) {
+    return {
+      employeeId: scoredMatches[0].employee.id,
+      message: `Interpreté "${employeeName}" como "${scoredMatches[0].employee.fullName}".`
+    };
+  }
+
   // Multiple matches - return error with list
-  const matchNames = matches.map(emp => emp.fullName).join(", ");
+  const matchNames = matches.slice(0, 5).map(emp => emp.fullName).join(", ");
   return { 
     error: `Encontré varios empleados con ese nombre: ${matchNames}. Por favor, especifica el nombre completo exacto.` 
+  };
+}
+
+// FEATURE FLAGS BY SUBSCRIPTION TIER
+// Defines which AI functions are available under each plan
+export const FEATURE_FLAGS_BY_TIER = {
+  "free": ["listEmployees", "getEmployeeShifts", "getEmployeeWorkHours"],
+  "starter": [
+    "listEmployees", "getEmployeeShifts", "getEmployeeWorkHours", "getVacationBalance",
+    "getPendingApprovals", "navigateToPage"
+  ],
+  "professional": [
+    // All starter features +
+    "listEmployees", "getEmployeeShifts", "getEmployeeWorkHours", "getVacationBalance",
+    "getPendingApprovals", "navigateToPage",
+    "assignSchedule", "assignScheduleInRange", "updateWorkShiftTimes",
+    "deleteWorkShift", "assignRotatingSchedule", "detectWorkShiftOverlaps",
+    "sendMessage", "approveVacationRequests", "approveTimeModificationRequests",
+    "createReminder", "requestDocument", "getCompanySettings",
+    "updateEmployeeShiftsColor", "updateWorkShiftColor", "generateTimeReport"
+  ],
+  "enterprise": [
+    // All professional features +
+    "listEmployees", "getEmployeeShifts", "getEmployeeWorkHours", "getVacationBalance",
+    "getPendingApprovals", "navigateToPage",
+    "assignSchedule", "assignScheduleInRange", "updateWorkShiftTimes",
+    "deleteWorkShift", "assignRotatingSchedule", "detectWorkShiftOverlaps",
+    "sendMessage", "approveVacationRequests", "approveTimeModificationRequests",
+    "createReminder", "requestDocument", "getCompanySettings",
+    "updateEmployeeShiftsColor", "updateWorkShiftColor", "generateTimeReport",
+    "createEmployee", "updateEmployee", "generatePayrollReport",
+    "swapEmployeeShifts", "copyEmployeeShifts", "createShiftAfterEmployee",
+    "updateWorkShiftDetails", "deleteWorkShiftsInRange", "updateWorkShiftsInRange",
+    // CRM functions (premium)
+    "getActiveWorkers", "listCRMContacts", "createCRMContact", "addCRMInteraction",
+    // Work reports (premium)
+    "listWorkReports", "createWorkReport",
+    // Vacation requests (premium)
+    "createVacationRequest",
+    // Accounting (premium)
+    "getAccountingSummary"
+  ]
+};
+
+// Helper function to check if a feature is available for a tier
+export function isFeatureAvailable(
+  functionName: string,
+  planName: string,
+  hasAddon: boolean = false
+): boolean {
+  // If addon is active, premium functions available
+  if (hasAddon && ["getActiveWorkers", "listCRMContacts", "createCRMContact", "addCRMInteraction",
+                     "listWorkReports", "createWorkReport", "createVacationRequest",
+                     "getAccountingSummary"].includes(functionName)) {
+    return true;
+  }
+
+  // Normalize plan name
+  const normalizedPlan = planName?.toLowerCase() || "free";
+  const availableFunctions = FEATURE_FLAGS_BY_TIER[normalizedPlan as keyof typeof FEATURE_FLAGS_BY_TIER]
+    || FEATURE_FLAGS_BY_TIER["free"];
+
+  return availableFunctions.includes(functionName);
+}
+
+// CENTRALIZED RESOLUTION HELPER
+// This function should be used in ALL places where employeeId needs to be resolved
+// Eliminates duplicate resolution logic and reduces DB queries  
+export async function resolveEmployeeIdFromParams(
+  storage: DrizzleStorage,
+  companyId: number,
+  params: { employeeId?: number; employeeName?: string }
+): Promise<{ employeeId: number; employeeName: string } | { error: string }> {
+  let targetEmployeeId: number | undefined;
+  
+  // If employeeId was already resolved elsewhere, use it directly
+  if (params.employeeId) {
+    targetEmployeeId = params.employeeId;
+  }
+  // Otherwise try to resolve from name
+  else if (params.employeeName) {
+    const resolved = await resolveEmployeeName(storage, companyId, params.employeeName);
+    if ('error' in resolved) {
+      return { error: resolved.error };
+    }
+    targetEmployeeId = resolved.employeeId;
+  } else {
+    return { error: 'Se requiere employeeId o employeeName' };
+  }
+  
+  // Get employee name for response
+  const employee = await storage.getUser(targetEmployeeId);
+  if (!employee) {
+    return { error: `Empleado con ID ${targetEmployeeId} no encontrado` };
+  }
+  
+  return {
+    employeeId: targetEmployeeId,
+    employeeName: employee.fullName,
   };
 }
 
@@ -578,9 +733,15 @@ export async function sendMessage(
       const { sendMessageNotification } = await import("./pushNotificationScheduler.js");
       sendMessageNotification(employeeId, admin?.fullName || "Admin", params.subject, message.id);
     } catch (error) {
-      // console.error("Error sending push notification:", error);
+      // Silently fail push notification
     }
   }
+
+  await logAIAuditAction(
+    context,
+    'ai_send_message',
+    `recipientCount=${results.length}; recipientIds=${JSON.stringify(targetEmployeeIds)}; subject=${params.subject}`
+  );
 
   return {
     success: true,
@@ -630,10 +791,56 @@ export async function approveTimeModificationRequests(
     results.push(updated);
   }
 
+  await logAIAuditAction(
+    context,
+    'ai_approve_time_modification_requests',
+    `approvedCount=${results.length}; requestIds=${JSON.stringify(targetRequestIds)}; adminResponse=${params.adminResponse || ''}`
+  );
+
   return {
     success: true,
     approvedCount: results.length,
     requestIds: targetRequestIds,
+  };
+}
+
+// 3-helper. Get pending vacation requests (for confirmation before bulk approve)
+export async function getPendingVacationsToApprove(
+  context: AIFunctionContext,
+) {
+  const { storage, companyId } = context;
+
+  const companyUsers = await storage.getUsersByCompany(companyId);
+  const companyUserIds = companyUsers.map(u => u.id);
+
+  const pendingRequests = await db.select()
+    .from(schema.vacationRequests)
+    .where(
+      and(
+        inArray(schema.vacationRequests.userId, companyUserIds),
+        eq(schema.vacationRequests.status, "pending")
+      )
+    )
+    .orderBy(desc(schema.vacationRequests.createdAt));
+
+  // Enrich with employee names
+  const enriched = await Promise.all(
+    pendingRequests.map(async (req: any) => {
+      const user = await storage.getUser(req.userId);
+      return {
+        id: req.id,
+        employeeName: user?.fullName || 'Unknown',
+        startDate: req.startDate,
+        endDate: req.endDate,
+        absenceType: req.absenceType || 'vacation',
+        createdAt: req.createdAt,
+      };
+    })
+  );
+
+  return {
+    count: enriched.length,
+    requests: enriched,
   };
 }
 
@@ -695,6 +902,12 @@ export async function approveVacationRequests(
     
     results.push(updated);
   }
+
+  await logAIAuditAction(
+    context,
+    'ai_approve_vacation_requests',
+    `approvedCount=${results.length}; requestIds=${JSON.stringify(targetRequestIds)}; adminComment=${params.adminComment || ''}`
+  );
 
   return {
     success: true,
@@ -758,6 +971,12 @@ export async function denyVacationRequests(
     
     results.push(updated);
   }
+
+  await logAIAuditAction(
+    context,
+    'ai_deny_vacation_requests',
+    `deniedCount=${results.length}; requestIds=${JSON.stringify(targetRequestIds)}; adminComment=${params.adminComment || ''}`
+  );
 
   return {
     success: true,
@@ -830,6 +1049,12 @@ export async function updateCompanySettings(
     }
   }
 
+  await logAIAuditAction(
+    context,
+    'ai_update_company_settings',
+    `companyId=${companyId}; changes=${changes.join(' | ')}`
+  );
+
   return {
     success: true,
     message: `Configuración actualizada: ${changes.join(', ')}`,
@@ -873,6 +1098,12 @@ export async function createReminder(
     enableNotifications: params.enableNotifications ?? true,
     createdBy: adminUserId,
   });
+
+  await logAIAuditAction(
+    context,
+    'ai_create_reminder',
+    `reminderId=${reminder.id}; assignedCount=${Array.isArray(assignedUserIds) ? assignedUserIds.length : 0}; title=${params.title}`
+  );
 
   return {
     success: true,
@@ -969,12 +1200,12 @@ export async function createEmployee(
     return { success: false, error: `El correo ${companyEmail} ya está en uso. Indica otro correo corporativo o personal.` };
   }
 
-  // Create employee with default password (user must change it on first login)
+  // Create employee without password — activation email will be sent
   const employee = await storage.createUser({
     companyId,
     personalEmail: params.email,
     companyEmail,
-    password: 'DefaultPass123!',
+    password: '',
     fullName: params.fullName,
     dni: params.dni,
     role,
@@ -982,7 +1213,43 @@ export async function createEmployee(
     personalPhone: params.phoneNumber || null,
     startDate: params.startDate ? new Date(params.startDate) : new Date(),
     isActive: true,
+    isPendingActivation: true,
   });
+
+  // Generate activation token (7-day expiry)
+  const activationToken = await storage.createActivationToken({
+    userId: employee.id,
+    email: companyEmail,
+    token: crypto.randomBytes(32).toString('hex'),
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    createdBy: context.adminUserId,
+  });
+
+  // Send welcome / activation email
+  const baseUrl = process.env.REPLIT_DOMAINS
+    ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+    : (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://oficaz.es');
+  const activationLink = `${baseUrl}/employee-activation?token=${activationToken.token}`;
+
+  const emailSent = await sendEmployeeWelcomeEmail(
+    companyEmail,
+    params.fullName,
+    company?.name ?? '',
+    activationToken.token,
+    activationLink
+  );
+
+  if (!emailSent) {
+    console.error('❌ [AI] Activation email could not be sent to:', companyEmail);
+  } else {
+    console.log('✅ [AI] Activation email sent to:', companyEmail);
+  }
+
+  await logAIAuditAction(
+    context,
+    'ai_create_employee',
+    `employeeId=${employee.id}; employeeName=${employee.fullName}; role=${employee.role}; activationEmailSent=${emailSent}`
+  );
 
   return {
     success: true,
@@ -994,7 +1261,7 @@ export async function createEmployee(
       position: employee.position,
       role: employee.role,
     },
-    message: `Empleado ${employee.fullName} creado como ${role}. Correo corporativo: ${employee.companyEmail}.`
+    message: `Empleado ${employee.fullName} creado como ${role}. Se ha enviado un correo a ${employee.companyEmail} para que establezca su contraseña.`
   };
 }
 
@@ -1056,6 +1323,12 @@ export async function updateEmployee(
       error: "No se pudo actualizar el empleado"
     };
   }
+
+  await logAIAuditAction(
+    context,
+    'ai_update_employee',
+    `employeeId=${params.employeeId}; updatedFields=${Object.keys(updates).join(',')}`
+  );
 
   return {
     success: true,
@@ -1283,6 +1556,12 @@ export async function assignSchedule(
     })
     .returning();
 
+  await logAIAuditAction(
+    context,
+    'ai_assign_schedule',
+    `employeeId=${params.employeeId}; title=${params.title}; startDate=${params.startDate}; endDate=${params.endDate}`
+  );
+
   return {
     success: true,
     shift: shift[0],
@@ -1426,6 +1705,12 @@ export async function assignScheduleInRange(
     ? ` (eliminé ${existingShifts.length} turno${existingShifts.length > 1 ? 's' : ''} antiguo${existingShifts.length > 1 ? 's' : ''})`
     : '';
 
+  await logAIAuditAction(
+    context,
+    'ai_assign_schedule_in_range',
+    `employeeId=${params.employeeId}; createdCount=${createdShifts.length}; startDate=${params.startDate}; endDate=${params.endDate}; forceOverwrite=${Boolean(params.forceOverwrite)}`
+  );
+
   return {
     success: true,
     createdCount: createdShifts.length,
@@ -1526,6 +1811,12 @@ export async function assignRotatingSchedule(
   // Calculate rest day dates for summary
   const restDaysCount = Math.floor((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1 - workDates.length;
 
+  await logAIAuditAction(
+    context,
+    'ai_assign_rotating_schedule',
+    `employeeId=${params.employeeId}; createdCount=${createdShifts.length}; workDays=${params.workDays}; restDays=${params.restDays}; startDate=${params.startDate}; endDate=${params.endDate}`
+  );
+
   return {
     success: true,
     createdCount: createdShifts.length,
@@ -1581,6 +1872,12 @@ export async function requestDocument(
   } catch (error) {
     // console.error("Error sending push notification:", error);
   }
+
+  await logAIAuditAction(
+    context,
+    'ai_request_document',
+    `employeeId=${params.employeeId}; fileName=${params.fileName}`
+  );
 
   return {
     success: true,
@@ -1640,6 +1937,12 @@ export async function deleteWorkShift(
     await db.delete(schema.workShifts)
       .where(eq(schema.workShifts.id, shift.id));
   }
+
+  await logAIAuditAction(
+    context,
+    'ai_delete_work_shift',
+    `employeeId=${params.employeeId}; date=${params.date}; deletedCount=${shiftsToDelete.length}`
+  );
 
   return {
     success: true,
@@ -1714,6 +2017,12 @@ export async function deleteWorkShiftsInRange(
   const targetDescription = employee 
     ? `de ${employee.fullName}` 
     : "de todos los empleados";
+
+  await logAIAuditAction(
+    context,
+    'ai_delete_work_shifts_in_range',
+    `deletedCount=${shiftsToDelete.length}; employeeId=${params.employeeId || 'all'}; startDate=${params.startDate}; endDate=${params.endDate}`
+  );
 
   return {
     success: true,
@@ -1826,6 +2135,12 @@ export async function updateWorkShiftTimes(
   }
 
   await storage.updateWorkShift(shift.id, updates);
+
+  await logAIAuditAction(
+    context,
+    'ai_update_work_shift_times',
+    `employeeId=${params.employeeId}; date=${params.date}; shiftId=${shift.id}; newStartTime=${params.newStartTime || ''}; newEndTime=${params.newEndTime || ''}`
+  );
 
   return {
     success: true,
@@ -1987,6 +2302,12 @@ export async function updateWorkShiftColor(
   for (const shift of shiftsOnDate) {
     await storage.updateWorkShift(shift.id, { color: params.newColor });
   }
+
+  await logAIAuditAction(
+    context,
+    'ai_update_work_shift_color',
+    `employeeId=${params.employeeId}; date=${params.date}; shiftsUpdated=${shiftsOnDate.length}; newColor=${params.newColor}`
+  );
   // console.log("🎨 Color updated successfully");
 
   return {
@@ -2065,6 +2386,12 @@ export async function updateWorkShiftDetails(
   if (params.newNotes) updates.notes = params.newNotes;
 
   await storage.updateWorkShift(shift.id, updates);
+
+  await logAIAuditAction(
+    context,
+    'ai_update_work_shift_details',
+    `employeeId=${params.employeeId}; date=${params.date}; shiftId=${shift.id}; updatedFields=${Object.keys(updates).join(',')}`
+  );
 
   return {
     success: true,
@@ -2145,6 +2472,12 @@ export async function updateWorkShiftsInRange(
     }
   }
 
+  await logAIAuditAction(
+    context,
+    'ai_update_work_shifts_in_range',
+    `employeeId=${params.employeeId}; startDate=${params.startDate}; endDate=${params.endDate}; shiftsUpdated=${updatedCount}; newStartTime=${params.newStartTime || ''}; newEndTime=${params.newEndTime || ''}`
+  );
+
   return {
     success: true,
     employeeFullName: employee.fullName,
@@ -2200,6 +2533,12 @@ export async function updateEmployeeShiftsColor(
     await storage.updateWorkShift(shift.id, { color: params.newColor });
   }
 
+  await logAIAuditAction(
+    context,
+    'ai_update_employee_shifts_color',
+    `employeeId=${params.employeeId}; startDate=${params.startDate}; endDate=${params.endDate}; shiftsUpdated=${shifts.length}; newColor=${params.newColor}`
+  );
+
   return {
     success: true,
     employeeFullName: employee.fullName,
@@ -2249,6 +2588,12 @@ export async function swapEmployeeShifts(
       employeeBName: employeeB.fullName
     };
   }
+
+  await logAIAuditAction(
+    context,
+    'ai_swap_employee_shifts',
+    `employeeAId=${params.employeeAId}; employeeBId=${params.employeeBId}; swappedCount=${result.swappedCount}; startDate=${params.startDate || ''}; endDate=${params.endDate || ''}`
+  );
 
   return {
     success: true,
@@ -2345,6 +2690,12 @@ export async function createShiftAfterEmployee(
     createdShifts.push(newShift);
   }
 
+  await logAIAuditAction(
+    context,
+    'ai_create_shift_after_employee',
+    `sourceEmployeeId=${params.sourceEmployeeId}; targetEmployeeId=${params.targetEmployeeId}; createdCount=${createdShifts.length}; endTime=${params.endTime}`
+  );
+
   return {
     success: true,
     sourceEmployeeName: sourceEmployee.fullName,
@@ -2412,6 +2763,12 @@ export async function copyEmployeeShifts(
     });
     copiedCount++;
   }
+
+  await logAIAuditAction(
+    context,
+    'ai_copy_employee_shifts',
+    `fromEmployeeId=${params.fromEmployeeId}; toEmployeeId=${params.toEmployeeId}; copiedCount=${copiedCount}; startDate=${params.startDate || ''}; endDate=${params.endDate || ''}`
+  );
 
   return {
     success: true,
@@ -2636,6 +2993,367 @@ export async function navigateToPage(
 }
 
 // Function definitions for OpenAI function calling
+// ================================================================
+// ⏱️ ACTIVE WORKERS: Who's clocked in right now
+// ================================================================
+export async function getActiveWorkers(context: AIFunctionContext) {
+  const { storage, companyId } = context;
+
+  const employees = await storage.getUsersByCompany(companyId);
+  const activeEmployees = employees.filter(e => e.status === 'active');
+  const employeeIds = activeEmployees.map(e => e.id);
+
+  if (employeeIds.length === 0) {
+    return { success: true, activeCount: 0, workers: [], message: "No hay empleados activos." };
+  }
+
+  const activeSessions = await db
+    .select({ userId: schema.workSessions.userId, clockIn: schema.workSessions.clockIn })
+    .from(schema.workSessions)
+    .where(and(inArray(schema.workSessions.userId, employeeIds), eq(schema.workSessions.status, 'active')));
+
+  const activeIds = new Set(activeSessions.map(s => s.userId));
+  const empMap = new Map(activeEmployees.map(e => [e.id, e.fullName]));
+
+  const workers = activeSessions.map(s => {
+    const hoursWorked = ((Date.now() - new Date(s.clockIn).getTime()) / 3600000).toFixed(1);
+    return {
+      id: s.userId,
+      fullName: empMap.get(s.userId) || `ID ${s.userId}`,
+      clockIn: new Date(s.clockIn).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+      hoursWorked: `${hoursWorked}h`,
+    };
+  });
+
+  const notWorking = activeEmployees.filter(e => !activeIds.has(e.id)).map(e => e.fullName);
+
+  return {
+    success: true,
+    activeCount: workers.length,
+    totalActiveEmployees: activeEmployees.length,
+    workers,
+    notWorking,
+    navigateTo: '/time-tracking',
+    message: workers.length === 0
+      ? "Ningún empleado está fichado en este momento."
+      : `${workers.length} de ${activeEmployees.length} empleado(s) fichado(s) ahora mismo.`,
+  };
+}
+
+// ================================================================
+// 📇 CRM: List contacts
+// ================================================================
+export async function listCRMContacts(
+  context: AIFunctionContext,
+  params?: { role?: 'client' | 'provider'; search?: string; limit?: number }
+) {
+  const { companyId } = context;
+  const limit = Math.min(params?.limit || 20, 50);
+
+  const contacts = await db
+    .select({
+      id: schema.businessContacts.id,
+      name: schema.businessContacts.name,
+      role: schema.businessContacts.role,
+      email: schema.businessContacts.email,
+      phone: schema.businessContacts.phone,
+      city: schema.businessContacts.city,
+    })
+    .from(schema.businessContacts)
+    .where(and(
+      eq(schema.businessContacts.companyId, companyId),
+      params?.role ? eq(schema.businessContacts.role, params.role) : undefined,
+      params?.search ? ilike(schema.businessContacts.name, `%${params.search}%`) : undefined,
+    ))
+    .orderBy(desc(schema.businessContacts.createdAt))
+    .limit(limit);
+
+  return {
+    success: true,
+    totalCount: contacts.length,
+    contacts: contacts.map(c => ({
+      id: c.id,
+      name: c.name,
+      type: c.role === 'client' ? 'cliente' : 'proveedor',
+      email: c.email || '',
+      phone: c.phone || '',
+      city: c.city || '',
+    })),
+    navigateTo: params?.role === 'provider' ? '/crm/contacts?tab=proveedores' : '/crm/contacts',
+  };
+}
+
+// ================================================================
+// ➕ CRM: Create contact
+// ================================================================
+export async function createCRMContact(
+  context: AIFunctionContext,
+  params: { name: string; role: 'client' | 'provider'; email?: string; phone?: string; city?: string; taxId?: string; notes?: string }
+) {
+  const { companyId } = context;
+
+  const [newContact] = await db
+    .insert(schema.businessContacts)
+    .values({
+      companyId,
+      name: params.name,
+      role: params.role,
+      email: params.email || null,
+      phone: params.phone || null,
+      city: params.city || null,
+      taxId: params.taxId || null,
+      notes: params.notes || null,
+    })
+    .returning();
+
+  await logAIAuditAction(
+    context,
+    'ai_create_crm_contact',
+    `contactId=${newContact.id}; role=${params.role}; name=${params.name}`
+  );
+
+  return {
+    success: true,
+    contact: { id: newContact.id, name: newContact.name, type: params.role === 'client' ? 'cliente' : 'proveedor' },
+    message: `Contacto "${params.name}" creado como ${params.role === 'client' ? 'cliente' : 'proveedor'}.`,
+    navigateTo: '/crm/contacts',
+  };
+}
+
+// ================================================================
+// 💬 CRM: Add interaction / note to a contact
+// ================================================================
+export async function addCRMInteraction(
+  context: AIFunctionContext,
+  params: { contactId: number; interactionType: 'call' | 'email' | 'whatsapp' | 'meeting' | 'note'; subject?: string; notes: string; result?: 'interested' | 'not_interested' | 'pending' | 'won' | 'lost' }
+) {
+  const { companyId, adminUserId } = context;
+
+  const [contact] = await db
+    .select({ id: schema.businessContacts.id, name: schema.businessContacts.name })
+    .from(schema.businessContacts)
+    .where(and(eq(schema.businessContacts.id, params.contactId), eq(schema.businessContacts.companyId, companyId)));
+
+  if (!contact) return { success: false, error: "Contacto no encontrado en esta empresa." };
+
+  await db.insert(schema.crmContactInteractions).values({
+    companyId,
+    contactId: params.contactId,
+    interactionType: params.interactionType,
+    subject: params.subject || null,
+    notes: params.notes,
+    result: params.result || null,
+    responded: false,
+    occurredAt: new Date(),
+    createdBy: adminUserId,
+  });
+
+  await logAIAuditAction(
+    context,
+    'ai_add_crm_interaction',
+    `contactId=${params.contactId}; interactionType=${params.interactionType}; subject=${params.subject || ''}`
+  );
+
+  return {
+    success: true,
+    message: `Interacción (${params.interactionType}) registrada para "${contact.name}".`,
+    navigateTo: `/crm/capture`,
+  };
+}
+
+// ================================================================
+// 📋 WORK REPORTS: List partes de trabajo
+// ================================================================
+export async function listWorkReports(
+  context: AIFunctionContext,
+  params?: { employeeId?: number; startDate?: string; endDate?: string; limit?: number }
+) {
+  const { storage, companyId } = context;
+  const limit = Math.min(params?.limit || 20, 50);
+
+  const conditions = [eq(schema.workReports.companyId, companyId)];
+  if (params?.employeeId) conditions.push(eq(schema.workReports.employeeId, params.employeeId));
+  if (params?.startDate) conditions.push(gte(schema.workReports.reportDate, params.startDate));
+  if (params?.endDate) conditions.push(lte(schema.workReports.reportDate, params.endDate));
+
+  const reports = await db
+    .select()
+    .from(schema.workReports)
+    .where(and(...conditions))
+    .orderBy(desc(schema.workReports.reportDate))
+    .limit(limit);
+
+  const employees = await storage.getUsersByCompany(companyId);
+  const empMap = new Map(employees.map(e => [e.id, e.fullName]));
+
+  return {
+    success: true,
+    totalCount: reports.length,
+    reports: reports.map(r => ({
+      id: r.id,
+      employee: empMap.get(r.employeeId) || `ID ${r.employeeId}`,
+      date: r.reportDate,
+      location: r.location,
+      client: r.clientName || '',
+      refCode: r.refCode || '',
+      description: r.description,
+      hours: r.durationMinutes ? `${(r.durationMinutes / 60).toFixed(1)}h` : '',
+      status: r.status,
+    })),
+    navigateTo: '/work-reports',
+  };
+}
+
+// ================================================================
+// 📝 WORK REPORTS: Create work report
+// ================================================================
+export async function createWorkReport(
+  context: AIFunctionContext,
+  params: { employeeId: number; reportDate: string; location: string; startTime: string; endTime: string; description: string; clientName?: string; refCode?: string; notes?: string }
+) {
+  const { storage, companyId } = context;
+
+  const employee = await storage.getUser(params.employeeId);
+  if (!employee || employee.companyId !== companyId) {
+    return { success: false, error: "Empleado no encontrado o no pertenece a esta empresa." };
+  }
+
+  const [sh, sm] = params.startTime.split(':').map(Number);
+  const [eh, em] = params.endTime.split(':').map(Number);
+  const durationMinutes = (eh * 60 + em) - (sh * 60 + sm);
+  if (durationMinutes <= 0) return { success: false, error: "La hora de fin debe ser posterior a la hora de inicio." };
+
+  const report = await storage.createWorkReport({
+    companyId,
+    employeeId: params.employeeId,
+    reportDate: params.reportDate,
+    location: params.location,
+    startTime: params.startTime,
+    endTime: params.endTime,
+    durationMinutes,
+    description: params.description,
+    clientName: params.clientName || null,
+    refCode: params.refCode || null,
+    notes: params.notes || null,
+    status: 'submitted',
+  } as any);
+
+  await logAIAuditAction(
+    context,
+    'ai_create_work_report',
+    `reportId=${report.id}; employeeId=${params.employeeId}; reportDate=${params.reportDate}; durationMinutes=${durationMinutes}`
+  );
+
+  return {
+    success: true,
+    report: { id: report.id, employee: employee.fullName, date: params.reportDate, location: params.location, hours: `${(durationMinutes / 60).toFixed(1)}h` },
+    message: `Parte de trabajo creado para ${employee.fullName} el ${params.reportDate} (${(durationMinutes / 60).toFixed(1)}h en ${params.location}).`,
+    navigateTo: '/work-reports',
+  };
+}
+
+// ================================================================
+// 🏖️ ABSENCES: Create a vacation/absence request (auto-approved)
+// ================================================================
+export async function createVacationRequest(
+  context: AIFunctionContext,
+  params: { employeeId: number; startDate: string; endDate: string; reason?: string; type?: 'vacation' | 'sick_leave' | 'personal_leave' }
+) {
+  const { storage, companyId } = context;
+
+  const employee = await storage.getUser(params.employeeId);
+  if (!employee || employee.companyId !== companyId) {
+    return { success: false, error: "Empleado no encontrado o no pertenece a esta empresa." };
+  }
+
+  const absenceType = params.type || 'vacation';
+  const startTs = new Date(`${params.startDate}T00:00:00`);
+  const endTs = new Date(`${params.endDate}T23:59:59`);
+  const daysCount = Math.ceil((endTs.getTime() - startTs.getTime()) / 86400000);
+
+  const request = await storage.createVacationRequest({
+    userId: params.employeeId,
+    startDate: startTs,
+    endDate: endTs,
+    reason: params.reason || 'Registrado por administrador',
+    absenceType,
+    status: 'approved',
+  } as any);
+
+  await logAIAuditAction(
+    context,
+    'ai_create_vacation_request',
+    `requestId=${request.id}; employeeId=${params.employeeId}; startDate=${params.startDate}; endDate=${params.endDate}; type=${absenceType}`
+  );
+
+  return {
+    success: true,
+    request: { id: request.id, employee: employee.fullName, startDate: params.startDate, endDate: params.endDate, days: daysCount, type: absenceType, status: 'aprobada' },
+    message: `Ausencia aprobada para ${employee.fullName}: del ${params.startDate} al ${params.endDate} (${daysCount} día(s)).`,
+    navigateTo: '/vacation-calendar',
+  };
+}
+
+// ================================================================
+// 💰 ACCOUNTING: Get income/expense summary
+// ================================================================
+export async function getAccountingSummary(
+  context: AIFunctionContext,
+  params?: { period?: 'this_month' | 'last_month' | 'this_year' | 'last_year' | 'custom'; startDate?: string; endDate?: string }
+) {
+  const { companyId } = context;
+  const now = new Date();
+  const period = params?.period || 'this_month';
+  let startDate: string, endDate: string, periodLabel: string;
+
+  if (period === 'last_month') {
+    const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    startDate = d.toISOString().split('T')[0];
+    endDate = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+    periodLabel = 'el mes pasado';
+  } else if (period === 'this_year') {
+    startDate = `${now.getFullYear()}-01-01`;
+    endDate = `${now.getFullYear()}-12-31`;
+    periodLabel = 'este año';
+  } else if (period === 'last_year') {
+    startDate = `${now.getFullYear() - 1}-01-01`;
+    endDate = `${now.getFullYear() - 1}-12-31`;
+    periodLabel = 'el año pasado';
+  } else if (period === 'custom' && params?.startDate && params?.endDate) {
+    startDate = params.startDate;
+    endDate = params.endDate;
+    periodLabel = `del ${params.startDate} al ${params.endDate}`;
+  } else {
+    startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+    endDate = now.toISOString().split('T')[0];
+    periodLabel = 'este mes';
+  }
+
+  const entries = await db
+    .select({ type: schema.accountingEntries.type, totalAmount: schema.accountingEntries.totalAmount })
+    .from(schema.accountingEntries)
+    .where(and(
+      eq(schema.accountingEntries.companyId, companyId),
+      gte(schema.accountingEntries.entryDate, startDate),
+      lte(schema.accountingEntries.entryDate, endDate),
+    ));
+
+  const totalIncome = entries.filter(e => e.type === 'income').reduce((s, e) => s + parseFloat(String(e.totalAmount || 0)), 0);
+  const totalExpenses = entries.filter(e => e.type === 'expense').reduce((s, e) => s + parseFloat(String(e.totalAmount || 0)), 0);
+  const balance = totalIncome - totalExpenses;
+
+  return {
+    success: true,
+    period: periodLabel,
+    totalIncome: `${totalIncome.toFixed(2)}€`,
+    totalExpenses: `${totalExpenses.toFixed(2)}€`,
+    balance: `${balance >= 0 ? '+' : ''}${balance.toFixed(2)}€`,
+    entryCount: entries.length,
+    navigateTo: '/accounting',
+    message: `Contabilidad ${periodLabel}: Ingresos ${totalIncome.toFixed(2)}€ | Gastos ${totalExpenses.toFixed(2)}€ | Balance ${balance >= 0 ? '+' : ''}${balance.toFixed(2)}€`,
+  };
+}
+
 export const AI_FUNCTIONS = [
   // ========================================
   // 📖 READ-ONLY FUNCTIONS (Always available - use these to gather context!)
@@ -3354,7 +4072,7 @@ export const AI_FUNCTIONS = [
   },
   {
     name: "updateWorkShiftColor",
-    description: "Cambiar el color de un turno existente. Útil para organizaci��n visual del cuadrante",
+    description: "Cambiar el color de un turno existente. Útil para organización visual del cuadrante",
     parameters: {
       type: "object",
       properties: {
@@ -3466,14 +4184,14 @@ export const AI_FUNCTIONS = [
   },
   {
     name: "navigateToPage",
-    description: "🧭 NAVEGAR a una página específica de la aplicación. USA ESTA FUNCIÓN cuando el usuario pregunte sobre solicitudes pendientes, vacaciones, fichajes, cuadrantes, etc. y necesite ver la página correspondiente. Por ejemplo: '¿qué solicitudes de vacaciones hay pendientes?' → navegar a vacaciones con filtro pendiente. '¿quién está fichado hoy?' → navegar a fichajes. La función lleva al usuario directamente a la página con los filtros aplicados.",
+    description: "🧭 NAVEGAR a una página específica de la aplicación. USA ESTA FUNCIÓN cuando el usuario pregunte sobre solicitudes pendientes, vacaciones, fichajes, cuadrantes, CRM, contabilidad, etc. y necesite ver la página correspondiente. Por ejemplo: '¿qué solicitudes de vacaciones hay pendientes?' → navegar a vacaciones con filtro pendiente. '¿quién está fichado hoy?' → navegar a fichajes. La función lleva al usuario directamente a la página con los filtros aplicados.",
     parameters: {
       type: "object",
       properties: {
         page: {
           type: "string",
-          enum: ["dashboard", "vacation-requests", "vacation-calendar", "time-tracking", "schedules", "employees", "documents", "reminders", "messages", "work-reports", "settings", "settings-policies", "settings-notifications", "profile"],
-          description: "Página a la que navegar: dashboard (inicio), vacation-requests (solicitudes vacaciones), vacation-calendar (calendario vacaciones), time-tracking (fichajes), schedules (cuadrantes), employees (empleados), documents (documentos), reminders (recordatorios), messages (mensajes), work-reports (partes de trabajo), settings (configuración), settings-policies (políticas), settings-notifications (notificaciones), profile (perfil)",
+          enum: ["dashboard", "vacation-requests", "vacation-calendar", "time-tracking", "schedules", "employees", "documents", "reminders", "messages", "work-reports", "settings", "settings-policies", "settings-notifications", "profile", "crm", "crm-contacts", "crm-pipeline", "accounting", "projects"],
+          description: "Página a la que navegar: dashboard (inicio), vacation-requests (solicitudes vacaciones), vacation-calendar (calendario vacaciones), time-tracking (fichajes), schedules (cuadrantes), employees (empleados), documents (documentos), reminders (recordatorios), messages (mensajes), work-reports (partes de trabajo), settings (configuración), settings-policies (políticas), settings-notifications (notificaciones), profile (perfil), crm (CRM general), crm-contacts (contactos clientes/proveedores), crm-pipeline (embudo captación), accounting (contabilidad), projects (proyectos)",
         },
         filter: {
           type: "string",
@@ -3496,6 +4214,121 @@ export const AI_FUNCTIONS = [
       required: ["page"],
     },
   },
+  // ========================================
+  // 🆕 NUEVAS HERRAMIENTAS — Control total de la app
+  // ========================================
+  {
+    name: "getActiveWorkers",
+    description: "⏱️ CONSULTA quién está fichado ahora mismo. Devuelve empleados con fichaje activo y su hora de entrada. Usa para: '¿quién está trabajando ahora?', '¿quién está fichado?', 'trabajadores en activo', 'quién está en la oficina'.",
+    parameters: { type: "object", properties: {}, required: [] },
+  },
+  {
+    name: "listCRMContacts",
+    description: "📇 CONSULTA la lista de contactos del CRM (clientes y proveedores). Usa para: '¿qué clientes tenemos?', 'lista de proveedores', 'busca contacto X', 'clientes CRM', '¿cuántos clientes hay?'.",
+    parameters: {
+      type: "object",
+      properties: {
+        role: { type: "string", enum: ["client", "provider"], description: "Filtrar por tipo: client (clientes) / provider (proveedores)" },
+        search: { type: "string", description: "Buscar por nombre" },
+        limit: { type: "number", description: "Máximo de resultados (default: 20)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "createCRMContact",
+    description: "➕ CREAR un nuevo contacto en el CRM. Usa para: 'añade el cliente X', 'crea el proveedor Y', 'nuevo cliente', 'agregar contact'. SIEMPRE pregunta el nombre y si es cliente o proveedor antes de crear.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Nombre o razón social del contacto" },
+        role: { type: "string", enum: ["client", "provider"], description: "Tipo: client (cliente) o provider (proveedor)" },
+        email: { type: "string", description: "Email (opcional)" },
+        phone: { type: "string", description: "Teléfono (opcional)" },
+        city: { type: "string", description: "Ciudad (opcional)" },
+        taxId: { type: "string", description: "CIF/NIF (opcional)" },
+        notes: { type: "string", description: "Notas internas (opcional)" },
+      },
+      required: ["name", "role"],
+    },
+  },
+  {
+    name: "addCRMInteraction",
+    description: "💬 REGISTRAR una interacción o nota en el historial de un contacto CRM. Usa para: 'anota que llamé a X', 'registra reunión con Y', 'añade nota al cliente Z', 'deja constancia de la llamada'. Primero obtén el ID del contacto con listCRMContacts.",
+    parameters: {
+      type: "object",
+      properties: {
+        contactId: { type: "number", description: "ID del contacto (obtener con listCRMContacts)" },
+        interactionType: { type: "string", enum: ["call", "email", "whatsapp", "meeting", "note"], description: "Tipo: call (llamada), email, whatsapp, meeting (reunión), note (nota)" },
+        subject: { type: "string", description: "Asunto de la interacción (opcional)" },
+        notes: { type: "string", description: "Descripción detallada de la interacción" },
+        result: { type: "string", enum: ["interested", "not_interested", "pending", "won", "lost"], description: "Resultado (opcional)" },
+      },
+      required: ["contactId", "interactionType", "notes"],
+    },
+  },
+  {
+    name: "listWorkReports",
+    description: "📋 CONSULTA los partes de trabajo. Usa para: '¿qué partes hay?', 'partes de trabajo de X', 'partes de esta semana', 'últimos partes enviados', 'resumen de partes'.",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeName: { type: "string", description: "Nombre del empleado para filtrar (opcional)" },
+        startDate: { type: "string", description: "Fecha inicio YYYY-MM-DD (opcional)" },
+        endDate: { type: "string", description: "Fecha fin YYYY-MM-DD (opcional)" },
+        limit: { type: "number", description: "Máximo de resultados (default: 20)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "createWorkReport",
+    description: "📝 CREAR un parte de trabajo para un empleado. Usa para: 'crea un parte para X', 'añade parte de trabajo', 'registra el parte del día'. Requiere: empleado, fecha, lugar, horario y descripción del trabajo.",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeName: { type: "string", description: "Nombre del empleado" },
+        reportDate: { type: "string", description: "Fecha del trabajo en formato YYYY-MM-DD" },
+        location: { type: "string", description: "Lugar donde se realizó el trabajo" },
+        startTime: { type: "string", description: "Hora de inicio en formato HH:mm (ej: '08:00')" },
+        endTime: { type: "string", description: "Hora de fin en formato HH:mm (ej: '16:00')" },
+        description: { type: "string", description: "Descripción detallada del trabajo realizado" },
+        clientName: { type: "string", description: "Nombre del cliente (opcional)" },
+        refCode: { type: "string", description: "Código de obra o referencia (opcional)" },
+        notes: { type: "string", description: "Notas adicionales (opcional)" },
+      },
+      required: ["employeeName", "reportDate", "location", "startTime", "endTime", "description"],
+    },
+  },
+  {
+    name: "createVacationRequest",
+    description: "🏖️ CREAR una ausencia/vacaciones para un empleado (queda automáticamente aprobada). Usa cuando el admin quiera registrar directamente ausencias: 'pon vacaciones a X del D1 al D2', 'registra que X está de baja', 'añade ausencia para Y'. NO usar para aprobar solicitudes existentes (usa approveVacationRequests).",
+    parameters: {
+      type: "object",
+      properties: {
+        employeeName: { type: "string", description: "Nombre del empleado" },
+        startDate: { type: "string", description: "Fecha de inicio en formato YYYY-MM-DD" },
+        endDate: { type: "string", description: "Fecha de fin en formato YYYY-MM-DD" },
+        reason: { type: "string", description: "Motivo (opcional)" },
+        type: { type: "string", enum: ["vacation", "sick_leave", "personal_leave"], description: "Tipo: vacation (vacaciones), sick_leave (baja médica), personal_leave (asunto personal). Default: vacation" },
+      },
+      required: ["employeeName", "startDate", "endDate"],
+    },
+  },
+  {
+    name: "getAccountingSummary",
+    description: "💰 CONSULTA el resumen de ingresos y gastos de contabilidad. Usa para: '¿cómo vamos de gastos?', '¿cuánto hemos facturado?', 'balance contable', 'ingresos y gastos del mes', 'resumen financiero', '¿cuánto hemos gastado este mes?'.",
+    parameters: {
+      type: "object",
+      properties: {
+        period: { type: "string", enum: ["this_month", "last_month", "this_year", "last_year", "custom"], description: "Período: this_month (este mes), last_month (mes pasado), this_year (este año), last_year (año pasado)" },
+        startDate: { type: "string", description: "Fecha inicio YYYY-MM-DD (solo si period='custom')" },
+        endDate: { type: "string", description: "Fecha fin YYYY-MM-DD (solo si period='custom')" },
+      },
+      required: [],
+    },
+  },
+
 ];
 
 // Execute AI function by name
@@ -3569,6 +4402,25 @@ export async function executeAIFunction(
       return copyEmployeeShifts(context, params);
     case "navigateToPage":
       return navigateToPage(context, params);
+    // ========================================
+    // 🆕 NUEVAS HERRAMIENTAS
+    // ========================================
+    case "getActiveWorkers":
+      return getActiveWorkers(context);
+    case "listCRMContacts":
+      return listCRMContacts(context, params);
+    case "createCRMContact":
+      return createCRMContact(context, params);
+    case "addCRMInteraction":
+      return addCRMInteraction(context, params);
+    case "listWorkReports":
+      return listWorkReports(context, params);
+    case "createWorkReport":
+      return createWorkReport(context, params);
+    case "createVacationRequest":
+      return createVacationRequest(context, params);
+    case "getAccountingSummary":
+      return getAccountingSummary(context, params);
     default:
       throw new Error(`Unknown function: ${functionName}`);
   }

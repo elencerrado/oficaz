@@ -3,9 +3,12 @@ import jwt from 'jsonwebtoken';
 import cron from 'node-cron';
 import { db } from './db';
 import { eq, and, isNull, sql, lte, inArray, gte, lt } from 'drizzle-orm';
-import { workAlarms, pushSubscriptions, workSessions, breakPeriods, users, reminders, systemNotifications } from '@shared/schema';
+import { workAlarms, pushSubscriptions, workSessions, breakPeriods, users, reminders, systemNotifications, documents } from '@shared/schema';
 import { JWT_SECRET } from './utils/jwt-secret.js';
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
+import { callInternalAutomationEndpoint, getInternalServerBaseUrl } from './internalAutomationClient';
+
+type ScheduledTask = ReturnType<typeof cron.schedule>;
 
 interface AlarmCheck {
   alarmId: number;
@@ -33,6 +36,78 @@ const checkedAlarms = new Map<string, Date>();
 const sentIncompleteSessionNotifications = new Map<string, Date>(); // Track daily incomplete session notifications
 const scheduledAlarmTimeouts = new Map<number, NodeJS.Timeout>(); // Store alarm timeouts for cleanup
 const scheduledReminderTimeouts = new Map<number, NodeJS.Timeout>(); // Store reminder timeouts for cleanup (event-driven)
+
+interface AlarmPushJob {
+  userId: number;
+  title: string;
+  alarmType: 'clock_in' | 'clock_out';
+  alarmId: number;
+  enqueuedAt: number;
+}
+
+const alarmPushQueue: AlarmPushJob[] = [];
+const pendingAlarmPushKeys = new Set<string>();
+const alarmNoSubscriptionLog = new Map<number, number>();
+let alarmPushWorkersRunning = 0;
+
+const ALARM_PUSH_CONCURRENCY = Math.min(
+  100,
+  Math.max(10, Number(process.env.ALARM_PUSH_CONCURRENCY || 35))
+);
+const NO_SUBSCRIPTION_LOG_INTERVAL_MS = 30 * 60 * 1000;
+const EMAIL_DEBUG_LOGS_ENABLED = process.env.OFICAZ_EMAIL_DEBUG === 'true';
+
+function maskEmail(email?: string | null): string {
+  if (!email) return 'none';
+  const [local, domain] = email.split('@');
+  if (!domain) return 'invalid-email';
+  if (local.length <= 2) return `***@${domain}`;
+  return `${local.slice(0, 2)}***@${domain}`;
+}
+
+function emailDebug(message: string, details?: Record<string, unknown>): void {
+  if (!EMAIL_DEBUG_LOGS_ENABLED) return;
+  if (details) {
+    console.debug(`📧 [EMAIL DEBUG] ${message}`, details);
+    return;
+  }
+  console.debug(`📧 [EMAIL DEBUG] ${message}`);
+}
+
+function enqueueAlarmPush(job: Omit<AlarmPushJob, 'enqueuedAt'>): void {
+  const dedupeKey = `${job.alarmId}-${job.userId}`;
+  if (pendingAlarmPushKeys.has(dedupeKey)) {
+    return;
+  }
+
+  pendingAlarmPushKeys.add(dedupeKey);
+  alarmPushQueue.push({ ...job, enqueuedAt: Date.now() });
+  scheduleAlarmPushWorkers();
+}
+
+function scheduleAlarmPushWorkers(): void {
+  while (alarmPushWorkersRunning < ALARM_PUSH_CONCURRENCY && alarmPushQueue.length > 0) {
+    alarmPushWorkersRunning++;
+
+    const nextJob = alarmPushQueue.shift();
+    if (!nextJob) {
+      alarmPushWorkersRunning--;
+      return;
+    }
+
+    const dedupeKey = `${nextJob.alarmId}-${nextJob.userId}`;
+
+    void sendPushNotification(nextJob.userId, nextJob.title, nextJob.alarmType, nextJob.alarmId)
+      .catch((error) => {
+        console.error(`❌ Alarm push worker error for alarm ${nextJob.alarmId}, user ${nextJob.userId}:`, error);
+      })
+      .finally(() => {
+        pendingAlarmPushKeys.delete(dedupeKey);
+        alarmPushWorkersRunning--;
+        scheduleAlarmPushWorkers();
+      });
+  }
+}
 
 // Helper: Calculate next trigger time for an alarm
 function calculateNextAlarmTime(alarmTime: string, weekdays: number[]): Date {
@@ -76,7 +151,12 @@ function scheduleAlarm(alarm: typeof workAlarms.$inferSelect): void {
     const timeout = setTimeout(async () => {
       try {
         console.log(`⏰ ALARM TRIGGERED: ${alarm.title} for user ${alarm.userId} at ${alarm.time}`);
-        await sendPushNotification(alarm.userId, alarm.title, alarm.type as 'clock_in' | 'clock_out', alarm.id);
+        enqueueAlarmPush({
+          userId: alarm.userId,
+          title: alarm.title,
+          alarmType: alarm.type as 'clock_in' | 'clock_out',
+          alarmId: alarm.id,
+        });
         
         // Reschedule for next occurrence
         scheduleAlarm(alarm);
@@ -310,46 +390,46 @@ export async function reloadReminders(): Promise<void> {
 }
 
 // Auto-process expired trials every 5 minutes
+const INTERNAL_SERVER_BASE_URL = getInternalServerBaseUrl();
+
 async function processExpiredTrials(): Promise<void> {
   try {
-    const response = await fetch(`http://localhost:5000/api/subscription/auto-trial-process`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const response = await callInternalAutomationEndpoint('/api/subscription/auto-trial-process');
     
-    if (response.ok) {
-      const result = await response.json();
-      if (result.processedCount > 0 || result.errorCount > 0) {
-        console.log(`🏦 AUTO-TRIAL SCHEDULER: ${result.processedCount} processed, ${result.errorCount} errors`);
-      }
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'No error details');
+      console.error(`❌ Auto-trial processing error: HTTP ${response.status} - ${errorText}`);
+      return;
+    }
+    
+    const result = await response.json();
+    if (result.processedCount > 0 || result.errorCount > 0) {
+      console.log(`🏦 AUTO-TRIAL SCHEDULER: ${result.processedCount} processed, ${result.errorCount} errors`);
     }
   } catch (error: any) {
-    // Silent fail - server might be restarting
-    if (!error.message?.includes('ECONNREFUSED')) {
-      console.error('❌ Auto-trial processing error:', error.message);
-    }
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`⚠️ Auto-trial scheduler skipped this cycle (${INTERNAL_SERVER_BASE_URL}) - ${message}`);
   }
 }
 
 // Auto-process scheduled deletions (companies past 30-day grace period) - runs every hour
 async function processScheduledDeletions(): Promise<void> {
   try {
-    const response = await fetch(`http://localhost:5000/api/account/auto-deletion-process`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const response = await callInternalAutomationEndpoint('/api/account/auto-deletion-process');
     
-    if (response.ok) {
-      const result = await response.json();
-      if (result.deletedCount > 0 || result.errorCount > 0) {
-        console.log(`🗑️ AUTO-DELETION SCHEDULER: ${result.deletedCount} deleted, ${result.errorCount} errors`);
-      }
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'No error details');
+      console.error(`❌ Auto-deletion processing error: HTTP ${response.status} - ${errorText}`);
+      return;
+    }
+    
+    const result = await response.json();
+    if (result.deletedCount > 0 || result.errorCount > 0) {
+      console.log(`🗑️ AUTO-DELETION SCHEDULER: ${result.deletedCount} deleted, ${result.errorCount} errors`);
     }
   } catch (error: any) {
-    // Silent fail - server might be restarting
-    if (!error.message?.includes('ECONNREFUSED')) {
-      console.error('❌ Auto-deletion processing error:', error.message);
-    }
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`⚠️ Auto-deletion scheduler skipped this cycle (${INTERNAL_SERVER_BASE_URL}) - ${message}`);
   }
 }
 
@@ -470,7 +550,12 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
       .where(eq(pushSubscriptions.userId, userId));
 
     if (allSubscriptions.length === 0) {
-      console.log(`📱 No push subscriptions found for user ${userId}`);
+      const now = Date.now();
+      const lastLog = alarmNoSubscriptionLog.get(userId) || 0;
+      if (now - lastLog > NO_SUBSCRIPTION_LOG_INTERVAL_MS) {
+        console.log(`📱 No push subscriptions found for user ${userId}`);
+        alarmNoSubscriptionLog.set(userId, now);
+      }
       return;
     }
 
@@ -489,7 +574,9 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
     }
 
     const subscriptions = Array.from(deviceMap.values());
-    console.log(`📱 Sending to ${subscriptions.length} unique device(s) (filtered from ${allSubscriptions.length} total subscriptions)`);
+    if (process.env.DEBUG_ALARMS) {
+      console.log(`📱 Sending to ${subscriptions.length} unique device(s) (filtered from ${allSubscriptions.length} total subscriptions)`);
+    }
 
     if (subscriptions.length === 0) {
       console.log(`📱 No unique devices found for user ${userId}`);
@@ -514,12 +601,15 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
       email: user.personalEmail || user.companyEmail || `user_${user.id}@temp.com`,
       role: user.role,
       companyId: user.companyId,
+      type: 'push_action',
       pushAction: true // Mark as push action token - limits scope of this token
     }, JWT_SECRET, { expiresIn: '15m' });
 
     // Get current work status to determine available actions
     const workStatus = await getWorkStatus(userId);
-    console.log(`📊 User ${userId} work status: ${workStatus.status}, ${workStatus.buttons.length} button(s)`);
+    if (process.env.DEBUG_ALARMS) {
+      console.log(`📊 User ${userId} work status: ${workStatus.status}, ${workStatus.buttons.length} button(s)`);
+    }
 
     // Build notification actions from work status buttons
     const actions = workStatus.buttons.map(btn => ({
@@ -528,7 +618,9 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
       icon: '/icon-192.png'
     }));
 
-    console.log(`🔔 Preparing notification with ${actions.length} action(s):`, actions.map(a => a.action));
+    if (process.env.DEBUG_ALARMS) {
+      console.log(`🔔 Preparing notification with ${actions.length} action(s):`, actions.map(a => a.action));
+    }
 
     // 🔒 CRITICAL: Use alarm-specific tag to deduplicate across multiple service workers
     // Tag format: alarm-{alarmId}-{second} - prevents duplicate notifications in same second
@@ -551,7 +643,7 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
         sessionId: workStatus.sessionId,
         breakId: workStatus.breakId,
         workStatus: workStatus.status,
-        authToken: tempToken // Include temporary auth token
+        actionToken: tempToken // Include short-lived action token
       },
       actions
     });
@@ -566,7 +658,9 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
       const lastSend = recentPushSends.get(throttleKey);
       
       if (lastSend && (nowMs - lastSend) < PUSH_SEND_THROTTLE_MS) {
-        console.log(`⏭️  SKIPPING duplicate push to alarm ${alarmId} on endpoint (last sent ${nowMs - lastSend}ms ago)`);
+        if (process.env.DEBUG_ALARMS) {
+          console.log(`⏭️  SKIPPING duplicate push to alarm ${alarmId} on endpoint (last sent ${nowMs - lastSend}ms ago)`);
+        }
         return;
       }
       
@@ -592,7 +686,9 @@ async function sendPushNotification(userId: number, title: string, alarmType: 'c
           }
         }
         
-        console.log(`✅ Push notification sent to user ${userId} with ${actions.length} action(s)`);
+        if (process.env.DEBUG_ALARMS) {
+          console.log(`✅ Push notification sent to user ${userId} with ${actions.length} action(s)`);
+        }
       } catch (error: any) {
         // If subscription is invalid, remove it
         if (error.statusCode === 410 || error.statusCode === 404) {
@@ -805,14 +901,15 @@ async function checkIncompleteSessions() {
         }
         const uniqueSubs = Array.from(deviceMap.values());
         
-        // Generate JWT token
+        // Generate short-lived JWT token for push actions
         const tempToken = jwt.sign({
           id: user.id,
           email: user.personalEmail || user.companyEmail || `user_${user.id}@temp.com`,
           role: user.role,
           companyId: user.companyId,
+          type: 'push_action',
           pushAction: true
-        }, JWT_SECRET, { expiresIn: '24h' });
+        }, JWT_SECRET, { expiresIn: '15m' });
         
         const sessionCount = sessions.length;
         const payload = JSON.stringify({
@@ -831,7 +928,7 @@ async function checkIncompleteSessions() {
             timestamp: Date.now(),
             userId,
             sessionCount,
-            authToken: tempToken
+            actionToken: tempToken
           },
           actions: [
             { action: 'view', title: 'Ver fichajes', icon: '/icon-192.png' }
@@ -1080,49 +1177,176 @@ export async function sendVacationNotification(
   }
 }
 
+// Function to send assigned vacation notification (when admin assigns absence to employee)
+export async function sendAssignedVacationNotification(
+  userId: number,
+  details: {
+    startDate: Date;
+    endDate: Date;
+    absenceType?: string;
+    adminName: string;
+    requestId?: number;
+  }
+) {
+  try {
+    console.log(`📱 Sending assigned vacation notification to user ${userId}`);
+    
+    // Get push subscriptions for the user
+    const subscriptions = await db.select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, userId));
+    
+    if (subscriptions.length === 0) {
+      console.log(`📱 No push subscriptions found for user ${userId}`);
+      return;
+    }
+    
+    // Filter to unique devices
+    const deviceMap = new Map<string, typeof subscriptions[0]>();
+    for (const sub of subscriptions) {
+      const deviceKey = sub.deviceId || sub.endpoint;
+      const existing = deviceMap.get(deviceKey);
+      if (!existing || new Date(sub.updatedAt) > new Date(existing.updatedAt)) {
+        deviceMap.set(deviceKey, sub);
+      }
+    }
+    
+    const uniqueSubscriptions = Array.from(deviceMap.values());
+    
+    // Format dates for display
+    const formatDate = (date: Date) => {
+      return new Date(date).toLocaleDateString('es-ES', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric' 
+      });
+    };
+    
+    const startDateStr = formatDate(details.startDate);
+    const endDateStr = formatDate(details.endDate);
+    
+    // Check if it's a single day
+    const isSingleDay = startDateStr === endDateStr;
+    const dateRangeText = isSingleDay 
+      ? `el día ${startDateStr}` 
+      : `del ${startDateStr} al ${endDateStr}`;
+    
+    // Get absence type label
+    const absenceTypeLabels: Record<string, string> = {
+      'vacation': 'Vacaciones',
+      'sick_leave': 'Baja médica',
+      'paternity_maternity': 'Paternidad/Maternidad',
+      'personal': 'Asuntos personales',
+      'training': 'Formación',
+      'work_related': 'Asuntos laborales',
+      'public_duty': 'Deber inexcusable',
+      'temporary_disability': 'Incapacidad temporal',
+      'adverse_weather': 'Condiciones climáticas adversas'
+    };
+    
+    const absenceTypeLabel = absenceTypeLabels[details.absenceType || 'vacation'] || 'Ausencia';
+    
+    // Create notification content
+    const title = '📋 Nueva Ausencia Asignada';
+    const body = `Te han asignado ${absenceTypeLabel.toLowerCase()} ${dateRangeText}`;
+    
+    const payload = JSON.stringify({
+      title,
+      body,
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      vibrate: [200, 100, 200],
+      requireInteraction: true,
+      tag: details.requestId ? `assigned-vacation-${details.requestId}` : `assigned-vacation-${userId}`,
+      data: {
+        url: '/employee/vacaciones',
+        type: 'assigned_vacation',
+        timestamp: Date.now(),
+        userId,
+        requestId: details.requestId
+      },
+      actions: [
+        { action: 'view', title: 'Verificar', icon: '/icon-192.png' }
+      ]
+    });
+    
+    // Send to all unique devices
+    for (const sub of uniqueSubscriptions) {
+      try {
+        await webpush.sendNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.p256dh,
+              auth: sub.auth
+            }
+          },
+          payload
+        );
+        console.log(`✅ Assigned vacation notification sent to user ${userId}`);
+      } catch (error: any) {
+        if (error.statusCode === 410 || error.statusCode === 404) {
+          console.log(`🗑️  Removing invalid subscription for user ${userId}`);
+          await db.delete(pushSubscriptions)
+            .where(eq(pushSubscriptions.endpoint, sub.endpoint));
+        } else {
+          console.error(`❌ Error sending assigned vacation notification to user ${userId}:`, error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in sendAssignedVacationNotification:', error);
+  }
+}
+
 // Function to send payroll document notification (pending signature)
-export async function sendPayrollNotification(userId: number, documentName: string, documentId?: number) {
+export async function sendPayrollNotification(
+  userId: number,
+  documentName: string,
+  documentId?: number,
+  options?: { skipEmail?: boolean }
+) {
   try {
     console.log(`📱 Sending payroll notification to user ${userId} for document ${documentId || 'unknown'}`);
     
     // 📧 QUEUE EMAIL NOTIFICATION
-    if (documentId) {
+    if (documentId && !options?.skipEmail) {
       try {
-        console.log(`📧 [EMAIL DEBUG] Starting email queue process for user ${userId}, document ${documentId}`);
+        emailDebug('Starting email queue process', { userId, documentId });
         const { queueEmail, createDocumentSignatureToken } = await import('./emailQueue');
         const { storage } = await import('./storage');
         
-        console.log(`📧 [EMAIL DEBUG] Fetching user ${userId} data...`);
+        emailDebug('Fetching user data', { userId });
         // Get user and company info
         const user = await storage.getUser(userId);
         
         // Priority: personalEmail > companyEmail (work email)
         const userEmail = user?.personalEmail || user?.companyEmail;
         
-        console.log(`📧 [EMAIL DEBUG] User data:`, user ? `${user.fullName} (companyEmail: ${user.companyEmail || 'none'}, personalEmail: ${user.personalEmail || 'none'})` : 'NOT FOUND');
-        console.log(`📧 [EMAIL DEBUG] Selected email (priority personal):`, userEmail);
+        emailDebug('User data fetched', {
+          userFound: Boolean(user),
+          userId,
+          companyEmail: maskEmail(user?.companyEmail),
+          personalEmail: maskEmail(user?.personalEmail),
+          selectedEmail: maskEmail(userEmail),
+        });
         
         if (user && userEmail) {
-          console.log(`📧 [EMAIL DEBUG] Fetching company ${user.companyId} data...`);
+          emailDebug('Fetching company data', { companyId: user.companyId });
           const company = await storage.getCompany(user.companyId);
-          console.log(`📧 [EMAIL DEBUG] Company data:`, company ? `${company.name} (${company.companyAlias})` : 'NOT FOUND');
+          emailDebug('Company data fetched', {
+            companyFound: Boolean(company),
+            companyId: user.companyId,
+            companyAlias: company?.companyAlias || null,
+          });
           
-          // Generate signature token for direct email link
-          console.log(`📧 [EMAIL DEBUG] Creating signature token...`);
-          const signatureToken = await createDocumentSignatureToken(
-            documentId,
-            userId,
-            user.companyId
-          );
-          console.log(`📧 [EMAIL DEBUG] Signature token created:`, signatureToken.substring(0, 20) + '...');
-          
-          // Build direct signature URL
+          // Build login URL (not direct document link - user must login first)
           const companyAlias = company?.companyAlias || 'app';
-          const signatureUrl = `${process.env.VITE_APP_URL || 'http://localhost:5000'}/${companyAlias}/inicio?signDocument=${documentId}&token=${signatureToken}`;
-          console.log(`📧 [EMAIL DEBUG] Signature URL:`, signatureUrl);
+          const loginUrl = `${process.env.VITE_APP_URL || 'http://localhost:5000'}/${companyAlias}/inicio`;
+          emailDebug('Login URL prepared');
           
           // Queue email with high priority
-          console.log(`📧 [EMAIL DEBUG] Queueing email to ${userEmail}...`);
+          emailDebug('Queueing payroll email', { to: maskEmail(userEmail) });
           await queueEmail({
             userId,
             toEmail: userEmail,
@@ -1133,7 +1357,8 @@ export async function sendPayrollNotification(userId: number, documentName: stri
               userName: user.fullName,
               documentName,
               documentId,
-              signatureUrl,
+              loginUrl,
+              companyAlias,
               companyName: company?.name || 'Tu empresa'
             },
             companyId: user.companyId,
@@ -1231,48 +1456,62 @@ export async function sendPayrollNotification(userId: number, documentName: stri
 }
 
 // Function to send new document notification
-export async function sendNewDocumentNotification(userId: number, documentName: string, documentId?: number) {
+export async function sendNewDocumentNotification(
+  userId: number,
+  documentName: string,
+  documentId?: number,
+  options?: { skipEmail?: boolean }
+) {
   try {
     console.log(`📱 Sending new document notification to user ${userId} for document ${documentId || 'unknown'}`);
     
     // 📧 QUEUE EMAIL NOTIFICATION
-    if (documentId) {
+    if (documentId && !options?.skipEmail) {
       try {
-        console.log(`📧 [EMAIL DEBUG] Starting email queue process for user ${userId}, document ${documentId}`);
+        emailDebug('Starting email queue process', { userId, documentId });
         const { queueEmail, createDocumentSignatureToken } = await import('./emailQueue');
         const { storage } = await import('./storage');
         
-        console.log(`📧 [EMAIL DEBUG] Fetching user ${userId} data...`);
+        emailDebug('Fetching user data', { userId });
         // Get user and company info
         const user = await storage.getUser(userId);
         
         // Priority: personalEmail > companyEmail (work email)
         const userEmail = user?.personalEmail || user?.companyEmail;
         
-        console.log(`📧 [EMAIL DEBUG] User data:`, user ? `${user.fullName} (companyEmail: ${user.companyEmail || 'none'}, personalEmail: ${user.personalEmail || 'none'})` : 'NOT FOUND');
-        console.log(`📧 [EMAIL DEBUG] Selected email (priority personal):`, userEmail);
+        emailDebug('User data fetched', {
+          userFound: Boolean(user),
+          userId,
+          companyEmail: maskEmail(user?.companyEmail),
+          personalEmail: maskEmail(user?.personalEmail),
+          selectedEmail: maskEmail(userEmail),
+        });
         
         if (user && userEmail) {
-          console.log(`📧 [EMAIL DEBUG] Fetching company ${user.companyId} data...`);
+          emailDebug('Fetching company data', { companyId: user.companyId });
           const company = await storage.getCompany(user.companyId);
-          console.log(`📧 [EMAIL DEBUG] Company data:`, company ? `${company.name} (${company.companyAlias})` : 'NOT FOUND');
+          emailDebug('Company data fetched', {
+            companyFound: Boolean(company),
+            companyId: user.companyId,
+            companyAlias: company?.companyAlias || null,
+          });
           
           // Generate signature token for direct email link
-          console.log(`📧 [EMAIL DEBUG] Creating signature token...`);
+          emailDebug('Creating signature token', { userId, documentId });
           const signatureToken = await createDocumentSignatureToken(
             documentId,
             userId,
             user.companyId
           );
-          console.log(`📧 [EMAIL DEBUG] Signature token created:`, signatureToken.substring(0, 20) + '...');
+          emailDebug('Signature token created');
           
           // Build direct signature URL
           const companyAlias = company?.companyAlias || 'app';
           const signatureUrl = `${process.env.VITE_APP_URL || 'http://localhost:5000'}/${companyAlias}/inicio?signDocument=${documentId}&token=${signatureToken}`;
-          console.log(`📧 [EMAIL DEBUG] Signature URL:`, signatureUrl);
+          emailDebug('Signature URL prepared');
           
           // Queue email
-          console.log(`📧 [EMAIL DEBUG] Queueing email to ${userEmail}...`);
+          emailDebug('Queueing document email', { to: maskEmail(userEmail) });
           await queueEmail({
             userId,
             toEmail: userEmail,
@@ -1762,12 +2001,277 @@ async function checkReminders() {
   }
 }
 
+// Daily document reminder: send notifications for ALL unsigned documents (not just payrolls)
+async function notifyUnsignedDocuments() {
+  try {
+    console.log('📧 [DOCUMENT REMINDER] Starting daily unsigned documents reminder check...');
+    
+    // Get ALL documents that require signature but haven't been signed yet
+    const unsignedDocs = await db.select({
+      documentId: documents.id,
+      userId: documents.userId,
+      fileName: documents.fileName,
+      originalName: documents.originalName,
+      requiresSignature: documents.requiresSignature,
+      createdAt: documents.createdAt
+    })
+      .from(documents)
+      .where(
+        and(
+          eq(documents.requiresSignature, true), // Must require signature
+          isNull(documents.signedAt) // Not signed yet
+        )
+      );
+
+    if (unsignedDocs.length === 0) {
+      console.log('✅ [DOCUMENT REMINDER] No unsigned documents found');
+      return;
+    }
+
+    console.log(`📧 [DOCUMENT REMINDER] Found ${unsignedDocs.length} unsigned documents requiring signatures`);
+
+    // Group documents by user to send one notification per user (not one per document)
+    const docsByUser = new Map<number, typeof unsignedDocs>();
+    for (const doc of unsignedDocs) {
+      if (!docsByUser.has(doc.userId)) {
+        docsByUser.set(doc.userId, []);
+      }
+      docsByUser.get(doc.userId)!.push(doc);
+    }
+
+    console.log(`📧 [DOCUMENT REMINDER] Notifying ${docsByUser.size} users with unsigned documents`);
+
+    // Send reminder to each user (one notification per user with count)
+    for (const [userId, userDocs] of docsByUser.entries()) {
+      try {
+        const docCount = userDocs.length;
+        const isPayroll = userDocs.some(d => 
+          (d.originalName || d.fileName).toLowerCase().includes('nomina') ||
+          (d.originalName || d.fileName).toLowerCase().includes('nómina') ||
+          (d.originalName || d.fileName).toLowerCase().includes('payroll')
+        );
+        
+        console.log(`📧 [DOCUMENT REMINDER] User ${userId}: ${docCount} unsigned document(s), includes payroll: ${isPayroll}`);
+        
+        // If user has multiple documents, send a summary notification
+        if (docCount > 1) {
+          await sendMultipleDocumentsNotification(userId, docCount, isPayroll);
+        } else {
+          // Single document - send specific notification
+          const doc = userDocs[0];
+          const documentName = doc.originalName || doc.fileName;
+          await sendPayrollNotification(userId, documentName, doc.documentId, { skipEmail: true });
+        }
+      } catch (error) {
+        console.error(`❌ [DOCUMENT REMINDER] Error sending reminder to user ${userId}:`, error);
+        // Continue with next user instead of failing
+      }
+    }
+
+    console.log(`✅ [DOCUMENT REMINDER] Daily reminder completed for ${unsignedDocs.length} unsigned documents across ${docsByUser.size} users`);
+  } catch (error) {
+    console.error('❌ [DOCUMENT REMINDER] Error in notifyUnsignedDocuments:', error);
+  }
+}
+
+// Exported test version that returns detailed results
+export async function notifyUnsignedDocumentsTest() {
+  try {
+    console.log('🧪 [TEST] Starting unsigned documents reminder check...');
+    
+    // Get ALL documents that require signature but haven't been signed yet
+    const unsignedDocs = await db.select({
+      documentId: documents.id,
+      userId: documents.userId,
+      fileName: documents.fileName,
+      originalName: documents.originalName,
+      requiresSignature: documents.requiresSignature,
+      createdAt: documents.createdAt
+    })
+      .from(documents)
+      .where(
+        and(
+          eq(documents.requiresSignature, true), // Must require signature
+          isNull(documents.signedAt) // Not signed yet
+        )
+      );
+
+    if (unsignedDocs.length === 0) {
+      console.log('✅ [TEST] No unsigned documents found');
+      return {
+        totalDocuments: 0,
+        usersNotified: 0,
+        details: []
+      };
+    }
+
+    console.log(`🧪 [TEST] Found ${unsignedDocs.length} unsigned documents`);
+
+    // Group documents by user
+    const docsByUser = new Map<number, typeof unsignedDocs>();
+    for (const doc of unsignedDocs) {
+      if (!docsByUser.has(doc.userId)) {
+        docsByUser.set(doc.userId, []);
+      }
+      docsByUser.get(doc.userId)!.push(doc);
+    }
+
+    console.log(`🧪 [TEST] Notifying ${docsByUser.size} users`);
+
+    const details: any[] = [];
+    let successCount = 0;
+    let errorCount = 0;
+
+    // Send reminder to each user
+    for (const [userId, userDocs] of docsByUser.entries()) {
+      try {
+        const docCount = userDocs.length;
+        const isPayroll = userDocs.some(d => 
+          (d.originalName || d.fileName).toLowerCase().includes('nomina') ||
+          (d.originalName || d.fileName).toLowerCase().includes('nómina') ||
+          (d.originalName || d.fileName).toLowerCase().includes('payroll')
+        );
+        
+        console.log(`🧪 [TEST] User ${userId}: ${docCount} document(s), payroll: ${isPayroll}`);
+        
+        // Send notification
+        if (docCount > 1) {
+          await sendMultipleDocumentsNotification(userId, docCount, isPayroll);
+        } else {
+          const doc = userDocs[0];
+          const documentName = doc.originalName || doc.fileName;
+          await sendPayrollNotification(userId, documentName, doc.documentId, { skipEmail: true });
+        }
+        
+        successCount++;
+        details.push({
+          userId,
+          documentCount: docCount,
+          hasPayroll: isPayroll,
+          documents: userDocs.map(d => ({
+            id: d.documentId,
+            name: d.originalName || d.fileName
+          })),
+          status: 'sent'
+        });
+      } catch (error) {
+        errorCount++;
+        console.error(`❌ [TEST] Error for user ${userId}:`, error);
+        details.push({
+          userId,
+          documentCount: userDocs.length,
+          status: 'error',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    }
+
+    console.log(`✅ [TEST] Completed: ${successCount} success, ${errorCount} errors`);
+
+    return {
+      totalDocuments: unsignedDocs.length,
+      usersNotified: docsByUser.size,
+      successCount,
+      errorCount,
+      details
+    };
+  } catch (error) {
+    console.error('❌ [TEST] Error in notifyUnsignedDocumentsTest:', error);
+    throw error;
+  }
+}
+
+// Send notification for multiple unsigned documents
+async function sendMultipleDocumentsNotification(userId: number, docCount: number, hasPayroll: boolean) {
+  try {
+    console.log(`📱 Sending multiple documents notification to user ${userId} (${docCount} documents, payroll: ${hasPayroll})`);
+    
+    // Get push subscriptions for the user
+    const subscriptions = await db.select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, userId));
+    
+    if (subscriptions.length === 0) {
+      console.log(`📱 No push subscriptions found for user ${userId}`);
+      return;
+    }
+    
+    // Filter to unique devices
+    const deviceMap = new Map<string, typeof subscriptions[0]>();
+    for (const sub of subscriptions) {
+      const deviceKey = sub.deviceId || sub.endpoint;
+      const existing = deviceMap.get(deviceKey);
+      if (!existing || new Date(sub.updatedAt) > new Date(existing.updatedAt)) {
+        deviceMap.set(deviceKey, sub);
+      }
+    }
+    
+    const uniqueSubscriptions = Array.from(deviceMap.values());
+    
+    // Use user-based tag for summary notifications
+    const notificationTag = `unsigned-docs-${userId}`;
+    
+    const title = hasPayroll ? '📄 Documentos y Nóminas Pendientes' : '📄 Documentos Pendientes de Firma';
+    const body = hasPayroll 
+      ? `Tienes ${docCount} documentos pendientes de firmar, incluyendo nóminas`
+      : `Tienes ${docCount} documentos pendientes de firmar`;
+    
+    const payload = JSON.stringify({
+      title,
+      body,
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      vibrate: [200, 100, 200],
+      requireInteraction: true,
+      tag: notificationTag,
+      data: {
+        url: '/employee/documentos',
+        type: 'multiple_documents_pending',
+        timestamp: Date.now(),
+        userId,
+        documentCount: docCount
+      },
+      actions: [
+        { action: 'view', title: 'Ver documentos', icon: '/icon-192.png' }
+      ]
+    });
+    
+    // Send to all unique devices
+    for (const sub of uniqueSubscriptions) {
+      try {
+        await webpush.sendNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.p256dh,
+              auth: sub.auth
+            }
+          },
+          payload
+        );
+        console.log(`✅ Multiple documents notification sent to user ${userId}`);
+      } catch (error: any) {
+        if (error.statusCode === 410 || error.statusCode === 404) {
+          console.log(`🗑️  Removing invalid subscription for user ${userId}`);
+          await db.delete(pushSubscriptions)
+            .where(eq(pushSubscriptions.endpoint, sub.endpoint));
+        } else {
+          console.error(`❌ Error sending notification to user ${userId}:`, error.message);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in sendMultipleDocumentsNotification:', error);
+  }
+}
+
 // 🔒 PROTECTED: Use global process to persist scheduler state across hot reloads
 // DO NOT MODIFY - This prevents duplicate notifications from module reloads
 declare global {
-  var pushSchedulerIncompleteTask: cron.ScheduledTask | undefined;
-  var pushSchedulerTrialTask: cron.ScheduledTask | undefined;
-  var pushSchedulerDeletionTask: cron.ScheduledTask | undefined;
+  var pushSchedulerIncompleteTask: ScheduledTask | undefined;
+  var pushSchedulerTrialTask: ScheduledTask | undefined;
+  var pushSchedulerDeletionTask: ScheduledTask | undefined;
+  var pushSchedulerPayrollTask: ScheduledTask | undefined;
   var pushSchedulerRunning: boolean | undefined;
 }
 
@@ -1820,6 +2324,13 @@ export async function startPushNotificationScheduler() {
     global.pushSchedulerDeletionTask.stop();
     global.pushSchedulerDeletionTask = undefined;
   }
+  if (global.pushSchedulerPayrollTask) {
+    if (process.env.DEBUG_SCHEDULER) {
+      console.log(`🧹 Stopping old payroll reminder task (hot reload cleanup) [${processId}]`);
+    }
+    global.pushSchedulerPayrollTask.stop();
+    global.pushSchedulerPayrollTask = undefined;
+  }
   
   // Mark as running BEFORE creating cron tasks
   global.pushSchedulerRunning = true;
@@ -1841,12 +2352,11 @@ export async function startPushNotificationScheduler() {
       console.error('❌ Error checking incomplete sessions:', err);
     });
   }, {
-    timezone: 'Europe/Madrid',
-    scheduled: true
+    timezone: 'Europe/Madrid'
   });
   
-  // ✅ Cron #2: Process expired trials (every hour - TODO: replace with Stripe webhooks)
-  global.pushSchedulerTrialTask = cron.schedule('0 * * * *', async () => {
+  // ✅ Cron #2: Process expired trials (every hour at minute 7 to avoid :00 congestion)
+  global.pushSchedulerTrialTask = cron.schedule('7 * * * *', async () => {
     if (process.env.DEBUG_SCHEDULER) {
       console.log('💳 Running trial expiration check (every hour)');
     }
@@ -1854,7 +2364,7 @@ export async function startPushNotificationScheduler() {
       console.error('❌ Error processing expired trials:', err);
     });
   }, {
-    scheduled: true
+    timezone: 'Europe/Madrid'
   });
   
   // ✅ Cron #4: Process scheduled deletions (daily at 2:00 AM Spain time)
@@ -1866,23 +2376,38 @@ export async function startPushNotificationScheduler() {
       console.error('❌ Error processing scheduled deletions:', err);
     });
   }, {
-    timezone: 'Europe/Madrid',
-    scheduled: true
+    timezone: 'Europe/Madrid'
+  });
+
+  // ✅ Cron #5: Document signature reminder notifications (daily at 10:00 AM Spain time)
+  // Sends reminders for ALL unsigned documents (payrolls, contracts, etc.)
+  global.pushSchedulerPayrollTask = cron.schedule('0 10 * * *', async () => {
+    if (process.env.DEBUG_SCHEDULER) {
+      console.log('📧 Running unsigned documents reminder check (10:00 AM Spain time)');
+    }
+    await notifyUnsignedDocuments().catch(err => {
+      console.error('❌ Error notifying unsigned documents:', err);
+    });
+  }, {
+    timezone: 'Europe/Madrid'
   });
   
-  console.log('✅ Scheduler started: Alarms+Reminders=event-driven, Incomplete/Deletions=daily-cron, Trials=hourly-cron');
+  console.log('✅ Scheduler started: Alarms+Reminders=event-driven, Incomplete/Documents=daily-cron, Trials=hourly-cron');
   if (process.env.DEBUG_SCHEDULER) {
     console.log(`   • Alarms: Event-driven (setTimeout per alarm)`);
     console.log(`   • Reminders: Event-driven (setTimeout per reminder) ✅ NO POLLING`);
     console.log(`   • Incomplete sessions: 09:00 Europe/Madrid (daily)`);
+    console.log(`   • Unsigned documents: 10:00 Europe/Madrid (daily) - ALL documents requiring signature`);
     console.log(`   • Deletions: 02:00 Europe/Madrid (daily)`);
+    console.log(`   • Stripe Reconciliation: 02:00 Europe/Madrid (daily) - Syncs all subscriptions from Stripe to DB`);
     console.log(`   • Trials: 0 * * * * (hourly - TODO: Stripe webhooks)`);
   }
   
   return { 
     incompleteSessionTask: global.pushSchedulerIncompleteTask,
     trialTask: global.pushSchedulerTrialTask,
-    deletionTask: global.pushSchedulerDeletionTask
+    deletionTask: global.pushSchedulerDeletionTask,
+    payrollTask: global.pushSchedulerPayrollTask
   };
 }
 

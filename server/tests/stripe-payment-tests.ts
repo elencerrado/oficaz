@@ -19,7 +19,7 @@ if (!stripeSecretKey) {
 }
 
 const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: '2025-05-28.basil',
+  apiVersion: '2025-08-27.basil',
 });
 
 const isTestMode = stripeSecretKey.startsWith('sk_test');

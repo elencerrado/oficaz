@@ -10,12 +10,202 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Building2, Users, Crown, Settings, Edit2, Check, X, Euro, AlertCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, Building2, Users, Crown, Settings, Edit2, Check, X, Euro, AlertCircle, Trash2, Database, HardDrive, Cpu, Brain, DollarSign } from 'lucide-react';
 import { getAuthHeaders } from '@/lib/auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface CompanyDetailProps {
   companyId: string;
+}
+
+interface UsageStatsProps {
+  companyId: string;
+}
+
+function UsageStatsCard({ companyId }: UsageStatsProps) {
+  const { data: usageStats, isLoading, error } = useQuery({
+    queryKey: ['/api/super-admin/companies', companyId, 'usage-stats'],
+    queryFn: async () => {
+      const response = await fetch(`/api/super-admin/companies/${companyId}/usage-stats`, {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch usage stats');
+      }
+      return response.json();
+    },
+    staleTime: 30000,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <LoadingSpinner size="sm" />
+        <p className="ml-2 text-white">Cargando estadísticas...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8 text-white/60">
+        <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-400" />
+        <p>Error al cargar estadísticas de uso</p>
+        <p className="text-xs mt-2 text-red-400">{error.toString()}</p>
+      </div>
+    );
+  }
+
+  if (!usageStats?.stats) {
+    return (
+      <div className="text-center py-8 text-white/60">
+        <p>No hay datos de uso disponibles</p>
+      </div>
+    );
+  }
+
+  const { storage, compute, ai, total } = usageStats.stats;
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Storage Section */}
+      <div>
+        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+          <HardDrive className="w-5 h-5" />
+          Almacenamiento
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* R2 Storage */}
+          <div className="bg-white/5 p-4 rounded-lg border border-white/10">
+            <div className="text-sm text-white/60 mb-1">Cloudflare R2</div>
+            <div className="text-xl font-bold text-white">{formatBytes(storage.r2.bytes)}</div>
+            <div className="text-xs text-emerald-400 mt-1">
+              ${storage.r2.costUSD.toFixed(4)}/mes
+            </div>
+          </div>
+
+          {/* Database Storage */}
+          <div className="bg-white/5 p-4 rounded-lg border border-white/10">
+            <div className="text-sm text-white/60 mb-1">Base de Datos (Neon)</div>
+            <div className="text-xl font-bold text-white">{formatBytes(storage.database.bytes)}</div>
+            <div className="text-xs text-emerald-400 mt-1">
+              ${storage.database.costUSD.toFixed(4)}/mes
+            </div>
+          </div>
+
+          {/* Total Storage */}
+          <div className="bg-blue-500/10 p-4 rounded-lg border border-blue-500/30">
+            <div className="text-sm text-blue-300 mb-1">Total Almacenamiento</div>
+            <div className="text-xl font-bold text-blue-400">{formatBytes(storage.total.bytes)}</div>
+            <div className="text-xs text-blue-300 mt-1">
+              ${storage.total.costUSD.toFixed(4)}/mes
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Compute & API Section */}
+      <div>
+        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+          <Cpu className="w-5 h-5" />
+          Procesamiento
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white/5 p-4 rounded-lg border border-white/10">
+            <div className="text-sm text-white/60 mb-1">Peticiones API</div>
+            <div className="text-xl font-bold text-white">{compute.apiRequests.toLocaleString()}</div>
+            <div className="text-xs text-white/40 mt-1">Este mes</div>
+          </div>
+
+          <div className="bg-white/5 p-4 rounded-lg border border-white/10">
+            <div className="text-sm text-white/60 mb-1">Tiempo de Cómputo</div>
+            <div className="text-xl font-bold text-white">{compute.apiComputeTimeSec.toFixed(2)}s</div>
+            <div className="text-xs text-white/40 mt-1">Total acumulado</div>
+          </div>
+
+          <div className="bg-purple-500/10 p-4 rounded-lg border border-purple-500/30">
+            <div className="text-sm text-purple-300 mb-1">Costo Cómputo</div>
+            <div className="text-xl font-bold text-purple-400">${compute.costUSD.toFixed(4)}</div>
+            <div className="text-xs text-purple-300 mt-1">/mes</div>
+          </div>
+        </div>
+      </div>
+
+      {/* AI Section */}
+      {ai.tokensUsed > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+            <Brain className="w-5 h-5" />
+            Inteligencia Artificial
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white/5 p-4 rounded-lg border border-white/10">
+              <div className="text-sm text-white/60 mb-1">Tokens Consumidos</div>
+              <div className="text-xl font-bold text-white">{ai.tokensUsed.toLocaleString()}</div>
+              <div className="text-xs text-white/40 mt-1">OpenAI GPT-4</div>
+            </div>
+
+            <div className="bg-white/5 p-4 rounded-lg border border-white/10">
+              <div className="text-sm text-white/60 mb-1">Peticiones IA</div>
+              <div className="text-xl font-bold text-white">{ai.requestsCount.toLocaleString()}</div>
+              <div className="text-xs text-white/40 mt-1">Este mes</div>
+            </div>
+
+            <div className="bg-orange-500/10 p-4 rounded-lg border border-orange-500/30">
+              <div className="text-sm text-orange-300 mb-1">Costo IA</div>
+              <div className="text-xl font-bold text-orange-400">${ai.costUSD.toFixed(4)}</div>
+              <div className="text-xs text-orange-300 mt-1">/mes</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Total Cost Summary */}
+      <div className="bg-gradient-to-r from-emerald-500/10 to-blue-500/10 p-6 rounded-lg border border-emerald-500/30">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-sm text-white/60 mb-1">Costo Total Mensual</div>
+            <div className="text-3xl font-bold text-white">
+              ${total.costUSD.toFixed(2)} USD
+            </div>
+            <div className="text-lg text-emerald-400 mt-1">
+              ≈ €{total.costEUR.toFixed(2)} EUR
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-xs text-white/40 mb-2">Desglose:</div>
+            <div className="space-y-1 text-sm">
+              <div className="text-white/60">Storage: ${storage.total.costUSD.toFixed(4)}</div>
+              <div className="text-white/60">Compute: ${compute.costUSD.toFixed(4)}</div>
+              {ai.tokensUsed > 0 && (
+                <div className="text-white/60">AI: ${ai.costUSD.toFixed(4)}</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Info Footer */}
+      <div className="text-xs text-white/40 text-center pt-2">
+        <p>Datos actualizados: {new Date(usageStats.stats.lastUpdated || Date.now()).toLocaleString('es-ES')}</p>
+        <p className="mt-1">
+          Precios estimados • R2: $0.015/GB • Neon: $0.12/GB • Compute: $0.00001/s • OpenAI: $0.002/1K tokens
+        </p>
+      </div>
+    </div>
+  );
 }
 
 const featureLabels = {
@@ -30,7 +220,7 @@ const featureLabels = {
   api: 'API',
 };
 
-// Subscription status colors (plan is now unified as 'Oficaz' with addons)
+// Subscription status colors
 const subscriptionStatusColors = {
   active: 'bg-emerald-500',
   trial: 'bg-blue-500',
@@ -52,7 +242,7 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
   const [newPlan, setNewPlan] = useState('');
   const [newMaxUsers, setNewMaxUsers] = useState('');
   const [newPrice, setNewPrice] = useState('');
-  const [newTrialDuration, setNewTrialDuration] = useState('');
+  const [newTrialEndDate, setNewTrialEndDate] = useState('');
   const [useCustomSettings, setUseCustomSettings] = useState(false);
   const [customFeatures, setCustomFeatures] = useState<any>({});
   
@@ -72,6 +262,9 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
       return response.json();
     },
     retry: false,
+    staleTime: 30000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Fetch available plans for dropdown
@@ -85,10 +278,18 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
       return response.json();
     },
     retry: false,
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   interface CompanySubscriptionUpdate {
+    plan?: string;
+    maxUsers?: number | null;
+    customMonthlyPrice?: number | null;
+    useCustomSettings?: boolean;
     trialDurationDays?: number;
+    demoMode?: boolean;
     features?: Record<string, boolean>;
   }
 
@@ -149,12 +350,11 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
   // Delete company mutation
   const deleteCompanyMutation = useMutation({
     mutationFn: async (confirmationText: string) => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/companies/${companyId}/delete-permanently`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({ confirmationText }),
       });
@@ -259,8 +459,31 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
   };
 
   const handleTrialDurationSave = () => {
+    if (!newTrialEndDate || !company) return;
+    
+    // Calculate days from company creation date to selected end date
+    const createdAt = new Date(company.createdAt);
+    const endDate = new Date(newTrialEndDate);
+    const diffTime = endDate.getTime() - createdAt.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays <= 0) {
+      toast({
+        title: "Error",
+        description: "La fecha de fin del trial debe ser posterior a la fecha de creación de la empresa",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     updateCompanyMutation.mutate({ 
-      trialDurationDays: newTrialDuration ? parseInt(newTrialDuration) : null 
+      trialDurationDays: diffDays
+    });
+  };
+
+  const handleDemoModeToggle = (checked: boolean) => {
+    updateCompanyMutation.mutate({
+      demoMode: checked,
     });
   };
 
@@ -287,6 +510,13 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
     }
   };
 
+      // Calculate trial end date from company creation + trial duration
+      const createdAt = new Date(company.createdAt);
+      const trialDays = company.trialDurationDays || 14;
+      const trialEndDate = new Date(createdAt);
+      trialEndDate.setDate(trialEndDate.getDate() + trialDays);
+      setNewTrialEndDate(trialEndDate.toISOString().split('T')[0]);
+      
   const saveCustomSettings = async () => {
     try {
       updateCompanyMutation.mutate({ 
@@ -303,7 +533,11 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
       setNewPlan(company.subscription.plan);
       setNewMaxUsers(company.subscription.maxUsers?.toString() || '');
       setNewPrice(company.subscription.customMonthlyPrice?.toString() || company.subscription.monthlyPrice?.toString() || '');
-      setNewTrialDuration(company.trialDurationDays?.toString() || '14');
+      const createdAt = new Date(company.createdAt);
+      const trialDays = company.trialDurationDays || 14;
+      const trialEndDate = new Date(createdAt);
+      trialEndDate.setDate(trialEndDate.getDate() + trialDays);
+      setNewTrialEndDate(trialEndDate.toISOString().split('T')[0]);
       setCustomFeatures(company.subscription.features || {});
       
       // Usar el estado explícito de useCustomSettings de la base de datos
@@ -331,6 +565,118 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
       </div>
     );
   }
+
+  const subscriptionStatus = company.subscription?.status;
+  const hasSubscriptionHistory = Boolean(
+    company.subscription?.stripeSubscriptionId ||
+    company.subscription?.firstPaymentDate ||
+    ['active', 'pending_cancel', 'cancelled', 'inactive'].includes(subscriptionStatus)
+  );
+  const isSubscribedCompany = hasSubscriptionHistory && subscriptionStatus !== 'trial';
+  const subscriptionStartDate = company.subscription?.firstPaymentDate || company.subscription?.startDate;
+  const nextPaymentDate = company.subscription?.nextPaymentDate;
+  const subscriptionUpdatedAt = company.subscription?.updatedAt;
+  const monthlyAmount = Number(
+    company.subscription?.customMonthlyPrice ??
+    company.calculatedMonthlyPrice ??
+    company.subscription?.monthlyPrice ??
+    0
+  );
+
+  const getMonthsSince = (dateValue: string | Date | null | undefined) => {
+    if (!dateValue) return 0;
+    const start = new Date(dateValue);
+    if (Number.isNaN(start.getTime())) return 0;
+
+    const now = new Date();
+    let months = (now.getFullYear() - start.getFullYear()) * 12;
+    months += now.getMonth() - start.getMonth();
+    if (now.getDate() < start.getDate()) months -= 1;
+    return Math.max(0, months);
+  };
+
+  const monthsSubscribed = getMonthsSince(subscriptionStartDate);
+  const isFutureNextPayment = (() => {
+    if (!nextPaymentDate) return false;
+    return new Date(nextPaymentDate).getTime() > Date.now();
+  })();
+
+  const subscriptionUi = (() => {
+    if (subscriptionStatus === 'active') {
+      return {
+        title: 'Estado de Suscripcion',
+        description: 'Resumen del estado actual de la suscripcion',
+        sinceLabel: 'Suscrita desde',
+        sinceSuffixSingular: 'mes activa',
+        sinceSuffixPlural: 'meses activa',
+        nextPaymentLabel: 'Proximo pago',
+        statusBadge: 'Suscripcion activa',
+        statusBadgeClass: 'bg-emerald-500 text-white',
+        amountLabel: 'Importe mensual actual',
+      };
+    }
+
+    if (subscriptionStatus === 'pending_cancel') {
+      return {
+        title: 'Estado de Suscripcion',
+        description: 'Suscripcion activa con cancelacion programada',
+        sinceLabel: 'Suscrita desde',
+        sinceSuffixSingular: 'mes activa',
+        sinceSuffixPlural: 'meses activa',
+        nextPaymentLabel: 'Fin del periodo',
+        statusBadge: 'Cancelacion programada',
+        statusBadgeClass: 'bg-orange-500 text-white',
+        amountLabel: 'Importe mensual actual',
+      };
+    }
+
+    if (subscriptionStatus === 'cancelled') {
+      return {
+        title: 'Estado de Suscripcion',
+        description: 'Suscripcion cancelada',
+        sinceLabel: 'Cancelada desde',
+        sinceSuffixSingular: 'mes desde cancelacion',
+        sinceSuffixPlural: 'meses desde cancelacion',
+        nextPaymentLabel: 'Proximo pago',
+        statusBadge: 'Suscripcion cancelada',
+        statusBadgeClass: 'bg-red-600 text-white',
+        amountLabel: 'Ultimo importe mensual',
+      };
+    }
+
+    if (subscriptionStatus === 'inactive') {
+      return {
+        title: 'Estado de Suscripcion',
+        description: 'Suscripcion inactiva',
+        sinceLabel: 'Inactiva desde',
+        sinceSuffixSingular: 'mes inactiva',
+        sinceSuffixPlural: 'meses inactiva',
+        nextPaymentLabel: 'Proximo pago',
+        statusBadge: 'Suscripcion inactiva',
+        statusBadgeClass: 'bg-slate-600 text-white',
+        amountLabel: 'Ultimo importe mensual',
+      };
+    }
+
+    return {
+      title: 'Configuracion de Trial',
+      description: 'Gestiona el periodo de prueba de esta empresa',
+      sinceLabel: 'Suscrita desde',
+      sinceSuffixSingular: 'mes activa',
+      sinceSuffixPlural: 'meses activa',
+      nextPaymentLabel: 'Proximo pago',
+      statusBadge: 'Sin suscripcion',
+      statusBadgeClass: 'bg-blue-500 text-white',
+      amountLabel: 'Importe mensual actual',
+    };
+  })();
+
+  const wasUpdatedThisMonth = (() => {
+    if (!subscriptionUpdatedAt) return false;
+    const updated = new Date(subscriptionUpdatedAt);
+    const now = new Date();
+    return updated.getMonth() === now.getMonth() && updated.getFullYear() === now.getFullYear();
+  })();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -368,13 +714,37 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
                   <span>{company.userCount} usuarios</span>
                 </div>
               </div>
-              <Badge 
-                className="bg-emerald-500 text-white"
-              >
-                Oficaz
-              </Badge>
             </div>
           </CardHeader>
+        </Card>
+
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20 mb-8">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Modo demo
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-white font-medium">Empresa demo sin cobro</p>
+                <p className="text-sm text-white/60 mt-1">
+                  Mantiene la empresa activa sin cobros ni creación automática de suscripciones en Stripe.
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                {company.demoMode && (
+                  <Badge className="bg-amber-500 text-white">Demo</Badge>
+                )}
+                <Switch
+                  checked={company.demoMode === true}
+                  onCheckedChange={handleDemoModeToggle}
+                  disabled={updateCompanyMutation.isPending}
+                />
+              </div>
+            </div>
+          </CardContent>
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -383,205 +753,165 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Crown className="w-5 h-5" />
-                Configuración de Plan
+                {isSubscribedCompany ? subscriptionUi.title : 'Configuracion de Trial'}
               </CardTitle>
+              <p className="text-sm text-white/60 mt-2">
+                {isSubscribedCompany
+                  ? subscriptionUi.description
+                  : 'Gestiona el periodo de prueba de esta empresa'}
+              </p>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Plan Selection */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/80">Plan de Suscripción</label>
-                <div className="flex items-center gap-2">
-                  {editingPlan ? (
-                    <>
-                      <Select value={newPlan} onValueChange={setNewPlan}>
-                        <SelectTrigger className="flex-1 bg-white/10 border-white/20 text-white">
-                          <SelectValue placeholder="Seleccionar plan" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {plans?.map((plan: any) => (
-                            <SelectItem key={plan.name} value={plan.name}>
-                              {plan.displayName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button size="sm" onClick={handlePlanSave} disabled={updateCompanyMutation.isPending}>
-                        <Check className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setEditingPlan(false)}>
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Badge className="bg-emerald-500 text-white flex-1 justify-center">
-                        Oficaz
-                      </Badge>
-                      <Button size="sm" variant="ghost" onClick={() => setEditingPlan(true)} className="text-white/60">
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Max Users */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/80">Límite de Usuarios</label>
-                <div className="flex items-center gap-2">
-                  {editingMaxUsers ? (
-                    <>
-                      <Input
-                        type="number"
-                        placeholder="∞ (ilimitado)"
-                        value={newMaxUsers}
-                        onChange={(e) => setNewMaxUsers(e.target.value)}
-                        className="flex-1 bg-white/10 border-white/20 text-white"
-                      />
-                      <Button size="sm" onClick={handleMaxUsersSave} disabled={updateCompanyMutation.isPending}>
-                        <Check className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setEditingMaxUsers(false)}>
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white">
-                        {company.subscription.maxUsers || '∞ (ilimitado)'}
+              {isSubscribedCompany ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+                      <div className="text-xs text-white/60 mb-1">{subscriptionUi.sinceLabel}</div>
+                      <div className="text-white font-semibold">
+                        {subscriptionStartDate ? new Date(subscriptionStartDate).toLocaleDateString('es-ES') : 'No disponible'}
                       </div>
-                      <Button size="sm" variant="ghost" onClick={() => setEditingMaxUsers(true)} className="text-white/60">
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Custom Price */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/80">Precio Mensual Personalizado (€/mes)</label>
-                <p className="text-xs text-white/60">
-                  Precio fijo mensual para toda la empresa. Si no se establece, se usa el precio estándar del plan ({company.subscription.monthlyPrice || '0'}€/mes).
-                </p>
-                <div className="flex items-center gap-2">
-                  {editingPrice ? (
-                    <>
-                      <div className="flex items-center flex-1">
-                        <Euro className="w-4 h-4 text-white/60 absolute ml-3 z-10" />
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={newPrice}
-                          onChange={(e) => setNewPrice(e.target.value)}
-                          className="pl-8 bg-white/10 border-white/20 text-white"
-                        />
-                      </div>
-                      <Button size="sm" onClick={handlePriceSave} disabled={updateCompanyMutation.isPending}>
-                        <Check className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setEditingPrice(false)}>
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white flex items-center gap-2">
-                        <Euro className="w-4 h-4 text-green-400" />
-                        {company.subscription.customMonthlyPrice ? (
-                          <>
-                            {company.subscription.customMonthlyPrice}
-                            <span className="text-white/60">€/mes (personalizado)</span>
-                          </>
-                        ) : (
-                          <>
-                            {company.subscription.monthlyPrice || '0'}
-                            <span className="text-white/60">€/mes (estándar {company.subscription.plan})</span>
-                          </>
-                        )}
-                      </div>
-                      <Button size="sm" variant="ghost" onClick={() => setEditingPrice(true)} className="text-white/60">
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                      {company.subscription.customMonthlyPrice && (
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={handleClearCustomPrice} 
-                          className="text-red-400 hover:text-red-300"
-                          title="Usar precio estándar del plan"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Trial Duration */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/80">Duración del Período de Prueba (días)</label>
-                <div className="flex items-center gap-2">
-                  {editingTrialDuration ? (
-                    <>
-                      <Input
-                        type="number"
-                        min="1"
-                        max="365"
-                        placeholder="14"
-                        value={newTrialDuration}
-                        onChange={(e) => setNewTrialDuration(e.target.value)}
-                        className="flex-1 bg-white/10 border-white/20 text-white"
-                      />
-                      <Button size="sm" onClick={handleTrialDurationSave} disabled={updateCompanyMutation.isPending}>
-                        <Check className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setEditingTrialDuration(false)}>
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white flex items-center gap-2">
-                        🕐 {company.trialDurationDays || 14} días
-                        <span className="text-white/60">de prueba</span>
-                      </div>
-                      <Button size="sm" variant="ghost" onClick={() => setEditingTrialDuration(true)} className="text-white/60">
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Trial Status - Real Time Information */}
-              {company.trialInfo && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/80">Estado del Período de Prueba</label>
-                  <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        {company.trialInfo.isTrialActive ? (
-                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                        ) : (
-                          <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                        )}
-                        <span className="text-white font-medium">
-                          {company.trialInfo.isTrialActive ? 'Prueba Activa' : 'Prueba Expirada'}
-                        </span>
-                      </div>
-                      <div className="text-white/60 text-sm">
-                        {company.trialInfo.daysRemaining} días restantes
+                      <div className="text-xs text-white/50 mt-1">
+                        {monthsSubscribed} {monthsSubscribed === 1 ? subscriptionUi.sinceSuffixSingular : subscriptionUi.sinceSuffixPlural}
                       </div>
                     </div>
-                    <div className="text-xs text-white/50 space-y-1">
-                      <div>Inicio: {new Date(company.trialInfo.trialStartDate).toLocaleDateString('es-ES')}</div>
-                      <div>Fin: {new Date(company.trialInfo.trialEndDate).toLocaleDateString('es-ES')}</div>
-                      <div>Duración total: {company.trialInfo.trialDuration} días</div>
+
+                    <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+                      <div className="text-xs text-white/60 mb-1">{subscriptionUi.nextPaymentLabel}</div>
+                      <div className="text-white font-semibold">
+                        {nextPaymentDate && isFutureNextPayment
+                          ? new Date(nextPaymentDate).toLocaleDateString('es-ES')
+                          : 'Sin proximo cobro'}
+                      </div>
+                      <div className="text-xs text-white/50 mt-1">
+                        {isFutureNextPayment ? 'Ciclo mensual' : 'No hay cobros programados'}
+                      </div>
                     </div>
                   </div>
-                </div>
+
+                  <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div>
+                        <div className="text-xs text-white/60 mb-1">{subscriptionUi.amountLabel}</div>
+                        <div className="text-2xl font-bold text-white">€{monthlyAmount.toFixed(2)}</div>
+                      </div>
+                      <Badge className={subscriptionUi.statusBadgeClass}>{subscriptionUi.statusBadge}</Badge>
+                    </div>
+                    <div className="text-xs text-white/50 mt-2">
+                      Incluye usuarios y funcionalidades contratadas
+                    </div>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div>
+                        <div className="text-xs text-white/60 mb-1">Última actualización de plan</div>
+                        <div className="text-white font-medium">
+                          {subscriptionUpdatedAt ? new Date(subscriptionUpdatedAt).toLocaleDateString('es-ES') : 'No disponible'}
+                        </div>
+                      </div>
+                      {wasUpdatedThisMonth && (
+                        <Badge variant="secondary" className="bg-blue-500/20 text-blue-200 border border-blue-400/30">
+                          Actualizada este mes
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Trial Duration */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white/80">Fecha de Fin del Trial</label>
+                    <p className="text-xs text-white/60">
+                      Selecciona la fecha en la que terminará el período de prueba
+                    </p>
+                    <div className="flex items-center gap-2">
+                      {editingTrialDuration ? (
+                        <>
+                          <div className="flex-1 space-y-2">
+                            <Input
+                              type="date"
+                              value={newTrialEndDate}
+                              min={new Date(company.createdAt).toISOString().split('T')[0]}
+                              onChange={(e) => setNewTrialEndDate(e.target.value)}
+                              className="bg-white/10 border-white/20 text-white"
+                            />
+                            {newTrialEndDate && company && (
+                              <div className="text-xs text-white/70 px-2">
+                                {(() => {
+                                  const createdAt = new Date(company.createdAt);
+                                  const endDate = new Date(newTrialEndDate);
+                                  const diffTime = endDate.getTime() - createdAt.getTime();
+                                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                  return `Total: ${diffDays > 0 ? diffDays : 0} días de trial`;
+                                })()}
+                              </div>
+                            )}
+                          </div>
+                          <Button size="sm" onClick={handleTrialDurationSave} disabled={updateCompanyMutation.isPending}>
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingTrialDuration(false)}>
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium">
+                                  {(() => {
+                                    const createdAt = new Date(company.createdAt);
+                                    const trialDays = company.trialDurationDays || 14;
+                                    const trialEnd = new Date(createdAt);
+                                    trialEnd.setDate(trialEnd.getDate() + trialDays);
+                                    return trialEnd.toLocaleDateString('es-ES');
+                                  })()}
+                                </div>
+                                <div className="text-xs text-white/60 mt-0.5">
+                                  🕐 {company.trialDurationDays || 14} días de trial
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingTrialDuration(true)} className="text-white/60">
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Trial Status - Real Time Information */}
+                  {company.trialInfo && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-white/80">Estado del Período de Prueba</label>
+                      <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            {company.trialInfo.isTrialActive ? (
+                              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                            ) : (
+                              <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                            )}
+                            <span className="text-white font-medium">
+                              {company.trialInfo.isTrialActive ? 'Prueba Activa' : 'Prueba Expirada'}
+                            </span>
+                          </div>
+                          <div className="text-white/60 text-sm">
+                            {company.trialInfo.daysRemaining} días restantes
+                          </div>
+                        </div>
+                        <div className="text-xs text-white/50 space-y-1">
+                          <div>Inicio: {new Date(company.trialInfo.trialStartDate).toLocaleDateString('es-ES')}</div>
+                          <div>Fin: {new Date(company.trialInfo.trialEndDate).toLocaleDateString('es-ES')}</div>
+                          <div>Duración total: {company.trialInfo.trialDuration} días</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -674,6 +1004,19 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
           </Card>
         </div>
 
+        {/* Usage Statistics & Costs - JUST BELOW FEATURES */}
+        <Card className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-xl border-purple-500/30 mt-8">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <DollarSign className="w-5 h-5" />
+              📊 Estadísticas de Uso y Costos Reales
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <UsageStatsCard companyId={companyId} />
+          </CardContent>
+        </Card>
+
         {/* Users Stats */}
         <Card className="bg-white/10 backdrop-blur-xl border-white/20 mt-8">
           <CardHeader>
@@ -699,6 +1042,19 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
                 <div className="text-sm text-white/60">Ingresos Mensuales</div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Usage Statistics & Costs */}
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20 mt-8">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <DollarSign className="w-5 h-5" />
+              Estadísticas de Uso y Costos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <UsageStatsCard companyId={companyId} />
           </CardContent>
         </Card>
 

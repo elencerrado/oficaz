@@ -16,6 +16,38 @@ export const calculateDays = (startDate: string, endDate: string): number => {
 };
 // ⚠️ END PROTECTED CODE ⚠️
 
+/**
+ * Parses a date-only string (YYYY-MM-DD) as a local Date without timezone shift.
+ * For ISO strings (with T), extracts the date part and interprets as local.
+ * This ensures "2025-01-30T00:00:00Z" from the database is shown as 2025-01-30 in local timezone.
+ */
+export const parseDateOnlyLocal = (dateString: string): Date => {
+  if (!dateString) return new Date(NaN);
+  
+  // Extract just the date part (YYYY-MM-DD) whether it's ISO or plain date
+  const [datePart] = dateString.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  if (!year || !month || !day) return new Date(dateString);
+  
+  // If input was ISO (has T), it's in UTC format, so we need to create a local date
+  // that represents the same calendar date
+  // "2025-01-30T00:00:00Z" should display as January 30, not shifted
+  if (dateString.includes('T')) {
+    // Create UTC date, then extract the UTC date components to create local date
+    const utcDate = new Date(dateString);
+    return new Date(utcDate.getUTCFullYear(), utcDate.getUTCMonth(), utcDate.getUTCDate());
+  }
+  
+  // For plain YYYY-MM-DD, create directly as local date
+  return new Date(year, month - 1, day);
+};
+
+const parseDateInput = (value: Date | string): Date => {
+  if (value instanceof Date) return value;
+  // Always extract just the date part (YYYY-MM-DD) to avoid timezone issues
+  return parseDateOnlyLocal(value);
+};
+
 // Timezone utilities for reminders (Spain timezone)
 import { toZonedTime } from 'date-fns-tz';
 import { format as formatDate } from 'date-fns';
@@ -119,8 +151,8 @@ export const getMadridTimeString = (utcISOString: string): string => {
  * @returns Formatted string in Spanish
  */
 export const formatVacationPeriod = (startDate: Date | string, endDate: Date | string): string => {
-  const start = typeof startDate === 'string' ? new Date(startDate) : startDate;
-  const end = typeof endDate === 'string' ? new Date(endDate) : endDate;
+  const start = parseDateInput(startDate);
+  const end = parseDateInput(endDate);
   
   const startDay = start.getDate();
   const endDay = end.getDate();
@@ -154,7 +186,7 @@ export const formatVacationPeriod = (startDate: Date | string, endDate: Date | s
  * @returns Formatted date like "22 de diciembre de 2025"
  */
 export const formatVacationDate = (date: Date | string): string => {
-  const d = typeof date === 'string' ? new Date(date) : date;
+  const d = parseDateInput(date);
   return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
 };
 
@@ -167,8 +199,8 @@ export const formatVacationDate = (date: Date | string): string => {
  * @returns Formatted date range
  */
 export const formatVacationDatesShort = (startDate: Date | string, endDate: Date | string): string => {
-  const start = typeof startDate === 'string' ? new Date(startDate) : startDate;
-  const end = typeof endDate === 'string' ? new Date(endDate) : endDate;
+  const start = parseDateInput(startDate);
+  const end = parseDateInput(endDate);
   
   const isSameDay = start.toDateString() === end.toDateString();
   

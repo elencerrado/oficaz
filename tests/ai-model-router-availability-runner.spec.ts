@@ -5,7 +5,7 @@ describe('runAssistantTurn model fallback', () => {
   it('uses fallback model when preferred unavailable and then escalates', async () => {
     const firstResp = {
       usage: { total_tokens: 10 },
-      choices: [{ message: { function_call: { name: 'createEmployee' } } }]
+      choices: [{ message: { function_call: { name: 'createEmployee' }, content: 'No puedo confirmar sin revisar mejor.' } }]
     };
 
     const secondResp = {

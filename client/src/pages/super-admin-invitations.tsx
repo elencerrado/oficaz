@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { getAuthHeaders } from '@/lib/auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface Invitation {
@@ -44,41 +45,42 @@ export default function SuperAdminInvitations() {
   const { data: settings } = useQuery<RegistrationSettings>({
     queryKey: ['/api/super-admin/registration-settings'],
     queryFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/registration-settings', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch registration settings');
       return response.json();
     },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Fetch invitations
   const { data: invitations = [], isLoading: isLoadingInvitations } = useQuery<Invitation[]>({
     queryKey: ['/api/super-admin/invitations'],
     queryFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/invitations', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch invitations');
       return response.json();
     },
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Toggle registration settings
   const toggleRegistrationMutation = useMutation({
     mutationFn: async (enabled: boolean) => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/registration-settings', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({
           publicRegistrationEnabled: enabled

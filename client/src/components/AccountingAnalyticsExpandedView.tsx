@@ -664,7 +664,7 @@ export function AccountingAnalyticsExpandedView({
     );
   };
 
-  const AnalysisSection = ({ title, data, icon: Icon, rowType = 'default' }: { title: string; data: GroupedData[]; icon: any; rowType?: 'default' | 'client' | 'supplier' | 'approved-pending' }) => {
+  const AnalysisSection = ({ title, data, icon: Icon, rowType = 'default' }: { title: string; data: GroupedData[]; icon: any; rowType?: 'default' | 'client' | 'supplier' | 'approved-pending' | 'category-income' | 'category-expense' }) => {
     if (data.length === 0) {
       return (
         <div className="text-center py-8">

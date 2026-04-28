@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { getAuthHeaders } from '@/lib/auth';
@@ -7,10 +7,8 @@ import {
   Building2, 
   Search,
   Filter,
-  Edit,
   Check,
   X,
-  Eye,
   Users,
   Tag,
   ArrowLeft,
@@ -28,7 +26,11 @@ import {
   FileText,
   Bell,
   Brain,
-  Boxes
+  Boxes,
+  HardDrive,
+  Database,
+  Cpu,
+  DollarSign
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
@@ -41,6 +43,11 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useStandardInfiniteScroll } from '@/hooks/use-standard-infinite-scroll';
+import { useIncrementalList } from '@/hooks/use-incremental-list';
+import { InfiniteListFooter } from '@/components/ui/infinite-list-footer';
+import { GLASS_FILTER_SEARCH_INPUT_CLASS, GLASS_FILTER_SELECT_TRIGGER_CLASS } from '@/lib/filter-styles';
 
 const addonIcons: Record<string, any> = {
   time_tracking: Clock,
@@ -65,9 +72,11 @@ interface ActiveAddon {
 
 interface Company {
   id: number;
+  createdAt: string;
   name: string;
   cif: string;
   email: string;
+  demoMode?: boolean;
   userCount: number;
   activeUsers?: number;
   trialDurationDays?: number;
@@ -75,6 +84,10 @@ interface Company {
     plan: string;
     status: string;
     stripeSubscriptionId?: string;
+    startDate?: string;
+    firstPaymentDate?: string;
+    nextPaymentDate?: string;
+    updatedAt?: string;
     maxUsers?: number;
     monthlyPrice?: number;
     customMonthlyPrice?: number;
@@ -90,6 +103,12 @@ interface Company {
     employees: number;
   };
   calculatedMonthlyPrice?: string;
+  billingSummary?: {
+    monthlyBaseAmount?: number;
+    latestInvoiceAmount?: number | null;
+    latestInvoiceDate?: string | null;
+    latestInvoiceHasProration?: boolean;
+  };
   promotionalCode?: {
     code: string;
     description: string;
@@ -108,6 +127,12 @@ interface Company {
   };
 }
 
+interface SubscriptionPlan {
+  id: number;
+  name: string;
+  features?: Record<string, unknown>;
+}
+
 const featureLabels = {
   messages: 'Mensajes',
   documents: 'Documentos',
@@ -120,7 +145,7 @@ const featureLabels = {
   api: 'API',
 };
 
-// Subscription status badge colors (plan is now unified as 'Oficaz' with addons)
+// Subscription status badge colors
 const subscriptionStatusColors = {
   active: 'bg-emerald-500',
   trial: 'bg-blue-500',
@@ -147,20 +172,22 @@ const getSubscriptionBadge = (company: Company) => {
     };
   }
 
+  // 🔧 FIX: Check actual subscription status FIRST before checking trial expiration
+  // Status is the source of truth for whether they have access
+  if (company.subscription.status === 'active') {
+    return {
+      text: company.subscription.stripeSubscriptionId ? 'Suscrito' : 'Activo',
+      variant: 'default' as const,
+      className: 'bg-emerald-500 text-white'
+    };
+  }
+
   if (company.trialInfo?.isTrialActive) {
     const days = company.trialInfo.daysRemaining;
     return {
       text: `Prueba - ${days} día${days !== 1 ? 's' : ''}`,
       variant: 'secondary' as const,
       className: 'bg-blue-500 text-white'
-    };
-  }
-
-  if (company.subscription.status === 'active' && company.subscription.stripeSubscriptionId) {
-    return {
-      text: 'Suscrito',
-      variant: 'default' as const,
-      className: 'bg-emerald-500 text-white'
     };
   }
 
@@ -179,11 +206,183 @@ const getSubscriptionBadge = (company: Company) => {
   };
 };
 
+function UsageStatsCardInline({ companyId }: { companyId: number }) {
+  const buildFallbackStats = () => {
+    const now = new Date();
+    return {
+      period: {
+        monthName: now.toLocaleString('es-ES', { month: 'long', year: 'numeric' }),
+      },
+      storage: {
+        r2: { bytes: 0, costUSD: 0 },
+        database: { bytes: 0, costUSD: 0 },
+        total: { bytes: 0, costUSD: 0 },
+      },
+      compute: { apiRequests: 0, apiComputeTimeMs: 0, costUSD: 0 },
+      ai: { tokensUsed: 0, requestsCount: 0, costUSD: 0 },
+      total: { costUSD: 0, costEUR: 0 },
+      lastUpdated: now.toISOString(),
+      degraded: true,
+      degradedReason: 'fetch_timeout_or_error',
+    };
+  };
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['/api/super-admin/companies', companyId, 'usage-stats'],
+    queryFn: async () => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 12000);
+
+      try {
+        const response = await fetch(`/api/super-admin/companies/${companyId}/usage-stats`, {
+          headers: getAuthHeaders(),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          return buildFallbackStats();
+        }
+
+        return response.json();
+      } catch (_fetchError) {
+        return buildFallbackStats();
+      } finally {
+        clearTimeout(timeout);
+      }
+    },
+    staleTime: 60 * 1000,
+    refetchInterval: 2 * 60 * 1000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 py-4 text-white/80">
+        <LoadingSpinner size="sm" />
+        <span>Cargando estadísticas...</span>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="py-4 text-white/70">
+        <div className="flex items-center gap-2 text-red-300">
+          <AlertCircle className="w-5 h-5" />
+          <span>Error al cargar estadísticas</span>
+        </div>
+      </div>
+    );
+  }
+
+  const period = data?.period || { monthName: 'Mes actual' };
+  const storage = data?.storage || {
+    r2: { bytes: 0, costUSD: 0 },
+    database: { bytes: 0, costUSD: 0 },
+    total: { bytes: 0, costUSD: 0 },
+  };
+  const compute = data?.compute || { apiRequests: 0, apiComputeTimeMs: 0, costUSD: 0 };
+  const ai = data?.ai || { tokensUsed: 0, requestsCount: 0, costUSD: 0 };
+  const total = data?.total || { costUSD: 0, costEUR: 0 };
+
+  const formatBytes = (bytes: number) => {
+    const safeBytes = Number.isFinite(bytes) ? bytes : 0;
+    if (safeBytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(safeBytes) / Math.log(k));
+    return `${parseFloat((safeBytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Period header */}
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-white/70">
+          <span className="font-medium capitalize">{period.monthName}</span>
+        </div>
+        <div className="text-xs text-white/50">
+          Actualizado: {data.lastUpdated ? new Date(data.lastUpdated).toLocaleString('es-ES') : 'N/A'}
+        </div>
+      </div>
+
+      {data?.degraded && (
+        <div className="rounded-lg border border-yellow-400/30 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-200">
+          Mostrando datos temporales mientras se recalculan las estadisticas.
+        </div>
+      )}
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white/5 p-4 rounded-lg border border-white/10">
+          <div className="text-xs text-white/60 flex items-center gap-2">
+            <HardDrive className="w-4 h-4" /> R2 Storage
+          </div>
+          <div className="text-lg font-bold text-white mt-1">{formatBytes(storage.r2.bytes)}</div>
+          <div className="text-xs text-emerald-400 mt-1">${storage.r2.costUSD.toFixed(4)}/mes</div>
+        </div>
+        <div className="bg-white/5 p-4 rounded-lg border border-white/10">
+          <div className="text-xs text-white/60 flex items-center gap-2">
+            <Database className="w-4 h-4" /> Base de Datos
+          </div>
+          <div className="text-lg font-bold text-white mt-1">{formatBytes(storage.database.bytes)}</div>
+          <div className="text-xs text-emerald-400 mt-1">${storage.database.costUSD.toFixed(4)}/mes</div>
+        </div>
+        <div className="bg-blue-500/10 p-4 rounded-lg border border-blue-500/30">
+          <div className="text-xs text-blue-200 flex items-center gap-2">
+            <DollarSign className="w-4 h-4" /> Total Storage
+          </div>
+          <div className="text-lg font-bold text-blue-100 mt-1">{formatBytes(storage.total.bytes)}</div>
+          <div className="text-xs text-blue-200 mt-1">${storage.total.costUSD.toFixed(4)}/mes</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white/5 p-4 rounded-lg border border-white/10">
+          <div className="text-xs text-white/60 flex items-center gap-2">
+            <Cpu className="w-4 h-4" /> API / Compute
+          </div>
+          <div className="text-lg font-bold text-white mt-1">{(compute.apiRequests || 0).toLocaleString()} req</div>
+          <div className="text-xs text-white/50">{((compute.apiComputeTimeMs || 0) / 1000).toFixed(1)} s CPU</div>
+          <div className="text-xs text-emerald-400 mt-1">${(compute.costUSD || 0).toFixed(4)}/mes</div>
+        </div>
+
+        <div className="bg-white/5 p-4 rounded-lg border border-white/10">
+          <div className="text-xs text-white/60 flex items-center gap-2">
+            <Brain className="w-4 h-4" /> IA
+          </div>
+          <div className="text-lg font-bold text-white mt-1">{(ai.tokensUsed || 0).toLocaleString()} tokens</div>
+          <div className="text-xs text-white/50">{(ai.requestsCount || 0).toLocaleString()} peticiones</div>
+          <div className="text-xs text-emerald-400 mt-1">${(ai.costUSD || 0).toFixed(4)}/mes</div>
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-r from-emerald-500/15 to-blue-500/10 p-4 rounded-lg border border-emerald-500/30">
+        <div className="flex items-center justify-between text-white">
+          <div>
+            <div className="text-xs text-white/60">Costo Total Estimado</div>
+            <div className="text-2xl font-bold">${(total.costUSD || 0).toFixed(2)} USD</div>
+            <div className="text-sm text-emerald-300">≈ €{(total.costEUR || 0).toFixed(2)} EUR</div>
+          </div>
+          <div className="text-xs text-white/50 text-right">
+            <div>Storage: ${(storage.total?.costUSD || 0).toFixed(4)}</div>
+            <div>Compute: ${(compute.costUSD || 0).toFixed(4)}</div>
+            {(ai.tokensUsed || 0) > 0 && <div>AI: ${(ai.costUSD || 0).toFixed(4)}</div>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SuperAdminCompanies() {
   usePageTitle('SuperAdmin - Empresas');
   const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  
+  const loadMoreCompaniesRef = useRef<HTMLDivElement | null>(null);
   const [editingCompany, setEditingCompany] = useState<number | null>(null);
   const [newPlan, setNewPlan] = useState<string>("");
   
@@ -196,7 +395,7 @@ export default function SuperAdminCompanies() {
   const [newPlanValue, setNewPlanValue] = useState('');
   const [newMaxUsers, setNewMaxUsers] = useState('');
   const [newPrice, setNewPrice] = useState('');
-  const [newTrialDuration, setNewTrialDuration] = useState('');
+  const [newTrialEndDate, setNewTrialEndDate] = useState('');
   const [useCustomSettings, setUseCustomSettings] = useState(false);
   const [customFeatures, setCustomFeatures] = useState<any>({});
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -206,7 +405,7 @@ export default function SuperAdminCompanies() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: companies } = useQuery({
+  const { data: companies } = useQuery<Company[]>({
     queryKey: ['/api/super-admin/companies'],
     queryFn: async () => {
       const response = await fetch('/api/super-admin/companies', {
@@ -216,12 +415,13 @@ export default function SuperAdminCompanies() {
       return response.json();
     },
     retry: false,
-    staleTime: 30000,
+    staleTime: 60000,
     refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Fetch company details when editing
-  const { data: selectedCompanyDetail } = useQuery({
+  const { data: selectedCompanyDetail, refetch: refetchCompanyDetail } = useQuery<Company>({
     queryKey: ['/api/super-admin/companies', editingCompanyId],
     queryFn: async () => {
       const response = await fetch(`/api/super-admin/companies/${editingCompanyId}`, {
@@ -232,10 +432,13 @@ export default function SuperAdminCompanies() {
     },
     enabled: !!editingCompanyId,
     retry: false,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   // Fetch available plans
-  const { data: plans } = useQuery({
+  const { data: plans } = useQuery<SubscriptionPlan[]>({
     queryKey: ['/api/super-admin/subscription-plans'],
     queryFn: async () => {
       const response = await fetch('/api/super-admin/subscription-plans', {
@@ -245,6 +448,9 @@ export default function SuperAdminCompanies() {
       return response.json();
     },
     retry: false,
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const updateSubscriptionMutation = useMutation({
@@ -328,12 +534,11 @@ export default function SuperAdminCompanies() {
 
   const deleteCompanyMutation = useMutation({
     mutationFn: async (confirmationText: string) => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/companies/${editingCompanyId}/delete-permanently`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({ confirmationText }),
       });
@@ -373,19 +578,54 @@ export default function SuperAdminCompanies() {
     if (selectedCompanyDetail) {
       setUseCustomSettings(selectedCompanyDetail.subscription.useCustomSettings || false);
       setCustomFeatures(selectedCompanyDetail.subscription.features || {});
+      
+      // Calculate trial end date from createdAt + trialDurationDays
+      const createdAt = new Date(selectedCompanyDetail.createdAt);
+      const trialDays = selectedCompanyDetail.trialDurationDays || 14;
+      const trialEndDate = new Date(createdAt);
+      trialEndDate.setDate(trialEndDate.getDate() + trialDays);
+      setNewTrialEndDate(trialEndDate.toISOString().split('T')[0]);
     }
   }, [selectedCompanyDetail]);
 
-  const filteredCompanies = companies?.filter((company: Company) => {
-    const matchesSearch = 
-      company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      company.cif.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      company.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = filterStatus === "all" || company.subscription.status === filterStatus;
-    
-    return matchesSearch && matchesStatus;
-  }) || [];
+  const filteredCompanies = useMemo(() => {
+    if (!companies) return [];
+
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return companies.filter((company: Company) => {
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        company.name.toLowerCase().includes(normalizedSearch) ||
+        company.cif.toLowerCase().includes(normalizedSearch) ||
+        company.email.toLowerCase().includes(normalizedSearch);
+
+      const matchesStatus = filterStatus === "all" || company.subscription.status === filterStatus;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [companies, searchTerm, filterStatus]);
+
+  const {
+    displayedCount: displayedCompaniesCount,
+    visibleItems: visibleCompanies,
+    hasMore: hasMoreCompaniesToDisplay,
+    loadMore: loadMoreCompanies,
+  } = useIncrementalList({
+    items: filteredCompanies,
+    mobileInitialCount: 10,
+    desktopInitialCount: 24,
+    resetKey: `${searchTerm}-${filterStatus}`,
+  });
+
+  useStandardInfiniteScroll({
+    targetRef: loadMoreCompaniesRef,
+    enabled: true,
+    canLoadMore: hasMoreCompaniesToDisplay,
+    onLoadMore: loadMoreCompanies,
+    dependencyKey: `${displayedCompaniesCount}-${filteredCompanies.length}`,
+    rootMargin: '100px',
+  });
 
   const handlePlanChange = (companyId: number, currentPlan: string) => {
     setEditingCompany(companyId);
@@ -404,6 +644,10 @@ export default function SuperAdminCompanies() {
 
   const openEditMode = (company: Company) => {
     setEditingCompanyId(company.id);
+    // Force refetch to get fresh data with correct contractedRoles
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/companies', company.id] });
+    }, 0);
   };
 
   const handlePlanSave = () => {
@@ -445,8 +689,30 @@ export default function SuperAdminCompanies() {
   };
 
   const handleTrialDurationSave = () => {
+    if (!newTrialEndDate || !selectedCompanyDetail) return;
+    
+    const createdAt = new Date(selectedCompanyDetail.createdAt);
+    const endDate = new Date(newTrialEndDate);
+    const diffTime = endDate.getTime() - createdAt.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays <= 0) {
+      toast({ 
+        title: "Error", 
+        description: "La fecha de fin debe ser posterior a la creación de la empresa",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     updateCompanyMutation.mutate({ 
-      trialDurationDays: newTrialDuration ? parseInt(newTrialDuration) : null 
+      trialDurationDays: diffDays
+    });
+  };
+
+  const handleDemoModeToggle = (checked: boolean) => {
+    updateCompanyMutation.mutate({
+      demoMode: checked,
     });
   };
 
@@ -494,269 +760,221 @@ export default function SuperAdminCompanies() {
   // If in edit mode, show edit form
   if (editingCompanyId && selectedCompanyDetail) {
     const company = selectedCompanyDetail;
+    const subscriptionStatus = company.subscription?.status;
+    const hasSubscriptionHistory = Boolean(
+      company.subscription?.stripeSubscriptionId ||
+      company.subscription?.firstPaymentDate ||
+      ['active', 'pending_cancel', 'cancelled', 'inactive'].includes(subscriptionStatus)
+    );
+    const showSubscriptionCard = hasSubscriptionHistory && subscriptionStatus !== 'trial';
+
+    const subscriptionStartDate = company.subscription?.firstPaymentDate || company.subscription?.startDate || company.createdAt;
+    const nextPaymentDate = company.subscription?.nextPaymentDate;
+    const monthlyAmount = Number(
+      company.subscription?.customMonthlyPrice ??
+      company.calculatedMonthlyPrice ??
+      company.subscription?.monthlyPrice ??
+      0
+    );
+    const latestInvoiceAmount = company.billingSummary?.latestInvoiceAmount;
+    const latestInvoiceDate = company.billingSummary?.latestInvoiceDate;
+    const latestInvoiceHasProration = company.billingSummary?.latestInvoiceHasProration;
+
+    const getMonthsSince = (dateValue?: string) => {
+      if (!dateValue) return 0;
+      const start = new Date(dateValue);
+      if (Number.isNaN(start.getTime())) return 0;
+
+      const now = new Date();
+      let months = (now.getFullYear() - start.getFullYear()) * 12;
+      months += now.getMonth() - start.getMonth();
+      if (now.getDate() < start.getDate()) months -= 1;
+      return Math.max(0, months);
+    };
+
+    const monthsSubscribed = getMonthsSince(subscriptionStartDate);
+    const displayNextPaymentDate = (() => {
+      if (nextPaymentDate) return new Date(nextPaymentDate);
+      if (subscriptionStatus === 'active' || subscriptionStatus === 'pending_cancel') {
+        const fallback = new Date();
+        fallback.setMonth(fallback.getMonth() + 1);
+        return fallback;
+      }
+      return null;
+    })();
+
+    const subscriptionBadge = (() => {
+      if (subscriptionStatus === 'active') return { text: 'Activa', className: 'bg-emerald-500/20 text-emerald-300' };
+      if (subscriptionStatus === 'pending_cancel') return { text: 'Cancelacion programada', className: 'bg-orange-500/20 text-orange-300' };
+      if (subscriptionStatus === 'cancelled') return { text: 'Cancelada', className: 'bg-red-500/20 text-red-300' };
+      if (subscriptionStatus === 'inactive') return { text: 'Inactiva', className: 'bg-slate-500/20 text-slate-300' };
+      return { text: 'Sin suscripcion', className: 'bg-blue-500/20 text-blue-300' };
+    })();
     
     return (
       <SuperAdminLayout>
-        <div className="container mx-auto px-6 py-8">
+        <div className="container mx-auto px-6 py-8 space-y-6">
           <Button
             variant="ghost"
             onClick={() => setEditingCompanyId(null)}
-            className="!text-white/70 hover:!text-white hover:!bg-white/10 mb-6"
+            className="!text-white/70 hover:!text-white hover:!bg-white/10"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Volver
           </Button>
 
-          <div className="mb-8">
-            <h1 className="text-2xl font-semibold !text-white mb-1">Gestión de Empresa</h1>
-            <p className="!text-white/60">Configuración personalizada para {company.name}</p>
+          {/* Company Info - No Background */}
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <Building2 className="w-8 h-8 text-white" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold !text-white">{company.name}</h2>
+              <div className="flex items-center gap-4 text-sm !text-white/60 mt-1">
+                <span>CIF: {company.cif}</span>
+                <span>•</span>
+                <span>{company.email}</span>
+                <span>•</span>
+                <span>{company.userCount} usuarios</span>
+              </div>
+            </div>
           </div>
 
-          {/* Company Info Card */}
-          <Card className="!bg-white/10 backdrop-blur-xl !border-white/20 mb-8">
-            <CardHeader>
+          {/* Trial or Subscription Status - Full Width Minimal */}
+          <Card className="!bg-white/10 backdrop-blur-xl !border-white/20">
+            <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <Building2 className="w-8 h-8 text-white" />
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Crown className="w-5 h-5 !text-white/70" />
+                  <span className="text-sm font-medium !text-white/80">{showSubscriptionCard ? 'Suscripcion' : 'Trial'}</span>
                 </div>
-                <div className="flex-1">
-                  <CardTitle className="!text-white text-xl">{company.name}</CardTitle>
-                  <div className="flex items-center gap-4 text-sm !text-white/60 mt-1">
-                    <span>CIF: {company.cif}</span>
-                    <span>•</span>
-                    <span>{company.email}</span>
-                    <span>•</span>
-                    <span>{company.userCount} usuarios</span>
-                  </div>
-                </div>
-                <Badge 
-                  className="bg-emerald-500 text-white"
-                >
-                  Oficaz
-                </Badge>
+                
+                {!showSubscriptionCard && editingTrialDuration ? (
+                  <>
+                    <div className="flex-1 max-w-xs">
+                      <Input
+                        type="date"
+                        value={newTrialEndDate}
+                        min={new Date(company.createdAt).toISOString().split('T')[0]}
+                        onChange={(e) => setNewTrialEndDate(e.target.value)}
+                        className="!bg-white/10 !border-white/20 !text-white"
+                      />
+                    </div>
+                    {newTrialEndDate && company && (
+                      <span className="text-sm !text-white/70">
+                        {(() => {
+                          const createdAt = new Date(company.createdAt);
+                          const endDate = new Date(newTrialEndDate);
+                          const diffTime = endDate.getTime() - createdAt.getTime();
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          return `${diffDays > 0 ? diffDays : 0} días`;
+                        })()}
+                      </span>
+                    )}
+                    <Button size="sm" onClick={handleTrialDurationSave} disabled={updateCompanyMutation.isPending}>
+                      <Check className="w-4 h-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditingTrialDuration(false)} className="!text-white/60">
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </>
+                ) : showSubscriptionCard ? (
+                  <>
+                    <div className="flex-1 flex items-center gap-4 flex-wrap">
+                      <span className="!text-white font-medium">
+                        {subscriptionStartDate ? new Date(subscriptionStartDate).toLocaleDateString('es-ES') : 'No disponible'}
+                      </span>
+                      <span className="text-sm !text-white/60">
+                        ({monthsSubscribed} {monthsSubscribed === 1 ? 'mes' : 'meses'})
+                      </span>
+                      <span className="text-sm !text-white/70">
+                        {displayNextPaymentDate
+                          ? `Proximo pago: ${displayNextPaymentDate.toLocaleDateString('es-ES')}`
+                          : 'Sin proximo cobro'}
+                      </span>
+                      <span className="text-sm !text-white/80 font-medium">
+                        €{monthlyAmount.toFixed(2)}/mes
+                      </span>
+                      <Badge className={subscriptionBadge.className}>{subscriptionBadge.text}</Badge>
+                      {latestInvoiceAmount !== null && latestInvoiceAmount !== undefined && (
+                        <span className="text-sm !text-white/60">
+                          Ultima factura: €{Number(latestInvoiceAmount).toFixed(2)}
+                          {latestInvoiceDate ? ` (${new Date(latestInvoiceDate).toLocaleDateString('es-ES')})` : ''}
+                          {latestInvoiceHasProration ? ' - incluye prorrateos' : ''}
+                        </span>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex-1 flex items-center gap-4">
+                      <span className="!text-white font-medium">
+                        {(() => {
+                          const createdAt = new Date(company.createdAt);
+                          const trialDays = company.trialDurationDays || 14;
+                          const trialEnd = new Date(createdAt);
+                          trialEnd.setDate(trialEnd.getDate() + trialDays);
+                          return trialEnd.toLocaleDateString('es-ES');
+                        })()}
+                      </span>
+                      <span className="text-sm !text-white/60">
+                        ({company.trialDurationDays || 14} días)
+                      </span>
+                      {company.trialInfo && (
+                        <Badge className={company.trialInfo.isTrialActive ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>
+                          {company.trialInfo.isTrialActive ? `Activo - ${company.trialInfo.daysRemaining}d restantes` : 'Expirado'}
+                        </Badge>
+                      )}
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={() => setEditingTrialDuration(true)} className="!text-white/60">
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                  </>
+                )}
               </div>
-            </CardHeader>
+            </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Plan & Pricing Configuration */}
-            <Card className="!bg-white/10 backdrop-blur-xl !border-white/20">
-              <CardHeader>
-                <CardTitle className="!text-white flex items-center gap-2">
-                  <Crown className="w-5 h-5" />
-                  Configuración de Plan
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Plan Selection */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium !text-white/80">Plan de Suscripción</label>
-                  <div className="flex items-center gap-2">
-                    {editingPlanField ? (
-                      <>
-                        <Select value={newPlanValue} onValueChange={setNewPlanValue}>
-                          <SelectTrigger className="flex-1 !bg-white/10 !border-white/20 !text-white">
-                            <SelectValue placeholder="Seleccionar plan" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {plans?.map((plan: any) => (
-                              <SelectItem key={plan.name} value={plan.name}>
-                                {plan.displayName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button size="sm" onClick={handlePlanSave} disabled={updateCompanyMutation.isPending}>
-                          <Check className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setEditingPlanField(false)} className="!text-white/60">
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Badge className="bg-emerald-500 text-white flex-1 justify-center">
-                          Oficaz
-                        </Badge>
-                        <Button size="sm" variant="ghost" onClick={() => setEditingPlanField(true)} className="!text-white/60">
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Max Users */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium !text-white/80">Límite de Usuarios</label>
-                  <div className="flex items-center gap-2">
-                    {editingMaxUsers ? (
-                      <>
-                        <Input
-                          type="number"
-                          placeholder="∞ (ilimitado)"
-                          value={newMaxUsers}
-                          onChange={(e) => setNewMaxUsers(e.target.value)}
-                          className="flex-1 !bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
-                        />
-                        <Button size="sm" onClick={handleMaxUsersSave} disabled={updateCompanyMutation.isPending}>
-                          <Check className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setEditingMaxUsers(false)} className="!text-white/60">
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex-1 px-3 py-2 !bg-white/10 border !border-white/20 rounded-lg !text-white">
-                          {company.subscription.maxUsers || '∞ (ilimitado)'}
-                        </div>
-                        <Button size="sm" variant="ghost" onClick={() => setEditingMaxUsers(true)} className="!text-white/60">
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Custom Price */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium !text-white/80">Precio Mensual Personalizado (€/mes)</label>
-                  <p className="text-xs !text-white/60">
-                    Precio fijo mensual para toda la empresa. Si no se establece, se usa el precio estándar del plan ({company.subscription.monthlyPrice || '0'}€/mes).
+          <Card className="!bg-white/10 backdrop-blur-xl !border-white/20">
+            <CardHeader>
+              <CardTitle className="!text-white text-base flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Modo demo
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="!text-white font-medium">Empresa demo sin cobro</p>
+                  <p className="text-sm !text-white/60">
+                    Mantiene la empresa activa sin generar suscripciones ni cobros en Stripe.
                   </p>
-                  <div className="flex items-center gap-2">
-                    {editingPrice ? (
-                      <>
-                        <div className="flex items-center flex-1">
-                          <Euro className="w-4 h-4 !text-white/60 absolute ml-3 z-10" />
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={newPrice}
-                            onChange={(e) => setNewPrice(e.target.value)}
-                            className="pl-8 !bg-white/10 !border-white/20 !text-white"
-                          />
-                        </div>
-                        <Button size="sm" onClick={handlePriceSave} disabled={updateCompanyMutation.isPending}>
-                          <Check className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setEditingPrice(false)} className="!text-white/60">
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex-1 px-3 py-2 !bg-white/10 border !border-white/20 rounded-lg !text-white flex items-center gap-2">
-                          <Euro className="w-4 h-4 text-green-400" />
-                          {company.subscription.customMonthlyPrice ? (
-                            <>
-                              {company.subscription.customMonthlyPrice}
-                              <span className="!text-white/60">€/mes (personalizado)</span>
-                            </>
-                          ) : (
-                            <>
-                              {company.subscription.monthlyPrice || '0'}
-                              <span className="!text-white/60">€/mes (estándar {company.subscription.plan})</span>
-                            </>
-                          )}
-                        </div>
-                        <Button size="sm" variant="ghost" onClick={() => setEditingPrice(true)} className="!text-white/60">
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                        {company.subscription.customMonthlyPrice && (
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            onClick={handleClearCustomPrice} 
-                            className="text-red-400 hover:text-red-300"
-                            title="Usar precio estándar del plan"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </>
-                    )}
-                  </div>
                 </div>
-
-                {/* Trial Duration */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium !text-white/80">Duración del Período de Prueba (días)</label>
-                  <div className="flex items-center gap-2">
-                    {editingTrialDuration ? (
-                      <>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="365"
-                          placeholder="14"
-                          value={newTrialDuration}
-                          onChange={(e) => setNewTrialDuration(e.target.value)}
-                          className="flex-1 !bg-white/10 !border-white/20 !text-white placeholder:!text-white/40"
-                        />
-                        <Button size="sm" onClick={handleTrialDurationSave} disabled={updateCompanyMutation.isPending}>
-                          <Check className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setEditingTrialDuration(false)} className="!text-white/60">
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex-1 px-3 py-2 !bg-white/10 border !border-white/20 rounded-lg !text-white flex items-center gap-2">
-                          🕐 {company.trialDurationDays || 14} días
-                          <span className="!text-white/60">de prueba</span>
-                        </div>
-                        <Button size="sm" variant="ghost" onClick={() => setEditingTrialDuration(true)} className="!text-white/60">
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
+                <div className="flex items-center gap-3">
+                  {company.demoMode && (
+                    <Badge className="bg-amber-500/20 text-amber-300">Demo</Badge>
+                  )}
+                  <Switch
+                    checked={company.demoMode === true}
+                    onCheckedChange={handleDemoModeToggle}
+                    disabled={updateCompanyMutation.isPending}
+                  />
                 </div>
-
-                {/* Trial Status */}
-                {company.trialInfo && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium !text-white/80">Estado del Período de Prueba</label>
-                    <div className="p-4 !bg-white/5 border !border-white/10 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          {company.trialInfo.isTrialActive ? (
-                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                          ) : (
-                            <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                          )}
-                          <span className="!text-white font-medium">
-                            {company.trialInfo.isTrialActive ? 'Prueba Activa' : 'Prueba Expirada'}
-                          </span>
-                        </div>
-                        <div className="!text-white/60 text-sm">
-                          {company.trialInfo.daysRemaining} días restantes
-                        </div>
-                      </div>
-                      <div className="text-xs !text-white/50 space-y-1">
-                        <div>Inicio: {new Date(company.trialInfo.trialStartDate).toLocaleDateString('es-ES')}</div>
-                        <div>Fin: {new Date(company.trialInfo.trialEndDate).toLocaleDateString('es-ES')}</div>
-                        <div>Duración total: {company.trialInfo.trialDuration} días</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-          </div>
+              </div>
+              <div className="text-xs !text-white/50">
+                Al activarlo, se limpia cualquier borrado programado y se excluye a la empresa de los automatismos de trial a Stripe.
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Subscription Dashboard - 3 Column iOS Style */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-6 xl:max-h-[400px]">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 xl:max-h-[400px]">
             {/* Column 1: User Mix */}
             <Card className="!bg-white/10 backdrop-blur-xl !border-white/15 rounded-3xl">
               <CardHeader className="pb-2">
                 <CardTitle className="!text-white text-base flex items-center gap-2">
                   <Users className="w-4 h-4" />
-                  Usuarios
+                  Usuarios (asientos contratados)
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
@@ -769,7 +987,7 @@ export default function SuperAdminCompanies() {
                     <div className="text-xs font-medium !text-white">Admins</div>
                     <div className="text-[10px] !text-white/50">€6/mes c/u</div>
                   </div>
-                  <div className="text-xl font-bold text-amber-400">{company.contractedRoles?.admins || 0}</div>
+                  <div className="text-xl font-bold text-amber-400">{Math.max(0, company.contractedRoles?.admins || 0)}</div>
                 </div>
                 
                 {/* Manager */}
@@ -781,7 +999,7 @@ export default function SuperAdminCompanies() {
                     <div className="text-xs font-medium !text-white">Managers</div>
                     <div className="text-[10px] !text-white/50">€4/mes c/u</div>
                   </div>
-                  <div className="text-xl font-bold text-purple-400">{company.contractedRoles?.managers || 0}</div>
+                  <div className="text-xl font-bold text-purple-400">{Math.max(0, company.contractedRoles?.managers || 0)}</div>
                 </div>
                 
                 {/* Employee */}
@@ -793,14 +1011,21 @@ export default function SuperAdminCompanies() {
                     <div className="text-xs font-medium !text-white">Empleados</div>
                     <div className="text-[10px] !text-white/50">€2/mes c/u</div>
                   </div>
-                  <div className="text-xl font-bold text-blue-400">{company.contractedRoles?.employees || 0}</div>
+                  <div className="text-xl font-bold text-blue-400">{Math.max(0, company.contractedRoles?.employees || 0)}</div>
                 </div>
 
-                {/* Stats footer */}
-                <div className="pt-2 border-t border-white/10 flex justify-between text-[10px] !text-white/50">
-                  <span>{company.userCount} totales</span>
-                  <span className="text-emerald-400">{company.activeUsers || 0} activos</span>
-                </div>
+                {/* Stats footer - contracted seats total */}
+                {(() => {
+                  const admins = Math.max(0, company.contractedRoles?.admins || 0);
+                  const managers = Math.max(0, company.contractedRoles?.managers || 0);
+                  const employees = Math.max(0, company.contractedRoles?.employees || 0);
+                  const totalSeats = admins + managers + employees;
+                  return (
+                    <div className="pt-2 border-t border-white/10 flex justify-start text-[10px] !text-white/50">
+                      <span>{totalSeats} asientos contratados</span>
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
 
@@ -866,22 +1091,27 @@ export default function SuperAdminCompanies() {
               <CardContent className="space-y-2">
                 {/* Breakdown */}
                 <div className="space-y-1.5 text-xs">
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-white/5">
-                    <span className="!text-white/70">Usuarios</span>
-                    <span className="!text-white font-medium">
-                      €{(
-                        (company.contractedRoles?.admins || 0) * 6 +
-                        (company.contractedRoles?.managers || 0) * 4 +
-                        (company.contractedRoles?.employees || 0) * 2
-                      ).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-white/5">
-                    <span className="!text-white/70">Complementos</span>
-                    <span className="!text-white font-medium">
-                      €{company.activeAddons?.reduce((sum: number, a: ActiveAddon) => sum + parseFloat(a.monthlyPrice), 0).toFixed(2) || '0.00'}
-                    </span>
-                  </div>
+                  {(() => {
+                    const admins = Math.max(0, company.contractedRoles?.admins || 0);
+                    const managers = Math.max(0, company.contractedRoles?.managers || 0);
+                    const employees = Math.max(0, company.contractedRoles?.employees || 0);
+                    const usersCost = (admins * 6) + (managers * 4) + (employees * 2);
+                    const addonsCost = company.activeAddons?.reduce((sum: number, a: ActiveAddon) => sum + (parseFloat(a.monthlyPrice) || 0), 0) || 0;
+                    const totalCost = usersCost + addonsCost;
+                    
+                    return (
+                      <>
+                        <div className="flex justify-between items-center p-2 rounded-lg bg-white/5">
+                          <span className="!text-white/70">Usuarios</span>
+                          <span className="!text-white font-medium">€{usersCost.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center p-2 rounded-lg bg-white/5">
+                          <span className="!text-white/70">Complementos</span>
+                          <span className="!text-white font-medium">€{addonsCost.toFixed(2)}</span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
                 
                 {/* Total */}
@@ -889,7 +1119,14 @@ export default function SuperAdminCompanies() {
                   <div className="text-center">
                     <div className="text-[10px] !text-white/60">Total mensual</div>
                     <div className="text-2xl font-black text-emerald-400">
-                      €{company.calculatedMonthlyPrice || '0.00'}
+                      {(() => {
+                        const admins = Math.max(0, company.contractedRoles?.admins || 0);
+                        const managers = Math.max(0, company.contractedRoles?.managers || 0);
+                        const employees = Math.max(0, company.contractedRoles?.employees || 0);
+                        const usersCost = (admins * 6) + (managers * 4) + (employees * 2);
+                        const addonsCost = company.activeAddons?.reduce((sum: number, a: ActiveAddon) => sum + (parseFloat(a.monthlyPrice) || 0), 0) || 0;
+                        return `€${(usersCost + addonsCost).toFixed(2)}`;
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -917,8 +1154,21 @@ export default function SuperAdminCompanies() {
             </Card>
           </div>
 
+          {/* Usage Statistics & Costs */}
+          <Card className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-xl border-purple-500/30">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <DollarSign className="w-5 h-5" />
+                Estadísticas de Uso y Costos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <UsageStatsCardInline companyId={company.id} />
+            </CardContent>
+          </Card>
+
           {/* Danger Zone */}
-          <Card className="bg-red-500/10 backdrop-blur-xl border-red-500/30 mt-8">
+          <Card className="bg-red-500/10 backdrop-blur-xl border-red-500/30">
             <CardHeader>
               <CardTitle className="text-red-400 flex items-center gap-2">
                 <AlertCircle className="w-5 h-5" />
@@ -1045,12 +1295,12 @@ export default function SuperAdminCompanies() {
                     placeholder="Buscar empresas por nombre, CIF o email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/50 pl-10"
+                    className={GLASS_FILTER_SEARCH_INPUT_CLASS}
                   />
                 </div>
               </div>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-48 !bg-white/10 !border-white/20 !text-white">
+                <SelectTrigger className={`w-48 ${GLASS_FILTER_SELECT_TRIGGER_CLASS}`}>
                   <SelectValue placeholder="Filtrar por estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1064,127 +1314,85 @@ export default function SuperAdminCompanies() {
           </CardContent>
         </Card>
 
-        {/* Companies List */}
-        <Card className="!bg-white/10 backdrop-blur-xl !border-white/20">
-          <CardHeader>
-            <CardTitle className="!text-white flex items-center justify-between">
-              Empresas ({filteredCompanies.length})
-              <Badge variant="secondary" className="bg-white/20 text-white">
-                {filteredCompanies.length} de {companies?.length || 0}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {filteredCompanies.map((company: Company) => (
-                <div
-                  key={company.id}
-                  className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-4 !bg-white/5 rounded-xl border !border-white/10 hover:!bg-white/10 transition-colors"
-                >
-                  <div className="flex items-start gap-3 lg:gap-4 min-w-0 flex-1">
-                    <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Building2 className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
+        {/* Title and counter */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold !text-white">
+            Empresas ({filteredCompanies.length})
+          </h2>
+          <Badge variant="secondary" className="bg-white/20 text-white">
+            {filteredCompanies.length} de {companies?.length || 0}
+          </Badge>
+        </div>
+
+        {/* Companies Cards - Direct Grid */}
+        <div className="space-y-4">
+          {visibleCompanies.map((company: Company) => (
+            <Card
+              key={company.id}
+              className="!bg-white/10 backdrop-blur-xl !border-white/20 cursor-pointer hover:!bg-white/15 hover:!border-white/30 transition-all duration-200 transform hover:scale-[1.01]"
+              onClick={() => openEditMode(company)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3 lg:gap-4 min-w-0">
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Building2 className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-semibold !text-white">{company.name}</h3>
+                      {(() => {
+                        const badge = getSubscriptionBadge(company);
+                        return (
+                          <Badge 
+                            variant={badge.variant}
+                            className={badge.className}
+                          >
+                            {badge.text}
+                          </Badge>
+                        );
+                      })()}
+                      {company.promotionalCode && (
+                        <Badge 
+                          variant="secondary" 
+                          className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 flex items-center gap-1"
+                        >
+                          <Tag className="w-3 h-3" />
+                          {company.promotionalCode.code}
+                        </Badge>
+                      )}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-semibold !text-white">{company.name}</h3>
-                        {editingCompany === company.id ? (
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => savePlanChange(company.id)}
-                              disabled={updateSubscriptionMutation.isPending}
-                              className="bg-emerald-600 hover:bg-emerald-700"
-                            >
-                              <Check className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={cancelPlanChange}
-                              className="!text-white/60 hover:!text-white hover:!bg-white/10"
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <>
-                            <Badge 
-                              className="bg-emerald-500 text-white cursor-pointer hover:opacity-80"
-                              onClick={() => handlePlanChange(company.id, company.subscription.plan)}
-                            >
-                              Oficaz
-                            </Badge>
-                            {(() => {
-                              const badge = getSubscriptionBadge(company);
-                              return (
-                                <Badge 
-                                  variant={badge.variant}
-                                  className={badge.className}
-                                >
-                                  {badge.text}
-                                </Badge>
-                              );
-                            })()}
-                            {company.promotionalCode && (
-                              <Badge 
-                                variant="secondary" 
-                                className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 flex items-center gap-1"
-                              >
-                                <Tag className="w-3 h-3" />
-                                {company.promotionalCode.code}
-                              </Badge>
-                            )}
-                          </>
-                        )}
-                        
-                        {editingCompany !== company.id && (
-                          <div className="flex items-center gap-2 ml-auto">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => openEditMode(company)}
-                              className="!text-white/60 hover:!text-white hover:!bg-white/10"
-                              title="Editar empresa"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => setLocation(`/super-admin/companies/${company.id}`)}
-                              className="!text-white/60 hover:!text-white hover:!bg-white/10"
-                              title="Ver detalles"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-1 sm:gap-4 text-sm !text-white/60 mt-1">
-                        <span className="truncate">{company.cif}</span>
-                        <span className="hidden sm:inline">•</span>
-                        <span className="truncate">{company.email}</span>
-                        <span className="hidden sm:inline">•</span>
-                        <span className="flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          {company.userCount} usuarios
-                        </span>
-                      </div>
+                    <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-1 sm:gap-4 text-sm !text-white/60 mt-1">
+                      <span className="truncate">{company.cif}</span>
+                      <span className="hidden sm:inline">•</span>
+                      <span className="truncate">{company.email}</span>
+                      <span className="hidden sm:inline">•</span>
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        {company.userCount} usuarios
+                      </span>
                     </div>
                   </div>
                 </div>
-              ))}
-              
-              {filteredCompanies.length === 0 && (
-                <div className="text-center py-12">
-                  <Filter className="w-12 h-12 !text-white/30 mx-auto mb-4" />
-                  <p className="!text-white/60">No se encontraron empresas con los filtros aplicados</p>
-                </div>
-              )}
+              </CardContent>
+            </Card>
+          ))}
+
+          <InfiniteListFooter
+            hasMore={hasMoreCompaniesToDisplay}
+            sentinelRef={loadMoreCompaniesRef}
+            onLoadMore={loadMoreCompanies}
+            hintText={`Mostrando ${visibleCompanies.length} de ${filteredCompanies.length} empresas`}
+            textClassName="text-white/70"
+            className="pt-3"
+          />
+          
+          {filteredCompanies.length === 0 && (
+            <div className="text-center py-12 !bg-white/10 backdrop-blur-xl !border-white/20 rounded-xl">
+              <Filter className="w-12 h-12 !text-white/30 mx-auto mb-4" />
+              <p className="!text-white/60">No se encontraron empresas con los filtros aplicados</p>
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </div>
       </div>
     </SuperAdminLayout>
   );

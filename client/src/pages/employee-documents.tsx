@@ -31,8 +31,9 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useStandardInfiniteScroll } from '@/hooks/use-standard-infinite-scroll';
 import { useLocation } from 'wouter';
-import { getAuthData } from '@/lib/auth';
+import { getAuthHeaders } from '@/lib/auth';
 import { DocumentSignatureModal } from '@/components/document-signature-modal';
 import { DocumentPreviewModal } from '@/components/DocumentPreviewModal';
 import { TabNavigation } from '@/components/ui/tab-navigation';
@@ -75,7 +76,7 @@ export default function EmployeeDocuments() {
   const [activeRequest, setActiveRequest] = useState<DocumentRequest | null>(null);
   const [signatureModalOpen, setSignatureModalOpen] = useState(false);
   const [documentToSign, setDocumentToSign] = useState<{ id: number; originalName: string } | null>(null);
-  const [previewModal, setPreviewModal] = useState<{ open: boolean; url: string; filename: string; mimeType?: string | null }>({ open: false, url: '', filename: '', mimeType: null });
+  const [previewModal, setPreviewModal] = useState<{ open: boolean; url: string; filename: string; mimeType?: string | null; requiresSignature?: boolean; isSigned?: boolean; isViewed?: boolean; documentId?: number }>({ open: false, url: '', filename: '', mimeType: null, requiresSignature: false, isSigned: false, isViewed: false, documentId: undefined });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -89,6 +90,9 @@ export default function EmployeeDocuments() {
   const { data: documentNotifications } = useQuery({
     queryKey: ['/api/document-notifications'],
     enabled: !!user,
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnMount: false,
   });
 
   // Convert unified notifications to DocumentRequest format
@@ -128,12 +132,14 @@ export default function EmployeeDocuments() {
     data: documentsData,
     isLoading,
     refetch,
+    error: queryError,
   } = useQuery({
-    queryKey: ['/api/documents/employee'],
+    queryKey: ['/api/documents'],
     enabled: !!user,
-    staleTime: 30000,
+    staleTime: 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    refetchOnMount: true,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const data = await apiRequest('GET', '/api/documents?limit=100');
       // Normalize response
@@ -144,10 +150,25 @@ export default function EmployeeDocuments() {
     },
   });
 
-  // Documents array
+  // Documents array (normalize cached shapes too)
   const allDocuments = useMemo(() => {
-    return Array.isArray(documentsData) ? documentsData : [];
+    if (Array.isArray(documentsData)) return documentsData;
+    if (documentsData?.items) return documentsData.items;
+    if (documentsData?.documents) return documentsData.documents;
+    return [];
   }, [documentsData]);
+
+  // Show error if query failed
+  useEffect(() => {
+    if (queryError) {
+      console.error('🔴 Query Error:', queryError);
+      toast({
+        title: 'Error al cargar documentos',
+        description: (queryError as any).message || 'No se pudieron cargar los documentos',
+        variant: 'destructive',
+      });
+    }
+  }, [queryError]);
 
   // Stub for compatibility
   const hasNextPage = false;
@@ -176,15 +197,10 @@ export default function EmployeeDocuments() {
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const authData = getAuthData();
-      const token = authData?.token || '';
-      
       const response = await fetch('/api/documents/upload', {
         method: 'POST',
         body: formData,
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+        headers: getAuthHeaders(),
       });
       
       if (!response.ok) {
@@ -201,11 +217,10 @@ export default function EmployeeDocuments() {
       // Mark request as completed if active
       if (activeRequest && pendingRequest) {
         try {
-          const authData = getAuthData();
           const response = await fetch(`/api/document-notifications/${pendingRequest.id}/complete`, {
             method: 'PATCH',
             headers: {
-              'Authorization': `Bearer ${authData?.token || ''}`,
+              ...getAuthHeaders(),
               'Content-Type': 'application/json',
             },
           });
@@ -258,7 +273,19 @@ export default function EmployeeDocuments() {
   // Document signature mutations
   const markViewedMutation = useMutation({
     mutationFn: (id: number) => apiRequest('POST', `/api/documents/${id}/view`),
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      // Actualizar el cache inmediatamente
+      queryClient.setQueryData(['/api/documents'], (oldData: any) => {
+        if (!Array.isArray(oldData)) return oldData;
+        return oldData.map((doc: any) => {
+          if (doc.id === variables) {
+            return { ...doc, isViewed: true, is_viewed: true };
+          }
+          return doc;
+        });
+      });
+      
+      // Invalidar query relacionada
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
     },
     // No error toast - this is a "fire and forget" operation
@@ -269,10 +296,31 @@ export default function EmployeeDocuments() {
   const signDocumentMutation = useMutation({
     mutationFn: ({ id, signature }: { id: number; signature: string }) => 
       apiRequest('POST', `/api/documents/${id}/sign`, { digitalSignature: signature }),
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      // Actualizar el documento en el cache inmediatamente
+      queryClient.setQueryData(['/api/documents'], (oldData: any) => {
+        if (!Array.isArray(oldData)) return oldData;
+        
+        return oldData.map((doc: any) => {
+          if (doc.id === variables.id) {
+            return {
+              ...doc,
+              isSigned: true,
+              signedAt: new Date().toISOString(),
+              requiresSignature: true // Mantener que requiere firma para mostrar el badge correcto
+            };
+          }
+          return doc;
+        });
+      });
+      
+      // También invalidar para asegurar sincronización con el servidor
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+      
+      // Cerrar ambos modales cuando se firma exitosamente
       setSignatureModalOpen(false);
       setDocumentToSign(null);
+      setPreviewModal({ open: false, url: '', filename: '', mimeType: null, requiresSignature: false, isSigned: false, isViewed: false, documentId: undefined });
       // No toast for employee - silent success as requested
     },
     onError: (error: any) => {
@@ -314,9 +362,25 @@ export default function EmployeeDocuments() {
 
   // Document signature handlers
   const handleOpenSignatureModal = (document: any) => {
-    // No longer auto-mark as viewed - user must click view button first
+    // Cerrar el modal de preview y abrir el de firma
+    setPreviewModal({ open: false, url: '', filename: '', mimeType: null, requiresSignature: false, isSigned: false, isViewed: false, documentId: undefined });
     setDocumentToSign(document);
     setSignatureModalOpen(true);
+  };
+
+  const handleCloseSignatureModal = () => {
+    // Cerrar el modal de firma y reabrir el de preview si existía un documento siendo visto
+    setSignatureModalOpen(false);
+    
+    // Si había un documento para firmar, reabrir su preview
+    if (documentToSign) {
+      const doc = (allDocuments as DocumentItem[]).find((d: DocumentItem) => d.id === documentToSign.id);
+      if (doc) {
+        handleViewDocument(doc);
+      }
+    }
+    
+    setDocumentToSign(null);
   };
 
   const handleSignDocument = (signature: string) => {
@@ -343,11 +407,27 @@ export default function EmployeeDocuments() {
     }
   };
 
-  const handleViewDocument = async (id: number, filename: string, mimeType?: string | null) => {
-    markViewedMutation.mutate(id);
-    const signedUrl = await generateSignedUrl(id);
+  const handleViewDocument = async (document: any) => {
+    markViewedMutation.mutate(document.id);
+    const signedUrl = await generateSignedUrl(document.id);
     if (!signedUrl) return;
-    setPreviewModal({ open: true, url: signedUrl, filename, mimeType: mimeType || null });
+    
+    // Check if document requires signature and if it's signed
+    const category = getDocumentCategory(document.originalName);
+    const requiresSignature = category === 'nominas' || document.requiresSignature;
+    const isSigned = !!document.isAccepted || !!document.signedAt;
+    const isViewed = !!document.isViewed;
+    
+    setPreviewModal({ 
+      open: true, 
+      url: signedUrl, 
+      filename: document.originalName, 
+      mimeType: document.mimeType || null,
+      requiresSignature,
+      isSigned,
+      isViewed: true, // Set to true since opening the modal marks it as viewed
+      documentId: document.id
+    });
   };
 
   const handleDownload = async (id: number, filename: string) => {
@@ -414,20 +494,15 @@ export default function EmployeeDocuments() {
 
   const skeletonCards = Array.from({ length: 6 });
 
-  useEffect(() => {
-    const el = loadMoreRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver((entries) => {
-      const entry = entries[0];
-      if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
-        fetchNextPage();
-      }
-    }, { rootMargin: '200px 0px 0px 0px' });
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  useStandardInfiniteScroll({
+    targetRef: loadMoreRef,
+    enabled: true,
+    canLoadMore: !!hasNextPage,
+    isLoadingMore: isFetchingNextPage,
+    onLoadMore: fetchNextPage,
+    dependencyKey: filteredDocuments.length,
+    rootMargin: '200px 0px 0px 0px',
+  });
 
 
 
@@ -442,7 +517,7 @@ export default function EmployeeDocuments() {
     }
   };
 
-  const isInitialLoading = isLoading && documents.length === 0;
+  const isInitialLoading = isLoading && allDocuments.length === 0;
 
   // Check if user has access to documents feature (after all hooks)
   if (!hasAccess('documents')) {
@@ -589,18 +664,18 @@ export default function EmployeeDocuments() {
             </div>
           </div>
         ) : filteredDocuments.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
             {filteredDocuments.map((document: any) => {
               const FileIcon = getFileIcon(document.originalName);
               const category = getDocumentCategory(document.originalName);
               const needsSignature = category === 'nominas' || document.requiresSignature;
-              const isSigned = !!document.isAccepted;
+              const isSigned = !!document.isAccepted || !!document.signedAt;
 
               return (
                 <div 
                   key={document.id} 
                   className="relative bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-200 dark:border-gray-700 shadow-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer overflow-hidden"
-                  onClick={() => handleViewDocument(document.id, document.originalName, document.mimeType)}
+                  onClick={() => handleViewDocument(document)}
                 >
                   {/* Mobile signature indicator on the right */}
                   {needsSignature && (
@@ -641,6 +716,15 @@ export default function EmployeeDocuments() {
                               {category === 'nominas' ? 'Nómina' :
                                category === 'contratos' ? 'Contrato' : 'Documento'}
                             </Badge>
+                            {/* Badge de documento no visto */}
+                            {!(document.isViewed ?? document.is_viewed ?? false) && (
+                              <Badge 
+                                variant="secondary" 
+                                className="text-xs px-2 py-0 border-0 !bg-blue-100 !text-blue-700 dark:!bg-blue-900/50 dark:!text-blue-300"
+                              >
+                                Nuevo
+                              </Badge>
+                            )}
                             {/* Signature status badge (desktop/tablet) */}
                             {needsSignature && (
                               <Badge 
@@ -662,19 +746,6 @@ export default function EmployeeDocuments() {
                             </span>
                           </div>
                         </div>
-                        {/* Signature button for unsigned documents (nóminas or requiresSignature) */}
-                        {needsSignature && !document.isAccepted && document.isViewed && (
-                          <div className="flex space-x-1 ml-2" onClick={(e) => e.stopPropagation()}>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleOpenSignatureModal(document)}
-                              className="text-green-400 dark:text-green-400 border-green-400/50 dark:border-green-400/50 hover:bg-green-400 dark:hover:bg-green-400 hover:text-white dark:hover:text-white h-8 px-2 bg-green-50 dark:bg-white/10"
-                            >
-                              <PenTool className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -713,10 +784,7 @@ export default function EmployeeDocuments() {
       {/* Digital Signature Modal */}
       <DocumentSignatureModal
         isOpen={signatureModalOpen}
-        onClose={() => {
-          setSignatureModalOpen(false);
-          setDocumentToSign(null);
-        }}
+        onClose={handleCloseSignatureModal}
         onSign={handleSignDocument}
         documentName={documentToSign?.originalName || ''}
         isLoading={signDocumentMutation.isPending}
@@ -727,7 +795,16 @@ export default function EmployeeDocuments() {
         url={previewModal.url}
         filename={previewModal.filename}
         mimeType={previewModal.mimeType}
-        onClose={() => setPreviewModal({ open: false, url: '', filename: '', mimeType: null })}
+        onClose={() => setPreviewModal({ open: false, url: '', filename: '', mimeType: null, requiresSignature: false, isSigned: false, isViewed: false, documentId: undefined })}
+        requiresSignature={previewModal.requiresSignature}
+        isSigned={previewModal.isSigned}
+        isViewed={previewModal.isViewed}
+        onSignClick={previewModal.documentId ? () => {
+          const doc = allDocuments.find((d: any) => d.id === previewModal.documentId);
+          if (doc) {
+            handleOpenSignatureModal(doc);
+          }
+        } : undefined}
       />
     </div>
   );

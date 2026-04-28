@@ -1,6 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import type { Server } from 'http';
 import jwt from 'jsonwebtoken';
+import { randomUUID } from 'crypto';
 import type { User } from '@shared/schema';
 import { JWT_SECRET } from './utils/jwt-secret.js';
 
@@ -15,10 +16,14 @@ interface WSMessage {
         'vacation_request_created' | 'vacation_request_updated' | 
         'modification_request_created' | 'modification_request_updated' |
         'document_request_created' | 'document_uploaded' | 'document_signed' |
-        'message_received' | 'work_report_created' | 
-        'reminder_created' | 'reminder_all_completed' |
+        'message_received' | 'work_report_created' |
+        'accounting_entry_created' | 'accounting_entry_updated' | 'accounting_entry_reviewed' | 'accounting_entry_deleted' |
+      'reminder_created' | 'reminder_user_completed' | 'reminder_all_completed' |
+        'manager_permissions_updated' |
         'role_changed';
   companyId: number;
+  eventId?: string;
+  occurredAt?: string;
   data?: any;
 }
 
@@ -34,6 +39,14 @@ class WorkSessionWebSocketServer {
   private wss: WebSocketServer;
   private clients: Map<number, Set<AuthenticatedWebSocket>> = new Map(); // companyId -> clients
   private userClients: Map<number, Set<AuthenticatedWebSocket>> = new Map(); // userId -> clients (for targeted messages)
+
+  private normalizeMessage(message: WSMessage): WSMessage {
+    return {
+      ...message,
+      eventId: message.eventId || randomUUID(),
+      occurredAt: message.occurredAt || new Date().toISOString(),
+    };
+  }
 
   constructor(server: Server) {
     this.wss = new WebSocketServer({ 
@@ -145,13 +158,14 @@ class WorkSessionWebSocketServer {
 
   // Public method to broadcast updates to all clients in a company
   public broadcastToCompany(companyId: number, message: WSMessage) {
+    const normalizedMessage = this.normalizeMessage(message);
     const companyClients = this.clients.get(companyId);
     
     if (!companyClients || companyClients.size === 0) {
       return; // No clients connected for this company
     }
 
-    const messageStr = JSON.stringify(message);
+    const messageStr = JSON.stringify(normalizedMessage);
     let sentCount = 0;
 
     companyClients.forEach((client) => {
@@ -161,7 +175,7 @@ class WorkSessionWebSocketServer {
       }
     });
 
-    // console.log(`📡 Broadcast to company ${companyId}: ${message.type} (${sentCount} clients)`);
+    // console.log(`📡 Broadcast to company ${companyId}: ${normalizedMessage.type} (${sentCount} clients)`);
   }
 
   // Get connected clients count for a company
@@ -178,7 +192,11 @@ class WorkSessionWebSocketServer {
       return false;
     }
 
-    const messageStr = JSON.stringify(message);
+    const normalizedMessage = ('companyId' in message && typeof message.companyId === 'number')
+      ? this.normalizeMessage(message)
+      : message;
+
+    const messageStr = JSON.stringify(normalizedMessage);
     let sentCount = 0;
 
     userSockets.forEach((client) => {
@@ -188,7 +206,7 @@ class WorkSessionWebSocketServer {
       }
     });
 
-    // console.log(`📡 Sent to user ${userId}: ${message.type} (${sentCount} devices)`);
+    // console.log(`📡 Sent to user ${userId}: ${normalizedMessage.type} (${sentCount} devices)`);
     return sentCount > 0;
   }
 

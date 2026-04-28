@@ -35,6 +35,7 @@ export default function VerifyCode() {
   // Get sessionId from URL params
   const params = new URLSearchParams(search);
   const sessionId = params.get('session');
+  const referralCodeFromUrl = (params.get('ref') || '').trim();
 
   const form = useForm<CodeData>({
     resolver: zodResolver(codeSchema),
@@ -57,7 +58,8 @@ export default function VerifyCode() {
     if (!sessionId) {
       // Use setTimeout to avoid immediate redirect during render
       const timer = setTimeout(() => {
-        setLocation('/request-code');
+        const referralQuery = referralCodeFromUrl ? `?ref=${encodeURIComponent(referralCodeFromUrl)}` : '';
+        setLocation(`/request-code${referralQuery}`);
       }, 100);
       return () => clearTimeout(timer);
     } else {
@@ -65,7 +67,7 @@ export default function VerifyCode() {
       setCountdown(60);
       setCanResend(false);
     }
-  }, [sessionId]);
+  }, [sessionId, referralCodeFromUrl, setLocation]);
 
   // Countdown timer for resend button
   useEffect(() => {
@@ -152,7 +154,8 @@ export default function VerifyCode() {
         } else {
           // Normal registration flow - redirect to registration with verification token and email
           setAllowNavigation(true); // Allow the navigation
-          setLocation(`/register?token=${result.verificationToken}&email=${encodeURIComponent(result.email)}`);
+          const referralQuery = referralCodeFromUrl ? `&ref=${encodeURIComponent(referralCodeFromUrl)}` : '';
+          setLocation(`/register?token=${result.verificationToken}&email=${encodeURIComponent(result.email)}${referralQuery}`);
         }
       } else {
         setErrorMessage(result.message || 'El código no es válido o ha expirado.');
@@ -231,6 +234,11 @@ export default function VerifyCode() {
           <p className="text-gray-600 text-sm">
             Introduce el código que hemos enviado a tu email
           </p>
+          {referralCodeFromUrl && (
+            <p className="mt-3 text-xs font-medium text-emerald-600">
+              Registro con referido: {referralCodeFromUrl}
+            </p>
+          )}
         </CardHeader>
 
         <CardContent className="px-8 pb-8">
@@ -320,7 +328,8 @@ export default function VerifyCode() {
               variant="ghost" 
               onClick={() => {
                 setIsLoading(false);
-                setLocation('/request-code');
+                const referralQuery = referralCodeFromUrl ? `?ref=${encodeURIComponent(referralCodeFromUrl)}` : '';
+                setLocation(`/request-code${referralQuery}`);
               }}
               className="w-full text-sm text-gray-600 hover:text-gray-900"
               disabled={isLoading}

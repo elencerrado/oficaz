@@ -34,6 +34,9 @@ import {
 import { EmployeeTopBar } from '@/components/employee/employee-top-bar';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { useStandardInfiniteScroll } from '@/hooks/use-standard-infinite-scroll';
+import { useIncrementalList } from '@/hooks/use-incremental-list';
+import { InfiniteListFooter } from '@/components/ui/infinite-list-footer';
 import { apiRequest } from '@/lib/queryClient';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -60,6 +63,13 @@ interface WorkReport {
   updatedAt: string;
 }
 
+interface CompanyWorkSchedule {
+  dayOfWeek: number;
+  isWorkingDay: boolean;
+  expectedEntryTime: string | null;
+  expectedExitTime: string | null;
+}
+
 const STATUS_STYLES = {
   draft: { bg: 'bg-yellow-50 dark:bg-yellow-900/20', border: 'border-yellow-200 dark:border-yellow-800', text: 'text-yellow-700 dark:text-yellow-300', label: 'Borrador' },
   submitted: { bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-green-200 dark:border-green-800', text: 'text-green-700 dark:text-green-300', label: 'Enviado' }
@@ -83,6 +93,7 @@ export default function WorkReportsPage() {
   const [clientSignedBy, setClientSignedBy] = useState('');
   const [isClientDrawing, setIsClientDrawing] = useState(false);
   const clientCanvasRef = useRef<HTMLCanvasElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const lastClientPointRef = useRef<{ x: number; y: number } | null>(null);
 
   const [formData, setFormData] = useState({
@@ -129,27 +140,72 @@ export default function WorkReportsPage() {
   const { data: reports = [], isLoading: reportsLoading } = useQuery<WorkReport[]>({
     queryKey: [`/api/work-reports${queryParams}`],
     enabled: isAuthenticated && !authLoading,
-    staleTime: 30000
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Use dedicated lightweight endpoints for autocomplete data (optimized DISTINCT queries)
   const { data: uniqueLocations = [] } = useQuery<string[]>({
     queryKey: ['/api/work-reports/locations'],
     enabled: isAuthenticated && !authLoading,
-    staleTime: 60000 // Cache for 1 minute - locations don't change often
+    staleTime: 2 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const { data: uniqueClients = [] } = useQuery<string[]>({
     queryKey: ['/api/work-reports/clients'],
     enabled: isAuthenticated && !authLoading,
-    staleTime: 60000
+    staleTime: 2 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const { data: uniqueRefCodes = [] } = useQuery<string[]>({
     queryKey: ['/api/work-reports/ref-codes'],
     enabled: isAuthenticated && !authLoading,
-    staleTime: 60000
+    staleTime: 2 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
+
+  const { data: companyWorkSchedules = [] } = useQuery<CompanyWorkSchedule[]>({
+    queryKey: ['/api/company-work-schedules'],
+    enabled: isAuthenticated && !authLoading,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const defaultReportTimes = useMemo(() => {
+    const workingSchedules = companyWorkSchedules.filter(
+      (schedule) => schedule.isWorkingDay && schedule.expectedEntryTime && schedule.expectedExitTime
+    );
+
+    if (workingSchedules.length === 0) {
+      return { startTime: '09:00', endTime: '17:00' };
+    }
+
+    const scheduleCounts = new Map<string, number>();
+    for (const schedule of workingSchedules) {
+      const key = `${schedule.expectedEntryTime}-${schedule.expectedExitTime}`;
+      scheduleCounts.set(key, (scheduleCounts.get(key) ?? 0) + 1);
+    }
+
+    const [mostFrequentKey] = Array.from(scheduleCounts.entries()).sort((a, b) => b[1] - a[1])[0];
+    const [startTime, endTime] = mostFrequentKey.split('-');
+
+    return {
+      startTime: startTime || '09:00',
+      endTime: endTime || '17:00'
+    };
+  }, [companyWorkSchedules]);
 
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [showClientSuggestions, setShowClientSuggestions] = useState(false);
@@ -185,6 +241,28 @@ export default function WorkReportsPage() {
       return matchesSearch;
     });
   }, [reports, searchTerm]);
+
+  const {
+    displayedCount,
+    visibleItems: visibleReports,
+    hasMore: hasMoreReportsToDisplay,
+    loadMore: loadMoreReports,
+    initialCount: initialReportsCount,
+  } = useIncrementalList({
+    items: filteredReports,
+    mobileInitialCount: 8,
+    desktopInitialCount: 12,
+    resetKey: `${searchTerm}-${dateFilter}`,
+  });
+
+  useStandardInfiniteScroll({
+    targetRef: loadMoreRef,
+    enabled: !reportsLoading,
+    canLoadMore: hasMoreReportsToDisplay,
+    onLoadMore: loadMoreReports,
+    dependencyKey: `${displayedCount}-${filteredReports.length}`,
+    rootMargin: '100px',
+  });
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData & { signatureImage?: string }) => {
@@ -237,8 +315,8 @@ export default function WorkReportsPage() {
       reportDate: format(new Date(), 'yyyy-MM-dd'),
       refCode: '',
       location: '',
-      startTime: '09:00',
-      endTime: '17:00',
+      startTime: defaultReportTimes.startTime,
+      endTime: defaultReportTimes.endTime,
       description: '',
       clientName: '',
       notes: '',
@@ -435,20 +513,20 @@ export default function WorkReportsPage() {
           Nuevo Parte
         </Button>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[96vw] md:w-[92vw] max-w-5xl max-h-[92vh] overflow-y-auto lg:overflow-hidden">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <ClipboardList className="w-5 h-5 text-blue-600" />
                 Nuevo Parte de Trabajo
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-6 py-4">
-              <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+            <div className="py-2 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4 lg:h-[calc(92vh-190px)] lg:overflow-hidden">
+              <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800 lg:h-full">
                 <h4 className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   Cuándo y dónde
                 </h4>
-                <div className="space-y-3">
+                <div className="space-y-3 lg:space-y-2">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <Label className="text-sm">Fecha del trabajo</Label>
@@ -554,12 +632,12 @@ export default function WorkReportsPage() {
                 </div>
               </div>
 
-              <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 lg:h-full">
                 <h4 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                   <FileText className="w-4 h-4" />
                   Detalles del trabajo
                 </h4>
-                <div className="space-y-3">
+                <div className="space-y-3 lg:space-y-2">
                   <div className="space-y-2 relative">
                     <Label className="text-sm flex items-center gap-1">
                       <User className="w-3 h-3" />
@@ -600,7 +678,7 @@ export default function WorkReportsPage() {
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={3}
-                      className="bg-white dark:bg-gray-800"
+                      className="bg-white dark:bg-gray-800 lg:min-h-[88px]"
                       data-testid="textarea-description"
                     />
                   </div>
@@ -611,7 +689,7 @@ export default function WorkReportsPage() {
                       value={formData.notes}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                       rows={2}
-                      className="bg-white dark:bg-gray-800"
+                      className="bg-white dark:bg-gray-800 lg:min-h-[72px]"
                       data-testid="textarea-notes"
                     />
                   </div>
@@ -685,7 +763,7 @@ export default function WorkReportsPage() {
         />
       ) : (
         <div className="space-y-4">
-          {filteredReports.map((report) => {
+          {visibleReports.map((report) => {
             const statusStyle = STATUS_STYLES[report.status];
             return (
               <Card 
@@ -798,25 +876,37 @@ export default function WorkReportsPage() {
               </Card>
             );
           })}
+
+          <InfiniteListFooter
+            hasMore={hasMoreReportsToDisplay}
+            sentinelRef={loadMoreRef}
+            onLoadMore={loadMoreReports}
+            hintText={`Mostrando ${visibleReports.length} de ${filteredReports.length} partes`}
+            doneText={
+              filteredReports.length > initialReportsCount
+                ? `Has visto todos los ${filteredReports.length} partes`
+                : undefined
+            }
+          />
         </div>
       )}
       </div>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[96vw] md:w-[92vw] max-w-5xl max-h-[92vh] overflow-y-auto lg:overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Edit className="w-5 h-5 text-blue-600" />
               Editar Parte de Trabajo
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-6 py-4">
-            <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+          <div className="py-2 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4 lg:h-[calc(92vh-190px)] lg:overflow-hidden">
+            <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800 lg:h-full">
               <h4 className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 Cuándo y dónde
               </h4>
-              <div className="space-y-3">
+              <div className="space-y-3 lg:space-y-2">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label className="text-sm">Fecha del trabajo</Label>
@@ -921,12 +1011,12 @@ export default function WorkReportsPage() {
               </div>
             </div>
 
-            <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 lg:h-full">
               <h4 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                 <FileText className="w-4 h-4" />
                 Detalles del trabajo
               </h4>
-              <div className="space-y-3">
+              <div className="space-y-3 lg:space-y-2">
                 <div className="space-y-2 relative">
                   <Label className="text-sm">Cliente <span className="text-gray-400 text-xs">(opcional)</span></Label>
                   <Input
@@ -962,7 +1052,7 @@ export default function WorkReportsPage() {
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={3}
-                    className="bg-white dark:bg-gray-800"
+                    className="bg-white dark:bg-gray-800 lg:min-h-[88px]"
                     data-testid="textarea-edit-description"
                   />
                 </div>
@@ -972,7 +1062,7 @@ export default function WorkReportsPage() {
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     rows={2}
-                    className="bg-white dark:bg-gray-800"
+                    className="bg-white dark:bg-gray-800 lg:min-h-[72px]"
                     data-testid="textarea-edit-notes"
                   />
                 </div>

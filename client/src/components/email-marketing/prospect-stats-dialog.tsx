@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { getAuthHeaders } from '@/lib/auth';
 import { Mail, Eye, MousePointerClick, UserCheck, Calendar, BarChart3, CheckCircle, XCircle, ArrowRight, CreditCard, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -14,11 +15,8 @@ export function ProspectStatsDialog({ prospect, open, onOpenChange }: ProspectSt
   const { data: campaignHistory, isLoading } = useQuery({
     queryKey: ['/api/super-admin/email-prospects', prospect?.id, 'campaign-history'],
     queryFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-prospects/${prospect.id}/campaign-history`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch campaign history');
       return response.json();

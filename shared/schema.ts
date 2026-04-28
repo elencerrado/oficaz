@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, jsonb, index, date, time, uniqueIndex, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, jsonb, index, date, time, uniqueIndex, unique, bigint, type AnyPgColumn } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -18,6 +18,8 @@ export const companies = pgTable("companies", {
   workingHoursPerDay: decimal("working_hours_per_day", { precision: 3, scale: 1 }).default("8"),
   defaultVacationDays: integer("default_vacation_days").default(30),
   vacationDaysPerMonth: decimal("vacation_days_per_month", { precision: 3, scale: 1 }).default("2.5"),
+  vacationDaysNatural: integer("vacation_days_natural").default(30), // Días naturales (30)
+  vacationDaysWorking: integer("vacation_days_working").default(22), // Días laborables (22)
   logoUrl: text("logo_url"),
   // Campos migrados desde company_configs
   workingHoursStart: text("working_hours_start").default("08:00").notNull(),
@@ -29,6 +31,9 @@ export const companies = pgTable("companies", {
   timezone: text("timezone").default("Europe/Madrid").notNull(),
   customAiRules: text("custom_ai_rules").default(""),
   vacationCutoffDay: text("vacation_cutoff_day").notNull().default("01-31"), // MM-DD, default Jan 31
+  absenceDayCalculationMode: varchar("absence_day_calculation_mode", { length: 20 }).notNull().default("natural"), // "natural" = all days | "working" = working days only
+  absenceDayCalculationModePrevious: varchar("absence_day_calculation_mode_previous", { length: 20 }),
+  absenceDayCalculationModeEffectiveFrom: timestamp("absence_day_calculation_mode_effective_from"),
   allowManagersToGrantRoles: boolean("allow_managers_to_grant_roles").default(false).notNull(),
   managerPermissions: jsonb("manager_permissions").default('{"canCreateDeleteEmployees":true,"canCreateDeleteManagers":false,"canBuyRemoveFeatures":false,"canBuyRemoveUsers":false,"canEditCompanyData":false,"visibleFeatures":[]}').notNull(),
   // Campos migrados desde account_info (datos de facturación)
@@ -43,6 +48,7 @@ export const companies = pgTable("companies", {
   
   // Datos de prueba
   hasDemoData: boolean("has_demo_data").default(false).notNull(),
+  demoMode: boolean("demo_mode").default(false).notNull(),
   trialDurationDays: integer("trial_duration_days").default(14).notNull(), // Días de período de prueba (por defecto 14)
   usedPromotionalCode: varchar("used_promotional_code", { length: 50 }), // Código promocional utilizado durante el registro
   
@@ -50,6 +56,11 @@ export const companies = pgTable("companies", {
   emailCampaignId: integer("email_campaign_id"), // ID de la campaña de email de la que vino el registro
   registrationSource: varchar("registration_source", { length: 50 }).default("direct"), // direct, email_campaign, invitation
   marketingEmailsConsent: boolean("marketing_emails_consent").default(false).notNull(), // Consentimiento para recibir emails comerciales
+  
+  // Referral system
+  referralCode: varchar("referral_code", { length: 32 }),
+  referredByCompanyId: integer("referred_by_company_id").references((): AnyPgColumn => companies.id, { onDelete: "set null" }),
+  referredByCode: varchar("referred_by_code", { length: 32 }),
   
   // Account deletion fields - 30 day grace period
   scheduledForDeletion: boolean("scheduled_for_deletion").default(false).notNull(),
@@ -107,6 +118,48 @@ export const superAdmins = pgTable("super_admins", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Support tickets generated from in-app feedback for super admin follow-up
+export const supportTickets = pgTable("support_tickets", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "set null" }),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+  companyName: varchar("company_name", { length: 255 }),
+  userName: varchar("user_name", { length: 255 }).notNull(),
+  userEmail: varchar("user_email", { length: 255 }).notNull(),
+  subject: varchar("subject", { length: 200 }).notNull(),
+  message: text("message").notNull(),
+  source: varchar("source", { length: 50 }).notNull().default("app_feedback"),
+  status: varchar("status", { length: 20 }).notNull().default("open"),
+  attachments: jsonb("attachments").notNull().default([]),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: varchar("resolved_by", { length: 255 }),
+  resolutionComment: text("resolution_comment"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  statusCreatedIdx: index("support_tickets_status_created_idx").on(table.status, table.createdAt),
+  companyCreatedIdx: index("support_tickets_company_created_idx").on(table.companyId, table.createdAt),
+}));
+
+export type SupportTicket = typeof supportTickets.$inferSelect;
+export type InsertSupportTicket = typeof supportTickets.$inferInsert;
+
+// ⏰ Company Work Schedules - Global work hours configuration
+export const companyWorkSchedules = pgTable("company_work_schedules", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").references(() => companies.id).notNull(),
+  dayOfWeek: integer("day_of_week").notNull(), // 0=Sunday, 1=Monday...6=Saturday
+  expectedEntryTime: time("expected_entry_time").notNull(), // e.g., 09:00
+  expectedExitTime: time("expected_exit_time").notNull(), // e.g., 18:00
+  isWorkingDay: boolean("is_working_day").notNull().default(true),
+  toleranceMinutes: integer("tolerance_minutes").notNull().default(15), // Tolerance for late entry
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyIdIdx: index("company_work_schedules_company_id_idx").on(table.companyId),
+  uniqueCompanyDay: unique("unique_company_day").on(table.companyId, table.dayOfWeek),
+}));
 
 // 🔒 SECURITY: Audit logs table for complete security tracking
 export const auditLogs = pgTable("audit_logs", {
@@ -218,11 +271,18 @@ export const subscriptions = pgTable("subscriptions", {
   stripeBasePlanItemId: text("stripe_base_plan_item_id"), // Stripe item for base plan (39€)
   firstPaymentDate: timestamp("first_payment_date"),
   nextPaymentDate: timestamp("next_payment_date"),
+  referralDiscountPercent: decimal("referral_discount_percent", { precision: 5, scale: 2 }).default("0.00").notNull(),
+  referralDiscountUpdatedAt: timestamp("referral_discount_updated_at"),
   
   // LEGACY: maxUsers (to be replaced by included + extra users)
   maxUsers: integer("max_users").default(12).notNull(), // DEPRECATED: Use includedX + extraX instead
   useCustomSettings: boolean("use_custom_settings").default(false).notNull(),
   customMonthlyPrice: decimal("custom_monthly_price", { precision: 10, scale: 2 }),
+  
+  // CRITICAL: Calculated monthly price stored in DB (source of truth)
+  // Calculated as: sum(active_addons.price) + (adminSeats * 6) + (managerSeats * 4) + (employeeSeats * 2)
+  // Where: adminSeats = extraAdmins + 1, managerSeats = extraManagers, employeeSeats = extraEmployees
+  monthlyPrice: decimal("monthly_price", { precision: 10, scale: 2 }).default("0.00"),
   
   // AI usage tracking
   aiTokensUsed: integer("ai_tokens_used").default(0), // AI tokens used this month
@@ -267,6 +327,19 @@ export const invoices = pgTable("invoices", {
   downloadUrl: text("download_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// FIX: Subscription processing flags to prevent race conditions
+// Tracks when subscription creation is in-flight for a company
+export const subscriptionProcessingFlags = pgTable("subscription_processing_flags", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }).notNull().unique(),
+  processingStage: varchar("processing_stage", { length: 50 }).notNull(), // "creating_subscription", "validating", etc
+  stripeCustomerId: text("stripe_customer_id"),
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(), // Auto-clear after 10 minutes
+  errorMessage: text("error_message"), // If failed, store error reason
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Usage statistics
@@ -359,7 +432,7 @@ export const users = pgTable("users", {
   
   // Configuración de partes de obra/trabajo
   // 'disabled' = sin acceso, 'manual' = icono en dash, 'both' = icono + popup al fichar salida
-  workReportMode: text("work_report_mode").default("manual"),
+  workReportMode: text("work_report_mode").notNull().default("manual"),
   
   // Vacaciones
   totalVacationDays: decimal("total_vacation_days", { precision: 4, scale: 1 }).notNull().default("0.0"), // Calculado automáticamente
@@ -374,10 +447,40 @@ export const users = pgTable("users", {
   // Stripe payment integration
   stripeCustomerId: text("stripe_customer_id"), // ID del cliente en Stripe
   
+  // Work pattern detection fields
+  detectedWorkPattern: jsonb("detected_work_pattern"), // Detected work schedule pattern from historical data
+  patternDetectionEnabled: boolean("pattern_detection_enabled").notNull().default(true), // Enable/disable automatic pattern detection
+  lastPatternAnalysis: timestamp("last_pattern_analysis"), // Last time pattern was analyzed
+  
   // Metadatos
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+// Employee Teams - grouping employees for bulk actions and filters
+export const employeeTeams = pgTable("employee_teams", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdBy: integer("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyIdx: index("employee_teams_company_idx").on(table.companyId),
+  uniqueCompanyName: unique("employee_teams_unique_company_name").on(table.companyId, table.name),
+}));
+
+export const employeeTeamMembers = pgTable("employee_team_members", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id").references(() => employeeTeams.id, { onDelete: "cascade" }).notNull(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  teamIdx: index("employee_team_members_team_idx").on(table.teamId),
+  userIdx: index("employee_team_members_user_idx").on(table.userId),
+  uniqueTeamUser: unique("employee_team_members_unique_team_user").on(table.teamId, table.userId),
+}));
 
 // Work sessions table
 export const workSessions = pgTable("work_sessions", {
@@ -484,10 +587,37 @@ export const vacationRequests = pgTable("vacation_requests", {
   reviewedAt: timestamp("reviewed_at"),
   adminComment: text("admin_comment"), // Admin's comment when reviewing
   // New absence type fields
-  absenceType: text("absence_type").notNull().default("vacation"), // vacation, maternity_paternity, marriage, family_death, family_death_travel, family_illness, family_illness_travel, home_relocation, public_duty, temporary_disability
+  absenceType: text("absence_type").notNull().default("vacation"), // vacation, maternity_paternity, marriage, family_death, family_death_travel, family_illness, family_illness_travel, home_relocation, public_duty, temporary_disability, adverse_weather
   attachmentPath: text("attachment_path"), // File path for supporting documents
+  deductFromVacation: boolean("deduct_from_vacation").default(true), // Admin decides if adverse_weather deducts from vacation balance
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// Hour-based absences table - for tracking absences by hours instead of full days
+// Used for incidents within a single day where employee works partial hours
+export const hourBasedAbsences = pgTable("hour_based_absences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  absenceDate: timestamp("absence_date").notNull(), // Date of the absence (time part ignored)
+  hoursStart: decimal("hours_start", { precision: 4, scale: 2 }).notNull(), // Start hour (0-24, allows decimals like 9.5)
+  hoursEnd: decimal("hours_end", { precision: 4, scale: 2 }).notNull(), // End hour (0-24)
+  totalHours: decimal("total_hours", { precision: 5, scale: 2 }).notNull(), // Calculated: hoursEnd - hoursStart
+  absenceType: text("absence_type").notNull(), // Same as vacation_requests: adverse_weather, etc.
+  reason: text("reason"),
+  status: text("status").notNull().default("pending"), // pending, approved, denied
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  adminComment: text("admin_comment"),
+  attachmentPath: text("attachment_path"),
+  autoApprove: boolean("auto_approve").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("hour_absences_user_id_idx").on(table.userId),
+  absenceDateIdx: index("hour_absences_date_idx").on(table.absenceDate),
+  statusIdx: index("hour_absences_status_idx").on(table.status),
+  userDateIdx: index("hour_absences_user_date_idx").on(table.userId, table.absenceDate),
+}));
 
 // Absence policies table - configurable days per absence type per company
 export const absencePolicies = pgTable("absence_policies", {
@@ -497,6 +627,7 @@ export const absencePolicies = pgTable("absence_policies", {
   name: text("name").notNull(), // Display name in Spanish
   maxDays: integer("max_days"), // null = unlimited (for temporary_disability, public_duty)
   requiresAttachment: boolean("requires_attachment").notNull().default(false),
+  recoveryPercentage: integer("recovery_percentage").default(70), // % of lost hours to recover as vacation (for adverse_weather: 70%)
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -552,9 +683,9 @@ export const messages = pgTable("messages", {
   isRead: boolean("is_read").notNull().default(false),
   isToAllEmployees: boolean("is_to_all_employees").notNull().default(false), // for company-wide messages
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Unified notifications table for all notification types
 export const systemNotifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
@@ -586,6 +717,9 @@ export const reminders = pgTable("reminders", {
   reminderDate: timestamp("reminder_date"),
   priority: text("priority").notNull().default('medium'), // 'low', 'medium', 'high'
   color: text("color").default('#ffffff'), // Hex color for the reminder
+  taskStatus: text("task_status").notNull().default('pending'), // 'pending', 'in_progress', 'on_hold'
+  contextType: text("context_type").notNull().default('general'), // 'general', 'project', 'area'
+  contextName: text("context_name"),
   isCompleted: boolean("is_completed").default(false).notNull(),
   isArchived: boolean("is_archived").default(false).notNull(),
   isPinned: boolean("is_pinned").default(false).notNull(),
@@ -596,6 +730,7 @@ export const reminders = pgTable("reminders", {
   completedByUserIds: integer("completed_by_user_ids").array(), // Array of user IDs who completed the reminder
   assignedBy: integer("assigned_by").references(() => users.id), // Who assigned the reminder
   assignedAt: timestamp("assigned_at"), // When it was assigned
+  responsibleUserId: integer("responsible_user_id").references(() => users.id),
   createdBy: integer("created_by").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -673,6 +808,17 @@ export const insertUserSchema = createInsertSchema(users).omit({
   usedVacationDays: true, // Auto-calculated
 });
 
+export const insertEmployeeTeamSchema = createInsertSchema(employeeTeams).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertEmployeeTeamMemberSchema = createInsertSchema(employeeTeamMembers).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertWorkSessionSchema = createInsertSchema(workSessions).omit({
   id: true,
   createdAt: true,
@@ -700,6 +846,7 @@ export const insertVacationRequestSchema = createInsertSchema(vacationRequests).
   createdAt: true,
   reviewedBy: true,
   reviewedAt: true,
+  deductFromVacation: true, // This field is set by admin during approval, not by employee during creation
 });
 
 export const insertAbsencePolicySchema = createInsertSchema(absencePolicies).omit({
@@ -839,6 +986,7 @@ export const companyRegistrationSchema = z.object({
   province: z.string().min(1, "Provincia requerida"),
   logoUrl: z.string().optional(),
   promotionalCode: z.string().optional(),
+  referralCode: z.string().optional(),
   
   // Admin user fields
   adminFullName: z.string().min(1, "Nombre completo requerido"),
@@ -899,16 +1047,28 @@ export const passwordResetRequestSchema = z.object({
 
 export const passwordResetSchema = z.object({
   token: z.string().min(1, "Token requerido"),
-  password: z.string()
-    .min(8, "Contraseña debe tener al menos 8 caracteres")
-    .regex(/[A-Z]/, "Debe contener al menos una mayúscula")
-    .regex(/[a-z]/, "Debe contener al menos una minúscula")
-    .regex(/[0-9]/, "Debe contener al menos un número")
-    .regex(/[^A-Za-z0-9]/, "Debe contener al menos un carácter especial"),
+  password: z.string().min(1, "Contraseña requerida"),
   confirmPassword: z.string().min(1, "Confirmación de contraseña requerida"),
+  acceptSimplePassword: z.boolean().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
+}).refine((data) => {
+  // Si no acepta contraseña simple, aplicar validaciones estrictas
+  if (!data.acceptSimplePassword) {
+    if (data.password.length < 8) return false;
+    if (!/[A-Z]/.test(data.password)) return false;
+    if (!/[a-z]/.test(data.password)) return false;
+    if (!/[0-9]/.test(data.password)) return false;
+    if (!/[^A-Za-z0-9]/.test(data.password)) return false;
+  } else {
+    // Si acepta contraseña simple, solo requerir mínimo 6 caracteres
+    if (data.password.length < 6) return false;
+  }
+  return true;
+}, {
+  message: "La contraseña no cumple con los requisitos",
+  path: ["password"],
 });
 
 // Contact form schema for security validation
@@ -937,6 +1097,8 @@ export const contactFormSchema = z.object({
 // Types
 export type Company = typeof companies.$inferSelect;
 export type User = typeof users.$inferSelect;
+export type EmployeeTeam = typeof employeeTeams.$inferSelect;
+export type EmployeeTeamMember = typeof employeeTeamMembers.$inferSelect;
 export type WorkSession = typeof workSessions.$inferSelect;
 export type BreakPeriod = typeof breakPeriods.$inferSelect;
 export type WorkSessionAuditLog = typeof workSessionAuditLog.$inferSelect;
@@ -949,8 +1111,10 @@ export type SystemNotification = typeof systemNotifications.$inferSelect;
 
 
 
-export type InsertCompany = z.infer<typeof insertCompanySchema>;
+export type InsertCompany = typeof companies.$inferInsert;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertEmployeeTeam = z.infer<typeof insertEmployeeTeamSchema>;
+export type InsertEmployeeTeamMember = z.infer<typeof insertEmployeeTeamMemberSchema>;
 export type InsertWorkSession = z.infer<typeof insertWorkSessionSchema>;
 export type InsertBreakPeriod = z.infer<typeof insertBreakPeriodSchema>;
 export type InsertWorkSessionAuditLog = z.infer<typeof insertWorkSessionAuditLogSchema>;
@@ -997,12 +1161,48 @@ export const customHolidays = pgTable("custom_holidays", {
   name: text("name").notNull(), // "Feria de Sevilla", "Día de la empresa"
   startDate: timestamp("start_date").notNull(), // Fecha de inicio del festivo
   endDate: timestamp("end_date").notNull(), // Fecha de fin del festivo (puede ser igual al inicio)
+  isRecurring: boolean("is_recurring").notNull().default(false), // Repetir cada año
+  recurrenceMonth: integer("recurrence_month"), // 1-12 si es recurrente
+  recurrenceDay: integer("recurrence_day"), // 1-31 si es recurrente
   type: varchar("type", { length: 20 }).notNull().default("local"), // national, regional, local
   region: text("region"), // Región si es regional
   description: text("description"), // Descripción opcional
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Official holidays table (Spain) - stored per year from API
+export const officialHolidays = pgTable("official_holidays", {
+  id: serial("id").primaryKey(),
+  countryCode: varchar("country_code", { length: 2 }).notNull().default("ES"),
+  regionCode: varchar("region_code", { length: 10 }), // ISO-3166-2 (e.g., ES-AN)
+  name: text("name").notNull(),
+  date: date("date").notNull(),
+  type: varchar("type", { length: 20 }).notNull().default("national"), // national | regional
+  source: text("source").notNull().default("nager"),
+  year: integer("year").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  dateIdx: index("official_holidays_date_idx").on(table.date),
+  regionIdx: index("official_holidays_region_idx").on(table.regionCode),
+  yearIdx: index("official_holidays_year_idx").on(table.year),
+  uniqueHoliday: uniqueIndex("official_holidays_unique").on(table.date, table.regionCode, table.name)
+}));
+
+// Company exceptions for official holidays (mark as laborable by convenio)
+export const companyHolidayExceptions = pgTable("company_holiday_exceptions", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  officialHolidayId: integer("official_holiday_id").notNull().references(() => officialHolidays.id, { onDelete: "cascade" }),
+  isExcluded: boolean("is_excluded").notNull().default(true),
+  reason: text("reason"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  companyIdx: index("company_holiday_exceptions_company_idx").on(table.companyId),
+  holidayIdx: index("company_holiday_exceptions_holiday_idx").on(table.officialHolidayId),
+  uniqueException: uniqueIndex("company_holiday_exceptions_unique").on(table.companyId, table.officialHolidayId)
+}));
 
 // Schema for custom holidays
 export const insertCustomHolidaySchema = createInsertSchema(customHolidays).omit({
@@ -1011,8 +1211,23 @@ export const insertCustomHolidaySchema = createInsertSchema(customHolidays).omit
   updatedAt: true,
 });
 
+export const insertOfficialHolidaySchema = createInsertSchema(officialHolidays).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCompanyHolidayExceptionSchema = createInsertSchema(companyHolidayExceptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type CustomHoliday = typeof customHolidays.$inferSelect;
 export type InsertCustomHoliday = z.infer<typeof insertCustomHolidaySchema>;
+export type OfficialHoliday = typeof officialHolidays.$inferSelect;
+export type InsertOfficialHoliday = z.infer<typeof insertOfficialHolidaySchema>;
+export type CompanyHolidayException = typeof companyHolidayExceptions.$inferSelect;
+export type InsertCompanyHolidayException = z.infer<typeof insertCompanyHolidayExceptionSchema>;
 
 // Work alarms table - alarmas personales para fichaje de empleados
 export const workAlarms = pgTable("work_alarms", {
@@ -1374,7 +1589,8 @@ export const addons = pgTable("addons", {
   isFreeFeature: boolean("is_free_feature").default(false).notNull(), // true = included in base plan, false = paid addon
   requiresSubscription: boolean("requires_subscription").default(true).notNull(), // Must have active subscription to use
   
-  isActive: boolean("is_active").default(true).notNull(),
+  isActive: boolean("is_active").default(true).notNull(), // If false, hidden from store and users can't purchase
+  isBeta: boolean("is_beta").default(false).notNull(), // If true, shows "Beta" badge in UI
   sortOrder: integer("sort_order").default(0), // Display order in store
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -1883,11 +2099,12 @@ export const businessContacts = pgTable("business_contacts", {
   companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 180 }).notNull(),
   role: varchar("role", { length: 20 }).notNull(), // client | provider
-  label: varchar("label", { length: 50 }), // Etiqueta visible en UI
+  label: varchar("label", { length: 50 }), // Etiqueta visible en UI (legacy, para compatibilidad)
   email: varchar("email", { length: 200 }),
   phone: varchar("phone", { length: 40 }),
   taxId: varchar("tax_id", { length: 50 }),
   city: varchar("city", { length: 120 }),
+  postalAddress: text("postal_address"), // Dirección postal completa
   notes: text("notes"),
   categories: integer("categories").array().default([]).notNull(), // IDs de categorías CRM de la empresa
   statusCategories: integer("status_categories").array().default([]).notNull(), // IDs de categorías de estado
@@ -1954,6 +2171,7 @@ export const crmStatusCategories = pgTable("crm_status_categories", {
   companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 100 }).notNull(),
   color: varchar("color", { length: 20 }).default("verde").notNull(),
+  stageKey: varchar("stage_key", { length: 40 }), // initial_contact, info_sent, meeting_scheduled, negotiation, client, discarded
   isDefault: boolean("is_default").default(false).notNull(), // Para marcar Activo/Inactivo por defecto
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -1996,6 +2214,103 @@ export const projectUsers = pgTable("project_users", {
 
 export type ProjectUser = typeof projectUsers.$inferSelect;
 export type InsertProjectUser = typeof projectUsers.$inferInsert;
+
+// CRM Lead Profiles - Captación específica por contacto (embudo/pipeline)
+export const crmLeadProfiles = pgTable("crm_lead_profiles", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  contactId: integer("contact_id").notNull().references(() => businessContacts.id, { onDelete: "cascade" }),
+  pipelineStage: varchar("pipeline_stage", { length: 40 }).notNull().default("initial_contact"), // initial_contact, info_sent, meeting_scheduled, negotiation, client, discarded
+  source: varchar("source", { length: 40 }).notNull().default("web"), // web, referral, fair, ads, other
+  priority: varchar("priority", { length: 20 }).notNull().default("medium"), // low, medium, high
+  estimatedValue: decimal("estimated_value", { precision: 12, scale: 2 }),
+  lastInteractionAt: timestamp("last_interaction_at"),
+  nextFollowUpAt: timestamp("next_follow_up_at"),
+  isClient: boolean("is_client").notNull().default(false),
+  isDiscarded: boolean("is_discarded").notNull().default(false),
+  discardReason: text("discard_reason"),
+  wonAt: timestamp("won_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyStageIdx: index("crm_lead_profiles_company_stage_idx").on(table.companyId, table.pipelineStage),
+  companyPriorityIdx: index("crm_lead_profiles_company_priority_idx").on(table.companyId, table.priority),
+  companySourceIdx: index("crm_lead_profiles_company_source_idx").on(table.companyId, table.source),
+  followUpIdx: index("crm_lead_profiles_follow_up_idx").on(table.companyId, table.nextFollowUpAt),
+  uniqueContactPerCompany: uniqueIndex("crm_lead_profiles_company_contact_unique").on(table.companyId, table.contactId),
+}));
+
+// CRM Interactions - Timeline cronológico de interacciones por contacto
+export const crmContactInteractions = pgTable("crm_contact_interactions", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  contactId: integer("contact_id").notNull().references(() => businessContacts.id, { onDelete: "cascade" }),
+  projectId: integer("project_id").references(() => projects.id, { onDelete: "set null" }),
+  interactionType: varchar("interaction_type", { length: 40 }).notNull(), // call, email, whatsapp, sms, meeting, documentation, note
+  subject: varchar("subject", { length: 240 }),
+  notes: text("notes"),
+  responded: boolean("responded").notNull().default(false),
+  result: varchar("result", { length: 40 }), // interested, not_interested, pending, won, lost
+  scheduledAt: timestamp("scheduled_at"),
+  occurredAt: timestamp("occurred_at").notNull().defaultNow(),
+  createdBy: integer("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyContactOccurredIdx: index("crm_contact_interactions_company_contact_occurred_idx").on(table.companyId, table.contactId, table.occurredAt),
+  companyScheduledIdx: index("crm_contact_interactions_company_scheduled_idx").on(table.companyId, table.scheduledAt),
+  companyTypeIdx: index("crm_contact_interactions_company_type_idx").on(table.companyId, table.interactionType),
+}));
+
+// CRM Follow-up Tasks - Próximas tareas/seguimientos de captación
+export const crmFollowUpTasks = pgTable("crm_follow_up_tasks", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  contactId: integer("contact_id").notNull().references(() => businessContacts.id, { onDelete: "cascade" }),
+  interactionId: integer("interaction_id").references(() => crmContactInteractions.id, { onDelete: "set null" }),
+  taskType: varchar("task_type", { length: 40 }).notNull().default("manual"), // manual, inactivity_followup, meeting_reminder
+  title: varchar("title", { length: 240 }).notNull(),
+  description: text("description"),
+  dueAt: timestamp("due_at").notNull(),
+  reminderAt: timestamp("reminder_at"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, completed, cancelled
+  priority: varchar("priority", { length: 20 }).notNull().default("medium"), // low, medium, high
+  templateKey: varchar("template_key", { length: 80 }),
+  createdBy: integer("created_by").references(() => users.id, { onDelete: "set null" }),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyDueIdx: index("crm_follow_up_tasks_company_due_idx").on(table.companyId, table.dueAt),
+  companyStatusIdx: index("crm_follow_up_tasks_company_status_idx").on(table.companyId, table.status),
+  companyContactIdx: index("crm_follow_up_tasks_company_contact_idx").on(table.companyId, table.contactId),
+  autoTaskUnique: uniqueIndex("crm_follow_up_tasks_auto_unique").on(table.companyId, table.contactId, table.taskType, table.dueAt),
+}));
+
+// CRM Message Templates - Plantillas rápidas de seguimiento
+export const crmMessageTemplates = pgTable("crm_message_templates", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  templateKey: varchar("template_key", { length: 80 }).notNull(),
+  title: varchar("title", { length: 180 }).notNull(),
+  content: text("content").notNull(),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdBy: integer("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyTemplateIdx: index("crm_message_templates_company_idx").on(table.companyId),
+  uniqueTemplateKey: uniqueIndex("crm_message_templates_company_key_unique").on(table.companyId, table.templateKey),
+}));
+
+export type CRMLeadProfile = typeof crmLeadProfiles.$inferSelect;
+export type InsertCRMLeadProfile = typeof crmLeadProfiles.$inferInsert;
+export type CRMContactInteraction = typeof crmContactInteractions.$inferSelect;
+export type InsertCRMContactInteraction = typeof crmContactInteractions.$inferInsert;
+export type CRMFollowUpTask = typeof crmFollowUpTasks.$inferSelect;
+export type InsertCRMFollowUpTask = typeof crmFollowUpTasks.$inferInsert;
+export type CRMMessageTemplate = typeof crmMessageTemplates.$inferSelect;
+export type InsertCRMMessageTemplate = typeof crmMessageTemplates.$inferInsert;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // EMAIL QUEUE - Enterprise-grade email system with queue and retries
@@ -2101,8 +2416,153 @@ export const insertDocumentSignaturePositionSchema = createInsertSchema(document
   updatedAt: true,
 });
 
+// Document Signature Reminders - Tracks when reminders were sent for unsigned documents
+export const documentSignatureReminders = pgTable("document_signature_reminders", {
+  id: serial("id").primaryKey(),
+  documentId: integer("document_id").references(() => documents.id, { onDelete: "cascade" }).notNull(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }).notNull(),
+  reminderNumber: integer("reminder_number").notNull(), // 1, 2, 3, 4 (escalating reminders)
+  emailQueueId: integer("email_queue_id"), // Reference to email_queue if email was sent
+  sentAt: timestamp("sent_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  documentIdIdx: index("document_signature_reminders_document_id_idx").on(table.documentId),
+  userIdIdx: index("document_signature_reminders_user_id_idx").on(table.userId),
+  companyIdIdx: index("document_signature_reminders_company_id_idx").on(table.companyId),
+  // Unique constraint: one reminder per document+user+reminder_number
+  uniqueReminderPerDoc: unique("unique_reminder_per_doc").on(table.documentId, table.userId, table.reminderNumber),
+}));
+
+export const insertDocumentSignatureReminderSchema = createInsertSchema(documentSignatureReminders).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type DocumentSignatureReminder = typeof documentSignatureReminders.$inferSelect;
+export type InsertDocumentSignatureReminder = z.infer<typeof insertDocumentSignatureReminderSchema>;
+
 export type DocumentSignaturePosition = typeof documentSignaturePositions.$inferSelect;
 export type InsertDocumentSignaturePosition = z.infer<typeof insertDocumentSignaturePositionSchema>;
 
+// Incomplete Session Weekly Reminders - Tracks when weekly reminders were sent for incomplete work sessions
+export const incompleteSessionWeeklyReminders = pgTable("incomplete_session_weekly_reminders", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }).notNull(),
+  sessionCount: integer("session_count").notNull(), // Number of incomplete sessions at time of reminder
+  emailQueueId: integer("email_queue_id"), // Reference to email_queue if email was sent
+  sentAt: timestamp("sent_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("incomplete_session_weekly_reminders_user_id_idx").on(table.userId),
+  companyIdIdx: index("incomplete_session_weekly_reminders_company_id_idx").on(table.companyId),
+  sentAtIdx: index("incomplete_session_weekly_reminders_sent_at_idx").on(table.sentAt),
+}));
+
+export const insertIncompleteSessionWeeklyReminderSchema = createInsertSchema(incompleteSessionWeeklyReminders).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type IncompleteSessionWeeklyReminder = typeof incompleteSessionWeeklyReminders.$inferSelect;
+export type InsertIncompleteSessionWeeklyReminder = z.infer<typeof insertIncompleteSessionWeeklyReminderSchema>;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 📊 COMPANY USAGE TRACKING: Monitor resource consumption per company
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const companyUsageStats = pgTable("company_usage_stats", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  year: integer("year").notNull(), // e.g., 2026
+  month: integer("month").notNull(), // 1-12
+  periodStart: timestamp("period_start").notNull(), // Legacy - kept for backwards compatibility
+  periodEnd: timestamp("period_end").notNull(),   // Legacy - kept for backwards compatibility
+  
+  // Storage metrics
+  r2StorageBytes: bigint("r2_storage_bytes", { mode: "number" }).default(0),
+  r2StorageCost: decimal("r2_storage_cost", { precision: 10, scale: 4 }).default("0.00"),
+  dbStorageBytes: bigint("db_storage_bytes", { mode: "number" }).default(0),
+  dbStorageCost: decimal("db_storage_cost", { precision: 10, scale: 4 }).default("0.00"),
+  
+  // API metrics
+  apiRequestsCount: integer("api_requests_count").default(0),
+  apiComputeTimeMs: bigint("api_compute_time_ms", { mode: "number" }).default(0),
+  apiComputeCost: decimal("api_compute_cost", { precision: 10, scale: 4 }).default("0.00"),
+  
+  // AI metrics
+  aiTokensUsed: integer("ai_tokens_used").default(0),
+  aiRequestsCount: integer("ai_requests_count").default(0),
+  aiCost: decimal("ai_cost", { precision: 10, scale: 4 }).default("0.00"),
+  
+  // Totals
+  totalCost: decimal("total_cost", { precision: 10, scale: 4 }).default("0.00"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  companyIdx: index("company_usage_stats_company_idx").on(table.companyId),
+  yearMonthIdx: index("company_usage_stats_year_month_idx").on(table.companyId, table.year, table.month),
+  uniqueMonth: unique("company_usage_stats_unique_month").on(table.companyId, table.year, table.month),
+}));
+
+export const companyRealtimeUsage = pgTable("company_realtime_usage", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }).unique(),
+  
+  // Current month tracking
+  currentYear: integer("current_year").notNull(),
+  currentMonth: integer("current_month").notNull(),
+  
+  // Current month metrics (reset at month start)
+  apiRequestsCount: integer("api_requests_count").default(0),
+  apiComputeTimeMs: bigint("api_compute_time_ms", { mode: "number" }).default(0),
+  aiTokensUsed: integer("ai_tokens_used").default(0),
+  aiRequestsCount: integer("ai_requests_count").default(0),
+  r2StorageBytes: bigint("r2_storage_bytes", { mode: "number" }).default(0),
+  
+  // Last calculation timestamps
+  lastStorageCheck: timestamp("last_storage_check"),
+  lastCostCalculation: timestamp("last_cost_calculation"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type CompanyUsageStats = typeof companyUsageStats.$inferSelect;
+export type InsertCompanyUsageStats = typeof companyUsageStats.$inferInsert;
+export type CompanyRealtimeUsage = typeof companyRealtimeUsage.$inferSelect;
+export type InsertCompanyRealtimeUsage = typeof companyRealtimeUsage.$inferInsert;
+
 // SeatPricing table is used instead (it already exists and has all needed fields for SuperAdmin pricing control)
 
+// Adverse Weather Incidents table - tracks when weather events occur and how many hours employees lost
+export const adverseWeatherIncidents = pgTable("adverse_weather_incidents", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").references(() => companies.id).notNull(),
+  incidentDate: date("incident_date").notNull(), // Date of the weather incident
+  description: text("description"), // Description of the incident (e.g., "Heavy snow closure")
+  lostHours: decimal("lost_hours", { precision: 6, scale: 2 }).notNull(), // Total hours lost per employee
+  recoveryHours: decimal("recovery_hours", { precision: 6, scale: 2 }).notNull(), // Hours to recover (calculate as lostHours * recoveryPercentage / 100)
+  recoveryPercentage: integer("recovery_percentage").default(70), // Percentage applied (snapshot of policy)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdBy: integer("created_by").references(() => users.id), // Admin who registered the incident
+});
+
+// Adverse Weather Hours Pool table - tracks accumulated recovery hours for adverse weather incidents
+export const adverseWeatherHoursPool = pgTable("adverse_weather_hours_pool", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  periodStart: date("period_start").notNull(), // Start of vacation period
+  periodEnd: date("period_end").notNull(), // End of vacation period
+  totalHours: decimal("total_hours", { precision: 6, scale: 2 }).notNull().default("0"), // Total accumulated hours (70% of lost hours)
+  usedHours: decimal("used_hours", { precision: 6, scale: 2 }).notNull().default("0"), // Hours already consumed
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type AdverseWeatherIncident = typeof adverseWeatherIncidents.$inferSelect;
+export type InsertAdverseWeatherIncident = typeof adverseWeatherIncidents.$inferInsert;
+export type AdverseWeatherHoursPool = typeof adverseWeatherHoursPool.$inferSelect;
+export type InsertAdverseWeatherHoursPool = typeof adverseWeatherHoursPool.$inferInsert;

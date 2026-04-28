@@ -585,14 +585,14 @@ export default function EmployeeTimeTracking() {
       const statusText = isIncomplete ? "Incompleto" : "En curso";
       
       return (
-        <div key={session.id} className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl p-3 mb-2 border border-gray-200 dark:border-white/20">
+        <div key={session.id} className="bg-white dark:bg-gray-800 rounded-2xl p-3 mb-2 border border-gray-200 dark:border-gray-700 shadow-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
           <div className="flex justify-between items-center mb-2">
             <span className="text-gray-900 dark:text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className={`${
                 statusColor === "red" 
-                  ? "bg-red-600 dark:bg-red-500/20 text-white dark:text-red-300 border-red-700 dark:border-red-500/30" 
-                  : "bg-green-600 dark:bg-green-500/20 text-white dark:text-green-300 border-green-700 dark:border-green-500/30"
+                  ? "bg-red-500/90 text-white border-0" 
+                  : "bg-emerald-500/90 text-white border-0"
               }`}>
                 {statusText}
               </Badge>
@@ -600,7 +600,7 @@ export default function EmployeeTimeTracking() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-6 px-2 py-0 text-xs bg-red-600 dark:bg-red-500/20 border-red-700 dark:border-red-500/50 text-white dark:text-red-300 hover:bg-red-700 dark:hover:bg-red-500/30 dark:hover:border-red-400"
+                  className="h-6 px-2 py-0 text-xs bg-red-500/90 border-0 text-white hover:bg-red-600"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleClockOutIncomplete(session.id);
@@ -621,9 +621,7 @@ export default function EmployeeTimeTracking() {
             <span className="text-gray-700 dark:text-white/90 text-sm">Entrada: {formatTime(session.clockIn)}</span>
           </div>
           
-          <div className="text-center text-gray-500 dark:text-white/60 text-xs py-2">
-            {isIncomplete ? "Sesión incompleta - marcar salida" : "Sesión activa - ficha para terminar"}
-          </div>
+
         </div>
       );
     }
@@ -650,7 +648,7 @@ export default function EmployeeTimeTracking() {
     return (
       <div 
         key={session.id} 
-        className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl p-2 mb-2 border border-gray-200 dark:border-white/20 cursor-pointer"
+        className="bg-white dark:bg-gray-800 rounded-2xl p-2 mb-2 border border-gray-200 dark:border-gray-700 shadow-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all cursor-pointer"
         onClick={() => toggleDayExpansion(`${formatDayDate(new Date(session.clockIn))}-${session.id}`)}
       >
         {/* Header with date and total hours - alineado con barra azul */}
@@ -661,7 +659,7 @@ export default function EmployeeTimeTracking() {
               {session.clockOut ? formatTotalHours(calculateSessionHours(session)) : '0h 0m'}
             </span>
             {!session.clockOut && (
-              <span className="text-white dark:text-red-400 text-xs bg-red-600 dark:bg-red-500/20 px-2 py-1 rounded-full border border-red-700 dark:border-red-500/30">
+              <span className="text-white text-xs bg-red-500/90 px-2 py-1 rounded-full border-0">
                 Incompleto
               </span>
             )}
@@ -797,31 +795,7 @@ export default function EmployeeTimeTracking() {
         <p className="text-gray-600 dark:text-white/70 text-sm">Revisa tu historial de fichajes y horas trabajadas</p>
       </div>
 
-      {/* Month navigation - Fixed height */}
-      <div className="flex items-center justify-between px-6 mb-6 h-12">
-        <button
-          onClick={() => setCurrentMonth(prev => subMonths(prev, 1))}
-          className="text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/5 p-2 rounded-lg transition-all duration-200"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-        
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white text-center min-w-0 flex-1">
-          {format(currentMonth, 'MMMM yyyy', { locale: es })}
-        </h2>
-        
-        {/* Flecha hacia adelante - solo si no es el mes actual */}
-        {format(currentMonth, 'yyyy-MM') < format(new Date(), 'yyyy-MM') ? (
-          <button
-            onClick={() => setCurrentMonth(prev => addMonths(prev, 1))}
-            className="text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/5 p-2 rounded-lg transition-all duration-200"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        ) : (
-          <div className="w-9 h-9 p-2" /> /* Spacer para mantener layout */
-        )}
-      </div>
+
 
       {/* Month Total Hours with 4 Month Statistics */}
       <div 
@@ -830,10 +804,32 @@ export default function EmployeeTimeTracking() {
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <div className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-gray-200 dark:border-white/20">
-          {/* Total del mes */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-2xl">
+          {/* Month selector - discreto en primera línea */}
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <button
+              type="button"
+              onClick={() => setCurrentMonth(prev => subMonths(prev, 1))}
+              className="p-1 text-gray-500 dark:text-white/50 hover:text-gray-700 dark:hover:text-white/70 transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span className="text-sm font-medium text-gray-600 dark:text-white/70 min-w-[120px] text-center">
+              {format(currentMonth, 'MMMM yyyy', { locale: es })}
+            </span>
+            {format(currentMonth, 'yyyy-MM') < format(new Date(), 'yyyy-MM') && (
+              <button
+                type="button"
+                onClick={() => setCurrentMonth(prev => addMonths(prev, 1))}
+                className="p-1 text-gray-500 dark:text-white/50 hover:text-gray-700 dark:hover:text-white/70 transition-colors"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          
+          {/* Total hours - segunda línea centrada */}
           <div className="text-center mb-4">
-            <p className="text-gray-600 dark:text-white/70 text-sm mb-1">Total del mes</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatTotalHours(totalMonthHours)}</p>
           </div>
           
@@ -942,19 +938,19 @@ export default function EmployeeTimeTracking() {
               
               // Contenedor de semana
               result.push(
-                <div key={`week-${weekKey}`} className="bg-white dark:bg-white/5 backdrop-blur-sm rounded-xl p-4 mb-4 border border-gray-200 dark:border-white/10">
+                <div key={`week-${weekKey}`} className="bg-white dark:bg-gray-800 rounded-2xl p-4 mb-3 border border-gray-200 dark:border-gray-700 shadow-2xl">
                   {/* Header de semana */}
                   <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 dark:border-white/10">
                     <h3 className="text-gray-900 dark:text-white font-medium text-sm">
                       {format(weekStart, 'MMMM', { locale: es })} semana del {format(weekStart, 'dd', { locale: es })}-{format(addDays(weekStart, 6), 'dd', { locale: es })}
                     </h3>
-                    <span className="text-white dark:text-blue-300 font-mono text-sm bg-blue-600 dark:bg-blue-400/20 px-2 py-1 rounded-lg border border-blue-700 dark:border-blue-400/30">
+                    <span className="text-white font-mono text-sm bg-blue-500/90 px-2 py-1 rounded-lg border-0">
                       {formatTotalHours(weekTotal)}
                     </span>
                   </div>
                   
                   {/* Sesiones de la semana agrupadas por día */}
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {(() => {
                       // Agrupar sesiones por día
                       const dayGroups = new Map<string, WorkSession[]>();
@@ -994,7 +990,7 @@ export default function EmployeeTimeTracking() {
                           return (
                             <div 
                               key={`day-${dayKey}`} 
-                              className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl p-2 mb-2 border border-gray-200 dark:border-white/20 cursor-pointer"
+                              className="bg-white dark:bg-gray-800 rounded-2xl p-2 mb-2 border border-gray-200 dark:border-gray-700 shadow-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all cursor-pointer"
                               onClick={() => toggleDayExpansion(`${formatDayDate(new Date(dayKey))}-multi`)}
                             >
                               {/* Header with date and total hours - alineado con barra azul */}
@@ -1007,7 +1003,7 @@ export default function EmployeeTimeTracking() {
                                     {dayTotal > 0 ? formatTotalHours(dayTotal) : '0h 0m'}
                                   </span>
                                   {sortedDaySessions.some(s => !s.clockOut) && (
-                                    <span className="text-white dark:text-red-400 text-xs bg-red-600 dark:bg-red-500/20 px-2 py-1 rounded-full border border-red-700 dark:border-red-500/30">
+                                    <span className="text-white text-xs bg-red-500/90 px-2 py-1 rounded-full border-0">
                                       Incompleto
                                     </span>
                                   )}
@@ -1205,6 +1201,7 @@ export default function EmployeeTimeTracking() {
       
       {/* Floating action button for requesting modifications */}
       <button
+        type="button"
         onClick={() => {
           setShowRequestDialog(true);
           setWizardStep('date');

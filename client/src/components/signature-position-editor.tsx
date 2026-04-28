@@ -271,7 +271,7 @@ export function SignaturePositionEditor({
   };
 
   // Calcular distancia entre dos puntos (para pinch zoom)
-  const getDistance = (p1: Touch, p2: Touch) => {
+  const getDistance = (p1: React.Touch, p2: React.Touch) => {
     const dx = p1.clientX - p2.clientX;
     const dy = p1.clientY - p2.clientY;
     return Math.sqrt(dx * dx + dy * dy);

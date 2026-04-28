@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 
 // Lazy load ALL Stripe components to remove 141KB from main bundle
 const Elements = lazy(() => import('@stripe/react-stripe-js').then(m => ({ default: m.Elements })));
-const loadStripe = lazy(() => import('@stripe/stripe-js').then(m => ({ default: m.loadStripe })));
 const LazyStripePaymentForm = lazy(() => import('./StripePaymentForm').then(m => ({ default: m.StripePaymentForm })));
 
 interface LazyStripeFormProps {
@@ -46,7 +45,7 @@ export function LazyStripeForm({
 
         // Lazy load Stripe
         // console.log('🔧 STRIPE LOAD - Loading Stripe library...');
-        const { default: loadStripeFunc } = await loadStripe;
+        const { loadStripe: loadStripeFunc } = await import('@stripe/stripe-js');
         // console.log('🔧 STRIPE LOAD - Library loaded, calling loadStripeFunc with key');
         const stripeInstance = await loadStripeFunc(publicKey);
         // console.log('🔧 STRIPE INSTANCE - Result:', !!stripeInstance);

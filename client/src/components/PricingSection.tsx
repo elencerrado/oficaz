@@ -15,7 +15,7 @@ export default function PricingSection() {
 
   const addons = [
     { name: 'Mensajería', price: 9, description: 'Comunicación interna entre empleados' },
-    { name: 'Recordatorios', price: 6, description: 'Alertas y recordatorios programados' },
+    { name: 'Tareas', price: 6, description: 'Alertas y tareas programadas' },
     { name: 'Documentos', price: 15, description: 'Gestión y almacenamiento de documentos' },
     { name: 'Partes de Trabajo', price: 12, description: 'Registro de partes y reportes' },
     { name: 'Asistente IA', price: 25, description: 'Automatización con inteligencia artificial' },

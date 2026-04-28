@@ -3,6 +3,27 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 
+function normalizeR2AccountId(rawAccountId: string, bucketName?: string): string {
+  const raw = (rawAccountId || "").trim();
+  if (!raw) return raw;
+
+  // Handle values like "bucket.accountId" or full host strings.
+  const withoutProtocol = raw.replace(/^https?:\/\//i, "").replace(/\.r2\.cloudflarestorage\.com.*$/i, "");
+
+  // Prefer a 32-hex account id when present.
+  const hexMatch = withoutProtocol.match(/[a-f0-9]{32}/i);
+  if (hexMatch?.[0]) {
+    return hexMatch[0];
+  }
+
+  // If value includes bucket prefix, strip it.
+  if (bucketName && withoutProtocol.startsWith(`${bucketName}.`)) {
+    return withoutProtocol.slice(bucketName.length + 1);
+  }
+
+  return withoutProtocol;
+}
+
 // Validate R2 configuration
 function validateR2Config() {
   const required = {
@@ -30,11 +51,12 @@ export function createR2Client(): S3Client | null {
   console.log("🔍 Checking R2 configuration...");
   try {
     const config = validateR2Config();
-    console.log("🔍 R2 config validated - Account ID exists:", !!config.R2_ACCOUNT_ID);
+    const normalizedAccountId = normalizeR2AccountId(config.R2_ACCOUNT_ID, config.R2_BUCKET_NAME);
+    console.log("🔍 R2 config validated - Account ID exists:", !!normalizedAccountId);
 
     const r2Client = new S3Client({
       region: "auto", // R2 uses "auto" for region
-      endpoint: `https://${config.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      endpoint: `https://${normalizedAccountId}.r2.cloudflarestorage.com`,
       credentials: {
         accessKeyId: config.R2_ACCESS_KEY_ID,
         secretAccessKey: config.R2_SECRET_ACCESS_KEY,
@@ -56,8 +78,8 @@ export function getR2BucketName(): string {
 
 // Get R2 public URL for an object
 export function getR2PublicUrl(objectKey: string): string {
-  const accountId = process.env.R2_ACCOUNT_ID;
-  const bucketName = process.env.R2_BUCKET_NAME;
+  const bucketName = process.env.R2_BUCKET_NAME || "";
+  const accountId = normalizeR2AccountId(process.env.R2_ACCOUNT_ID || "", bucketName);
   
   // R2 custom domain or default R2.dev URL
   // You can configure a custom domain in Cloudflare dashboard

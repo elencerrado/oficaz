@@ -31,6 +31,16 @@ import {
   DialogTrigger,
   DialogFooter
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
 
 interface PromotionalCode {
@@ -75,6 +85,7 @@ const SuperAdminPromoCodes = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingCode, setEditingCode] = useState<PromotionalCode | null>(null);
+  const [deleteConfirmCode, setDeleteConfirmCode] = useState<PromotionalCode | null>(null);
   
   const [formData, setFormData] = useState<FormData>({
     code: '',
@@ -95,7 +106,11 @@ const SuperAdminPromoCodes = () => {
       });
       if (!response.ok) throw new Error('Failed to fetch promotional codes');
       return response.json();
-    }
+    },
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Create promotional code mutation
@@ -204,8 +219,8 @@ const SuperAdminPromoCodes = () => {
       trialDurationDays: 60,
       isActive: true,
       maxUses: null,
-      validFrom: null,
-      validUntil: null
+      validFrom: undefined,
+      validUntil: undefined
     });
   };
 
@@ -233,13 +248,16 @@ const SuperAdminPromoCodes = () => {
 
   const handleUpdate = () => {
     if (!editingCode) return;
-    updateMutation.mutate({ id: editingCode.id, data: formData });
+    const payload: Partial<CreatePromotionalCodeData> = {
+      ...formData,
+      validFrom: formData.validFrom ? formData.validFrom.toISOString().split('T')[0] : null,
+      validUntil: formData.validUntil ? formData.validUntil.toISOString().split('T')[0] : null,
+    };
+    updateMutation.mutate({ id: editingCode.id, data: payload });
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este código promocional?')) {
-      deleteMutation.mutate(id);
-    }
+  const handleDelete = (code: PromotionalCode) => {
+    setDeleteConfirmCode(code);
   };
 
   const formatDate = (dateString: string | null) => {
@@ -431,7 +449,7 @@ const SuperAdminPromoCodes = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(code.id)}
+                      onClick={() => handleDelete(code)}
                       className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                       data-testid={`button-delete-${code.id}`}
                     >
@@ -589,6 +607,41 @@ const SuperAdminPromoCodes = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={Boolean(deleteConfirmCode)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteConfirmCode(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar código promocional?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirmCode && (
+                <>
+                  Esta acción eliminará el código <strong>{deleteConfirmCode.code}</strong> y no se puede deshacer.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteConfirmCode(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (!deleteConfirmCode) return;
+                deleteMutation.mutate(deleteConfirmCode.id);
+                setDeleteConfirmCode(null);
+              }}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       </div>
     </SuperAdminLayout>
   );

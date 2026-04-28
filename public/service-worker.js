@@ -178,9 +178,9 @@ self.addEventListener('notificationclick', (event) => {
       return;
     }
     
-    // Get auth token from notification data for work actions
-    const authToken = notificationData.authToken;
-    if (!authToken) {
+    // Get short-lived action token from notification payload (legacy fallback supported)
+    const actionToken = notificationData.actionToken || notificationData.authToken;
+    if (!actionToken) {
       return;
     }
     
@@ -190,7 +190,7 @@ self.addEventListener('notificationclick', (event) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
+          'Authorization': `Bearer ${actionToken}`
         },
         credentials: 'include', // Include cookies for auth
         body: JSON.stringify({

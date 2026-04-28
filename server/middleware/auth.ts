@@ -12,6 +12,13 @@ export interface AuthRequest extends Request {
   };
 }
 
+export type ManagerPermissionKey =
+  | 'canCreateDeleteEmployees'
+  | 'canCreateDeleteManagers'
+  | 'canBuyRemoveFeatures'
+  | 'canBuyRemoveUsers'
+  | 'canEditCompanyData';
+
 export function authenticateToken(req: AuthRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers['authorization'];
   let token = authHeader && authHeader.split(' ')[1];
@@ -30,6 +37,25 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
       return res.status(403).json({ message: 'Invalid or expired token' });
     }
 
+    const tokenType = decoded?.type;
+    const isPushActionToken = decoded?.pushAction === true || tokenType === 'push_action';
+    const isPushEndpoint = req.path.startsWith('/api/push/');
+
+    // Reject explicit non-access/non-push tokens for protected endpoints
+    if (tokenType && tokenType !== 'access' && tokenType !== 'push_action') {
+      return res.status(403).json({ message: 'Invalid token type for this endpoint' });
+    }
+
+    // Push action tokens are only allowed on push endpoints
+    if (isPushActionToken && !isPushEndpoint) {
+      return res.status(403).json({ message: 'Push action token is not allowed for this endpoint' });
+    }
+
+    // Validate minimum JWT payload shape to avoid malformed/legacy token abuse
+    if (typeof decoded?.id !== 'number' || typeof decoded?.companyId !== 'number' || typeof decoded?.role !== 'string') {
+      return res.status(403).json({ message: 'Invalid token payload' });
+    }
+
     // CRITICAL FIX: Block corrupted tokens for non-existent user ID 4
     if (decoded.id === 4) {
       return res.status(403).json({ message: 'Invalid token - user does not exist' });
@@ -40,7 +66,7 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
       email: decoded.email || decoded.username, // Support both for transition
       role: decoded.role,
       companyId: decoded.companyId,
-      pushAction: decoded.pushAction || false, // Include pushAction flag if present
+      pushAction: isPushActionToken,
     };
     next();
   });
@@ -93,7 +119,10 @@ const featureToAddonKey: Record<string, string> = {
   reminders: 'reminders',
   work_reports: 'work_reports',
   reports: 'work_reports',
+  crm: 'crm',
   ai_assistant: 'ai_assistant',
+  inventory: 'inventory',
+  accounting: 'accounting',
 };
 
 // Middleware to require a specific addon/feature to be purchased
@@ -113,7 +142,8 @@ export function requireFeature(featureKey: string, getStorage: () => any) {
 
       // Check if feature is enabled in subscription features object
       const features = subscription.features as Record<string, boolean> || {};
-      if (!features[featureKey]) {
+      const normalizedFeatureKey = featureToAddonKey[featureKey] || featureKey;
+      if (!features[normalizedFeatureKey] && !features[featureKey]) {
         return res.status(402).json({ message: `Funcionalidad "${featureKey}" no comprada. Adquiérela en la Tienda.` });
       }
 
@@ -176,6 +206,44 @@ export function requireVisibleFeature(featureKey: string, getStorage: () => any)
       next();
     } catch (error) {
       console.error('Error checking feature visibility:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+  };
+}
+
+// Middleware to enforce manager-specific permission flags stored in company.managerPermissions.
+// Admins always pass through. Managers must have the requested flag set to true.
+export function requireManagerPermission(permissionKey: ManagerPermissionKey, getStorage: () => any) {
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    if (req.user.role === 'admin') {
+      return next();
+    }
+
+    if (req.user.role !== 'manager') {
+      return res.status(403).json({ message: 'Insufficient permissions' });
+    }
+
+    try {
+      const storage = getStorage();
+      const company = await storage.getCompany(req.user.companyId);
+
+      if (!company) {
+        return res.status(404).json({ message: 'Company not found' });
+      }
+
+      const managerPermissions = (company.managerPermissions || {}) as Partial<Record<ManagerPermissionKey, boolean>>;
+
+      if (!Boolean(managerPermissions[permissionKey])) {
+        return res.status(403).json({ message: 'Insufficient manager permissions' });
+      }
+
+      next();
+    } catch (error) {
+      console.error('Error checking manager permission:', error);
       return res.status(500).json({ message: 'Internal server error' });
     }
   };

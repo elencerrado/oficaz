@@ -1,41 +1,43 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Info, X } from 'lucide-react';
+import { logger } from '@/lib/logger';
+import { getAuthData, getAuthHeaders } from '@/lib/auth';
 
 interface DemoDataStatus {
   hasDemoData: boolean;
 }
 
 export function DemoDataBanner() {
-  console.log('🎯 DemoDataBanner COMPONENT RENDERING - FORCED');
+  logger.log('🎯 DemoDataBanner COMPONENT RENDERING');
   
   const [isVisible, setIsVisible] = useState(true);
-  const [hasData, setHasData] = useState(true); // FORCED TRUE FOR TESTING
+  const [hasData, setHasData] = useState(false); // Actually check server status
 
   // Check demo data status
   useEffect(() => {
-    console.log('🎯 DemoDataBanner useEffect RUNNING');
+    logger.log('🎯 DemoDataBanner useEffect RUNNING');
     const checkDemoData = async () => {
       try {
-        const token = localStorage.getItem('token');
-        console.log('🎯 Token exists:', !!token);
+        const authData = getAuthData();
+        const token = authData?.token;
+        logger.log('🎯 Token exists:', !!token);
         if (!token) return;
 
-        console.log('🎯 Making request to /api/demo-data/status');
+        logger.log('🎯 Making request to /api/demo-data/status');
         const response = await fetch('/api/demo-data/status', {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            ...getAuthHeaders(),
             'Content-Type': 'application/json'
           }
         });
         
-        console.log('🎯 Response status:', response.status);
+        logger.log('🎯 Response status:', response.status);
         if (response.ok) {
           const data = await response.json();
-          console.log('🎯 Demo data status RECEIVED:', data);
+          logger.log('🎯 Demo data status RECEIVED:', data);
           setHasData(data.hasDemoData);
         } else {
-          console.log('🎯 Response not OK:', response.status);
+          logger.log('🎯 Response not OK:', response.status);
         }
       } catch (error) {
         console.error('🎯 Error checking demo data:', error);
@@ -45,14 +47,14 @@ export function DemoDataBanner() {
     checkDemoData();
   }, []);
 
-  console.log('🎯 DemoDataBanner render state:', { isVisible, hasData });
+  logger.log('🎯 DemoDataBanner render state:', { isVisible, hasData });
 
   if (!isVisible || !hasData) {
-    console.log('🎯 DemoDataBanner NOT RENDERING - isVisible:', isVisible, 'hasData:', hasData);
+    logger.log('🎯 DemoDataBanner NOT RENDERING - isVisible:', isVisible, 'hasData:', hasData);
     return null;
   }
 
-  console.log('🎯 DemoDataBanner RENDERING BANNER');
+  logger.log('🎯 DemoDataBanner RENDERING BANNER');
 
   return (
     <div className="bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-400 dark:border-blue-500 p-4 mb-6">
@@ -73,7 +75,7 @@ export function DemoDataBanner() {
                 <li>Empleados de ejemplo con fichajes realistas del mes anterior y actual</li>
                 <li>Solicitudes de vacaciones aprobadas y pendientes</li>
                 <li>Mensajes bidireccionales entre empleados y administradores</li>
-                <li>Recordatorios y documentos de muestra</li>
+                <li>Tareas y documentos de muestra</li>
               </ul>
               <p className="mt-2 text-xs text-blue-600 dark:text-blue-400">
                 Los datos demo se generan basándose en la fecha de registro de la empresa para mayor realismo.

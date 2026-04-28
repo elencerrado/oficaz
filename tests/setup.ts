@@ -18,7 +18,14 @@ if (typeof window !== 'undefined') {
 
 // Mock global de fetch para tests de API (solo en entornos con `window`, p.ej. jsdom)
 if (typeof window !== 'undefined') {
-  global.fetch = vi.fn();
+  const useRealFetch =
+    process.env.RUN_LIVE_PAYMENT_INTEGRATION === '1' ||
+    process.env.RUN_SUPERADMIN_SMOKE === '1' ||
+    process.env.RUN_TIME_TRACKING_SMOKE === '1';
+
+  if (!useRealFetch) {
+    global.fetch = vi.fn();
+  }
 }
 
 // Configurar timezone para tests consistentes

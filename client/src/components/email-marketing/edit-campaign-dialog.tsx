@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { getAuthHeaders } from '@/lib/auth';
 import { ChevronRight, ChevronLeft, Trash2 } from 'lucide-react';
 import { RecipientSelector } from './recipient-selector';
 import { EmailPreviewEditor } from './email-preview-editor';
@@ -274,12 +275,11 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
 
   const updateCampaignMutation = useMutation({
     mutationFn: async (data: any) => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-campaigns/${campaign.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(data),
       });
@@ -305,11 +305,10 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
 
   const deleteCampaignMutation = useMutation({
     mutationFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-campaigns/${campaign.id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
           'Cache-Control': 'no-cache',
         },
       });

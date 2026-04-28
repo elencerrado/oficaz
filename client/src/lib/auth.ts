@@ -1,4 +1,5 @@
 import { User, Company } from '@shared/schema';
+import * as CryptoJS from 'crypto-js';
 
 interface AuthData {
   user: User;
@@ -11,7 +12,8 @@ interface AuthData {
 // 🔒 SECURITY: Lightweight symmetric obfuscation for authData at rest
 // Not a replacement for CSP/SameSite cookies, but reduces trivial token theft via XSS/localStorage dumps
 const STORAGE_KEY = import.meta.env.VITE_STORAGE_KEY || 'oficaz-default-key';
-const ENC_PREFIX = 'enc:';
+const LEGACY_ENC_PREFIX = 'enc:';
+const ENC_PREFIX_V2 = 'enc:v2:';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -24,30 +26,45 @@ function xorBytes(data: Uint8Array, keyBytes: Uint8Array): Uint8Array {
   return result;
 }
 
+function isValidAuthData(parsed: any): parsed is AuthData {
+  return Boolean(parsed?.user && parsed?.token && parsed?.company);
+}
+
 function encryptAuthPayload(payload: AuthData): string {
-  const plaintext = encoder.encode(JSON.stringify(payload));
-  const keyBytes = encoder.encode(STORAGE_KEY);
-  const cipherBytes = xorBytes(plaintext, keyBytes);
-  const base64 = btoa(String.fromCharCode(...cipherBytes));
-  return `${ENC_PREFIX}${base64}`;
+  const plaintext = JSON.stringify(payload);
+  const cipherText = CryptoJS.AES.encrypt(plaintext, STORAGE_KEY).toString();
+  return `${ENC_PREFIX_V2}${cipherText}`;
 }
 
 function decryptAuthPayload(raw: string): AuthData | null {
   try {
-    const base64 = raw.startsWith(ENC_PREFIX) ? raw.slice(ENC_PREFIX.length) : raw;
-    const cipherBytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-    const keyBytes = encoder.encode(STORAGE_KEY);
-    const plainBytes = xorBytes(cipherBytes, keyBytes);
-    const json = decoder.decode(plainBytes);
-    return JSON.parse(json);
-  } catch (error) {
-    // Fallback to legacy JSON.parse for backwards compatibility
-    try {
-      return JSON.parse(raw);
-    } catch (err) {
-      console.error('Failed to decrypt authData:', err);
-      return null;
+    if (raw.startsWith(ENC_PREFIX_V2)) {
+      const cipherText = raw.slice(ENC_PREFIX_V2.length);
+      const bytes = CryptoJS.AES.decrypt(cipherText, STORAGE_KEY);
+      const json = bytes.toString(CryptoJS.enc.Utf8);
+      if (!json) {
+        return null;
+      }
+
+      const parsed = JSON.parse(json);
+      return isValidAuthData(parsed) ? parsed : null;
     }
+
+    if (raw.startsWith(LEGACY_ENC_PREFIX)) {
+      const base64 = raw.slice(LEGACY_ENC_PREFIX.length);
+      const cipherBytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+      const keyBytes = encoder.encode(STORAGE_KEY);
+      const plainBytes = xorBytes(cipherBytes, keyBytes);
+      const json = decoder.decode(plainBytes);
+      const parsed = JSON.parse(json);
+      return isValidAuthData(parsed) ? parsed : null;
+    }
+
+    const parsed = JSON.parse(raw);
+    return isValidAuthData(parsed) ? parsed : null;
+  } catch (error) {
+    console.error('Failed to decrypt authData:', error);
+    return null;
   }
 }
 
@@ -65,9 +82,8 @@ export function setAuthData(data: AuthData, remember: boolean = true) {
     
     // Verify it was saved correctly
     const saved = storage.getItem('authData');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // // console.log(`✅ Auth data verification - saved successfully to ${storageType}:`, { hasToken: !!parsed.token });
+    if (saved && decryptAuthPayload(saved)) {
+      // // console.log(`✅ Auth data verification - saved successfully to ${storageType}`);
     } else {
       // // console.error(`❌ Auth data was not saved to ${storageType}`);
     }
@@ -79,17 +95,30 @@ export function setAuthData(data: AuthData, remember: boolean = true) {
 export function getAuthData(): AuthData | null {
   // Try localStorage first (persistent sessions)
   let authDataStr = localStorage.getItem('authData');
+  let activeStorage: Storage = localStorage;
   
   // If not in localStorage, try sessionStorage (temporary sessions)
   if (!authDataStr) {
     authDataStr = sessionStorage.getItem('authData');
+    activeStorage = sessionStorage;
   }
   
   if (!authDataStr) {
     return null;
   }
 
-  return decryptAuthPayload(authDataStr);
+  const parsed = decryptAuthPayload(authDataStr);
+
+  // Transparently migrate legacy/plain formats to v2 encryption.
+  if (parsed && !authDataStr.startsWith(ENC_PREFIX_V2)) {
+    try {
+      activeStorage.setItem('authData', encryptAuthPayload(parsed));
+    } catch {
+      // Keep current session data even if migration write fails.
+    }
+  }
+
+  return parsed;
 }
 
 export function clearAuthData() {
@@ -184,15 +213,16 @@ export async function refreshAccessToken(): Promise<string | null> {
 
   isRefreshing = true;
   
+  const authData = getAuthData();
+  
+  if (!authData?.refreshToken) {
+    // // console.log('❌ No refresh token available');
+    isRefreshing = false;
+    return null;
+  }
+  
   refreshPromise = (async () => {
     try {
-      const authData = getAuthData();
-      
-      if (!authData?.refreshToken) {
-        // // console.log('❌ No refresh token available');
-        return null;
-      }
-
       // // console.log('🔄 Attempting to refresh access token...');
       
       const response = await fetch('/api/auth/refresh', {
@@ -248,6 +278,7 @@ export async function refreshAccessToken(): Promise<string | null> {
       clearAuthData();
       return null;
     } finally {
+      // CRITICAL: Always cleanup the isRefreshing flag when promise completes
       isRefreshing = false;
       refreshPromise = null;
     }

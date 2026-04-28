@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { getAuthHeaders } from '@/lib/auth';
+import { openWhatsApp } from '@/lib/whatsapp';
 import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -88,53 +90,47 @@ export default function SuperAdminMarketing() {
   const { data: campaigns } = useQuery({
     queryKey: ['/api/super-admin/email-campaigns'],
     queryFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/email-campaigns', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch campaigns');
       return response.json();
     },
-    staleTime: 30000,
+    staleTime: 60000,
     refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const { data: prospects } = useQuery({
     queryKey: ['/api/super-admin/email-prospects'],
     queryFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/email-prospects', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch prospects');
       return response.json();
     },
-    staleTime: 30000,
+    staleTime: 60000,
     refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const { data: registeredUsers } = useQuery({
     queryKey: ['/api/super-admin/registered-users-stats'],
     queryFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/registered-users-stats', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch users stats');
       return response.json();
     },
-    staleTime: 30000,
+    staleTime: 60000,
     refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Get all unique tags from all prospects
-  const allTags = React.useMemo(() => {
+  const allTags = useMemo(() => {
     if (!prospects) return [];
     const tagsSet = new Set<string>();
     prospects.forEach((prospect: any) => {
@@ -144,7 +140,7 @@ export default function SuperAdminMarketing() {
   }, [prospects]);
 
   // Filter and sort prospects
-  const filteredProspects = React.useMemo(() => {
+  const filteredProspects = useMemo(() => {
     if (!prospects) return [];
     
     let result = [...prospects];
@@ -338,12 +334,9 @@ export default function SuperAdminMarketing() {
         status: 'sending',
       }));
       
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-campaigns/${campaignId}/send`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) {
         const error = await response.json();
@@ -385,12 +378,9 @@ export default function SuperAdminMarketing() {
   // Duplicate campaign mutation
   const duplicateCampaignMutation = useMutation({
     mutationFn: async (campaignId: number) => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-campaigns/${campaignId}/duplicate`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) {
         const error = await response.json();
@@ -417,12 +407,9 @@ export default function SuperAdminMarketing() {
   // Delete prospect mutation
   const deleteProspectMutation = useMutation({
     mutationFn: async (prospectId: number) => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-prospects/${prospectId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to delete prospect');
       return response.json();
@@ -446,12 +433,9 @@ export default function SuperAdminMarketing() {
   // Clean duplicate tags mutation
   const cleanDuplicateTagsMutation = useMutation({
     mutationFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/email-prospects/clean-duplicate-tags', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) {
         const error = await response.json();
@@ -478,12 +462,11 @@ export default function SuperAdminMarketing() {
   // Update prospect inline mutation with optimistic updates
   const updateProspectInlineMutation = useMutation({
     mutationFn: async ({ prospectId, field, value }: { prospectId: number; field: string; value: any }) => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-prospects/${prospectId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({ [field]: value }),
       });
@@ -544,7 +527,6 @@ export default function SuperAdminMarketing() {
   // Create prospect from empty row mutation
   const createProspectFromRowMutation = useMutation({
     mutationFn: async ({ field, value }: { field: string; value: any }) => {
-      const token = sessionStorage.getItem('superAdminToken');
       const prospectData: any = { [field]: value };
       
       // If field is not email, we need a placeholder email
@@ -556,7 +538,7 @@ export default function SuperAdminMarketing() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(prospectData),
       });
@@ -583,12 +565,11 @@ export default function SuperAdminMarketing() {
   // Mark email as bounced mutation
   const markBouncedMutation = useMutation({
     mutationFn: async (prospectId: number) => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-prospects/${prospectId}/mark-bounced`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
         },
       });
       if (!response.ok) {
@@ -617,12 +598,11 @@ export default function SuperAdminMarketing() {
   // Reactivate bounced email mutation (reset lastEmailStatus)
   const reactivateEmailMutation = useMutation({
     mutationFn: async (prospectId: number) => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-prospects/${prospectId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({ lastEmailStatus: null }),
       });
@@ -1185,10 +1165,7 @@ export default function SuperAdminMarketing() {
                                     <div className="flex items-center gap-1 w-full">
                                       {prospect.phone && !prospect.phone.trim().startsWith('9') && (
                                         <button
-                                          onClick={() => {
-                                            const cleanPhone = prospect.phone.replace(/\s+/g, '');
-                                            window.open(`https://wa.me/${cleanPhone}`, '_blank');
-                                          }}
+                                          onClick={(event) => openWhatsApp(prospect.phone, { event })}
                                           className="p-1 rounded transition-colors bg-green-500/20 text-green-400 hover:bg-green-500/30"
                                           title="Abrir WhatsApp"
                                           data-testid={`button-whatsapp-open-${prospect.id}`}

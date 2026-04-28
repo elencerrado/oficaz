@@ -24,6 +24,7 @@ import { format } from 'date-fns';
 import { DatePickerDay } from '@/components/ui/date-picker';
 import { z } from 'zod';
 import { getAuthData, clearAuthData } from '@/lib/auth';
+import { logger as appLogger } from '@/lib/logger';
 import { EmployeeWorkSessionCard, FeatureNotifications, EmployeeHeader } from '@/components/employee';
 
 interface WorkSession {
@@ -38,9 +39,7 @@ interface WorkSession {
 // ⚡ OPTIMIZACIÓN: Logger condicional (solo en desarrollo)
 const logger = {
   debug: (...args: any[]) => {
-    if (import.meta.env.DEV) {
-      console.log('[Employee]', ...args);
-    }
+    appLogger.log('[Employee]', ...args);
   },
   error: (...args: any[]) => {
     console.error('[Employee]', ...args);
@@ -94,7 +93,7 @@ export default function EmployeeDashboard() {
       // Redirect to documents page with signature parameters preserved
       logger.debug('📧 Email signature link detected, redirecting to documents...');
       const companyAlias = company.companyAlias || 'app';
-      setLocation(`/${companyAlias}/mis-documentos?signDocument=${signDocumentId}&token=${signatureToken}`);
+      setLocation(`/${companyAlias}/misdocumentos?signDocument=${signDocumentId}&token=${signatureToken}`);
     }
   }, [user, company, setLocation]);
   
@@ -381,6 +380,13 @@ export default function EmployeeDashboard() {
     queryKey: ['/api/documents'],
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes - WebSocket handles updates
+    queryFn: async () => {
+      const data = await apiRequest('GET', '/api/documents?limit=100');
+      if (Array.isArray(data)) return data;
+      if (data?.items) return data.items;
+      if (data?.documents) return data.documents;
+      return [];
+    },
     // ⚡ OPTIMIZADO: Sin polling, WebSocket maneja document_uploaded
   });
 
@@ -422,16 +428,6 @@ export default function EmployeeDashboard() {
       const reviewDate = request.reviewedAt ? new Date(request.reviewedAt) : new Date(request.createdAt);
       const isNew = reviewDate > lastCheckDate;
       
-      // console.log('Dashboard vacation check:', {
-      //   id: request.id,
-      //   status: request.status,
-      //   reviewedAt: request.reviewedAt,
-      //   reviewDate: reviewDate.toISOString(),
-      //   lastCheck: lastCheckDate.toISOString(),
-      //   isNew,
-      //   currentTime: new Date().toISOString()
-      // });
-      
       return isNew;
     });
     
@@ -452,7 +448,6 @@ export default function EmployeeDashboard() {
     }
     
     if (hasUpdates) {
-      // console.log('Dashboard setting vacation notification flag for', newlyProcessedRequests.length, 'requests');
       localStorage.setItem('hasVacationUpdates', 'true');
     } else {
       setHasVacationUpdates(false);
@@ -463,7 +458,6 @@ export default function EmployeeDashboard() {
   useEffect(() => {
     if (hasVacationUpdates) {
       const timer = setTimeout(() => {
-        // console.log('Dashboard: clearing vacation notifications after viewing dashboard');
         setHasVacationUpdates(false);
         localStorage.setItem('lastVacationCheck', new Date().toISOString());
         localStorage.removeItem('vacationNotificationType');
@@ -501,12 +495,14 @@ export default function EmployeeDashboard() {
 
   // Document notifications with specific rules
   useEffect(() => {
-    if (!documentNotifications || !documents) return;
+    if (!documents) return;
+
+    const safeDocumentNotifications = Array.isArray(documentNotifications) ? documentNotifications : [];
 
     // 🔴 RED: Pending document upload requests (se quita cuando enviamos archivo)
-    const pendingRequests = Array.isArray(documentNotifications) ? documentNotifications.filter(notification => 
+    const pendingRequests = safeDocumentNotifications.filter(notification => 
       !notification.isCompleted
-    ) : [];
+    );
     const hasPendingRequests = pendingRequests.length > 0;
     setHasDocumentRequests(hasPendingRequests);
 
@@ -523,30 +519,41 @@ export default function EmployeeDashboard() {
     setHasNewDocuments(hasUnviewedDocuments);
 
     // 🟠 ORANGE: Documents that require signature but haven't been signed yet
-    // Only show if user has already viewed the document (isViewed = true)
+    // Show if document requires signature OR is payroll (nóminas), regardless of whether it's been viewed
+    // The user should know they have documents waiting to be signed
     const unsignedDocuments = Array.isArray(documents) ? documents.filter(doc => {
-      const isViewed = doc.isViewed ?? doc.is_viewed ?? false;
       const requiresSignature = doc.requiresSignature ?? doc.requires_signature ?? false;
       const isAccepted = doc.isAccepted ?? doc.is_accepted ?? false;
+      const signedAt = doc.signedAt ?? doc.signed_at ?? null;
       // Also check for payroll documents (nóminas) which always require signature
       const fileName = (doc.originalName || doc.original_name || doc.fileName || '').toLowerCase();
       const isPayroll = fileName.includes('nomina') || fileName.includes('nómina');
       
-      // Show orange badge if: document is viewed AND (requires signature OR is payroll) AND not yet signed
-      return isViewed && (requiresSignature || isPayroll) && !isAccepted;
+      // Show orange badge if: (requires signature OR is payroll) AND not yet signed
+      // NOTE: We check both isAccepted (old field) and signedAt (new field) for compatibility
+      const isSigned = isAccepted || !!signedAt;
+      return (requiresSignature || isPayroll) && !isSigned;
     }) : [];
 
     const hasUnsigned = unsignedDocuments.length > 0;
     setHasUnsignedDocuments(hasUnsigned);
 
-    // console.log('📋 Document notifications check:', {
-    //   pendingRequests: pendingRequests.length,
-    //   unviewedDocuments: unviewedDocuments.length,
-    //   unsignedDocuments: unsignedDocuments.length,
-    //   hasPendingRequests,
-    //   hasUnviewedDocuments,
-    //   hasUnsigned
-    // });
+    logger.debug('📋 Document notifications check:', {
+      totalDocuments: documents.length,
+      pendingRequests: pendingRequests.length,
+      unviewedDocuments: unviewedDocuments.length,
+      unsignedDocuments: unsignedDocuments.length,
+      unsignedDocumentsDetails: unsignedDocuments.map(d => ({
+        name: d.originalName || d.original_name,
+        requiresSignature: d.requiresSignature ?? d.requires_signature,
+        isAccepted: d.isAccepted ?? d.is_accepted,
+        signedAt: d.signedAt ?? d.signed_at,
+        isPayroll: (d.originalName || d.original_name || '').toLowerCase().includes('nomina')
+      })),
+      hasPendingRequests,
+      hasUnviewedDocuments,
+      hasUnsigned
+    });
 
   }, [documentNotifications, documents]);
 
@@ -568,27 +575,11 @@ export default function EmployeeDashboard() {
       // Check if user has completed this reminder
       const userCompleted = reminder.completedBy?.includes(user?.id);
       
-      // console.log('🔔 Reminder overdue check:', {
-      //   id: reminder.id,
-      //   title: reminder.title,
-      //   dueDate: reminder.dueDate,
-      //   isOverdue,
-      //   userCompleted,
-      //   completedBy: reminder.completedBy
-      // });
-      
       return isOverdue && !userCompleted;
     }) : [];
 
     const hasOverdue = overdueReminders.length > 0;
     setHasOverdueReminders(hasOverdue);
-
-    // console.log('🔔 Overdue reminders check:', {
-    //   totalReminders: allReminders.length,
-    //   overdueCount: overdueReminders.length,
-    //   hasOverdue,
-    //   overdueReminders: overdueReminders.map((r: any) => ({ id: r.id, title: r.title, dueDate: r.dueDate }))
-    // });
 
   }, [allReminders, user?.id]);
 
@@ -610,14 +601,6 @@ export default function EmployeeDashboard() {
     const showNotification = unreadMessages > 0 && (!lastVisitTime || currentTime > lastVisitTime);
     setHasNewMessages(showNotification);
 
-    // console.log('💬 Messages notification check:', {
-    //   unreadMessages,
-    //   lastVisitTime: lastVisitTime?.toISOString(),
-    //   currentTime: currentTime.toISOString(),
-    //   showNotification,
-    //   lastMessagesPageVisit
-    // });
-
   }, [unreadCount]);
 
   // Check for active reminders from the /api/reminders/active endpoint
@@ -632,12 +615,6 @@ export default function EmployeeDashboard() {
   useEffect(() => {
     const hasActive = Array.isArray(activeReminders) && activeReminders.length > 0;
     setHasActiveReminders(hasActive);
-
-    // console.log('📋 Active reminders check:', {
-    //   activeCount: activeReminders.length,
-    //   hasActiveReminders: hasActive,
-    //   reminders: (activeReminders as any[]).map((r: any) => ({ id: r.id, title: r.title }))
-    // });
 
   }, [activeReminders]);
 
@@ -1147,7 +1124,7 @@ export default function EmployeeDashboard() {
     },
     { 
       icon: Bell, 
-      title: 'Recordatorios', 
+      title: 'Tareas', 
       route: `/${companyAlias}/recordatorios`,
       notification: hasOverdueReminders || hasActiveReminders,
       notificationType: hasOverdueReminders ? 'red' : (hasActiveReminders ? 'blue' : 'none'),
@@ -1363,22 +1340,6 @@ export default function EmployeeDashboard() {
     }
   }, []);
 
-  // Log real-time notification status for debugging
-  useEffect(() => {
-    // console.log('🔔 Real-time notifications status:', {
-    //   hasVacationUpdates,
-    //   hasDocumentRequests,
-    //   hasNewDocuments,
-    //   hasUnsignedDocuments,
-    //   unreadMessages: unreadCount?.count || 0,
-    //   timestamp: new Date().toISOString()
-    // });
-  }, [hasVacationUpdates, hasDocumentRequests, hasNewDocuments, hasUnsignedDocuments, unreadCount]);
-
-  // Log feature access for debugging
-  useEffect(() => {
-  }, [hasAccess]);
-
   // ⚡ OPTIMIZACIÓN: WebSocket para notificaciones en tiempo real (en lugar de polling)
   useEffect(() => {
     if (!user) return;
@@ -1528,7 +1489,7 @@ export default function EmployeeDashboard() {
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2">
+                <button type="button" className="flex items-center gap-2">
                   <div>
                     <h1 className="text-xs font-medium text-gray-900 dark:text-white drop-shadow-lg">{user?.fullName}</h1>
                   </div>
@@ -1561,6 +1522,7 @@ export default function EmployeeDashboard() {
                     {/* Botones */}
                     <div className="relative flex items-center">
                       <button
+                        type="button"
                         onClick={() => setTheme('light')}
                         className={`flex-1 flex items-center justify-center p-2 rounded-full transition-colors z-10 ${
                           theme === 'light' 
@@ -1572,6 +1534,7 @@ export default function EmployeeDashboard() {
                         <Sun className="h-4 w-4" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => setTheme('system')}
                         className={`flex-1 flex items-center justify-center p-2 rounded-full transition-colors z-10 ${
                           theme === 'system' 
@@ -1583,6 +1546,7 @@ export default function EmployeeDashboard() {
                         <Monitor className="h-4 w-4" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => setTheme('dark')}
                         className={`flex-1 flex items-center justify-center p-2 rounded-full transition-colors z-10 ${
                           theme === 'dark' 
@@ -1633,7 +1597,7 @@ export default function EmployeeDashboard() {
         <div className="flex justify-center mb-2 flex-shrink-0">
           <Dialog>
             <DialogTrigger asChild>
-              <button className="text-center hover:scale-105 transition-transform duration-200 cursor-pointer">
+              <button type="button" className="text-center hover:scale-105 transition-transform duration-200 cursor-pointer">
                 {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
                 {shouldShowLogo ? (
                   <img 
@@ -1774,6 +1738,7 @@ export default function EmployeeDashboard() {
                       return (
                         <div key={index} className="flex flex-col items-center group relative">
                           <button
+                            type="button"
                             onClick={() => {
                               if (showSwapMenu) return;
                               
@@ -1838,6 +1803,7 @@ export default function EmployeeDashboard() {
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Intercambiar con:</h4>
                   <button 
+                    type="button"
                     onClick={() => { setShowSwapMenu(false); setLongPressItem(null); }}
                     className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
@@ -1849,6 +1815,7 @@ export default function EmployeeDashboard() {
                     const swapColor = featureColors[swapItem.feature] || featureColors.default;
                     return (
                       <button
+                        type="button"
                         key={swapItem.displayIndex}
                         onClick={() => handleSwapItems(swapItem.displayIndex)}
                         className="flex flex-col items-center p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -1872,6 +1839,7 @@ export default function EmployeeDashboard() {
             <div className="flex justify-center gap-2 mt-2">
               {Array.from({ length: totalPages }).map((_, index) => (
                 <button
+                  type="button"
                   key={index}
                   onClick={() => handlePageDotClick(index)}
                   className={`w-2 h-2 rounded-full transition-all duration-300 ${
@@ -2478,6 +2446,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Alarmas de Trabajo</h2>
             <button
+              type="button"
               onClick={onClose}
               className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
@@ -2632,12 +2601,14 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                     </div>
                     <div className="flex gap-2">
                       <button
+                        type="button"
                         onClick={() => handleEdit(alarm)}
                         className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm transition-colors"
                       >
                         Editar
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleDelete(alarm.id)}
                         className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm transition-colors"
                       >

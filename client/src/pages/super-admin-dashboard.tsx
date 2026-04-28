@@ -7,7 +7,6 @@ import {
   Users, 
   TrendingUp,
   AlertTriangle,
-  BarChart3,
   Euro,
   ArrowRight,
   Send,
@@ -19,23 +18,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SuperAdminLayout } from "@/components/layout/super-admin-layout";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-
-interface CompanyWithStats {
-  id: number;
-  name: string;
-  cif: string;
-  email: string;
-  alias: string;
-  userCount: number;
-  subscription: {
-    plan: string;
-    status: string;
-    maxUsers: number;
-    startDate: string;
-    endDate?: string;
-  };
-  createdAt: string;
-}
 
 interface SuperAdminStats {
   totalCompanies: number;
@@ -54,15 +36,6 @@ interface SuperAdminStats {
   };
 }
 
-// Subscription status colors (plan is now unified as 'Oficaz' with addons)
-const subscriptionStatusColors = {
-  active: 'bg-emerald-500',
-  trial: 'bg-blue-500',
-  expired: 'bg-gray-600',
-  cancelled: 'bg-orange-600',
-  deleted: 'bg-red-900'
-};
-
 export default function SuperAdminDashboard() {
   usePageTitle('SuperAdmin - Panel');
   const [, setLocation] = useLocation();
@@ -78,19 +51,7 @@ export default function SuperAdminDashboard() {
     },
     staleTime: 30000, // Cache for 30 seconds
     refetchOnMount: false,
-  });
-
-  const { data: companies, isLoading: companiesLoading } = useQuery<CompanyWithStats[]>({
-    queryKey: ['/api/super-admin/companies'],
-    queryFn: async () => {
-      const response = await fetch('/api/super-admin/companies', {
-        headers: getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to fetch companies');
-      return response.json();
-    },
-    staleTime: 30000, // Cache for 30 seconds
-    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const { data: pendingDeletions } = useQuery({
@@ -102,6 +63,9 @@ export default function SuperAdminDashboard() {
       if (!response.ok) throw new Error('Failed to fetch pending deletions');
       return response.json();
     },
+    staleTime: 60000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const { data: emailStats } = useQuery({
@@ -132,11 +96,12 @@ export default function SuperAdminDashboard() {
         conversionRate
       };
     },
-    staleTime: 30000,
+    staleTime: 60000,
     refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
-  if (statsLoading || companiesLoading) {
+  if (statsLoading) {
     return (
       <SuperAdminLayout>
         <div className="min-h-screen flex items-center justify-center">
@@ -177,7 +142,7 @@ export default function SuperAdminDashboard() {
                     <Building2 className="w-5 h-5 text-blue-300" />
                     <div>
                       <div className="text-xl font-bold text-white">{stats?.totalCompanies || 0}</div>
-                      <p className="text-[10px] text-white/70">Empresas</p>
+                      <p className="text-[10px] text-white/70">Empresas totales</p>
                     </div>
                   </div>
                 </div>
@@ -187,7 +152,7 @@ export default function SuperAdminDashboard() {
                     <Users className="w-5 h-5 text-emerald-300" />
                     <div>
                       <div className="text-xl font-bold text-white">{stats?.totalUsers || 0}</div>
-                      <p className="text-[10px] text-white/70">Usuarios</p>
+                      <p className="text-[10px] text-white/70">Usuarios totales</p>
                     </div>
                   </div>
                 </div>
@@ -196,8 +161,8 @@ export default function SuperAdminDashboard() {
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-purple-300" />
                     <div>
-                      <div className="text-xl font-bold text-white">{stats?.activePaidSubscriptions || 0}</div>
-                      <p className="text-[10px] text-white/70">Activas</p>
+                      <div className="text-xl font-bold text-white">{stats?.subscriptionStats?.active || 0}</div>
+                      <p className="text-[10px] text-white/70">Pagando</p>
                     </div>
                   </div>
                 </div>
@@ -206,7 +171,7 @@ export default function SuperAdminDashboard() {
                   <div className="flex items-center gap-2">
                     <Euro className="w-5 h-5 text-yellow-300" />
                     <div>
-                      <div className="text-xl font-bold text-white">{stats?.monthlyRevenue?.toFixed(2) || '0.00'}€</div>
+                      <div className="text-xl font-bold text-white">{stats?.monthlyRevenue?.toFixed(0) || '0'}€</div>
                       <p className="text-[10px] text-white/70">MRR</p>
                     </div>
                   </div>
@@ -215,12 +180,20 @@ export default function SuperAdminDashboard() {
 
               {/* Plan Distribution - Compact */}
               <div className="border-t border-white/10 pt-3">
-                <p className="text-xs text-white/60 mb-2">Plan Activo</p>
-                <div className="bg-gradient-to-br from-emerald-500/15 to-emerald-600/15 backdrop-blur-xl rounded-lg p-3 border border-emerald-400/30 text-center">
-                  <div className="w-12 h-12 bg-emerald-500 rounded-md mx-auto mb-2 flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">{stats?.totalCompanies || 0}</span>
+                <p className="text-xs text-white/60 mb-2">Estado de Suscripciones</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-gradient-to-br from-blue-500/15 to-blue-600/15 backdrop-blur-xl rounded-lg p-2 border border-blue-400/30 text-center">
+                    <div className="text-2xl font-bold text-blue-300">{stats?.subscriptionStats?.trial || 0}</div>
+                    <p className="text-[9px] text-white/70 font-medium">Trial</p>
                   </div>
-                  <p className="text-xs text-white/70 font-medium">Empresas con Oficaz</p>
+                  <div className="bg-gradient-to-br from-emerald-500/15 to-emerald-600/15 backdrop-blur-xl rounded-lg p-2 border border-emerald-400/30 text-center">
+                    <div className="text-2xl font-bold text-emerald-300">{stats?.subscriptionStats?.active || 0}</div>
+                    <p className="text-[9px] text-white/70 font-medium">Activas</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-orange-500/15 to-orange-600/15 backdrop-blur-xl rounded-lg p-2 border border-orange-400/30 text-center">
+                    <div className="text-2xl font-bold text-orange-300">{stats?.subscriptionStats?.cancelled || 0}</div>
+                    <p className="text-[9px] text-white/70 font-medium">Canceladas</p>
+                  </div>
                 </div>
               </div>
             </CardContent>

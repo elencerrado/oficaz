@@ -465,12 +465,20 @@ export function DocumentSignatureModal({
     </div>
   );
 
-  // Custom overlay without any CSS transforms
+  // Return null if modal is not open
+  if (!isOpen) return null;
+
+  // Custom overlay - now safe to use normal z-index since preview is closed
   const modalContent = (
     <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      style={{ touchAction: 'none' }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }
       }}
     >
       <div 
@@ -481,8 +489,12 @@ export function DocumentSignatureModal({
           <PenTool className="h-5 w-5" />
           <h2 className="text-lg font-semibold">Firmar Documento</h2>
           <button
-            onClick={onClose}
-            className="ml-auto p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
+            className="ml-auto p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>

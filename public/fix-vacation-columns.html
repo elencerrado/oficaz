@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Vacation Columns</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            display: none;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🔧 Reparar Columnas de Vacaciones</h1>
+        <p>Este script añadirá las columnas <code>vacation_days_natural</code> y <code>vacation_days_working</code> a la base de datos si no existen.</p>
+        
+        <button id="fixBtn" onclick="executeFix()">Ejecutar Fix</button>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Ejecutando fix...</p>
+        </div>
+        
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        async function executeFix() {
+            const btn = document.getElementById('fixBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            
+            // Disable button and show loading
+            btn.disabled = true;
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            
+            try {
+                // Get token from localStorage or sessionStorage
+                const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+                
+                if (!token) {
+                    throw new Error('No se encontró token de autenticación. Por favor, inicia sesión primero.');
+                }
+                
+                const response = await fetch('/api/admin/fix-vacation-columns', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                loading.style.display = 'none';
+                result.style.display = 'block';
+                
+                if (data.success) {
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        <strong>✅ Éxito!</strong><br>
+                        ${data.message}<br>
+                        ${data.columnsAdded.length > 0 ? `<br>Columnas añadidas: ${data.columnsAdded.join(', ')}` : '<br>Las columnas ya existían.'}
+                        <br><br>
+                        <strong>Ahora puedes guardar los cambios en la configuración de vacaciones.</strong>
+                    `;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `<strong>❌ Error:</strong><br>${data.message}`;
+                }
+                
+                // Re-enable button after 3 seconds
+                setTimeout(() => {
+                    btn.disabled = false;
+                }, 3000);
+                
+            } catch (error) {
+                loading.style.display = 'none';
+                result.style.display = 'block';
+                result.className = 'result error';
+                result.innerHTML = `<strong>❌ Error:</strong><br>${error.message}`;
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

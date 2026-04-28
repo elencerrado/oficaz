@@ -19,6 +19,10 @@ export default defineConfig({
         ]
       : []),
   ],
+  optimizeDeps: {
+    // Exclude problematic modules from optimization to avoid Replit cache issues
+    exclude: ["@replit/vite-plugin-cartographer"],
+  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),

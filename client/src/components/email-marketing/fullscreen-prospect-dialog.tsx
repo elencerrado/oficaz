@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { openWhatsApp } from '@/lib/whatsapp';
+import { getAuthHeaders } from '@/lib/auth';
 import { 
   Mail, 
   Eye, 
@@ -68,11 +70,8 @@ export function FullScreenProspectDialog({ prospect, open, onOpenChange }: FullS
   const { data: campaignHistory } = useQuery({
     queryKey: ['/api/super-admin/email-prospects', prospect?.id, 'campaign-history'],
     queryFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-prospects/${prospect.id}/campaign-history`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch campaign history');
       return response.json();
@@ -100,13 +99,11 @@ export function FullScreenProspectDialog({ prospect, open, onOpenChange }: FullS
 
   const updateProspectMutation = useMutation({
     mutationFn: async (data: any) => {
-      const token = sessionStorage.getItem('superAdminToken');
-      
       const response = await fetch(`/api/super-admin/email-prospects/${prospect.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(data),
       });
@@ -314,7 +311,7 @@ export function FullScreenProspectDialog({ prospect, open, onOpenChange }: FullS
                       {hasWhatsApp && (
                         <Button
                           type="button"
-                          onClick={() => window.open(`https://wa.me/${formData.phone.replace(/\s+/g, '')}`, '_blank')}
+                          onClick={(event) => openWhatsApp(formData.phone, { event })}
                           className="bg-green-600 hover:bg-green-700 text-white"
                           size="sm"
                         >

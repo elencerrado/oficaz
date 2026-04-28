@@ -11,6 +11,7 @@ import StatsCard, { StatsCardGrid } from '@/components/StatsCard';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { logger } from '@/lib/logger';
+import { useStandardInfiniteScroll } from '@/hooks/use-standard-infinite-scroll';
 import { usePageHeader } from '@/components/layout/page-header';
 import { usePageTitle } from '@/hooks/use-page-title';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -19,6 +20,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { CategoryMultiSelect, CategoryTag, type CRMCategoryData } from '@/components/crm-category-manager';
 import { DatePickerDay } from '@/components/ui/date-picker';
+import { CRMCapturePanel } from '@/components/crm-capture-panel';
+import { CRMInteractionHistory } from '@/components/crm-interaction-history';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Users,
   Building2,
@@ -43,6 +47,7 @@ interface Contact {
   phone?: string | null;
   taxId?: string | null;
   city?: string | null;
+  postalAddress?: string | null;
   notes?: string | null;
   status: string;
   categories?: number[] | null;
@@ -67,14 +72,30 @@ interface ProjectWithLinks {
   providers?: Contact[];
 }
 
+interface CapturePipelineItem {
+  id: number;
+  stage: string;
+  statusCategoryName?: string | null;
+  hasStaleAlert?: boolean;
+  daysWithoutInteraction?: number | null;
+  lastInteractionAt?: string | null;
+}
+
+interface CapturePipelineResponse {
+  stages: Array<{ id: string; items: CapturePipelineItem[] }>;
+  total: number;
+}
+
 type ContactRole = 'client' | 'provider';
 
 interface ContactFormState {
+  label: string;
   name: string;
   email: string;
   phone: string;
   taxId: string;
   city: string;
+  postalAddress: string;
   notes: string;
   categories: CRMCategoryData[];
   statusCategories: CRMCategoryData[];
@@ -95,11 +116,13 @@ interface ProjectFormState {
 }
 
 const emptyContactForm: ContactFormState = {
+  label: '',
   name: '',
   email: '',
   phone: '',
   taxId: '',
   city: '',
+  postalAddress: '',
   notes: '',
   categories: [],
   statusCategories: [],
@@ -125,12 +148,14 @@ export default function CRMPage() {
   const { setHeader, resetHeader } = usePageHeader();
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'clients' | 'providers' | 'projects'>('clients');
+  const [activeTab, setActiveTab] = useState<'clients' | 'providers' | 'projects' | 'capture'>('clients');
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
-  const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const [showNewContactCard, setShowNewContactCard] = useState(false);
   const [contactForm, setContactForm] = useState<ContactFormState>(emptyContactForm);
-  const [editingContactId, setEditingContactId] = useState<number | null>(null);
   const [contactRole, setContactRole] = useState<ContactRole>('client');
 
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
@@ -151,6 +176,13 @@ export default function CRMPage() {
     });
     return resetHeader;
   }, [resetHeader, setHeader]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => window.clearTimeout(timeoutId);
+  }, [searchTerm]);
 
   const { data: categories = [], isLoading: loadingCategories } = useQuery<CRMCategoryData[]>({
     queryKey: ['/api/crm/categories'],
@@ -188,13 +220,13 @@ export default function CRMPage() {
     isFetchingNextPage: clientsFetchingNext,
     fetchNextPage: fetchMoreClients,
   } = useInfiniteQuery<PaginatedPage<Contact>>({
-    queryKey: ['/api/crm/contacts', 'client', searchTerm],
+    queryKey: ['/api/crm/contacts', 'client', debouncedSearchTerm],
     queryFn: async ({ pageParam = 0 }) => {
       const params = new URLSearchParams();
       params.set('role', 'client');
       params.set('limit', String(CONTACT_PAGE_SIZE));
       params.set('offset', String(pageParam));
-      if (searchTerm) params.set('search', searchTerm);
+      if (debouncedSearchTerm) params.set('search', debouncedSearchTerm);
       const response = await apiRequest('GET', `/api/crm/contacts?${params.toString()}`);
       return normalizePage<Contact>(response);
     },
@@ -203,6 +235,10 @@ export default function CRMPage() {
         ? allPages.reduce((acc, page) => acc + (page.items?.length ?? 0), 0)
         : undefined,
     initialPageParam: 0,
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const {
@@ -212,13 +248,13 @@ export default function CRMPage() {
     isFetchingNextPage: providersFetchingNext,
     fetchNextPage: fetchMoreProviders,
   } = useInfiniteQuery<PaginatedPage<Contact>>({
-    queryKey: ['/api/crm/contacts', 'provider', searchTerm],
+    queryKey: ['/api/crm/contacts', 'provider', debouncedSearchTerm],
     queryFn: async ({ pageParam = 0 }) => {
       const params = new URLSearchParams();
       params.set('role', 'provider');
       params.set('limit', String(CONTACT_PAGE_SIZE));
       params.set('offset', String(pageParam));
-      if (searchTerm) params.set('search', searchTerm);
+      if (debouncedSearchTerm) params.set('search', debouncedSearchTerm);
       const response = await apiRequest('GET', `/api/crm/contacts?${params.toString()}`);
       return normalizePage<Contact>(response);
     },
@@ -227,6 +263,10 @@ export default function CRMPage() {
         ? allPages.reduce((acc, page) => acc + (page.items?.length ?? 0), 0)
         : undefined,
     initialPageParam: 0,
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const {
@@ -236,12 +276,12 @@ export default function CRMPage() {
     isFetchingNextPage: projectsFetchingNext,
     fetchNextPage: fetchMoreProjects,
   } = useInfiniteQuery<PaginatedPage<ProjectWithLinks>>({
-    queryKey: ['/api/crm/projects', searchTerm],
+    queryKey: ['/api/crm/projects', debouncedSearchTerm],
     queryFn: async ({ pageParam = 0 }) => {
       const params = new URLSearchParams();
       params.set('limit', String(PROJECT_PAGE_SIZE));
       params.set('offset', String(pageParam));
-      if (searchTerm) params.set('search', searchTerm);
+      if (debouncedSearchTerm) params.set('search', debouncedSearchTerm);
       const response = await apiRequest('GET', `/api/crm/projects?${params.toString()}`);
       return normalizePage<ProjectWithLinks>(response);
     },
@@ -250,6 +290,10 @@ export default function CRMPage() {
         ? allPages.reduce((acc, page) => acc + (page.items?.length ?? 0), 0)
         : undefined,
     initialPageParam: 0,
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const clientPages = useMemo(() => (clientPagesData?.pages || []).map(page => normalizePage<Contact>(page)), [clientPagesData]);
@@ -264,58 +308,41 @@ export default function CRMPage() {
   const providersTotal = providerPages[0]?.totalCount ?? providers.length;
   const projectsTotal = projectPages[0]?.totalCount ?? projects.length;
 
-  const normalize = (s: string | undefined | null) =>
-    (s || '')
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
+  const contactMatchesFilters = (contact: Contact) => {
+    const statusMatch =
+      statusFilter === 'all'
+        ? true
+        : (contact.statusCategories || []).includes(Number(statusFilter));
 
-  const contactMatchesTerm = (contact: Contact, term: string) => {
-    if (!term) return true;
-    const normTerm = normalize(term);
-    const categoryNames = (contact.categories || [])
-      .map((cid) => categories.find((c) => c.id === cid)?.name)
-      .map(normalize)
-      .join(' ');
+    const categoryMatch =
+      categoryFilter === 'all'
+        ? true
+        : (contact.categories || []).includes(Number(categoryFilter));
 
-    return [
-      contact.name,
-      contact.label,
-      contact.email,
-      contact.phone,
-      contact.taxId,
-      contact.city,
-      contact.notes,
-      categoryNames,
-    ].some((field) => normalize(field).includes(normTerm));
+    return statusMatch && categoryMatch;
   };
 
   const filteredClients = useMemo(() => {
-    return clients.filter((item) => contactMatchesTerm(item, searchTerm));
-  }, [clients, searchTerm, categories]);
+    return clients.filter((item) => contactMatchesFilters(item));
+  }, [clients, statusFilter, categoryFilter]);
 
   const filteredProviders = useMemo(() => {
-    return providers.filter((item) => contactMatchesTerm(item, searchTerm));
-  }, [providers, searchTerm, categories]);
+    return providers.filter((item) => contactMatchesFilters(item));
+  }, [providers, statusFilter, categoryFilter]);
 
   const filteredProjects = useMemo(() => {
-    const term = normalize(searchTerm);
-    return projects.filter((item) => normalize(item.project?.name || '').includes(term));
-  }, [projects, searchTerm]);
+    return projects;
+  }, [projects]);
 
   const contactMutation = useMutation({
     mutationFn: (payload: Partial<Contact> & { role: ContactRole }) => {
-      if (editingContactId) {
-        return apiRequest('PATCH', `/api/crm/contacts/${editingContactId}`, payload);
-      }
       return apiRequest('POST', '/api/crm/contacts', payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/crm/contacts'] });
-      setContactDialogOpen(false);
-      setEditingContactId(null);
+      setShowNewContactCard(false);
       setContactForm(emptyContactForm);
-      toast({ title: 'Guardado', description: 'Contacto actualizado correctamente.' });
+      toast({ title: 'Guardado', description: 'Contacto creado correctamente.' });
     },
     onError: (error: any) => {
       toast({
@@ -530,9 +557,6 @@ export default function CRMPage() {
     const statusCategoryIds = form.statusCategories
       .map(c => c.id)
       .filter((id): id is number => id !== undefined);
-    
-    // console.log('📤 Frontend - Preparing payload with statusCategories:', form.statusCategories);
-    // console.log('📤 Frontend - Status category IDs:', statusCategoryIds);
 
     return {
       name: normalizeText(form.name) || '',
@@ -551,10 +575,7 @@ export default function CRMPage() {
 
   const projectMutation = useMutation({
     mutationFn: (payload: ProjectFormState) => {
-      // console.log('💾 Mutation called with payload:', payload);
-      // console.log('💾 statusCategories in payload:', payload.statusCategories);
       const body = projectPayload(payload);
-      // console.log('💾 Final body to send:', body);
       if (editingProjectId) {
         return apiRequest('PATCH', `/api/crm/projects/${editingProjectId}`, body);
       }
@@ -661,37 +682,10 @@ export default function CRMPage() {
     return companyEmployeesData.filter(emp => !assignedIds.has(emp.id));
   }, [companyEmployeesData, projectAssignedUsers]);
 
-  const openContactDialog = (role: ContactRole, contact?: Contact) => {
+  const openNewContactCard = (role: ContactRole) => {
     setContactRole(role);
-    if (contact) {
-      setEditingContactId(contact.id);
-      // Convertir IDs de categorías a objetos
-      const contactCategories = contact.categories
-        ? contact.categories
-            .map(catId => categories.find(c => c.id === catId))
-            .filter((c): c is CRMCategoryData => c !== undefined)
-        : [];
-      // Convertir IDs de estados a objetos
-      const contactStatusCategories = contact.statusCategories
-        ? contact.statusCategories
-            .map(catId => statusCategories.find(c => c.id === catId))
-            .filter((c): c is CRMCategoryData => c !== undefined)
-        : [];
-      setContactForm({
-        name: contact.name || '',
-        email: contact.email || '',
-        phone: contact.phone || '',
-        taxId: contact.taxId || '',
-        city: contact.city || '',
-        notes: contact.notes || '',
-        categories: contactCategories,
-        statusCategories: contactStatusCategories,
-      });
-    } else {
-      setEditingContactId(null);
-      setContactForm(emptyContactForm);
-    }
-    setContactDialogOpen(true);
+    setContactForm(emptyContactForm);
+    setShowNewContactCard(true);
   };
 
   const openProjectDialog = (project?: ProjectWithLinks) => {
@@ -727,28 +721,31 @@ export default function CRMPage() {
     projects: projectsTotal,
   };
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some(entry => entry.isIntersecting)) return;
-
-        if (activeTab === 'clients' && clientsHasNext && !clientsFetchingNext) {
-          fetchMoreClients();
-        }
-        if (activeTab === 'providers' && providersHasNext && !providersFetchingNext) {
-          fetchMoreProviders();
-        }
-        if (activeTab === 'projects' && projectsHasNext && !projectsFetchingNext) {
-          fetchMoreProjects();
-        }
-      },
-      { threshold: 0.1, rootMargin: '120px' }
-    );
-
-    const el = loadMoreRef.current;
-    if (el) observer.observe(el);
-    return () => observer.disconnect();
-  }, [activeTab, clientsHasNext, providersHasNext, projectsHasNext, clientsFetchingNext, providersFetchingNext, projectsFetchingNext, fetchMoreClients, fetchMoreProviders, fetchMoreProjects]);
+  useStandardInfiniteScroll({
+    targetRef: loadMoreRef,
+    enabled: activeTab === 'clients' || activeTab === 'providers' || activeTab === 'projects',
+    canLoadMore:
+      (activeTab === 'clients' && !!clientsHasNext) ||
+      (activeTab === 'providers' && !!providersHasNext) ||
+      (activeTab === 'projects' && !!projectsHasNext),
+    isLoadingMore:
+      (activeTab === 'clients' && clientsFetchingNext) ||
+      (activeTab === 'providers' && providersFetchingNext) ||
+      (activeTab === 'projects' && projectsFetchingNext),
+    onLoadMore: () => {
+      if (activeTab === 'clients' && clientsHasNext && !clientsFetchingNext) {
+        fetchMoreClients();
+      }
+      if (activeTab === 'providers' && providersHasNext && !providersFetchingNext) {
+        fetchMoreProviders();
+      }
+      if (activeTab === 'projects' && projectsHasNext && !projectsFetchingNext) {
+        fetchMoreProjects();
+      }
+    },
+    dependencyKey: `${activeTab}-${filteredClients.length}-${filteredProviders.length}-${filteredProjects.length}`,
+    rootMargin: '120px',
+  });
 
   return (
     <div>
@@ -763,56 +760,183 @@ export default function CRMPage() {
           { id: 'clients', label: 'Clientes', icon: Users },
           { id: 'providers', label: 'Proveedores', icon: Building2 },
           { id: 'projects', label: 'Proyectos', icon: FolderKanban },
+          { id: 'capture', label: 'Captación', icon: AlertCircle },
         ]}
         activeTab={activeTab}
         onTabChange={(tabId) => setActiveTab(tabId as any)}
       />
 
       <div className="space-y-4">
-        {/* Barra de búsqueda y acciones */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          {/* Contador de resultados - SIEMPRE a la izquierda */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
-            <span className="text-sm font-medium text-foreground dark:text-white">
-              {activeTab === 'clients' && filteredClients.length}
-              {activeTab === 'providers' && filteredProviders.length}
-              {activeTab === 'projects' && filteredProjects.length}
-            </span>
-            <span className="text-sm text-muted-foreground dark:text-gray-400">
-              {activeTab === 'clients' && 'clientes'}
-              {activeTab === 'providers' && 'proveedores'}
-              {activeTab === 'projects' && 'proyectos'}
-            </span>
-          </div>
-          
-          {/* Input de búsqueda */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <Input
-              placeholder={activeTab === 'projects' ? 'Buscar proyectos...' : 'Buscar por nombre...'}
-              className="pl-9 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          {/* Espaciador flexible - empuja botón a la derecha */}
-          <div className="hidden sm:block flex-1" />
-          
-          {/* Botón de acción principal - a la derecha */}
-          {activeTab !== 'projects' && (
-            <Button onClick={() => openContactDialog(activeTab === 'clients' ? 'client' : 'provider')}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo {activeTab === 'clients' ? 'cliente' : 'proveedor'}
+        {(activeTab === 'clients' || activeTab === 'providers') && (
+          <div className="hidden md:flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
+              <span className="text-sm font-medium text-foreground">
+                {activeTab === 'clients' ? filteredClients.length : filteredProviders.length}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {activeTab === 'clients' ? 'clientes' : 'proveedores'}
+              </span>
+            </div>
+
+            <div className="relative w-[240px]">
+              <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Input
+                placeholder="Buscar por nombre..."
+                className="h-9 pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px] h-9">
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los estados</SelectItem>
+                {statusCategories
+                  .filter((cat): cat is CRMCategoryData & { id: number } => cat.id !== undefined)
+                  .map((cat) => (
+                    <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-[180px] h-9">
+                <SelectValue placeholder="Categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las categorías</SelectItem>
+                {categories
+                  .filter((cat): cat is CRMCategoryData & { id: number } => cat.id !== undefined)
+                  .map((cat) => (
+                    <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setStatusFilter('all');
+                setCategoryFilter('all');
+              }}
+              disabled={statusFilter === 'all' && categoryFilter === 'all'}
+            >
+              Limpiar
             </Button>
-          )}
-          {activeTab === 'projects' && (
+
+            <div className="flex-1" />
+
+            <Button size="sm" onClick={() => openNewContactCard(activeTab === 'clients' ? 'client' : 'provider')}>
+              <Plus className="h-4 w-4 mr-1" />
+              Contacto
+            </Button>
+          </div>
+        )}
+
+        {(activeTab === 'clients' || activeTab === 'providers') && (
+          <div className="md:hidden space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
+                <span className="text-sm font-medium text-foreground">
+                  {activeTab === 'clients' ? filteredClients.length : filteredProviders.length}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {activeTab === 'clients' ? 'clientes' : 'proveedores'}
+                </span>
+              </div>
+              <Button size="sm" onClick={() => openNewContactCard(activeTab === 'clients' ? 'client' : 'provider')}>
+                <Plus className="h-4 w-4 mr-1" />
+                Contacto
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2">
+              <div className="relative">
+                <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Input
+                  placeholder="Buscar por nombre..."
+                  className="h-9 pl-9"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {statusCategories
+                      .filter((cat): cat is CRMCategoryData & { id: number } => cat.id !== undefined)
+                      .map((cat) => (
+                        <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    {categories
+                      .filter((cat): cat is CRMCategoryData & { id: number } => cat.id !== undefined)
+                      .map((cat) => (
+                        <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setStatusFilter('all');
+                  setCategoryFilter('all');
+                }}
+                disabled={statusFilter === 'all' && categoryFilter === 'all'}
+              >
+                Limpiar filtros
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'projects' && (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
+              <span className="text-sm font-medium text-foreground dark:text-white">{filteredProjects.length}</span>
+              <span className="text-sm text-muted-foreground dark:text-gray-400">proyectos</span>
+            </div>
+
+            <div className="relative flex-1 max-w-md">
+              <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Input
+                placeholder="Buscar proyectos..."
+                className="pl-9 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <div className="hidden sm:block flex-1" />
+
             <Button onClick={() => openProjectDialog()}>
               <Plus className="h-4 w-4 mr-2" />
               Nuevo proyecto
             </Button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Lists Content */}
         <div>
@@ -821,12 +945,37 @@ export default function CRMPage() {
             <ContactsList
               data={filteredClients}
               loading={loadingClients}
-              onEdit={(c) => openContactDialog('client', c)}
               onDelete={(id) => deleteContactMutation.mutate(id)}
               emptyLabel="Aún no tienes clientes"
               role="client"
+              showNewContactCard={showNewContactCard && contactRole === 'client'}
+              newContactDraft={contactForm}
+              newContactSaving={contactMutation.isPending}
+              onNewContactChange={setContactForm}
+              onSaveNewContact={() =>
+                contactMutation.mutate({
+                  ...contactForm,
+                  categories: contactForm.categories
+                    .map(c => c.id)
+                    .filter((id): id is number => id !== undefined),
+                  statusCategories: contactForm.statusCategories
+                    .map(c => c.id)
+                    .filter((id): id is number => id !== undefined),
+                  role: 'client',
+                })
+              }
+              onCancelNewContact={() => {
+                setShowNewContactCard(false);
+                setContactForm(emptyContactForm);
+              }}
               categories={categories}
               statusCategories={statusCategories}
+              onCreateCategory={(name, color) => createCategoryMutation.mutate({ name, color })}
+              onUpdateCategory={(id, name, color) => updateCategoryMutation.mutate({ id, name, color })}
+              onDeleteCategory={(id) => deleteCategoryMutation.mutate(id)}
+              onCreateStatusCategory={(name, color) => createStatusCategoryMutation.mutate({ name, color })}
+              onUpdateStatusCategory={(id, name, color) => updateStatusCategoryMutation.mutate({ id, name, color })}
+              onDeleteStatusCategory={(id) => deleteStatusCategoryMutation.mutate(id)}
             />
             <div ref={loadMoreRef} className="h-8" />
             {clientsFetchingNext && (
@@ -840,12 +989,37 @@ export default function CRMPage() {
             <ContactsList
               data={filteredProviders}
               loading={loadingProviders}
-              onEdit={(c) => openContactDialog('provider', c)}
               onDelete={(id) => deleteContactMutation.mutate(id)}
               emptyLabel="Aún no tienes proveedores"
               role="provider"
+              showNewContactCard={showNewContactCard && contactRole === 'provider'}
+              newContactDraft={contactForm}
+              newContactSaving={contactMutation.isPending}
+              onNewContactChange={setContactForm}
+              onSaveNewContact={() =>
+                contactMutation.mutate({
+                  ...contactForm,
+                  categories: contactForm.categories
+                    .map(c => c.id)
+                    .filter((id): id is number => id !== undefined),
+                  statusCategories: contactForm.statusCategories
+                    .map(c => c.id)
+                    .filter((id): id is number => id !== undefined),
+                  role: 'provider',
+                })
+              }
+              onCancelNewContact={() => {
+                setShowNewContactCard(false);
+                setContactForm(emptyContactForm);
+              }}
               categories={categories}
               statusCategories={statusCategories}
+              onCreateCategory={(name, color) => createCategoryMutation.mutate({ name, color })}
+              onUpdateCategory={(id, name, color) => updateCategoryMutation.mutate({ id, name, color })}
+              onDeleteCategory={(id) => deleteCategoryMutation.mutate(id)}
+              onCreateStatusCategory={(name, color) => createStatusCategoryMutation.mutate({ name, color })}
+              onUpdateStatusCategory={(id, name, color) => updateStatusCategoryMutation.mutate({ id, name, color })}
+              onDeleteStatusCategory={(id) => deleteStatusCategoryMutation.mutate(id)}
             />
             <div ref={loadMoreRef} className="h-8" />
             {providersFetchingNext && (
@@ -868,217 +1042,10 @@ export default function CRMPage() {
             )}
           </>
         )}
+
+        {activeTab === 'capture' && <CRMCapturePanel />}
       </div>
       </div>
-
-      <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
-        <DialogContent className="max-w-xl dark:bg-gray-900 max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingContactId ? 'Editar' : 'Nuevo'} {contactRole === 'client' ? 'cliente' : 'proveedor'}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="dark:text-white">Nombre *</Label>
-                <Input
-                  value={contactForm.name}
-                  onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                  placeholder="Ej: Cliente ABC"
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                />
-              </div>
-              <div>
-                <Label className="dark:text-white">Email</Label>
-                <Input
-                  type="email"
-                  value={contactForm.email}
-                  onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                  placeholder="correo@empresa.com"
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                />
-              </div>
-              <div>
-                <Label className="dark:text-white">Teléfono</Label>
-                <Input
-                  value={contactForm.phone}
-                  onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                  placeholder="+34 600 000 000"
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                />
-              </div>
-              <div>
-                <Label className="dark:text-white">CIF / NIF</Label>
-                <Input
-                  value={contactForm.taxId}
-                  onChange={(e) => setContactForm({ ...contactForm, taxId: e.target.value })}
-                  placeholder="B12345678"
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                />
-              </div>
-              <div>
-                <Label className="dark:text-white">Ciudad</Label>
-                <Input
-                  value={contactForm.city}
-                  onChange={(e) => setContactForm({ ...contactForm, city: e.target.value })}
-                  placeholder="Madrid"
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label className="dark:text-white">Notas</Label>
-              <Textarea
-                value={contactForm.notes}
-                onChange={(e) => setContactForm({ ...contactForm, notes: e.target.value })}
-                placeholder="Información adicional"
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
-            </div>
-
-            {/* Estados */}
-            <div>
-              <Label className="dark:text-white mb-2 block">Estado</Label>
-              <CategoryMultiSelect
-                selectedCategories={contactForm.statusCategories}
-                availableCategories={statusCategories}
-                multiSelect={false}
-                onAdd={(category) => {
-                  // En modo single-select, reemplazar la categoría existente
-                  setContactForm({
-                    ...contactForm,
-                    statusCategories: [category],
-                  });
-                }}
-                onRemove={(categoryId) => {
-                  setContactForm({
-                    ...contactForm,
-                    statusCategories: contactForm.statusCategories.filter(c => c.id !== categoryId),
-                  });
-                }}
-                onCreateNew={(name, color) => {
-                  createStatusCategoryMutation.mutate({ name, color }, {
-                    onSuccess: (newCategory) => {
-                      // En modo single-select, reemplazar la categoría existente
-                      setContactForm({
-                        ...contactForm,
-                        statusCategories: [newCategory as CRMCategoryData],
-                      });
-                    },
-                  });
-                }}
-                onEditCategory={(category) => {
-                  if (category.id) {
-                    setContactForm({
-                      ...contactForm,
-                      statusCategories: contactForm.statusCategories.map((c) =>
-                        c.id === category.id ? { ...c, name: category.name, color: category.color } : c
-                      ),
-                    });
-                    updateStatusCategoryMutation.mutate({
-                      id: category.id,
-                      name: category.name,
-                      color: category.color,
-                    });
-                  }
-                }}
-                onDeleteCategory={(categoryId) => {
-                  setContactForm({
-                    ...contactForm,
-                    statusCategories: contactForm.statusCategories.filter(c => c.id !== categoryId),
-                  });
-                  deleteStatusCategoryMutation.mutate(categoryId);
-                }}
-              />
-            </div>
-
-            {/* Categorías */}
-            <div>
-              <Label className="dark:text-white mb-2 block">Categorías</Label>
-              <CategoryMultiSelect
-                selectedCategories={contactForm.categories}
-                availableCategories={categories}
-                onAdd={(category) => {
-                  if (!contactForm.categories.find(c => c.id === category.id)) {
-                    setContactForm({
-                      ...contactForm,
-                      categories: [...contactForm.categories, category],
-                    });
-                  }
-                }}
-                onRemove={(categoryId) => {
-                  setContactForm({
-                    ...contactForm,
-                    categories: contactForm.categories.filter(c => c.id !== categoryId),
-                  });
-                }}
-                onCreateNew={(name, color) => {
-                  createCategoryMutation.mutate({ name, color }, {
-                    onSuccess: (newCategory) => {
-                      setContactForm({
-                        ...contactForm,
-                        categories: [...contactForm.categories, newCategory as CRMCategoryData],
-                      });
-                    },
-                  });
-                }}
-                onEditCategory={(category) => {
-                  if (category.id) {
-                    // Update selected categories in the form immediately so chips reflect renamed color/name
-                    setContactForm({
-                      ...contactForm,
-                      categories: contactForm.categories.map((c) =>
-                        c.id === category.id ? { ...c, name: category.name, color: category.color } : c
-                      ),
-                    });
-                    updateCategoryMutation.mutate({
-                      id: category.id,
-                      name: category.name,
-                      color: category.color,
-                    });
-                  }
-                }}
-                onDeleteCategory={(categoryId) => {
-                  deleteCategoryMutation.mutate(categoryId);
-                }}
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setContactDialogOpen(false);
-                setEditingContactId(null);
-                setContactForm(emptyContactForm);
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={() =>
-                contactMutation.mutate({
-                  ...contactForm,
-                  categories: contactForm.categories
-                    .map(c => c.id)
-                    .filter((id): id is number => id !== undefined),
-                  statusCategories: contactForm.statusCategories
-                    .map(c => c.id)
-                    .filter((id): id is number => id !== undefined),
-                  role: contactRole,
-                })
-              }
-              disabled={!contactForm.name || contactMutation.isPending}
-            >
-              {contactMutation.isPending ? 'Guardando...' : 'Guardar'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={projectDialogOpen} onOpenChange={setProjectDialogOpen}>
         <DialogContent className="max-w-3xl dark:bg-gray-900 max-h-[90vh] overflow-y-auto">
@@ -1116,19 +1083,15 @@ export default function CRMPage() {
                 availableCategories={projectStatusCategories}
                 multiSelect={false}
                 onAdd={(category) => {
-                  // console.log('🏷️ Adding category to project:', category);
                   // En modo single-select, reemplazar la categoría existente
                   const newStatusCategories = [category];
-                  // console.log('🏷️ New statusCategories:', newStatusCategories);
                   setProjectForm({
                     ...projectForm,
                     statusCategories: newStatusCategories,
                   });
                 }}
                 onRemove={(categoryId) => {
-                  // console.log('🗑️ Removing category from project:', categoryId);
                   const newStatusCategories = projectForm.statusCategories.filter(c => c.id !== categoryId);
-                  // console.log('🏷️ New statusCategories after remove:', newStatusCategories);
                   setProjectForm({
                     ...projectForm,
                     statusCategories: newStatusCategories,
@@ -1408,8 +1371,6 @@ export default function CRMPage() {
             </Button>
             <Button
               onClick={() => {
-                // console.log('💾 Guardar clicked - Current projectForm:', projectForm);
-                // console.log('💾 Current statusCategories:', projectForm.statusCategories);
                 projectMutation.mutate(projectForm);
               }}
               disabled={!projectForm.name || projectMutation.isPending}
@@ -1427,22 +1388,168 @@ export default function CRMPage() {
 function ContactsList({
   data,
   loading,
-  onEdit,
   onDelete,
   emptyLabel,
   role,
+  showNewContactCard = false,
+  newContactDraft,
+  newContactSaving = false,
+  onNewContactChange,
+  onSaveNewContact,
+  onCancelNewContact,
   categories,
   statusCategories,
+  onCreateCategory,
+  onUpdateCategory,
+  onDeleteCategory,
+  onCreateStatusCategory,
+  onUpdateStatusCategory,
+  onDeleteStatusCategory,
 }: {
   data: Contact[];
   loading: boolean;
-  onEdit: (contact: Contact) => void;
   onDelete: (id: number) => void;
   emptyLabel: string;
   role: ContactRole;
+  showNewContactCard?: boolean;
+  newContactDraft?: ContactFormState;
+  newContactSaving?: boolean;
+  onNewContactChange?: (form: ContactFormState) => void;
+  onSaveNewContact?: () => void;
+  onCancelNewContact?: () => void;
   categories: CRMCategoryData[];
   statusCategories: CRMCategoryData[];
+  onCreateCategory?: (name: string, color: string) => void;
+  onUpdateCategory?: (id: number, name: string, color: string) => void;
+  onDeleteCategory?: (id: number) => void;
+  onCreateStatusCategory?: (name: string, color: string) => void;
+  onUpdateStatusCategory?: (id: number, name: string, color: string) => void;
+  onDeleteStatusCategory?: (id: number) => void;
 }) {
+  const { toast } = useToast();
+  const [expandedContactId, setExpandedContactId] = useState<number | null>(null);
+  const [contactPendingDelete, setContactPendingDelete] = useState<{ id: number; name: string } | null>(null);
+  const [drafts, setDrafts] = useState<Record<number, {
+    label: string;
+    name: string;
+    email: string;
+    phone: string;
+    taxId: string;
+    city: string;
+    postalAddress: string;
+    notes: string;
+    categories: number[];
+    statusCategories: number[];
+  }>>({});
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const saveTimeoutsRef = useRef<Record<number, ReturnType<typeof setTimeout> | undefined>>({});
+  const pendingPayloadRef = useRef<Record<number, Partial<Contact>>>({});
+
+  const getNextStatusCategoryId = (currentStatusId?: number | null) => {
+    const available = statusCategories.filter((cat): cat is CRMCategoryData & { id: number } => cat.id !== undefined);
+    if (available.length === 0) return null;
+
+    const currentIndex = available.findIndex((cat) => cat.id === currentStatusId);
+    if (currentIndex === -1) return available[0].id;
+
+    const nextIndex = (currentIndex + 1) % available.length;
+    return available[nextIndex].id;
+  };
+
+  const getInitialDraft = (contact: Contact) => ({
+    label: contact.label || '',
+    name: contact.name || '',
+    email: contact.email || '',
+    phone: contact.phone || '',
+    taxId: contact.taxId || '',
+    city: contact.city || '',
+    postalAddress: contact.postalAddress || '',
+    notes: contact.notes || '',
+    categories: (Array.isArray(contact.categories) ? contact.categories : []).filter((id): id is number => typeof id === 'number'),
+    statusCategories: (Array.isArray(contact.statusCategories) ? contact.statusCategories : []).filter((id): id is number => typeof id === 'number'),
+  });
+
+  const inlineUpdateMutation = useMutation({
+    mutationFn: ({ contactId, payload }: { contactId: number; payload: Partial<Contact> }) =>
+      apiRequest('PATCH', `/api/crm/contacts/${contactId}`, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/crm/contacts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/crm/capture/pipeline'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error al guardar',
+        description: error?.message || 'No se pudo guardar el contacto',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const flushPendingSave = useCallback((contactId: number) => {
+    const pending = pendingPayloadRef.current[contactId];
+    if (!pending || Object.keys(pending).length === 0) return;
+    pendingPayloadRef.current[contactId] = {};
+    inlineUpdateMutation.mutate({ contactId, payload: pending });
+  }, [inlineUpdateMutation]);
+
+  const scheduleSave = useCallback((contactId: number, partialPayload: Partial<Contact>, immediate = false) => {
+    pendingPayloadRef.current[contactId] = {
+      ...(pendingPayloadRef.current[contactId] || {}),
+      ...partialPayload,
+    };
+
+    const currentTimeout = saveTimeoutsRef.current[contactId];
+    if (currentTimeout) clearTimeout(currentTimeout);
+
+    if (immediate) {
+      flushPendingSave(contactId);
+      return;
+    }
+
+    saveTimeoutsRef.current[contactId] = setTimeout(() => {
+      flushPendingSave(contactId);
+    }, 500);
+  }, [flushPendingSave]);
+
+  const updateDraftField = (
+    contactId: number,
+    field: 'label' | 'name' | 'email' | 'phone' | 'taxId' | 'city' | 'postalAddress' | 'notes' | 'categories' | 'statusCategories',
+    value: string | number[]
+  ) => {
+    setDrafts((prev) => {
+      const base = prev[contactId] || getInitialDraft(data.find((item) => item.id === contactId)!);
+      return {
+        ...prev,
+        [contactId]: {
+          ...base,
+          [field]: value,
+        },
+      };
+    });
+  };
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (expandedContactId === null) return;
+      const target = event.target as Node;
+      if (listRef.current && !listRef.current.contains(target)) {
+        flushPendingSave(expandedContactId);
+        setExpandedContactId(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [expandedContactId, flushPendingSave]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(saveTimeoutsRef.current).forEach((timeoutId) => {
+        if (timeoutId) clearTimeout(timeoutId);
+      });
+    };
+  }, []);
+
   // Mapa de colores para convertir nombres a clases Tailwind (bg y text)
   const colorMap: Record<string, { bg: string; text: string }> = {
     'predeterminado': { bg: 'bg-gray-100 dark:bg-gray-900/40', text: 'text-gray-700 dark:text-gray-300' },
@@ -1465,7 +1572,7 @@ function ContactsList({
     );
   }
 
-  if (!data.length) {
+  if (!data.length && !showNewContactCard) {
     return (
       <Card className="dark:bg-gray-800 dark:border-gray-700">
         <CardContent className="py-12 text-center">
@@ -1477,8 +1584,163 @@ function ContactsList({
   }
 
   return (
-    <div className="space-y-3">
+    <div ref={listRef} className="space-y-3">
+      {showNewContactCard && newContactDraft && (
+        <Card className="border border-blue-200 dark:border-blue-700 dark:bg-gray-800 rounded-2xl ring-1 ring-blue-400/40 overflow-visible">
+          <CardContent className="bg-gray-50/70 dark:bg-gray-900/20 p-4 overflow-visible">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3 overflow-visible">
+              <div>
+                <Label className="text-xs text-gray-500">Nombre *</Label>
+                <Input
+                  value={newContactDraft.name}
+                  onChange={(e) => onNewContactChange?.({ ...newContactDraft, name: e.target.value })}
+                  placeholder="Ej: Cliente ABC"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500">Email</Label>
+                <Input
+                  type="email"
+                  value={newContactDraft.email}
+                  onChange={(e) => onNewContactChange?.({ ...newContactDraft, email: e.target.value })}
+                  placeholder="correo@empresa.com"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500">Teléfono</Label>
+                <Input
+                  value={newContactDraft.phone}
+                  onChange={(e) => onNewContactChange?.({ ...newContactDraft, phone: e.target.value })}
+                  placeholder="+34 600 000 000"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500">CIF/NIF</Label>
+                <Input
+                  value={newContactDraft.taxId}
+                  onChange={(e) => onNewContactChange?.({ ...newContactDraft, taxId: e.target.value })}
+                  placeholder="B12345678"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500">Estado</Label>
+                <CategoryMultiSelect
+                  selectedCategories={newContactDraft.statusCategories}
+                  availableCategories={statusCategories}
+                  multiSelect={false}
+                  onAdd={(category) => {
+                    onNewContactChange?.({
+                      ...newContactDraft,
+                      statusCategories: [category],
+                    });
+                  }}
+                  onRemove={(categoryId) => {
+                    onNewContactChange?.({
+                      ...newContactDraft,
+                      statusCategories: newContactDraft.statusCategories.filter(c => c.id !== categoryId),
+                    });
+                  }}
+                  onCreateNew={(name, color) => {
+                    if (onCreateStatusCategory) {
+                      onCreateStatusCategory(name, color);
+                    }
+                  }}
+                  onEditCategory={(category) => {
+                    if (category.id && onUpdateStatusCategory) {
+                      onUpdateStatusCategory(category.id, category.name, category.color);
+                    }
+                  }}
+                  onDeleteCategory={(categoryId) => {
+                    onNewContactChange?.({
+                      ...newContactDraft,
+                      statusCategories: newContactDraft.statusCategories.filter(c => c.id !== categoryId),
+                    });
+                    if (onDeleteStatusCategory) onDeleteStatusCategory(categoryId);
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mt-3">
+              <div className="md:col-span-2">
+                <Label className="text-xs text-gray-500">Dirección postal</Label>
+                <Input
+                  value={newContactDraft.postalAddress}
+                  onChange={(e) => onNewContactChange?.({ ...newContactDraft, postalAddress: e.target.value })}
+                  placeholder="Calle, número, CP"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500">Ciudad</Label>
+                <Input
+                  value={newContactDraft.city}
+                  onChange={(e) => onNewContactChange?.({ ...newContactDraft, city: e.target.value })}
+                  placeholder="Madrid"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-xs text-gray-500">Categorías</Label>
+                <CategoryMultiSelect
+                  selectedCategories={newContactDraft.categories}
+                  availableCategories={categories}
+                  onAdd={(category) => {
+                    if (!newContactDraft.categories.find(c => c.id === category.id)) {
+                      onNewContactChange?.({
+                        ...newContactDraft,
+                        categories: [...newContactDraft.categories, category],
+                      });
+                    }
+                  }}
+                  onRemove={(categoryId) => {
+                    onNewContactChange?.({
+                      ...newContactDraft,
+                      categories: newContactDraft.categories.filter(c => c.id !== categoryId),
+                    });
+                  }}
+                  onCreateNew={(name, color) => {
+                    if (onCreateCategory) {
+                      onCreateCategory(name, color);
+                    }
+                  }}
+                  onEditCategory={(category) => {
+                    if (category.id && onUpdateCategory) {
+                      onUpdateCategory(category.id, category.name, category.color);
+                    }
+                  }}
+                  onDeleteCategory={(categoryId) => {
+                    onNewContactChange?.({
+                      ...newContactDraft,
+                      categories: newContactDraft.categories.filter(c => c.id !== categoryId),
+                    });
+                    if (onDeleteCategory) onDeleteCategory(categoryId);
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="mt-3">
+              <Label className="text-xs text-gray-500">Notas</Label>
+              <Textarea
+                rows={3}
+                value={newContactDraft.notes}
+                onChange={(e) => onNewContactChange?.({ ...newContactDraft, notes: e.target.value })}
+              />
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={onCancelNewContact}>Cancelar</Button>
+              <Button onClick={onSaveNewContact} disabled={!newContactDraft.name || newContactSaving}>
+                {newContactSaving ? 'Guardando...' : 'Guardar'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {data.map((contact) => {
+        const isExpanded = expandedContactId === contact.id;
+        const draft = drafts[contact.id] || getInitialDraft(contact);
+
         // Convertir IDs de estado a objetos
         const statusCats = contact.statusCategories && Array.isArray(contact.statusCategories) && contact.statusCategories.length > 0
           ? contact.statusCategories
@@ -1486,14 +1748,22 @@ function ContactsList({
               .filter((cat): cat is CRMCategoryData => cat !== undefined)
           : null;
         const primaryStatus = statusCats && statusCats.length > 0 ? statusCats[0] : null;
+        const canQuickStatusChange = statusCategories.some((cat) => cat.id !== undefined);
 
         return (
         <Card
           key={contact.id}
-          className="border border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-2xl overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+          className={`border border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-2xl hover:shadow-md transition-all cursor-pointer ${isExpanded ? 'ring-1 ring-blue-400/40 overflow-visible' : 'overflow-hidden'}`}
           role="button"
-          onClick={() => onEdit(contact)}
+          onClick={() => {
+            setDrafts((prev) => ({
+              ...prev,
+              [contact.id]: prev[contact.id] || getInitialDraft(contact),
+            }));
+            setExpandedContactId((prev) => (prev === contact.id ? null : contact.id));
+          }}
         >
+          {!isExpanded && (
           <CardContent className="p-0">
             <div className="flex items-stretch">
               {/* Contenido principal */}
@@ -1510,18 +1780,18 @@ function ContactsList({
 
                 {/* Datos de contacto - columnas fijas alineadas */}
                 <div className="hidden md:flex items-center gap-4 flex-1 min-w-0 overflow-hidden">
-                  {/* Email - oculto en md, visible en lg+ */}
-                  <span className="text-xs text-gray-600 dark:text-gray-400 truncate w-[160px] flex-shrink-0 hidden lg:block">
+                  {/* Email */}
+                  <span className="text-xs text-gray-600 dark:text-gray-400 truncate flex-shrink-0 w-[160px] hidden lg:block">
                     {contact.email || '-'}
                   </span>
                   
                   {/* Teléfono */}
-                  <span className="text-xs text-gray-600 dark:text-gray-400 truncate w-[100px] flex-shrink-0">
+                  <span className="text-xs text-gray-600 dark:text-gray-400 truncate w-[120px] flex-shrink-0">
                     {contact.phone || '-'}
                   </span>
                   
-                  {/* Ciudad - solo en xl+ */}
-                  <span className="text-xs text-gray-600 dark:text-gray-400 truncate w-[80px] flex-shrink-0 hidden xl:block">
+                  {/* Ciudad */}
+                  <span className="text-xs text-gray-600 dark:text-gray-400 truncate w-[90px] flex-shrink-0 hidden xl:block">
                     {contact.city || '-'}
                   </span>
                   
@@ -1554,29 +1824,26 @@ function ContactsList({
                     )}
                   </div>
                 </div>
+
               </div>
-              
-              {/* Botón eliminar - siempre visible, nunca salta a segunda fila */}
-              <div className="flex items-center px-2 flex-shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(contact.id);
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-              
+
               {/* Sección coloreada de estado - extremo derecho */}
               <div 
-                className={`w-[110px] flex items-center justify-center flex-shrink-0 px-3 ${
+                className={`w-[128px] flex items-center justify-center flex-shrink-0 px-3 ${canQuickStatusChange ? 'cursor-pointer hover:opacity-90 transition' : ''} ${
                   primaryStatus?.color && colorMap[primaryStatus.color]
                     ? colorMap[primaryStatus.color].bg
                     : 'bg-gray-100 dark:bg-gray-900/40'
                 }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+
+                  const nextStatusId = getNextStatusCategoryId(primaryStatus?.id);
+                  if (!nextStatusId) return;
+
+                  const updatedStatus = [nextStatusId];
+                  updateDraftField(contact.id, 'statusCategories', updatedStatus);
+                  scheduleSave(contact.id, { statusCategories: updatedStatus }, true);
+                }}
               >
                 <span className={`text-xs font-semibold text-center ${
                   primaryStatus?.color && colorMap[primaryStatus.color]
@@ -1588,10 +1855,259 @@ function ContactsList({
               </div>
             </div>
           </CardContent>
+          )}
+
+            {isExpanded && (
+              <CardContent 
+                className="border-t border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/20 p-4 overflow-visible"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 overflow-visible">
+                  <div>
+                    <Label className="text-xs text-gray-500">Nombre</Label>
+                    <Input
+                      value={draft.name}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        updateDraftField(contact.id, 'name', value);
+                        scheduleSave(contact.id, { name: value });
+                      }}
+                      onBlur={() => scheduleSave(contact.id, {}, true)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Email</Label>
+                    <Input
+                      value={draft.email}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        updateDraftField(contact.id, 'email', value);
+                        scheduleSave(contact.id, { email: value });
+                      }}
+                      onBlur={() => scheduleSave(contact.id, {}, true)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Teléfono</Label>
+                    <Input
+                      value={draft.phone}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        updateDraftField(contact.id, 'phone', value);
+                        scheduleSave(contact.id, { phone: value });
+                      }}
+                      onBlur={() => scheduleSave(contact.id, {}, true)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">CIF / NIF</Label>
+                    <Input
+                      value={draft.taxId}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        updateDraftField(contact.id, 'taxId', value);
+                        scheduleSave(contact.id, { taxId: value });
+                      }}
+                      onBlur={() => scheduleSave(contact.id, {}, true)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Estado</Label>
+                    <CategoryMultiSelect
+                      selectedCategories={draft.statusCategories
+                        .map((id) => statusCategories.find((c) => c.id === id))
+                        .filter((c): c is CRMCategoryData => c !== undefined)}
+                      availableCategories={statusCategories}
+                      multiSelect={false}
+                      onAdd={(category) => {
+                        const updated = [category.id].filter((id): id is number => id !== undefined);
+                        updateDraftField(contact.id, 'statusCategories', updated);
+                        scheduleSave(contact.id, { statusCategories: updated }, true);
+                      }}
+                      onRemove={(categoryId) => {
+                        if (!categoryId) return;
+                        const updated: number[] = [];
+                        updateDraftField(contact.id, 'statusCategories', updated);
+                        scheduleSave(contact.id, { statusCategories: updated }, true);
+                      }}
+                      onCreateNew={(name, color) => {
+                        if (onCreateStatusCategory) onCreateStatusCategory(name, color);
+                      }}
+                      onEditCategory={(category) => {
+                        if (category.id && onUpdateStatusCategory) {
+                          onUpdateStatusCategory(category.id, category.name, category.color);
+                        }
+                      }}
+                      onDeleteCategory={(categoryId) => {
+                        const updated: number[] = [];
+                        updateDraftField(contact.id, 'statusCategories', updated);
+                        scheduleSave(contact.id, { statusCategories: updated }, true);
+                        if (onDeleteStatusCategory) onDeleteStatusCategory(categoryId);
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mt-3">
+                  <div className="md:col-span-2">
+                    <Label className="text-xs text-gray-500">Dirección postal</Label>
+                    <Input
+                      value={draft.postalAddress}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        updateDraftField(contact.id, 'postalAddress', value);
+                        scheduleSave(contact.id, { postalAddress: value });
+                      }}
+                      onBlur={() => scheduleSave(contact.id, {}, true)}
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-gray-500">Ciudad</Label>
+                    <Input
+                      value={draft.city}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        updateDraftField(contact.id, 'city', value);
+                        scheduleSave(contact.id, { city: value });
+                      }}
+                      onBlur={() => scheduleSave(contact.id, {}, true)}
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label className="text-xs text-gray-500">Categorías</Label>
+                    <CategoryMultiSelect
+                      selectedCategories={draft.categories
+                        .map((id) => categories.find((c) => c.id === id))
+                        .filter((c): c is CRMCategoryData => c !== undefined)}
+                      availableCategories={categories}
+                      onAdd={(category) => {
+                        const updated = [...draft.categories];
+                        if (category.id && !updated.includes(category.id)) {
+                          updated.push(category.id);
+                          updateDraftField(contact.id, 'categories', updated);
+                          scheduleSave(contact.id, { categories: updated }, true);
+                        }
+                      }}
+                      onRemove={(categoryId) => {
+                        if (!categoryId) return;
+                        const updated = draft.categories.filter((id) => id !== categoryId);
+                        updateDraftField(contact.id, 'categories', updated);
+                        scheduleSave(contact.id, { categories: updated }, true);
+                      }}
+                      onCreateNew={(name, color) => {
+                        if (onCreateCategory) onCreateCategory(name, color);
+                      }}
+                      onEditCategory={(category) => {
+                        if (category.id && onUpdateCategory) {
+                          onUpdateCategory(category.id, category.name, category.color);
+                          const updated = draft.categories.map((id) => id);
+                          updateDraftField(contact.id, 'categories', updated);
+                        }
+                      }}
+                      onDeleteCategory={(categoryId) => {
+                        const updated = draft.categories.filter((id) => id !== categoryId);
+                        updateDraftField(contact.id, 'categories', updated);
+                        scheduleSave(contact.id, { categories: updated }, true);
+                        if (onDeleteCategory) onDeleteCategory(categoryId);
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <Label className="text-xs text-gray-500">Notas</Label>
+                  <Textarea
+                    rows={3}
+                    value={draft.notes}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      updateDraftField(contact.id, 'notes', value);
+                      scheduleSave(contact.id, { notes: value });
+                    }}
+                    onBlur={() => scheduleSave(contact.id, {}, true)}
+                  />
+                </div>
+
+                <div className="mt-4">
+                  <ContactStatusHistory contactId={contact.id} />
+                </div>
+
+                <div className="mt-4 flex justify-end">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setContactPendingDelete({ id: contact.id, name: contact.name });
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Eliminar contacto
+                  </Button>
+                </div>
+              </CardContent>
+            )}
         </Card>
         );
       })}
+
+      <Dialog
+        open={!!contactPendingDelete}
+        onOpenChange={(open) => {
+          if (!open) setContactPendingDelete(null);
+        }}
+      >
+        <DialogContent className="max-w-md dark:bg-gray-900" onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle>Confirmar borrado</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            ¿Seguro que quieres eliminar {contactPendingDelete ? `"${contactPendingDelete.name}"` : 'este contacto'}? Esta acción no se puede deshacer.
+          </p>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setContactPendingDelete(null)}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                if (!contactPendingDelete) return;
+                setExpandedContactId((current) => (current === contactPendingDelete.id ? null : current));
+                onDelete(contactPendingDelete.id);
+                setContactPendingDelete(null);
+              }}
+            >
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+function ContactStatusHistory({ contactId }: { contactId: number }) {
+  return (
+    <CRMInteractionHistory
+      contactId={contactId}
+      queryScope="status-history"
+      title="Historial de estado"
+      emptyText="Sin cambios de estado todavía."
+      subjectFilter="Cambio de estado"
+      showCount
+      maxHeightClassName="max-h-60"
+      containerClassName="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-white/40 dark:bg-gray-900/30 space-y-2"
+    />
   );
 }
 

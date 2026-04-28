@@ -1,5 +1,6 @@
 import { eq, and, or, desc, sql, lte, gte, lt, isNotNull, isNull, inArray, asc, ne } from 'drizzle-orm';
 import * as schema from '@shared/schema';
+import { vacationLockManager } from './utils/vacationCalculationLock';
 import type {
   Company, User, WorkSession, BreakPeriod, VacationRequest, Document, Message, SystemNotification,
   InsertCompany, InsertUser, InsertWorkSession, InsertBreakPeriod, InsertVacationRequest, InsertDocument, InsertMessage, InsertSystemNotification,
@@ -38,7 +39,7 @@ if (!stripeSecretKey) {
 }
 
 const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: '2025-05-28.basil',
+  apiVersion: '2025-08-27.basil',
 });
 
 export interface IStorage {
@@ -103,11 +104,16 @@ export interface IStorage {
   updateWorkSessionBreakTime(workSessionId: number): Promise<void>;
 
   // Vacation/Absence Requests
+  calculateVacationDays(userId: number, mode?: 'total' | 'period'): Promise<number>;
+  updateUserVacationDays(userId: number, operationName?: string): Promise<User | undefined>;
+  syncVacationDaysForCompany(companyId: number): Promise<{ companyId: number; processedUsers: number; updatedUsers: number; errorUsers: number }>;
+  syncVacationDaysForAllCompanies(): Promise<{ processedCompanies: number; processedUsers: number; updatedUsers: number; errorUsers: number }>;
   createVacationRequest(request: InsertVacationRequest): Promise<VacationRequest>;
   getVacationRequestById(id: number): Promise<VacationRequest | undefined>;
   getVacationRequestsByUser(userId: number): Promise<VacationRequest[]>;
   getVacationRequestsByCompany(companyId: number): Promise<VacationRequest[]>;
   updateVacationRequest(id: number, updates: Partial<InsertVacationRequest>): Promise<VacationRequest | undefined>;
+  deleteVacationRequest(id: number): Promise<VacationRequest | undefined>;
 
   // Absence Policies
   getAbsencePoliciesByCompany(companyId: number): Promise<AbsencePolicy[]>;
@@ -126,6 +132,7 @@ export interface IStorage {
   getDocument(id: number): Promise<Document | undefined>;
   deleteDocument(id: number): Promise<boolean>;
   deleteOrphanedDocuments(documentIds: number[]): Promise<{ deleted: number; failed: number[] }>;
+  updateDocumentName(id: number, originalName: string, fileName: string): Promise<Document | undefined>;
   
   // Document signature methods
   markDocumentAsViewed(id: number): Promise<Document | undefined>;
@@ -396,13 +403,29 @@ export interface IStorage {
   createToolLoan(loan: schema.InsertToolLoan): Promise<schema.ToolLoan>;
   updateToolLoan(id: number, updates: Partial<schema.InsertToolLoan>): Promise<schema.ToolLoan | undefined>;
   getOverdueToolLoans(companyId: number): Promise<(schema.ToolLoan & { product: schema.Product })[]>;
+  
+  // Company Usage Tracking & Cost Calculation
+  calculateR2StorageUsage(companyId: number): Promise<{ bytes: number; costUSD: number }>;
+  calculateDBStorageUsage(companyId: number): Promise<{ bytes: number; costUSD: number }>;
+  getCompanyRealtimeUsage(companyId: number): Promise<any>;
+  calculateCompanyUsageStats(companyId: number): Promise<any>;
+  trackAPIRequest(companyId: number, computeTimeMs: number): Promise<void>;
+  trackAIUsage(companyId: number, tokensUsed: number): Promise<void>;
 }
 
 export class DrizzleStorage implements IStorage {
   // Companies
   async createCompany(company: InsertCompany): Promise<Company> {
-    const [result] = await db.insert(schema.companies).values(company).returning();
-    return result;
+    const inserted = await db.insert(schema.companies).values(company).returning();
+    const result = Array.isArray(inserted)
+      ? inserted[0]
+      : (inserted as any)?.rows?.[0];
+
+    if (!result) {
+      throw new Error('No se pudo crear la empresa');
+    }
+
+    return result as Company;
   }
 
   async getCompany(id: number): Promise<Company | undefined> {
@@ -475,8 +498,13 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getUsersByCompany(companyId: number): Promise<User[]> {
-    // Looking for users by company
-    const result = await db.select().from(schema.users).where(eq(schema.users.companyId, companyId));
+    // Looking for users by company - EXCLUDE: accountants are external and shouldn't appear as company users
+    const result = await db.select().from(schema.users).where(
+      and(
+        eq(schema.users.companyId, companyId),
+        ne(schema.users.role, 'accountant')
+      )
+    );
     // Found users by company
     return result;
   }
@@ -500,42 +528,75 @@ export class DrizzleStorage implements IStorage {
     return user;
   }
 
-  // Calculate vacation entitlement for the current period using company cutoff (default Feb 1 -> Jan 31)
-  async calculateVacationDays(userId: number): Promise<number> {
+  // Calculate vacation entitlement.
+  // mode='period' (default):
+  //   - first employment year: prorated by months since hire
+  //   - after first year: full annual entitlement each period
+  // mode='total': accrual from hire date to today (tenure-based accumulation)
+  async calculateVacationDays(userId: number, mode: 'total' | 'period' = 'period'): Promise<number> {
     const user = await this.getUser(userId);
     if (!user) return 0;
+    if (!user.startDate) return 0;
 
     const company = await this.getCompany(user.companyId);
-    const companyDaysPerMonth = parseFloat(company?.vacationDaysPerMonth || company?.defaultVacationPolicy || '2.5');
+    const calculationMode = company?.absenceDayCalculationMode === 'working' ? 'working' : 'natural';
+    const companyAnnualDaysRaw = calculationMode === 'working'
+      ? company?.vacationDaysWorking
+      : (company?.defaultVacationDays ?? company?.vacationDaysNatural);
+    const companyAnnualDays = companyAnnualDaysRaw ? parseFloat(companyAnnualDaysRaw.toString()) : NaN;
+    const companyDaysPerMonth = Number.isFinite(companyAnnualDays) && companyAnnualDays > 0
+      ? companyAnnualDays / 12
+      : parseFloat(company?.vacationDaysPerMonth || company?.defaultVacationPolicy || '2.5');
     const userDaysPerMonth = user.vacationDaysPerMonth ? parseFloat(user.vacationDaysPerMonth) : companyDaysPerMonth;
 
-    const cutoff = (company as any)?.vacationCutoffDay || '01-31'; // MM-DD
-    const [mmStr, ddStr] = cutoff.split('-');
-    const mm = Math.max(1, Math.min(12, parseInt(mmStr || '1', 10))) - 1; // zero-based month
-    const dd = Math.max(1, Math.min(31, parseInt(ddStr || '31', 10)));
-
     const startDate = new Date(user.startDate);
+    if (isNaN(startDate.getTime())) return 0;
     const today = new Date();
 
-    // Determine current vacation period boundaries using cutoff (period ends on cutoff; starts next day previous year)
-    const currentYear = today.getFullYear();
-    const cutoffThisYear = new Date(currentYear, mm, dd);
-    const periodEnd = today <= cutoffThisYear ? cutoffThisYear : new Date(currentYear + 1, mm, dd);
-    const periodStart = new Date(periodEnd);
-    periodStart.setFullYear(periodEnd.getFullYear() - 1);
-    periodStart.setDate(periodStart.getDate() + 1); // day after previous cutoff
+    let accrualStart = startDate;
+    let accrualEnd = today;
+    let maxMonths = Number.POSITIVE_INFINITY;
 
-    // Accrual starts at later of hire date or period start
-    const accrualStart = startDate > periodStart ? startDate : periodStart;
-    if (accrualStart > periodEnd) {
+    if (mode === 'period') {
+      const monthsSinceHire = (today.getFullYear() - startDate.getFullYear()) * 12 +
+        (today.getMonth() - startDate.getMonth()) +
+        (today.getDate() >= startDate.getDate() ? 1 : 0);
+
+      const adjustment = parseFloat(user.vacationDaysAdjustment || '0');
+
+      // After first year, entitlement resets by period but remains full annual amount.
+      if (monthsSinceHire >= 12) {
+        return Math.max(0, Math.round((companyDaysPerMonth * 12 + adjustment) * 10) / 10);
+      }
+
+      const cutoff = (company as any)?.vacationCutoffDay || '01-31'; // MM-DD
+      const [mmStr, ddStr] = cutoff.split('-');
+      const mm = Math.max(1, Math.min(12, parseInt(mmStr || '1', 10))) - 1; // zero-based month
+      const dd = Math.max(1, Math.min(31, parseInt(ddStr || '31', 10)));
+
+      // Determine current vacation period boundaries using cutoff (period ends on cutoff; starts next day previous year)
+      const currentYear = today.getFullYear();
+      const cutoffThisYear = new Date(currentYear, mm, dd);
+      const periodEnd = today <= cutoffThisYear ? cutoffThisYear : new Date(currentYear + 1, mm, dd);
+      const periodStart = new Date(periodEnd);
+      periodStart.setFullYear(periodEnd.getFullYear() - 1);
+      periodStart.setDate(periodStart.getDate() + 1); // day after previous cutoff
+
+      // In first-year period mode, keep simple proration inside current period.
+      accrualStart = startDate > periodStart ? startDate : periodStart;
+      accrualEnd = today < periodEnd ? today : periodEnd;
+      maxMonths = 12;
+    }
+
+    if (accrualStart > accrualEnd) {
       return 0;
     }
 
-    // Months worked within the period (inclusive), capped to 12
-    const monthsWorked = (periodEnd.getFullYear() - accrualStart.getFullYear()) * 12 +
-      (periodEnd.getMonth() - accrualStart.getMonth()) +
-      (periodEnd.getDate() >= accrualStart.getDate() ? 1 : 0);
-    const cappedMonths = Math.max(0, Math.min(12, monthsWorked));
+    // Months worked up to today (inclusive)
+    const monthsWorked = (accrualEnd.getFullYear() - accrualStart.getFullYear()) * 12 +
+      (accrualEnd.getMonth() - accrualStart.getMonth()) +
+      (accrualEnd.getDate() >= accrualStart.getDate() ? 1 : 0);
+    const cappedMonths = Math.max(0, Math.min(maxMonths, monthsWorked));
 
     const calculatedDays = Math.round((cappedMonths * userDaysPerMonth) * 10) / 10;
     const adjustment = parseFloat(user.vacationDaysAdjustment || '0');
@@ -543,10 +604,71 @@ export class DrizzleStorage implements IStorage {
     return Math.max(0, calculatedDays + adjustment);
   }
 
-  // Update user's vacation days automatically
-  async updateUserVacationDays(userId: number): Promise<User | undefined> {
-    const calculatedDays = await this.calculateVacationDays(userId);
-    return this.updateUser(userId, { totalVacationDays: calculatedDays.toString() });
+  // Update user's vacation days automatically with lock protection
+  async updateUserVacationDays(userId: number, operationName: string = 'generic'): Promise<User | undefined> {
+    return vacationLockManager.withLock(userId, async () => {
+      const calculatedDays = await this.calculateVacationDays(userId);
+      return this.updateUser(userId, { totalVacationDays: calculatedDays.toString() });
+    }, operationName);
+  }
+
+  async syncVacationDaysForCompany(companyId: number): Promise<{ companyId: number; processedUsers: number; updatedUsers: number; errorUsers: number }> {
+    const users = await this.getUsersByCompany(companyId);
+    let processedUsers = 0;
+    let updatedUsers = 0;
+    let errorUsers = 0;
+
+    for (const user of users) {
+      processedUsers += 1;
+
+      try {
+        await vacationLockManager.withLock(user.id, async () => {
+          const calculatedDays = await this.calculateVacationDays(user.id);
+          const currentDays = user.totalVacationDays ? parseFloat(user.totalVacationDays) : 0;
+
+          if (Math.abs(currentDays - calculatedDays) > 0.01) {
+            await this.updateUser(user.id, { totalVacationDays: calculatedDays.toString() });
+            updatedUsers += 1;
+          }
+        }, 'daily-vacation-sync');
+      } catch {
+        errorUsers += 1;
+      }
+    }
+
+    return {
+      companyId,
+      processedUsers,
+      updatedUsers,
+      errorUsers,
+    };
+  }
+
+  async syncVacationDaysForAllCompanies(): Promise<{ processedCompanies: number; processedUsers: number; updatedUsers: number; errorUsers: number }> {
+    const companies = await this.getAllCompanies();
+    let processedCompanies = 0;
+    let processedUsers = 0;
+    let updatedUsers = 0;
+    let errorUsers = 0;
+
+    for (const company of companies) {
+      if ((company as any).isDeleted) {
+        continue;
+      }
+
+      const result = await this.syncVacationDaysForCompany(company.id);
+      processedCompanies += 1;
+      processedUsers += result.processedUsers;
+      updatedUsers += result.updatedUsers;
+      errorUsers += result.errorUsers;
+    }
+
+    return {
+      processedCompanies,
+      processedUsers,
+      updatedUsers,
+      errorUsers,
+    };
   }
 
   // 🔒 SECURITY: Refresh Token Management
@@ -625,22 +747,24 @@ export class DrizzleStorage implements IStorage {
     return signedUrl;
   }
 
-  // 🔒 SECURITY: Atomic get-and-consume to prevent TOCTOU race conditions
+  // 🔒 SECURITY: Validate signed URL token (reusable until expiration)
+  // iOS/native PDF viewers can perform multiple requests for the same document.
   async consumeSignedUrl(token: string): Promise<any | undefined> {
-    // Atomic operation: Update only if not used and not expired, return the updated row
-    const [signedUrl] = await db.update(schema.signedUrls)
-      .set({ 
-        used: true,
-        usedAt: new Date()
-      })
+    const [signedUrl] = await db.select().from(schema.signedUrls)
       .where(and(
         eq(schema.signedUrls.token, token),
-        eq(schema.signedUrls.used, false), // Only if not already used
         gte(schema.signedUrls.expiresAt, new Date()) // Only if not expired
-      ))
-      .returning();
-    
-    // Returns undefined if token was already used, expired, or doesn't exist
+      ));
+
+    if (!signedUrl) {
+      return undefined;
+    }
+
+    // Track last access for auditing without invalidating the token.
+    await db.update(schema.signedUrls)
+      .set({ usedAt: new Date() })
+      .where(eq(schema.signedUrls.id, signedUrl.id));
+
     return signedUrl;
   }
 
@@ -1052,17 +1176,59 @@ export class DrizzleStorage implements IStorage {
 
   // Vacation Requests
   async createVacationRequest(request: InsertVacationRequest): Promise<VacationRequest> {
-    const [result] = await db.insert(schema.vacationRequests).values(request).returning();
+    const [result] = await db.insert(schema.vacationRequests).values(request).returning({
+      id: schema.vacationRequests.id,
+      userId: schema.vacationRequests.userId,
+      startDate: schema.vacationRequests.startDate,
+      endDate: schema.vacationRequests.endDate,
+      reason: schema.vacationRequests.reason,
+      status: schema.vacationRequests.status,
+      reviewedBy: schema.vacationRequests.reviewedBy,
+      reviewedAt: schema.vacationRequests.reviewedAt,
+      adminComment: schema.vacationRequests.adminComment,
+      absenceType: schema.vacationRequests.absenceType,
+      attachmentPath: schema.vacationRequests.attachmentPath,
+      deductFromVacation: schema.vacationRequests.deductFromVacation,
+      createdAt: schema.vacationRequests.createdAt,
+    });
     return result;
   }
 
   async getVacationRequestById(id: number): Promise<VacationRequest | undefined> {
-    const [result] = await db.select().from(schema.vacationRequests).where(eq(schema.vacationRequests.id, id));
+    const [result] = await db.select({
+      id: schema.vacationRequests.id,
+      userId: schema.vacationRequests.userId,
+      startDate: schema.vacationRequests.startDate,
+      endDate: schema.vacationRequests.endDate,
+      reason: schema.vacationRequests.reason,
+      status: schema.vacationRequests.status,
+      reviewedBy: schema.vacationRequests.reviewedBy,
+      reviewedAt: schema.vacationRequests.reviewedAt,
+      adminComment: schema.vacationRequests.adminComment,
+      absenceType: schema.vacationRequests.absenceType,
+      attachmentPath: schema.vacationRequests.attachmentPath,
+      deductFromVacation: schema.vacationRequests.deductFromVacation,
+      createdAt: schema.vacationRequests.createdAt,
+    }).from(schema.vacationRequests).where(eq(schema.vacationRequests.id, id));
     return result;
   }
 
   async getVacationRequestsByUser(userId: number): Promise<VacationRequest[]> {
-    return db.select().from(schema.vacationRequests)
+    return db.select({
+      id: schema.vacationRequests.id,
+      userId: schema.vacationRequests.userId,
+      startDate: schema.vacationRequests.startDate,
+      endDate: schema.vacationRequests.endDate,
+      reason: schema.vacationRequests.reason,
+      status: schema.vacationRequests.status,
+      reviewedBy: schema.vacationRequests.reviewedBy,
+      reviewedAt: schema.vacationRequests.reviewedAt,
+      adminComment: schema.vacationRequests.adminComment,
+      absenceType: schema.vacationRequests.absenceType,
+      attachmentPath: schema.vacationRequests.attachmentPath,
+      deductFromVacation: schema.vacationRequests.deductFromVacation,
+      createdAt: schema.vacationRequests.createdAt,
+    }).from(schema.vacationRequests)
       .where(eq(schema.vacationRequests.userId, userId))
       .orderBy(desc(schema.vacationRequests.createdAt));
   }
@@ -1077,6 +1243,7 @@ export class DrizzleStorage implements IStorage {
       status: schema.vacationRequests.status,
       reviewedBy: schema.vacationRequests.reviewedBy,
       reviewedAt: schema.vacationRequests.reviewedAt,
+      adminComment: schema.vacationRequests.adminComment,
       createdAt: schema.vacationRequests.createdAt,
       absenceType: schema.vacationRequests.absenceType,
       attachmentPath: schema.vacationRequests.attachmentPath,
@@ -1100,6 +1267,8 @@ export class DrizzleStorage implements IStorage {
       requestDate: request.createdAt || new Date().toISOString(), // Use createdAt as requestDate
       approvedBy: request.reviewedBy,
       approvedDate: request.reviewedAt,
+      adminComment: String(request.adminComment || '').replace(/^__ASSIGNED__/, '').trim() || undefined,
+      assignedByAdmin: String(request.adminComment || '').startsWith('__ASSIGNED__'),
       createdAt: request.createdAt,
       updatedAt: request.createdAt,
       absenceType: request.absenceType || 'vacation',
@@ -1113,6 +1282,11 @@ export class DrizzleStorage implements IStorage {
 
   async updateVacationRequest(id: number, updates: Partial<InsertVacationRequest>): Promise<VacationRequest | undefined> {
     const [request] = await db.update(schema.vacationRequests).set(updates).where(eq(schema.vacationRequests.id, id)).returning();
+    return request;
+  }
+
+  async deleteVacationRequest(id: number): Promise<VacationRequest | undefined> {
+    const [request] = await db.delete(schema.vacationRequests).where(eq(schema.vacationRequests.id, id)).returning();
     return request;
   }
 
@@ -1169,6 +1343,19 @@ export class DrizzleStorage implements IStorage {
         await this.createAbsencePolicy(policy);
       }
     }
+
+    const hasAdverseWeather = existing.some((policy) => policy.absenceType === 'adverse_weather');
+    if (!hasAdverseWeather) {
+      await this.createAbsencePolicy({
+        companyId,
+        absenceType: 'adverse_weather',
+        name: 'Inclemencias del tiempo',
+        maxDays: null,
+        requiresAttachment: false,
+        isActive: true,
+        recoveryPercentage: 70,
+      });
+    }
   }
 
   // Documents
@@ -1188,10 +1375,13 @@ export class DrizzleStorage implements IStorage {
 
     if (cursor) {
       // Orden descendente por fecha e id para evitar duplicados
-      constraints.push(or(
+      const cursorConstraint = or(
         lt(schema.documents.createdAt, cursor.createdAt),
         and(eq(schema.documents.createdAt, cursor.createdAt), lt(schema.documents.id, cursor.id))
-      ));
+      );
+      if (cursorConstraint) {
+        constraints.push(cursorConstraint);
+      }
     }
 
     return db.select().from(schema.documents)
@@ -1217,6 +1407,7 @@ export class DrizzleStorage implements IStorage {
         d.is_accepted as "isAccepted",
         d.accepted_at as "acceptedAt",
         d.signed_at as "signedAt",
+        d.digital_signature as "digitalSignature",
         d.requires_signature as "requiresSignature",
         u.full_name as "userFullName",
         u.profile_picture as "userProfilePicture",
@@ -1405,6 +1596,18 @@ export class DrizzleStorage implements IStorage {
   async deleteDocument(id: number): Promise<boolean> {
     const result = await db.delete(schema.documents).where(eq(schema.documents.id, id));
     return result.rowCount > 0;
+  }
+
+  async updateDocumentName(id: number, originalName: string, fileName: string): Promise<Document | undefined> {
+    const result = await db.update(schema.documents)
+      .set({
+        originalName,
+        fileName
+      })
+      .where(eq(schema.documents.id, id))
+      .returning();
+    
+    return result[0];
   }
 
   async deleteOrphanedDocuments(documentIds: number[]): Promise<{ deleted: number; failed: number[] }> {
@@ -1670,6 +1873,7 @@ export class DrizzleStorage implements IStorage {
         subscriptionStatus: schema.subscriptions.status,
         subscriptionMaxUsers: schema.subscriptions.maxUsers,
         subscriptionEndDate: schema.subscriptions.endDate,
+        subscriptionTrialEndDate: schema.subscriptions.trialEndDate,
         stripeSubscriptionId: schema.subscriptions.stripeSubscriptionId,
         promoCodeId: schema.companies.usedPromotionalCode,
         promoCodeText: schema.promotionalCodes.code,
@@ -1705,12 +1909,26 @@ export class DrizzleStorage implements IStorage {
       // Calculate trial info
       const trialDuration = row.trialDurationDays || 7;
       const trialStartDate = new Date(row.createdAt || new Date());
-      const trialEndDate = new Date(trialStartDate);
-      trialEndDate.setDate(trialEndDate.getDate() + trialDuration);
+      const storedTrialEnd = row.subscriptionTrialEndDate ? new Date(row.subscriptionTrialEndDate) : null;
+      const computedTrialEnd = new Date(trialStartDate);
+      computedTrialEnd.setDate(computedTrialEnd.getDate() + trialDuration);
+      const trialEndDate = storedTrialEnd
+        ? (storedTrialEnd > computedTrialEnd ? new Date(storedTrialEnd) : computedTrialEnd)
+        : computedTrialEnd;
       
       const now = new Date();
-      const daysRemaining = Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      const isTrialActive = daysRemaining > 0;
+      const madridToday = now.toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' });
+      const madridTrialEnd = trialEndDate.toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' });
+      const [todayY, todayM, todayD] = madridToday.split('-').map(Number);
+      const [endY, endM, endD] = madridTrialEnd.split('-').map(Number);
+      const todayUtc = Date.UTC(todayY, todayM - 1, todayD);
+      const endUtc = Date.UTC(endY, endM - 1, endD);
+      const diffDays = Math.floor((endUtc - todayUtc) / (1000 * 60 * 60 * 24));
+      const daysRemaining = diffDays + 1;
+      const isTrialActive = diffDays >= 0;
+      const effectiveStatus = isTrialActive && row.subscriptionStatus === 'blocked'
+        ? 'trial'
+        : (row.subscriptionStatus || 'active');
 
       return {
         id: row.id,
@@ -1721,7 +1939,7 @@ export class DrizzleStorage implements IStorage {
         userCount: row.userCount || 0,
         subscription: {
           plan: row.subscriptionPlan || 'basic',
-          status: row.subscriptionStatus || 'active',
+          status: effectiveStatus,
           maxUsers: row.subscriptionMaxUsers || 5,
           endDate: row.subscriptionEndDate?.toISOString(),
           stripeSubscriptionId: row.stripeSubscriptionId,
@@ -1746,74 +1964,106 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getSuperAdminStats(): Promise<any> {
-    // Total companies registered
-    const companiesCount = await db.select({ count: sql<number>`count(*)` }).from(schema.companies);
+    // Total companies registered (excluding deleted ones)
+    const companiesCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.companies)
+      .where(eq(schema.companies.isDeleted, false));
     
-    // Total active users across all companies
-    const usersCount = await db.select({ count: sql<number>`count(*)` }).from(schema.users);
-    
-    // Get subscription status stats (trial, active, cancelled)
-    const companyStatsResult = await db
-      .select({
-        isTrialActive: schema.companies.isTrialActive,
-        count: sql<number>`count(*)`,
+    // Total active users across all non-deleted companies
+    const usersCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.users)
+      .innerJoin(schema.companies, eq(schema.users.companyId, schema.companies.id))
+      .where(eq(schema.companies.isDeleted, false));
+
+    // Count companies in trial period (registered but no Stripe subscription yet)
+    // A company is in trial if:
+    // 1. Not deleted
+    // 2. No Stripe subscription OR subscription status is 'trial' or 'trialing'
+    // 3. Trial period hasn't expired (createdAt + trialDurationDays > now)
+    const now = new Date();
+    const trialCompanies = await db
+      .select({ 
+        id: schema.companies.id,
+        createdAt: schema.companies.createdAt,
+        trialDurationDays: schema.companies.trialDurationDays,
       })
       .from(schema.companies)
-      .groupBy(schema.companies.isTrialActive);
-
-    const subscriptionStatsMap = {
-      trial: 0,
-      active: 0,
-      cancelled: 0,
-    };
-
-    // Count trial companies
-    const trialCompanies = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(schema.companies)
+      .leftJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId))
       .where(
         and(
-          eq(schema.companies.isTrialActive, true),
-          isNull(schema.companies.deletionInfo)
+          eq(schema.companies.isDeleted, false),
+          or(
+            isNull(schema.subscriptions.stripeSubscriptionId),
+            inArray(schema.subscriptions.status, ['trial', 'trialing'])
+          )
         )
       );
+    
+    // Filter trial companies by date
+    const activeTrialCount = trialCompanies.filter(company => {
+      const trialDuration = company.trialDurationDays || 14;
+      const trialStart = new Date(company.createdAt || now);
+      const trialEnd = new Date(trialStart);
+      trialEnd.setDate(trialEnd.getDate() + trialDuration);
+      return trialEnd > now;
+    }).length;
 
-    // Count active (paid) subscriptions
-    const activeSubscriptions = await db
+    // Count active PAID subscriptions (with Stripe)
+    const activePaidSubscriptions = await db
       .select({ count: sql<number>`count(*)` })
       .from(schema.subscriptions)
+      .innerJoin(schema.companies, eq(schema.subscriptions.companyId, schema.companies.id))
       .where(
         and(
+          eq(schema.companies.isDeleted, false),
           eq(schema.subscriptions.status, 'active'),
-          sql`${schema.subscriptions.stripeSubscriptionId} IS NOT NULL`
+          isNotNull(schema.subscriptions.stripeSubscriptionId)
         )
       );
 
-    // Count cancelled subscriptions
+    // Count cancelled subscriptions (not deleted companies)
     const cancelledSubscriptions = await db
       .select({ count: sql<number>`count(*)` })
       .from(schema.subscriptions)
-      .where(eq(schema.subscriptions.status, 'cancelled'));
+      .innerJoin(schema.companies, eq(schema.subscriptions.companyId, schema.companies.id))
+      .where(
+        and(
+          eq(schema.companies.isDeleted, false),
+          eq(schema.subscriptions.status, 'cancelled')
+        )
+      );
 
-    subscriptionStatsMap.trial = trialCompanies[0]?.count || 0;
-    subscriptionStatsMap.active = activeSubscriptions[0]?.count || 0;
-    subscriptionStatsMap.cancelled = cancelledSubscriptions[0]?.count || 0;
+    const subscriptionStatsMap = {
+      trial: activeTrialCount,
+      active: activePaidSubscriptions[0]?.count || 0,
+      cancelled: cancelledSubscriptions[0]?.count || 0,
+    };
 
     // Get real pricing from Stripe for accurate revenue calculation
     let monthlyRevenue = 0;
     
-    // Get all active subscriptions with Stripe IDs
-    const activeSubscriptions = await db
+    // Get all active subscriptions with Stripe IDs from non-deleted companies
+    const activeSubscriptionsForRevenue = await db
       .select({
         stripeSubscriptionId: schema.subscriptions.stripeSubscriptionId,
         plan: schema.subscriptions.plan,
+        companyName: schema.companies.name,
       })
       .from(schema.subscriptions)
-      .where(eq(schema.subscriptions.status, 'active'));
+      .innerJoin(schema.companies, eq(schema.subscriptions.companyId, schema.companies.id))
+      .where(
+        and(
+          eq(schema.companies.isDeleted, false),
+          eq(schema.subscriptions.status, 'active'),
+          isNotNull(schema.subscriptions.stripeSubscriptionId)
+        )
+      );
 
     // Fetch real prices from Stripe
-    for (const sub of activeSubscriptions) {
-      if (sub.stripeSubscriptionId && sub.plan !== 'free') {
+    for (const sub of activeSubscriptionsForRevenue) {
+      if (sub.stripeSubscriptionId) {
         try {
           const stripeSubscription = await stripe.subscriptions.retrieve(sub.stripeSubscriptionId);
           
@@ -1834,7 +2084,7 @@ export class DrizzleStorage implements IStorage {
             }
           }
         } catch (error) {
-          console.error(`Error fetching Stripe subscription ${sub.stripeSubscriptionId}:`, error);
+          console.error(`Error fetching Stripe subscription ${sub.stripeSubscriptionId} for ${sub.companyName}:`, error);
           // Continue with other subscriptions
         }
       }
@@ -1848,27 +2098,37 @@ export class DrizzleStorage implements IStorage {
     
     try {
       // Get current month start timestamp
-      const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const monthStartTimestamp = Math.floor(monthStart.getTime() / 1000);
       
-      // Get all paid invoices from Stripe
-      const invoices = await stripe.invoices.list({
-        limit: 100, // Get last 100 invoices
-        status: 'paid',
-      });
+      // Get all paid invoices from Stripe (paginated)
+      let hasMore = true;
+      let startingAfter: string | undefined = undefined;
       
-      // Sum up all paid amounts
-      for (const invoice of invoices.data) {
-        if (invoice.amount_paid) {
-          // Convert from cents to euros
-          const amount = invoice.amount_paid / 100;
-          totalAccumulatedRevenue += amount;
-          
-          // Check if invoice was paid in current month
-          if (invoice.status_transitions?.paid_at && invoice.status_transitions.paid_at >= monthStartTimestamp) {
-            currentMonthRevenue += amount;
+      while (hasMore) {
+        const invoices: Stripe.ApiList<Stripe.Invoice> = await stripe.invoices.list({
+          limit: 100,
+          status: 'paid',
+          starting_after: startingAfter,
+        });
+        
+        // Sum up all paid amounts
+        for (const invoice of invoices.data) {
+          if (invoice.amount_paid) {
+            // Convert from cents to euros
+            const amount = invoice.amount_paid / 100;
+            totalAccumulatedRevenue += amount;
+            
+            // Check if invoice was paid in current month
+            if (invoice.status_transitions?.paid_at && invoice.status_transitions.paid_at >= monthStartTimestamp) {
+              currentMonthRevenue += amount;
+            }
           }
+        }
+        
+        hasMore = invoices.has_more;
+        if (hasMore && invoices.data.length > 0) {
+          startingAfter = invoices.data[invoices.data.length - 1].id;
         }
       }
     } catch (error) {
@@ -1926,7 +2186,42 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getSubscriptionByCompanyId(companyId: number): Promise<any | undefined> {
-    const [subscription] = await db.select().from(schema.subscriptions).where(eq(schema.subscriptions.companyId, companyId));
+    // Use explicit column selection to avoid errors if monthly_price column doesn't exist yet
+    const [subscription] = await db.select({
+      id: schema.subscriptions.id,
+      companyId: schema.subscriptions.companyId,
+      plan: schema.subscriptions.plan,
+      baseMonthlyPrice: schema.subscriptions.baseMonthlyPrice,
+      monthlyPrice: schema.subscriptions.monthlyPrice,
+      includedAdmins: schema.subscriptions.includedAdmins,
+      includedManagers: schema.subscriptions.includedManagers,
+      includedEmployees: schema.subscriptions.includedEmployees,
+      isLegacyPlan: schema.subscriptions.isLegacyPlan,
+      extraAdmins: schema.subscriptions.extraAdmins,
+      extraManagers: schema.subscriptions.extraManagers,
+      extraEmployees: schema.subscriptions.extraEmployees,
+      stripeAdminSeatsItemId: schema.subscriptions.stripeAdminSeatsItemId,
+      stripeManagerSeatsItemId: schema.subscriptions.stripeManagerSeatsItemId,
+      stripeEmployeeSeatsItemId: schema.subscriptions.stripeEmployeeSeatsItemId,
+      status: schema.subscriptions.status,
+      startDate: schema.subscriptions.startDate,
+      endDate: schema.subscriptions.endDate,
+      isTrialActive: schema.subscriptions.isTrialActive,
+      trialStartDate: schema.subscriptions.trialStartDate,
+      trialEndDate: schema.subscriptions.trialEndDate,
+      stripeCustomerId: schema.subscriptions.stripeCustomerId,
+      stripeSubscriptionId: schema.subscriptions.stripeSubscriptionId,
+      stripeBasePlanItemId: schema.subscriptions.stripeBasePlanItemId,
+      firstPaymentDate: schema.subscriptions.firstPaymentDate,
+      nextPaymentDate: schema.subscriptions.nextPaymentDate,
+      maxUsers: schema.subscriptions.maxUsers,
+      useCustomSettings: schema.subscriptions.useCustomSettings,
+      customMonthlyPrice: schema.subscriptions.customMonthlyPrice,
+      aiTokensUsed: schema.subscriptions.aiTokensUsed,
+      aiTokensResetDate: schema.subscriptions.aiTokensResetDate,
+      createdAt: schema.subscriptions.createdAt,
+      updatedAt: schema.subscriptions.updatedAt,
+    }).from(schema.subscriptions).where(eq(schema.subscriptions.companyId, companyId));
     
     if (!subscription) {
       return undefined;
@@ -2139,6 +2434,9 @@ export class DrizzleStorage implements IStorage {
       reminderDate: schema.reminders.reminderDate,
       priority: schema.reminders.priority,
       color: schema.reminders.color,
+      taskStatus: schema.reminders.taskStatus,
+      contextType: schema.reminders.contextType,
+      contextName: schema.reminders.contextName,
       isCompleted: schema.reminders.isCompleted,
       isArchived: schema.reminders.isArchived,
       isPinned: schema.reminders.isPinned,
@@ -2148,6 +2446,7 @@ export class DrizzleStorage implements IStorage {
       completedByUserIds: schema.reminders.completedByUserIds,
       assignedBy: schema.reminders.assignedBy,
       assignedAt: schema.reminders.assignedAt,
+      responsibleUserId: schema.reminders.responsibleUserId,
       createdBy: schema.reminders.createdBy,
       createdAt: schema.reminders.createdAt,
       updatedAt: schema.reminders.updatedAt,
@@ -2223,6 +2522,9 @@ export class DrizzleStorage implements IStorage {
       reminderDate: schema.reminders.reminderDate,
       priority: schema.reminders.priority,
       color: schema.reminders.color,
+      taskStatus: schema.reminders.taskStatus,
+      contextType: schema.reminders.contextType,
+      contextName: schema.reminders.contextName,
       isCompleted: schema.reminders.isCompleted,
       isArchived: schema.reminders.isArchived,
       isPinned: schema.reminders.isPinned,
@@ -2232,6 +2534,7 @@ export class DrizzleStorage implements IStorage {
       completedByUserIds: schema.reminders.completedByUserIds,
       assignedBy: schema.reminders.assignedBy,
       assignedAt: schema.reminders.assignedAt,
+      responsibleUserId: schema.reminders.responsibleUserId,
       createdBy: schema.reminders.createdBy,
       createdAt: schema.reminders.createdAt,
       updatedAt: schema.reminders.updatedAt,
@@ -2645,6 +2948,9 @@ export class DrizzleStorage implements IStorage {
       reminderDate: schema.reminders.reminderDate,
       priority: schema.reminders.priority,
       color: schema.reminders.color,
+      taskStatus: schema.reminders.taskStatus,
+      contextType: schema.reminders.contextType,
+      contextName: schema.reminders.contextName,
       isCompleted: schema.reminders.isCompleted,
       isArchived: schema.reminders.isArchived,
       isPinned: schema.reminders.isPinned,
@@ -2654,6 +2960,7 @@ export class DrizzleStorage implements IStorage {
       completedByUserIds: schema.reminders.completedByUserIds,
       assignedBy: schema.reminders.assignedBy,
       assignedAt: schema.reminders.assignedAt,
+      responsibleUserId: schema.reminders.responsibleUserId,
       createdBy: schema.reminders.createdBy,
       createdAt: schema.reminders.createdAt,
       updatedAt: schema.reminders.updatedAt,
@@ -2679,6 +2986,9 @@ export class DrizzleStorage implements IStorage {
       reminderDate: schema.reminders.reminderDate,
       priority: schema.reminders.priority,
       color: schema.reminders.color,
+      taskStatus: schema.reminders.taskStatus,
+      contextType: schema.reminders.contextType,
+      contextName: schema.reminders.contextName,
       isCompleted: schema.reminders.isCompleted,
       isArchived: schema.reminders.isArchived,
       isPinned: schema.reminders.isPinned,
@@ -2688,6 +2998,7 @@ export class DrizzleStorage implements IStorage {
       completedByUserIds: schema.reminders.completedByUserIds,
       assignedBy: schema.reminders.assignedBy,
       assignedAt: schema.reminders.assignedAt,
+      responsibleUserId: schema.reminders.responsibleUserId,
       createdBy: schema.reminders.createdBy,
       createdAt: schema.reminders.createdAt,
       updatedAt: schema.reminders.updatedAt,
@@ -2743,7 +3054,12 @@ export class DrizzleStorage implements IStorage {
       profilePicture: schema.users.profilePicture
     })
     .from(schema.users)
-    .where(eq(schema.users.companyId, companyId))
+    .where(
+      and(
+        eq(schema.users.companyId, companyId),
+        ne(schema.users.role, 'accountant') // Excluir gestor externo
+      )
+    )
     .orderBy(schema.users.fullName);
   }
 
@@ -2801,7 +3117,7 @@ export class DrizzleStorage implements IStorage {
 
       if (!company) return;
 
-      const maxHours = company.workingHoursPerDay || 8;
+      const maxHours = Number(company.workingHoursPerDay || 8);
       const maxMilliseconds = maxHours * 60 * 60 * 1000;
 
       // Find all incomplete sessions that exceed max working hours
@@ -2895,105 +3211,167 @@ export class DrizzleStorage implements IStorage {
   async deleteCompanyPermanently(companyId: number): Promise<boolean> {
     try {
       console.log(`🗑️ PERMANENT DELETION: Starting for company ${companyId}`);
-      
-      // Get all user IDs for this company (needed for related tables)
-      const companyUsers = await db.select({ id: schema.users.id })
-        .from(schema.users)
-        .where(eq(schema.users.companyId, companyId));
-      const userIds = companyUsers.map(u => u.id);
-      
-      console.log(`🗑️ Found ${userIds.length} users to delete for company ${companyId}`);
-      
-      // Delete in correct order (respecting foreign keys)
-      // 1. Delete refresh tokens for all users
-      if (userIds.length > 0) {
-        await db.delete(schema.refreshTokens)
-          .where(sql`user_id = ANY(ARRAY[${sql.join(userIds.map(id => sql`${id}`), sql`, `)}]::integer[])`);
-        console.log(`   ✅ Deleted refresh tokens`);
-      }
-      
-      // 2. Delete push subscriptions
-      if (userIds.length > 0) {
-        await db.delete(schema.pushSubscriptions)
-          .where(sql`user_id = ANY(ARRAY[${sql.join(userIds.map(id => sql`${id}`), sql`, `)}]::integer[])`);
-        console.log(`   ✅ Deleted push subscriptions`);
-      }
-      
-      // 3. Delete system notifications
-      if (userIds.length > 0) {
-        await db.delete(schema.systemNotifications)
-          .where(sql`user_id = ANY(ARRAY[${sql.join(userIds.map(id => sql`${id}`), sql`, `)}]::integer[])`);
-        console.log(`   ✅ Deleted system notifications`);
-      }
-      
-      // 4. Delete messages
-      await db.delete(schema.messages)
-        .where(eq(schema.messages.companyId, companyId));
-      console.log(`   ✅ Deleted messages`);
-      
-      // 5. Delete reminders
-      await db.delete(schema.reminders)
-        .where(eq(schema.reminders.companyId, companyId));
-      console.log(`   ✅ Deleted reminders`);
-      
-      // 6. Delete work sessions (time tracking)
-      await db.delete(schema.workSessions)
-        .where(eq(schema.workSessions.companyId, companyId));
-      console.log(`   ✅ Deleted work sessions`);
-      
-      // 7. Delete documents
-      await db.delete(schema.documents)
-        .where(eq(schema.documents.companyId, companyId));
-      console.log(`   ✅ Deleted documents`);
-      
-      // 8. Delete vacation requests
-      await db.delete(schema.vacationRequests)
-        .where(eq(schema.vacationRequests.companyId, companyId));
-      console.log(`   ✅ Deleted vacation requests`);
-      
-      // 9. Delete audit log
-      await db.delete(schema.auditLog)
-        .where(eq(schema.auditLog.companyId, companyId));
-      console.log(`   ✅ Deleted audit log`);
-      
-      // 10. Delete modification requests
-      await db.delete(schema.modificationRequests)
-        .where(eq(schema.modificationRequests.companyId, companyId));
-      console.log(`   ✅ Deleted modification requests`);
-      
-      // 11. Delete company addons
-      await db.delete(schema.companyAddons)
-        .where(eq(schema.companyAddons.companyId, companyId));
-      console.log(`   ✅ Deleted company addons`);
-      
-      // 12. Delete vacation info
-      if (userIds.length > 0) {
-        await db.delete(schema.vacationInfo)
-          .where(sql`user_id = ANY(ARRAY[${sql.join(userIds.map(id => sql`${id}`), sql`, `)}]::integer[])`);
-        console.log(`   ✅ Deleted vacation info`);
-      }
-      
-      // 13. Delete subscriptions
-      await db.delete(schema.subscriptions)
-        .where(eq(schema.subscriptions.companyId, companyId));
-      console.log(`   ✅ Deleted subscriptions`);
-      
-      // 14. Delete users
-      await db.delete(schema.users)
-        .where(eq(schema.users.companyId, companyId));
-      console.log(`   ✅ Deleted ${userIds.length} users`);
-      
-      // 15. Mark company as permanently deleted (soft delete for audit trail)
-      await db.update(schema.companies)
-        .set({
-          isDeleted: true,
-          name: `[DELETED] ${companyId}`,
-          email: `deleted_${companyId}@deleted.local`,
-          cif: `DELETED_${companyId}`,
-          updatedAt: new Date()
-        })
-        .where(eq(schema.companies.id, companyId));
-      console.log(`   ✅ Marked company as deleted`);
+      await db.transaction(async (tx) => {
+        const companyUsers = await tx.select({ id: schema.users.id })
+          .from(schema.users)
+          .where(eq(schema.users.companyId, companyId));
+        const userIds = companyUsers.map((user) => user.id);
+
+        console.log(`🗑️ Found ${userIds.length} users to delete for company ${companyId}`);
+
+        if (userIds.length > 0) {
+          const workSessions = await tx.select({ id: schema.workSessions.id })
+            .from(schema.workSessions)
+            .where(inArray(schema.workSessions.userId, userIds));
+          const workSessionIds = workSessions.map((session) => session.id);
+
+          await tx.delete(schema.refreshTokens)
+            .where(sql`user_id = ANY(ARRAY[${sql.join(userIds.map(id => sql`${id}`), sql`, `)}]::integer[])`);
+          console.log(`   ✅ Deleted refresh tokens`);
+
+          await tx.delete(schema.pushSubscriptions)
+            .where(sql`user_id = ANY(ARRAY[${sql.join(userIds.map(id => sql`${id}`), sql`, `)}]::integer[])`);
+          console.log(`   ✅ Deleted push subscriptions`);
+
+          await tx.delete(schema.systemNotifications)
+            .where(sql`user_id = ANY(ARRAY[${sql.join(userIds.map(id => sql`${id}`), sql`, `)}]::integer[])`);
+          console.log(`   ✅ Deleted system notifications`);
+
+          await tx.delete(schema.imageProcessingJobs)
+            .where(or(
+              inArray(schema.imageProcessingJobs.userId, userIds),
+              inArray(schema.imageProcessingJobs.targetUserId, userIds)
+            ));
+          console.log(`   ✅ Deleted image processing jobs`);
+
+          await tx.delete(schema.adverseWeatherHoursPool)
+            .where(inArray(schema.adverseWeatherHoursPool.userId, userIds));
+          console.log(`   ✅ Deleted adverse weather hours pool entries`);
+
+          if (workSessionIds.length > 0) {
+            await tx.delete(schema.breakPeriods)
+              .where(inArray(schema.breakPeriods.workSessionId, workSessionIds));
+            console.log(`   ✅ Deleted break periods`);
+          }
+
+          await tx.delete(schema.messages)
+            .where(or(
+              inArray(schema.messages.senderId, userIds),
+              inArray(schema.messages.receiverId, userIds)
+            ));
+          console.log(`   ✅ Deleted messages`);
+
+          await tx.delete(schema.hourBasedAbsences)
+            .where(inArray(schema.hourBasedAbsences.userId, userIds));
+          console.log(`   ✅ Deleted hour-based absences`);
+
+          await tx.delete(schema.workSessions)
+            .where(inArray(schema.workSessions.userId, userIds));
+          console.log(`   ✅ Deleted work sessions`);
+
+          await tx.delete(schema.vacationRequests)
+            .where(inArray(schema.vacationRequests.userId, userIds));
+          console.log(`   ✅ Deleted vacation requests`);
+
+          await tx.delete(schema.documents)
+            .where(eq(schema.documents.companyId, companyId));
+          console.log(`   ✅ Deleted documents`);
+
+          await tx.delete(schema.workAlarms)
+            .where(inArray(schema.workAlarms.userId, userIds));
+          console.log(`   ✅ Deleted work alarms`);
+
+          await tx.delete(schema.employeeActivationTokens)
+            .where(or(
+              inArray(schema.employeeActivationTokens.userId, userIds),
+              inArray(schema.employeeActivationTokens.createdBy, userIds)
+            ));
+          console.log(`   ✅ Deleted employee activation tokens`);
+        } else {
+          await tx.delete(schema.documents)
+            .where(eq(schema.documents.companyId, companyId));
+          console.log(`   ✅ Deleted documents`);
+        }
+
+        await tx.delete(schema.reminders)
+          .where(eq(schema.reminders.companyId, companyId));
+        console.log(`   ✅ Deleted reminders`);
+
+        await tx.delete(schema.workSessionAuditLog)
+          .where(eq(schema.workSessionAuditLog.companyId, companyId));
+        console.log(`   ✅ Deleted audit log`);
+
+        await tx.delete(schema.workSessionModificationRequests)
+          .where(eq(schema.workSessionModificationRequests.companyId, companyId));
+        console.log(`   ✅ Deleted modification requests`);
+
+        await tx.delete(schema.companyAddons)
+          .where(eq(schema.companyAddons.companyId, companyId));
+        console.log(`   ✅ Deleted company addons`);
+
+        await tx.delete(schema.companyWorkSchedules)
+          .where(eq(schema.companyWorkSchedules.companyId, companyId));
+        console.log(`   ✅ Deleted company work schedules`);
+
+        await tx.delete(schema.absencePolicies)
+          .where(eq(schema.absencePolicies.companyId, companyId));
+        console.log(`   ✅ Deleted absence policies`);
+
+        await tx.delete(schema.adverseWeatherIncidents)
+          .where(eq(schema.adverseWeatherIncidents.companyId, companyId));
+        console.log(`   ✅ Deleted adverse weather incidents`);
+
+        await tx.delete(schema.passwordResetTokens)
+          .where(eq(schema.passwordResetTokens.companyId, companyId));
+        console.log(`   ✅ Deleted password reset tokens`);
+
+        await tx.delete(schema.workReports)
+          .where(eq(schema.workReports.companyId, companyId));
+        console.log(`   ✅ Deleted work reports`);
+
+        await tx.delete(schema.customHolidays)
+          .where(eq(schema.customHolidays.companyId, companyId));
+        console.log(`   ✅ Deleted custom holidays`);
+
+        await tx.delete(schema.paymentMethods)
+          .where(eq(schema.paymentMethods.companyId, companyId));
+        console.log(`   ✅ Deleted payment methods`);
+
+        await tx.delete(schema.invoices)
+          .where(eq(schema.invoices.companyId, companyId));
+        console.log(`   ✅ Deleted invoices`);
+
+        await tx.delete(schema.usageStats)
+          .where(eq(schema.usageStats.companyId, companyId));
+        console.log(`   ✅ Deleted usage stats`);
+
+        await tx.delete(schema.workShifts)
+          .where(eq(schema.workShifts.companyId, companyId));
+        console.log(`   ✅ Deleted work shifts`);
+
+        await tx.delete(schema.landingVisits)
+          .where(eq(schema.landingVisits.companyId, companyId));
+        console.log(`   ✅ Deleted landing visits`);
+
+        await tx.delete(schema.subscriptions)
+          .where(eq(schema.subscriptions.companyId, companyId));
+        console.log(`   ✅ Deleted subscriptions`);
+
+        await tx.delete(schema.users)
+          .where(eq(schema.users.companyId, companyId));
+        console.log(`   ✅ Deleted ${userIds.length} users`);
+
+        await tx.update(schema.companies)
+          .set({
+            isDeleted: true,
+            name: `[DELETED] ${companyId}`,
+            email: `deleted_${companyId}@deleted.local`,
+            cif: `DELETED_${companyId}`,
+            updatedAt: new Date()
+          })
+          .where(eq(schema.companies.id, companyId));
+        console.log(`   ✅ Marked company as deleted`);
+      });
       
       console.log(`🗑️ PERMANENT DELETION COMPLETE for company ${companyId}`);
       return true;
@@ -3183,6 +3561,9 @@ export class DrizzleStorage implements IStorage {
         .set({
           completedByUserIds: currentCompletedBy,
           isCompleted: shouldBeGloballyCompleted,
+          taskStatus: shouldBeGloballyCompleted
+            ? 'completed'
+            : (reminder.taskStatus === 'completed' ? 'on_hold' : reminder.taskStatus),
           updatedAt: new Date()
         })
         .where(eq(schema.reminders.id, reminderId))
@@ -3685,6 +4066,15 @@ export class DrizzleStorage implements IStorage {
       console.error('Error validating promotional code:', error);
       return { valid: false, message: 'Error al validar el código' };
     }
+  }
+
+  async redeemPromotionalCode(code: string): Promise<{ success: boolean; message?: string; trialDays?: number }> {
+    const result = await this.validatePromotionalCode(code);
+    return {
+      success: result.valid,
+      message: result.message,
+      trialDays: result.trialDays,
+    };
   }
 
 
@@ -4445,12 +4835,18 @@ export class DrizzleStorage implements IStorage {
 
   // Mark addon as pending cancellation - user keeps access until end of billing period
   async markAddonPendingCancel(companyId: number, addonId: number, effectiveDate: Date): Promise<schema.CompanyAddon | undefined> {
+    // SECURITY: Cooldown extends PAST the next billing period to prevent re-enrollment within 30 days
+    // If current period ends 28/2, next period is 1/3-28/3
+    // cooldown should last until 28/3 to block re-enrollment during entire next billing cycle
+    // This prevents: buy addon → use full month → cancel → immediately rebuy same month
+    const cooldownEndsAt = new Date(effectiveDate.getTime() + 30 * 24 * 60 * 60 * 1000); // +30 days
+    
     const [updated] = await db.update(schema.companyAddons)
       .set({
         status: 'pending_cancel',
         cancelledAt: new Date(),
         cancellationEffectiveDate: effectiveDate,
-        cooldownEndsAt: effectiveDate, // Cannot re-add until this date
+        cooldownEndsAt: cooldownEndsAt, // Cannot re-add until next billing period ends (SECURITY)
         updatedAt: new Date(),
       })
       .where(and(
@@ -4697,7 +5093,7 @@ export class DrizzleStorage implements IStorage {
     const admins = {
       included: 0,
       extra: subscription.extraAdmins,
-      total: subscription.extraAdmins,
+      total: subscription.extraAdmins + 1, // +1 for the creator admin (extraAdmins are "extras" beyond the creator)
     };
     const managers = {
       included: 0,
@@ -4714,7 +5110,7 @@ export class DrizzleStorage implements IStorage {
       admins,
       managers,
       employees,
-      totalUsers: admins.total + managers.total + employees.total,
+      totalUsers: (subscription.extraAdmins + 1) + subscription.extraManagers + subscription.extraEmployees,
     };
   }
 
@@ -4734,7 +5130,8 @@ export class DrizzleStorage implements IStorage {
       .from(schema.users)
       .where(and(
         eq(schema.users.companyId, companyId),
-        eq(schema.users.isActive, true)
+        eq(schema.users.isActive, true),
+        ne(schema.users.role, 'accountant') // EXCLUDE: External accountants should not count as company users
       ))
       .groupBy(schema.users.role);
 
@@ -5268,6 +5665,535 @@ export class DrizzleStorage implements IStorage {
       product: r.product,
     }));
   }
+
+  /**
+  * Calculate the monthly price for a subscription (SOURCE OF TRUTH).
+  * Formula: sum(active_addons) + (adminSeats * 6) + (managerSeats * 4) + (employeeSeats * 2)
+  * Note: pending_cancel addons are excluded from the next billed amount.
+   * Where: adminSeats = extraAdmins + 1 (creator), managerSeats = extraManagers, employeeSeats = extraEmployees
+   * This is CRITICAL and must match Stripe billing and all dashboards.
+   */
+  async calculateSubscriptionMonthlyPrice(companyId: number): Promise<number> {
+    // Get subscription to access extra user counts
+    const subscription = await this.getCompanySubscription(companyId);
+    if (!subscription) {
+      return 0;
+    }
+
+    // Get active addons
+    const companyAddons = await this.getCompanyAddons(companyId);
+    const activeAddons = companyAddons.filter(ca => ca.status === 'active');
+    const addonsTotal = activeAddons.reduce((sum, ca) => sum + Number(ca.addon?.monthlyPrice ?? 0), 0);
+
+    // Calculate seat pricing (backend truth: línea 15296-15301)
+    const extraAdmins = subscription.extraAdmins || 0;
+    const extraManagers = subscription.extraManagers || 0;
+    const extraEmployees = subscription.extraEmployees || 0;
+    
+    const adminSeats = extraAdmins + 1; // +1 for creator admin (NOT "extra", the creator is always seat 1)
+    const managerSeats = extraManagers;
+    const employeeSeats = extraEmployees;
+    
+    const seatsTotal = (adminSeats * 6) + (managerSeats * 4) + (employeeSeats * 2);
+    
+    const totalPrice = addonsTotal + seatsTotal;
+    return totalPrice;
+  }
+
+  /**
+   * Update subscription monthly price in the database.
+   * Called whenever subscription details change (addons, extra users, etc).
+   * Handles cases where monthly_price column doesn't exist yet.
+   */
+  async updateSubscriptionMonthlyPrice(companyId: number): Promise<number> {
+    const monthlyPrice = await this.calculateSubscriptionMonthlyPrice(companyId);
+    
+    try {
+      await db.update(schema.subscriptions)
+        .set({ monthlyPrice: monthlyPrice.toString() })
+        .where(eq(schema.subscriptions.companyId, companyId));
+    } catch (error: any) {
+      // If monthly_price column doesn't exist yet, silently fail - it will be created on migration
+      if (error.message && error.message.includes('monthly_price')) {
+        console.warn(`⚠️  monthly_price column not yet created in DB - skipping update (will be fixed on migration)`);
+      } else {
+        throw error;
+      }
+    }
+    
+    return monthlyPrice;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 📊 COMPANY USAGE TRACKING & COST CALCULATION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Calculate R2 storage usage for a company
+   * Returns total bytes and estimated monthly cost
+   * Note: Full R2 calculation requires AWS SDK initialization
+   */
+  async calculateR2StorageUsage(companyId: number): Promise<{ bytes: number; costUSD: number }> {
+    try {
+      // TODO: Implement full R2 integration with AWS SDK
+      // For now, returning placeholder values. Tracking is done via company_realtime_usage table
+      // This would need:
+      // 1. AWS SDK S3 client initialization
+      // 2. List objects with company prefix
+      // 3. Sum file sizes
+      
+      // Placeholder: Estimate based on file count or use tracking table
+      const realtimeUsage = await this.getCompanyRealtimeUsage(companyId);
+      const estimatedR2Bytes = realtimeUsage.r2StorageBytes || 0;
+      
+      // R2 pricing: $0.015/GB/month storage
+      const costUSD = (estimatedR2Bytes / (1024 ** 3)) * 0.015;
+      
+      return { bytes: estimatedR2Bytes, costUSD };
+    } catch (error) {
+      console.error('Error calculating R2 storage:', error);
+      return { bytes: 0, costUSD: 0 };
+    }
+  }
+
+  /**
+   * Calculate database storage usage for a company
+   * Estimates based on table sizes filtered by company_id
+   */
+  async calculateDBStorageUsage(companyId: number): Promise<{ bytes: number; costUSD: number }> {
+    try {
+      // This query can be expensive on large companies. Use a hard timeout and fallback to cached snapshot.
+      const timeoutMs = 3500;
+      let timeoutHandle: NodeJS.Timeout | null = null;
+
+      const heavyQueryPromise = db.execute<{ total_bytes: string }>(sql`
+        WITH company_data AS (
+          SELECT pg_column_size(u.*) as size FROM users u WHERE u.company_id = ${companyId}
+          UNION ALL
+          SELECT pg_column_size(ws.*) FROM work_sessions ws
+          JOIN users u ON ws.user_id = u.id WHERE u.company_id = ${companyId}
+          UNION ALL
+          SELECT pg_column_size(d.*) FROM documents d WHERE d.company_id = ${companyId}
+          UNION ALL
+          SELECT pg_column_size(ae.*) FROM accounting_entries ae WHERE ae.company_id = ${companyId}
+          UNION ALL
+          SELECT pg_column_size(p.*) FROM projects p WHERE p.company_id = ${companyId}
+          UNION ALL
+          SELECT pg_column_size(bc.*) FROM business_contacts bc WHERE bc.company_id = ${companyId}
+          UNION ALL
+          SELECT pg_column_size(ws.*) FROM work_shifts ws WHERE ws.company_id = ${companyId}
+          UNION ALL
+          SELECT pg_column_size(vr.*) FROM vacation_requests vr
+          JOIN users u ON vr.user_id = u.id WHERE u.company_id = ${companyId}
+        )
+        SELECT COALESCE(SUM(size), 0)::text as total_bytes FROM company_data
+      `);
+
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutHandle = setTimeout(() => reject(new Error(`DB_STORAGE_TIMEOUT_${timeoutMs}ms`)), timeoutMs);
+      });
+
+      let totalBytes = 0;
+
+      try {
+        const result: any = await Promise.race([heavyQueryPromise, timeoutPromise]);
+        totalBytes = parseInt(result.rows?.[0]?.total_bytes || '0');
+      } catch (queryError: any) {
+        // Fallback to latest archived monthly snapshot to avoid blocking UI.
+        const [lastSnapshot] = await db.select({ dbStorageBytes: schema.companyUsageStats.dbStorageBytes })
+          .from(schema.companyUsageStats)
+          .where(eq(schema.companyUsageStats.companyId, companyId))
+          .orderBy(desc(schema.companyUsageStats.year), desc(schema.companyUsageStats.month))
+          .limit(1);
+
+        totalBytes = Number(lastSnapshot?.dbStorageBytes || 0);
+        console.warn(`⚠️ Using cached DB storage snapshot for company ${companyId}: ${queryError?.message}`);
+      } finally {
+        if (timeoutHandle) clearTimeout(timeoutHandle);
+      }
+      
+      // Neon pricing: ~$0.12/GiB/month for storage
+      const costUSD = (totalBytes / (1024 ** 3)) * 0.12;
+      
+      return { bytes: totalBytes, costUSD };
+    } catch (error) {
+      console.error('Error calculating DB storage:', error);
+      return { bytes: 0, costUSD: 0 };
+    }
+  }
+
+  /**
+   * Get current month usage stats for a company
+   * Auto-creates if doesn't exist or if new month started
+   */
+  async getCompanyRealtimeUsage(companyId: number) {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // 1-12
+    
+    const [usage] = await db.select()
+      .from(schema.companyRealtimeUsage)
+      .where(eq(schema.companyRealtimeUsage.companyId, companyId));
+    
+    if (!usage) {
+      // Create if doesn't exist
+      const [newUsage] = await db.insert(schema.companyRealtimeUsage)
+        .values({ 
+          companyId,
+          currentYear,
+          currentMonth
+        })
+        .returning();
+      return newUsage;
+    }
+    
+    // Check if month changed - if so, archive current stats and reset
+    if (usage.currentYear !== currentYear || usage.currentMonth !== currentMonth) {
+      await this.archiveMonthlyUsageStats(companyId, usage);
+      
+      // Reset for new month
+      const [updatedUsage] = await db.update(schema.companyRealtimeUsage)
+        .set({
+          currentYear,
+          currentMonth,
+          apiRequestsCount: 0,
+          apiComputeTimeMs: 0,
+          aiTokensUsed: 0,
+          aiRequestsCount: 0,
+          r2StorageBytes: 0,
+          lastStorageCheck: null,
+          lastCostCalculation: null,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.companyRealtimeUsage.companyId, companyId))
+        .returning();
+      
+      return updatedUsage;
+    }
+    
+    return usage;
+  }
+
+  /**
+   * Archive monthly usage stats to history table
+   * Called automatically when month changes
+   */
+  private async archiveMonthlyUsageStats(
+    companyId: number, 
+    realtimeUsage: typeof schema.companyRealtimeUsage.$inferSelect
+  ) {
+    try {
+      // Calculate final costs for the month
+      const [r2Storage, dbStorage] = await Promise.all([
+        this.calculateR2StorageUsage(companyId),
+        this.calculateDBStorageUsage(companyId)
+      ]);
+      
+      const apiComputeCostUSD = (Number(realtimeUsage.apiComputeTimeMs || 0) / 1000) * 0.00001;
+      const aiCostUSD = (Number(realtimeUsage.aiTokensUsed || 0) / 1000) * 0.002;
+      const totalCostUSD = r2Storage.costUSD + dbStorage.costUSD + apiComputeCostUSD + aiCostUSD;
+      
+      // Create period boundaries for legacy compatibility
+      const periodStart = new Date(realtimeUsage.currentYear, realtimeUsage.currentMonth - 1, 1);
+      const periodEnd = new Date(realtimeUsage.currentYear, realtimeUsage.currentMonth, 0, 23, 59, 59);
+      
+      // Insert into history (upsert to handle duplicates)
+      await db.insert(schema.companyUsageStats)
+        .values({
+          companyId,
+          year: realtimeUsage.currentYear,
+          month: realtimeUsage.currentMonth,
+          periodStart,
+          periodEnd,
+          r2StorageBytes: r2Storage.bytes,
+          r2StorageCost: r2Storage.costUSD.toFixed(4),
+          dbStorageBytes: dbStorage.bytes,
+          dbStorageCost: dbStorage.costUSD.toFixed(4),
+          apiRequestsCount: realtimeUsage.apiRequestsCount,
+          apiComputeTimeMs: realtimeUsage.apiComputeTimeMs,
+          apiComputeCost: apiComputeCostUSD.toFixed(4),
+          aiTokensUsed: realtimeUsage.aiTokensUsed,
+          aiRequestsCount: realtimeUsage.aiRequestsCount,
+          aiCost: aiCostUSD.toFixed(4),
+          totalCost: totalCostUSD.toFixed(4)
+        })
+        .onConflictDoUpdate({
+          target: [schema.companyUsageStats.companyId, schema.companyUsageStats.year, schema.companyUsageStats.month],
+          set: {
+            r2StorageBytes: r2Storage.bytes,
+            r2StorageCost: r2Storage.costUSD.toFixed(4),
+            dbStorageBytes: dbStorage.bytes,
+            dbStorageCost: dbStorage.costUSD.toFixed(4),
+            apiRequestsCount: realtimeUsage.apiRequestsCount,
+            apiComputeTimeMs: realtimeUsage.apiComputeTimeMs,
+            apiComputeCost: apiComputeCostUSD.toFixed(4),
+            aiTokensUsed: realtimeUsage.aiTokensUsed,
+            aiRequestsCount: realtimeUsage.aiRequestsCount,
+            aiCost: aiCostUSD.toFixed(4),
+            totalCost: totalCostUSD.toFixed(4),
+            updatedAt: new Date()
+          }
+        });
+      
+      console.log(`📊 Archived usage stats for company ${companyId}: ${realtimeUsage.currentYear}-${String(realtimeUsage.currentMonth).padStart(2, '0')}`);
+    } catch (error) {
+      console.error('Error archiving monthly usage stats:', error);
+      // Don't throw - allow the reset to continue
+    }
+  }
+
+  /**
+   * Calculate complete usage statistics for a company (current month)
+   * Returns all metrics with estimated costs
+   */
+  async calculateCompanyUsageStats(companyId: number) {
+    const [r2Storage, dbStorage, realtimeUsage] = await Promise.all([
+      this.calculateR2StorageUsage(companyId),
+      this.calculateDBStorageUsage(companyId),
+      this.getCompanyRealtimeUsage(companyId)
+    ]);
+    
+    // Safely handle null values with defaults
+    const apiComputeTimeMs = realtimeUsage.apiComputeTimeMs || 0;
+    const aiTokensUsed = realtimeUsage.aiTokensUsed || 0;
+    const apiRequestsCount = realtimeUsage.apiRequestsCount || 0;
+    const aiRequestsCount = realtimeUsage.aiRequestsCount || 0;
+    
+    // Calculate API compute cost (estimate: $0.00001 per second of compute)
+    const apiComputeCostUSD = (apiComputeTimeMs / 1000) * 0.00001;
+    
+    // Calculate AI cost (OpenAI pricing: ~$0.002 per 1K tokens for GPT-4)
+    const aiCostUSD = (aiTokensUsed / 1000) * 0.002;
+    
+    const totalCostUSD = r2Storage.costUSD + dbStorage.costUSD + apiComputeCostUSD + aiCostUSD;
+    
+    return {
+      companyId,
+      period: {
+        year: realtimeUsage.currentYear,
+        month: realtimeUsage.currentMonth,
+        monthName: new Date(realtimeUsage.currentYear, realtimeUsage.currentMonth - 1).toLocaleString('es-ES', { month: 'long', year: 'numeric' })
+      },
+      storage: {
+        r2: {
+          bytes: r2Storage.bytes,
+          gb: r2Storage.bytes / (1024 ** 3),
+          costUSD: r2Storage.costUSD
+        },
+        database: {
+          bytes: dbStorage.bytes,
+          gb: dbStorage.bytes / (1024 ** 3),
+          costUSD: dbStorage.costUSD
+        },
+        total: {
+          bytes: r2Storage.bytes + dbStorage.bytes,
+          gb: (r2Storage.bytes + dbStorage.bytes) / (1024 ** 3),
+          costUSD: r2Storage.costUSD + dbStorage.costUSD
+        }
+      },
+      compute: {
+        apiRequests: apiRequestsCount,
+        apiComputeTimeMs: apiComputeTimeMs,
+        apiComputeTimeSec: apiComputeTimeMs / 1000,
+        costUSD: apiComputeCostUSD
+      },
+      ai: {
+        tokensUsed: aiTokensUsed,
+        requestsCount: aiRequestsCount,
+        costUSD: aiCostUSD
+      },
+      total: {
+        costUSD: totalCostUSD,
+        costEUR: totalCostUSD * 0.92 // Approximate EUR conversion
+      },
+      lastUpdated: realtimeUsage.updatedAt
+    };
+  }
+
+  /**
+   * Get usage stats history for a company
+   * Returns archived monthly stats
+   */
+  async getCompanyUsageHistory(companyId: number, limit = 12) {
+    const history = await db.select()
+      .from(schema.companyUsageStats)
+      .where(eq(schema.companyUsageStats.companyId, companyId))
+      .orderBy(desc(schema.companyUsageStats.year), desc(schema.companyUsageStats.month))
+      .limit(limit);
+    
+    return history.map(record => ({
+      period: {
+        year: record.year,
+        month: record.month,
+        monthName: new Date(record.year, record.month - 1).toLocaleString('es-ES', { month: 'long', year: 'numeric' })
+      },
+      storage: {
+        r2: {
+          bytes: Number(record.r2StorageBytes),
+          gb: Number(record.r2StorageBytes) / (1024 ** 3),
+          costUSD: parseFloat(record.r2StorageCost as string)
+        },
+        database: {
+          bytes: Number(record.dbStorageBytes),
+          gb: Number(record.dbStorageBytes) / (1024 ** 3),
+          costUSD: parseFloat(record.dbStorageCost as string)
+        }
+      },
+      compute: {
+        apiRequests: record.apiRequestsCount,
+        apiComputeTimeMs: Number(record.apiComputeTimeMs),
+        costUSD: parseFloat(record.apiComputeCost as string)
+      },
+      ai: {
+        tokensUsed: record.aiTokensUsed,
+        requestsCount: record.aiRequestsCount,
+        costUSD: parseFloat(record.aiCost as string)
+      },
+      total: {
+        costUSD: parseFloat(record.totalCost as string),
+        costEUR: parseFloat(record.totalCost as string) * 0.92
+      },
+      createdAt: record.createdAt
+    }));
+  }
+
+  /**
+   * Track an API request for usage monitoring
+   */
+  async trackAPIRequest(companyId: number, computeTimeMs: number) {
+    try {
+      await db.execute(sql`
+        INSERT INTO company_realtime_usage (company_id, api_requests_count, api_compute_time_ms)
+        VALUES (${companyId}, 1, ${computeTimeMs})
+        ON CONFLICT (company_id) DO UPDATE SET
+          api_requests_count = company_realtime_usage.api_requests_count + 1,
+          api_compute_time_ms = company_realtime_usage.api_compute_time_ms + ${computeTimeMs},
+          updated_at = NOW()
+      `);
+    } catch (error) {
+      // Silently fail if table doesn't exist yet
+      console.debug('API tracking not available yet');
+    }
+  }
+
+  /**
+   * Track AI usage (tokens consumed)
+   */
+  async trackAIUsage(companyId: number, tokensUsed: number) {
+    try {
+      await db.execute(sql`
+        INSERT INTO company_realtime_usage (company_id, ai_tokens_used, ai_requests_count)
+        VALUES (${companyId}, ${tokensUsed}, 1)
+        ON CONFLICT (company_id) DO UPDATE SET
+          ai_tokens_used = company_realtime_usage.ai_tokens_used + ${tokensUsed},
+          ai_requests_count = company_realtime_usage.ai_requests_count + 1,
+          updated_at = NOW()
+      `);
+    } catch (error) {
+      console.debug('AI tracking not available yet');
+    }
+  }
+
+  /**
+   * Get adverse weather hours pool for a user in a specific period
+   */
+  async getAdverseWeatherHoursPool(userId: number, periodStart: Date, periodEnd: Date) {
+    const result = await db.select().from(schema.adverseWeatherHoursPool)
+      .where(
+        and(
+          eq(schema.adverseWeatherHoursPool.userId, userId),
+          eq(schema.adverseWeatherHoursPool.periodStart, periodStart.toISOString().split('T')[0]),
+          eq(schema.adverseWeatherHoursPool.periodEnd, periodEnd.toISOString().split('T')[0])
+        )
+      );
+    return result[0];
+  }
+
+  /**
+   * Add adverse weather recovery hours to pool (70% of lost hours)
+   */
+  async addAdverseWeatherRecoveryHours(userId: number, periodStart: Date, periodEnd: Date, recoveryHours: number) {
+    const periodStartStr = periodStart.toISOString().split('T')[0];
+    const periodEndStr = periodEnd.toISOString().split('T')[0];
+    
+    const existing = await this.getAdverseWeatherHoursPool(userId, periodStart, periodEnd);
+    
+    if (existing) {
+      // Update existing pool
+      return await db.update(schema.adverseWeatherHoursPool)
+        .set({
+          totalHours: (parseFloat(existing.totalHours) + recoveryHours).toString(),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(schema.adverseWeatherHoursPool.userId, userId),
+            eq(schema.adverseWeatherHoursPool.periodStart, periodStartStr),
+            eq(schema.adverseWeatherHoursPool.periodEnd, periodEndStr)
+          )
+        );
+    } else {
+      // Create new pool
+      return await db.insert(schema.adverseWeatherHoursPool).values({
+        userId,
+        periodStart: periodStartStr,
+        periodEnd: periodEndStr,
+        totalHours: recoveryHours.toString(),
+        usedHours: '0',
+      });
+    }
+  }
+
+  /**
+   * Consume adverse weather recovery hours when creating hour-based absence
+   */
+  async consumeAdverseWeatherHours(userId: number, periodStart: Date, periodEnd: Date, hoursUsed: number) {
+    const pool = await this.getAdverseWeatherHoursPool(userId, periodStart, periodEnd);
+    if (!pool) return; // No pool exists, nothing to consume
+    
+    const periodStartStr = periodStart.toISOString().split('T')[0];
+    const periodEndStr = periodEnd.toISOString().split('T')[0];
+    
+    await db.update(schema.adverseWeatherHoursPool)
+      .set({
+        usedHours: (parseFloat(pool.usedHours) + hoursUsed).toString(),
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(schema.adverseWeatherHoursPool.userId, userId),
+          eq(schema.adverseWeatherHoursPool.periodStart, periodStartStr),
+          eq(schema.adverseWeatherHoursPool.periodEnd, periodEndStr)
+        )
+      );
+  }
+
+  /**
+   * Return adverse weather recovery hours to pool (when deleting or denying approved absences)
+   */
+  async returnAdverseWeatherHours(userId: number, periodStart: Date, periodEnd: Date, hoursToReturn: number) {
+    const pool = await this.getAdverseWeatherHoursPool(userId, periodStart, periodEnd);
+    if (!pool) return; // No pool exists, nothing to return
+    
+    const periodStartStr = periodStart.toISOString().split('T')[0];
+    const periodEndStr = periodEnd.toISOString().split('T')[0];
+    const currentUsed = parseFloat(pool.usedHours);
+    const newUsed = Math.max(0, currentUsed - hoursToReturn); // Never go negative
+    
+    await db.update(schema.adverseWeatherHoursPool)
+      .set({
+        usedHours: newUsed.toString(),
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(schema.adverseWeatherHoursPool.userId, userId),
+          eq(schema.adverseWeatherHoursPool.periodStart, periodStartStr),
+          eq(schema.adverseWeatherHoursPool.periodEnd, periodEndStr)
+        )
+      );
+  }
+
 }
 
 export const storage = new DrizzleStorage();

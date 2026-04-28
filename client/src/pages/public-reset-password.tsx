@@ -14,22 +14,34 @@ import { apiRequest } from '@/lib/queryClient';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import oficazLogo from '@/assets/oficaz-logo.png';
 
-// Extended schema to include acceptTerms
+// Extended schema to include acceptTerms and acceptSimplePassword
 const resetPasswordSchema = z.object({
   token: z.string(),
-  password: z.string()
-    .min(8, 'Mínimo 8 caracteres')
-    .regex(/[A-Z]/, 'Una mayúscula')
-    .regex(/[a-z]/, 'Una minúscula')
-    .regex(/[0-9]/, 'Un número')
-    .regex(/[^A-Za-z0-9]/, 'Un carácter especial'),
-  confirmPassword: z.string().min(8, 'Confirma tu contraseña'),
+  password: z.string().min(1, 'Contraseña requerida'),
+  confirmPassword: z.string().min(1, 'Confirma tu contraseña'),
   acceptTerms: z.boolean().refine(val => val === true, {
     message: 'Debes aceptar los términos y la política de privacidad',
   }),
+  acceptSimplePassword: z.boolean().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Las contraseñas no coinciden',
   path: ['confirmPassword'],
+}).refine((data) => {
+  // Si no acepta contraseña simple, aplicar validaciones estrictas
+  if (!data.acceptSimplePassword) {
+    if (data.password.length < 8) return false;
+    if (!/[A-Z]/.test(data.password)) return false;
+    if (!/[a-z]/.test(data.password)) return false;
+    if (!/[0-9]/.test(data.password)) return false;
+    if (!/[^A-Za-z0-9]/.test(data.password)) return false;
+  } else {
+    // Si acepta contraseña simple, solo requerir mínimo 6 caracteres
+    if (data.password.length < 6) return false;
+  }
+  return true;
+}, {
+  message: 'La contraseña no cumple con los requisitos',
+  path: ['password'],
 });
 
 type ResetPasswordData = z.infer<typeof resetPasswordSchema>;
@@ -55,16 +67,9 @@ export default function ResetPassword() {
       password: '',
       confirmPassword: '',
       acceptTerms: false,
+      acceptSimplePassword: false,
     },
   });
-
-  // Set dark notch for dark background
-  useEffect(() => {
-    document.documentElement.classList.add('dark-notch');
-    return () => {
-      document.documentElement.classList.remove('dark-notch');
-    };
-  }, []);
 
   // Validate token on component mount
   useEffect(() => {
@@ -247,32 +252,28 @@ export default function ResetPassword() {
               )}
 
               {/* Password Field */}
-              <div className="relative">
-                <Input
-                  type={showPassword ? 'text' : 'password'}
-                  {...form.register('password')}
-                  placeholder="Nueva contraseña"
-                  className="rounded-xl border border-gray-300 py-3 px-4 pr-16 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  onChange={(e) => {
-                    form.setValue('password', e.target.value);
-                    setError(null);
-                  }}
-                />
-                <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Nueva contraseña</label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    {...form.register('password')}
+                    placeholder="Mínimo 8 caracteres"
+                  />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-4 w-4 p-0 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => setShowPassword((prev) => !prev)}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-400" />
+                      <EyeOff className="h-4 w-4" />
                     ) : (
-                      <Eye className="h-4 w-4 text-gray-400" />
+                      <Eye className="h-4 w-4" />
                     )}
                   </Button>
-                  <Lock className="h-4 w-4 text-gray-400" />
                 </div>
                 {form.formState.errors.password && (
                   <p className="text-xs text-red-500 mt-1">
@@ -282,32 +283,28 @@ export default function ResetPassword() {
               </div>
 
               {/* Confirm Password Field */}
-              <div className="relative">
-                <Input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  {...form.register('confirmPassword')}
-                  placeholder="Confirmar contraseña"
-                  className="rounded-xl border border-gray-300 py-3 px-4 pr-16 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  onChange={(e) => {
-                    form.setValue('confirmPassword', e.target.value);
-                    setError(null);
-                  }}
-                />
-                <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Confirmar contraseña</label>
+                <div className="relative">
+                  <Input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    {...form.register('confirmPassword')}
+                    placeholder="Repite la contraseña"
+                  />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-4 w-4 p-0 hover:bg-transparent"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
                   >
                     {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-400" />
+                      <EyeOff className="h-4 w-4" />
                     ) : (
-                      <Eye className="h-4 w-4 text-gray-400" />
+                      <Eye className="h-4 w-4" />
                     )}
                   </Button>
-                  <Lock className="h-4 w-4 text-gray-400" />
                 </div>
                 {form.formState.errors.confirmPassword && (
                   <p className="text-xs text-red-500 mt-1">
@@ -316,15 +313,38 @@ export default function ResetPassword() {
                 )}
               </div>
 
+              {/* Simple Password Option */}
+              <div className="flex items-start gap-2 py-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <Checkbox
+                  id="acceptSimplePassword"
+                  checked={form.watch('acceptSimplePassword') || false}
+                  onCheckedChange={(checked) => form.setValue('acceptSimplePassword', checked as boolean)}
+                />
+                <Label htmlFor="acceptSimplePassword" className="text-sm text-amber-800 leading-relaxed cursor-pointer">
+                  Acepto usar contraseña simple
+                </Label>
+              </div>
+
               {/* Password Requirements */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-xs text-blue-700 font-medium mb-1">Requisitos de contraseña:</p>
-                <ul className="text-xs text-blue-600 space-y-1">
-                  <li>• Mínimo 8 caracteres</li>
-                  <li>• Al menos una mayúscula y minúscula</li>
-                  <li>• Al menos un número</li>
-                  <li>• Al menos un carácter especial</li>
-                </ul>
+              <div className={`${form.watch('acceptSimplePassword') ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-200'} border p-3 rounded-lg`}>
+                <p className={`text-sm ${form.watch('acceptSimplePassword') ? 'text-amber-700' : 'text-blue-700'}`}>
+                  <strong>{form.watch('acceptSimplePassword') ? 'Requisitos (contraseña simple):' : 'Requisitos de contraseña:'}</strong>
+                </p>
+                {form.watch('acceptSimplePassword') ? (
+                  <ul className="text-xs text-amber-600 mt-1 space-y-1">
+                    <li>• Mínimo 6 caracteres</li>
+                    <li>• No uses datos personales</li>
+                    <li>• No uses números sencillos tipo 123456</li>
+                  </ul>
+                ) : (
+                  <ul className="text-xs text-blue-600 mt-1 space-y-1">
+                    <li>• Mínimo 8 caracteres</li>
+                    <li>• Al menos una mayúscula</li>
+                    <li>• Al menos una minúscula</li>
+                    <li>• Al menos un número</li>
+                    <li>• Al menos un carácter especial (!@#$%^&*...)</li>
+                  </ul>
+                )}
               </div>
 
               {/* Accept Terms Checkbox */}

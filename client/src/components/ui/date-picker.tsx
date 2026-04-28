@@ -245,6 +245,7 @@ interface DatePickerPeriodProps {
   onEndDateChange: (date: Date | undefined) => void;
   className?: string;
   buttonText?: string;
+  disabledDays?: React.ComponentProps<typeof Calendar>['disabled'];
 }
 
 export function DatePickerPeriod({
@@ -253,7 +254,8 @@ export function DatePickerPeriod({
   onStartDateChange,
   onEndDateChange,
   className,
-  buttonText
+  buttonText,
+  disabledDays
 }: DatePickerPeriodProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSelectingStart, setIsSelectingStart] = useState(true);
@@ -280,7 +282,7 @@ export function DatePickerPeriod({
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className={cn("text-left", className)}
+          className={cn("text-left h-9", className)}
         >
           <span className="truncate text-xs"> {/* ⚠️ NO MODIFICAR: tipografía uniforme con otros filtros */}
             {buttonText || (startDate && endDate
@@ -306,6 +308,7 @@ export function DatePickerPeriod({
               to: endDate || undefined
             }}
             defaultMonth={startDate || new Date()}
+            disabled={disabledDays}
             onSelect={(range) => {
               if (!range) {
                 onStartDateChange(undefined);

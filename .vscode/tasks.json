@@ -1,0 +1,14 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run mojibake fixer",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"scripts/maintenance/fix-mojibake.cjs"
+			],
+			"isBackground": false
+		}
+	]
+}

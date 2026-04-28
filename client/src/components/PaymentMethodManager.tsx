@@ -12,6 +12,7 @@ import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { useAuth } from '@/hooks/use-auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { getAuthHeaders } from '@/lib/auth';
 import type { Addon, CompanyAddon } from '@shared/schema';
 
 interface PaymentMethod {
@@ -30,10 +31,39 @@ interface PaymentMethodManagerProps {
   selectedPlanPrice?: number;
 }
 
+interface AccountSubscription {
+  plan?: string;
+  customMonthlyPrice?: number | string | null;
+  monthlyPrice?: number;
+  stripeSubscriptionId?: string | null;
+  stripeCustomerId?: string | null;
+}
 
+interface CancellationStatus {
+  scheduledForCancellation?: boolean;
+  scheduledCancellationDate?: string;
+}
 
-// Initialize Stripe
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY!);
+interface TrialStatusInfo {
+  trialEnd?: string;
+  trialEndDate?: string;
+  isBlocked?: boolean;
+}
+
+// Initialize Stripe lazily to prevent early loading
+let stripePromise: ReturnType<typeof loadStripe> | null = null;
+
+const getStripePromise = () => {
+  if (!stripePromise) {
+    const key = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+    if (!key) {
+      console.error('VITE_STRIPE_PUBLISHABLE_KEY not found');
+      return null;
+    }
+    stripePromise = loadStripe(key);
+  }
+  return stripePromise;
+};
 
 export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selectedPlan, selectedPlanPrice }: PaymentMethodManagerProps) {
   const [isAddingCard, setIsAddingCard] = useState(false);
@@ -44,60 +74,51 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
   const { refreshUser } = useAuth();
 
   // Get current subscription to determine the actual plan and price
-  const { data: subscription, refetch: refetchSubscription } = useQuery({
+  const { data: subscription, refetch: refetchSubscription } = useQuery<AccountSubscription>({
     queryKey: ['/api/account/subscription'],
     staleTime: 30000,
   });
 
   // Get cancellation status to show warnings
-  const { data: cancellationStatus } = useQuery({
+  const { data: cancellationStatus } = useQuery<CancellationStatus>({
     queryKey: ['/api/account/cancellation-status'],
     staleTime: 30000,
   });
 
   // Get trial status for trial end date
-  const { data: trialStatus } = useQuery({
+  const { data: trialStatus } = useQuery<TrialStatusInfo>({
     queryKey: ['/api/account/trial-status'],
     staleTime: 30000,
   });
 
-  // Get seat prices from API (fallback to hardcoded defaults)
-  const { data: seatPricesData = [] } = useQuery({
-    queryKey: ['/api/super-admin/seat-prices'],
-    queryFn: async () => {
-      try {
-        const response = await fetch('/api/super-admin/seat-prices');
-        if (!response.ok) throw new Error('Failed to fetch seat prices');
-        return response.json();
-      } catch (error) {
-        console.warn('Failed to fetch seat prices from API, using defaults:', error);
-        return [];
-      }
-    },
-    staleTime: 60000,
-  });
-
-  // Get active addons to derive the real monthly price when parent doesn't provide it
+  // Get company addons to calculate total addon price
   const { data: companyAddons = [] } = useQuery<(CompanyAddon & { addon: Addon })[]>({
     queryKey: ['/api/company/addons'],
     staleTime: 30000,
-    enabled: selectedPlanPrice == null, // skip if parent already passes the total
+  });
+
+  // Get subscription info (includes seat pricing and user counts)
+  const { data: subscriptionInfo } = useQuery({
+    queryKey: ['/api/subscription/info'],
+    enabled: !!subscription,
+    staleTime: 30000,
+    queryFn: async () => {
+      const res = await fetch('/api/subscription/info', {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('No se pudo obtener la info de suscripción');
+      return res.json();
+    }
   });
 
   // Determine the actual plan and price to display - Nuevo modelo: siempre Oficaz
   const actualPlan = selectedPlan || subscription?.plan || "oficaz";
 
-  // Build seat pricing map from API data (with hardcoded fallbacks)
+  // Build seat pricing map from subscription info (already includes seat prices)
   const seatPriceMap: Record<string, number> = {
-    admin: seatPricesData.find((s: any) => s.roleType === 'admin')?.monthlyPrice 
-      ? parseFloat(seatPricesData.find((s: any) => s.roleType === 'admin').monthlyPrice)
-      : 6,
-    manager: seatPricesData.find((s: any) => s.roleType === 'manager')?.monthlyPrice
-      ? parseFloat(seatPricesData.find((s: any) => s.roleType === 'manager').monthlyPrice)
-      : 4,
-    employee: seatPricesData.find((s: any) => s.roleType === 'employee')?.monthlyPrice
-      ? parseFloat(seatPricesData.find((s: any) => s.roleType === 'employee').monthlyPrice)
-      : 2,
+    admin: ((subscriptionInfo as any)?.seatPricing?.find((s: any) => s.roleType === 'admin')?.monthlyPrice) || 6,
+    manager: ((subscriptionInfo as any)?.seatPricing?.find((s: any) => s.roleType === 'manager')?.monthlyPrice) || 4,
+    employee: ((subscriptionInfo as any)?.seatPricing?.find((s: any) => s.roleType === 'employee')?.monthlyPrice) || 2,
   };
 
   const derivedPrice = (() => {
@@ -109,22 +130,10 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
       return Number(subscription.customMonthlyPrice);
     }
 
-    // 3) Base + addons + seats (modular model). Base can be 0€.
-    const base = subscription?.baseMonthlyPrice != null ? Number(subscription.baseMonthlyPrice) : 0;
-
-    const addonsTotal = companyAddons
-      .filter(ca => ca.status === 'active' || ca.status === 'pending_cancel')
-      .reduce((sum, ca) => sum + Number(ca.addon?.monthlyPrice ?? 0), 0);
-
-    const adminSeats = (subscription?.extraAdmins ?? 0) + 1; // include creator admin
-    const managerSeats = subscription?.extraManagers ?? 0;
-    const employeeSeats = subscription?.extraEmployees ?? 0;
-
-    const seatsTotal = (adminSeats * seatPriceMap.admin)
-      + (managerSeats * seatPriceMap.manager)
-      + (employeeSeats * seatPriceMap.employee);
-
-    return base + addonsTotal + seatsTotal;
+    // Use pre-calculated monthly price from backend for consistency
+    // Backend calculates: addons + (adminSeats * 6) + (managerSeats * 4) + (employeeSeats * 2)
+    // See routes.ts /api/account/subscription endpoint
+    return subscription?.monthlyPrice ?? 0;
   })();
 
   const actualPrice = derivedPrice;
@@ -318,7 +327,7 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
               <div className="flex-1">
                 <h4 className="font-medium text-red-900 mb-2">Cuenta programada para cancelación</h4>
                 <p className="text-sm text-red-800 mb-3">
-                  Tu cuenta está programada para ser cancelada el {new Date(cancellationStatus.scheduledCancellationDate).toLocaleDateString('es-ES', { 
+                  Tu cuenta está programada para ser cancelada el {(cancellationStatus.scheduledCancellationDate ? new Date(cancellationStatus.scheduledCancellationDate) : new Date()).toLocaleDateString('es-ES', { 
                     day: 'numeric', 
                     month: 'long', 
                     year: 'numeric' 
@@ -491,7 +500,7 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
           </DialogHeader>
           {clientSecret ? (
             <Elements 
-              stripe={stripePromise} 
+              stripe={getStripePromise()} 
               options={{ 
                 clientSecret,
                 appearance: {

@@ -4,6 +4,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { getAuthHeaders } from '@/lib/auth';
 
 interface RecipientSelectorProps {
   selectedEmails: string[];
@@ -11,15 +12,27 @@ interface RecipientSelectorProps {
   audienceType?: 'subscribers' | 'one_time';
 }
 
+interface CompanyUser {
+  id: number;
+  email: string;
+  marketingConsent: boolean;
+  fullName?: string;
+}
+
+interface EmailProspect {
+  id: number;
+  email: string;
+  source?: string;
+}
+
 export function RecipientSelector({ selectedEmails, onSelectionChange, audienceType = 'one_time' }: RecipientSelectorProps) {
   // Fetch users by category (parallel queries) - force fresh data
-  const { data: activeUsers = [], isLoading: loadingActive } = useQuery({
+  const { data: activeUsers = [], isLoading: loadingActive } = useQuery<CompanyUser[]>({
     queryKey: ['/api/super-admin/recipients', 'active'],
     queryFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/recipients/active', {
         headers: { 
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
           'Cache-Control': 'no-cache'
         }
       });
@@ -30,13 +43,12 @@ export function RecipientSelector({ selectedEmails, onSelectionChange, audienceT
     gcTime: 0
   });
 
-  const { data: trialUsers = [], isLoading: loadingTrial } = useQuery({
+  const { data: trialUsers = [], isLoading: loadingTrial } = useQuery<CompanyUser[]>({
     queryKey: ['/api/super-admin/recipients', 'trial'],
     queryFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/recipients/trial', {
         headers: { 
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
           'Cache-Control': 'no-cache'
         }
       });
@@ -47,13 +59,12 @@ export function RecipientSelector({ selectedEmails, onSelectionChange, audienceT
     gcTime: 0
   });
 
-  const { data: blockedUsers = [], isLoading: loadingBlocked } = useQuery({
+  const { data: blockedUsers = [], isLoading: loadingBlocked } = useQuery<CompanyUser[]>({
     queryKey: ['/api/super-admin/recipients', 'blocked'],
     queryFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/recipients/blocked', {
         headers: { 
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
           'Cache-Control': 'no-cache'
         }
       });
@@ -64,13 +75,12 @@ export function RecipientSelector({ selectedEmails, onSelectionChange, audienceT
     gcTime: 0
   });
 
-  const { data: cancelledUsers = [], isLoading: loadingCancelled } = useQuery({
+  const { data: cancelledUsers = [], isLoading: loadingCancelled } = useQuery<CompanyUser[]>({
     queryKey: ['/api/super-admin/recipients', 'cancelled'],
     queryFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/recipients/cancelled', {
         headers: { 
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
           'Cache-Control': 'no-cache'
         }
       });
@@ -81,13 +91,12 @@ export function RecipientSelector({ selectedEmails, onSelectionChange, audienceT
     gcTime: 0
   });
 
-  const { data: prospects = [], isLoading: loadingProspects } = useQuery({
+  const { data: prospects = [], isLoading: loadingProspects } = useQuery<EmailProspect[]>({
     queryKey: ['/api/super-admin/email-prospects'],
     queryFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/email-prospects', {
         headers: { 
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
           'Cache-Control': 'no-cache'
         }
       });
@@ -108,8 +117,8 @@ export function RecipientSelector({ selectedEmails, onSelectionChange, audienceT
     }
   };
 
-  const toggleCategory = (category: any[]) => {
-    const categoryEmails = category.map(u => u.email);
+  const toggleCategory = (category: CompanyUser[] | EmailProspect[]) => {
+    const categoryEmails = category.map((item: CompanyUser | EmailProspect) => item.email);
     const allSelected = categoryEmails.every(email => selectedEmails.includes(email));
     
     if (allSelected) {
@@ -130,24 +139,24 @@ export function RecipientSelector({ selectedEmails, onSelectionChange, audienceT
   const selectAll = () => {
     // Filtrar usuarios según tipo de audiencia antes de seleccionar todos
     const filteredActiveUsers = audienceType === 'subscribers' 
-      ? activeUsers.filter(u => u.marketingConsent === true) 
+      ? activeUsers.filter((u: CompanyUser) => u.marketingConsent === true) 
       : activeUsers;
     const filteredTrialUsers = audienceType === 'subscribers' 
-      ? trialUsers.filter(u => u.marketingConsent === true) 
+      ? trialUsers.filter((u: CompanyUser) => u.marketingConsent === true) 
       : trialUsers;
     const filteredBlockedUsers = audienceType === 'subscribers' 
-      ? blockedUsers.filter(u => u.marketingConsent === true) 
+      ? blockedUsers.filter((u: CompanyUser) => u.marketingConsent === true) 
       : blockedUsers;
     const filteredCancelledUsers = audienceType === 'subscribers' 
-      ? cancelledUsers.filter(u => u.marketingConsent === true) 
+      ? cancelledUsers.filter((u: CompanyUser) => u.marketingConsent === true) 
       : cancelledUsers;
       
     const allEmails = [
-      ...filteredActiveUsers.map(u => u.email),
-      ...filteredTrialUsers.map(u => u.email),
-      ...filteredBlockedUsers.map(u => u.email),
-      ...filteredCancelledUsers.map(u => u.email),
-      ...prospects.map(p => p.email)
+      ...filteredActiveUsers.map((u: CompanyUser) => u.email),
+      ...filteredTrialUsers.map((u: CompanyUser) => u.email),
+      ...filteredBlockedUsers.map((u: CompanyUser) => u.email),
+      ...filteredCancelledUsers.map((u: CompanyUser) => u.email),
+      ...prospects.map((p: EmailProspect) => p.email)
     ];
     onSelectionChange(allEmails);
   };
@@ -166,16 +175,16 @@ export function RecipientSelector({ selectedEmails, onSelectionChange, audienceT
 
   // Filtrar usuarios según el tipo de audiencia
   const filteredActiveUsers = audienceType === 'subscribers' 
-    ? activeUsers.filter(u => u.marketingConsent === true) 
+    ? activeUsers.filter((u: CompanyUser) => u.marketingConsent === true) 
     : activeUsers;
   const filteredTrialUsers = audienceType === 'subscribers' 
-    ? trialUsers.filter(u => u.marketingConsent === true) 
+    ? trialUsers.filter((u: CompanyUser) => u.marketingConsent === true) 
     : trialUsers;
   const filteredBlockedUsers = audienceType === 'subscribers' 
-    ? blockedUsers.filter(u => u.marketingConsent === true) 
+    ? blockedUsers.filter((u: CompanyUser) => u.marketingConsent === true) 
     : blockedUsers;
   const filteredCancelledUsers = audienceType === 'subscribers' 
-    ? cancelledUsers.filter(u => u.marketingConsent === true) 
+    ? cancelledUsers.filter((u: CompanyUser) => u.marketingConsent === true) 
     : cancelledUsers;
 
   const categories = [

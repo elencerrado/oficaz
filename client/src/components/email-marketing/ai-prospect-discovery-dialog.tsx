@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { getAuthHeaders } from '@/lib/auth';
 import { Search, Sparkles, AlertTriangle, CheckCircle2, Globe } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -45,12 +46,11 @@ export function AiProspectDiscoveryDialog({
 
   const searchMutation = useMutation({
     mutationFn: async ({ query, limit }: { query: string; limit: number }) => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/ai-prospect-discovery', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({ query, limit }),
       });
@@ -91,14 +91,13 @@ export function AiProspectDiscoveryDialog({
 
   const addMutation = useMutation({
     mutationFn: async (prospects: AiProspect[]) => {
-      const token = sessionStorage.getItem('superAdminToken');
       const results = await Promise.allSettled(
         prospects.map(prospect =>
           fetch('/api/super-admin/email-prospects', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
+              ...getAuthHeaders(),
             },
             body: JSON.stringify(prospect),
           }).then(r => r.ok ? r.json() : Promise.reject(r))

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
@@ -17,10 +17,15 @@ import { EmployeeTopBar } from '@/components/employee/employee-top-bar';
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { DatePickerDay } from '@/components/ui/date-picker';
+import { useStandardInfiniteScroll } from '@/hooks/use-standard-infinite-scroll';
+import { useIncrementalList } from '@/hooks/use-incremental-list';
+import { InfiniteListFooter } from '@/components/ui/infinite-list-footer';
 import { apiRequest } from '@/lib/queryClient';
 import { logger } from '@/lib/logger';
+import { getAuthHeaders as getCentralAuthHeaders } from '@/lib/auth';
 
 interface AccountingEntry {
+  id: number;
   type: 'expense' | 'income';
   categoryId: number;
   category?: {
@@ -67,6 +72,7 @@ export default function EmployeeExpenses() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [manualMode, setManualMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   // Estados para OCR de tickets
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
@@ -77,9 +83,7 @@ export default function EmployeeExpenses() {
     queryFn: async () => {
       try {
         const response = await fetch('/api/company/addons/crm/status', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
+          headers: getCentralAuthHeaders(),
           credentials: 'include',
         });
         if (!response.ok) return { active: false };
@@ -101,9 +105,7 @@ export default function EmployeeExpenses() {
 
   // Helper para obtener headers con token
   const getAuthHeaders = () => {
-    return {
-      'Authorization': `Bearer ${token}`,
-    };
+    return getCentralAuthHeaders();
   };
 
   // Form state
@@ -159,6 +161,10 @@ export default function EmployeeExpenses() {
   // Fetch my expenses
   const { data: expenses = [] } = useQuery<AccountingEntry[]>({
     queryKey: ['/api/accounting/entries', { type: 'expense' }],
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Create expense mutation
@@ -393,6 +399,30 @@ export default function EmployeeExpenses() {
   const pendingExpenses = expenses.filter((e) => e.status === 'pending');
   const approvedExpenses = expenses.filter((e) => e.status === 'approved');
   const rejectedExpenses = expenses.filter((e) => e.status === 'rejected');
+  const sortedExpenses = useMemo(
+    () => [...expenses].sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime()),
+    [expenses]
+  );
+  const {
+    displayedCount,
+    visibleItems: visibleExpenses,
+    hasMore: hasMoreExpenses,
+    loadMore,
+  } = useIncrementalList({
+    items: sortedExpenses,
+    mobileInitialCount: 8,
+    desktopInitialCount: 14,
+    resetKey: expenses.length,
+  });
+
+  useStandardInfiniteScroll({
+    targetRef: loadMoreRef,
+    enabled: sortedExpenses.length > 0,
+    canLoadMore: hasMoreExpenses,
+    onLoadMore: loadMore,
+    dependencyKey: `${displayedCount}-${sortedExpenses.length}`,
+    rootMargin: '100px',
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-employee-gradient text-gray-900 dark:text-white flex flex-col page-scroll">
@@ -444,7 +474,7 @@ export default function EmployeeExpenses() {
 
       {/* Expenses List */}
       <div className="flex-1 px-6 pb-6 space-y-3">
-        {expenses.length === 0 && (
+        {sortedExpenses.length === 0 && (
           <Card className="bg-white dark:bg-white/10 backdrop-blur-sm border-gray-200 dark:border-white/20">
             <CardContent className="p-8 text-center">
               <Receipt className="h-12 w-12 mx-auto mb-4 text-gray-400 dark:text-white/40" />
@@ -454,7 +484,7 @@ export default function EmployeeExpenses() {
           </Card>
         )}
 
-        {expenses.map((expense) => (
+        {visibleExpenses.map((expense) => (
           <Card key={expense.id} className="bg-white dark:bg-white/10 backdrop-blur-sm border-gray-200 dark:border-white/20">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
@@ -532,6 +562,13 @@ export default function EmployeeExpenses() {
             </CardContent>
           </Card>
         ))}
+
+        <InfiniteListFooter
+          hasMore={hasMoreExpenses}
+          sentinelRef={loadMoreRef}
+          onLoadMore={loadMore}
+          hintText={`Mostrando ${visibleExpenses.length} de ${sortedExpenses.length} gastos`}
+        />
       </div>
 
       {/* Create Expense Dialog */}

@@ -97,14 +97,7 @@ export function useReminderNotifications() {
   // Function to mark notification as shown on server
   const markNotificationShown = async (reminderId: number) => {
     try {
-      const token = localStorage.getItem('token');
-      await fetch(`/api/reminders/${reminderId}/mark-notification-shown`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      await apiRequest('POST', `/api/reminders/${reminderId}/mark-notification-shown`);
     } catch (error) {
       // Error marking notification as shown
     }

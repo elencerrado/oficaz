@@ -6,6 +6,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Building2, ChevronRight } from 'lucide-react';
 import AdminAccounting from './admin-accounting';
 import { useLocation } from 'wouter';
+import { getAuthHeaders } from '@/lib/auth';
 
 interface AccountantCompany {
   id: number;
@@ -14,7 +15,7 @@ interface AccountantCompany {
 }
 
 export default function AccountantAccounting() {
-  const { token, user } = useAuth();
+  const { user } = useAuth();
   const [location] = useLocation();
   const searchParams = useMemo(() => new URLSearchParams(location.split('?')[1] || ''), [location]);
   const initialCompanyId = searchParams.get('companyId');
@@ -26,16 +27,23 @@ export default function AccountantAccounting() {
     queryKey: ['/api/accountant/companies'],
     queryFn: async () => {
       const response = await fetch('/api/accountant/companies', {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: getAuthHeaders(),
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch companies');
       return response.json();
     },
     enabled: user?.role === 'accountant',
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
-  const selectedCompany = companies.find(c => c.id === selectedCompanyId);
+  const selectedCompany = useMemo(
+    () => companies.find((c) => c.id === selectedCompanyId),
+    [companies, selectedCompanyId]
+  );
 
   // Si no hay empresa seleccionada, mostrar lista
   if (!selectedCompanyId) {

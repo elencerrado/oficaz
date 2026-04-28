@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertCircle, CreditCard, Clock, Plus, TrendingUp } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useToast } from '@/hooks/use-toast';
+import { getAuthHeaders } from '@/lib/auth';
 import { PaymentMethodManager } from '@/components/PaymentMethodManager';
 import { useAuth } from '@/hooks/use-auth';
 import type { Addon, CompanyAddon } from '@shared/schema';
@@ -19,6 +20,8 @@ interface TrialStatus {
   plan: string;
   hasPaymentMethod: boolean;
   isBlocked: boolean;
+  demoMode?: boolean;
+  subscriptionInFlight?: boolean; // True if subscription is being created
 }
 
 interface PaymentIntent {
@@ -28,6 +31,15 @@ interface PaymentIntent {
   plan: string;
   employeeCount: number;
   pricePerUser: number;
+}
+
+interface PaymentMethod {
+  id: string;
+  card_brand: string;
+  card_last_four: string;
+  card_exp_month: number;
+  card_exp_year: number;
+  is_default: boolean;
 }
 
 export function TrialManager() {
@@ -43,7 +55,7 @@ export function TrialManager() {
   });
 
   // Obtener métodos de pago para el modal
-  const { data: paymentMethods = [] } = useQuery({
+  const { data: paymentMethods = [] } = useQuery<PaymentMethod[]>({
     queryKey: ['/api/account/payment-methods'],
     staleTime: 60000,
   });
@@ -54,61 +66,34 @@ export function TrialManager() {
     staleTime: 30000,
   });
 
-  // Get seat prices from API (fallback to hardcoded defaults)
-  const { data: seatPricesData = [] } = useQuery({
-    queryKey: ['/api/super-admin/seat-prices'],
+  // Obtener info de suscripción (incluye conteos reales por rol)
+  const { data: subscriptionInfo } = useQuery({
+    queryKey: ['/api/subscription/info'],
+    enabled: !!subscription,
+    staleTime: 30000,
     queryFn: async () => {
-      try {
-        const response = await fetch('/api/super-admin/seat-prices');
-        if (!response.ok) throw new Error('Failed to fetch seat prices');
-        return response.json();
-      } catch (error) {
-        console.warn('Failed to fetch seat prices from API, using defaults:', error);
-        return [];
-      }
-    },
-    staleTime: 60000,
+      const res = await fetch('/api/subscription/info', {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('No se pudo obtener la info de suscripción');
+      return res.json();
+    }
   });
 
-  // Build seat pricing map from API data (with hardcoded fallbacks)
+  // Build seat pricing map from subscription info (already includes seat prices)
   const seatPriceMap = {
-    admin: seatPricesData.find((s: any) => s.roleType === 'admin')?.monthlyPrice
-      ? parseFloat(seatPricesData.find((s: any) => s.roleType === 'admin').monthlyPrice)
-      : 6,
-    manager: seatPricesData.find((s: any) => s.roleType === 'manager')?.monthlyPrice
-      ? parseFloat(seatPricesData.find((s: any) => s.roleType === 'manager').monthlyPrice)
-      : 4,
-    employee: seatPricesData.find((s: any) => s.roleType === 'employee')?.monthlyPrice
-      ? parseFloat(seatPricesData.find((s: any) => s.roleType === 'employee').monthlyPrice)
-      : 2,
+    admin: ((subscriptionInfo as any)?.seatPricing?.find((s: any) => s.roleType === 'admin')?.monthlyPrice) || 6,
+    manager: ((subscriptionInfo as any)?.seatPricing?.find((s: any) => s.roleType === 'manager')?.monthlyPrice) || 4,
+    employee: ((subscriptionInfo as any)?.seatPricing?.find((s: any) => s.roleType === 'employee')?.monthlyPrice) || 2,
   };
 
-  // Calcular precio proyectado total usando datos reales (addons + asientos + precio base/custom)
+  // Calcular precio proyectado total usando datos reales (addons + asientos)
+  // Debe coincidir exactamente con el cálculo del backend (línea 12801-12810 en routes.ts)
   const projectedPrice = useMemo(() => {
-    // 1) Custom price siempre manda
-    if (subscription?.customMonthlyPrice != null) {
-      return Number(subscription.customMonthlyPrice);
-    }
-
-    // 2) Base (puede ser 0€ en modelo modular)
-    const basePrice = subscription?.baseMonthlyPrice != null ? Number(subscription.baseMonthlyPrice) : 0;
-
-    // 3) Addons activos o pending_cancel con su precio real
-    const addonsTotal = companyAddons
-      .filter(ca => ca.status === 'active' || ca.status === 'pending_cancel')
-      .reduce((sum, ca) => sum + Number(ca.addon?.monthlyPrice ?? 0), 0);
-
-    // 4) Asientos (incluye el admin inicial)
-    const adminSeats = (subscription?.extraAdmins ?? 0) + 1;
-    const managerSeats = subscription?.extraManagers ?? 0;
-    const employeeSeats = subscription?.extraEmployees ?? 0;
-
-    const seatsTotal = (adminSeats * seatPriceMap.admin)
-      + (managerSeats * seatPriceMap.manager)
-      + (employeeSeats * seatPriceMap.employee);
-
-    return basePrice + addonsTotal + seatsTotal;
-  }, [companyAddons, subscription, seatPriceMap]);
+    // Use pre-calculated monthly price from backend for consistency
+    // Backend calculates: addons + (adminSeats * 6) + (managerSeats * 4) + (employeeSeats * 2)
+    return Number(subscription?.monthlyPrice ?? 0);
+  }, [subscription?.monthlyPrice]);
 
   // Función para obtener el precio del plan Oficaz
   const getPlanPrice = (_planName: string) => projectedPrice.toFixed(2);
@@ -123,7 +108,7 @@ export function TrialManager() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({ plan })
       });
@@ -181,6 +166,11 @@ export function TrialManager() {
   // Only render if we have trial status data (avoid hydration mismatch)
   if (!trialStatus) return null;
 
+  // Demo companies should behave as subscribed and never show trial UX.
+  if (trialStatus.demoMode) {
+    return null;
+  }
+
   // If account is active (paid), don't show anything - subscription is working
   if (trialStatus.status === 'active' && !trialStatus.isTrialActive) {
     return null;
@@ -189,6 +179,29 @@ export function TrialManager() {
   // If in trial and has payment method, don't show in dashboard
   if (trialStatus.isTrialActive && trialStatus.hasPaymentMethod) {
     return null;
+  }
+
+  // If subscription is being created, show processing message
+  if (trialStatus.subscriptionInFlight) {
+    return (
+      <Card className="border-blue-200 bg-blue-50">
+        <CardHeader>
+          <CardTitle className="flex items-center text-blue-800">
+            <Clock className="w-5 h-5 mr-2 animate-spin" />
+            Procesando Suscripción
+          </CardTitle>
+          <CardDescription className="text-blue-600">
+            Tu suscripción se está siendo activada. Por favor, espera un momento.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center gap-3">
+            <LoadingSpinner size="md" />
+            <p className="text-sm text-blue-700">Activando tu cuenta...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   // If account is blocked, show urgent payment required

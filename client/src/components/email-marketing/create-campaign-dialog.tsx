@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { getAuthHeaders } from '@/lib/auth';
 import { Plus, ChevronRight, ChevronLeft } from 'lucide-react';
 import { RecipientSelector } from './recipient-selector';
 import { EmailPreviewEditor } from './email-preview-editor';
@@ -139,12 +140,11 @@ export function CreateCampaignDialog() {
 
   const createCampaignMutation = useMutation({
     mutationFn: async (data: any) => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/email-campaigns', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(data),
       });

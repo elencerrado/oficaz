@@ -1,13 +1,77 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { ModalActionButton } from '@/components/ui/modal-action-button';
+import { ModalHeaderWithActions } from '@/components/ui/modal-header-with-actions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { ZoomIn, ZoomOut, RotateCcw, ExternalLink, Download, FileX, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, ExternalLink, Download, FileX, ChevronLeft, ChevronRight, Trash2, PenTool, X } from 'lucide-react';
 import { getAuthHeaders } from '@/lib/auth';
-import { Document, Page, pdfjs } from 'react-pdf';
+import { Document, Page } from 'react-pdf';
+import { pdfjsLib as pdfjs } from '@/lib/pdf-worker';
 
-// Usar el mismo worker que signature-position-editor (funciona en Windows e iOS)
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+const detectMimeTypeFromBytes = async (blob: Blob, fallback?: string | null): Promise<string> => {
+  const declared = (blob.type || fallback || '').toLowerCase();
+  if (declared && declared !== 'application/octet-stream') {
+    return declared;
+  }
+
+  try {
+    const headerBuffer = await blob.slice(0, 16).arrayBuffer();
+    const header = new Uint8Array(headerBuffer);
+
+    // PDF: %PDF-
+    if (
+      header.length >= 5 &&
+      header[0] === 0x25 &&
+      header[1] === 0x50 &&
+      header[2] === 0x44 &&
+      header[3] === 0x46 &&
+      header[4] === 0x2d
+    ) {
+      return 'application/pdf';
+    }
+
+    // PNG
+    if (
+      header.length >= 8 &&
+      header[0] === 0x89 &&
+      header[1] === 0x50 &&
+      header[2] === 0x4e &&
+      header[3] === 0x47
+    ) {
+      return 'image/png';
+    }
+
+    // JPEG
+    if (header.length >= 3 && header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff) {
+      return 'image/jpeg';
+    }
+
+    // GIF
+    if (header.length >= 3 && header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46) {
+      return 'image/gif';
+    }
+
+    // WEBP: RIFF....WEBP
+    if (
+      header.length >= 12 &&
+      header[0] === 0x52 &&
+      header[1] === 0x49 &&
+      header[2] === 0x46 &&
+      header[3] === 0x46 &&
+      header[8] === 0x57 &&
+      header[9] === 0x45 &&
+      header[10] === 0x42 &&
+      header[11] === 0x50
+    ) {
+      return 'image/webp';
+    }
+  } catch {
+    // Keep fallback below
+  }
+
+  return declared || 'application/octet-stream';
+};
 
 interface DocumentPreviewModalProps {
   open: boolean;
@@ -17,9 +81,13 @@ interface DocumentPreviewModalProps {
   onClose: () => void;
   docId?: number | null;
   onDelete?: (docId: number) => void;
+  requiresSignature?: boolean; // If document requires signature
+  isSigned?: boolean; // If document is already signed
+  isViewed?: boolean; // If document has been viewed
+  onSignClick?: () => void; // Callback when sign button is clicked
 }
 
-export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, docId, onDelete }: DocumentPreviewModalProps) {
+export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, docId, onDelete, requiresSignature = false, isSigned = false, isViewed = false, onSignClick }: DocumentPreviewModalProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -35,7 +103,7 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
   const [detectedMimeType, setDetectedMimeType] = useState<string | null>(null);
   const [pdfNumPages, setPdfNumPages] = useState<number | null>(null);
   const [pdfPageNumber, setPdfPageNumber] = useState(1);
-  const [pdfContainerWidth, setPdfContainerWidth] = useState<number>(800);
+  const [pdfContainerWidth, setPdfContainerWidth] = useState<number>(0);
   const pdfContainerRef = useRef<HTMLDivElement>(null);
   const [pdfLoadError, setPdfLoadError] = useState(false);
   const [pdfZoom, setPdfZoom] = useState(1);
@@ -43,6 +111,8 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
   const [isPdfDragging, setIsPdfDragging] = useState(false);
   const pdfDragStartRef = useRef<{ x: number; y: number } | null>(null);
   const lastPinchDistanceRef = useRef<number | null>(null);
+  const lastTapTimeRef = useRef<number>(0);
+  const doubleTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Detect iOS - Safari on iOS doesn't support inline PDF viewing properly
   const isIOS = useMemo(() => {
@@ -50,6 +120,15 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
     return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   }, []);
+
+  // Detect Android - also has issues with inline PDF viewing in many browsers
+  const isAndroid = useMemo(() => {
+    if (typeof navigator === 'undefined') return false;
+    return /Android/.test(navigator.userAgent);
+  }, []);
+
+  // Use react-pdf for mobile devices (iOS and Android)
+  const isMobile = isIOS || isAndroid;
 
   // Memoize PDF file data to prevent unnecessary reloads
   const pdfFileData = useMemo(() => {
@@ -80,7 +159,6 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
         const width = modalWidth - 32;
         const newWidth = Math.max(width, 300); // minimum 300px
         
-        console.log('[PDF Width iOS] Viewport:', viewportWidth, 'x', viewportHeight, 'Modal 95vw:', modalWidth, 'Final PDF width:', newWidth);
         setPdfContainerWidth(newWidth);
       }
     };
@@ -88,17 +166,17 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
     // Initial update immediately (no delay for first render)
     updateWidth();
     
-    // Multiple updates to catch iOS viewport changes
+    // Multiple updates to catch mobile viewport changes
     const frameId1 = requestAnimationFrame(updateWidth);
     const frameId2 = requestAnimationFrame(() => {
       requestAnimationFrame(updateWidth);
     });
     
-    // Delayed update for iOS Safari (sometimes needs extra time for viewport to settle)
+    // Delayed update for mobile browsers (sometimes needs extra time for viewport to settle)
     const timeoutId = setTimeout(updateWidth, 100);
     const timeoutId2 = setTimeout(updateWidth, 300);
     
-    // Use ResizeObserver for better detection on iOS
+    // Use ResizeObserver for better detection on mobile
     let resizeObserver: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined' && pdfContainerRef.current) {
       resizeObserver = new ResizeObserver(updateWidth);
@@ -117,17 +195,18 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
       window.removeEventListener('resize', updateWidth);
       window.removeEventListener('orientationchange', updateWidth);
     };
-  }, [open]);
+  }, [open, pdfArrayBuffer]); // Añadir pdfArrayBuffer para recalcular cuando se monte el contenedor PDF
 
   // Auto-fit PDF to container width on first load (iOS fix)
+  // Estado para controlar si ya se hizo el reset inicial
+  const [pdfInitialResetDone, setPdfInitialResetDone] = useState(false);
+  
+  // Reset flag cuando cambia el PDF
   useEffect(() => {
-    if (pdfArrayBuffer && pdfContainerWidth && pdfContainerWidth > 0) {
-      console.log('[PDF Fit] Resetting zoom and pan. Container width:', pdfContainerWidth);
-      // Reset pan and zoom when PDF loads or container width changes
-      setPdfPan({ x: 0, y: 0 });
-      setPdfZoom(1);
+    if (pdfArrayBuffer) {
+      setPdfInitialResetDone(false);
     }
-  }, [pdfArrayBuffer, pdfContainerWidth]);
+  }, [pdfArrayBuffer]);
 
   useEffect(() => {
     if (open && url) {
@@ -142,6 +221,7 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
       setPdfNumPages(null);
       setPdfPageNumber(1);
       setPdfLoadError(false);
+      lastTapTimeRef.current = 0;
       
       // Check if URL requires authentication (internal API endpoint)
       // Signed URLs (/api/documents/download/TOKEN) don't need auth - the token IS the auth
@@ -161,16 +241,16 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
               throw new Error(res.status === 404 ? 'Documento no encontrado' : 'Error al cargar el documento');
             }
             const contentType = res.headers.get('content-type') || 'application/octet-stream';
-            setDetectedMimeType(contentType);
             return res.blob();
           })
-          .then(blob => {
+          .then(async (blob) => {
             try {
-              const type = blob.type.toLowerCase();
-              setDetectedMimeType(blob.type);
+              const normalizedMimeType = await detectMimeTypeFromBytes(blob, mimeType || null);
+              setDetectedMimeType(normalizedMimeType);
+              const type = normalizedMimeType.toLowerCase();
               
-              if (type.includes('pdf') && isIOS) {
-                // For PDF on iOS: convert to ArrayBuffer for react-pdf (Safari no soporta PDFs en iframe)
+              if (type.includes('pdf') && isMobile) {
+                // For PDF on mobile (iOS/Android): convert to ArrayBuffer for react-pdf (mejor compatibilidad)
                 blob.arrayBuffer().then(arrayBuffer => {
                   const uint8Array = new Uint8Array(arrayBuffer);
                   setPdfArrayBuffer(uint8Array);
@@ -195,16 +275,17 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
             setError(err.message || 'No se pudo cargar el documento');
           });
       } else {
-        // For external URLs (like signed R2 URLs), fetch to check if it's PDF on iOS
-        if (isIOS) {
+        // For external URLs (like signed R2 URLs), fetch to check if it's PDF on mobile
+        if (isMobile) {
           fetch(url)
             .then(res => res.blob())
-            .then(blob => {
-              const type = blob.type.toLowerCase();
-              setDetectedMimeType(blob.type);
+            .then(async (blob) => {
+              const normalizedMimeType = await detectMimeTypeFromBytes(blob, mimeType || null);
+              const type = normalizedMimeType.toLowerCase();
+              setDetectedMimeType(normalizedMimeType);
               
               if (type.includes('pdf')) {
-                // Convert to ArrayBuffer for iOS
+                // Convert to ArrayBuffer for mobile
                 blob.arrayBuffer().then(arrayBuffer => {
                   const uint8Array = new Uint8Array(arrayBuffer);
                   setPdfArrayBuffer(uint8Array);
@@ -225,6 +306,7 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
             });
         } else {
           // Desktop: use URL directly
+          setDetectedMimeType(mimeType || null);
           setBlobUrl(url);
           setLoading(false);
         }
@@ -238,13 +320,17 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
       setError(null);
       setDetectedMimeType(null);
     }
-  }, [open, url]);
+  }, [open, url, mimeType]);
   
   // Cleanup blob URL on unmount
   useEffect(() => {
     return () => {
       if (blobUrl && blobUrl.startsWith('blob:')) {
         URL.revokeObjectURL(blobUrl);
+      }
+      // Limpiar timeout de doble tap
+      if (doubleTapTimeoutRef.current) {
+        clearTimeout(doubleTapTimeoutRef.current);
       }
     };
   }, [blobUrl]);
@@ -262,6 +348,9 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
     const type = (detectedMimeType || mimeType || '').toLowerCase();
     return type.includes('pdf') || safeFilename.toLowerCase().endsWith('.pdf');
   }, [mimeType, detectedMimeType, safeFilename]);
+
+  // Allow download/external open only if document doesn't require signature OR is already signed
+  const allowDownloadAndExternal = !requiresSignature || isSigned;
 
   const handleZoomIn = () => setZoom((z) => Math.min(3, z + 0.1));
   const handleZoomOut = () => setZoom((z) => Math.max(0.2, z - 0.1));
@@ -372,15 +461,42 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
     setPan((prev) => clampPan(prev));
   }, [zoom, imageSize]);
 
-  // Gestión táctil para PDF en iOS
+  // Gestión táctil para PDF en móvil (iOS/Android)
   const handlePdfTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 1) {
-      // Un dedo: arrastrar
       const touch = e.touches[0];
-      setIsPdfDragging(true);
-      pdfDragStartRef.current = { x: touch.clientX - pdfPan.x, y: touch.clientY - pdfPan.y };
+      const now = Date.now();
+      const timeSinceLastTap = now - lastTapTimeRef.current;
+      
+      // Detectar doble tap (menos de 300ms entre taps)
+      if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
+        // Doble tap: ajustar documento (fit to screen)
+        e.preventDefault();
+        setPdfZoom(1);
+        setPdfPan({ x: 0, y: 0 });
+        lastTapTimeRef.current = 0;
+        if (doubleTapTimeoutRef.current) {
+          clearTimeout(doubleTapTimeoutRef.current);
+          doubleTapTimeoutRef.current = null;
+        }
+      } else {
+        // Primer tap o tap simple: iniciar arrastre después de un delay
+        lastTapTimeRef.current = now;
+        doubleTapTimeoutRef.current = setTimeout(() => {
+          // Si no hubo segundo tap, iniciar arrastre
+          setIsPdfDragging(true);
+          pdfDragStartRef.current = { x: touch.clientX - pdfPan.x, y: touch.clientY - pdfPan.y };
+        }, 300);
+      }
     } else if (e.touches.length === 2) {
-      // Dos dedos: zoom
+      // Dos dedos: zoom con pellizco
+      // Cancelar cualquier detección de doble tap
+      if (doubleTapTimeoutRef.current) {
+        clearTimeout(doubleTapTimeoutRef.current);
+        doubleTapTimeoutRef.current = null;
+      }
+      lastTapTimeRef.current = 0;
+      
       const touch1 = e.touches[0];
       const touch2 = e.touches[1];
       const distance = Math.hypot(
@@ -393,33 +509,47 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
 
   const handlePdfTouchMove = (e: React.TouchEvent) => {
     if (e.touches.length === 1 && isPdfDragging && pdfDragStartRef.current) {
-      // Arrastrar
+      // Arrastrar con un dedo
+      e.preventDefault();
       const touch = e.touches[0];
       setPdfPan({
         x: touch.clientX - pdfDragStartRef.current.x,
         y: touch.clientY - pdfDragStartRef.current.y,
       });
     } else if (e.touches.length === 2 && lastPinchDistanceRef.current) {
-      // Zoom con pellizco
+      // Zoom con pellizco (dos dedos)
+      e.preventDefault();
       const touch1 = e.touches[0];
       const touch2 = e.touches[1];
       const distance = Math.hypot(
         touch2.clientX - touch1.clientX,
         touch2.clientY - touch1.clientY
       );
+      
+      // Calcular el factor de zoom basado en la distancia entre dedos
       const delta = distance / lastPinchDistanceRef.current;
-      setPdfZoom(prev => Math.max(0.5, Math.min(3, prev * delta)));
+      setPdfZoom(prev => {
+        const newZoom = prev * delta;
+        // Limitar zoom entre 0.5x y 4x para mejor usabilidad
+        return Math.max(0.5, Math.min(4, newZoom));
+      });
       lastPinchDistanceRef.current = distance;
     }
   };
 
-  const handlePdfTouchEnd = () => {
-    setIsPdfDragging(false);
-    pdfDragStartRef.current = null;
-    lastPinchDistanceRef.current = null;
+  const handlePdfTouchEnd = (e: React.TouchEvent) => {
+    // Si se termina el gesto de pellizco o arrastre
+    if (e.touches.length === 0) {
+      setIsPdfDragging(false);
+      pdfDragStartRef.current = null;
+      lastPinchDistanceRef.current = null;
+    } else if (e.touches.length === 1) {
+      // Si queda un dedo, reiniciar arrastre
+      lastPinchDistanceRef.current = null;
+    }
   };
 
-  // Gestión con ratón para PDF en iOS escritorio (iPad con trackpad/ratón)
+  // Gestión con ratón para PDF en móvil (tablets con trackpad/ratón)
   const handlePdfMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return; // Solo botón izquierdo
     setIsPdfDragging(true);
@@ -441,67 +571,62 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-6xl w-[95vw] h-[90vh] p-0 overflow-hidden flex flex-col">
-        <DialogHeader className="px-3 md:px-4 py-2 md:py-3 border-b pr-10 md:pr-12 flex-shrink-0">
-          <div className="flex items-center justify-between gap-2 md:gap-3">
-            <DialogTitle className="truncate text-xs md:text-sm">{filename || 'Documento'}</DialogTitle>
-            <div className="flex items-center gap-0.5 md:gap-1 flex-shrink-0">
+      <DialogContent showCloseButton={false} className="max-w-6xl w-[95vw] h-[90vh] p-0 overflow-hidden flex flex-col">
+        <ModalHeaderWithActions
+          title={filename || 'Documento'}
+          titleClassName="text-xs md:text-sm"
+          actions={(
+            <>
               {isImage && (
                 <>
-                  <Button variant="outline" size="sm" onClick={handleZoomOut} className="h-6 w-6 md:h-7 md:w-7 p-0">
-                    <ZoomOut className="h-3 w-3 md:h-3.5 md:w-3.5" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleResetZoom} className="h-6 w-6 md:h-7 md:w-7 p-0">
-                    <RotateCcw className="h-3 w-3 md:h-3.5 md:w-3.5" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleZoomIn} className="h-6 w-6 md:h-7 md:w-7 p-0">
-                    <ZoomIn className="h-3 w-3 md:h-3.5 md:w-3.5" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleDownload} className="h-6 w-6 md:h-7 md:w-7 p-0">
-                    <Download className="h-3 w-3 md:h-3.5 md:w-3.5" />
-                  </Button>
+                  <ModalActionButton intent="neutral" onClick={handleZoomOut} title="Reducir zoom">
+                    <ZoomOut />
+                  </ModalActionButton>
+                  <ModalActionButton intent="neutral" onClick={handleResetZoom} title="Restablecer zoom">
+                    <RotateCcw />
+                  </ModalActionButton>
+                  <ModalActionButton intent="neutral" onClick={handleZoomIn} title="Aumentar zoom">
+                    <ZoomIn />
+                  </ModalActionButton>
+                  {allowDownloadAndExternal && (
+                    <ModalActionButton intent="download" onClick={handleDownload} title="Descargar documento">
+                      <Download />
+                    </ModalActionButton>
+                  )}
                 </>
               )}
-              {/* Controles para PDF en iOS (react-pdf) */}
-              {isPdf && pdfArrayBuffer && isIOS && (
-                <>
-                  <Button variant="outline" size="sm" onClick={() => setPdfZoom(z => Math.max(0.5, z - 0.2))} className="h-6 w-6 md:h-7 md:w-7 p-0">
-                    <ZoomOut className="h-3 w-3 md:h-3.5 md:w-3.5" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => { setPdfZoom(1); setPdfPan({ x: 0, y: 0 }); }} className="h-6 w-6 md:h-7 md:w-7 p-0">
-                    <RotateCcw className="h-3 w-3 md:h-3.5 md:w-3.5" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setPdfZoom(z => Math.min(3, z + 0.2))} className="h-6 w-6 md:h-7 md:w-7 p-0">
-                    <ZoomIn className="h-3 w-3 md:h-3.5 md:w-3.5" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleDownload} className="h-6 w-6 md:h-7 md:w-7 p-0">
-                    <Download className="h-3 w-3 md:h-3.5 md:w-3.5" />
-                  </Button>
-                </>
+              {/* Controles para PDF en móvil (react-pdf) - solo descarga, zoom por gestos */}
+              {isPdf && pdfArrayBuffer && isMobile && allowDownloadAndExternal && (
+                <ModalActionButton intent="download" onClick={handleDownload} title="Descargar documento">
+                  <Download />
+                </ModalActionButton>
               )}
               {/* Delete icon in modal header */}
               {typeof docId === 'number' && onDelete && (
-                <Button
-                  variant="outline"
-                  size="sm"
+                <ModalActionButton
+                  intent="delete"
                   onClick={() => onDelete(docId)}
-                  className="h-6 w-6 md:h-7 md:w-7 p-0"
                   title="Eliminar documento"
                 >
-                  <Trash2 className="h-3 w-3 md:h-3.5 md:w-3.5" />
-                </Button>
+                  <Trash2 />
+                </ModalActionButton>
               )}
-              {/* External link button per requested style */}
-              <button
-                onClick={handleOpenNewTab}
-                title="Abrir en nueva pestaña"
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md h-6 w-6 md:h-7 md:w-7 p-0"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-external-link h-3 w-3 md:h-3.5 md:w-3.5"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>
-              </button>
-            </div>
-          </div>
-        </DialogHeader>
+              {/* External link button - only if document doesn't require signature or is signed */}
+              {allowDownloadAndExternal && (
+                <ModalActionButton
+                  intent="neutral"
+                  onClick={handleOpenNewTab}
+                  title="Abrir en nueva pestaña"
+                >
+                  <ExternalLink />
+                </ModalActionButton>
+              )}
+              <ModalActionButton intent="neutral" onClick={onClose} title="Cerrar modal">
+                <X />
+              </ModalActionButton>
+            </>
+          )}
+        />
 
         <div className="flex-1 bg-muted/50 relative overflow-hidden">
           {error && (
@@ -555,7 +680,7 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
               </div>
             ) : isPdf ? (
               pdfArrayBuffer ? (
-                // iOS: usar react-pdf porque Safari no soporta PDFs en iframe
+                // Móvil (iOS/Android): usar react-pdf para mejor compatibilidad
                 <div 
                   ref={pdfContainerRef} 
                   className={`w-full h-full overflow-hidden flex items-center justify-center relative ${isPdfDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
@@ -579,13 +704,13 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
                       transition: isPdfDragging ? 'none' : 'transform 0.1s ease-out',
                     }}
                   >
-                    <Document
-                      file={pdfFileData}
-                      onLoadSuccess={({ numPages }) => {
-                        console.log('[PDF Document] Loaded successfully. Pages:', numPages, 'Container width:', pdfContainerWidth);
-                        setPdfNumPages(numPages);
-                        setLoading(false);
-                      }}
+                    {pdfContainerWidth > 0 ? (
+                      <Document
+                        file={pdfFileData}
+                        onLoadSuccess={({ numPages }) => {
+                          setPdfNumPages(numPages);
+                          setLoading(false);
+                        }}
                       onLoadError={() => {
                         setPdfLoadError(true);
                         setError('No se pudo cargar el PDF');
@@ -600,16 +725,25 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
                         renderTextLayer={false}
                         renderAnnotationLayer={false}
                         onLoadSuccess={(page) => {
-                          console.log('[PDF Page] Page rendered. Width:', page.width, 'Height:', page.height, 'Original size:', page.originalWidth, 'x', page.originalHeight, 'Container width:', pdfContainerWidth);
                           setLoading(false);
+                          
+                          // Reset zoom y pan DESPUÉS de renderizar la primera vez
+                          if (!pdfInitialResetDone && pdfContainerWidth > 0) {
+                            setPdfPan({ x: 0, y: 0 });
+                            setPdfZoom(1);
+                            setPdfInitialResetDone(true);
+                          }
                         }}
                         onRenderError={() => {
                           setError('Error al renderizar la página');
                         }}
                       />
                     </Document>
+                    ) : (
+                      <LoadingSpinner />
+                    )}
                   </div>
-                  {/* Controles de navegación de página para PDF en iOS */}
+                  {/* Controles de navegación de página para PDF en móvil */}
                   {pdfNumPages && pdfNumPages > 1 && (
                     <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-background/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg border">
                       <Button
@@ -654,9 +788,47 @@ export function DocumentPreviewModal({ open, url, filename, mimeType, onClose, d
                   </div>
                 </div>
               )
-            ) : null
+            ) : (
+              <div className="w-full h-full flex items-center justify-center p-4">
+                <div className="text-center max-w-sm">
+                  <FileX className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                  <p className="text-base font-medium text-foreground mb-2">Vista previa no disponible</p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Este archivo no se puede mostrar en el modal. Puedes abrirlo o descargarlo.
+                  </p>
+                  <div className="flex items-center justify-center gap-2">
+                    {allowDownloadAndExternal && (
+                      <Button variant="outline" size="sm" onClick={handleOpenNewTab} className="gap-2">
+                        <ExternalLink className="w-4 h-4" />
+                        Abrir
+                      </Button>
+                    )}
+                    {allowDownloadAndExternal && (
+                      <Button size="sm" onClick={handleDownload} className="gap-2">
+                        <Download className="w-4 h-4" />
+                        Descargar
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
           )}
         </div>
+
+        {/* Footer con botón de firmar - solo para empleados con documentos que requieren firma */}
+        {requiresSignature && !isSigned && isViewed && onSignClick && (
+          <div className="border-t bg-background px-4 py-3 flex items-center justify-center flex-shrink-0">
+            <Button
+              onClick={onSignClick}
+              size="lg"
+              className="bg-green-600 hover:bg-green-700 text-white shadow-md"
+            >
+              <PenTool className="h-4 w-4 mr-2" />
+              Firmar Documento
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

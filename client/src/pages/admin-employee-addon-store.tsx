@@ -32,12 +32,15 @@ import {
   Briefcase,
   Package,
   CreditCard,
-  LogOut
+  LogOut,
+  CirclePlay
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { getAddonColorClasses, getAddonIconComponent } from '@/lib/addon-visuals';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Capacitor } from '@capacitor/core';
 import type { Addon, CompanyAddon } from '@shared/schema';
 
 interface AddonWithStatus extends Omit<Addon, 'isFreeFeature'> {
@@ -50,69 +53,24 @@ interface AddonWithStatus extends Omit<Addon, 'isFreeFeature'> {
   isFreeFeature: boolean;
 }
 
-const getAddonIcon = (key: string) => {
-  switch (key) {
-    case 'employees':
-      return <Users className="h-6 w-6" />;
-    case 'crm':
-      return <Briefcase className="h-6 w-6" />;
-    case 'accounting':
-      return <CreditCard className="h-6 w-6" />;
-    case 'ai_assistant':
-      return <Sparkles className="h-6 w-6" />;
-    case 'work_reports':
-      return <FileText className="h-6 w-6" />;
-    case 'messages':
-      return <MessageCircle className="h-6 w-6" />;
-    case 'reminders':
-      return <Bell className="h-6 w-6" />;
-    case 'documents':
-      return <FolderOpen className="h-6 w-6" />;
-    case 'time_tracking':
-      return <Clock className="h-6 w-6" />;
-    case 'vacation':
-      return <CalendarDays className="h-6 w-6" />;
-    case 'schedules':
-      return <LayoutGrid className="h-6 w-6" />;
-    case 'inventory':
-      return <Package className="h-6 w-6" />;
-    default:
-      return <Store className="h-6 w-6" />;
-  }
-};
+type RoleVideoKey = 'admin' | 'manager' | 'employee';
 
-const getAddonColor = (key: string, isFree: boolean = false) => {
-  if (isFree) {
-    return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
-  }
-  switch (key) {
-    case 'employees':
-      return 'bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-400';
-    case 'crm':
-      return 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-400';
-    case 'accounting':
-      return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
-    case 'ai_assistant':
-      return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
-    case 'work_reports':
-      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
-    case 'messages':
-      return 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400';
-    case 'reminders':
-      return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
-    case 'documents':
-      return 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400';
-    case 'time_tracking':
-      return 'bg-stone-100 text-stone-700 dark:bg-stone-900/30 dark:text-stone-300';
-    case 'vacation':
-      return 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400';
-    case 'schedules':
-      return 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400';
-    case 'inventory':
-      return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
-    default:
-      return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
-  }
+const roleVideoConfig: Record<RoleVideoKey, {
+  title: string;
+  embedId: string;
+}> = {
+  admin: {
+    title: 'Vídeo explicativo: Administrador',
+    embedId: 'THVtK0rxHzo',
+  },
+  manager: {
+    title: 'Vídeo explicativo: Manager',
+    embedId: 'Pwuv9q9PhDI',
+  },
+  employee: {
+    title: 'Vídeo explicativo: Empleado',
+    embedId: 'OydgoA8fYN4',
+  },
 };
 
 export default function AddonStore() {
@@ -124,6 +82,20 @@ export default function AddonStore() {
   
   const isAdmin = user?.role === 'admin';
   const isManager = user?.role === 'manager';
+  const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+  const companyAliasFromPath = typeof window !== 'undefined'
+    ? window.location.pathname.split('/').filter(Boolean)[0]
+    : '';
+  const webBillingBaseUrl = (import.meta.env.VITE_WEB_BILLING_URL || 'https://oficaz.es').replace(/\/$/, '');
+  const webBillingUrl = companyAliasFromPath
+    ? `${webBillingBaseUrl}/${companyAliasFromPath}/tienda`
+    : `${webBillingBaseUrl}/login`;
+
+  const openWebBilling = () => {
+    if (typeof window !== 'undefined') {
+      window.open(webBillingUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
   
   const handleLogout = async () => {
     await logout();
@@ -140,6 +112,10 @@ export default function AddonStore() {
   } }>({
     queryKey: ['/api/settings/manager-permissions'],
     enabled: isAdmin || isManager,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
   
   const managerPermissions = permissionsData?.managerPermissions;
@@ -149,10 +125,14 @@ export default function AddonStore() {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showSeatsDialog, setShowSeatsDialog] = useState(false);
   const [showPaymentManager, setShowPaymentManager] = useState(false);
+  const [activeRoleVideo, setActiveRoleVideo] = useState<RoleVideoKey | null>(null);
   
-  const { data: trialStatus } = useQuery<{ isBlocked: boolean; trialEndDate: string }>({
+  const { data: trialStatus } = useQuery<{ isBlocked: boolean; trialEndDate: string; subscriptionInFlight?: boolean }>({
     queryKey: ['/api/account/trial-status'],
-    staleTime: 30000,
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     enabled: !!user && isAdmin,
   });
   
@@ -160,19 +140,54 @@ export default function AddonStore() {
     queryKey: ['/api/account/payment-methods'],
     retry: false,
     enabled: !!user && isAdmin,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
   
-  const isTrialExpired = trialStatus?.isBlocked === true;
+  const isSubscriptionInFlight = trialStatus?.subscriptionInFlight === true;
+  const isTrialExpired = trialStatus?.isBlocked === true && !isSubscriptionInFlight;
   
+  // Load seat prices from database
+  const { data: seatPricesFromDB = [] } = useQuery({
+    queryKey: ['/api/public/seat-prices'],
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/public/seat-prices');
+        if (!response.ok) throw new Error('Failed to fetch seat prices');
+        return response.json();
+      } catch (error) {
+        console.warn('Failed to fetch seat prices, using defaults');
+        return [];
+      }
+    },
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+  
+  // Build seat price map from API data (with fallback defaults)
   const seatPrices = {
-    employees: 2,
-    managers: 4,
-    admins: 6
+    employees: seatPricesFromDB.find((s: any) => s.roleType === 'employee')?.monthlyPrice 
+      ? parseFloat(seatPricesFromDB.find((s: any) => s.roleType === 'employee').monthlyPrice)
+      : 2,
+    managers: seatPricesFromDB.find((s: any) => s.roleType === 'manager')?.monthlyPrice
+      ? parseFloat(seatPricesFromDB.find((s: any) => s.roleType === 'manager').monthlyPrice)
+      : 4,
+    admins: seatPricesFromDB.find((s: any) => s.roleType === 'admin')?.monthlyPrice
+      ? parseFloat(seatPricesFromDB.find((s: any) => s.roleType === 'admin').monthlyPrice)
+      : 6,
   };
 
   const { data: addons, isLoading: addonsLoading } = useQuery<Addon[]>({
     queryKey: ['/api/addons'],
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
   
   // Get subscription info with user counts - enabled for admins and managers (server validates role)
@@ -182,17 +197,26 @@ export default function AddonStore() {
     userCounts: { employees: number; managers: number; admins: number };
   }>({
     queryKey: ['/api/subscription/info'],
-    enabled: !!user && (isAdmin || isManager)
+    enabled: !!user && (isAdmin || isManager),
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
   
   // Current users by role (from actual users in system)
-  const currentUserCounts = subscriptionInfo?.userCounts || { employees: 0, managers: 0, admins: 0 };
+  // Note: At least 1 admin always exists (the company creator)
+  const currentUserCounts = {
+    employees: subscriptionInfo?.userCounts?.employees || 0,
+    managers: subscriptionInfo?.userCounts?.managers || 0,
+    admins: Math.max(1, subscriptionInfo?.userCounts?.admins || 0)  // At least 1 (mandatory creator)
+  };
   
-  // ALL seats are paid - extraAdmins/extraManagers/extraEmployees = total contracted
+  // ALL seats are paid - display TOTAL seats contracted (1 admin is mandatory + extras)
   const contractedSeats = {
     employees: subscription?.extraEmployees || 0,
     managers: subscription?.extraManagers || 0,
-    admins: subscription?.extraAdmins || 0
+    admins: (subscription?.extraAdmins || 0) + 1  // +1 for mandatory admin
   };
   
   // Minimum: must have at least 1 admin (paid €6)
@@ -233,7 +257,11 @@ export default function AddonStore() {
   // Permissions check is only for actions (buying/removing features), not for viewing data
   const { data: companyAddons, isLoading: companyAddonsLoading } = useQuery<(CompanyAddon & { addon: Addon })[]>({
     queryKey: ['/api/company/addons'],
-    enabled: !!user && (isAdmin || isManager)
+    enabled: !!user && (isAdmin || isManager),
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const purchaseMutation = useMutation({
@@ -351,6 +379,14 @@ export default function AddonStore() {
 
   // Update seat count with validation
   const updateSeatCount = (role: 'employees' | 'managers' | 'admins', delta: number) => {
+    if (isNativeAndroid) {
+      toast({
+        title: 'Gestion solo en web',
+        description: 'En Android solo puedes consultar tu suscripcion. Gestiona cambios desde la web.',
+      });
+      return;
+    }
+
     // Check manager permissions for buying/removing users
     if (isManager && !managerPermissions?.canBuyRemoveUsers) {
       toast({
@@ -412,7 +448,7 @@ export default function AddonStore() {
 
   if (!isAdmin && !managerCanAccessStore) {
     return (
-      <div className="px-6 py-4 min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="py-4 min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <AlertCircle className="h-12 w-12 text-gray-400 mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Acceso restringido</h2>
@@ -447,6 +483,14 @@ export default function AddonStore() {
   const allAddons = addonsWithStatus;
 
   const handlePurchase = (addon: AddonWithStatus) => {
+    if (isNativeAndroid) {
+      toast({
+        title: 'Gestion solo en web',
+        description: 'En Android no se pueden anadir complementos. Hazlo desde la web.',
+      });
+      return;
+    }
+
     // Check manager permissions for buying features
     if (isManager && !managerPermissions?.canBuyRemoveFeatures) {
       toast({
@@ -461,6 +505,14 @@ export default function AddonStore() {
   };
 
   const handleCancel = (addon: AddonWithStatus) => {
+    if (isNativeAndroid) {
+      toast({
+        title: 'Gestion solo en web',
+        description: 'En Android no se pueden cancelar complementos. Hazlo desde la web.',
+      });
+      return;
+    }
+
     // Check manager permissions for removing features
     if (isManager && !managerPermissions?.canBuyRemoveFeatures) {
       toast({
@@ -514,8 +566,56 @@ export default function AddonStore() {
     return total;
   };
 
+  const selectedRoleVideo = activeRoleVideo ? roleVideoConfig[activeRoleVideo] : null;
+
+  const renderRoleVideoButton = (role: RoleVideoKey) => (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8 rounded-full text-gray-500 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-950/30"
+      onClick={() => setActiveRoleVideo(role)}
+      data-testid={`role-video-${role}`}
+      title={`Ver vídeo explicativo del rol ${roleVideoConfig[role].title.replace('Vídeo explicativo: ', '').toLowerCase()}`}
+    >
+      <CirclePlay className="h-5 w-5" />
+    </Button>
+  );
+
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50 dark:bg-gray-900" style={{ overflowX: 'clip' }}>
+    <div className="py-4 min-h-screen bg-gray-50 dark:bg-gray-900" style={{ overflowX: 'clip' }}>
+      {isSubscriptionInFlight && (
+        <Card className="mb-6 border-blue-300 dark:border-blue-700 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 shadow-lg">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center animate-pulse">
+                <CreditCard className="h-6 w-6 text-blue-600 dark:text-blue-400 animate-spin" />
+              </div>
+              <div>
+                <CardTitle className="text-xl text-blue-800 dark:text-blue-200">
+                  Procesando Suscripción
+                </CardTitle>
+                <CardDescription className="text-blue-700 dark:text-blue-300">
+                  Tu suscripción está siendo activada en estos momentos. Por favor, no cierres esta ventana.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
+                <p className="text-sm text-gray-700 dark:text-gray-300">Creando tu suscripción...</p>
+              </div>
+              <div className="w-full bg-blue-200 dark:bg-blue-900/30 rounded-full h-2 overflow-hidden">
+                <div className="bg-blue-600 dark:bg-blue-400 h-full rounded-full animate-pulse" style={{ width: '70%' }} />
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Refresca la página en 30 segundos si el estado no cambia</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
       {isTrialExpired && (
         <Card className="mb-6 border-amber-300 dark:border-amber-700 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 shadow-lg">
           <CardHeader className="pb-3">
@@ -553,13 +653,13 @@ export default function AddonStore() {
               </div>
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <Button 
-                  onClick={() => setShowPaymentManager(true)}
+                  onClick={isNativeAndroid ? openWebBilling : () => setShowPaymentManager(true)}
                   size="lg"
                   className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white shadow-md"
                   data-testid="button-add-payment-method"
                 >
                   <CreditCard className="mr-2 h-5 w-5" />
-                  Añadir Método de Pago
+                  {isNativeAndroid ? 'Gestionar en la web' : 'Añadir Método de Pago'}
                 </Button>
                 <Button 
                   onClick={handleLogout}
@@ -588,6 +688,20 @@ export default function AddonStore() {
           }
         </p>
       </div>
+
+      {isNativeAndroid && (
+        <Card className="mb-6 border-blue-200 dark:border-blue-800 bg-blue-50/70 dark:bg-blue-900/20">
+          <CardContent className="pt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="font-medium text-blue-900 dark:text-blue-100">Modo solo lectura en Android</p>
+              <p className="text-sm text-blue-700 dark:text-blue-300">Puedes ver tu suscripcion aqui, pero los cambios se gestionan unicamente en la web.</p>
+            </div>
+            <Button onClick={openWebBilling} className="sm:w-auto w-full" data-testid="button-open-web-billing">
+              Gestionar en la web
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {isLoading ? (
         <div className="space-y-8">
@@ -673,6 +787,7 @@ export default function AddonStore() {
                         {currentUserCounts.employees} activos de {displaySeats.employees} contratados
                       </span>
                     </div>
+                    {renderRoleVideoButton('employee')}
                     <div className="flex items-baseline gap-1 sm:hidden">
                       <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
                         {seatPrices.employees.toFixed(2)}€
@@ -699,7 +814,7 @@ export default function AddonStore() {
                       size="icon"
                       className="h-9 w-9 sm:h-10 sm:w-10"
                       onClick={() => updateSeatCount('employees', -1)}
-                      disabled={displaySeats.employees === 0}
+                      disabled={isNativeAndroid || displaySeats.employees === 0}
                       data-testid="seats-employees-minus"
                     >
                       <Minus className="h-4 w-4" />
@@ -712,6 +827,7 @@ export default function AddonStore() {
                       size="icon"
                       className="h-9 w-9 sm:h-10 sm:w-10"
                       onClick={() => updateSeatCount('employees', 1)}
+                      disabled={isNativeAndroid}
                       data-testid="seats-employees-plus"
                     >
                       <Plus className="h-4 w-4" />
@@ -735,6 +851,7 @@ export default function AddonStore() {
                         {currentUserCounts.managers} activos de {displaySeats.managers} contratados
                       </span>
                     </div>
+                    {renderRoleVideoButton('manager')}
                     <div className="flex items-baseline gap-1 sm:hidden">
                       <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
                         {seatPrices.managers.toFixed(2)}€
@@ -761,7 +878,7 @@ export default function AddonStore() {
                       size="icon"
                       className="h-9 w-9 sm:h-10 sm:w-10"
                       onClick={() => updateSeatCount('managers', -1)}
-                      disabled={displaySeats.managers === 0}
+                      disabled={isNativeAndroid || displaySeats.managers === 0}
                       data-testid="seats-managers-minus"
                     >
                       <Minus className="h-4 w-4" />
@@ -774,6 +891,7 @@ export default function AddonStore() {
                       size="icon"
                       className="h-9 w-9 sm:h-10 sm:w-10"
                       onClick={() => updateSeatCount('managers', 1)}
+                      disabled={isNativeAndroid}
                       data-testid="seats-managers-plus"
                     >
                       <Plus className="h-4 w-4" />
@@ -797,6 +915,7 @@ export default function AddonStore() {
                         {currentUserCounts.admins} activos de {displaySeats.admins} contratados
                       </span>
                     </div>
+                    {renderRoleVideoButton('admin')}
                     <div className="flex items-baseline gap-1 sm:hidden">
                       <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
                         {seatPrices.admins.toFixed(2)}€
@@ -823,7 +942,7 @@ export default function AddonStore() {
                       size="icon"
                       className="h-9 w-9 sm:h-10 sm:w-10"
                       onClick={() => updateSeatCount('admins', -1)}
-                      disabled={displaySeats.admins === 0}
+                      disabled={isNativeAndroid || displaySeats.admins <= minimumSeats.admins}
                       data-testid="seats-admins-minus"
                     >
                       <Minus className="h-4 w-4" />
@@ -836,6 +955,7 @@ export default function AddonStore() {
                       size="icon"
                       className="h-9 w-9 sm:h-10 sm:w-10"
                       onClick={() => updateSeatCount('admins', 1)}
+                      disabled={isNativeAndroid}
                       data-testid="seats-admins-plus"
                     >
                       <Plus className="h-4 w-4" />
@@ -894,6 +1014,7 @@ export default function AddonStore() {
               </div>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {allAddons.map((addon) => {
+                  const AddonIcon = getAddonIconComponent(addon.key, addon.icon);
                   const isPurchased = addon.isPurchased;
                   const isPendingCancel = addon.isPendingCancel;
                   const isInCooldown = addon.isInCooldown && !isPurchased;
@@ -918,8 +1039,8 @@ export default function AddonStore() {
                     >
                       <CardHeader className="pb-2">
                         <div className="flex items-center gap-3 mb-2">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${getAddonColor(addon.key, addon.isFreeFeature)}`}>
-                            {getAddonIcon(addon.key)}
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${getAddonColorClasses(addon.key, addon.isFreeFeature)}`}>
+                            <AddonIcon className="h-6 w-6" />
                           </div>
                           <div className="flex items-center gap-2 flex-1">
                             <CardTitle className="text-base text-gray-900 dark:text-gray-100">{addon.name}</CardTitle>
@@ -976,10 +1097,20 @@ export default function AddonStore() {
                               variant="outline" 
                               className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                               onClick={() => handleCancel(addon)}
+                              disabled={isNativeAndroid}
                               data-testid={`addon-cancel-${addon.key}`}
                             >
-                              <XCircle className="h-4 w-4 mr-2" />
-                              Cancelar complemento
+                              {isNativeAndroid ? (
+                                <>
+                                  <CreditCard className="h-4 w-4 mr-2" />
+                                  Gestionar en web
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="h-4 w-4 mr-2" />
+                                  Cancelar complemento
+                                </>
+                              )}
                             </Button>
                           ) : isInCooldown ? (
                             <Button 
@@ -995,10 +1126,20 @@ export default function AddonStore() {
                             <Button 
                               className="w-full"
                               onClick={() => handlePurchase(addon)}
+                              disabled={isNativeAndroid}
                               data-testid={`addon-purchase-${addon.key}`}
                             >
-                              <ShoppingCart className="h-4 w-4 mr-2" />
-                              Añadir a mi suscripción
+                              {isNativeAndroid ? (
+                                <>
+                                  <CreditCard className="h-4 w-4 mr-2" />
+                                  Gestionar en web
+                                </>
+                              ) : (
+                                <>
+                                  <ShoppingCart className="h-4 w-4 mr-2" />
+                                  Añadir a mi suscripción
+                                </>
+                              )}
                             </Button>
                           )}
                         </div>
@@ -1032,9 +1173,14 @@ export default function AddonStore() {
           <div className="py-4">
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
               <div className="flex items-center gap-3 mb-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getAddonColor(selectedAddon?.key || '')}`}>
-                  {getAddonIcon(selectedAddon?.key || '')}
-                </div>
+                {(() => {
+                  const SelectedAddonIcon = getAddonIconComponent(selectedAddon?.key || '', selectedAddon?.icon || null);
+                  return (
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getAddonColorClasses(selectedAddon?.key || '', selectedAddon?.isFreeFeature || false)}`}>
+                      <SelectedAddonIcon className="h-6 w-6" />
+                    </div>
+                  );
+                })()}
                 <div>
                   <p className="font-medium text-gray-900 dark:text-gray-100">{selectedAddon?.name}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">{selectedAddon?.description}</p>
@@ -1082,6 +1228,34 @@ export default function AddonStore() {
               )}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!selectedRoleVideo} onOpenChange={(open) => {
+        if (!open) {
+          setActiveRoleVideo(null);
+        }
+      }}>
+        <DialogContent className="max-w-4xl border-0 bg-transparent p-0 shadow-none [&>button]:hidden" data-testid="role-video-dialog">
+          <DialogHeader className="sr-only">
+            <DialogTitle>{selectedRoleVideo?.title || 'Vídeo explicativo'}</DialogTitle>
+            <DialogDescription>Vídeo explicativo del rol seleccionado</DialogDescription>
+          </DialogHeader>
+
+          {selectedRoleVideo ? (
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-black dark:border-gray-700">
+              <div className="relative aspect-video w-full">
+                <iframe
+                  className="absolute inset-0 h-full w-full"
+                  src={`https://www.youtube-nocookie.com/embed/${selectedRoleVideo.embedId}?autoplay=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&playsinline=1&fs=0`}
+                  title={selectedRoleVideo.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
 
@@ -1239,7 +1413,7 @@ export default function AddonStore() {
         </DialogContent>
       </Dialog>
 
-      {showPaymentManager && (
+      {showPaymentManager && !isNativeAndroid && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
           <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
             <CardHeader className="flex flex-row items-center justify-between">

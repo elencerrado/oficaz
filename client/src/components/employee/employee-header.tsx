@@ -38,6 +38,7 @@ export function EmployeeHeader({
         <div className="flex gap-1 p-1 bg-gray-200 dark:bg-gray-700 rounded-lg">
           {themeOptions.map(({ icon: Icon, label, value }) => (
             <button
+              type="button"
               key={value}
               onClick={() => onThemeChange(value)}
               className={`p-2 rounded transition-colors ${
@@ -54,6 +55,7 @@ export function EmployeeHeader({
 
         {/* Logout */}
         <Button
+          type="button"
           onClick={onLogout}
           variant="ghost"
           size="sm"

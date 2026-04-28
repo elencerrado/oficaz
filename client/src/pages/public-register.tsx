@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useLocation, useSearch } from 'wouter';
@@ -11,9 +11,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Building, User, Eye, EyeOff, Users, CheckCircle, XCircle, ArrowRight, ArrowLeft, Shield, Star, Crown, Check, Clock, Palmtree, CalendarDays, MessageSquare, Bell, FileText, ClipboardList, Sparkles, Brain, Calendar, Mail, CalendarClock, HelpCircle, Plus, Minus } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Building, User, Eye, EyeOff, Users, CheckCircle, XCircle, ArrowRight, ArrowLeft, Shield, Star, Crown, Check, Clock, Palmtree, CalendarDays, MessageSquare, Bell, FileText, ClipboardList, Sparkles, Brain, Calendar, Mail, CalendarClock, HelpCircle, Plus, Minus, CirclePlay } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ADDON_DEFINITIONS } from '@shared/addon-definitions';
+import { getAddonColorClasses, getAddonIconComponent } from '@/lib/addon-visuals';
+import oficazLogo from '@/assets/oficaz-logo.png';
 
 import { apiRequest } from '@/lib/queryClient';
 
@@ -31,23 +34,6 @@ interface Addon {
   icon: string | null;
   isFreeFeature: boolean;
 }
-
-const iconMap: Record<string, any> = {
-  Users: Users,
-  Clock: Clock,
-  Calendar: Calendar,
-  CalendarClock: CalendarClock,
-  Mail: Mail,
-  Bell: Bell,
-  FileText: FileText,
-  ClipboardList: ClipboardList,
-  Sparkles: Sparkles,
-};
-
-const getIcon = (iconName: string | null) => {
-  if (!iconName) return Clock;
-  return iconMap[iconName] || Clock;
-};
 
 const validateCompanyField = async (field: string, value: string) => {
   try {
@@ -103,9 +89,42 @@ const step4Schema = z.object({
   contactName: z.string().optional(),
   contactPhone: z.string().optional(),
   contactEmail: z.string().optional(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Las contraseñas no coinciden',
-  path: ['confirmPassword'],
+}).superRefine((data, ctx) => {
+  if (data.password !== data.confirmPassword) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Las contraseñas no coinciden',
+      path: ['confirmPassword'],
+    });
+  }
+
+  if (!data.sameAsAdmin) {
+    if (!data.contactName?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Nombre de contacto requerido',
+        path: ['contactName'],
+      });
+    }
+
+    if (!data.contactPhone?.trim() || data.contactPhone.trim().length < 9) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Teléfono de contacto no válido',
+        path: ['contactPhone'],
+      });
+    }
+
+    const emailValue = data.contactEmail?.trim() || '';
+    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue);
+    if (!isEmailValid) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Email de contacto no válido',
+        path: ['contactEmail'],
+      });
+    }
+  }
 });
 
 const step5Schema = z.object({
@@ -123,6 +142,78 @@ type Step3Data = z.infer<typeof step3Schema>;
 type Step4Data = z.infer<typeof step4Schema>;
 type Step5Data = z.infer<typeof step5Schema>;
 type FormData = Step1Data & Step2Data & Step3Data & Step4Data & Step5Data;
+
+const MANDATORY_FEATURE_KEYS = ['employees'] as const;
+
+const normalizeSelectedFeatures = (features: unknown): string[] => {
+  const baseFeatures = Array.isArray(features)
+    ? features.filter((feature): feature is string => typeof feature === 'string' && feature.trim().length > 0)
+    : [];
+
+  return Array.from(new Set([...MANDATORY_FEATURE_KEYS, ...baseFeatures]));
+};
+
+const getAddonDisplayName = (addon: Pick<Addon, 'key' | 'name'>): string => {
+  if (addon.key === 'ai_assistant') {
+    return 'OficazIA';
+  }
+
+  return addon.name;
+};
+
+type RoleVideoKey = 'admin' | 'manager' | 'employee';
+
+const roleVideoConfig: Record<RoleVideoKey, { embedId: string; title: string }> = {
+  admin: {
+    embedId: 'THVtK0rxHzo',
+    title: 'Video explicativo: Administrador',
+  },
+  manager: {
+    embedId: 'Pwuv9q9PhDI',
+    title: 'Video explicativo: Manager',
+  },
+  employee: {
+    embedId: 'OydgoA8fYN4',
+    title: 'Video explicativo: Empleado',
+  },
+};
+
+interface PersistedRegisterWizardState {
+  currentStep: number;
+  formData: Partial<FormData>;
+}
+
+const REGISTER_WIZARD_STORAGE_PREFIX = 'registerWizardState:v2';
+
+const DEFAULT_REGISTER_FORM_DATA: Partial<FormData> = {
+  selectedFeatures: ['employees'], // employees is always included (free)
+  admins: 1,
+  managers: 0,
+  employees: 0,
+  sameAsAdmin: true,
+};
+
+const readPersistedRegisterWizardState = (key: string): PersistedRegisterWizardState | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(key);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as PersistedRegisterWizardState;
+    if (typeof parsed?.currentStep !== 'number' || !parsed?.formData || typeof parsed.formData !== 'object') {
+      return null;
+    }
+
+    return parsed;
+  } catch {
+    return null;
+  }
+};
 
 interface RegisterProps {
   byInvitation?: boolean;
@@ -147,27 +238,45 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   const search = useSearch();
   const { register } = useAuth();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [validatingStep2, setValidatingStep2] = useState(false);
-  const [validatingStep3, setValidatingStep3] = useState(false);
-  const [formData, setFormData] = useState<Partial<FormData>>({
-    selectedFeatures: ['employees'], // employees is always included (free)
-    admins: 1,
-    managers: 0,
-    employees: 0,
-    sameAsAdmin: true,
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [showDemoLoading, setShowDemoLoading] = useState(false);
-  const [introAnimationStarted, setIntroAnimationStarted] = useState(false);
-  const [isBackendComplete, setIsBackendComplete] = useState(false);
-  const [promoCodeValidation, setPromoCodeValidation] = useState<{ status: 'idle' | 'checking' | 'valid' | 'invalid', message?: string, trialDays?: number }>({ status: 'idle' });
-
   const params = new URLSearchParams(search);
   const verificationToken = params.get('token');
   const emailFromUrl = params.get('email') || '';
+  const referralCodeFromUrl = (params.get('ref') || '').trim();
+
+  const wizardStorageKey = byInvitation
+    ? `${REGISTER_WIZARD_STORAGE_PREFIX}:invitation:${invitationToken || invitationEmail || 'default'}`
+    : `${REGISTER_WIZARD_STORAGE_PREFIX}:verification:${verificationToken || emailFromUrl || 'default'}`;
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [validatingStep2, setValidatingStep2] = useState(false);
+  const [validatingStep3, setValidatingStep3] = useState(false);
+  const [formData, setFormData] = useState<Partial<FormData>>(() => {
+    const persisted = readPersistedRegisterWizardState(wizardStorageKey);
+    const persistedFeatures = normalizeSelectedFeatures(persisted?.formData?.selectedFeatures);
+
+    return {
+      ...DEFAULT_REGISTER_FORM_DATA,
+      ...(persisted?.formData || {}),
+      selectedFeatures: persistedFeatures,
+    };
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [currentStep, setCurrentStep] = useState(() => {
+    const persisted = readPersistedRegisterWizardState(wizardStorageKey);
+    const persistedStep = persisted?.currentStep;
+    if (typeof persistedStep !== 'number' || persistedStep < 0 || persistedStep > 5) {
+      return 0;
+    }
+    return persistedStep;
+  });
+  const [showDemoLoading, setShowDemoLoading] = useState(false);
+  const [introAnimationStarted, setIntroAnimationStarted] = useState(false);
+  const [isBackendComplete, setIsBackendComplete] = useState(false);
+  const [activeRoleVideo, setActiveRoleVideo] = useState<RoleVideoKey | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitErrorIsTokenIssue, setSubmitErrorIsTokenIssue] = useState(false);
+  const [promoCodeValidation, setPromoCodeValidation] = useState<{ status: 'idle' | 'checking' | 'valid' | 'invalid', message?: string, trialDays?: number }>({ status: 'idle' });
   
   useEffect(() => {
     if (!byInvitation && !verificationToken) {
@@ -175,11 +284,12 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       setValidatingStep2(false);
       setValidatingStep3(false);
       const timer = setTimeout(() => {
-        setLocation('/request-code', { replace: true });
+        const referralQuery = referralCodeFromUrl ? `?ref=${encodeURIComponent(referralCodeFromUrl)}` : '';
+        setLocation(`/request-code${referralQuery}`, { replace: true });
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [verificationToken, byInvitation, setLocation]);
+  }, [verificationToken, byInvitation, referralCodeFromUrl, setLocation]);
 
   useEffect(() => {
     document.documentElement.classList.add('dark-notch');
@@ -209,13 +319,41 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     }
   }, [currentStep]);
 
-  // Load addons from API, with ADDON_DEFINITIONS as fallback for prices
+  // Load addons from API with pricing from database
   const { data: apiAddons = [] } = useQuery<Addon[]>({
     queryKey: ['/api/public/addons'],
   });
   
-  // Use local ADDON_DEFINITIONS for accurate pricing
-  const addons = ADDON_DEFINITIONS;
+  // Load seat prices from API
+  const { data: seatPrices = [] } = useQuery({
+    queryKey: ['/api/public/seat-prices'],
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/public/seat-prices');
+        if (!response.ok) throw new Error('Failed to fetch seat prices');
+        return response.json();
+      } catch (error) {
+        console.warn('Failed to fetch seat prices, using defaults');
+        return [];
+      }
+    },
+  });
+  
+  // Build seat price map from API data (with fallback defaults)
+  const seatPriceMap = {
+    admin: seatPrices.find((s: any) => s.roleType === 'admin')?.monthlyPrice 
+      ? parseFloat(seatPrices.find((s: any) => s.roleType === 'admin').monthlyPrice)
+      : 6,
+    manager: seatPrices.find((s: any) => s.roleType === 'manager')?.monthlyPrice
+      ? parseFloat(seatPrices.find((s: any) => s.roleType === 'manager').monthlyPrice)
+      : 4,
+    employee: seatPrices.find((s: any) => s.roleType === 'employee')?.monthlyPrice
+      ? parseFloat(seatPrices.find((s: any) => s.roleType === 'employee').monthlyPrice)
+      : 2,
+  };
+  
+  // Use API addons if available, fallback to ADDON_DEFINITIONS for offline mode
+  const addons = apiAddons.length > 0 ? (apiAddons as any[]) : ADDON_DEFINITIONS;
 
 
   const step1Form = useForm<Step1Data>({
@@ -269,6 +407,51 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     },
   });
 
+  const step1Values = step1Form.watch();
+  const step2Values = step2Form.watch();
+  const step3Values = step3Form.watch();
+  const step4Values = step4Form.watch();
+  const step5Values = step5Form.watch();
+
+  useEffect(() => {
+    const currentFeatures = step1Form.getValues('selectedFeatures') ?? [];
+    const normalizedFeatures = normalizeSelectedFeatures(currentFeatures);
+
+    if (normalizedFeatures.length !== currentFeatures.length || normalizedFeatures.some((feature, index) => feature !== currentFeatures[index])) {
+      step1Form.setValue('selectedFeatures', normalizedFeatures, {
+        shouldDirty: false,
+        shouldValidate: true,
+      });
+    }
+  }, [step1Form, step1Values.selectedFeatures]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const { password: _password, confirmPassword: _confirmPassword, ...safeStep4Values } = step4Values;
+
+    const persistedData: Partial<FormData> = {
+      ...DEFAULT_REGISTER_FORM_DATA,
+      ...formData,
+      ...step1Values,
+      ...step2Values,
+      ...step3Values,
+      ...safeStep4Values,
+      ...step5Values,
+      selectedFeatures: normalizeSelectedFeatures(step1Values.selectedFeatures ?? formData.selectedFeatures),
+    };
+
+    window.sessionStorage.setItem(
+      wizardStorageKey,
+      JSON.stringify({
+        currentStep,
+        formData: persistedData,
+      }),
+    );
+  }, [wizardStorageKey, currentStep, formData, step1Values, step2Values, step3Values, step4Values, step5Values]);
+
   const goToStep = (step: number) => {
     setCurrentStep(step);
     setIsLoading(false);
@@ -282,7 +465,12 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   };
 
   const handleFeaturesSubmit = (data: Step1Data) => {
-    setFormData(prev => ({ ...prev, ...data }));
+    const normalizedData: Step1Data = {
+      ...data,
+      selectedFeatures: normalizeSelectedFeatures(data.selectedFeatures),
+    };
+
+    setFormData(prev => ({ ...prev, ...normalizedData }));
     setCurrentStep(3);
   };
 
@@ -371,8 +559,62 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   };
 
   const handleStep5Submit = async (data: Step5Data) => {
+    const getReadableRegistrationError = (error: any): string => {
+      const rawMessage = typeof error?.message === 'string' ? error.message : '';
+      const parseCandidate = (candidate: string): string | null => {
+        try {
+          const parsed = JSON.parse(candidate);
+
+          if (Array.isArray(parsed)) {
+            const firstMessage = parsed.find((item: any) => typeof item?.message === 'string')?.message;
+            return typeof firstMessage === 'string' && firstMessage.trim().length > 0
+              ? firstMessage
+              : null;
+          }
+
+          if (typeof parsed?.message === 'string' && parsed.message.trim().length > 0) {
+            return parsed.message;
+          }
+
+          if (typeof parsed?.error === 'string' && parsed.error.trim().length > 0) {
+            return parsed.error;
+          }
+        } catch {
+          // Ignore JSON parse errors and fallback below.
+        }
+
+        return null;
+      };
+
+      const jsonSuffixMatch = rawMessage.match(/(\{.*\}|\[.*\])$/);
+
+      if (jsonSuffixMatch) {
+        const parsedMessage = parseCandidate(jsonSuffixMatch[0]);
+        if (parsedMessage) {
+          return parsedMessage;
+        }
+      }
+
+      const wholeMessageParsed = parseCandidate(rawMessage);
+      if (wholeMessageParsed) {
+        return wholeMessageParsed;
+      }
+
+      if (rawMessage.trim().length > 0) {
+        const trimmed = rawMessage.trim();
+        if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+          return 'No se pudo completar el registro. Revisa los datos y vuelve a intentarlo.';
+        }
+        return rawMessage;
+      }
+
+      return 'Error al crear la empresa';
+    };
+
     try {
       setIsLoading(true);
+      setSubmitError(null);
+      setSubmitErrorIsTokenIssue(false);
       // Set flag BEFORE showing loader to prevent PublicRoute redirect
       sessionStorage.setItem('registrationWelcomeFlow', 'true');
       setShowDemoLoading(true);
@@ -381,38 +623,88 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       const urlParams = new URLSearchParams(search);
       const campaignId = urlParams.get('campaign');
       const registrationSource = urlParams.get('source') || 'direct';
+
+      const passwordValue = (step4Form.getValues('password') || '').trim();
+      const confirmPasswordValue = (step4Form.getValues('confirmPassword') || '').trim();
+
+      if (passwordValue.length === 0 || confirmPasswordValue.length === 0) {
+        sessionStorage.removeItem('registrationWelcomeFlow');
+        setShowDemoLoading(false);
+        setIsBackendComplete(false);
+        setIsLoading(false);
+        setCurrentStep(4);
+        step4Form.setError('password', { message: 'Por seguridad, vuelve a introducir tu contraseña' });
+        step4Form.setError('confirmPassword', { message: 'Confirma de nuevo tu contraseña para continuar' });
+        return;
+      }
       
-      const finalData = { 
-        ...formData, 
+      const latestFormSnapshot: Partial<FormData> = {
+        ...formData,
+        ...step1Form.getValues(),
+        ...step2Form.getValues(),
+        ...step3Form.getValues(),
+        ...step4Form.getValues(),
         ...data,
+        selectedFeatures: normalizeSelectedFeatures(step1Form.getValues('selectedFeatures')),
+      };
+
+      const isSameContact = latestFormSnapshot.sameAsAdmin !== false;
+
+      const finalData = {
+        ...latestFormSnapshot,
         verificationToken: byInvitation ? null : verificationToken,
         invitationToken: byInvitation ? invitationToken : null,
-        contactName: formData.sameAsAdmin ? formData.adminFullName : formData.contactName,
+        referralCode: referralCodeFromUrl || undefined,
+        contactName: isSameContact ? latestFormSnapshot.adminFullName : latestFormSnapshot.contactName,
+        contactPhone: isSameContact ? latestFormSnapshot.adminPhone : latestFormSnapshot.contactPhone,
+        contactEmail: isSameContact ? latestFormSnapshot.adminEmail : latestFormSnapshot.contactEmail,
         campaignId: campaignId,
         source: registrationSource,
       };
       
       try {
         await register(finalData);
+        sessionStorage.removeItem(wizardStorageKey);
         // Welcome screen is handled by DemoLoadingOverlay, not the old modal
         setIsBackendComplete(true);
       } catch (error: any) {
         sessionStorage.removeItem('registrationWelcomeFlow');
         setShowDemoLoading(false);
         setIsBackendComplete(false);
-        
-        if (error.message && error.message.includes('programada para eliminación')) {
-          alert(error.message);
-        } else {
-          alert(error.message || 'Error al crear la empresa');
+
+        const readableMessage = getReadableRegistrationError(error);
+        const normalizedMessage = readableMessage.toLowerCase();
+        const isTokenIssue =
+          normalizedMessage.includes('token de verificación inválido') ||
+          normalizedMessage.includes('token de verificacion invalido') ||
+          normalizedMessage.includes('token de verificación expirado') ||
+          (normalizedMessage.includes('token') && normalizedMessage.includes('expirado'));
+
+        if (isTokenIssue && !byInvitation) {
+          sessionStorage.removeItem(wizardStorageKey);
+          setIsLoading(false);
+          setSubmitError(null);
+          setSubmitErrorIsTokenIssue(false);
+          setCurrentStep(0);
+          setLocation('/request-code');
+          return;
         }
+
+        setSubmitError(
+          isTokenIssue
+            ? 'Tu enlace de verificación ha caducado o ya no es válido. Solicita un nuevo código para continuar.'
+            : readableMessage,
+        );
+        setSubmitErrorIsTokenIssue(isTokenIssue);
         setIsLoading(false);
       }
     } catch (error: any) {
       sessionStorage.removeItem('registrationWelcomeFlow');
       setShowDemoLoading(false);
+      setIsBackendComplete(false);
+      setSubmitError(getReadableRegistrationError(error));
+      setSubmitErrorIsTokenIssue(false);
       setIsLoading(false);
-      alert(error.message || 'Error al crear la empresa');
     }
   };
 
@@ -425,7 +717,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     setPromoCodeValidation({ status: 'checking' });
     
     try {
-      const response = await apiRequest('POST', '/api/validate-promo-code', { code: code.trim() });
+      const response = await apiRequest('POST', '/api/validate-promotional-code', { code: code.trim() });
       if (response.valid) {
         setPromoCodeValidation({ 
           status: 'valid', 
@@ -456,6 +748,20 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     { num: 5, label: 'Confirmar', icon: Check },
   ];
 
+  const selectedRoleVideo = activeRoleVideo ? roleVideoConfig[activeRoleVideo] : null;
+
+  const renderRoleVideoButton = (role: RoleVideoKey) => (
+    <button
+      type="button"
+      onClick={() => setActiveRoleVideo(role)}
+      className="w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-red-600 transition-colors flex items-center justify-center"
+      title="Ver video explicativo"
+      aria-label={`Ver video del rol ${role}`}
+    >
+      <CirclePlay className="w-4 h-4" />
+    </button>
+  );
+
   return (
     <div className="min-h-screen bg-[#f5f5f7]">
       {/* Left Rail - Desktop only - Apple style minimal - FIXED position */}
@@ -466,8 +772,14 @@ export default function Register({ byInvitation = false, invitationEmail, invita
         
         {/* Logo - Centered at top */}
         <div className="relative z-10 flex justify-center pt-4 pb-12">
-          <img src="/favicon.png" alt="Oficaz" className="h-10" />
+          <img src={oficazLogo} alt="Oficaz" className="h-10 w-auto" />
         </div>
+
+        {referralCodeFromUrl && (
+          <div className="relative z-10 mx-auto mb-6 max-w-sm rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+            Registro con referido activo: <span className="font-semibold">{referralCodeFromUrl}</span>
+          </div>
+        )}
 
         {/* Progress steps - vertical, centered */}
         <div className="relative z-10 flex-1 flex flex-col justify-center">
@@ -506,17 +818,17 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
         {/* Price summary - compact version with real-time updates */}
         {currentStep >= 1 && (() => {
-          const liveAdmins = currentStep === 1 ? step2Form.watch('admins') : (formData.admins || 0);
-          const liveManagers = currentStep === 1 ? step2Form.watch('managers') : (formData.managers || 0);
-          const liveEmployees = currentStep === 1 ? step2Form.watch('employees') : (formData.employees || 0);
-          const liveFeatures = currentStep === 2 ? (step1Form.watch('selectedFeatures') || []) : (formData.selectedFeatures || []);
+          const liveAdmins = Number(step2Values.admins ?? formData.admins ?? 1);
+          const liveManagers = Number(step2Values.managers ?? formData.managers ?? 0);
+          const liveEmployees = Number(step2Values.employees ?? formData.employees ?? 0);
+          const liveFeatures = (step1Values.selectedFeatures || formData.selectedFeatures || []) as string[];
           const totalUsers = liveAdmins + liveManagers + liveEmployees;
           const totalFeatures = liveFeatures.length;
-          const totalPrice = (liveAdmins * 6) + (liveManagers * 4) + (liveEmployees * 2) +
-            liveFeatures.reduce((sum: number, key: string) => {
-              const addon = ADDON_DEFINITIONS.find(a => a.key === key);
-              return sum + (addon ? addon.monthlyPrice : 0);
-            }, 0);
+          const addonsPriceTotal = liveFeatures.reduce((sum: number, key: string) => {
+            const addon = addons.find((a: any) => a.key === key);
+            return sum + Number(addon?.monthlyPrice ?? 0);
+          }, 0);
+          const totalPrice = (liveAdmins * seatPriceMap.admin) + (liveManagers * seatPriceMap.manager) + (liveEmployees * seatPriceMap.employee) + addonsPriceTotal;
           
           return (
             <div className="relative z-10 pt-6 border-t border-white/10">
@@ -533,7 +845,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 <div className="flex justify-between items-baseline">
                   <span className="text-gray-300 text-sm">Total</span>
                   <div className="text-right">
-                    <span className="text-2xl font-bold text-white">€{totalPrice}</span>
+                    <span className="text-2xl font-bold text-white">€{totalPrice.toFixed(2)}</span>
                     <span className="text-gray-400 text-sm">/mes</span>
                   </div>
                 </div>
@@ -636,8 +948,32 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
             {/* Step 1: Team Configuration - Apple Style (friendly tone) */}
             {currentStep === 1 && (
-              <form key={`step-1-${currentStep}`} onSubmit={step2Form.handleSubmit(handleTeamSubmit)} className="space-y-6">
-                <div className="text-center mb-8 wizard-section-animate">
+              <form key={`step-1-${currentStep}`} onSubmit={step2Form.handleSubmit(handleTeamSubmit)} className="space-y-6 pb-28">
+                <div className="hidden lg:grid lg:grid-cols-3 items-center gap-3 sticky top-3 z-30 bg-white/90 backdrop-blur-sm border border-gray-200/80 rounded-2xl p-3 shadow-sm lg:w-[calc(100%+6rem)] lg:-mx-12 xl:w-[calc(100%+8rem)] xl:-mx-16">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => goToStep(0)}
+                    className="justify-self-start h-10 px-3 rounded-xl text-gray-600 hover:text-gray-900"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Atrás
+                  </Button>
+                  <div className="text-center px-2">
+                    <h2 className="text-lg font-semibold text-gray-900">Vamos a configurar tu equipo</h2>
+                    <p className="text-sm text-gray-500">Cuéntanos cuántas personas usarán Oficaz.</p>
+                  </div>
+                  <Button
+                    type="submit"
+                    data-testid="button-step1-continue-desktop"
+                    className="justify-self-end h-10 px-4 rounded-xl"
+                  >
+                    Continuar
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+
+                <div className="text-center mb-8 wizard-section-animate lg:hidden">
                   <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-3">
                     Vamos a configurar tu equipo
                   </h2>
@@ -656,9 +992,12 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                           <Crown className="w-7 h-7 text-white" />
                         </div>
                         <div className="min-w-0">
-                          <h3 className="font-semibold text-gray-900 text-lg">Administradores</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-gray-900 text-lg">Administradores</h3>
+                            {renderRoleVideoButton('admin')}
+                          </div>
                           <p className="text-sm text-gray-500">Control total y facturación</p>
-                          <span className="text-sm font-medium text-amber-600">€6/usuario/mes</span>
+                          <span className="text-sm font-medium text-amber-600">€{seatPriceMap.admin}/usuario/mes</span>
                         </div>
                       </div>
                       <div className="flex items-center justify-end gap-2 flex-shrink-0">
@@ -712,9 +1051,12 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                           <Users className="w-7 h-7 text-white" />
                         </div>
                         <div className="min-w-0">
-                          <h3 className="font-semibold text-gray-900 text-lg">Managers</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-gray-900 text-lg">Managers</h3>
+                            {renderRoleVideoButton('manager')}
+                          </div>
                           <p className="text-sm text-gray-500">Gestión de equipos e informes</p>
-                          <span className="text-sm font-medium text-purple-600">€4/usuario/mes</span>
+                          <span className="text-sm font-medium text-purple-600">€{seatPriceMap.manager}/usuario/mes</span>
                         </div>
                       </div>
                       <div className="flex items-center justify-end gap-2 flex-shrink-0">
@@ -764,9 +1106,12 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                           <User className="w-7 h-7 text-white" />
                         </div>
                         <div className="min-w-0">
-                          <h3 className="font-semibold text-gray-900 text-lg">Empleados</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-gray-900 text-lg">Empleados</h3>
+                            {renderRoleVideoButton('employee')}
+                          </div>
                           <p className="text-sm text-gray-500">Fichajes, ausencias, nóminas</p>
-                          <span className="text-sm font-medium text-blue-600">€2/usuario/mes</span>
+                          <span className="text-sm font-medium text-blue-600">€{seatPriceMap.employee}/usuario/mes</span>
                         </div>
                       </div>
                       <div className="flex items-center justify-end gap-2 flex-shrink-0">
@@ -809,7 +1154,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="lg:hidden sticky bottom-0 z-20 flex gap-3 pt-4 pb-2 bg-[#f5f5f7]/95 backdrop-blur-sm border-t border-gray-200/80">
                   <Button 
                     type="button" 
                     variant="outline"
@@ -833,8 +1178,33 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
             {/* Step 2: Features Selection - Apple Style (friendly tone) */}
             {currentStep === 2 && (
-              <form key={`step-2-${currentStep}`} onSubmit={step1Form.handleSubmit(handleFeaturesSubmit)} className="space-y-6">
-                <div className="text-center mb-8 wizard-section-animate">
+              <form key={`step-2-${currentStep}`} onSubmit={step1Form.handleSubmit(handleFeaturesSubmit)} className="space-y-6 pb-28 lg:space-y-0 lg:pb-0 lg:h-[calc(100vh-6rem)] lg:flex lg:flex-col">
+                <div className="hidden lg:grid lg:grid-cols-3 items-center gap-3 sticky top-3 z-30 bg-white border border-gray-200/90 rounded-2xl p-3 shadow-sm lg:w-[calc(100%+6rem)] lg:-mx-12 xl:w-[calc(100%+8rem)] xl:-mx-16">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => goToStep(1)}
+                    className="justify-self-start h-10 px-3 rounded-xl text-gray-600 hover:text-gray-900"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Atrás
+                  </Button>
+                  <div className="text-center px-2">
+                    <h2 className="text-lg font-semibold text-gray-900">Elige las funciones que te interesan</h2>
+                    <p className="text-sm text-gray-500">Selecciona lo que necesitas ahora.</p>
+                  </div>
+                  <Button
+                    type="submit"
+                    data-testid="button-step2-continue-desktop"
+                    disabled={(step1Form.watch('selectedFeatures') || []).length === 0}
+                    className="justify-self-end h-10 px-4 rounded-xl"
+                  >
+                    Continuar
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+
+                <div className="text-center mb-8 wizard-section-animate lg:hidden">
                   <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-3">
                     Elige las funciones que te interesan
                   </h2>
@@ -843,87 +1213,98 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   </p>
                 </div>
 
-                {/* Features grid - Apple style cards with cascade animation */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {addons.map((addon, index) => {
-                    const Icon = getIcon(addon.icon);
-                    const selectedFeatures = step1Form.watch('selectedFeatures') || [];
-                    const isSelected = selectedFeatures.includes(addon.key);
-                    const price = Number(addon.monthlyPrice);
-                    const isFree = addon.isFreeFeature;
-                    const isLocked = addon.key === 'employees'; // employees is always included
-                    
-                    return (
-                      <label
-                        key={addon.key}
-                        htmlFor={`feature-${addon.key}`}
-                        data-testid={`feature-${addon.key}`}
-                        className={`
-                          flex flex-col p-5 rounded-2xl min-h-[160px]
-                          wizard-animate wizard-delay-${index}
-                          ${isLocked 
-                            ? 'bg-green-50 border-2 border-green-300 cursor-default'
-                            : isSelected 
-                              ? 'bg-oficaz-primary/5 border-2 border-oficaz-primary shadow-lg shadow-oficaz-primary/10 scale-[1.02] cursor-pointer' 
-                              : 'bg-white border-2 border-gray-100 hover:border-gray-200 hover:shadow-md cursor-pointer'
-                          }
-                        `}
-                      >
-                        <input
-                          type="checkbox"
-                          id={`feature-${addon.key}`}
-                          value={addon.key}
-                          {...step1Form.register('selectedFeatures')}
-                          className="sr-only"
-                          disabled={isLocked}
-                          checked={isLocked ? true : undefined}
-                        />
-                        
-                        {/* Header: Icon + Name + Selection indicator */}
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className={`
-                            w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors
-                            ${isLocked ? 'bg-green-500 text-white' : isSelected ? 'bg-oficaz-primary text-white' : 'bg-gray-100 text-gray-500'}
-                          `}>
-                            <Icon className="w-5 h-5" />
+                <div className="lg:flex-1 lg:min-h-0 lg:overflow-hidden lg:-mt-1">
+                  <div className="lg:h-full lg:overflow-y-auto lg:pt-5 lg:pr-2">
+                  {/* Features grid - Apple style cards with cascade animation */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {addons.map((addon, index) => {
+                      const Icon = getAddonIconComponent(addon.key, addon.icon);
+                      const selectedFeatures = step1Form.watch('selectedFeatures') || [];
+                      const isSelected = selectedFeatures.includes(addon.key);
+                      const price = Number(addon.monthlyPrice);
+                      const isFree = addon.isFreeFeature;
+                      const isLocked = addon.key === 'employees'; // employees is always included
+                      
+                      return (
+                        <label
+                          key={addon.key}
+                          htmlFor={`feature-${addon.key}`}
+                          data-testid={`feature-${addon.key}`}
+                          className={`
+                            flex flex-col p-5 rounded-2xl min-h-[160px]
+                            wizard-animate wizard-delay-${index}
+                            ${isLocked 
+                              ? 'bg-green-50 border-2 border-green-300 cursor-default'
+                              : isSelected 
+                                ? 'bg-oficaz-primary/5 border-2 border-oficaz-primary shadow-lg shadow-oficaz-primary/10 scale-[1.02] cursor-pointer' 
+                                : 'bg-white border-2 border-gray-100 hover:border-gray-200 hover:shadow-md cursor-pointer'
+                            }
+                          `}
+                        >
+                          <input
+                            type="checkbox"
+                            id={`feature-${addon.key}`}
+                            value={addon.key}
+                            {...step1Form.register('selectedFeatures')}
+                            className="sr-only"
+                            disabled={isLocked}
+                            checked={isLocked ? true : undefined}
+                          />
+                          
+                          {/* Header: Icon + Name + Selection indicator */}
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className={`
+                              w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-all
+                              ${getAddonColorClasses(addon.key, isFree)}
+                              ${isSelected ? 'ring-2 ring-oficaz-primary/35' : ''}
+                            `}>
+                              <Icon className="w-5 h-5" />
+                            </div>
+                            <span className="font-semibold text-gray-900 flex-1">{getAddonDisplayName(addon)}</span>
+                            <div className={`
+                              w-6 h-6 rounded-full flex items-center justify-center transition-all flex-shrink-0
+                              ${isLocked ? 'bg-green-500 text-white' : isSelected ? 'bg-oficaz-primary text-white' : 'bg-gray-100'}
+                            `}>
+                              {(isSelected || isLocked) && <Check className="w-4 h-4" />}
+                            </div>
                           </div>
-                          <span className="font-semibold text-gray-900 flex-1">{addon.name}</span>
-                          <div className={`
-                            w-6 h-6 rounded-full flex items-center justify-center transition-all flex-shrink-0
-                            ${isLocked ? 'bg-green-500 text-white' : isSelected ? 'bg-oficaz-primary text-white' : 'bg-gray-100'}
-                          `}>
-                            {(isSelected || isLocked) && <Check className="w-4 h-4" />}
+                          
+                          {/* Description - full text with personality */}
+                          <p className="text-sm text-gray-500 flex-1 leading-relaxed">{addon.description}</p>
+                          
+                          {/* Price - bottom right */}
+                          <div className="flex justify-end mt-3 pt-3 border-t border-gray-100">
+                            {isFree ? (
+                              <Badge className="bg-green-100 text-green-700 border-0">
+                                Gratis - Incluido
+                              </Badge>
+                            ) : (
+                              <span className={`text-base font-bold ${isSelected ? 'text-oficaz-primary' : 'text-gray-700'}`}>
+                                €{price}<span className="text-sm font-normal text-gray-400">/mes</span>
+                              </span>
+                            )}
                           </div>
-                        </div>
-                        
-                        {/* Description - full text with personality */}
-                        <p className="text-sm text-gray-500 flex-1 leading-relaxed">{addon.description}</p>
-                        
-                        {/* Price - bottom right */}
-                        <div className="flex justify-end mt-3 pt-3 border-t border-gray-100">
-                          {isFree ? (
-                            <Badge className="bg-green-100 text-green-700 border-0">
-                              Gratis - Incluido
-                            </Badge>
-                          ) : (
-                            <span className={`text-base font-bold ${isSelected ? 'text-oficaz-primary' : 'text-gray-700'}`}>
-                              €{price}<span className="text-sm font-normal text-gray-400">/mes</span>
-                            </span>
-                          )}
-                        </div>
-                      </label>
-                    );
-                  })}
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  {/* Validation error */}
+                  {step1Form.formState.errors.selectedFeatures && (
+                    <p className="text-sm text-red-500 text-center mt-4">
+                      {step1Form.formState.errors.selectedFeatures.message}
+                    </p>
+                  )}
+
+                  {(step1Form.watch('selectedFeatures') || []).length === 0 && (
+                    <p className="hidden lg:block text-xs text-gray-400 text-center mt-4">
+                      Selecciona al menos 1 funcionalidad para continuar
+                    </p>
+                  )}
+                  </div>
                 </div>
 
-                {/* Validation error */}
-                {step1Form.formState.errors.selectedFeatures && (
-                  <p className="text-sm text-red-500 text-center">
-                    {step1Form.formState.errors.selectedFeatures.message}
-                  </p>
-                )}
-
-                <div className="flex gap-3 pt-4">
+                <div className="lg:hidden sticky bottom-0 z-20 flex gap-3 pt-4 pb-2 bg-[#f5f5f7]/95 backdrop-blur-sm border-t border-gray-200/80">
                   <Button 
                     type="button" 
                     variant="outline"
@@ -944,7 +1325,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   </Button>
                 </div>
                 {(step1Form.watch('selectedFeatures') || []).length === 0 && (
-                  <p className="text-xs text-gray-400 text-center">
+                  <p className="lg:hidden text-xs text-gray-400 text-center">
                     Selecciona al menos 1 funcionalidad para continuar
                   </p>
                 )}
@@ -953,8 +1334,34 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
             {/* Step 3: Company - Friendly tone */}
             {currentStep === 3 && (
-              <form key={`step-3-${currentStep}`} onSubmit={step3Form.handleSubmit(handleStep3Submit)} className="space-y-6">
-                <div className="text-center lg:text-left mb-6 wizard-section-animate">
+              <form key={`step-3-${currentStep}`} onSubmit={step3Form.handleSubmit(handleStep3Submit)} className="space-y-6 pb-28">
+                <div className="hidden lg:grid lg:grid-cols-3 items-center gap-3 sticky top-3 z-30 bg-white/90 backdrop-blur-sm border border-gray-200/80 rounded-2xl p-3 shadow-sm lg:w-[calc(100%+6rem)] lg:-mx-12 xl:w-[calc(100%+8rem)] xl:-mx-16">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => goToStep(2)}
+                    className="justify-self-start h-10 px-3 rounded-xl text-gray-600 hover:text-gray-900"
+                    disabled={validatingStep2}
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Atrás
+                  </Button>
+                  <div className="text-center px-2">
+                    <h2 className="text-lg font-semibold text-gray-900">Cuéntanos sobre tu empresa</h2>
+                    <p className="text-sm text-gray-500">Solo necesitamos unos datos básicos para empezar.</p>
+                  </div>
+                  <Button
+                    type="submit"
+                    data-testid="button-step3-continue-desktop"
+                    className="justify-self-end h-10 px-4 rounded-xl"
+                    disabled={validatingStep2}
+                  >
+                    {validatingStep2 ? 'Verificando...' : 'Continuar'}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+
+                <div className="text-center lg:text-left mb-6 wizard-section-animate lg:hidden">
                   <h2 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-2">
                     Cuéntanos sobre tu empresa
                   </h2>
@@ -1044,28 +1451,31 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     <Label htmlFor="province" className="text-sm font-medium text-gray-700">
                       Provincia
                     </Label>
-                    <Select
-                      value={step3Form.watch('province')}
-                      onValueChange={(value) => step3Form.setValue('province', value)}
-                    >
-                      <SelectTrigger className="h-12 rounded-xl bg-white border-gray-200">
-                        <SelectValue placeholder="Selecciona una provincia" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {spanishProvinces.map((province) => (
-                          <SelectItem key={province} value={province}>
-                            {province}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Controller
+                      control={step3Form.control}
+                      name="province"
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger className="h-12 rounded-xl bg-white border-gray-200">
+                            <SelectValue placeholder="Selecciona una provincia" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {spanishProvinces.map((province) => (
+                              <SelectItem key={province} value={province}>
+                                {province}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                     {step3Form.formState.errors.province && (
                       <p className="text-xs text-red-500">{step3Form.formState.errors.province.message}</p>
                     )}
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="lg:hidden sticky bottom-0 z-20 flex gap-3 pt-4 pb-2 bg-[#f5f5f7]/95 backdrop-blur-sm border-t border-gray-200/80">
                   <Button 
                     type="button" 
                     variant="outline"
@@ -1091,8 +1501,34 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
             {/* Step 4: Admin - Friendly tone */}
             {currentStep === 4 && (
-              <form key={`step-4-${currentStep}`} onSubmit={step4Form.handleSubmit(handleStep4Submit)} className="space-y-6">
-                <div className="text-center lg:text-left mb-6 wizard-section-animate">
+              <form key={`step-4-${currentStep}`} onSubmit={step4Form.handleSubmit(handleStep4Submit)} className="space-y-6 pb-28">
+                <div className="hidden lg:grid lg:grid-cols-3 items-center gap-3 sticky top-3 z-30 bg-white/90 backdrop-blur-sm border border-gray-200/80 rounded-2xl p-3 shadow-sm lg:w-[calc(100%+6rem)] lg:-mx-12 xl:w-[calc(100%+8rem)] xl:-mx-16">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => goToStep(3)}
+                    className="justify-self-start h-10 px-3 rounded-xl text-gray-600 hover:text-gray-900"
+                    disabled={validatingStep3}
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Atrás
+                  </Button>
+                  <div className="text-center px-2">
+                    <h2 className="text-lg font-semibold text-gray-900">Crea tu cuenta</h2>
+                    <p className="text-sm text-gray-500">Estos serán tus datos de acceso como administrador.</p>
+                  </div>
+                  <Button
+                    type="submit"
+                    data-testid="button-step4-continue-desktop"
+                    className="justify-self-end h-10 px-4 rounded-xl"
+                    disabled={validatingStep3}
+                  >
+                    {validatingStep3 ? 'Verificando...' : 'Continuar'}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+
+                <div className="text-center lg:text-left mb-6 wizard-section-animate lg:hidden">
                   <h2 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-2">
                     Crea tu cuenta
                   </h2>
@@ -1186,7 +1622,8 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       />
                       <button
                         type="button"
-                        onClick={() => setShowPassword(!showPassword)}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => setShowPassword((prev) => !prev)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       >
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -1211,7 +1648,8 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       />
                       <button
                         type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => setShowConfirmPassword((prev) => !prev)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       >
                         {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -1295,7 +1733,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   )}
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="lg:hidden sticky bottom-0 z-20 flex gap-3 pt-4 pb-2 bg-[#f5f5f7]/95 backdrop-blur-sm border-t border-gray-200/80">
                   <Button 
                     type="button" 
                     variant="outline"
@@ -1321,9 +1759,27 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
             {/* Step 5: Confirmation - Apple Style */}
             {currentStep === 5 && (
-              <form key={`step-5-${currentStep}`} onSubmit={step5Form.handleSubmit(handleStep5Submit)} className="space-y-8">
+              <form key={`step-5-${currentStep}`} onSubmit={step5Form.handleSubmit(handleStep5Submit)} className="space-y-8 pb-28">
+                <div className="hidden lg:grid lg:grid-cols-3 items-center gap-3 sticky top-3 z-30 bg-white/90 backdrop-blur-sm border border-gray-200/80 rounded-2xl p-3 shadow-sm lg:w-[calc(100%+6rem)] lg:-mx-12 xl:w-[calc(100%+8rem)] xl:-mx-16">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => goToStep(4)}
+                    className="justify-self-start h-10 px-3 rounded-xl text-gray-600 hover:text-gray-900"
+                    disabled={isLoading}
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Atrás
+                  </Button>
+                  <div className="text-center px-2">
+                    <h2 className="text-lg font-semibold text-gray-900">Confirma tu configuración</h2>
+                    <p className="text-sm text-gray-500">Revisa todo y activa tu prueba en segundos.</p>
+                  </div>
+                  <div className="justify-self-end w-full" aria-hidden="true" />
+                </div>
+
                 {/* Header - Personalized */}
-                <div className="text-center mb-6 wizard-section-animate">
+                <div className="text-center mb-6 wizard-section-animate lg:hidden">
                   <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-3">
                     Este es tu plan perfecto para {formData.companyName || 'tu empresa'}
                   </h2>
@@ -1331,6 +1787,37 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     Ni más ni menos, solo lo que necesitas.
                   </p>
                 </div>
+
+                {submitError && (
+                  <div className="rounded-xl border border-red-200 bg-red-50 p-4 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <XCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-red-700">{submitError}</p>
+                    </div>
+                    {submitErrorIsTokenIssue && !byInvitation && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setLocation('/request-code')}
+                        className="h-10 rounded-xl border-red-200 text-red-700 hover:bg-red-100"
+                      >
+                        Solicitar nuevo código
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {referralCodeFromUrl && (
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                    <p className="text-sm text-emerald-800">
+                      Este registro quedará asociado al referido
+                      {' '}
+                      <span className="font-semibold">{referralCodeFromUrl}</span>
+                      {' '}
+                      y se aplicará al programa cuando la empresa complete su primer pago.
+                    </p>
+                  </div>
+                )}
 
                 {/* Minimal Summary Card */}
                 <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm wizard-animate wizard-delay-1">
@@ -1341,11 +1828,11 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       {formData.selectedFeatures && formData.selectedFeatures.map((featureKey: string) => {
                         const addon = addons.find(a => a.key === featureKey);
                         if (!addon) return null;
-                        const Icon = iconMap[addon.icon as keyof typeof iconMap] || Clock;
+                        const Icon = getAddonIconComponent(addon.key, addon.icon);
                         return (
-                          <div key={featureKey} className="inline-flex items-center gap-2 bg-gray-50 rounded-full px-4 py-2">
-                            <Icon className="w-4 h-4 text-oficaz-primary" />
-                            <span className="text-sm font-medium text-gray-700">{addon.name}</span>
+                          <div key={featureKey} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 ${getAddonColorClasses(addon.key, addon.isFreeFeature)}`}>
+                            <Icon className="w-4 h-4" />
+                            <span className="text-sm font-medium">{getAddonDisplayName(addon)}</span>
                           </div>
                         );
                       })}
@@ -1381,14 +1868,84 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   {/* Divider */}
                   <div className="h-px bg-gray-100 my-6" />
 
+                  {/* Promo code */}
+                  <div className="space-y-2 mb-6">
+                    <Label htmlFor="promotionalCode" className="text-sm font-medium text-gray-700">
+                      Código promocional (opcional)
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="promotionalCode"
+                        placeholder="Ingresa tu código"
+                        className="h-12 rounded-xl bg-white border-gray-200 pr-12"
+                        {...step5Form.register('promotionalCode')}
+                        onBlur={(e) => validatePromotionalCode(e.target.value)}
+                        data-testid="input-promotional-code"
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {promoCodeValidation.status === 'checking' && (
+                          <LoadingSpinner size="xs" />
+                        )}
+                        {promoCodeValidation.status === 'valid' && (
+                          <CheckCircle className="w-5 h-5 text-green-500" />
+                        )}
+                        {promoCodeValidation.status === 'invalid' && (
+                          <XCircle className="w-5 h-5 text-red-500" />
+                        )}
+                      </div>
+                    </div>
+                    {promoCodeValidation.message && (
+                      <p className={`text-xs ${promoCodeValidation.status === 'valid' ? 'text-green-600' : 'text-red-600'}`}>
+                        {promoCodeValidation.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Terms */}
+                  <div className="space-y-3 mb-6">
+                    <div className="flex items-start gap-3 bg-gray-50 rounded-xl p-4">
+                      <Checkbox
+                        id="acceptTerms"
+                        checked={step5Form.watch('acceptTerms') || false}
+                        onCheckedChange={(checked) => step5Form.setValue('acceptTerms', checked as boolean)}
+                        className="mt-0.5"
+                      />
+                      <Label htmlFor="acceptTerms" className="text-sm text-gray-700 leading-relaxed cursor-pointer">
+                        Acepto los{' '}
+                        <a href="/terminos" target="_blank" className="text-oficaz-primary hover:underline">Términos</a>,{' '}
+                        <a href="/politica-privacidad" target="_blank" className="text-oficaz-primary hover:underline">Privacidad</a> y{' '}
+                        <a href="/cookies" target="_blank" className="text-oficaz-primary hover:underline">Cookies</a>
+                      </Label>
+                    </div>
+                    {step5Form.formState.errors.acceptTerms && (
+                      <p className="text-sm text-red-500 text-center">{step5Form.formState.errors.acceptTerms.message}</p>
+                    )}
+
+                    <div className="flex items-start gap-3 bg-gray-50 rounded-xl p-4">
+                      <Checkbox
+                        id="acceptMarketing"
+                        checked={step5Form.watch('acceptMarketing') || false}
+                        onCheckedChange={(checked) => step5Form.setValue('acceptMarketing', checked as boolean)}
+                        className="mt-0.5"
+                        data-testid="checkbox-accept-marketing"
+                      />
+                      <Label htmlFor="acceptMarketing" className="text-sm text-gray-700 cursor-pointer">
+                        Recibir novedades y ofertas de Oficaz (opcional)
+                      </Label>
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="h-px bg-gray-100 my-6" />
+
                   {/* Price - Big and centered */}
                   <div className="text-center">
                     <div className="mb-2">
                       <span className="text-5xl font-bold text-gray-900">
                         €{
-                          ((formData.admins || 1) * 6) + 
-                          ((formData.managers || 0) * 4) + 
-                          ((formData.employees || 0) * 2) +
+                          ((formData.admins || 1) * seatPriceMap.admin) + 
+                          ((formData.managers || 0) * seatPriceMap.manager) + 
+                          ((formData.employees || 0) * seatPriceMap.employee) +
                           (formData.selectedFeatures?.reduce((sum: number, key: string) => {
                             const addon = addons.find(a => a.key === key);
                             return sum + (addon ? Number(addon.monthlyPrice) : 0);
@@ -1400,6 +1957,24 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     <p className="text-sm text-gray-500 max-w-sm mx-auto">
                       A este precio hay que descontarle las horas que te vamos a ahorrar en trabajo.
                     </p>
+                  </div>
+
+                  {/* Final CTA in body for desktop and mobile */}
+                  <div className="mt-8 rounded-2xl bg-gradient-to-r from-[#0b7fdc] to-[#0aa5d6] p-5 text-white shadow-lg shadow-sky-200/70">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div>
+                        <p className="text-sm text-white/85">Todo listo para empezar</p>
+                        <p className="text-lg font-semibold">Activa ahora tu entorno y prueba todas las funciones</p>
+                      </div>
+                      <Button
+                        type="submit"
+                        data-testid="button-start-trial-body"
+                        className="h-12 px-6 rounded-xl bg-white text-[#0b7fdc] hover:bg-slate-100 font-semibold"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? 'Creando...' : 'Comenzar prueba'}
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -1421,92 +1996,16 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   </div>
                 </div>
 
-                {/* Promo code */}
-                <div className="space-y-2">
-                  <Label htmlFor="promotionalCode" className="text-sm font-medium text-gray-700">
-                    Código promocional (opcional)
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="promotionalCode"
-                      placeholder="Ingresa tu código"
-                      className="h-12 rounded-xl bg-white border-gray-200 pr-12"
-                      {...step5Form.register('promotionalCode')}
-                      onBlur={(e) => validatePromotionalCode(e.target.value)}
-                      data-testid="input-promotional-code"
-                    />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      {promoCodeValidation.status === 'checking' && (
-                        <LoadingSpinner size="xs" />
-                      )}
-                      {promoCodeValidation.status === 'valid' && (
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                      )}
-                      {promoCodeValidation.status === 'invalid' && (
-                        <XCircle className="w-5 h-5 text-red-500" />
-                      )}
-                    </div>
-                  </div>
-                  {promoCodeValidation.message && (
-                    <p className={`text-xs ${promoCodeValidation.status === 'valid' ? 'text-green-600' : 'text-red-600'}`}>
-                      {promoCodeValidation.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Terms */}
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3 bg-gray-50 rounded-xl p-4">
-                    <Checkbox
-                      id="acceptTerms"
-                      checked={step5Form.watch('acceptTerms') || false}
-                      onCheckedChange={(checked) => step5Form.setValue('acceptTerms', checked as boolean)}
-                      className="mt-0.5"
-                    />
-                    <Label htmlFor="acceptTerms" className="text-sm text-gray-700 leading-relaxed cursor-pointer">
-                      Acepto los{' '}
-                      <a href="/terminos" target="_blank" className="text-oficaz-primary hover:underline">Términos</a>,{' '}
-                      <a href="/politica-privacidad" target="_blank" className="text-oficaz-primary hover:underline">Privacidad</a> y{' '}
-                      <a href="/cookies" target="_blank" className="text-oficaz-primary hover:underline">Cookies</a>
-                    </Label>
-                  </div>
-                  {step5Form.formState.errors.acceptTerms && (
-                    <p className="text-sm text-red-500 text-center">{step5Form.formState.errors.acceptTerms.message}</p>
-                  )}
-
-                  <div className="flex items-start gap-3 bg-gray-50 rounded-xl p-4">
-                    <Checkbox
-                      id="acceptMarketing"
-                      checked={step5Form.watch('acceptMarketing') || false}
-                      onCheckedChange={(checked) => step5Form.setValue('acceptMarketing', checked as boolean)}
-                      className="mt-0.5"
-                      data-testid="checkbox-accept-marketing"
-                    />
-                    <Label htmlFor="acceptMarketing" className="text-sm text-gray-700 cursor-pointer">
-                      Recibir novedades y ofertas de Oficaz (opcional)
-                    </Label>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 pt-4">
+                <div className="lg:hidden sticky bottom-0 z-20 flex gap-3 pt-4 pb-2 bg-[#f5f5f7]/95 backdrop-blur-sm border-t border-gray-200/80">
                   <Button 
                     type="button" 
                     variant="outline"
                     onClick={() => goToStep(4)}
-                    className="flex-1 h-12 rounded-xl"
+                    className="w-full h-12 rounded-xl"
                     disabled={isLoading}
                   >
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Atrás
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    data-testid="button-start-trial"
-                    className="flex-1 h-12 rounded-xl bg-green-600 hover:bg-green-700"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Creando...' : 'Comenzar prueba'}
-                    <Star className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
               </form>
@@ -1536,6 +2035,33 @@ export default function Register({ byInvitation = false, invitationEmail, invita
           setLocation('/dashboard');
         }}
       />
+
+      <Dialog open={!!selectedRoleVideo} onOpenChange={(open) => {
+        if (!open) {
+          setActiveRoleVideo(null);
+        }
+      }}>
+        <DialogContent className="max-w-4xl border-0 bg-transparent p-0 shadow-none [&>button]:hidden" data-testid="register-role-video-dialog">
+          <DialogHeader className="sr-only">
+            <DialogTitle>{selectedRoleVideo?.title || 'Video explicativo'}</DialogTitle>
+            <DialogDescription>Video explicativo del rol seleccionado</DialogDescription>
+          </DialogHeader>
+          {selectedRoleVideo ? (
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-black dark:border-gray-700">
+              <div className="relative aspect-video w-full">
+                <iframe
+                  className="absolute inset-0 h-full w-full"
+                  src={`https://www.youtube-nocookie.com/embed/${selectedRoleVideo.embedId}?autoplay=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&playsinline=1&fs=0`}
+                  title={selectedRoleVideo.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

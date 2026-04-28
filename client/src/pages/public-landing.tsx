@@ -1,11 +1,13 @@
-import { Link, useLocation } from 'wouter';
+import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { openWhatsApp as openWhatsAppLink } from '@/lib/whatsapp';
 import { lazy, Suspense } from 'react';
 import type { CarouselApi } from '@/components/ui/carousel';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
@@ -22,6 +24,7 @@ import {
   XCircle,
   ArrowRight,
   Play,
+  CirclePlay,
   ChevronLeft,
   ChevronRight,
   Star,
@@ -118,73 +121,22 @@ const addonExtendedDescriptions: Record<string, string> = {
   inventory: "Seguimiento completo de stock en todos tus almacenes. Alertas de stock bajo, movimientos de entrada y salida, valoración de inventario y trazabilidad de productos. Gestión profesional sin complicaciones."
 };
 
-function DifficultySlider({ onSelect }: { onSelect?: (option: 'dificil' | 'normal' | 'oficaz') => void }) {
-  const [selected, setSelected] = useState<'dificil' | 'normal' | 'oficaz'>('normal');
-  const [, navigate] = useLocation();
-  
-  const handleSelect = (option: 'dificil' | 'normal' | 'oficaz') => {
-    setSelected(option);
-    onSelect?.(option);
-    if (option === 'oficaz') {
-      setTimeout(() => {
-        navigate('/request-code');
-      }, 400);
-    }
-  };
-  
-  return (
-    <div className="relative inline-flex bg-white/10 backdrop-blur-md rounded-2xl p-1.5 border border-white/20">
-      {/* Sliding background indicator */}
-      <div 
-        className="absolute top-1.5 bottom-1.5 rounded-xl transition-all duration-300 ease-out"
-        style={{
-          width: 'calc(33.333% - 4px)',
-          left: selected === 'dificil' ? '6px' : selected === 'normal' ? 'calc(33.333% + 2px)' : 'calc(66.666% - 2px)',
-          background: selected === 'oficaz' 
-            ? 'linear-gradient(135deg, #007AFF 0%, #0066DD 100%)' 
-            : selected === 'dificil'
-            ? 'rgba(239, 68, 68, 0.3)'
-            : 'rgba(255, 255, 255, 0.15)',
-          boxShadow: selected === 'oficaz' ? '0 4px 20px rgba(0, 122, 255, 0.4)' : 'none'
-        }}
-      />
-      
-      {/* Options */}
-      <button
-        onClick={() => handleSelect('dificil')}
-        className={`relative z-10 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-semibold transition-all duration-300 ${
-          selected === 'dificil' 
-            ? 'text-red-400' 
-            : 'text-white/60 hover:text-white/80'
-        }`}
-      >
-        Difícil
-      </button>
-      
-      <button
-        onClick={() => handleSelect('normal')}
-        className={`relative z-10 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-semibold transition-all duration-300 ${
-          selected === 'normal' 
-            ? 'text-white' 
-            : 'text-white/60 hover:text-white/80'
-        }`}
-      >
-        Normal
-      </button>
-      
-      <button
-        onClick={() => handleSelect('oficaz')}
-        className={`relative z-10 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold transition-all duration-300 ${
-          selected === 'oficaz' 
-            ? 'text-white' 
-            : 'text-white/60 hover:text-white/80'
-        }`}
-      >
-        Oficaz
-      </button>
-    </div>
-  );
-}
+type RoleVideoKey = 'admin' | 'manager' | 'employee';
+
+const roleVideoConfig: Record<RoleVideoKey, { embedId: string; title: string }> = {
+  admin: {
+    embedId: 'THVtK0rxHzo',
+    title: 'Video explicativo: Administrador',
+  },
+  manager: {
+    embedId: 'Pwuv9q9PhDI',
+    title: 'Video explicativo: Manager',
+  },
+  employee: {
+    embedId: 'OydgoA8fYN4',
+    title: 'Video explicativo: Empleado',
+  },
+};
 
 // Reusable component for mobile preview content in both carousel and desktop
 function MobilePreviewContent({ addonKey }: { addonKey: string }) {
@@ -759,7 +711,7 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
   if (addonKey === 'reminders') {
     return (
       <div className="p-3 h-full bg-[#0a1628]">
-        <h3 className="text-white font-bold text-sm mb-0.5">Recordatorios</h3>
+        <h3 className="text-white font-bold text-sm mb-0.5">Tareas</h3>
         <p className="text-gray-400 text-[8px] mb-2">Gestiona tus tareas</p>
         
         <div className="flex gap-1.5 mb-2">
@@ -791,8 +743,8 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
             </div>
             <div className="flex items-center justify-between mt-1.5">
               <div className="flex -space-x-1">
-                <img src="" alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
-                <img src="" alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
+                <img src={avatarWoman01} alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
+                <img src={avatarMan01} alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
               </div>
               <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
                 <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
@@ -843,7 +795,7 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
             </div>
             <div className="flex items-center justify-between mt-1.5">
               <div className="flex -space-x-1">
-                <img src="" alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-green-50 object-cover" />
+                <img src={avatarWoman02} alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-green-50 object-cover" />
               </div>
               <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
                 <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
@@ -1082,7 +1034,7 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
         <div className="flex items-center justify-end gap-1.5 mb-2">
           <span className="text-white text-[7px]">Carlos López</span>
           <img 
-            src="" 
+            src={avatarMan01} 
             alt="Avatar"
             className="w-5 h-5 rounded-full object-cover"
           />
@@ -1096,7 +1048,7 @@ function MobilePreviewContent({ addonKey }: { addonKey: string }) {
             { icon: CalendarDays, label: 'Cuadrante', color: 'bg-[#007AFF]' },
             { icon: MessageSquare, label: 'Mensajes', color: 'bg-[#007AFF]' },
             { icon: FileText, label: 'Documentos', color: 'bg-[#007AFF]' },
-            { icon: Bell, label: 'Recordatorios', color: 'bg-[#007AFF]' },
+            { icon: Bell, label: 'Tareas', color: 'bg-[#007AFF]' },
           ].map((item, i) => (
             <div key={i} className="flex flex-col items-center">
               <div className={`w-10 h-10 ${item.color} rounded-xl flex items-center justify-center mb-1`}>
@@ -1143,7 +1095,7 @@ export default function Landing() {
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [previewAddon, setPreviewAddon] = useState<string>('employee_dashboard');
-  const [difficultyMode, setDifficultyMode] = useState<'dificil' | 'normal' | 'oficaz'>('normal');
+  const [activeRoleVideo, setActiveRoleVideo] = useState<RoleVideoKey | null>(null);
 
   // Pricing calculator state - starts with 1 admin (required), employees (always included) and time_tracking selected
   const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set(['employee_dashboard', 'employees', 'time_tracking']));
@@ -1151,13 +1103,164 @@ export default function Landing() {
 
   // Defer API calls until after critical content renders
   const [shouldLoadData, setShouldLoadData] = useState(false);
+
+  const openWhatsApp = useCallback((event?: React.MouseEvent<HTMLElement>) => {
+    openWhatsAppLink('34614028600', { event });
+  }, []);
+
+  const selectedRoleVideo = activeRoleVideo ? roleVideoConfig[activeRoleVideo] : null;
+
+  const renderRoleVideoButton = (role: RoleVideoKey) => (
+    <button
+      type="button"
+      onClick={() => setActiveRoleVideo(role)}
+      className="w-5 h-5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-red-600 transition-colors flex items-center justify-center"
+      title="Ver video explicativo"
+      aria-label={`Ver video del rol ${role}`}
+    >
+      <CirclePlay className="w-3.5 h-3.5" />
+    </button>
+  );
   
   useEffect(() => {
     // Trigger entrance animations after mount
     const timer = setTimeout(() => setIsLoaded(true), 100);
     return () => clearTimeout(timer);
   }, []);
-  
+
+  useEffect(() => {
+    const getMetaByName = (name: string) => {
+      return document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
+    };
+    
+    const getMetaByProperty = (property: string) => {
+      return document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement | null;
+    };
+    
+    const previousMeta = {
+      description: getMetaByName('description')?.getAttribute('content') || '',
+      robots: getMetaByName('robots')?.getAttribute('content') || '',
+      ogTitle: getMetaByProperty('og:title')?.getAttribute('content') || '',
+      ogDescription: getMetaByProperty('og:description')?.getAttribute('content') || '',
+      ogType: getMetaByProperty('og:type')?.getAttribute('content') || '',
+      ogUrl: getMetaByProperty('og:url')?.getAttribute('content') || '',
+      ogImage: getMetaByProperty('og:image')?.getAttribute('content') || '',
+      ogSiteName: getMetaByProperty('og:site_name')?.getAttribute('content') || '',
+      twitterCard: getMetaByName('twitter:card')?.getAttribute('content') || '',
+      twitterTitle: getMetaByName('twitter:title')?.getAttribute('content') || '',
+      twitterDescription: getMetaByName('twitter:description')?.getAttribute('content') || '',
+      twitterImage: getMetaByName('twitter:image')?.getAttribute('content') || '',
+      canonical: document.querySelector('link[rel="canonical"]')?.getAttribute('href') || '',
+    };
+
+    const setMetaByName = (name: string, content: string) => {
+      let tag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute('name', name);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('content', content);
+    };
+
+    const setMetaByProperty = (property: string, content: string) => {
+      let tag = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement | null;
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute('property', property);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('content', content);
+    };
+
+    const setCanonical = (href: string) => {
+      let tag = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+      if (!tag) {
+        tag = document.createElement('link');
+        tag.setAttribute('rel', 'canonical');
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('href', href);
+    };
+
+    const description = 'Oficaz: fichajes, ausencias, cuadrantes, documentos y más en una app modular. Paga solo por lo que necesitas.';
+    const canonicalUrl = `${window.location.origin}${window.location.pathname === '/' ? '/' : window.location.pathname}`;
+    const socialImageUrl = heroBackground.startsWith('http')
+      ? heroBackground
+      : `${window.location.origin}${heroBackground.startsWith('/') ? '' : '/'}${heroBackground}`;
+
+    setMetaByName('description', description);
+    setMetaByName('robots', 'index,follow');
+    setMetaByProperty('og:title', 'Oficaz | Gestión empresarial modular');
+    setMetaByProperty('og:description', description);
+    setMetaByProperty('og:type', 'website');
+    setMetaByProperty('og:url', canonicalUrl);
+    setMetaByProperty('og:image', socialImageUrl);
+    setMetaByProperty('og:site_name', 'Oficaz');
+    setMetaByName('twitter:card', 'summary_large_image');
+    setMetaByName('twitter:title', 'Oficaz | Gestión empresarial modular');
+    setMetaByName('twitter:description', description);
+    setMetaByName('twitter:image', socialImageUrl);
+    setCanonical(canonicalUrl);
+
+    return () => {
+      if (previousMeta.description) setMetaByName('description', previousMeta.description);
+      if (previousMeta.robots) setMetaByName('robots', previousMeta.robots);
+      if (previousMeta.ogTitle) setMetaByProperty('og:title', previousMeta.ogTitle);
+      if (previousMeta.ogDescription) setMetaByProperty('og:description', previousMeta.ogDescription);
+      if (previousMeta.ogType) setMetaByProperty('og:type', previousMeta.ogType);
+      if (previousMeta.ogUrl) setMetaByProperty('og:url', previousMeta.ogUrl);
+      if (previousMeta.ogImage) setMetaByProperty('og:image', previousMeta.ogImage);
+      if (previousMeta.ogSiteName) setMetaByProperty('og:site_name', previousMeta.ogSiteName);
+      if (previousMeta.twitterCard) setMetaByName('twitter:card', previousMeta.twitterCard);
+      if (previousMeta.twitterTitle) setMetaByName('twitter:title', previousMeta.twitterTitle);
+      if (previousMeta.twitterDescription) setMetaByName('twitter:description', previousMeta.twitterDescription);
+      if (previousMeta.twitterImage) setMetaByName('twitter:image', previousMeta.twitterImage);
+      if (previousMeta.canonical) setCanonical(previousMeta.canonical);
+    };
+  }, []);
+
+  // JSON-LD structured data for Google rich results
+  useEffect(() => {
+    const baseUrl = window.location.origin;
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = 'jsonld-oficaz';
+    script.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'Organization',
+          name: 'Oficaz',
+          url: baseUrl,
+          logo: `${baseUrl}/oficaz-logo-white.png`,
+        },
+        {
+          '@type': 'SoftwareApplication',
+          name: 'Oficaz',
+          applicationCategory: 'BusinessApplication',
+          operatingSystem: 'Web, iOS, Android',
+          description: 'App modular de gestion empresarial: fichajes, ausencias, cuadrantes, contabilidad e inventario en una sola plataforma.',
+          url: baseUrl,
+          publisher: {
+            '@type': 'Organization',
+            name: 'Oficaz',
+          },
+          offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'EUR',
+            description: 'Prueba gratuita disponible',
+          },
+        },
+      ],
+    });
+    document.head.appendChild(script);
+    return () => {
+      document.getElementById('jsonld-oficaz')?.remove();
+    };
+  }, []);
+
   useEffect(() => {
     // Defer data loading to prevent blocking initial render
     const timer = setTimeout(() => setShouldLoadData(true), 100);
@@ -1206,12 +1309,12 @@ export default function Landing() {
     { key: 'schedules', icon: CalendarClock, label: 'Cuadrante', desc: 'Turnos y horarios' },
     { key: 'documents', icon: FileText, label: 'Documentos', desc: 'Gestión y firma' },
     { key: 'messages', icon: Mail, label: 'Mensajes', desc: 'Comunicación interna' },
-    { key: 'reminders', icon: Bell, label: 'Recordatorios', desc: 'Avisos y tareas' },
+    { key: 'reminders', icon: Bell, label: 'Tareas', desc: 'Avisos y tareas' },
     { key: 'work_reports', icon: ClipboardList, label: 'Partes', desc: 'Órdenes y reportes' },
     { key: 'inventory', icon: Package, label: 'Inventario', desc: 'Stock y movimientos' },
     { key: 'accounting', icon: Calculator, label: 'Contabilidad', desc: 'Ingresos y gastos' },
     { key: 'crm', icon: Briefcase, label: 'CRM', desc: 'Clientes y proyectos' },
-    { key: 'ai_assistant', icon: Sparkles, label: 'OfiCazIA', desc: 'Asistente inteligente' },
+    { key: 'ai_assistant', icon: Sparkles, label: 'OficazIA', desc: 'Asistente inteligente' },
     { key: 'employees', icon: Users, label: 'Empleados', desc: 'Perfiles y permisos' },
   ]), []);
 
@@ -1336,7 +1439,7 @@ export default function Landing() {
     { key: 'vacation', name: 'Ausencias', price: 3, icon: Calendar, isLocked: false, description: 'Olvídate del caos de las hojas de cálculo. Cada empleado ve sus días disponibles, solicita fechas, y tú apruebas o rechazas al instante.' },
     { key: 'schedules', name: 'Cuadrante', price: 3, icon: CalendarDays, isLocked: false, description: 'Planifica turnos arrastrando y soltando. Duplica semanas enteras, crea plantillas, y con OficazIA genera cuadrantes optimizados en segundos.' },
     { key: 'messages', name: 'Mensajes', price: 5, icon: MessageSquare, isLocked: false, description: 'Mantén la comunicación profesional separada del WhatsApp personal. Crea grupos por departamento y guarda historial de conversaciones.' },
-    { key: 'reminders', name: 'Recordatorios', price: 5, icon: Bell, isLocked: false, description: 'Configura alertas para ti o para cualquier empleado. Notificaciones push que llegan aunque la app esté cerrada. Perfectas para fechas límite.' },
+    { key: 'reminders', name: 'Tareas', price: 5, icon: Bell, isLocked: false, description: 'Configura alertas y tareas para ti o para cualquier empleado. Notificaciones push que llegan aunque la app esté cerrada. Perfectas para fechas límite.' },
     { key: 'documents', name: 'Documentos', price: 10, icon: FileText, isLocked: false, description: 'Sube nóminas, contratos, certificados y cualquier documento. Organización automática por empleado y categoría. Firma digital integrada.' },
     { key: 'crm', name: 'Clientes y Proyectos', price: 8, icon: Users2, isLocked: false, description: 'Gestiona todos tus clientes, proveedores y proyectos en un solo lugar. Vincula contactos a proyectos y ten la central de tu negocio siempre a mano.' },
       { key: 'accounting', name: 'Contabilidad básica', price: 10, icon: Calculator, isLocked: false, description: 'Sistema contable básico integrado. Registra ingresos y gastos, categoriza movimientos automáticamente, y genera informes financieros simples.' },
@@ -1363,70 +1466,6 @@ export default function Landing() {
     setSelectedAddons(newSet);
   };
 
-  // Funciones principales
-  const mainFeatures = [
-    {
-      icon: Clock,
-      title: "Control horario",
-      description: "Control automático con seguimiento en tiempo real y reportes detallados"
-    },
-    {
-      icon: Calendar,
-      title: "Gestión de ausencias",
-      description: "Solicitudes digitales con flujo de aprobación y calendario integrado"
-    },
-    {
-      icon: CalendarDays,
-      title: "Cuadrante",
-      description: "Planificación visual drag & drop con turnos inteligentes y gestión semanal"
-    }
-  ];
-
-  // Funciones adicionales
-  const additionalFeatures = [
-    {
-      icon: FileText,
-      title: "Documentos",
-      description: "Subida automática con detección de empleados y categorización inteligente"
-    },
-    {
-      icon: MessageSquare,
-      title: "Mensajes",
-      description: "Comunicación empresarial estilo WhatsApp para toda la organización"
-    },
-    {
-      icon: Settings,
-      title: "Recordatorios",
-      description: "Recordatorios personalizados, tareas automáticas y notificaciones inteligentes"
-    }
-  ];
-
-  const features = [...mainFeatures, ...additionalFeatures];
-
-  const testimonials = [
-    {
-      name: "María González",
-      role: "Directora de RRHH",
-      company: "TechCorp",
-      content: "Oficaz transformó completamente nuestra gestión de empleados. Lo que antes tomaba horas ahora se hace en minutos.",
-      rating: 5
-    },
-    {
-      name: "Carlos Ruiz",
-      role: "CEO",
-      company: "StartupFlow",
-      content: "La facilidad de uso es increíble. Nuestros empleados se adaptaron en días, no semanas.",
-      rating: 5
-    },
-    {
-      name: "Ana Martín",
-      role: "Responsable de Operaciones",
-      company: "LogisticsPro",
-      content: "El control de tiempo en tiempo real nos ahorró miles de euros en el primer mes.",
-      rating: 5
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -1443,30 +1482,28 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-10">
             <div className="flex items-center">
-              <img src={oficazHeaderLogo} alt="Oficaz" className="h-6 md:h-7 w-auto object-contain" loading="eager" />
+              <a href="#inicio" aria-label="Ir al inicio de la landing">
+                <img src={oficazHeaderLogo} alt="Oficaz" className="h-6 md:h-7 w-auto object-contain" loading="eager" />
+              </a>
             </div>
             
             <nav className="hidden md:flex items-center justify-between flex-1 ml-8">
               <div className="flex items-center space-x-8">
                 <a href="#funciones" className="text-gray-700 hover:text-gray-900 transition-colors font-medium">Funciones</a>
                 <a href="#precios" className="text-gray-700 hover:text-gray-900 transition-colors font-medium">Precios</a>
+                <a href="#faq" className="text-gray-700 hover:text-gray-900 transition-colors font-medium">FAQ</a>
               </div>
               
               <div className="flex items-center space-x-3">
-                <a 
-                  href="https://wa.me/34614028600" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center mr-2"
+                <Button
+                  size="sm"
+                  onClick={openWhatsApp}
+                  className="bg-[#25D366] hover:bg-[#20BA5A] text-white font-semibold px-4 py-2 shadow-lg shadow-[#25D366]/25 border-0 rounded-lg hover:shadow-xl hover:shadow-[#25D366]/30 transition-all duration-300 hover:scale-105"
+                  aria-label="Contactar por WhatsApp"
                 >
-                  <Button 
-                    size="sm" 
-                    className="bg-[#25D366] hover:bg-[#20BA5A] text-white font-semibold px-4 py-2 shadow-lg shadow-[#25D366]/25 border-0 rounded-lg hover:shadow-xl hover:shadow-[#25D366]/30 transition-all duration-300 hover:scale-105"
-                  >
-                    <FaWhatsapp className="w-5 h-5 mr-2" />
-                    WhatsApp
-                  </Button>
-                </a>
+                  <FaWhatsapp className="w-5 h-5 mr-2" />
+                  WhatsApp
+                </Button>
                 {registrationSettings?.publicRegistrationEnabled ? (
                   <Link href="/request-code">
                     <Button size="sm" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-6 py-2 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg hover:shadow-xl hover:shadow-[#007AFF]/30 transition-all duration-300 hover:scale-105">
@@ -1480,7 +1517,7 @@ export default function Landing() {
                     className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-6 py-2 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg hover:shadow-xl hover:shadow-[#007AFF]/30 transition-all duration-300 hover:scale-105"
                   >
                     <Mail className="w-4 h-4 mr-2" />
-                    Contacta
+                    Solicitar demo
                   </Button>
                 )}
                 <Link href="/login">
@@ -1496,13 +1533,14 @@ export default function Landing() {
               {registrationSettings?.publicRegistrationEnabled ? (
                 <Link href="/request-code">
                   <Button size="sm" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-3 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg">
-                    Registrarse
+                    Prueba gratis
                   </Button>
                 </Link>
               ) : (
                 <Button 
                   size="sm" 
                   onClick={() => setIsContactFormOpen(true)}
+                  aria-label="Contactar"
                   className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-3 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg"
                 >
                   <Mail className="w-4 h-4" />
@@ -1520,9 +1558,8 @@ export default function Landing() {
 
       {/* Floating WhatsApp Button - Mobile Only */}
       <a 
-        href="https://wa.me/34614028600" 
-        target="_blank" 
-        rel="noopener noreferrer"
+        href="https://wa.me/34614028600"
+        onClick={openWhatsApp}
         className="md:hidden fixed bottom-6 right-6 z-50 inline-flex items-center justify-center w-16 h-16 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-full shadow-2xl shadow-[#25D366]/40 transition-all duration-300 hover:scale-110 active:scale-95"
         aria-label="Contactar por WhatsApp"
       >
@@ -1531,6 +1568,7 @@ export default function Landing() {
 
       {/* Hero Section - Static, no scroll effects */}
       <section 
+        id="inicio"
         className="relative min-h-[88vh] md:min-h-screen flex items-center justify-center pt-14 md:pt-16"
         style={{ 
           backgroundImage: `url(${heroBackground})`,
@@ -1558,14 +1596,15 @@ export default function Landing() {
               </h1>
               
               <p 
-                className="text-sm sm:text-base md:text-xl font-semibold text-[#007AFF]"
+                className="text-sm sm:text-base md:text-xl font-semibold text-white/80"
                 style={{
                   opacity: isLoaded ? 1 : 0,
                   transform: isLoaded ? 'translateY(0)' : 'translateY(40px)',
                   transition: 'all 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) 150ms',
                 }}
               >
-                La app modular de gestión empresarial en un clic.
+                Ausencias, cuadrantes, contabilidad, inventario...<br />
+                gestiona toda tu empresa en una app modular.
               </p>
             </div>
 
@@ -1666,7 +1705,7 @@ export default function Landing() {
                   onClick={() => setIsContactFormOpen(true)}
                   className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-bold px-6 sm:px-8 py-3 text-base sm:text-lg shadow-lg shadow-[#007AFF]/30 border-0 rounded-xl transition-all duration-300 hover:scale-105"
                 >
-                  Comenzar prueba gratis
+                  Solicitar demo
                 </Button>
               )}
             </div>
@@ -1692,8 +1731,34 @@ export default function Landing() {
           
           <ScrollReveal delay={0.3}>
             <p className="text-lg md:text-xl text-gray-500 max-w-3xl mx-auto leading-relaxed">
-              Dirigir una empresa exige foco real, no perder horas en tareas que drenan atención y no aportan valor. Tú impulsa, decide y construye. Todo lo repetitivo, lo tedioso y lo administrativo queda en manos de Oficaz.
+              Dirigir una empresa exige foco real. Oficaz te quita trabajo administrativo del medio para que tú decidas, organices y hagas crecer el negocio.
             </p>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* Anti-complexity Section */}
+      <section className="bg-gray-900 py-20 md:py-28">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <ScrollReveal>
+            <p className="text-sm md:text-base font-semibold uppercase tracking-widest text-blue-400 mb-6">
+              Oficaz no es como las demás
+            </p>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.15] tracking-tight mb-8">
+              No otro software enorme<br className="hidden sm:block" /> con tutoriales interminables.
+            </h2>
+            <p className="text-xl md:text-2xl text-gray-400 max-w-2xl mx-auto leading-relaxed mb-10">
+              Oficaz está pensado para personas que quieren gestionar su empresa{' '}
+              <span className="text-white font-semibold">sin necesitar conocimientos avanzados</span>.
+              Entras, lo entiendes y lo usas. Así de simple.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-base text-gray-500">
+              <span className="flex items-center gap-2"><XCircle className="w-5 h-5 text-red-400" /> Sin formación previa</span>
+              <span className="hidden sm:block text-gray-700">·</span>
+              <span className="flex items-center gap-2"><XCircle className="w-5 h-5 text-red-400" /> Sin implementaciones largas</span>
+              <span className="hidden sm:block text-gray-700">·</span>
+              <span className="flex items-center gap-2"><XCircle className="w-5 h-5 text-red-400" /> Sin funciones que nunca usarás</span>
+            </div>
           </ScrollReveal>
         </div>
       </section>
@@ -1779,10 +1844,12 @@ export default function Landing() {
             
             {/* Dots indicator */}
             <div className="flex justify-center gap-1.5 mt-4">
-              {addons.map((addon, i) => (
+              {addons.map((addon) => (
                 <button
                   key={addon.key}
+                  type="button"
                   onClick={() => setPreviewAddon(addon.key)}
+                  aria-label={`Ver vista de ${addon.name}`}
                   className={`w-2 h-2 rounded-full transition-all ${
                     previewAddon === addon.key ? 'bg-[#007AFF] w-4' : 'bg-gray-300'
                   }`}
@@ -1833,6 +1900,7 @@ export default function Landing() {
                           {/* Arrow Navigation */}
                           <div className="flex items-center gap-3">
                             <button
+                              type="button"
                               onClick={() => {
                                 const prevIndex = currentIndex === 0 ? addons.length - 1 : currentIndex - 1;
                                 setPreviewAddon(addons[prevIndex].key);
@@ -1843,6 +1911,7 @@ export default function Landing() {
                               <ChevronLeft className="w-5 h-5 text-gray-600" />
                             </button>
                             <button
+                              type="button"
                               onClick={() => {
                                 const nextIndex = currentIndex === addons.length - 1 ? 0 : currentIndex + 1;
                                 setPreviewAddon(addons[nextIndex].key);
@@ -1859,6 +1928,7 @@ export default function Landing() {
                             {addons.map((a, i) => (
                               <button
                                 key={a.key}
+                                type="button"
                                 onClick={() => setPreviewAddon(a.key)}
                                 className={`transition-all duration-300 rounded-full ${
                                   a.key === previewAddon 
@@ -1918,7 +1988,7 @@ export default function Landing() {
                           <div className="flex items-center justify-end gap-1.5 mb-2">
                             <span className="text-white text-[7px]">Carlos López</span>
                             <img 
-                              src="" 
+                              src={avatarMan01} 
                               alt="Avatar"
                               className="w-5 h-5 rounded-full object-cover"
                             />
@@ -1932,7 +2002,7 @@ export default function Landing() {
                               { icon: CalendarDays, label: 'Cuadrante', color: 'bg-[#007AFF]' },
                               { icon: MessageSquare, label: 'Mensajes', color: 'bg-[#007AFF]' },
                               { icon: FileText, label: 'Documentos', color: 'bg-[#007AFF]' },
-                              { icon: Bell, label: 'Recordatorios', color: 'bg-[#007AFF]' },
+                              { icon: Bell, label: 'Tareas', color: 'bg-[#007AFF]' },
                             ].map((item, i) => (
                               <div key={i} className="flex flex-col items-center">
                                 <div className={`w-10 h-10 ${item.color} rounded-xl flex items-center justify-center mb-1`}>
@@ -2368,8 +2438,8 @@ export default function Landing() {
                           className="h-full"
                         >
                         <div className="p-3 h-full bg-[#0a1628]">
-                          <h3 className="text-white font-bold text-sm mb-0.5">Recordatorios</h3>
-                          <p className="text-gray-400 text-[8px] mb-2">Gestiona tus recordatorios</p>
+                          <h3 className="text-white font-bold text-sm mb-0.5">Tareas</h3>
+                          <p className="text-gray-400 text-[8px] mb-2">Gestiona tus tareas</p>
                           
                           {/* Search and filter row */}
                           <div className="flex gap-1.5 mb-2">
@@ -2405,8 +2475,8 @@ export default function Landing() {
                               </div>
                               <div className="flex items-center justify-between mt-1.5">
                                 <div className="flex -space-x-1">
-                                  <img src="" alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
-                                  <img src="" alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
+                                  <img src={avatarWoman01} alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
+                                  <img src={avatarMan01} alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-pink-50 object-cover" />
                                 </div>
                                 <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
                                   <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
@@ -2457,7 +2527,7 @@ export default function Landing() {
                               </div>
                               <div className="flex items-center justify-between mt-1.5">
                                 <div className="flex -space-x-1">
-                                  <img src="" alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-green-50 object-cover" />
+                                  <img src={avatarWoman02} alt="Avatar de usuario" className="w-4 h-4 rounded-full border-2 border-green-50 object-cover" />
                                 </div>
                                 <button className="flex items-center gap-0.5 text-gray-500 text-[5px]">
                                   <div className="w-2.5 h-2.5 rounded-full border border-gray-400"></div>
@@ -3001,7 +3071,7 @@ export default function Landing() {
               Sin planes. Paga solo lo que necesitas.
             </h2>
             <p className="text-sm md:text-base text-gray-500">
-              Configura tu equipo y selecciona las funciones
+              Configura tu equipo, activa módulos y calcula tu precio al instante.
             </p>
           </ScrollReveal>
           
@@ -3028,12 +3098,17 @@ export default function Landing() {
                           <Users className="w-3.5 h-3.5 text-blue-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 text-sm">Empleados</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-medium text-gray-900 text-sm">Empleados</p>
+                            {renderRoleVideoButton('employee')}
+                          </div>
                                                   </div>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <button 
+                          type="button"
                           onClick={() => setUserCounts(prev => ({ ...prev, employees: Math.max(0, prev.employees - 1) }))}
+                          aria-label="Reducir empleados"
                           className="w-6 h-6 rounded-full bg-white border border-gray-200 hover:bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-xs"
                         >
                           -
@@ -3046,7 +3121,9 @@ export default function Landing() {
                           className="w-8 text-center font-bold text-gray-900 text-sm bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                         <button 
+                          type="button"
                           onClick={() => setUserCounts(prev => ({ ...prev, employees: prev.employees + 1 }))}
+                          aria-label="Aumentar empleados"
                           className="w-6 h-6 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-xs"
                         >
                           +
@@ -3064,12 +3141,17 @@ export default function Landing() {
                           <Shield className="w-3.5 h-3.5 text-purple-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 text-sm">Managers</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-medium text-gray-900 text-sm">Managers</p>
+                            {renderRoleVideoButton('manager')}
+                          </div>
                                                   </div>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <button 
+                          type="button"
                           onClick={() => setUserCounts(prev => ({ ...prev, managers: Math.max(0, prev.managers - 1) }))}
+                          aria-label="Reducir managers"
                           className="w-6 h-6 rounded-full bg-white border border-gray-200 hover:bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-xs"
                         >
                           -
@@ -3082,7 +3164,9 @@ export default function Landing() {
                           className="w-8 text-center font-bold text-gray-900 text-sm bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                         <button 
+                          type="button"
                           onClick={() => setUserCounts(prev => ({ ...prev, managers: prev.managers + 1 }))}
+                          aria-label="Aumentar managers"
                           className="w-6 h-6 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-xs"
                         >
                           +
@@ -3100,13 +3184,18 @@ export default function Landing() {
                           <Settings className="w-3.5 h-3.5 text-amber-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 text-sm">Admins</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-medium text-gray-900 text-sm">Admins</p>
+                            {renderRoleVideoButton('admin')}
+                          </div>
                                                   </div>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <button 
+                          type="button"
                           onClick={() => setUserCounts(prev => ({ ...prev, admins: Math.max(1, prev.admins - 1) }))}
                           disabled={userCounts.admins <= 1}
+                          aria-label="Reducir admins"
                           className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${
                             userCounts.admins <= 1 
                               ? 'bg-gray-100 text-gray-300 cursor-not-allowed' 
@@ -3123,7 +3212,9 @@ export default function Landing() {
                           className="w-8 text-center font-bold text-gray-900 text-sm bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                         <button 
+                          type="button"
                           onClick={() => setUserCounts(prev => ({ ...prev, admins: prev.admins + 1 }))}
+                          aria-label="Aumentar admins"
                           className="w-6 h-6 rounded-full bg-[#007AFF] hover:bg-[#0056CC] flex items-center justify-center text-white font-bold text-xs"
                         >
                           +
@@ -3154,8 +3245,10 @@ export default function Landing() {
                     return (
                       <button
                         key={addon.key}
+                        type="button"
                         onClick={() => toggleAddon(addon.key)}
                         disabled={isLocked}
+                        aria-label={isLocked ? `${addon.name} incluido gratis` : `${isSelected ? 'Quitar' : 'Activar'} ${addon.name}`}
                         className={`w-full p-3 rounded-xl text-left transition-all duration-200 border flex items-center gap-3 ${
                           isLocked
                             ? 'bg-green-50 border-green-200'
@@ -3268,6 +3361,56 @@ export default function Landing() {
           </ScrollReveal>
         </div>
       </section>
+
+      {/* FAQ Section */}
+      <section id="faq" className="bg-white py-16 md:py-24 border-t border-gray-100">
+        <div className="max-w-4xl mx-auto px-6">
+          <ScrollReveal className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-4">
+              Preguntas frecuentes
+            </h2>
+            <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+              Lo importante, claro y sin letra pequena.
+            </p>
+          </ScrollReveal>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: 'Cuanto tardamos en empezar a usar Oficaz?',
+                a: 'Normalmente el mismo dia. Configuras tu equipo, activas modulos y empiezas a trabajar sin procesos largos de implantacion.',
+              },
+              {
+                q: 'Necesitamos formacion tecnica para manejar la plataforma?',
+                a: 'No. Esta pensada para gente que quiere gestionar sin conocimientos avanzados: entrar, entender y usar.',
+              },
+              {
+                q: 'Hay permanencia o costes ocultos?',
+                a: 'No hay permanencia. Pagas solo por usuarios y modulos activos; puedes ajustar tu plan cuando quieras.',
+              },
+              {
+                q: 'Podemos empezar con poco e ir ampliando?',
+                a: 'Si. Empiezas con lo esencial y activas nuevos modulos cuando realmente los necesites.',
+              },
+              {
+                q: 'Que soporte recibimos si tenemos dudas?',
+                a: 'Soporte por WhatsApp y contacto directo con el equipo para ayudarte en configuracion y uso diario.',
+              },
+            ].map((item, index) => (
+              <ScrollReveal key={item.q} delay={0.05 * index}>
+                <details className="group rounded-2xl border border-gray-200 bg-gray-50/70 px-6 py-4 open:bg-white open:shadow-sm open:border-gray-300 transition-all duration-300">
+                  <summary className="cursor-pointer list-none pr-6 text-lg font-semibold text-gray-900 relative">
+                    {item.q}
+                    <span className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 group-open:rotate-45 transition-transform">+</span>
+                  </summary>
+                  <p className="mt-3 text-gray-600 leading-relaxed">{item.a}</p>
+                </details>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Final CTA Section - Memorable Close */}
       <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#007AFF] via-blue-600 to-indigo-700 relative overflow-hidden py-20 md:py-24">
         {/* Background Elements */}
@@ -3278,11 +3421,6 @@ export default function Landing() {
         
         <div className="max-w-5xl mx-auto px-6 lg:px-8 text-center relative z-10">
           <ScrollReveal>
-            {/* The Big Question */}
-            <p className="text-xl md:text-2xl text-blue-200 font-medium mb-6">
-              Una pregunta honesta:
-            </p>
-            
             {/* Main Statement - The Hook */}
             <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white mb-8 tracking-tight leading-[1.1]">
               ¿Cuánto vale<br />
@@ -3296,17 +3434,17 @@ export default function Landing() {
             
             {/* The Philosophy */}
             <p className="text-lg md:text-xl text-blue-100 mb-16 max-w-3xl mx-auto leading-relaxed">
-              Cada minuto que pierdes en tareas administrativas es un minuto que no dedicas a lo que realmente importa: 
-              <span className="text-white font-semibold"> hacer crecer tu negocio, cuidar a tu equipo, vivir tu vida.</span>
+              Las horas que pierdes en burocracia no vuelven.
+              <span className="text-white font-semibold"> Oficaz convierte esa carga en dos clics.</span>
             </p>
           </ScrollReveal>
           
           <ScrollReveal delay={0.2}>
             {/* CTA Button - Massive */}
-            {registrationSettings?.publicRegistrationEnabled && (
+            {registrationSettings?.publicRegistrationEnabled ? (
               <div className="mb-10">
                 <Link href="/request-code">
-                  <button className="group relative bg-white text-[#007AFF] hover:bg-gray-50 font-black text-xl md:text-2xl px-12 md:px-16 py-6 md:py-7 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] hover:shadow-[0_30px_80px_-15px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-all duration-300">
+                  <button type="button" className="group relative bg-white text-[#007AFF] hover:bg-gray-50 font-black text-xl md:text-2xl px-12 md:px-16 py-6 md:py-7 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] hover:shadow-[0_30px_80px_-15px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-all duration-300">
                     <span className="relative z-10 flex items-center gap-4">
                       Recupera tu tiempo
                       <ArrowRight className="w-7 h-7 group-hover:translate-x-2 transition-transform duration-300" />
@@ -3314,11 +3452,26 @@ export default function Landing() {
                   </button>
                 </Link>
               </div>
+            ) : (
+              <div className="mb-10">
+                <button
+                  type="button"
+                  onClick={() => setIsContactFormOpen(true)}
+                  className="group relative bg-white text-[#007AFF] hover:bg-gray-50 font-black text-xl md:text-2xl px-12 md:px-16 py-6 md:py-7 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] hover:shadow-[0_30px_80px_-15px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-all duration-300"
+                >
+                  <span className="relative z-10 flex items-center gap-4">
+                    Hablar con ventas
+                    <ArrowRight className="w-7 h-7 group-hover:translate-x-2 transition-transform duration-300" />
+                  </span>
+                </button>
+              </div>
             )}
             
             {/* Closing Line */}
             <p className="text-blue-200/80 text-base md:text-lg font-medium">
-              7 días gratis. Sin tarjeta. Sin compromiso.
+              {registrationSettings?.publicRegistrationEnabled
+                ? '7 días gratis. Sin tarjeta. Sin compromiso.'
+                : 'Demo personalizada. Sin compromiso.'}
             </p>
           </ScrollReveal>
         </div>
@@ -3330,7 +3483,7 @@ export default function Landing() {
             <div>
               <div className="flex items-center space-x-2 mb-6">
                 <img 
-                  src="/email-logo-white.png" 
+                  src="/oficaz-logo-white.png" 
                   alt="Oficaz" 
                   className="h-8 w-auto"
                   loading="lazy"
@@ -3340,16 +3493,21 @@ export default function Landing() {
                 La plataforma de gestión empresarial más intuitiva para empresas modernas.
               </p>
               <div className="text-sm text-gray-500">
-                © 2025 Oficaz. Todos los derechos reservados.
+                © {new Date().getFullYear()} Oficaz. Todos los derechos reservados.
               </div>
             </div>
             
             <div>
               <h3 className="font-semibold mb-4">Producto</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#features" className="hover:text-white transition-colors">Funciones</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">Precios</a></li>
-                <li><a href="/request-code" className="hover:text-white transition-colors">Prueba Gratis</a></li>
+                <li><a href="#funciones" className="hover:text-white transition-colors">Funciones</a></li>
+                <li><a href="#precios" className="hover:text-white transition-colors">Precios</a></li>
+                <li><a href="#faq" className="hover:text-white transition-colors">FAQ</a></li>
+                {registrationSettings?.publicRegistrationEnabled ? (
+                  <li><a href="/request-code" className="hover:text-white transition-colors">Prueba Gratis</a></li>
+                ) : (
+                  <li><button type="button" onClick={() => setIsContactFormOpen(true)} className="hover:text-white transition-colors text-gray-400">Solicitar demo</button></li>
+                )}
               </ul>
             </div>
             
@@ -3369,6 +3527,7 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+
       {/* Contact Form Modal - Lazy loaded */}
       {isContactFormOpen && (
         <Suspense fallback={<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"><div className="bg-white rounded-lg p-6">Cargando...</div></div>}>
@@ -3378,6 +3537,33 @@ export default function Landing() {
           />
         </Suspense>
       )}
+
+      <Dialog open={!!selectedRoleVideo} onOpenChange={(open) => {
+        if (!open) {
+          setActiveRoleVideo(null);
+        }
+      }}>
+        <DialogContent className="max-w-4xl border-0 bg-transparent p-0 shadow-none [&>button]:hidden" data-testid="landing-role-video-dialog">
+          <DialogHeader className="sr-only">
+            <DialogTitle>{selectedRoleVideo?.title || 'Video explicativo'}</DialogTitle>
+            <DialogDescription>Video explicativo del rol seleccionado</DialogDescription>
+          </DialogHeader>
+          {selectedRoleVideo ? (
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-black dark:border-gray-700">
+              <div className="relative aspect-video w-full">
+                <iframe
+                  className="absolute inset-0 h-full w-full"
+                  src={`https://www.youtube-nocookie.com/embed/${selectedRoleVideo.embedId}?autoplay=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&playsinline=1&fs=0`}
+                  title={selectedRoleVideo.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

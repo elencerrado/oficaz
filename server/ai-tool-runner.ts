@@ -64,3 +64,42 @@ export async function runToolCalls(
 
   return toolResults;
 }
+
+// FEATURE FLAG VALIDATION - Check if function is available for this subscription
+// This prevents free/starter tier users from accessing premium functions
+export function isFeatureAvailable(functionName: string, planName: string, hasAddon: boolean = false): boolean {
+  // Premium addon functions (CRM, accounting, work reports, vacation creation)
+  const premiumAddonFunctions = ['getActiveWorkers', 'listCRMContacts', 'createCRMContact', 'addCRMInteraction',
+                                   'listWorkReports', 'createWorkReport', 'createVacationRequest', 'getAccountingSummary'];
+  
+  // If addon is active, premium functions are available
+  if (hasAddon && premiumAddonFunctions.includes(functionName)) {
+    return true;
+  }
+  
+  // Plan-based access
+  const featuresByPlan: Record<string, string[]> = {
+    'free': ['listEmployees', 'getEmployeeShifts', 'getEmployeeWorkHours'],
+    'starter': ['listEmployees', 'getEmployeeShifts', 'getEmployeeWorkHours', 'getVacationBalance', 'getPendingApprovals', 'navigateToPage'],
+    'professional': [
+      'listEmployees', 'getEmployeeShifts', 'getEmployeeWorkHours', 'getVacationBalance', 'getPendingApprovals', 'navigateToPage',
+      'assignSchedule', 'assignScheduleInRange', 'updateWorkShiftTimes', 'deleteWorkShift', 'assignRotatingSchedule',
+      'detectWorkShiftOverlaps', 'sendMessage', 'approveVacationRequests', 'approveTimeModificationRequests',
+      'createReminder', 'requestDocument', 'getCompanySettings', 'updateEmployeeShiftsColor', 'updateWorkShiftColor', 'generateTimeReport'
+    ],
+    'enterprise': [
+      // All professional + enterprise features
+      'listEmployees', 'getEmployeeShifts', 'getEmployeeWorkHours', 'getVacationBalance', 'getPendingApprovals', 'navigateToPage',
+      'assignSchedule', 'assignScheduleInRange', 'updateWorkShiftTimes', 'deleteWorkShift', 'assignRotatingSchedule',
+      'detectWorkShiftOverlaps', 'sendMessage', 'approveVacationRequests', 'approveTimeModificationRequests', 'createReminder',
+      'requestDocument', 'getCompanySettings', 'updateEmployeeShiftsColor', 'updateWorkShiftColor', 'generateTimeReport',
+      'createEmployee', 'updateEmployee', 'generatePayrollReport', 'swapEmployeeShifts', 'copyEmployeeShifts',
+      'createShiftAfterEmployee', 'updateWorkShiftDetails', 'deleteWorkShiftsInRange', 'updateWorkShiftsInRange', 'customQuery', 'deleteEmployee'
+    ]
+  };
+  
+  const normalizedPlan = (planName || 'free').toLowerCase();
+  const availableFunctions = featuresByPlan[normalizedPlan] || featuresByPlan['free'];
+  
+  return availableFunctions.includes(functionName);
+}

@@ -12,12 +12,15 @@ import { Users, Plus, ChevronLeft, ChevronRight, ChevronDown, Clock, Copy, Trash
 import { format, differenceInDays, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, addWeeks, subWeeks, getDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
+import { logger } from '@/lib/logger';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useFeatureCheck } from "@/hooks/use-feature-check";
 import { FeatureRestrictedPage } from "@/components/feature-restricted-page";
 import { usePageHeader } from '@/components/layout/page-header';
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTeams, resolveTeamMemberIds } from '@/hooks/use-teams';
 import { 
   DndContext, 
   closestCenter,
@@ -97,6 +100,18 @@ interface ShiftTemplate {
   createdBy?: number;
   createdAt: string;
   updatedAt?: string;
+}
+
+interface WeeklyEventGroup {
+  key: string;
+  representativeShiftId: number;
+  title: string;
+  startTime: string;
+  endTime: string;
+  location?: string;
+  color: string;
+  notes?: string;
+  displayOrder: number;
 }
 
 const SHIFT_COLORS = [
@@ -612,19 +627,31 @@ export default function Schedules() {
   const [deletingShiftId, setDeletingShiftId] = useState<number | null>(null);
   const [showShiftModal, setShowShiftModal] = useState(false);
   const [viewMode, setViewMode] = useState<'day' | 'workweek' | 'week'>('week');
+  const [boardMode, setBoardMode] = useState<'employees-by-days' | 'events-by-employees'>('employees-by-days');
   
-  // Forzar vista día en móvil
+  // Forzar vista día en móvil excepto en la vista de eventos, que siempre es semanal
   useEffect(() => {
     const checkMobile = () => {
-      if (window.innerWidth < 640) { // Forzar día solo en pantallas muy pequeñas (móvil)
+      if (boardMode === 'events-by-employees') {
+        setViewMode('week');
+        return;
+      }
+
+      if (window.innerWidth < 640) {
         setViewMode('day');
       }
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, [boardMode]);
+
+  useEffect(() => {
+    if (boardMode === 'events-by-employees' && viewMode !== 'week') {
+      setViewMode('week');
+    }
+  }, [boardMode, viewMode]);
   
   // Estado para el formulario de edición
   const [editShift, setEditShift] = useState({
@@ -659,6 +686,10 @@ export default function Schedules() {
      queryKey: ['/api/shift-templates'],
      queryFn: () => apiRequest('GET', '/api/shift-templates'),
      enabled: !hasNoAccess,
+     staleTime: 5 * 60 * 1000,
+     gcTime: 15 * 60 * 1000,
+     refetchOnMount: false,
+     refetchOnWindowFocus: false,
    });
 
    // Mutation para crear plantilla
@@ -796,6 +827,7 @@ export default function Schedules() {
   // Estados y configuración para drag & drop
   const [activeShift, setActiveShift] = useState<WorkShift | null>(null);
   const [activeTemplate, setActiveTemplate] = useState<ShiftTemplate | null>(null);
+  const [activeEmployeeDrag, setActiveEmployeeDrag] = useState<Employee | null>(null);
   const [dragOverCellId, setDragOverCellId] = useState<string | null>(null);
   const [dragAnchor, setDragAnchor] = useState<{
     width: number;
@@ -877,12 +909,18 @@ export default function Schedules() {
       setDragAnchor(null);
     }
 
-    if (dragData?.type === 'template') {
+    if (dragData?.type === 'employee-assignment') {
       setActiveShift(null);
+      setActiveTemplate(null);
+      setActiveEmployeeDrag(dragData.employee as Employee);
+    } else if (dragData?.type === 'template') {
+      setActiveShift(null);
+      setActiveEmployeeDrag(null);
       setActiveTemplate(dragData.template as ShiftTemplate);
     } else {
       const shift = workShifts.find(s => s.id === Number(active.id));
       if (shift) {
+        setActiveEmployeeDrag(null);
         setActiveTemplate(null);
         setActiveShift(shift);
       }
@@ -902,6 +940,7 @@ export default function Schedules() {
   const handleDragCancel = () => {
     setActiveShift(null);
     setActiveTemplate(null);
+    setActiveEmployeeDrag(null);
     setDragOverCellId(null);
     setDragAnchor(null);
     // Restaurar scroll del body
@@ -913,13 +952,16 @@ export default function Schedules() {
     const { active, over } = event;
     const dragData = active.data.current as any;
     const isTemplateDrag = dragData?.type === 'template';
+    const isEmployeeDrag = dragData?.type === 'employee-assignment';
     const draggedTemplate = isTemplateDrag ? (dragData.template as ShiftTemplate) : null;
+    const draggedEmployee = isEmployeeDrag ? (dragData.employee as Employee) : null;
     
     // Guardar referencia ANTES de resetear el estado
     const draggedShift = isTemplateDrag ? null : activeShift;
     
     setActiveShift(null);
     setActiveTemplate(null);
+    setActiveEmployeeDrag(null);
     setDragOverCellId(null);
     setDragAnchor(null);
     
@@ -927,7 +969,84 @@ export default function Schedules() {
     document.body.style.overflow = '';
     document.body.style.touchAction = '';
 
-    if (!over || (!draggedShift && !draggedTemplate)) return;
+    if (!over || (!draggedShift && !draggedTemplate && !draggedEmployee)) return;
+
+    if (draggedEmployee && String(over.id).startsWith('event-cell-')) {
+      const eventCellParts = String(over.id).split('-');
+      const templateId = Number(eventCellParts[2]);
+      const employeeId = Number(eventCellParts[3]);
+
+      if (!templateId || !employeeId) return;
+
+      const eventGroup = groupedWeeklyEvents.find((item) => item.representativeShiftId === templateId);
+      if (!eventGroup) return;
+
+      const firstAvailableDay = filteredDays.find((day) => {
+        if (isEmployeeOnVacation(employeeId, day)) return false;
+        return !hasTimeConflict(employeeId, day, eventGroup.startTime, eventGroup.endTime);
+      });
+
+      if (!firstAvailableDay) {
+        toast({
+          title: 'Sin hueco disponible',
+          description: 'No hay días disponibles en la semana para este evento y empleado.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const targetDate = firstAvailableDay;
+      const vacation = isEmployeeOnVacation(employeeId, targetDate);
+      if (vacation) {
+        toast({
+          title: 'No disponible',
+          description: 'El empleado está de vacaciones en esa fecha.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const [startHour, startMinute] = eventGroup.startTime.split(':').map(Number);
+      const [endHour, endMinute] = eventGroup.endTime.split(':').map(Number);
+
+      const startAt = new Date(targetDate);
+      startAt.setHours(startHour, startMinute, 0, 0);
+
+      const endAt = new Date(targetDate);
+      endAt.setHours(endHour, endMinute, 0, 0);
+      if (endAt <= startAt) {
+        endAt.setDate(endAt.getDate() + 1);
+      }
+
+      if (hasTimeConflict(employeeId, targetDate, eventGroup.startTime, eventGroup.endTime)) {
+        toast({
+          title: 'Conflicto de horario',
+          description: 'Ya existe un turno que se solapa para este empleado.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      try {
+        await apiRequest('POST', '/api/work-shifts', {
+          employeeId,
+          startAt: startAt.toISOString(),
+          endAt: endAt.toISOString(),
+          title: eventGroup.title,
+          location: eventGroup.location || '',
+          notes: eventGroup.notes || '',
+          color: eventGroup.color,
+        });
+        invalidateCurrentWeekShifts();
+      } catch {
+        toast({
+          title: 'Error al asignar',
+          description: 'No se pudo crear el turno desde el evento.',
+          variant: 'destructive',
+        });
+      }
+      return;
+    }
 
     // Handle template reordering (plantilla a plantilla)
     if (isTemplateDrag && String(over.id).startsWith('template-')) {
@@ -1909,6 +2028,17 @@ export default function Schedules() {
     select: (data: Employee[]) => data?.filter((emp: Employee) => emp.status === 'active') || [],
   });
 
+  const { data: teams = [] } = useTeams(true);
+  const [teamFilter, setTeamFilter] = useState('all');
+
+  const visibleEmployees = useMemo(() => {
+    if (teamFilter === 'all') return employees;
+    const teamId = parseInt(teamFilter, 10);
+    if (!Number.isInteger(teamId)) return employees;
+    const memberIds = new Set(resolveTeamMemberIds(teams, teamId));
+    return employees.filter((employee) => memberIds.has(employee.id));
+  }, [employees, teamFilter, teams]);
+
   const { data: workShifts = [], isLoading: loadingShifts, refetch: refetchShifts } = useQuery<WorkShift[]>({
     queryKey: ['/api/work-shifts/company', format(weekRange.start, 'yyyy-MM-dd'), format(weekRange.end, 'yyyy-MM-dd')],
     enabled: !!weekRange.start && !!weekRange.end,
@@ -1966,6 +2096,46 @@ export default function Schedules() {
       ? weekRange.days.filter(day => day.getDay() >= 1 && day.getDay() <= 5)
       : weekRange.days;
   }, [weekRange.days, viewMode]);
+
+  const groupedWeeklyEvents = useMemo(() => {
+    const normalizeText = (value: string | undefined | null) =>
+      (value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+    const groups = new Map<string, WeeklyEventGroup>();
+
+    // ✅ FILTRAR: Solo turnos de esta semana visible
+    const weekShifts = workShifts.filter((shift: WorkShift) => {
+      const shiftStart = parseISO(shift.startAt);
+      return shiftStart >= weekRange.start && shiftStart <= weekRange.end;
+    });
+
+    weekShifts.forEach((shift: WorkShift, index: number) => {
+      const shiftStart = parseISO(shift.startAt);
+      const shiftEnd = parseISO(shift.endAt);
+      const key = [
+        normalizeText(shift.title),
+        format(shiftStart, 'HH:mm'),
+        format(shiftEnd, 'HH:mm'),
+        normalizeText(shift.location),
+      ].join('||');
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          representativeShiftId: shift.id,
+          title: shift.title,
+          startTime: format(shiftStart, 'HH:mm'),
+          endTime: format(shiftEnd, 'HH:mm'),
+          location: shift.location,
+          color: shift.color,
+          notes: shift.notes,
+          displayOrder: index,
+        });
+      }
+    });
+
+    return Array.from(groups.values()).sort((a, b) => a.displayOrder - b.displayOrder);
+  }, [workShifts, weekRange]);
 
   // Obtener turnos para un empleado específico
   const getShiftsForEmployee = (employeeId: number) => {
@@ -2721,6 +2891,175 @@ export default function Schedules() {
     );
   }, [workShifts, viewMode, getShiftsForEmployee, getGlobalTimelineBounds, assignShiftLanes, isViewOnly, deletingShiftId]);
 
+  const getEventShiftForEmployeeOnDay = useCallback((eventGroup: WeeklyEventGroup, employeeId: number, day: Date) => {
+    const dayKey = format(day, 'yyyy-MM-dd');
+    const normalizeText = (value: string | undefined | null) =>
+      (value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+    return workShifts.find((shift: WorkShift) => {
+      if (shift.employeeId !== employeeId) return false;
+      const shiftStart = parseISO(shift.startAt);
+      const shiftEnd = parseISO(shift.endAt);
+      const sameTitle = normalizeText(shift.title) === normalizeText(eventGroup.title);
+      const sameLocation = normalizeText(shift.location) === normalizeText(eventGroup.location);
+      const sameTimeWindow =
+        format(shiftStart, 'HH:mm') === eventGroup.startTime &&
+        format(shiftEnd, 'HH:mm') === eventGroup.endTime;
+
+      return (
+        format(shiftStart, 'yyyy-MM-dd') === dayKey &&
+        sameTitle &&
+        sameTimeWindow &&
+        sameLocation
+      );
+    }) || null;
+  }, [workShifts]);
+
+  function EmployeeAssignmentChip({ employee }: { employee: Employee }) {
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+      id: `assign-emp-${employee.id}`,
+      disabled: isViewOnly,
+      data: { type: 'employee-assignment', employee },
+    });
+
+    return (
+      <div
+        ref={setNodeRef}
+        {...listeners}
+        {...attributes}
+        className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs border transition-all ${
+          isViewOnly
+            ? 'cursor-default bg-muted/50 text-muted-foreground border-border'
+            : 'cursor-grab active:cursor-grabbing bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/35'
+        }`}
+        style={{
+          transform: CSS.Transform.toString(transform),
+          opacity: isDragging ? 0.5 : 1,
+        }}
+        title={isViewOnly ? 'Modo lectura' : 'Arrastra para asignar a un evento'}
+      >
+        <Users className="w-3 h-3" />
+        <span>Asignar</span>
+      </div>
+    );
+  }
+
+  function WeeklyEventAssignmentCell({
+    eventGroup,
+    employee,
+  }: {
+    eventGroup: WeeklyEventGroup;
+    employee: Employee;
+  }) {
+    const createShiftFromTemplate = async (day: Date) => {
+      const [startHour, startMinute] = eventGroup.startTime.split(':').map(Number);
+      const [endHour, endMinute] = eventGroup.endTime.split(':').map(Number);
+
+      const startAt = new Date(day);
+      startAt.setHours(startHour, startMinute, 0, 0);
+
+      const endAt = new Date(day);
+      endAt.setHours(endHour, endMinute, 0, 0);
+      if (endAt <= startAt) {
+        endAt.setDate(endAt.getDate() + 1);
+      }
+
+      if (hasTimeConflict(employee.id, day, eventGroup.startTime, eventGroup.endTime)) {
+        toast({
+          title: 'Conflicto de horario',
+          description: 'Ya existe un turno que se solapa para este empleado.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      try {
+        await apiRequest('POST', '/api/work-shifts', {
+          employeeId: employee.id,
+          startAt: startAt.toISOString(),
+          endAt: endAt.toISOString(),
+          title: eventGroup.title,
+          location: eventGroup.location || '',
+          notes: eventGroup.notes || '',
+          color: eventGroup.color,
+        });
+        invalidateCurrentWeekShifts();
+      } catch {
+        toast({
+          title: 'Error al crear',
+          description: 'No se pudo crear el turno.',
+          variant: 'destructive',
+        });
+      }
+    };
+
+    const matchingShiftsThisWeek = filteredDays
+      .map((day) => {
+        const shift = getEventShiftForEmployeeOnDay(eventGroup, employee.id, day);
+        if (!shift) return null;
+        return { day, shift };
+      })
+      .filter((item): item is { day: Date; shift: WorkShift } => item !== null);
+
+    const cellId = `event-cell-${eventGroup.representativeShiftId}-${employee.id}`;
+    const { setNodeRef, isOver } = useDroppable({ id: cellId, disabled: isViewOnly });
+
+    return (
+      <div
+        ref={setNodeRef}
+        className={`min-h-[140px] rounded-lg border p-2 text-[12px] transition-colors ${
+          isOver
+            ? 'border-green-400 bg-green-50 dark:bg-green-900/20'
+            : 'border-border bg-white dark:bg-gray-900'
+        }`}
+      >
+        {matchingShiftsThisWeek.length > 0 ? (
+          <div className="space-y-1.5">
+            {matchingShiftsThisWeek.map(({ day, shift }) => (
+              <div
+                key={`event-line-${shift.id}`}
+                className="rounded-md px-2 py-1 text-white relative"
+                style={{ backgroundColor: shift.color || eventGroup.color }}
+              >
+                <div className="font-semibold capitalize">
+                  {format(day, 'EEEE', { locale: es })} - {format(parseISO(shift.startAt), 'HH:mm')} a {format(parseISO(shift.endAt), 'HH:mm')}
+                </div>
+                {!isViewOnly && (
+                  <button
+                    type="button"
+                    className="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/90 text-red-600 flex items-center justify-center"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteShiftMutation.mutate(shift.id);
+                    }}
+                    title="Eliminar turno"
+                  >
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="h-full flex flex-col items-start justify-center gap-2 text-muted-foreground">
+            <span>Sin turnos de este evento</span>
+            {!isViewOnly && (
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 hover:text-foreground"
+                onClick={() => createShiftFromTemplate(filteredDays[0])}
+                title="Asignar este evento (primer día de la semana visible)"
+              >
+                <Plus className="w-3 h-3" />
+                Asignar
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // No subscription access = no access at all (moved after all hooks)
   if (hasNoAccess) {
     return (
@@ -2740,9 +3079,9 @@ export default function Schedules() {
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      {employees.length === 0 && !loadingEmployees ? (
+      {visibleEmployees.length === 0 && !loadingEmployees ? (
         <div className="text-center py-8 text-muted-foreground">
-          No hay empleados registrados
+          {teamFilter === 'all' ? 'No hay empleados registrados' : 'No hay empleados en el equipo seleccionado'}
         </div>
       ) : (
         <div className={`space-y-3 transition-opacity duration-300 ${loadingEmployees ? 'opacity-60' : 'opacity-100'}`}>
@@ -2760,8 +3099,10 @@ export default function Schedules() {
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
                 
-                <h2 className="text-sm font-semibold text-foreground capitalize">
-                  {format(weekRange.start, "MMMM yyyy", { locale: es })}
+                <h2 className="text-sm font-semibold text-foreground capitalize text-center">
+                  {boardMode === 'events-by-employees'
+                    ? `${format(weekRange.start, "d MMM", { locale: es })} - ${format(weekRange.end, "d MMM yyyy", { locale: es })}`
+                    : format(weekRange.start, "MMMM yyyy", { locale: es })}
                 </h2>
                 
                 <Button
@@ -2777,70 +3118,112 @@ export default function Schedules() {
             </CardContent>
           </Card>
 
-          {/* Fila de días de la semana - Cards individuales alineadas con turnos */}
-          <div className={`grid gap-1 md:gap-4 px-3 ${viewMode === 'day' ? 'sm:grid-cols-[120px_minmax(0,1fr)] grid-cols-1' : viewMode === 'workweek' ? 'grid-cols-[120px_repeat(5,minmax(0,1fr))]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
-            {/* Selector de vista en la columna de avatares */}
-            <div className={`flex items-center justify-center ${viewMode === 'day' ? 'hidden sm:flex' : ''}`}>
-              <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-1 relative hidden sm:block">
-                {/* Sliding indicator */}
-                <div 
-                  className="absolute top-1 bottom-1 bg-white dark:bg-gray-900 rounded-lg shadow-sm transition-all duration-300 ease-in-out border border-gray-200 dark:border-gray-700"
-                  style={{
-                    left: viewMode === 'day' ? '4px' : viewMode === 'workweek' ? 'calc(33.33% + 1px)' : 'calc(66.66% - 2px)',
-                    width: 'calc(33.33% - 4px)'
-                  }}
-                />
-                
-                {/* Tab buttons */}
-                <div className="relative flex">
-                  {(['day', 'workweek', 'week'] as const).map((mode) => {
-                    const labels = { day: '1', workweek: '5', week: '7' };
-                    return (
-                      <button
-                        type="button"
-                        key={mode}
-                        onClick={() => {
-                          if (window.innerWidth >= 640 || mode === 'day' || mode === 'workweek') {
-                            setViewMode(mode);
-                          }
-                        }}
-                        className={`py-1.5 px-3 font-medium text-xs transition-colors duration-200 relative z-10 flex items-center justify-center ${
-                          viewMode === mode
-                            ? 'text-primary'
-                            : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                        data-testid={`view-mode-${mode}`}
-                      >
-                        {labels[mode]}
-                      </button>
-                    );
-                  })}
-                </div>
+          <div className="px-3">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-center gap-3">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                <Select value={teamFilter} onValueChange={setTeamFilter}>
+                  <SelectTrigger className="w-full sm:w-[280px] h-9">
+                    <SelectValue placeholder="Filtrar por equipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los equipos</SelectItem>
+                    {teams.map((team) => (
+                      <SelectItem key={`schedule-team-${team.id}`} value={team.id.toString()}>
+                        {team.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="hidden items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Vista</span>
+                <button
+                  type="button"
+                  className={`px-3 py-1.5 text-xs rounded-md border transition-colors ${
+                    boardMode === 'employees-by-days'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-muted-foreground border-border hover:text-foreground'
+                  }`}
+                  onClick={() => setBoardMode('employees-by-days')}
+                >
+                  Empleados x dias
+                </button>
+                <button
+                  type="button"
+                  className={`px-3 py-1.5 text-xs rounded-md border transition-colors ${
+                    boardMode === 'events-by-employees'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-muted-foreground border-border hover:text-foreground'
+                  }`}
+                  onClick={() => setBoardMode('events-by-employees')}
+                >
+                  Eventos x personas
+                </button>
               </div>
             </div>
-            
-            {/* Días de la semana - Cards individuales alineadas con celdas de turnos */}
-            {filteredDays.map((day, index) => {
-              const isToday = format(new Date(), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
-              const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-              
-              const abbrs = ['DOM','LUN','MAR','MIE','JUE','VIE','SAB'] as const;
-              const abbr = abbrs[day.getDay()];
-              const colorClass = isToday
-                ? 'text-blue-600 dark:text-blue-400'
-                : isWeekend
-                  ? 'text-muted-foreground/70'
-                  : 'text-muted-foreground';
-              
-              return (
-                <div key={index} className={`flex items-center justify-center py-1.5 px-3 rounded-lg border bg-card border-border dark:border-gray-700 dark:bg-gray-800/50 shadow-sm ${isToday ? 'ring-2 ring-blue-500/50' : ''}`}>
-                  <span className={`text-sm font-semibold uppercase tracking-wide ${colorClass}`}>
-                    {`${abbr} ${format(day, 'd')}`}
-                  </span>
-                </div>
-              );
-            })}
           </div>
+
+          {boardMode === 'employees-by-days' ? (
+            <div className={`grid gap-1 md:gap-4 px-3 ${viewMode === 'day' ? 'sm:grid-cols-[120px_minmax(0,1fr)] grid-cols-1' : viewMode === 'workweek' ? 'grid-cols-[120px_repeat(5,minmax(0,1fr))]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
+              <div className={`flex items-center justify-center ${viewMode === 'day' ? 'hidden sm:flex' : ''}`}>
+                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-1 relative hidden sm:block">
+                  <div 
+                    className="absolute top-1 bottom-1 bg-white dark:bg-gray-900 rounded-lg shadow-sm transition-all duration-300 ease-in-out border border-gray-200 dark:border-gray-700"
+                    style={{
+                      left: viewMode === 'day' ? '4px' : viewMode === 'workweek' ? 'calc(33.33% + 1px)' : 'calc(66.66% - 2px)',
+                      width: 'calc(33.33% - 4px)'
+                    }}
+                  />
+                  <div className="relative flex">
+                    {(['day', 'workweek', 'week'] as const).map((mode) => {
+                      const labels = { day: '1', workweek: '5', week: '7' };
+                      return (
+                        <button
+                          type="button"
+                          key={mode}
+                          onClick={() => {
+                            if (window.innerWidth >= 640 || mode === 'day' || mode === 'workweek') {
+                              setViewMode(mode);
+                            }
+                          }}
+                          className={`py-1.5 px-3 font-medium text-xs transition-colors duration-200 relative z-10 flex items-center justify-center ${
+                            viewMode === mode
+                              ? 'text-primary'
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                          data-testid={`view-mode-${mode}`}
+                        >
+                          {labels[mode]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {filteredDays.map((day, index) => {
+                const isToday = format(new Date(), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
+                const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+                const abbrs = ['DOM','LUN','MAR','MIE','JUE','VIE','SAB'] as const;
+                const abbr = abbrs[day.getDay()];
+                const colorClass = isToday
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : isWeekend
+                    ? 'text-muted-foreground/70'
+                    : 'text-muted-foreground';
+
+                return (
+                  <div key={index} className={`flex items-center justify-center py-1.5 px-3 rounded-lg border bg-card border-border dark:border-gray-700 dark:bg-gray-800/50 shadow-sm ${isToday ? 'ring-2 ring-blue-500/50' : ''}`}>
+                    <span className={`text-sm font-semibold uppercase tracking-wide ${colorClass}`}>
+                      {`${abbr} ${format(day, 'd')}`}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
 
           {/* Barra superior de plantillas reutilizables */}
           <TemplatesDropZone 
@@ -2855,17 +3238,94 @@ export default function Schedules() {
             }}
           />
 
-          {/* Contenedor de empleados con scroll */}
+          {boardMode === 'events-by-employees' ? (
+            <div className="space-y-2 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+              {groupedWeeklyEvents.length === 0 ? (
+                <Card className="bg-card border-border shadow-sm">
+                  <CardContent className="py-10 text-center text-muted-foreground">
+                    No hay eventos en la semana visible.
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="bg-card border-border shadow-sm overflow-hidden">
+                  <CardContent className="p-3 space-y-3 overflow-x-auto">
+                    <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2 min-w-max">
+                      <div className="text-sm font-semibold text-foreground capitalize">
+                        {format(weekRange.start, "d MMM", { locale: es })} - {format(weekRange.end, "d MMM yyyy", { locale: es })}
+                      </div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                        {groupedWeeklyEvents.length} eventos reales x {visibleEmployees.length} personas
+                      </div>
+                    </div>
+
+                    <div
+                      className="grid gap-2 min-w-max"
+                      style={{ gridTemplateColumns: `220px repeat(${visibleEmployees.length}, minmax(210px, 1fr))` }}
+                    >
+                      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center px-2">
+                        Evento
+                      </div>
+                      {visibleEmployees.map((employee) => (
+                        <div key={`event-col-${employee.id}`} className="rounded-md border border-border p-2 bg-muted/30">
+                          <div className="flex items-center gap-2">
+                            <UserAvatar
+                              fullName={employee.fullName}
+                              size="sm"
+                              userId={employee.id}
+                              profilePicture={employee.profilePicture}
+                              className="w-6 h-6"
+                            />
+                            <div className="min-w-0">
+                              <div className="text-xs font-medium truncate">{employee.fullName}</div>
+                              <div className="text-[11px] text-muted-foreground">{getWeeklyHours(employee.id).formatted}</div>
+                            </div>
+                          </div>
+                          {!isViewOnly && (
+                            <div className="mt-2">
+                              <EmployeeAssignmentChip employee={employee} />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {groupedWeeklyEvents.map((eventGroup) => (
+                        <div key={`event-row-wrap-${eventGroup.key}`} className="contents">
+                          <div className="rounded-md border border-border p-3 bg-white dark:bg-gray-900 flex flex-col justify-start gap-1">
+                            <div className="text-sm font-semibold truncate" style={{ color: eventGroup.color }}>
+                              {eventGroup.title}
+                            </div>
+                            <div className="text-[11px] text-muted-foreground">
+                              {eventGroup.startTime} - {eventGroup.endTime}
+                            </div>
+                            {eventGroup.location ? (
+                              <div className="text-[11px] text-muted-foreground truncate">📍 {eventGroup.location}</div>
+                            ) : null}
+                          </div>
+                          {visibleEmployees.map((employee) => (
+                            <WeeklyEventAssignmentCell
+                              key={`event-cell-${eventGroup.key}-${employee.id}`}
+                              eventGroup={eventGroup}
+                              employee={employee}
+                            />
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          ) : (
           <div className="space-y-2 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
-            {employees.length === 0 ? (
+            {visibleEmployees.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <Users className="w-12 h-12 text-muted-foreground/50 mb-3" />
-                <p className="text-sm text-muted-foreground">No hay empleados activos</p>
+                <p className="text-sm text-muted-foreground">No hay empleados para este filtro</p>
               </div>
             ) : null}
             
             {/* Card por cada empleado */}
-            {employees.map((employee: Employee) => (
+            {visibleEmployees.map((employee: Employee) => (
               <Card key={employee.id} className="bg-card border-border shadow-sm overflow-hidden">
                 <CardContent className="p-0">
                   {viewMode === 'day' ? (
@@ -3111,7 +3571,6 @@ export default function Schedules() {
                 </Card>
               ))}
             </div>
-          </div>
         )}
 
       {/* Diálogo para crear/editar plantilla */}
@@ -3839,7 +4298,7 @@ export default function Schedules() {
                 return parseISO(a.startAt).getTime() - parseISO(b.startAt).getTime();
               });
 
-              console.log('� ADAPTAR preview shifts:', {
+              logger.log('ADAPTAR preview shifts:', {
                 total: allAdaptedShifts.length,
                 created: allAdaptedShifts.filter((s: any) => s && s.isCreated).length,
                 updated: allAdaptedShifts.filter((s: any) => s && s.isUpdated).length,
@@ -4100,6 +4559,9 @@ export default function Schedules() {
         </AlertDialogContent>
       </AlertDialog>
 
+      </div>
+      )}
+
       {/* DragOverlay - El elemento arrastrado flota por encima de todo */}
       <DragOverlay 
         dropAnimation={{
@@ -4172,6 +4634,20 @@ export default function Schedules() {
             <div className="absolute -top-2 -right-2 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white text-[10px] font-semibold">
               T
             </div>
+          </div>
+        ) : activeEmployeeDrag ? (
+          <div
+            className="rounded-[7px] flex items-center gap-2 text-white shadow-xl px-3 py-2 cursor-grabbing"
+            style={{
+              backgroundColor: '#2563EB',
+              transform: 'scale(1.05)',
+              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+              border: '2px solid rgba(255, 255, 255, 0.8)',
+            }}
+          >
+            <Users className="w-4 h-4" />
+            <span className="text-xs font-semibold">{activeEmployeeDrag.fullName}</span>
+            <span className="text-[10px] opacity-90">{getWeeklyHours(activeEmployeeDrag.id).formatted}</span>
           </div>
         ) : null}
       </DragOverlay>

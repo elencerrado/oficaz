@@ -13,6 +13,7 @@ import { spawn } from 'child_process';
 import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -34,11 +35,31 @@ console.log(`🚀 Iniciando Oficaz en modo ${isDev ? 'desarrollo' : 'producción
 console.log(`📁 Usando variables de entorno de: ${envPath}`);
 console.log(`🔗 Abrir en el navegador: http://localhost:${port}`);
 
+// Cargar variables de entorno de forma explícita para evitar depender de --env-file
+dotenv.config({ path: envPath });
+
+function getTsxCommand() {
+  return join(__dirname, 'node_modules', 'tsx', 'dist', 'cli.mjs');
+}
+
+function buildNodeOptionsWithHeapFallback() {
+  const current = process.env.NODE_OPTIONS || '';
+  if (/--max-old-space-size=\d+/i.test(current)) {
+    return current;
+  }
+  return `${current} --max-old-space-size=4096`.trim();
+}
+
 if (isDev) {
-  // Modo desarrollo: usar tsx con --import (requerido por Node >=18.19/20.6)
-  const child = spawn('node', ['--env-file=.env', '--import', 'tsx', 'server/index.ts'], {
+  // Modo desarrollo: ejecutar tsx mediante node para evitar EINVAL en Windows
+  const tsxCliPath = getTsxCommand();
+  const child = spawn(process.execPath, [tsxCliPath, 'server/index.ts'], {
     stdio: 'inherit',
-    env: { ...process.env, NODE_ENV: 'development' }
+    env: {
+      ...process.env,
+      NODE_ENV: 'development',
+      NODE_OPTIONS: buildNodeOptionsWithHeapFallback(),
+    }
   });
   child.on('exit', (code, signal) => {
     if (code !== 0) {

@@ -233,10 +233,10 @@ export function FeedbackButton({ variant = 'discrete', hasAI = false }: Feedback
         variant="ghost"
         size="sm"
         title="Dar feedback"
-        className="px-4 py-2 text-blue-600 hover:text-blue-700 backdrop-blur-sm bg-white/30 hover:bg-white/40 dark:text-blue-400 dark:hover:text-blue-300 dark:bg-slate-800/30 dark:hover:bg-slate-800/50 border border-white/20 dark:border-slate-700/30 rounded-lg transition-all hover:shadow-lg"
+        className="h-9 w-9 p-0 sm:h-auto sm:w-auto sm:px-4 sm:py-2 text-blue-600 hover:text-blue-700 backdrop-blur-sm bg-white/30 hover:bg-white/40 dark:text-blue-400 dark:hover:text-blue-300 dark:bg-slate-800/30 dark:hover:bg-slate-800/50 border border-white/20 dark:border-slate-700/30 rounded-lg transition-all hover:shadow-lg"
       >
-        <MessageSquare className="h-4 w-4 mr-1" />
-        Dar Feedback
+        <MessageSquare className="h-4 w-4 sm:mr-1" />
+        <span className="hidden sm:inline">Dar Feedback</span>
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 
+const hasDatabase = Boolean(process.env.DATABASE_URL);
+
 // Mock OpenAI client module
 vi.mock('openai', () => {
   return {
@@ -57,12 +59,14 @@ vi.mock('../server/storage', async () => {
   };
 });
 
-import { registerRoutes } from '../server/routes';
 import { generateToken } from '../server/middleware/auth';
 
-describe('AI assistant endpoint (simulated E2E)', () => {
+const describeIfDatabase = hasDatabase ? describe : describe.skip;
+
+describeIfDatabase('AI assistant endpoint (simulated E2E)', () => {
   let app: any;
   beforeEach(async () => {
+    const { registerRoutes } = await import('../server/routes');
     app = express();
     app.use(express.json());
     await registerRoutes(app);

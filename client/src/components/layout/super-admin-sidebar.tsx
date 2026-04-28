@@ -9,7 +9,8 @@ import {
   LogOut,
   Send,
   TrendingUp,
-  DollarSign
+  DollarSign,
+  MessageSquareWarning
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
@@ -39,11 +40,6 @@ export function SuperAdminSidebar({ isOpen, onClose }: SuperAdminSidebarProps) {
       icon: Building2
     },
     { 
-      name: 'Planes', 
-      href: '/super-admin/plans', 
-      icon: Settings
-    },
-    { 
       name: 'Gestión de Precios', 
       href: '/super-admin/pricing', 
       icon: DollarSign
@@ -63,6 +59,11 @@ export function SuperAdminSidebar({ isOpen, onClose }: SuperAdminSidebarProps) {
       href: '/super-admin/marketing', 
       icon: Send
     },
+    {
+      name: 'Incidencias',
+      href: '/super-admin/incidencias',
+      icon: MessageSquareWarning
+    },
     { 
       name: 'Métricas Web', 
       href: '/super-admin/landing-metrics', 
@@ -80,18 +81,30 @@ export function SuperAdminSidebar({ isOpen, onClose }: SuperAdminSidebarProps) {
     window.location.href = '/super-admin';
   };
 
+  const isRouteActive = (href: string) => {
+    if (location === href) return true;
+
+    if (href === '/super-admin/companies' && location.startsWith('/super-admin/companies/')) {
+      return true;
+    }
+
+    return false;
+  };
+
   return (
     <>
       {/* Mobile overlay */}
       {isOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+          aria-hidden="true"
           onClick={onClose}
         />
       )}
       
       {/* Sidebar */}
       <nav 
+        aria-label="Navegación superadmin"
         className={`
           fixed left-0 w-64 bg-gradient-to-b from-gray-900 via-blue-900 to-purple-900 shadow-lg z-30 transform transition-transform duration-300 flex flex-col border-r border-white/10
           ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
@@ -118,7 +131,7 @@ export function SuperAdminSidebar({ isOpen, onClose }: SuperAdminSidebarProps) {
           <ul className="space-y-1 px-3">
             {navigation.map((item) => {
               const Icon = item.icon;
-              const isActive = location === item.href;
+              const isActive = isRouteActive(item.href);
               
               return (
                 <li key={item.name}>

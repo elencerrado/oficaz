@@ -42,6 +42,8 @@ export type CRMCategoryData = {
   id?: number;
   name: string;
   color: string;
+  isDefault?: boolean;
+  stageKey?: string | null;
 };
 
 interface CategoryTagProps {
@@ -253,8 +255,10 @@ export function CategoryMultiSelect({
       const insideInput = inputContainerRef.current?.contains(target);
       const insideDropdown = dropdownRef.current?.contains(target);
       const insideMenuPortal = target.closest('[data-radix-popper-content]');
-      const insideCategoryMenu = target.closest('[data-category-menu]');
-      if (insideInput || insideDropdown || insideMenuPortal || insideCategoryMenu) return;
+      const insideCategoryMenu = target.closest('[data-category-menu="true"]');
+      const insideDropdownTrigger = target.closest('[data-dropdown-trigger="true"]') || target.closest('button[type="button"][data-menu-trigger="true"]');
+      
+      if (insideInput || insideDropdown || insideMenuPortal || insideCategoryMenu || insideDropdownTrigger) return;
       setShowMenu(false);
     };
     document.addEventListener('mousedown', handleClick, true);
@@ -309,9 +313,15 @@ export function CategoryMultiSelect({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 overflow-visible">
       {/* Outer container is relative so dropdown anchors to its left edge */}
-      <div className="relative flex flex-wrap gap-2 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 min-h-[40px]">
+      <div
+        className={`relative flex border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 overflow-visible ${
+          multiSelect
+            ? 'flex-wrap gap-2 p-2 min-h-[40px]'
+            : 'flex-nowrap items-center gap-2 px-2 py-1 h-10'
+        }`}
+      >
         {/* Selected chips: show only an X for removal, no 3-dots */}
         {selectedCategories.map((category) => (
           <div key={category.id} className="inline-flex items-center gap-1">
@@ -339,7 +349,7 @@ export function CategoryMultiSelect({
 
         {/* Input always at the end, dropdown anchored to the left of the whole control */}
         <div
-          className="flex-1 min-w-[150px]"
+          className={`flex-1 ${multiSelect ? 'min-w-[150px]' : 'min-w-0'}`}
           ref={inputContainerRef}
           onMouseDown={() => {
             // Always reopen dropdown when clicking the input area
@@ -354,7 +364,9 @@ export function CategoryMultiSelect({
             value={input}
             onChange={(e) => { setInput(e.target.value); setShowMenu(true); }}
             onFocus={() => { setShowMenu(true); setInputFocused(true); }}
-            className="border-0 p-0 bg-transparent dark:bg-transparent dark:text-white focus-visible:ring-0 focus-visible:ring-offset-0 h-auto caret-transparent"
+            className={`border-0 p-0 bg-transparent dark:bg-transparent dark:text-white focus-visible:ring-0 focus-visible:ring-offset-0 caret-transparent ${
+              multiSelect ? 'h-auto' : 'h-8'
+            }`}
             ref={inputRef}
             onKeyDown={(e) => {
               if (e.key === 'Escape') {
@@ -368,7 +380,7 @@ export function CategoryMultiSelect({
                   if (firstAvailable) {
                     onAdd(firstAvailable);
                     setInput('');
-                    setShowMenu(true);
+                    setShowMenu(multiSelect);
                     inputRef.current?.focus();
                   }
                 } else {
@@ -384,7 +396,9 @@ export function CategoryMultiSelect({
         {showMenu && (
           <div
             ref={dropdownRef}
-            className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-lg z-[9999] min-w-[240px] overflow-y-auto"
+            className="absolute top-full right-0 left-auto mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-lg z-[9999] min-w-[240px] max-w-[calc(100vw-1rem)] overflow-y-auto"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Existing categories with far-right 3-dots menu */}
             {filtered.length > 0 && (
@@ -394,6 +408,7 @@ export function CategoryMultiSelect({
                     key={category.id}
                     className="w-full px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-between gap-2"
                     onMouseDown={(e) => {
+                      e.stopPropagation();
                       // If clicking on menu trigger, do not select
                       if ((e.target as HTMLElement).closest('[data-menu-trigger]')) {
                         e.preventDefault();
@@ -404,18 +419,11 @@ export function CategoryMultiSelect({
                       if (selectedCategories.some(s => s.id === category.id)) {
                         return;
                       }
-                      
-                      // Si es single-select y ya hay una categoría seleccionada, quitarla primero
-                      if (!multiSelect && selectedCategories.length > 0) {
-                        selectedCategories.forEach(cat => {
-                          if (cat.id) onRemove(cat.id);
-                        });
-                      }
-                      
+
                       onAdd(category);
                       setInput('');
-                      // Keep dropdown open for multi-selection and editing
-                      setShowMenu(true);
+                      // En single-select cerramos para evitar dobles eventos y guardados en carrera
+                      setShowMenu(multiSelect);
                       inputRef.current?.focus();
                     }}
                   >
@@ -434,17 +442,16 @@ export function CategoryMultiSelect({
                           type="button"
                           className="h-6 w-6 p-0 rounded hover:bg-black/10 dark:hover:bg-white/10 flex items-center justify-center"
                           data-menu-trigger="true"
+                          data-dropdown-trigger="true"
                           onMouseDown={(e) => e.stopPropagation()}
                           onClick={(e) => e.stopPropagation()}
                         >
                           <MoreVertical className="h-4 w-4" />
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40" data-category-menu>
+                      <DropdownMenuContent align="end" className="w-40 z-[1000]" data-category-menu="true">
                         <DropdownMenuItem
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
+                          onSelect={() => {
                             setEditingCategory(category);
                             setShowMenu(false);
                           }}
@@ -452,17 +459,17 @@ export function CategoryMultiSelect({
                           <Edit2 className="h-4 w-4 mr-2" />
                           Editar
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleDeleteCategory(category.id);
-                          }}
-                          className="text-red-600 dark:text-red-400"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Eliminar
-                        </DropdownMenuItem>
+                        {!category.isDefault && !category.stageKey && (
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              handleDeleteCategory(category.id);
+                            }}
+                            className="text-red-600 dark:text-red-400"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>

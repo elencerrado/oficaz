@@ -14,6 +14,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import oficazLogo from '@/assets/oficaz-logo.png';
 import { getAuthData, clearAuthData } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 // Secure login schema
 const loginSchema = z.object({
@@ -52,6 +53,15 @@ export default function Login() {
     document.documentElement.classList.add('dark-notch');
     document.body.style.overflow = 'hidden';
     
+    const clearAuthStorageSelectively = () => {
+      // Only remove auth-related keys, preserve user preferences and other data
+      const authKeys = ['authData', 'superAdminToken', 'token', 'user', 'company', 'refreshToken'];
+      authKeys.forEach(key => {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+      });
+    };
+    
     const cleanupCorruptedTokens = () => {
       const authData = getAuthData();
       if (authData) {
@@ -60,19 +70,17 @@ export default function Login() {
           if (authData.user?.id === 4 || (authData.token && authData.token.includes('.'))) {
             const payload = JSON.parse(atob(authData.token.split('.')[1]));
             if (payload.userId === 4) {
-              console.log('🧹 Removing corrupted token for user ID 4');
+              logger.log('🧹 Removing corrupted token for user ID 4');
               clearAuthData();
-              localStorage.clear();
-              sessionStorage.clear();
+              clearAuthStorageSelectively();
               return;
             }
           }
         } catch (error) {
-          // If we can't parse it, it's corrupted - clear it
-          console.log('🧹 Removing unparseable auth data');
+          // If we can't parse it, it's corrupted - clear it (auth keys only)
+          logger.log('🧹 Removing unparseable auth data');
           clearAuthData();
-          localStorage.clear();
-          sessionStorage.clear();
+          clearAuthStorageSelectively();
         }
       }
       
@@ -84,12 +92,12 @@ export default function Login() {
           try {
             const parsed = JSON.parse(item);
             if (parsed.id === 4 || parsed.userId === 4) {
-              console.log(`🧹 Removing corrupted ${key} for user ID 4`);
+              logger.log(`🧹 Removing corrupted ${key} for user ID 4`);
               localStorage.removeItem(key);
             }
           } catch (error) {
             // If we can't parse, it might be corrupted
-            console.log(`🧹 Removing unparseable ${key}`);
+            logger.log(`🧹 Removing unparseable ${key}`);
             localStorage.removeItem(key);
           }
         }
@@ -162,9 +170,9 @@ export default function Login() {
           : data.dniOrEmail.toUpperCase().trim()
       };
       
-      console.log('🔐 Frontend login starting...');
+      logger.log('🔐 Frontend login starting...');
       const response: any = await login(normalizedData.dniOrEmail, data.password, companyAlias, rememberMe);
-      console.log('🔐 Frontend login completed successfully:', { rememberMe });
+      logger.log('🔐 Frontend login completed successfully:', { rememberMe });
       
       // Auth data stored successfully
       
@@ -179,7 +187,7 @@ export default function Login() {
       }
       
       // Wait for auth state to update before redirect
-      console.log('🔐 Login successful, waiting for auth state update...');
+      logger.log('🔐 Login successful, waiting for auth state update...');
       
       // Wait a bit for the auth state to be fully updated
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -188,11 +196,11 @@ export default function Login() {
       const userRole = (response as any)?.user?.role;
       
       if (userRole === 'accountant') {
-        console.log('🔐 Accountant login, redirecting to /accountant');
+        logger.log('🔐 Accountant login, redirecting to /accountant');
         setLocation('/accountant');
       } else {
         const redirectAlias = companyAlias || (response as any)?.company?.companyAlias || 'test';
-        console.log('🔐 Redirecting to:', `/${redirectAlias}/inicio`);
+        logger.log('🔐 Redirecting to:', `/${redirectAlias}/inicio`);
         setLocation(`/${redirectAlias}/inicio`);
       }
       
@@ -262,6 +270,7 @@ export default function Login() {
               <Input
                 {...form.register('dniOrEmail')}
                 placeholder="DNI/NIE o email"
+                autoComplete="username"
                 className="rounded-xl border border-gray-300 py-3 px-4 pr-12 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 onChange={(e) => {
                   form.setValue('dniOrEmail', e.target.value);
@@ -282,6 +291,7 @@ export default function Login() {
                 type={showPassword ? 'text' : 'password'}
                 {...form.register('password')}
                 placeholder="Contraseña"
+                autoComplete="current-password"
                 className="rounded-xl border border-gray-300 py-3 px-4 pr-16 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 onChange={(e) => {
                   form.setValue('password', e.target.value);
@@ -294,7 +304,8 @@ export default function Login() {
                   variant="ghost"
                   size="sm"
                   className="h-4 w-4 p-0 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setShowPassword((prev) => !prev)}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4 text-gray-400" />

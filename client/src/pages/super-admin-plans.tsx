@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
+import { getAuthHeaders } from '@/lib/auth';
 import { 
   Pencil, Euro, Users, Settings, MessageSquare, FileText, 
   Calendar, Clock, BarChart3, Palette, Upload, Zap, Bell
@@ -76,7 +77,7 @@ const featureLabels = {
   customization: 'Personalización',
   logoUpload: 'Subida de Logo',
   api: 'API',
-  reminders: 'Recordatorios',
+  reminders: 'Tareas',
   notifications: 'Notificaciones Push',
   employee_time_edit: 'Edición de Tiempos',
   employee_time_edit_permission: 'Permisos de Edición',
@@ -104,11 +105,8 @@ export default function SuperAdminPlans() {
   const { data: plans } = useQuery({
     queryKey: ['/api/super-admin/subscription-plans'],
     queryFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/subscription-plans', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch plans');
       return response.json();
@@ -121,11 +119,8 @@ export default function SuperAdminPlans() {
   const { data: dbFeatures } = useQuery({
     queryKey: ['/api/super-admin/features'],
     queryFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/features', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch features');
       return response.json();
@@ -141,7 +136,7 @@ export default function SuperAdminPlans() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionStorage.getItem('superAdminToken')}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(data),
       });
@@ -177,7 +172,7 @@ export default function SuperAdminPlans() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionStorage.getItem('superAdminToken')}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(data),
       });
@@ -242,7 +237,7 @@ export default function SuperAdminPlans() {
     if (newPrice && !isNaN(parseFloat(newPrice))) {
       updatePlanMutation.mutate({
         id: planId,
-        data: { monthlyPrice: parseFloat(newPrice) }
+        data: { monthlyPrice: parseFloat(newPrice).toString() }
       });
     }
     setEditingPrice(null);

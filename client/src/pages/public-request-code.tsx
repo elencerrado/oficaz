@@ -9,11 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Mail, ArrowRight, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { useSearch } from 'wouter';
 
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@/assets/oficaz-logo.png';
 import { usePageTitle } from '@/hooks/use-page-title';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { logger } from '@/lib/logger';
 
 const emailSchema = z.object({
   email: z.string().email('Email no válido'),
@@ -24,13 +26,17 @@ type EmailData = z.infer<typeof emailSchema>;
 export default function RequestCode() {
   usePageTitle('Solicitar Código de Verificación');
   const [, setLocation] = useLocation();
+  const search = useSearch();
   const [isLoading, setIsLoading] = useState(false);
   const [emailStatus, setEmailStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable' | 'cancelled'>('idle');
   const [emailMessage, setEmailMessage] = useState('');
   const [canRecover, setCanRecover] = useState(false);
 
+  const queryParams = new URLSearchParams(search);
+  const referralCodeFromUrl = (queryParams.get('ref') || '').trim();
+
   // Check if public registration is enabled
-  const { data: registrationSettings, isLoading: isLoadingSettings } = useQuery({
+  const { data: registrationSettings, isLoading: isLoadingSettings } = useQuery<{ publicRegistrationEnabled?: boolean }>({
     queryKey: ['/api/registration-status'],
     retry: false,
   });
@@ -126,7 +132,7 @@ export default function RequestCode() {
   const handleSubmit = async (data: EmailData) => {
     setIsLoading(true);
     try {
-      console.log('Sending request to:', '/api/auth/request-verification-code', data);
+      logger.log('Sending request to:', '/api/auth/request-verification-code', data);
       
       const response = await fetch('/api/auth/request-verification-code', {
         method: 'POST',
@@ -136,21 +142,22 @@ export default function RequestCode() {
         body: JSON.stringify(data),
       });
       
-      console.log('Response status:', response.status);
+      logger.log('Response status:', response.status);
       
       const result = await response.json();
-      console.log('Response data:', result);
+      logger.log('Response data:', result);
       
       if (response.ok) {
-        console.log('Verification code sent:', result.message);
+        logger.log('Verification code sent:', result.message);
         
         // Check if this is account recovery - no alert, just proceed
         if (result.isRecovery) {
-          console.log('Account recovery flow initiated');
+          logger.log('Account recovery flow initiated');
         }
         
         // Redirect to verification page with secure session ID - instant navigation
-        setLocation(`/verify-code?session=${result.sessionId}`);
+        const referralQuery = referralCodeFromUrl ? `&ref=${encodeURIComponent(referralCodeFromUrl)}` : '';
+        setLocation(`/verify-code?session=${result.sessionId}${referralQuery}`);
       } else {
         console.error('Request error:', result.message || 'No se pudo enviar el código.');
         // ✅ Update visual state to show error with icons
@@ -256,6 +263,11 @@ export default function RequestCode() {
           <p className="text-gray-600 text-sm">
             Introduce tu email para comenzar el registro
           </p>
+          {referralCodeFromUrl && (
+            <p className="mt-3 text-xs font-medium text-emerald-600">
+              Enlace de referido detectado: {referralCodeFromUrl}
+            </p>
+          )}
         </CardHeader>
 
         <CardContent className="px-6 pb-6">

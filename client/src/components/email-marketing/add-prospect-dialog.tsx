@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { getAuthHeaders } from '@/lib/auth';
 import { Plus } from 'lucide-react';
 
 export function AddProspectDialog() {
@@ -25,7 +26,6 @@ export function AddProspectDialog() {
 
   const createProspectMutation = useMutation({
     mutationFn: async (data: any) => {
-      const token = sessionStorage.getItem('superAdminToken');
       const prospectData = {
         ...data,
         tags: data.tags ? data.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
@@ -35,7 +35,7 @@ export function AddProspectDialog() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(prospectData),
       });

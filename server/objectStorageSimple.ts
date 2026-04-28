@@ -4,7 +4,7 @@ import { Storage, File } from "@google-cloud/storage";
 import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { Response } from "express";
 import { randomUUID } from "crypto";
-import { createR2Client, getR2BucketName } from "./config/cloudflareR2.js";
+import { createR2Client, getR2BucketName, getR2PublicUrl } from "./config/cloudflareR2.js";
 
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
 
@@ -251,7 +251,7 @@ export class SimpleObjectStorageService {
       await r2Client.send(command);
       console.log(`📄 Uploaded document to R2: ${filename}`);
 
-      // Return the R2 key for database storage
+      // Return canonical object key so DB/storage logic is consistent in all environments.
       return key;
     }
 
@@ -276,7 +276,8 @@ export class SimpleObjectStorageService {
     });
 
     console.log(`📄 Uploaded document to Replit Object Storage: ${filename}`);
-    return `documents/${filename}`;
+    // Return canonical object key so consumers can resolve/download uniformly.
+    return key;
   }
 
   // Download a document from object storage (R2 or Replit)

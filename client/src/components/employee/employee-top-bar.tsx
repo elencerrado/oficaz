@@ -45,7 +45,7 @@ export function EmployeeTopBar({ homeHref }: EmployeeTopBarProps) {
       {/* Avatar + menu */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-2 px-1 py-1 text-right hover:text-gray-700 dark:hover:text-gray-200 transition">
+          <button type="button" className="flex items-center gap-2 px-1 py-1 text-right hover:text-gray-700 dark:hover:text-gray-200 transition">
             <div className="flex flex-col items-end text-right max-w-[140px] leading-tight">
               <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">{companyName}</span>
               <span className="text-xs text-gray-600 dark:text-white/70 truncate">{employeeName}</span>
@@ -68,6 +68,7 @@ export function EmployeeTopBar({ homeHref }: EmployeeTopBarProps) {
               />
               <div className="relative flex items-center">
                 <button
+                  type="button"
                   onClick={() => setTheme('light')}
                   className={`flex-1 flex items-center justify-center p-2 rounded-full transition-colors z-10 ${
                     theme === 'light'
@@ -79,6 +80,7 @@ export function EmployeeTopBar({ homeHref }: EmployeeTopBarProps) {
                   <Sun className="h-4 w-4" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => setTheme('system')}
                   className={`flex-1 flex items-center justify-center p-2 rounded-full transition-colors z-10 ${
                     theme === 'system'
@@ -90,6 +92,7 @@ export function EmployeeTopBar({ homeHref }: EmployeeTopBarProps) {
                   <Monitor className="h-4 w-4" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => setTheme('dark')}
                   className={`flex-1 flex items-center justify-center p-2 rounded-full transition-colors z-10 ${
                     theme === 'dark'

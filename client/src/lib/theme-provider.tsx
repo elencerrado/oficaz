@@ -358,6 +358,16 @@ export const useTheme = () => {
   const context = useContext(ThemeProviderContext);
 
   if (context === undefined) {
+    // Durante HMR de Vite, el contexto puede perderse temporalmente
+    // En lugar de lanzar error, retornar valores por defecto
+    if (import.meta.env.DEV) {
+      console.warn('useTheme called outside ThemeProvider context (HMR reload). Using defaults.');
+      return {
+        theme: 'system' as const,
+        setTheme: () => {},
+        resolvedTheme: 'light' as const,
+      };
+    }
     throw new Error('useTheme must be used within a ThemeProvider');
   }
 

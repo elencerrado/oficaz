@@ -4,9 +4,11 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import * as XLSX from 'xlsx';
 import { useAuth } from '@/hooks/use-auth';
+import { getAuthHeaders as getCentralAuthHeaders } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { useStandardInfiniteScroll } from '@/hooks/use-standard-infinite-scroll';
 import StatsCard, { StatsCardGrid } from '@/components/StatsCard';
 import { TabNavigation } from '@/components/ui/tab-navigation';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -26,10 +28,9 @@ import { Badge } from '@/components/ui/badge';
 import { DocumentPreviewModal } from '@/components/DocumentPreviewModal';
 import { DocumentViewer } from '@/components/DocumentViewer';
 import { AccountingAnalyticsExpandedView } from '@/components/AccountingAnalyticsExpandedView';
-import { Document, Page, pdfjs } from 'react-pdf';
-
-// Configurar worker de PDF para iOS
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+import { InfiniteListFooter } from '@/components/ui/infinite-list-footer';
+import { Document, Page } from 'react-pdf';
+import { pdfjsLib as pdfjs } from '@/lib/pdf-worker';
 
 import { 
   Calculator, 
@@ -279,7 +280,7 @@ interface AccountingEntry {
   entryDate: string;
   paymentMethod?: string;
   invoiceNumber?: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'approved_accountant' | 'submitted';
   reviewedBy: number | null;
   reviewedAt: string | null;
   reviewNotes: string | null;
@@ -448,7 +449,7 @@ export default function Accounting({
     queryKey: ['/api/accountant/companies', accountantCompanyId, 'details'],
     queryFn: async () => {
       const response = await fetch(`/api/accountant/companies/${accountantCompanyId}/details`, {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: getCentralAuthHeaders(),
         credentials: 'include',
       });
       if (!response.ok) return null;
@@ -462,7 +463,7 @@ export default function Accounting({
     ? selectedCompanyData
     : authCompany;
   
-  console.log('🏢 Company Info:', { 
+  logger.log('🏢 Company Info:', { 
     accountantMode, 
     effectiveCompanyId, 
     companyName: company?.name,
@@ -487,9 +488,7 @@ export default function Accounting({
 
   // Helper para obtener headers con token
   const getAuthHeaders = () => {
-    return {
-      'Authorization': `Bearer ${token}`,
-    };
+    return getCentralAuthHeaders();
   };
 
   // Helper para determinar si un movimiento debe contar en estadísticas/gráficas
@@ -504,7 +503,7 @@ export default function Accounting({
       const url = accountantMode 
         ? `/api/accountant/companies/${effectiveCompanyId}/categories`
         : '/api/accounting/categories';
-      console.log('🔍 Fetching categories:', { accountantMode, effectiveCompanyId, url });
+      logger.log('🔍 Fetching categories:', { accountantMode, effectiveCompanyId, url });
       const response = await fetch(url, {
         headers: getAuthHeaders(),
         credentials: 'include',
@@ -514,7 +513,7 @@ export default function Accounting({
         throw new Error('Failed to fetch categories');
       }
       const data = await response.json();
-      console.log('✅ Categories loaded:', data.length);
+      logger.log('✅ Categories loaded:', data.length);
       return data;
     },
     enabled: !!effectiveCompanyId,
@@ -529,19 +528,14 @@ export default function Accounting({
         ? `/api/accountant/companies/${effectiveCompanyId}/dashboard`
         : '/api/accounting/dashboard';
       const response = await fetch(url, {
-        headers: {
-          ...getAuthHeaders(),
-          'Cache-Control': 'no-cache',
-          Pragma: 'no-cache',
-        },
-        cache: 'no-store',
+        headers: getAuthHeaders(),
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch dashboard');
       return response.json();
     },
     enabled: !!effectiveCompanyId,
-    staleTime: 0, // Sin caché para refrescar inmediatamente
+    staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000, // Mantener en caché 5 minutos cuando no está en uso
   });
 
@@ -555,7 +549,7 @@ export default function Accounting({
         const url = accountantMode
           ? `/api/accountant/companies/${effectiveCompanyId}/crm-status`
           : '/api/company/addons/crm/status';
-        console.log('🔍 Fetching CRM status:', { accountantMode, effectiveCompanyId, url });
+        logger.log('🔍 Fetching CRM status:', { accountantMode, effectiveCompanyId, url });
         const response = await fetch(url, {
           headers: getAuthHeaders(),
           credentials: 'include',
@@ -565,7 +559,7 @@ export default function Accounting({
           return { active: false };
         }
         const data = await response.json();
-        console.log('✅ CRM status:', data);
+        logger.log('✅ CRM status:', data);
         return data;
       } catch (error) {
         console.error('❌ CRM status error:', error);
@@ -573,18 +567,18 @@ export default function Accounting({
       }
     },
     enabled: !!effectiveCompanyId,
-    staleTime: 0, // Sin caché para refrescar inmediatamente cuando se desactiva CRM
-    gcTime: 1 * 60 * 1000, // Mantener en caché 1 minuto
-    refetchInterval: 30 * 1000, // Revalidar cada 30 segundos
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchInterval: 2 * 60 * 1000,
     retry: false,
   });
 
   const hasCRMAddon = Boolean(crmAddonStatus?.active);
-  console.log('📊 CRM Addon Status:', { hasCRMAddon, crmAddonStatus });
+  logger.log('📊 CRM Addon Status:', { hasCRMAddon, crmAddonStatus });
 
   // Hardcoded: Solo Servited usa gestoría externa
   const usesExternalAccountant = company?.name?.toLowerCase() === 'servited';
-  console.log('🔧 External Accountant Check:', { 
+  logger.log('🔧 External Accountant Check:', { 
     companyName: company?.name,
     companyNameLower: company?.name?.toLowerCase(),
     usesExternalAccountant 
@@ -600,7 +594,7 @@ export default function Accounting({
         const url = accountantMode
           ? `/api/accountant/companies/${effectiveCompanyId}/projects`
           : '/api/crm/projects';
-        console.log('🔍 Fetching projects:', { accountantMode, effectiveCompanyId, url, hasCRMAddon });
+        logger.log('🔍 Fetching projects:', { accountantMode, effectiveCompanyId, url, hasCRMAddon });
         const response = await fetch(url, {
           headers: getAuthHeaders(),
           credentials: 'include',
@@ -610,7 +604,7 @@ export default function Accounting({
           return [];
         }
         const data = await response.json();
-        console.log('✅ Projects loaded:', { count: data.length, projects: data });
+        logger.log('✅ Projects loaded:', { count: data.length, projects: data });
         return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('❌ Projects error:', error);
@@ -633,7 +627,7 @@ export default function Accounting({
       }))
     : [];
 
-  console.log('📋 Transformed projects:', { count: projects.length, projects });
+  logger.log('📋 Transformed projects:', { count: projects.length, projects });
 
   // Debug: mostrar info de proyectos
   useEffect(() => {
@@ -778,7 +772,7 @@ export default function Accounting({
       } as FiscalSettings;
     },
     enabled: !!effectiveCompanyId,
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
   });
 
   const fiscalSettingsMutation = useMutation({
@@ -867,7 +861,7 @@ export default function Accounting({
 
   // Estados para scroll infinito en movimientos
   const MOVEMENTS_PER_PAGE = 50;
-  const MOVEMENTS_PER_LOAD = 15;
+  const MOVEMENTS_PER_LOAD = isMobile ? 10 : 15;
   const [displayedMovementsCount, setDisplayedMovementsCount] = useState(MOVEMENTS_PER_LOAD);
   const loadMoreMovementsRef = useRef<HTMLDivElement>(null);
 
@@ -1176,6 +1170,7 @@ export default function Accounting({
   // Estados del modal de movimiento
   const [revertConfirm, setRevertConfirm] = useState<{ open: boolean; entry: any | null }>({ open: false, entry: null });
   const [deleteFileConfirm, setDeleteFileConfirm] = useState<{ open: boolean; fileIndex: number | null }>({ open: false, fileIndex: null });
+  const [deleteAttachmentConfirm, setDeleteAttachmentConfirm] = useState<{ open: boolean; attachmentId: number | null; fileName: string }>({ open: false, attachmentId: null, fileName: '' });
   const [isEntryModalReadOnly, setIsEntryModalReadOnly] = useState(false);
   const [inlineRevertLoading, setInlineRevertLoading] = useState(false);
 
@@ -1410,7 +1405,7 @@ export default function Accounting({
     const approvedEntriesWithProject = filteredEntries
       .filter(e => e.project && isApprovedStatus(e.status));
     
-    console.log('📊 Project Chart Data:', {
+    logger.log('📊 Project Chart Data:', {
       totalFilteredEntries: filteredEntries.length,
       approvedEntries: filteredEntries.filter(e => isApprovedStatus(e.status)).length,
       withProject: approvedEntriesWithProject.length,
@@ -1437,7 +1432,7 @@ export default function Accounting({
         color: colors[index % colors.length]
       }));
     
-    console.log('📊 Final chart data:', chartData);
+    logger.log('📊 Final chart data:', chartData);
     return chartData;
   }, [filteredEntries, showPricesWithVAT]);
 
@@ -1474,30 +1469,14 @@ export default function Accounting({
     }
   }, [displayedMovementsCount, filteredEntries.length, MOVEMENTS_PER_LOAD]);
 
-  // IntersectionObserver para detectar cuando el usuario llega al final
-  useEffect(() => {
-    if (activeTab !== 'movements') return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some(entry => entry.isIntersecting) && hasMoreMovementsToDisplay) {
-          loadMoreMovements();
-        }
-      },
-      { threshold: 0.1, rootMargin: '100px' }
-    );
-
-    const timeoutId = setTimeout(() => {
-      if (loadMoreMovementsRef.current) {
-        observer.observe(loadMoreMovementsRef.current);
-      }
-    }, 50);
-
-    return () => {
-      clearTimeout(timeoutId);
-      observer.disconnect();
-    };
-  }, [activeTab, hasMoreMovementsToDisplay, loadMoreMovements]);
+  useStandardInfiniteScroll({
+    targetRef: loadMoreMovementsRef,
+    enabled: activeTab === 'movements',
+    canLoadMore: hasMoreMovementsToDisplay,
+    onLoadMore: loadMoreMovements,
+    dependencyKey: `${activeTab}-${displayedMovementsCount}-${filteredEntries.length}`,
+    rootMargin: '100px',
+  });
 
   // Reset displayedMovementsCount cuando se aplican cambios de filtro
   useEffect(() => {
@@ -1591,9 +1570,6 @@ export default function Accounting({
   // Convertir PDF a imagen (primera página) para usar OCR visual cuando el PDF es una foto
   const convertPdfToImage = async (pdfFile: File): Promise<File | null> => {
     try {
-      const pdfjs = await import('pdfjs-dist');
-      pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-
       const arrayBuffer = await pdfFile.arrayBuffer();
       const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
       const page = await pdf.getPage(1);
@@ -3881,14 +3857,15 @@ export default function Accounting({
                 );
               })}
               
-              {/* Load more indicator para scroll infinito */}
-              {hasMoreMovementsToDisplay && (
-                <div ref={loadMoreMovementsRef} className="text-center py-8">
-                  <div className="text-sm text-muted-foreground">
-                    Cargando más movimientos...
-                  </div>
-                </div>
-              )}
+              <InfiniteListFooter
+                hasMore={hasMoreMovementsToDisplay}
+                sentinelRef={loadMoreMovementsRef}
+                isLoading={isLoadingEntries}
+                loadingText="Cargando más movimientos..."
+                hintText="Desplaza para cargar más movimientos"
+                onLoadMore={loadMoreMovements}
+                className="py-8"
+              />
               
               {/* Mensaje de fin de lista */}
               {!hasMoreMovementsToDisplay && displayedMovements.length > 0 && (
@@ -5624,11 +5601,7 @@ export default function Accounting({
                             </button>
                             <button
                               type="button"
-                              onClick={() => {
-                                if (window.confirm('¿Eliminar este adjunto?')) {
-                                  handleDeleteAttachment(attachment.id);
-                                }
-                              }}
+                              onClick={() => setDeleteAttachmentConfirm({ open: true, attachmentId: attachment.id, fileName: attachment.fileName })}
                               className="flex-shrink-0 p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
                             >
                               <X className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
@@ -5908,11 +5881,7 @@ export default function Accounting({
                                     </div>
                                   </button>
                                   <button
-                                    onClick={() => {
-                                      if (window.confirm('¿Eliminar este adjunto?')) {
-                                        handleDeleteAttachment(attachment.id);
-                                      }
-                                    }}
+                                    onClick={() => setDeleteAttachmentConfirm({ open: true, attachmentId: attachment.id, fileName: attachment.fileName })}
                                     className="flex-shrink-0 p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
                                     title="Eliminar adjunto"
                                   >
@@ -6610,11 +6579,7 @@ export default function Accounting({
                               </button>
                               <button
                                 type="button"
-                                onClick={() => {
-                                  if (window.confirm('¿Eliminar este adjunto?')) {
-                                    handleDeleteAttachment(attachment.id);
-                                  }
-                                }}
+                                onClick={() => setDeleteAttachmentConfirm({ open: true, attachmentId: attachment.id, fileName: attachment.fileName })}
                                 className="flex-shrink-0 p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
                                 title="Eliminar adjunto"
                               >
@@ -6918,6 +6883,42 @@ export default function Accounting({
                   setEntryFiles(prev => prev.filter((_, i) => i !== deleteFileConfirm.fileIndex));
                 }
                 setDeleteFileConfirm({ open: false, fileIndex: null });
+              }}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={deleteAttachmentConfirm.open}
+        onOpenChange={(open) => setDeleteAttachmentConfirm({ open, attachmentId: open ? deleteAttachmentConfirm.attachmentId : null, fileName: open ? deleteAttachmentConfirm.fileName : '' })}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar adjunto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteAttachmentConfirm.fileName && (
+                <>
+                  Se eliminará el archivo <strong>{deleteAttachmentConfirm.fileName}</strong>
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => setDeleteAttachmentConfirm({ open: false, attachmentId: null, fileName: '' })}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (deleteAttachmentConfirm.attachmentId !== null) {
+                  handleDeleteAttachment(deleteAttachmentConfirm.attachmentId);
+                }
+                setDeleteAttachmentConfirm({ open: false, attachmentId: null, fileName: '' });
               }}
             >
               Eliminar

@@ -6,17 +6,26 @@ import { Card, CardContent } from '@/components/ui/card';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
+interface ActiveSession {
+  clockIn: string;
+  status?: string;
+}
+
+interface CompanySettings {
+  workingHoursPerDay?: number;
+}
+
 export function ClockWidget() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: activeSession, isLoading } = useQuery({
+  const { data: activeSession, isLoading } = useQuery<ActiveSession | null>({
     queryKey: ['/api/work-sessions/active'],
     refetchInterval: 30000, // ⚡ Optimizado: Refetch every 30 seconds (was 10s)
   });
 
-  const { data: companySettings } = useQuery({
+  const { data: companySettings } = useQuery<CompanySettings>({
     queryKey: ['/api/settings/work-hours'],
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
@@ -178,7 +187,7 @@ export function ClockWidget() {
               </div>
               {activeSession && (
                 <p className="text-sm text-gray-500 mt-1">
-                  Since {formatTime(new Date((activeSession as any).clockIn))}
+                  Since {formatTime(new Date(activeSession.clockIn))}
                 </p>
               )}
             </div>
@@ -187,7 +196,7 @@ export function ClockWidget() {
                 {activeSession ? 'Current Session' : 'Current Time'}
               </p>
               <p className="text-2xl font-bold text-oficaz-primary">
-                {activeSession ? formatSessionTime((activeSession as any).clockIn) : formatTime(currentTime)}
+                {activeSession ? formatSessionTime(activeSession.clockIn) : formatTime(currentTime)}
               </p>
             </div>
           </div>

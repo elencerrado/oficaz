@@ -37,8 +37,6 @@ import {
 import { format, addDays, isSameDay, parseISO, startOfDay, differenceInCalendarDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
-import { logger } from '@/lib/logger';
-import { getAuthData } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { TrialManager } from '@/components/TrialManager';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -75,9 +73,8 @@ export default function AdminDashboard() {
   const [hasAnimated, setHasAnimated] = useState(() => 
     sessionStorage.getItem('adminDashboardAnimated') === 'true'
   );
-  const [visibleCards, setVisibleCards] = useState<number[]>(() => 
-    sessionStorage.getItem('adminDashboardAnimated') === 'true' ? [0, 1, 2, 3, 4, 5, 6] : []
-  );
+  // ✨ FIXED: Cards always visible by default to prevent blank dashboard on first load
+  const [visibleCards, setVisibleCards] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
 
   // ✨ OPTIMIZED: Removed MutationObserver - CustomCalendar handles today highlighting via CSS
 
@@ -188,6 +185,21 @@ export default function AdminDashboard() {
     enabled: user?.role === 'admin' || user?.role === 'manager',
   });
 
+  // ⚡ Fast pending-only query so "Resumen de Pendientes" is not blocked by full dashboard payload
+  const { data: pendingSummary } = useQuery<{
+    pendingVacationsCount: number;
+    incompleteSessionsCount: number;
+    modificationRequestsCount: number;
+    unreadMessagesCount: number;
+    unsignedPayrollsCount: number;
+    documentRequestsCount: number;
+    totalPending: number;
+  }>({
+    queryKey: ['/api/admin/dashboard/pending-summary'],
+    staleTime: 15_000,
+    enabled: user?.role === 'admin' || user?.role === 'manager',
+  });
+
   // ✨ OPTIMIZATION: Memoize extracted data to prevent creating new arrays on every render
   const employees = useMemo(() => dashboardData?.employees || [], [dashboardData?.employees]);
   const recentSessions = useMemo(() => dashboardData?.recentSessions || [], [dashboardData?.recentSessions]);
@@ -221,117 +233,26 @@ export default function AdminDashboard() {
     setSelectedDate(date);
   }, []);
   
-  // WebSocket connection for real-time updates
-  useEffect(() => {
-    // Get fresh token from auth context (always up-to-date)
-      const token = getAuthData()?.token;
-      if (!token || (user?.role !== 'admin' && user?.role !== 'manager')) {
-        logger.warn('No token available for WebSocket');
-        return;
-      }
-
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    const ws = new WebSocket(`${protocol}//${host}/ws/work-sessions?token=${token}`);
-
-    ws.onopen = () => {
-      logger.info('✅ WebSocket connected for real-time updates');
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        logger.debug('📡 WebSocket message received:', message);
-
-        // Invalidate consolidated dashboard query for any updates
-        if (message.type === 'vacation_request_created' || 
-            message.type === 'vacation_request_updated' ||
-            message.type === 'modification_request_created' || 
-            message.type === 'modification_request_updated' ||
-            message.type === 'work_session_created' || 
-            message.type === 'work_session_updated' || 
-            message.type === 'work_session_deleted' ||
-            message.type === 'message_received' ||
-            message.type === 'document_uploaded' ||
-            message.type === 'work_report_created' ||
-            message.type === 'reminder_all_completed') {
-          queryClient.invalidateQueries({ queryKey: ['/api/admin/dashboard/summary'] });
-        }
-        
-        // 🔔 Toast notifications for new employee actions
-        if (message.type === 'message_received' && message.data) {
-          toast({
-            title: "💬 Nuevo mensaje",
-            description: `${message.data.senderName} te ha enviado un mensaje`,
-            duration: 8000
-          });
-        }
-        
-        if (message.type === 'document_uploaded' && message.data) {
-          const docType = message.data.requestType ? ` (${message.data.requestType})` : '';
-          toast({
-            title: "📄 Documento subido",
-            description: `${message.data.employeeName} ha subido un documento${docType}`,
-            duration: 8000
-          });
-        }
-        
-        if (message.type === 'work_report_created' && message.data) {
-          toast({
-            title: "📋 Nuevo parte de trabajo",
-            description: `${message.data.employeeName} ha enviado un parte desde ${message.data.location}`,
-            duration: 8000
-          });
-        }
-        
-        if (message.type === 'reminder_all_completed' && message.data) {
-          toast({
-            title: "✅ Recordatorio completado",
-            description: `Todos (${message.data.completedCount}) han completado: ${message.data.title}`,
-            duration: 8000
-          });
-        }
-      } catch (error) {
-        logger.error('Error parsing WebSocket message:', error);
-      }
-    };
-
-    ws.onerror = (error) => {
-      logger.error('WebSocket error:', error);
-    };
-
-    ws.onclose = (event) => {
-      logger.info('WebSocket disconnected', event.code, event.reason);
-      // If token expired, try to reconnect after a delay
-      if (event.code === 1008 && event.reason?.includes('Token expired')) {
-        logger.info('Token expired, will reconnect with fresh token in 5s');
-        setTimeout(() => {
-          // Force component re-render to get fresh token
-          queryClient.invalidateQueries();
-        }, 5000);
-      }
-    };
-
-    // ✨ OPTIMIZED: Cleanup on unmount with proper close code
-    return () => {
-      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-        ws.close(1000, 'Component unmounted'); // Normal closure
-      }
-    };
-  }, [user?.role, queryClient]); // ✨ OPTIMIZED: Only re-create WebSocket if role changes
-
   // Extract remaining data from consolidated response
   const unreadMessagesCount = dashboardData?.unreadMessagesCount || 0;
   const unsignedPayrollsCount = dashboardData?.unsignedPayrollsCount || 0;
   const documentRequests = dashboardData?.documentRequests || [];
   const customHolidays = dashboardData?.customHolidays || [];
 
+  // Prefer fast pending-summary counts for the pending card and total
+  const pendingVacationsCount = pendingSummary?.pendingVacationsCount ?? pendingVacations.length;
+  const incompleteSessionsCount = pendingSummary?.incompleteSessionsCount ?? incompleteSessions.length;
+  const modificationRequestsCount = pendingSummary?.modificationRequestsCount ?? modificationRequests.length;
+  const unreadMessagesPendingCount = pendingSummary?.unreadMessagesCount ?? unreadMessagesCount;
+  const unsignedPayrollsPendingCount = pendingSummary?.unsignedPayrollsCount ?? unsignedPayrollsCount;
+  const documentRequestsPendingCount = pendingSummary?.documentRequestsCount ?? documentRequests.length;
+
   // Calculate total pending items (respecting feature access)
   const totalPending = 
-    (hasAccess('time_tracking') ? incompleteSessions.length + modificationRequests.length : 0) + 
-    (hasAccess('vacation') ? pendingVacations.length : 0) + 
-    (hasAccess('documents') ? unsignedPayrollsCount + documentRequests.length : 0) + 
-    (hasAccess('messages') ? unreadMessagesCount : 0);
+    (hasAccess('time_tracking') ? incompleteSessionsCount + modificationRequestsCount : 0) + 
+    (hasAccess('vacation') ? pendingVacationsCount : 0) + 
+    (hasAccess('documents') ? unsignedPayrollsPendingCount + documentRequestsPendingCount : 0) + 
+    (hasAccess('messages') ? unreadMessagesPendingCount : 0);
 
   // Track previous vacation requests to detect new ones for toast notifications
   const previousVacationRequestsRef = useRef<any[]>([]);
@@ -726,7 +647,9 @@ export default function AdminDashboard() {
 
   // ✨ OPTIMIZED: Staggered card animation - only runs ONCE per session using RAF
   useEffect(() => {
-    if (!isInitialLoading && dashboardData && !hasAnimated) {
+    if (!hasAnimated && dashboardData) {
+      // Reset cards for animation on first load
+      setVisibleCards([]);
       const totalCards = 7;
       let currentCard = 0;
       
@@ -746,7 +669,7 @@ export default function AdminDashboard() {
       
       requestAnimationFrame(animateNextCard);
     }
-  }, [isInitialLoading, dashboardData, hasAnimated]);
+  }, [hasAnimated, dashboardData]);
 
   // Helper function to get card animation class
   const getCardAnimationClass = (cardIndex: number) => {
@@ -971,7 +894,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {hasAccess('time_tracking') && incompleteSessions.length > 0 && (
+                  {hasAccess('time_tracking') && incompleteSessionsCount > 0 && (
                     <button
                       onClick={() => setLocation(`/${companyAlias}/fichajes?filter=incomplete`)}
                       className="w-full flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
@@ -980,7 +903,7 @@ export default function AdminDashboard() {
                         <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
                           <Clock className="h-5 w-5 text-red-600 dark:text-red-400" />
                         </div>
-                        <span className="text-2xl font-bold text-red-600 dark:text-red-400">{incompleteSessions.length}</span>
+                        <span className="text-2xl font-bold text-red-600 dark:text-red-400">{incompleteSessionsCount}</span>
                         <div>
                           <p className="font-medium text-sm">Sesiones incompletas</p>
                           <p className="text-xs text-muted-foreground">Sin fichaje de salida</p>
@@ -990,7 +913,7 @@ export default function AdminDashboard() {
                     </button>
                   )}
 
-                  {hasAccess('time_tracking') && modificationRequests.length > 0 && (
+                  {hasAccess('time_tracking') && modificationRequestsCount > 0 && (
                     <button
                       onClick={() => setLocation(`/${companyAlias}/fichajes`)}
                       className="w-full flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
@@ -999,7 +922,7 @@ export default function AdminDashboard() {
                         <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
                           <Edit className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{modificationRequests.length}</span>
+                        <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{modificationRequestsCount}</span>
                         <div>
                           <p className="font-medium text-sm">Solicitudes de fichajes</p>
                           <p className="text-xs text-muted-foreground">Modificaciones pendientes</p>
@@ -1009,7 +932,7 @@ export default function AdminDashboard() {
                     </button>
                   )}
 
-                  {hasAccess('vacation') && pendingVacations.length > 0 && (
+                  {hasAccess('vacation') && pendingVacationsCount > 0 && (
                     <button
                       onClick={() => setLocation(`/${companyAlias}/ausencias?filter=pending`)}
                       className="w-full flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
@@ -1018,7 +941,7 @@ export default function AdminDashboard() {
                         <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
                           <Plane className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                         </div>
-                        <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">{pendingVacations.length}</span>
+                        <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">{pendingVacationsCount}</span>
                         <div>
                           <p className="font-medium text-sm">Solicitudes de ausencias</p>
                           <p className="text-xs text-muted-foreground">Pendientes de aprobación</p>
@@ -1028,7 +951,7 @@ export default function AdminDashboard() {
                     </button>
                   )}
 
-                  {hasAccess('documents') && unsignedPayrollsCount > 0 && (
+                  {hasAccess('documents') && unsignedPayrollsPendingCount > 0 && (
                     <button
                       onClick={() => setLocation(`/${companyAlias}/documentos?filter=unsigned`)}
                       className="w-full flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
@@ -1037,7 +960,7 @@ export default function AdminDashboard() {
                         <div className="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center flex-shrink-0">
                           <FileText className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                         </div>
-                        <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{unsignedPayrollsCount}</span>
+                        <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{unsignedPayrollsPendingCount}</span>
                         <div>
                           <p className="font-medium text-sm">Documentos pendientes de firma</p>
                           <p className="text-xs text-muted-foreground">Nóminas y circulares</p>
@@ -1047,7 +970,7 @@ export default function AdminDashboard() {
                     </button>
                   )}
 
-                  {hasAccess('documents') && documentRequests.length > 0 && (
+                  {hasAccess('documents') && documentRequestsPendingCount > 0 && (
                     <button
                       onClick={() => setLocation(`/${companyAlias}/documentos`)}
                       className="w-full flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
@@ -1056,7 +979,7 @@ export default function AdminDashboard() {
                         <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
                           <Upload className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                         </div>
-                        <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">{documentRequests.length}</span>
+                        <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">{documentRequestsPendingCount}</span>
                         <div>
                           <p className="font-medium text-sm">Solicitudes de documentos</p>
                           <p className="text-xs text-muted-foreground">Pendientes de subida</p>
@@ -1066,7 +989,7 @@ export default function AdminDashboard() {
                     </button>
                   )}
 
-                  {hasAccess('messages') && unreadMessagesCount > 0 && (
+                  {hasAccess('messages') && unreadMessagesPendingCount > 0 && (
                     <button
                       onClick={() => setLocation(`/${companyAlias}/mensajes`)}
                       className="w-full flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
@@ -1075,7 +998,7 @@ export default function AdminDashboard() {
                         <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
                           <MessageSquare className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                         </div>
-                        <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{unreadMessagesCount}</span>
+                        <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{unreadMessagesPendingCount}</span>
                         <div>
                           <p className="font-medium text-sm">Mensajes sin leer</p>
                           <p className="text-xs text-muted-foreground">Nuevas conversaciones</p>
@@ -1139,7 +1062,7 @@ export default function AdminDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Bell className="h-5 w-5" />
-                  Recordatorios Próximos
+                  Tareas Próximas
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1180,7 +1103,7 @@ export default function AdminDashboard() {
                       </div>
                     ))
                   ) : (
-                    <p className="text-muted-foreground text-center py-4">No hay recordatorios activos</p>
+                    <p className="text-muted-foreground text-center py-4">No hay tareas activas</p>
                   )}
                 </div>
               </CardContent>
@@ -1199,15 +1122,15 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="space-y-3">
                   {recentSessions?.length > 0 ? (
-                    recentSessions.map((event: any) => (
+                    recentSessions.slice(0, 10).map((event: any) => (
                       <div key={event.id} className="flex items-center gap-3 py-2 border-b border-border last:border-0">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          event.type === 'entry' ? 'bg-green-100' : 'bg-red-100'
+                          event.type === 'entry' ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'
                         }`}>
                           {event.type === 'entry' ? (
-                            <ArrowRight className="h-4 w-4 text-green-600" />
+                            <ArrowRight className="h-4 w-4 text-green-600 dark:text-green-400" />
                           ) : (
-                            <ArrowLeft className="h-4 w-4 text-red-600" />
+                            <ArrowLeft className="h-4 w-4 text-red-600 dark:text-red-400" />
                           )}
                         </div>
                         <div className="flex-1">

@@ -3,10 +3,8 @@ import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ZoomIn, ZoomOut, RotateCcw, ExternalLink, Download, FileX, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getAuthHeaders } from '@/lib/auth';
-import { Document, Page, pdfjs } from 'react-pdf';
-
-// Use local worker to satisfy CSP
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+import { Document, Page } from 'react-pdf';
+import { pdfjsLib as pdfjs } from '@/lib/pdf-worker';
 
 interface DocumentViewerProps {
   url: string; // Signed URL or blob URL

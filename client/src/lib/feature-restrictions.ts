@@ -15,7 +15,7 @@
 //
 // ADD-ONS DE PAGO (requieren compra):
 //    - messages (9€) - Mensajería Interna
-//    - reminders (6€) - Recordatorios
+//    - reminders (6€) - Tareas
 //    - documents (15€) - Gestión Documental
 //    - work_reports (12€) - Partes de Trabajo
 //    - ai_assistant (25€) - Asistente IA
@@ -31,6 +31,7 @@ export const CANONICAL_ADDON_KEYS = [
   'documents',
   'ai_assistant',
   'work_reports',
+  'crm',
   'inventory',
   'accounting'
 ] as const;
@@ -51,6 +52,7 @@ export type FeatureKey = CanonicalAddonKey | LegacyFeatureKey;
 
 // Backend subscription features - only canonical keys
 export interface SubscriptionFeatures {
+  [key: string]: boolean | undefined;
   time_tracking: boolean;
   vacation: boolean;
   schedules: boolean;
@@ -59,6 +61,7 @@ export interface SubscriptionFeatures {
   documents: boolean;
   ai_assistant: boolean;
   work_reports: boolean;
+  crm: boolean;
   inventory: boolean;
   accounting: boolean;
   // Company settings (not addon-based)
@@ -76,7 +79,7 @@ export interface Subscription {
 }
 
 // Map legacy feature names to canonical addon keys
-const LEGACY_TO_CANONICAL: Record<LegacyFeatureKey, CanonicalAddonKey | 'logoUpload' | 'employee_time_edit' | 'employee_time_edit_permission'> = {
+export const LEGACY_TO_CANONICAL: Record<LegacyFeatureKey, CanonicalAddonKey | 'logoUpload' | 'employee_time_edit' | 'employee_time_edit_permission'> = {
   timeTracking: 'time_tracking',
   reports: 'work_reports',
   analytics: 'work_reports',
@@ -91,10 +94,11 @@ const FEATURE_NAMES: Record<FeatureKey, string> = {
   vacation: 'Ausencias',
   schedules: 'Cuadrante de horarios',
   messages: 'Mensajería Interna',
-  reminders: 'Recordatorios',
+  reminders: 'Tareas',
   documents: 'Gestión Documental',
   ai_assistant: 'Asistente IA',
   work_reports: 'Partes de Trabajo',
+  crm: 'CRM / Proyectos',
   inventory: 'Inventario',
   accounting: 'Contabilidad',
   timeTracking: 'Fichajes',
@@ -106,7 +110,7 @@ const FEATURE_NAMES: Record<FeatureKey, string> = {
 };
 
 // Normalize feature key to canonical form
-function normalizeFeatureKey(feature: FeatureKey): string {
+export function normalizeFeatureKey(feature: FeatureKey | string): string {
   if (feature in LEGACY_TO_CANONICAL) {
     return LEGACY_TO_CANONICAL[feature as LegacyFeatureKey];
   }
@@ -131,8 +135,21 @@ export const checkFeatureAccess = (subscription: Subscription | null, feature: F
     return subscription.features[canonicalKey as keyof SubscriptionFeatures] ?? true;
   }
   
-  // Check addon access via subscription.features
-  return subscription.features[canonicalKey as keyof SubscriptionFeatures] ?? false;
+  // Check addon access via subscription.features (canonical key first)
+  if (canonicalKey in subscription.features) {
+    return Boolean(subscription.features[canonicalKey]);
+  }
+
+  // Fallback: if backend sends a key not yet in local typings, still respect it
+  if (feature in subscription.features) {
+    return Boolean(subscription.features[feature]);
+  }
+
+  if (import.meta.env.DEV) {
+    console.warn(`[FeatureAccess] Unknown feature key: ${feature} (normalized: ${canonicalKey})`);
+  }
+
+  return false;
 };
 
 // Get the display name for a feature

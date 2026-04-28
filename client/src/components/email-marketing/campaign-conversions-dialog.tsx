@@ -13,6 +13,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { getAuthHeaders } from '@/lib/auth';
 
 interface CampaignConversionsDialogProps {
   campaign: any;
@@ -26,11 +27,8 @@ export function CampaignConversionsDialog({ campaign, open, onOpenChange }: Camp
   const { data: conversions, isLoading } = useQuery({
     queryKey: [`/api/super-admin/email-campaigns/${campaign?.id}/conversions`],
     queryFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/email-campaigns/${campaign.id}/conversions`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch conversions');
       return response.json();

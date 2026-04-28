@@ -14,7 +14,11 @@ export function ConditionalStripeProvider({ enabled, children }: { enabled: bool
   }
 
   // Only load when payment is actually needed
-  const LazyStripeForm = lazy(() => import('@/components/StripePaymentForm'));
+  const LazyStripeForm = lazy(() =>
+    import('@/components/StripePaymentForm').then(() => ({
+      default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    }))
+  );
   
   return (
     <Suspense fallback={<StripeLoading />}>

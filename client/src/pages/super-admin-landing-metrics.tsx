@@ -7,6 +7,7 @@ import { format, subDays, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
+import { getAuthHeaders } from '@/lib/auth';
 
 interface DailyVisit {
   date: string;
@@ -19,21 +20,16 @@ export default function SuperAdminLandingMetrics() {
   const { data: metrics } = useQuery({
     queryKey: ['/api/super-admin/landing-metrics'],
     queryFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/landing-metrics', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch metrics');
       return response.json();
     },
-    staleTime: 0, // Always fetch fresh data
-    refetchOnMount: true, // Refetch when component mounts
-    refetchInterval: 60000, // ⚡ Optimizado: Refetch every 60s (was 30s)
-    gcTime: 0, // Don't cache (garbage collection time)
+    staleTime: 60 * 1000,
+    refetchOnMount: false,
+    refetchInterval: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   // Generate complete last 7 days array
@@ -63,11 +59,10 @@ export default function SuperAdminLandingMetrics() {
   // Mutation to clean test visits
   const cleanTestVisitsMutation = useMutation({
     mutationFn: async () => {
-      const token = sessionStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/landing-metrics/clean-test-visits', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
           'Content-Type': 'application/json',
         },
       });

@@ -20,6 +20,9 @@ import { getAuthHeaders } from '@/lib/auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { usePageHeader } from '@/components/layout/page-header';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { useStandardInfiniteScroll } from '@/hooks/use-standard-infinite-scroll';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { InfiniteListFooter } from '@/components/ui/infinite-list-footer';
 import { 
   Package, 
   Warehouse, 
@@ -126,6 +129,10 @@ export default function Inventory() {
 
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ['/api/inventory/dashboard'],
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   return (
@@ -361,12 +368,13 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   // Infinite scroll state
-  const [displayedCount, setDisplayedCount] = useState(50);
-  const ITEMS_PER_LOAD = 20;
+  const INITIAL_DISPLAY_COUNT = isMobile ? 24 : 50;
+  const ITEMS_PER_LOAD = isMobile ? 12 : 20;
+  const [displayedCount, setDisplayedCount] = useState(INITIAL_DISPLAY_COUNT);
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const queryClient = useRef(null);
   
   // Bulk upload states
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -399,6 +407,10 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
       return undefined;
     },
     initialPageParam: 0,
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Flatten all pages into single array
@@ -409,10 +421,18 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/inventory/categories'],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const { data: warehouses = [] } = useQuery<WarehouseType[]>({
     queryKey: ['/api/inventory/warehouses'],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Find default warehouse
@@ -421,6 +441,10 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
   // Stock data to show quantities
   const { data: stockData = [] } = useQuery<{ productId: number; warehouseId: number; quantity: string; warehouseName: string }[]>({
     queryKey: ['/api/inventory/stock'],
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Get the effective warehouse ID for filtering
@@ -625,26 +649,18 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
 
   // Reset displayedCount on filter change
   useEffect(() => {
-    setDisplayedCount(50);
-  }, [searchTerm, categoryFilter, inStockOnly]);
+    setDisplayedCount(INITIAL_DISPLAY_COUNT);
+  }, [searchTerm, categoryFilter, inStockOnly, INITIAL_DISPLAY_COUNT]);
 
-  // Infinite scroll with IntersectionObserver
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some(entry => entry.isIntersecting) && !isLoading && !isFetchingNextPage && hasMoreToDisplay) {
-          loadMoreProducts();
-        }
-      },
-      { threshold: 0.1, rootMargin: '100px' }
-    );
-
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [isLoading, isFetchingNextPage, hasMoreToDisplay, loadMoreProducts]);
+  useStandardInfiniteScroll({
+    targetRef: loadMoreRef,
+    enabled: !isLoading,
+    canLoadMore: hasMoreToDisplay,
+    isLoadingMore: isFetchingNextPage,
+    onLoadMore: loadMoreProducts,
+    dependencyKey: `${displayedCount}-${filteredProducts.length}`,
+    rootMargin: '100px',
+  });
 
   return (
     <div className="space-y-4">
@@ -939,17 +955,16 @@ function ProductsTab({ searchTerm, setSearchTerm }: { searchTerm: string; setSea
             </div>
           </div>
           
-          {/* Infinite scroll observer and loading state */}
-          <div ref={loadMoreRef} className="py-4 text-center">
-            {isFetchingNextPage ? (
-              <div className="flex justify-center items-center gap-2">
-                <LoadingSpinner />
-                <span className="text-sm text-gray-500">Cargando más productos...</span>
-              </div>
-            ) : hasMoreToDisplay ? (
-              <span className="text-sm text-gray-500">Desplázate para cargar más</span>
-            ) : null}
-          </div>
+          <InfiniteListFooter
+            hasMore={hasMoreToDisplay}
+            sentinelRef={loadMoreRef}
+            isLoading={isFetchingNextPage}
+            loadingText="Cargando más productos..."
+            hintText="Desplázate para cargar más"
+            onLoadMore={loadMoreProducts}
+            className="py-4"
+            textClassName="text-gray-500"
+          />
         </Card>
       )}
 
@@ -1578,10 +1593,12 @@ function MovementsTab() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; movement: Movement | null }>({ open: false, movement: null });
   const [viewDialog, setViewDialog] = useState<{ open: boolean; movement: any | null; loading: boolean }>({ open: false, movement: null, loading: false });
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   // Infinite scroll state
-  const [displayedCount, setDisplayedCount] = useState(50);
-  const ITEMS_PER_LOAD = 20;
+  const INITIAL_DISPLAY_COUNT = isMobile ? 24 : 50;
+  const ITEMS_PER_LOAD = isMobile ? 12 : 20;
+  const [displayedCount, setDisplayedCount] = useState(INITIAL_DISPLAY_COUNT);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const { data: infiniteData, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
@@ -1603,6 +1620,10 @@ function MovementsTab() {
       return undefined;
     },
     initialPageParam: 0,
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Flatten all pages
@@ -1613,15 +1634,27 @@ function MovementsTab() {
 
   const { data: products = [] } = useQuery<Product[]>({
     queryKey: ['/api/inventory/products'],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const { data: warehouses = [] } = useQuery<WarehouseType[]>({
     queryKey: ['/api/inventory/warehouses'],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Stock data para verificar disponibilidad
   const { data: stockData = [] } = useQuery<{ productId: number; warehouseId: number; quantity: string; warehouseName: string }[]>({
     queryKey: ['/api/inventory/stock'],
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Aggregate stock by product and warehouse
@@ -1905,26 +1938,18 @@ function MovementsTab() {
 
   // Reset on filter change
   useEffect(() => {
-    setDisplayedCount(50);
-  }, [typeFilter]);
+    setDisplayedCount(INITIAL_DISPLAY_COUNT);
+  }, [typeFilter, INITIAL_DISPLAY_COUNT]);
 
-  // Infinite scroll observer
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some(entry => entry.isIntersecting) && !isLoading && !isFetchingNextPage && hasMoreToDisplay) {
-          loadMoreMovements();
-        }
-      },
-      { threshold: 0.1, rootMargin: '100px' }
-    );
-
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [isLoading, isFetchingNextPage, hasMoreToDisplay, loadMoreMovements]);
+  useStandardInfiniteScroll({
+    targetRef: loadMoreRef,
+    enabled: !isLoading,
+    canLoadMore: hasMoreToDisplay,
+    isLoadingMore: isFetchingNextPage,
+    onLoadMore: loadMoreMovements,
+    dependencyKey: `${displayedCount}-${allMovements.length}-${typeFilter}`,
+    rootMargin: '100px',
+  });
 
   return (
     <div className="space-y-4">
@@ -2342,17 +2367,16 @@ function MovementsTab() {
             </Card>
           ))}
           
-          {/* Infinite scroll observer and loading state */}
-          <div ref={loadMoreRef} className="py-4 text-center">
-            {isFetchingNextPage ? (
-              <div className="flex justify-center items-center gap-2">
-                <LoadingSpinner />
-                <span className="text-sm text-gray-500">Cargando más movimientos...</span>
-              </div>
-            ) : hasMoreToDisplay ? (
-              <span className="text-sm text-gray-500">Desplázate para cargar más</span>
-            ) : null}
-          </div>
+          <InfiniteListFooter
+            hasMore={hasMoreToDisplay}
+            sentinelRef={loadMoreRef}
+            isLoading={isFetchingNextPage}
+            loadingText="Cargando más movimientos..."
+            hintText="Desplázate para cargar más"
+            onLoadMore={loadMoreMovements}
+            className="py-4"
+            textClassName="text-gray-500"
+          />
         </div>
       )}
 
@@ -2622,10 +2646,18 @@ function SettingsTab() {
 
   const { data: categories = [], isLoading: loadingCategories } = useQuery<Category[]>({
     queryKey: ['/api/inventory/categories'],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const { data: warehouses = [], isLoading: loadingWarehouses } = useQuery<WarehouseType[]>({
     queryKey: ['/api/inventory/warehouses'],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const createCategoryMutation = useMutation({

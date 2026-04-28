@@ -13,14 +13,15 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { DocumentSignatureModal } from '@/components/document-signature-modal';
 import { SignaturePositionEditor } from '@/components/signature-position-editor';
+import { DatePickerPeriod } from '@/components/ui/date-picker';
 import { useQuery, useMutation, useInfiniteQuery } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 import { useToast } from '@/hooks/use-toast';
 import StatsCard, { StatsCardGrid } from '@/components/StatsCard';
 import { TabNavigation } from '@/components/ui/tab-navigation';
@@ -53,13 +54,20 @@ import {
   Clock,
   Home,
   ArrowLeft,
-  ImageIcon
+  ImageIcon,
+  ChevronDown,
+  RotateCcw,
+  Pencil
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { analyzeFileName, documentTypes as importedDocumentTypes } from '@/utils/documentUtils';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DocumentPreviewModal } from '@/components/DocumentPreviewModal';
+import { useTeams, resolveTeamMemberIds } from '@/hooks/use-teams';
+import { EmployeeScopeDropdown } from '@/components/ui/employee-scope-dropdown';
+import { useStandardInfiniteScroll } from '@/hooks/use-standard-infinite-scroll';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Employee {
   id: number;
@@ -118,6 +126,10 @@ export default function AdminDocuments() {
           type.id === 'justificante' ? FileCheck :
           File
   })), []);
+  const payrollDocumentTypeName = useMemo(
+    () => documentTypes.find((type) => type.id === 'nomina')?.name ?? '',
+    [documentTypes]
+  );
   
   // Get document access mode: 'full', 'self', or 'none'
   const documentAccessMode = getDocumentAccessMode();
@@ -128,11 +140,21 @@ export default function AdminDocuments() {
   const [message, setMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
+  const [selectedEmployeeTeamFilter, setSelectedEmployeeTeamFilter] = useState<string>('all');
   const [filterPendingSignature, setFilterPendingSignature] = useState(false); // Filter for unsigned payrolls
+  const [downloadingZipMonth, setDownloadingZipMonth] = useState<string | null>(null); // Track ZIP downloads
+  const [documentStartDate, setDocumentStartDate] = useState<Date | undefined>(undefined); // Document date range filter
+  const [documentEndDate, setDocumentEndDate] = useState<Date | undefined>(undefined);
+  const [signatureFilter, setSignatureFilter] = useState<'all' | 'signed' | 'unsigned'>('all'); // Filter documents by signature status
+  const [documentTypeFilter, setDocumentTypeFilter] = useState<string>('all'); // Filter documents by type
+  const [bulkActionMode, setBulkActionMode] = useState(false); // Enable/disable bulk selection mode
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState<Set<number>>(new Set()); // Selected document IDs for bulk actions
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState<{ show: boolean; documentCount: number }>({ show: false, documentCount: 0 }); // Bulk delete confirmation modal
+  const [showMobileFilters, setShowMobileFilters] = useState(false); // Show/hide filters modal on mobile
   
   // Estados para filtros de requests
   const [requestEmployeeFilter, setRequestEmployeeFilter] = useState<string>('all');
-  const [requestEmployeeSearch, setRequestEmployeeSearch] = useState('');
+  const [requestTeamFilter, setRequestTeamFilter] = useState<string>('all');
   const [requestTypeFilter, setRequestTypeFilter] = useState('all');
   const [requestStatusFilter, setRequestStatusFilter] = useState('all');
   const [isUploading, setIsUploading] = useState(false);
@@ -187,6 +209,10 @@ export default function AdminDocuments() {
   } | null>(null);
   const [showUndoConfirm, setShowUndoConfirm] = useState(false);
   
+  // Inline edit state for document names
+  const [editingDocumentId, setEditingDocumentId] = useState<number | null>(null);
+  const [editingDocumentName, setEditingDocumentName] = useState<string>('');
+  
   // Folder expansion state for folder view
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
@@ -217,9 +243,11 @@ export default function AdminDocuments() {
   // Fetch employees (optimized - employees don't change often)
   const { data: employees = [], isLoading: loadingEmployees } = useQuery<Employee[]>({
     queryKey: ['/api/employees'],
-    staleTime: 5 * 60 * 1000, // ⚡ Cache for 5 minutes
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     select: (data: Employee[] = []) => data.filter((e: any) => !e?.isPendingActivation)
   });
+
+  const { data: teams = [] } = useTeams(!isSelfAccessOnly);
 
   // Fetch document notifications (sent requests)
   // WebSocket handles document_* events - no polling needed!
@@ -231,8 +259,12 @@ export default function AdminDocuments() {
 
   // Memoize filtered requests to avoid recalculation on every render
   const filteredRequests = useMemo(() => {
+    const selectedTeamId = requestTeamFilter !== 'all' ? parseInt(requestTeamFilter, 10) : null;
+    const selectedTeamMembers = selectedTeamId ? new Set(resolveTeamMemberIds(teams, selectedTeamId)) : null;
+
     return (sentRequests || []).filter((request: any) => {
       const matchesEmployee = requestEmployeeFilter === "all" || request.userId === parseInt(requestEmployeeFilter);
+      const matchesTeam = !selectedTeamMembers || selectedTeamMembers.has(request.userId);
       const matchesType = requestTypeFilter === "all" || request.documentType === requestTypeFilter;
       
       // Determinar el estado de la solicitud
@@ -247,17 +279,19 @@ export default function AdminDocuments() {
       
       const matchesStatus = requestStatusFilter === "all" || requestStatus === requestStatusFilter;
       
-      return matchesEmployee && matchesType && matchesStatus;
+      return matchesEmployee && matchesTeam && matchesType && matchesStatus;
     });
-  }, [sentRequests, requestEmployeeFilter, requestTypeFilter, requestStatusFilter]);
+  }, [sentRequests, requestEmployeeFilter, requestTeamFilter, requestTypeFilter, requestStatusFilter, teams]);
 
   // Fetch all documents - WebSocket handles real-time updates
   // Infinite scroll state
-  const [displayedCount, setDisplayedCount] = useState(10);
-  const [displayedRequestsCount, setDisplayedRequestsCount] = useState(10);
+  const isMobile = useIsMobile();
+  const ITEMS_PER_LOAD = isMobile ? 8 : 12;
+  const INITIAL_ITEMS = isMobile ? 8 : 12;
+  const [displayedCount, setDisplayedCount] = useState(INITIAL_ITEMS);
+  const [displayedRequestsCount, setDisplayedRequestsCount] = useState(INITIAL_ITEMS);
   const [previewModal, setPreviewModal] = useState<{ open: boolean; url: string; filename: string; mimeType?: string | null; docId: number | null }>({ open: false, url: '', filename: '', mimeType: null, docId: null });
   const DOCUMENTS_PER_PAGE = 50;
-  const ITEMS_PER_LOAD = 10;
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const loadMoreRequestsRef = useRef<HTMLDivElement>(null);
 
@@ -289,7 +323,7 @@ export default function AdminDocuments() {
     staleTime: 30000, // Cache for 30s
     gcTime: 10 * 60 * 1000,
     retry: 2,
-    refetchOnMount: 'always', // Always refetch when component mounts
+    refetchOnMount: false, // Reuse warm cache on remount within stale window
   });
 
   // Flatten all pages into single documents array
@@ -315,6 +349,8 @@ export default function AdminDocuments() {
     const normalizedFileName = normalizeText(doc.originalName || '');
     const normalizedEmployeeName = normalizeText(doc.user?.fullName || '');
     const combinedText = `${normalizedFileName} ${normalizedEmployeeName}`;
+    const selectedTeamId = selectedEmployeeTeamFilter !== 'all' ? parseInt(selectedEmployeeTeamFilter, 10) : null;
+    const selectedTeamMembers = selectedTeamId ? new Set(resolveTeamMemberIds(teams, selectedTeamId)) : null;
     
     // Split search term into words and check if ALL words are found
     const searchWords = normalizeText(searchTerm).split(/\s+/).filter(word => word.length > 0);
@@ -322,19 +358,52 @@ export default function AdminDocuments() {
                          searchWords.every(word => combinedText.includes(word));
     
     // In self-access mode, don't filter by employee (already filtered to self)
-    const matchesEmployee = isSelfAccessOnly || selectedEmployee === 'all' || doc.userId.toString() === selectedEmployee;
+    const matchesEmployee = isSelfAccessOnly || (
+      (selectedEmployee === 'all' || doc.userId.toString() === selectedEmployee) &&
+      (!selectedTeamMembers || selectedTeamMembers.has(doc.userId))
+    );
     
     // Filter by pending signature (unsigned payrolls OR documents with requiresSignature flag)
     let matchesPendingSignature = true;
     if (filterPendingSignature && employees && employees.length > 0) {
       const fileName = doc.originalName || doc.fileName || '';
       const analysis = analyzeFileName(fileName, employees);
-      const isPayroll = analysis.documentType === 'Nómina';
+      const isPayroll = analysis.documentType === payrollDocumentTypeName;
       const requiresSignature = (doc as any).requiresSignature === true;
       matchesPendingSignature = (isPayroll || requiresSignature) && !doc.signedAt;
     }
+
+    // Filter by date range
+    let matchesDateRange = true;
+    if (documentStartDate !== undefined || documentEndDate !== undefined) {
+      const docDate = new Date(doc.createdAt);
+      const startOfDay = documentStartDate ? new Date(documentStartDate) : null;
+      const endOfDay = documentEndDate ? new Date(documentEndDate) : null;
+      if (startOfDay) startOfDay.setHours(0, 0, 0, 0);
+      if (endOfDay) endOfDay.setHours(23, 59, 59, 999);
+      
+      if (startOfDay && docDate < startOfDay) matchesDateRange = false;
+      if (endOfDay && docDate > endOfDay) matchesDateRange = false;
+    }
+
+    // Filter by signature status
+    let matchesSignatureFilter = true;
+    if (signatureFilter === 'signed') {
+      matchesSignatureFilter = doc.signedAt !== null && doc.signedAt !== undefined;
+    } else if (signatureFilter === 'unsigned') {
+      matchesSignatureFilter = !doc.signedAt;
+    }
+    // 'all' matches everything
+
+    // Filter by document type
+    let matchesDocumentType = true;
+    if (documentTypeFilter !== 'all' && employees && employees.length > 0) {
+      const fileName = doc.originalName || doc.fileName || '';
+      const analysis = analyzeFileName(fileName, employees);
+      matchesDocumentType = analysis.documentType === importedDocumentTypes.find(dt => dt.id === documentTypeFilter)?.name;
+    }
     
-    return matchesSearch && matchesEmployee && matchesPendingSignature;
+    return matchesSearch && matchesEmployee && matchesPendingSignature && matchesDateRange && matchesSignatureFilter && matchesDocumentType;
   });
 
   // hasMore is true if we have more items to display (either locally or on server)
@@ -345,7 +414,7 @@ export default function AdminDocuments() {
 
   // Load more function for infinite scroll - first show more from loaded data, then fetch from server
   const loadMoreDocuments = useCallback(() => {
-    console.log('📜 loadMoreDocuments called', { 
+    logger.log('[DOCS] loadMoreDocuments called', {
       displayedCount, 
       filteredLength: filteredDocuments.length, 
       hasNextPage, 
@@ -373,65 +442,34 @@ export default function AdminDocuments() {
 
   // Reset displayed count when filters change
   useEffect(() => {
-    setDisplayedCount(10);
-  }, [searchTerm, selectedEmployee, filterPendingSignature]);
+    setDisplayedCount(INITIAL_ITEMS);
+  }, [searchTerm, selectedEmployee, selectedEmployeeTeamFilter, filterPendingSignature, documentStartDate, documentEndDate, signatureFilter, documentTypeFilter, INITIAL_ITEMS]);
 
-  // Infinite scroll with IntersectionObserver
-  useEffect(() => {
-    // Only set up observer when in explorer tab
-    if (activeTab !== 'explorer') return;
-    
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some(entry => entry.isIntersecting) && !loadingDocuments && !isFetchingNextPage && hasMoreToDisplay) {
-          loadMoreDocuments();
-        }
-      },
-      { threshold: 0.1, rootMargin: '100px' }
-    );
-    
-    const timeoutId = setTimeout(() => {
-      if (loadMoreRef.current) {
-        observer.observe(loadMoreRef.current);
-      }
-    }, 50);
-    
-    return () => {
-      clearTimeout(timeoutId);
-      observer.disconnect();
-    };
-  }, [loadingDocuments, isFetchingNextPage, hasMoreToDisplay, activeTab, loadMoreDocuments, displayedCount, totalDocumentsCount]);
+  useStandardInfiniteScroll({
+    targetRef: loadMoreRef,
+    enabled: activeTab === 'explorer' && !loadingDocuments,
+    canLoadMore: hasMoreToDisplay,
+    isLoadingMore: isFetchingNextPage,
+    onLoadMore: loadMoreDocuments,
+    dependencyKey: `${activeTab}-${displayedCount}-${totalDocumentsCount}-${filteredDocuments.length}`,
+    rootMargin: '100px',
+  });
 
-  // Infinite scroll for requests tab
-  useEffect(() => {
-    // Only set up observer when in requests tab
-    if (activeTab !== 'requests') return;
-    
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some(entry => entry.isIntersecting) && filteredRequests.length > displayedRequestsCount) {
-          setDisplayedRequestsCount(prev => Math.min(prev + ITEMS_PER_LOAD, filteredRequests.length));
-        }
-      },
-      { threshold: 0.1, rootMargin: '100px' }
-    );
-    
-    const timeoutId = setTimeout(() => {
-      if (loadMoreRequestsRef.current) {
-        observer.observe(loadMoreRequestsRef.current);
-      }
-    }, 50);
-    
-    return () => {
-      clearTimeout(timeoutId);
-      observer.disconnect();
-    };
-  }, [activeTab, filteredRequests.length, displayedRequestsCount, ITEMS_PER_LOAD]);
+  useStandardInfiniteScroll({
+    targetRef: loadMoreRequestsRef,
+    enabled: activeTab === 'requests',
+    canLoadMore: filteredRequests.length > displayedRequestsCount,
+    onLoadMore: () => {
+      setDisplayedRequestsCount((prev) => Math.min(prev + ITEMS_PER_LOAD, filteredRequests.length));
+    },
+    dependencyKey: `${activeTab}-${displayedRequestsCount}-${filteredRequests.length}`,
+    rootMargin: '100px',
+  });
 
   // Reset displayed requests count when filters change
   useEffect(() => {
-    setDisplayedRequestsCount(10);
-  }, [requestEmployeeFilter, requestTypeFilter, requestStatusFilter]);
+    setDisplayedRequestsCount(INITIAL_ITEMS);
+  }, [requestEmployeeFilter, requestTeamFilter, requestTypeFilter, requestStatusFilter, INITIAL_ITEMS]);
 
   // Auto-activate filter from URL parameters (dashboard navigation)
   useEffect(() => {
@@ -644,9 +682,95 @@ export default function AdminDocuments() {
     },
   });
 
+  // Rename document mutation
+  const renameMutation = useMutation({
+    mutationFn: async ({ docId, originalName, fileName }: { docId: number; originalName: string; fileName: string }) => {
+      const response = await fetch(`/api/documents/${docId}/rename`, {
+        method: 'PATCH',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ originalName, fileName }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al renombrar documento');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/documents/all'] });
+      queryClient.refetchQueries({ queryKey: ['/api/documents/all'] });
+      toast({
+        title: 'Documento renombrado',
+        description: 'El nombre del documento se actualizó correctamente',
+      });
+      setEditingDocumentId(null);
+      setEditingDocumentName('');
+    },
+    onError: (error: any) => {
+      console.error('Rename error:', error);
+      toast({
+        title: 'Error al renombrar',
+        description: error.message || 'No se pudo renombrar el documento',
+        variant: 'destructive',
+      });
+      setEditingDocumentId(null);
+      setEditingDocumentName('');
+    },
+  });
+
+  // Download payroll documents for a specific month as ZIP
+  const handleDownloadPayrollMonth = async (year: string, month: string) => {
+    try {
+      const monthKey = `${year}-${month}`;
+      setDownloadingZipMonth(monthKey);
+      
+      const response = await fetch(`/api/documents/payroll/download-month?year=${year}&month=${month}`, {
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Error downloading payroll file');
+      }
+
+      // Create blob from response
+      const blob = await response.blob();
+      
+      // Create download link and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Nominas_${year}_${month}.zip`;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Descargado',
+        description: `Nóminas de ${month}/${year} descargadas correctamente`,
+      });
+    } catch (error: any) {
+      console.error('Error downloading payroll ZIP:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Error al descargar las nóminas',
+        variant: 'destructive',
+      });
+    } finally {
+      setDownloadingZipMonth(null);
+    }
+  };
+
   // Use analyzeFileName from shared utilities
 
-  // ⚠️ PROTECTED - DO NOT MODIFY: Generate clean filename with document type, employee name and date
+  // PROTECTED - DO NOT MODIFY: Generate clean filename with document type, employee name and date
   // CRITICAL FUNCTION: User confirmed satisfaction with current functionality 
   // Fixed issues: "mar" false positive detection, correct type mapping, proper date extraction
   // This function is ESSENTIAL for document naming - preserve all logic completely
@@ -670,7 +794,7 @@ export default function AdminDocuments() {
     const currentYear = new Date().getFullYear();
     const year = yearMatch ? yearMatch[0] : currentYear.toString();
     
-    // ⚠️ PROTECTED - DO NOT MODIFY: Month detection logic fixed to avoid false positives
+    // PROTECTED - DO NOT MODIFY: Month detection logic fixed to avoid false positives
     // CRITICAL: Removed "mar" abbreviation to prevent detecting "mar" in "Marti" as "marzo"
     // Uses word boundaries and separators to ensure accurate month detection
     const monthMatch = fileName.match(/\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b/i) ||
@@ -907,7 +1031,7 @@ export default function AdminDocuments() {
     // Analyze all files and show preview
     const analysisResults = validFiles.map(file => {
       const analysis = analyzeFileName(file.name, employees || []);
-      // ⚠️ PROTECTED - DO NOT MODIFY: Convert document type name to ID for Select component
+      // PROTECTED - DO NOT MODIFY: Convert document type name to ID for Select component
       const documentTypeId = documentTypes.find(type => type.name === analysis.documentType)?.id || 'otros';
       return {
         file,
@@ -960,6 +1084,23 @@ export default function AdminDocuments() {
         ? prev.filter(id => id !== employeeId)
         : [...prev, employeeId]
     );
+  };
+
+  const addTeamToRequestSelection = (teamId: number) => {
+    const memberIds = resolveTeamMemberIds(teams, teamId);
+    if (memberIds.length === 0) return;
+    setSelectedEmployees((prev) => Array.from(new Set([...prev, ...memberIds])));
+  };
+
+  const toggleTeamInUploadSelection = (teamId: number) => {
+    const memberIds = resolveTeamMemberIds(teams, teamId);
+    if (memberIds.length === 0) return;
+    const allSelected = memberIds.every((id) => uploadSelectedEmployees.includes(id));
+    if (allSelected) {
+      setUploadSelectedEmployees((prev) => prev.filter((id) => !memberIds.includes(id)));
+      return;
+    }
+    setUploadSelectedEmployees((prev) => Array.from(new Set([...prev, ...memberIds])));
   };
   
   // Filtered employees for upload dialog search
@@ -1079,7 +1220,90 @@ export default function AdminDocuments() {
       };
     }
 
-    // 2. Empleados folder (employee documents)
+    // 2. Nóminas folder (payrolls organized by month)
+    const payrollDocs = filteredDocuments.filter((doc: Document) => {
+      if (doc.folderId) return false; // Skip accounting docs
+      const fileName = doc.originalName || doc.fileName || '';
+      const analysis = analyzeFileName(fileName, employees);
+      return analysis.documentType === payrollDocumentTypeName;
+    });
+
+    if (payrollDocs.length > 0 && !isSelfAccessOnly) {
+      const payrollYearSubfolders: FolderStructure = {};
+      const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                          'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      const monthKeywords = [
+        'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+      ];
+
+      // Organize payrolls by year and month
+      payrollDocs.forEach((doc: Document) => {
+        const fileName = (doc.originalName || doc.fileName || '').toLowerCase();
+        
+        // Try to extract year and month from filename
+        // Patterns: "Nomina Enero 2025", "Nómina_Febrero_2026.pdf", etc.
+        let year = '';
+        let monthIndex = -1;
+
+        // Extract year (look for 4-digit year like 2025, 2026)
+        const yearMatch = fileName.match(/20\d{2}/);
+        if (yearMatch) {
+          year = yearMatch[0];
+        } else {
+          // Fallback to creation date year
+          const createdDate = new Date(doc.createdAt);
+          year = createdDate.getFullYear().toString();
+        }
+
+        // Extract month (look for month names)
+        for (let i = 0; i < monthKeywords.length; i++) {
+          if (fileName.includes(monthKeywords[i])) {
+            monthIndex = i;
+            break;
+          }
+        }
+
+        // If no month found in filename, use creation date month
+        if (monthIndex === -1) {
+          const createdDate = new Date(doc.createdAt);
+          monthIndex = createdDate.getMonth();
+        }
+
+        const monthKey = (monthIndex + 1).toString().padStart(2, '0'); // "01", "02", etc.
+
+        // Create year folder if doesn't exist
+        if (!payrollYearSubfolders[year]) {
+          payrollYearSubfolders[year] = {
+            name: year,
+            icon: Folder,
+            documents: [],
+            subfolders: {}
+          };
+        }
+
+        // Create month folder if doesn't exist
+        if (!payrollYearSubfolders[year].subfolders![monthKey]) {
+          payrollYearSubfolders[year].subfolders![monthKey] = {
+            name: monthNames[monthIndex],
+            icon: Folder,
+            documents: []
+          };
+        }
+
+        // Add document to month folder
+        payrollYearSubfolders[year].subfolders![monthKey].documents.push(doc);
+      });
+
+      structure['nominas'] = {
+        name: 'Nóminas',
+        icon: DollarSign,
+        documents: [],
+        subfolders: payrollYearSubfolders
+      };
+    }
+
+    // 3. Empleados folder (employee documents)
     const employeeDocs = filteredDocuments.filter((doc: Document) => !doc.folderId && doc.userId !== user?.id);
     if (employeeDocs.length > 0 && !isSelfAccessOnly) {
       const employeeSubfolders: FolderStructure = {};
@@ -1136,7 +1360,7 @@ export default function AdminDocuments() {
       };
     }
 
-    // 3. Mis Documentos (current user's documents)
+    // 4. Mis Documentos (current user's documents)
     const myDocs = filteredDocuments.filter((doc: Document) => !doc.folderId && doc.userId === user?.id);
     if (myDocs.length > 0) {
       const mySubfolders: FolderStructure = {};
@@ -1196,7 +1420,7 @@ export default function AdminDocuments() {
 
 
 
-  // 🔒 SECURITY: Generate signed URL for secure document access
+  // SECURITY: Generate signed URL for secure document access
   const generateSignedUrl = async (docId: number): Promise<string | null> => {
     try {
       const data = await apiRequest('POST', `/api/documents/${docId}/generate-signed-url`);
@@ -1215,7 +1439,7 @@ export default function AdminDocuments() {
   const handleDownload = async (docId: number, fileName: string) => {
     setDownloadingDocId(docId);
     try {
-      // 🔒 SECURITY: Use signed URL instead of JWT token
+      // SECURITY: Use signed URL instead of JWT token
       const signedUrl = await generateSignedUrl(docId);
       if (!signedUrl) {
         setDownloadingDocId(null);
@@ -1319,6 +1543,40 @@ export default function AdminDocuments() {
     });
   };
 
+  // Handle inline document name editing
+  const handleStartEditDocument = (docId: number, currentName: string) => {
+    setEditingDocumentId(docId);
+    setEditingDocumentName(currentName);
+  };
+
+  const handleCancelEditDocument = () => {
+    setEditingDocumentId(null);
+    setEditingDocumentName('');
+  };
+
+  const handleSaveEditDocument = async (docId: number, currentDocument: any) => {
+    if (!editingDocumentName.trim()) {
+      toast({
+        title: 'Error',
+        description: 'El nombre del documento no puede estar vacío',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const trimmedName = editingDocumentName.trim();
+
+    // Extract filename and extension
+    const parts = trimmedName.split('.');
+    const extension = parts.length > 1 ? parts.pop() : '';
+    const nameWithoutExt = parts.join('.');
+
+    const fileName = extension ? `${nameWithoutExt}.${extension}` : trimmedName;
+    const originalName = trimmedName;
+
+    renameMutation.mutate({ docId, originalName, fileName });
+  };
+
   const handleSignature = async (signature: string) => {
     if (!signatureModal.documentId) return;
     
@@ -1354,7 +1612,7 @@ export default function AdminDocuments() {
               value={(documentsSource || []).filter(doc => {
                 const fileName = doc.originalName || doc.fileName || '';
                 const analysis = analyzeFileName(fileName, employees);
-                const isPayroll = analysis.documentType === 'Nómina';
+                const isPayroll = analysis.documentType === payrollDocumentTypeName;
                 const requiresSignature = doc.requiresSignature === true;
                 return (isPayroll || requiresSignature) && !doc.isAccepted;
               }).length}
@@ -1389,7 +1647,7 @@ export default function AdminDocuments() {
               value={(allDocuments || []).filter(doc => {
                 const fileName = doc.originalName || doc.fileName || '';
                 const analysis = analyzeFileName(fileName, employees);
-                const isPayroll = analysis.documentType === 'Nómina';
+                const isPayroll = analysis.documentType === payrollDocumentTypeName;
                 const requiresSignature = doc.requiresSignature === true;
                 return (isPayroll || requiresSignature) && !doc.isAccepted;
               }).length}
@@ -1512,7 +1770,7 @@ export default function AdminDocuments() {
                   Pulsa para seleccionar archivos
                 </p>
                 <p className="text-xs text-blue-600 mb-4">
-                  🤖 Detección inteligente: Los archivos se asignarán automáticamente al empleado correcto
+                  Detección inteligente: Los archivos se asignarán automáticamente al empleado correcto
                 </p>
                 <Button
                   onClick={() => fileInputRef.current?.click()}
@@ -1531,7 +1789,7 @@ export default function AdminDocuments() {
                     if (files.length > 0) {
                       const analysisResults = files.map(file => {
                         const analysis = analyzeFileName(file.name, employees);
-                        // ⚠️ PROTECTED - DO NOT MODIFY: Convert document type name to ID for Select component
+                        // PROTECTED - DO NOT MODIFY: Convert document type name to ID for Select component
                         const documentTypeId = documentTypes.find(type => type.name === analysis.documentType)?.id || 'otros';
                         return {
                           file,
@@ -1586,8 +1844,8 @@ export default function AdminDocuments() {
                       Se eliminarán:
                     </p>
                     <ul className="text-sm text-amber-700 dark:text-amber-300 space-y-1">
-                      <li>• Archivo: <strong>{lastCircularUpload.fileName}</strong></li>
-                      <li>• {lastCircularUpload.documentIds.length} copias enviadas a {lastCircularUpload.employeeCount} empleado(s)</li>
+                      <li>⬢ Archivo: <strong>{lastCircularUpload.fileName}</strong></li>
+                      <li>⬢ {lastCircularUpload.documentIds.length} copias enviadas a {lastCircularUpload.employeeCount} empleado(s)</li>
                     </ul>
                   </div>
                 )}
@@ -1632,31 +1890,15 @@ export default function AdminDocuments() {
 
         {activeTab === 'explorer' && (
           <div className="space-y-4">
-            {/* Filters Section - una sola fila (wrap en móvil) */}
+            {/* Filters Section - Two rows layout */}
             <div className="flex flex-col gap-3">
+              {/* Row 1: Document count, search bar, view mode toggle */}
               <div className="flex flex-wrap items-center gap-2 w-full">
                 {/* Contador */}
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
                   <span className="text-sm font-medium text-foreground">{totalDocumentsCount}</span>
                   <span className="text-sm text-muted-foreground">documento{totalDocumentsCount !== 1 ? 's' : ''}</span>
                 </div>
-
-                {/* Filtro empleado */}
-                {!isSelfAccessOnly && (
-                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                    <SelectTrigger className="w-[180px] sm:w-[200px]">
-                      <SelectValue placeholder="Todos los empleados" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los empleados</SelectItem>
-                      {employees.map((employee: Employee) => (
-                        <SelectItem key={employee.id} value={employee.id.toString()}>
-                          {employee.fullName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
 
                 {/* Buscador */}
                 <div className="flex-1 min-w-[200px]">
@@ -1693,6 +1935,165 @@ export default function AdminDocuments() {
                   </Button>
                 </div>
               </div>
+
+              {/* Row 2: Desktop filters (visible on md and up), Mobile filters button - No wrap, single line */}
+              {viewMode === 'list' && (
+              <div className="flex flex-nowrap items-center gap-1.5 w-full overflow-x-auto pb-1">
+                {/* Reset filters button - Always visible */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedEmployee('all');
+                    setSelectedEmployeeTeamFilter('all');
+                    setDocumentTypeFilter('all');
+                    setDocumentStartDate(undefined);
+                    setDocumentEndDate(undefined);
+                    setSignatureFilter('all');
+                    setBulkActionMode(false);
+                    setSelectedDocumentIds(new Set());
+                  }}
+                  className="h-9 w-9 p-0 flex-shrink-0"
+                  title="Resetear todos los filtros"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+
+                {/* Desktop filters - Hidden on mobile, visible on md and up - No wrap */}
+                <div className="hidden md:flex flex-nowrap items-center gap-1.5 flex-1 overflow-x-auto">
+                  {/* Filtro empleado - Searchable */}
+                  {!isSelfAccessOnly && (
+                    <EmployeeScopeDropdown
+                      employees={employees.map((employee) => ({ id: employee.id, fullName: employee.fullName }))}
+                      teams={teams.map((team) => ({ id: team.id, name: team.name }))}
+                      value={
+                        selectedEmployeeTeamFilter !== 'all'
+                          ? { type: 'team', id: parseInt(selectedEmployeeTeamFilter, 10) }
+                          : selectedEmployee !== 'all'
+                            ? { type: 'employee', id: parseInt(selectedEmployee, 10) }
+                            : { type: 'all' }
+                      }
+                      onChange={(value) => {
+                        if (value.type === 'all') {
+                          setSelectedEmployee('all');
+                          setSelectedEmployeeTeamFilter('all');
+                          return;
+                        }
+
+                        if (value.type === 'team') {
+                          setSelectedEmployeeTeamFilter(String(value.id));
+                          setSelectedEmployee('all');
+                          return;
+                        }
+
+                        setSelectedEmployee(String(value.id));
+                        setSelectedEmployeeTeamFilter('all');
+                      }}
+                      allLabel="Todos los empleados"
+                      buttonPlaceholder="Empleados"
+                      searchPlaceholder="Buscar empleado..."
+                      buttonClassName="w-[110px] sm:w-[130px] justify-between h-9 text-sm font-normal"
+                      contentClassName="w-[240px] p-0"
+                    />
+                  )}
+
+                  {/* Document type filter */}
+                  <Select value={documentTypeFilter} onValueChange={setDocumentTypeFilter}>
+                    <SelectTrigger className="w-[100px] h-9 text-sm">
+                      <SelectValue placeholder="Tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {importedDocumentTypes.map(type => (
+                        <SelectItem key={type.id} value={type.id}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Date range picker - Styled to match other filters */}
+                  <DatePickerPeriod
+                    startDate={documentStartDate}
+                    endDate={documentEndDate}
+                    onStartDateChange={setDocumentStartDate}
+                    onEndDateChange={setDocumentEndDate}
+                    className="w-[110px] h-9 text-sm"
+                  />
+
+                  {/* Signature status filter */}
+                  <Select value={signatureFilter} onValueChange={(value) => setSignatureFilter(value as 'all' | 'signed' | 'unsigned')}>
+                    <SelectTrigger className="w-[100px] h-9 text-sm">
+                      <SelectValue placeholder="Firma" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="signed">Firmados</SelectItem>
+                      <SelectItem value="unsigned">Sin firmar</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Mobile filters button - Only visible on mobile */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="md:hidden h-9 text-sm flex-shrink-0"
+                  onClick={() => setShowMobileFilters(true)}
+                >
+                  Filtros
+                </Button>
+
+                {/* Bulk action mode toggle */}
+                <Button
+                  variant={bulkActionMode ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setBulkActionMode(!bulkActionMode);
+                    if (!bulkActionMode) {
+                      setSelectedDocumentIds(new Set());
+                    }
+                  }}
+                  className="h-9 text-sm flex-shrink-0"
+                >
+                  {bulkActionMode ? 'Cancelar' : 'Seleccionar'}
+                </Button>
+
+                {/* Bulk action icons - Download */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!bulkActionMode || selectedDocumentIds.size === 0}
+                  onClick={() => {
+                    const documentsToDownload = displayedDocuments.filter(doc => selectedDocumentIds.has(doc.id));
+                    documentsToDownload.forEach(doc => {
+                      handleDownload(doc.id, doc.originalName || doc.fileName);
+                    });
+                  }}
+                  className="h-9 w-9 p-0 flex-shrink-0"
+                  title={selectedDocumentIds.size > 0 ? `Descargar ${selectedDocumentIds.size} archivo${selectedDocumentIds.size !== 1 ? 's' : ''}` : 'Descargar (selecciona documentos primero)'}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+
+                {/* Bulk action icons - Delete */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!bulkActionMode || selectedDocumentIds.size === 0}
+                  onClick={() => {
+                    setBulkDeleteConfirm({
+                      show: true,
+                      documentCount: selectedDocumentIds.size
+                    });
+                  }}
+                  className="h-9 w-9 p-0 text-destructive hover:text-destructive flex-shrink-0"
+                  title={selectedDocumentIds.size > 0 ? `Eliminar ${selectedDocumentIds.size} archivo${selectedDocumentIds.size !== 1 ? 's' : ''}` : 'Eliminar (selecciona documentos primero)'}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              )}
             </div>
             
             {/* Toggle Pending Signature Filter */}
@@ -1726,45 +2127,155 @@ export default function AdminDocuments() {
                       return (
                         <div 
                           key={document.id} 
-                          className="bg-card dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600"
+                          className={`rounded-xl shadow-sm border overflow-hidden transition-all ${
+                            editingDocumentId === document.id
+                              ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-700/60'
+                              : selectedDocumentIds.has(document.id)
+                                ? 'border-blue-400 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:shadow-md'
+                                : 'bg-card dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600'
+                          }`}
                         >
                           <div className="flex items-stretch">
-                            {/* Columna de icono - centrado verticalmente */}
+                            {/* Checkbox o Icono */}
                             <div className="flex items-center justify-center px-2 md:px-3 flex-shrink-0">
-                              <FileIcon className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
+                              {bulkActionMode ? (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newSelected = new Set(selectedDocumentIds);
+                                    if (newSelected.has(document.id)) {
+                                      newSelected.delete(document.id);
+                                    } else {
+                                      newSelected.add(document.id);
+                                    }
+                                    setSelectedDocumentIds(newSelected);
+                                  }}
+                                  className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                                    selectedDocumentIds.has(document.id)
+                                      ? 'border-blue-500 bg-blue-500'
+                                      : 'border-gray-300 dark:border-gray-600 bg-transparent hover:border-blue-400'
+                                  }`}
+                                >
+                                  {selectedDocumentIds.has(document.id) && (
+                                    <Check className="h-3 w-3 text-white" />
+                                  )}
+                                </button>
+                              ) : (
+                                <FileIcon className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
+                              )}
                             </div>
                             
                             {/* Contenido principal */}
                             <div 
                               className="flex items-start p-2 md:p-3 py-2 min-w-0 flex-1 cursor-pointer"
-                              onClick={() => handleViewDocument(document.id)}
+                              onClick={() => {
+                                if (bulkActionMode) {
+                                  const newSelected = new Set(selectedDocumentIds);
+                                  if (newSelected.has(document.id)) {
+                                    newSelected.delete(document.id);
+                                  } else {
+                                    newSelected.add(document.id);
+                                  }
+                                  setSelectedDocumentIds(newSelected);
+                                } else {
+                                  handleViewDocument(document.id);
+                                }
+                              }}
                             >
                               <div className="min-w-0 flex-1 space-y-1">
-                                <p className="font-medium text-sm md:text-base text-gray-900 dark:text-gray-100 line-clamp-2 md:truncate leading-tight">
-                                  {document.folderId ? document.fileName : (document.originalName || document.fileName)}
-                                </p>
+                                {editingDocumentId === document.id ? (
+                                  <div 
+                                    className="flex items-center gap-1 min-w-0 h-7" 
+                                    onClick={(e) => e.stopPropagation()}
+                                    onKeyDown={(e) => {
+                                      e.stopPropagation();
+                                      if (e.key === 'Enter') {
+                                        handleSaveEditDocument(document.id, document);
+                                      } else if (e.key === 'Escape') {
+                                        handleCancelEditDocument();
+                                      }
+                                    }}
+                                  >
+                                    <Input
+                                      autoFocus
+                                      value={editingDocumentName}
+                                      onChange={(e) => setEditingDocumentName(e.target.value)}
+                                      className="text-sm md:text-base font-medium p-0.5 h-7 border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                      placeholder="Nombre del documento"
+                                    />
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleSaveEditDocument(document.id, document)}
+                                      disabled={renameMutation.isPending}
+                                      className="h-7 w-7 p-0 flex-shrink-0"
+                                    >
+                                      <Check className="h-4 w-4 text-green-600" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={handleCancelEditDocument}
+                                      disabled={renameMutation.isPending}
+                                      className="h-7 w-7 p-0 flex-shrink-0"
+                                    >
+                                      <X className="h-4 w-4 text-red-600" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-start gap-1">
+                                    <p 
+                                      onClick={(e) => e.stopPropagation()}
+                                      onDoubleClick={(e) => { e.stopPropagation(); handleStartEditDocument(document.id, document.folderId ? document.fileName : (document.originalName || document.fileName)); }}
+                                      className="font-medium text-sm md:text-base text-gray-900 dark:text-gray-100 line-clamp-2 md:truncate leading-tight cursor-text hover:bg-muted/50 rounded px-1 py-0.5 transition-colors select-none min-w-0 flex-1"
+                                      title="Doble clic para editar"
+                                    >
+                                      {document.folderId ? document.fileName : (document.originalName || document.fileName)}
+                                    </p>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="md:hidden h-6 w-6 p-0 flex-shrink-0"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleStartEditDocument(document.id, document.folderId ? document.fileName : (document.originalName || document.fileName));
+                                      }}
+                                      aria-label="Editar nombre"
+                                      title="Editar nombre"
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </div>
+                                )}
                                 {/* Info en layout adaptativo */}
                                 <div className="flex flex-col md:flex-row md:items-center gap-0.5 md:gap-2 text-xs md:text-sm">
                                   <div className="flex items-center gap-1.5">
                                     <span className="font-semibold text-muted-foreground">{formatFileSize(document.fileSize)}</span>
-                                    <span className="text-muted-foreground/60">•</span>
+                                    <span className="text-muted-foreground/60">"</span>
                                     <span className="text-muted-foreground">{format(new Date(document.createdAt), 'd MMM yyyy', { locale: es })}</span>
+                                    {/* Badge de documento no visto */}
+                                    {!document.isViewed && (
+                                      <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                                        Nuevo
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="flex items-center gap-1.5 text-muted-foreground">
-                                    <span className="hidden md:inline text-muted-foreground/60">•</span>
+                                    <span className="hidden md:inline text-muted-foreground/60">"</span>
                                     <span className="truncate">Por: {document.user?.fullName || 'Usuario desconocido'}</span>
                                   </div>
                                 </div>
                               </div>
                             </div>
                           
-                            {/* Botones de acción: solo Firmar cuando aplica (descargar/borrar se mueven al modal) */}
+                            {/* Botones de accion: solo Firmar cuando aplica (descargar/borrar se mueven al modal) */}
                             <div className="flex gap-0.5 md:gap-1 items-center px-1 md:px-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               {/* Firmar (solo si aplica) */}
                               {(() => {
                                 const fileName = document.originalName || document.fileName || '';
                                 const analysis = analyzeFileName(fileName, employees);
-                                const requiresSignature = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                const requiresSignature = analysis.documentType === payrollDocumentTypeName || document.requiresSignature;
                                 return requiresSignature && 
                                        document.userId === user?.id && 
                                        !document.isAccepted && 
@@ -1786,40 +2297,35 @@ export default function AdminDocuments() {
                               {/* Descargar/Borrar removidos en la lista; disponibles en el modal de vista previa */}
                             </div>
                           
-                            {/* Sección coloreada de estado - extremo derecho, ultra compacta en móvil */}
+                            {/* Seccion coloreada de estado - extremo derecho, ultra compacta en movil */}
                             <div className={`hidden md:flex md:w-[110px] flex items-center justify-center flex-shrink-0 px-2 md:px-3 ${
                               (() => {
-                                // Si es documento de contabilidad, color según tipo de movimiento
                                 if (document.folderId && document.accountingType) {
                                   return document.accountingType === 'expense' 
                                     ? 'bg-red-100 dark:bg-red-900/40' 
                                     : 'bg-green-100 dark:bg-green-900/40';
                                 }
-                                // Para otros documentos, color según estado de firma
                                 const fileName = document.originalName || document.fileName || '';
                                 const analysis = analyzeFileName(fileName, employees);
-                                const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                const requiresSignatureBadge = analysis.documentType === payrollDocumentTypeName || document.requiresSignature;
                                 if (requiresSignatureBadge) {
                                   return document.isAccepted 
                                     ? 'bg-green-100 dark:bg-green-900/40' 
                                     : 'bg-yellow-100 dark:bg-yellow-900/40';
                                 }
-                                // Por defecto, fondo gris suave
                                 return 'bg-gray-100 dark:bg-gray-800';
                               })()
                             }`}>
                               <span className={`text-[10px] md:text-xs font-semibold text-center leading-tight ${
                                 (() => {
-                                  // Si es documento de contabilidad
                                   if (document.folderId && document.accountingType) {
                                     return document.accountingType === 'expense' 
                                       ? 'text-red-700 dark:text-red-300' 
                                       : 'text-green-700 dark:text-green-300';
                                   }
-                                  // Para otros documentos, color según estado de firma
                                   const fileName = document.originalName || document.fileName || '';
                                   const analysis = analyzeFileName(fileName, employees);
-                                  const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                  const requiresSignatureBadge = analysis.documentType === payrollDocumentTypeName || document.requiresSignature;
                                   if (requiresSignatureBadge) {
                                     return document.isAccepted 
                                       ? 'text-green-700 dark:text-green-300' 
@@ -1829,22 +2335,19 @@ export default function AdminDocuments() {
                                 })()
                               }`}>
                                 {(() => {
-                                  // Si es documento de contabilidad
                                   if (document.folderId && document.accountingType) {
                                     return document.accountingType === 'expense' ? 'Gasto' : 'Ingreso';
                                   }
-                                  // Para otros documentos, mostrar estado de firma
                                   const fileName = document.originalName || document.fileName || '';
                                   const analysis = analyzeFileName(fileName, employees);
-                                  const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                  const requiresSignatureBadge = analysis.documentType === payrollDocumentTypeName || document.requiresSignature;
                                   if (requiresSignatureBadge) {
-                                    return document.signedAt ? '✓ Firmada' : 'Pendiente firma';
+                                    return document.signedAt ? 'Firmada' : 'Pendiente firma';
                                   }
                                   return 'Documento';
                                 })()}
                               </span>
                             </div>
-
                             {/* Indicador compacto móvil - Ocupa toda la altura */}
                             <div className={`md:hidden flex items-stretch flex-shrink-0 w-1 rounded-full ${
                               (() => {
@@ -1857,7 +2360,7 @@ export default function AdminDocuments() {
                                 // Para otros documentos, color según estado de firma
                                 const fileName = document.originalName || document.fileName || '';
                                 const analysis = analyzeFileName(fileName, employees);
-                                const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                const requiresSignatureBadge = analysis.documentType === payrollDocumentTypeName || document.requiresSignature;
                                 if (requiresSignatureBadge) {
                                   return document.signedAt 
                                     ? 'bg-green-500 dark:bg-green-600' 
@@ -1874,9 +2377,9 @@ export default function AdminDocuments() {
                               // Para otros documentos, mostrar estado de firma
                               const fileName = document.originalName || document.fileName || '';
                               const analysis = analyzeFileName(fileName, employees);
-                              const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                              const requiresSignatureBadge = analysis.documentType === payrollDocumentTypeName || document.requiresSignature;
                               if (requiresSignatureBadge) {
-                                return document.signedAt ? '✓ Firmada' : 'Pendiente firma';
+                                return document.signedAt ? 'Firmada' : 'Pendiente firma';
                               }
                               return 'Documento';
                             })()} />
@@ -1888,14 +2391,24 @@ export default function AdminDocuments() {
                     {/* Elemento observador para scroll infinito */}
                     {hasMoreToDisplay && (
                       <div ref={loadMoreRef} className="py-4">
-                        <div className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
+                        <div className="flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
                           {isFetchingNextPage ? (
                             <>
                               <LoadingSpinner size="sm" />
                               <span>Cargando más documentos...</span>
                             </>
                           ) : (
-                            <span>Mostrando {displayedDocuments.length} de {filteredDocuments.length}</span>
+                            <>
+                              <span>Mostrando {displayedDocuments.length} de {filteredDocuments.length}</span>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={loadMoreDocuments}
+                              >
+                                Cargar más
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -2074,6 +2587,12 @@ export default function AdminDocuments() {
                                     type="button"
                                     className="w-full flex items-center justify-between p-3 bg-card dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition-all"
                                     onClick={(e) => {
+                                      // Check if this is a payroll month and click was on the download button
+                                      if ((e.target as HTMLElement).closest('button[data-download-btn]')) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        return;
+                                      }
                                       e.preventDefault();
                                       setCurrentFolderPath(`${currentFolderPath}/${subfolderId}`);
                                     }}
@@ -2094,9 +2613,45 @@ export default function AdminDocuments() {
                                         <p className="text-sm text-muted-foreground">{subfolderTotalDocs} archivo{subfolderTotalDocs !== 1 ? 's' : ''}</p>
                                       </div>
                                     </div>
-                                    <div className="flex-shrink-0">
-                                      <SubfolderIcon className="h-5 w-5 text-muted-foreground" />
-                                    </div>
+                                    {(() => {
+                                      // Check if this is a payroll month folder
+                                      const pathParts = currentFolderPath.split('/');
+                                      const isPayrollMonthFolder = pathParts.length === 2 && pathParts[0] === 'nominas' && !isNaN(parseInt(subfolderId));
+                                      
+                                      if (isPayrollMonthFolder) {
+                                        const year = pathParts[1];
+                                        const month = subfolderId;
+                                        const isDownloading = downloadingZipMonth === `${year}-${month}`;
+                                        
+                                        return (
+                                          <button
+                                            key={`download-${year}-${month}`}
+                                            data-download-btn
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.preventDefault();
+                                              e.stopPropagation();
+                                              handleDownloadPayrollMonth(year, month);
+                                            }}
+                                            disabled={isDownloading}
+                                            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 transition-colors text-blue-700 dark:text-blue-300 flex-shrink-0 disabled:opacity-50"
+                                            title="Descargar nóminas del mes"
+                                          >
+                                            {isDownloading ? (
+                                              <LoadingSpinner size="sm" />
+                                            ) : (
+                                              <Download className="h-4 w-4" />
+                                            )}
+                                          </button>
+                                        );
+                                      }
+                                      
+                                      return (
+                                        <div className="flex-shrink-0">
+                                          <SubfolderIcon className="h-5 w-5 text-muted-foreground" />
+                                        </div>
+                                      );
+                                    })()}
                                   </button>
                                 );
                               })}
@@ -2111,7 +2666,11 @@ export default function AdminDocuments() {
                                   return (
                                     <div 
                                       key={document.id} 
-                                      className="bg-card dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600"
+                                      className={`rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all ${
+                                        editingDocumentId === document.id
+                                          ? 'bg-gray-100 dark:bg-gray-700/60'
+                                          : 'bg-card dark:bg-gray-800 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600'
+                                      }`}
                                     >
                                       <div className="flex items-stretch">
                                         {/* Columna de icono - centrado verticalmente */}
@@ -2125,18 +2684,82 @@ export default function AdminDocuments() {
                                           onClick={() => handleViewDocument(document.id)}
                                         >
                                           <div className="min-w-0 flex-1 space-y-1">
-                                            <p className="font-medium text-sm md:text-base text-gray-900 dark:text-gray-100 line-clamp-2 md:truncate leading-tight">
-                                              {document.folderId ? document.fileName : (document.originalName || document.fileName)}
-                                            </p>
+                                            {editingDocumentId === document.id ? (
+                                              <div 
+                                                className="flex items-center gap-1 min-w-0 h-7" 
+                                                onClick={(e) => e.stopPropagation()}
+                                                onKeyDown={(e) => {
+                                                  e.stopPropagation();
+                                                  if (e.key === 'Enter') {
+                                                    handleSaveEditDocument(document.id, document);
+                                                  } else if (e.key === 'Escape') {
+                                                    handleCancelEditDocument();
+                                                  }
+                                                }}
+                                              >
+                                                <Input
+                                                  autoFocus
+                                                  value={editingDocumentName}
+                                                  onChange={(e) => setEditingDocumentName(e.target.value)}
+                                                  className="text-sm md:text-base font-medium p-0.5 h-7 border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                                  placeholder="Nombre del documento"
+                                                />
+                                                <Button
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  onClick={() => handleSaveEditDocument(document.id, document)}
+                                                  disabled={renameMutation.isPending}
+                                                  className="h-7 w-7 p-0 flex-shrink-0"
+                                                >
+                                                  <Check className="h-4 w-4 text-green-600" />
+                                                </Button>
+                                                <Button
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  onClick={handleCancelEditDocument}
+                                                  disabled={renameMutation.isPending}
+                                                  className="h-7 w-7 p-0 flex-shrink-0"
+                                                >
+                                                  <X className="h-4 w-4 text-red-600" />
+                                                </Button>
+                                              </div>
+                                            ) : (
+                                              <div className="flex items-start gap-1">
+                                                <p 
+                                                  onClick={(e) => e.stopPropagation()}
+                                                  onDoubleClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStartEditDocument(document.id, document.folderId ? document.fileName : (document.originalName || document.fileName));
+                                                  }}
+                                                  className="font-medium text-sm md:text-base text-gray-900 dark:text-gray-100 line-clamp-2 md:truncate leading-tight cursor-text hover:bg-muted/50 rounded px-1 py-0.5 transition-colors select-none min-w-0 flex-1"
+                                                  title="Doble clic para editar"
+                                                >
+                                                  {document.folderId ? document.fileName : (document.originalName || document.fileName)}
+                                                </p>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  className="md:hidden h-6 w-6 p-0 flex-shrink-0"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStartEditDocument(document.id, document.folderId ? document.fileName : (document.originalName || document.fileName));
+                                                  }}
+                                                  aria-label="Editar nombre"
+                                                  title="Editar nombre"
+                                                >
+                                                  <Pencil className="h-3.5 w-3.5" />
+                                                </Button>
+                                              </div>
+                                            )}
                                             {/* Info en layout adaptativo */}
                                             <div className="flex flex-col md:flex-row md:items-center gap-0.5 md:gap-2 text-xs md:text-sm">
                                               <div className="flex items-center gap-1.5">
                                                 <span className="font-semibold text-muted-foreground">{formatFileSize(document.fileSize)}</span>
-                                                <span className="text-muted-foreground/60">•</span>
+                                                <span className="text-muted-foreground/60">⬢</span>
                                                 <span className="text-muted-foreground">{format(new Date(document.createdAt), 'd MMM yyyy', { locale: es })}</span>
                                               </div>
                                               <div className="flex items-center gap-1.5 text-muted-foreground">
-                                                <span className="hidden md:inline text-muted-foreground/60">•</span>
+                                                <span className="hidden md:inline text-muted-foreground/60">⬢</span>
                                                 <span className="truncate">Por: {document.user?.fullName || 'Usuario desconocido'}</span>
                                               </div>
                                             </div>
@@ -2160,7 +2783,7 @@ export default function AdminDocuments() {
                                             // Para otros documentos, color según estado de firma
                                             const fileName = document.originalName || document.fileName || '';
                                             const analysis = analyzeFileName(fileName, employees);
-                                            const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                            const requiresSignatureBadge = analysis.documentType === payrollDocumentTypeName || document.requiresSignature;
                                             if (requiresSignatureBadge) {
                                               return document.isAccepted 
                                                 ? 'bg-green-100 dark:bg-green-900/40' 
@@ -2181,7 +2804,7 @@ export default function AdminDocuments() {
                                               // Para otros documentos, color según estado de firma
                                               const fileName = document.originalName || document.fileName || '';
                                               const analysis = analyzeFileName(fileName, employees);
-                                              const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                              const requiresSignatureBadge = analysis.documentType === payrollDocumentTypeName || document.requiresSignature;
                                               if (requiresSignatureBadge) {
                                                 return document.isAccepted 
                                                   ? 'text-green-700 dark:text-green-300' 
@@ -2198,9 +2821,9 @@ export default function AdminDocuments() {
                                               // Para otros documentos, mostrar estado de firma
                                               const fileName = document.originalName || document.fileName || '';
                                               const analysis = analyzeFileName(fileName, employees);
-                                              const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                              const requiresSignatureBadge = analysis.documentType === payrollDocumentTypeName || document.requiresSignature;
                                               if (requiresSignatureBadge) {
-                                                return document.signedAt ? '✓ Firmada' : 'Pendiente firma';
+                                                return document.signedAt ? 'Firmada' : 'Pendiente firma';
                                               }
                                               return 'Documento';
                                             })()}
@@ -2219,7 +2842,7 @@ export default function AdminDocuments() {
                                             // Para otros documentos, color según estado de firma
                                             const fileName = document.originalName || document.fileName || '';
                                             const analysis = analyzeFileName(fileName, employees);
-                                            const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                            const requiresSignatureBadge = analysis.documentType === payrollDocumentTypeName || document.requiresSignature;
                                             if (requiresSignatureBadge) {
                                               return document.isAccepted 
                                                 ? 'bg-green-500 dark:bg-green-600' 
@@ -2236,9 +2859,9 @@ export default function AdminDocuments() {
                                           // Para otros documentos, mostrar estado de firma
                                           const fileName = document.originalName || document.fileName || '';
                                           const analysis = analyzeFileName(fileName, employees);
-                                          const requiresSignatureBadge = analysis.documentType === 'Nómina' || document.requiresSignature;
+                                          const requiresSignatureBadge = analysis.documentType === payrollDocumentTypeName || document.requiresSignature;
                                           if (requiresSignatureBadge) {
-                                            return document.isAccepted ? '✓ Firmada' : 'Pendiente firma';
+                                            return document.isAccepted ? 'Firmada' : 'Pendiente firma';
                                           }
                                           return 'Documento';
                                         })()} />
@@ -2284,7 +2907,7 @@ export default function AdminDocuments() {
                       }, {});
 
                       return Object.entries(documentsByEmployee).map(([employeeId, employeeData]: [string, any]) => {
-                        // ⚠️ PROTECTED - DO NOT MODIFY: Smart document categorization using analyzeFileName
+                        // PROTECTED - DO NOT MODIFY: Smart document categorization using analyzeFileName
                         // Agrupar documentos por tipo usando la función inteligente de análisis
                         const docsByType = employeeData.documents.reduce((acc: any, doc: Document) => {
                           const fileName = doc.originalName || doc.fileName || '';
@@ -2461,14 +3084,24 @@ export default function AdminDocuments() {
                     {/* Elemento observador para scroll infinito */}
                     {hasMoreToDisplay && (
                       <div ref={loadMoreRef} className="py-4">
-                        <div className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
+                        <div className="flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-sm">
                           {isFetchingNextPage ? (
                             <>
                               <LoadingSpinner size="sm" />
                               <span>Cargando más documentos...</span>
                             </>
                           ) : (
-                            <span>Mostrando {displayedDocuments.length} de {filteredDocuments.length}</span>
+                            <>
+                              <span>Mostrando {displayedDocuments.length} de {filteredDocuments.length}</span>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={loadMoreDocuments}
+                              >
+                                Cargar más
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -2504,47 +3137,37 @@ export default function AdminDocuments() {
                 </div>
                 
                 {/* Filtro Empleado - Solo desktop */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-[180px] justify-between font-normal hidden md:flex">
-                      <span className="truncate">
-                        {requestEmployeeFilter === "all" 
-                          ? "Todos los empleados" 
-                          : employees.find((e: Employee) => e.id === parseInt(requestEmployeeFilter))?.fullName || "Empleado"}
-                      </span>
-                      <User className="w-4 h-4 ml-2 flex-shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[240px] p-0" align="start">
-                    <div className="p-2 border-b">
-                      <Input
-                        placeholder="Buscar empleado..."
-                        value={requestEmployeeSearch}
-                        onChange={(e) => setRequestEmployeeSearch(e.target.value)}
-                        className="h-8"
-                      />
-                    </div>
-                    <div className="max-h-[200px] overflow-y-auto p-1">
-                      <button
-                        onClick={() => { setRequestEmployeeFilter("all"); setRequestEmployeeSearch(""); }}
-                        className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors ${requestEmployeeFilter === "all" ? "bg-muted font-medium" : ""}`}
-                      >
-                        Todos los empleados
-                      </button>
-                      {employees
-                        .filter((emp: Employee) => !requestEmployeeSearch || emp.fullName.toLowerCase().includes(requestEmployeeSearch.toLowerCase()))
-                        .map((emp: Employee) => (
-                          <button
-                            key={`request-emp-${emp.id}`}
-                            onClick={() => { setRequestEmployeeFilter(emp.id.toString()); setRequestEmployeeSearch(""); }}
-                            className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors truncate ${requestEmployeeFilter === emp.id.toString() ? "bg-muted font-medium" : ""}`}
-                          >
-                            {emp.fullName}
-                          </button>
-                        ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                <div className="hidden md:block">
+                  <EmployeeScopeDropdown
+                    employees={employees.map((employee) => ({ id: employee.id, fullName: employee.fullName }))}
+                    teams={teams.map((team) => ({ id: team.id, name: team.name }))}
+                    value={
+                      requestTeamFilter !== 'all'
+                        ? { type: 'team', id: parseInt(requestTeamFilter, 10) }
+                        : requestEmployeeFilter !== 'all'
+                          ? { type: 'employee', id: parseInt(requestEmployeeFilter, 10) }
+                          : { type: 'all' }
+                    }
+                    onChange={(value) => {
+                      if (value.type === 'all') {
+                        setRequestEmployeeFilter('all');
+                        setRequestTeamFilter('all');
+                        return;
+                      }
+
+                      if (value.type === 'team') {
+                        setRequestTeamFilter(String(value.id));
+                        setRequestEmployeeFilter('all');
+                        return;
+                      }
+
+                      setRequestEmployeeFilter(String(value.id));
+                      setRequestTeamFilter('all');
+                    }}
+                    buttonClassName="w-[180px] justify-between font-normal"
+                    contentClassName="w-[240px] p-0"
+                  />
+                </div>
                 
                 {/* Filtro Tipo de Documento - Solo desktop */}
                 <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
@@ -2586,47 +3209,37 @@ export default function AdminDocuments() {
               {/* Fila 2: Filtros móviles */}
               <div className="flex md:hidden items-center gap-2">
                 {/* Filtro Empleado móvil */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="flex-1 justify-between font-normal text-xs h-9">
-                      <span className="truncate">
-                        {requestEmployeeFilter === "all" 
-                          ? "Todos" 
-                          : employees.find((e: Employee) => e.id === parseInt(requestEmployeeFilter))?.fullName || "Empleado"}
-                      </span>
-                      <User className="w-3.5 h-3.5 ml-1 flex-shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[240px] p-0" align="start">
-                    <div className="p-2 border-b">
-                      <Input
-                        placeholder="Buscar empleado..."
-                        value={requestEmployeeSearch}
-                        onChange={(e) => setRequestEmployeeSearch(e.target.value)}
-                        className="h-8"
-                      />
-                    </div>
-                    <div className="max-h-[200px] overflow-y-auto p-1">
-                      <button
-                        onClick={() => { setRequestEmployeeFilter("all"); setRequestEmployeeSearch(""); }}
-                        className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors ${requestEmployeeFilter === "all" ? "bg-muted font-medium" : ""}`}
-                      >
-                        Todos
-                      </button>
-                      {employees
-                        .filter((emp: Employee) => !requestEmployeeSearch || emp.fullName.toLowerCase().includes(requestEmployeeSearch.toLowerCase()))
-                        .map((emp: Employee) => (
-                          <button
-                            key={`request-emp-mob-${emp.id}`}
-                            onClick={() => { setRequestEmployeeFilter(emp.id.toString()); setRequestEmployeeSearch(""); }}
-                            className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors truncate ${requestEmployeeFilter === emp.id.toString() ? "bg-muted font-medium" : ""}`}
-                          >
-                            {emp.fullName}
-                          </button>
-                        ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                <EmployeeScopeDropdown
+                  employees={employees.map((employee) => ({ id: employee.id, fullName: employee.fullName }))}
+                  teams={teams.map((team) => ({ id: team.id, name: team.name }))}
+                  value={
+                    requestTeamFilter !== 'all'
+                      ? { type: 'team', id: parseInt(requestTeamFilter, 10) }
+                      : requestEmployeeFilter !== 'all'
+                        ? { type: 'employee', id: parseInt(requestEmployeeFilter, 10) }
+                        : { type: 'all' }
+                  }
+                  onChange={(value) => {
+                    if (value.type === 'all') {
+                      setRequestEmployeeFilter('all');
+                      setRequestTeamFilter('all');
+                      return;
+                    }
+
+                    if (value.type === 'team') {
+                      setRequestTeamFilter(String(value.id));
+                      setRequestEmployeeFilter('all');
+                      return;
+                    }
+
+                    setRequestEmployeeFilter(String(value.id));
+                    setRequestTeamFilter('all');
+                  }}
+                  allLabel="Todos los empleados"
+                  buttonPlaceholder="Empleado"
+                  buttonClassName="flex-1 justify-between font-normal text-xs h-9"
+                  contentClassName="w-[240px] p-0"
+                />
                 
                 {/* Filtro Tipo móvil */}
                 <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
@@ -2688,7 +3301,7 @@ export default function AdminDocuments() {
                               </div>
                               {request.message && (
                                 <div className="flex items-center gap-1.5 text-muted-foreground">
-                                  <span className="hidden md:inline text-muted-foreground/60">•</span>
+                                  <span className="hidden md:inline text-muted-foreground/60">⬢</span>
                                   <span className="italic truncate">"{request.message}"</span>
                                 </div>
                               )}
@@ -2773,7 +3386,17 @@ export default function AdminDocuments() {
                 
                 {/* Load more trigger */}
                 {displayedRequestsCount < filteredRequests.length && (
-                  <div ref={loadMoreRequestsRef} className="h-px" />
+                  <div className="flex flex-col items-center gap-2 py-2">
+                    <div ref={loadMoreRequestsRef} className="h-px w-full" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDisplayedRequestsCount((prev) => Math.min(prev + ITEMS_PER_LOAD, filteredRequests.length))}
+                    >
+                      Cargar más solicitudes
+                    </Button>
+                  </div>
                 )}
               </div>
             ) : (
@@ -2933,6 +3556,30 @@ export default function AdminDocuments() {
                       Seleccionar todos
                     </button>
                   </div>
+
+                  {teams.length > 0 ? (
+                    <div className="mb-3">
+                      <p className="text-xs font-medium text-muted-foreground mb-2">Equipos</p>
+                      <div className="flex flex-wrap gap-2">
+                        {teams.map((team) => {
+                          const teamMemberIds = resolveTeamMemberIds(teams, team.id);
+                          const allSelected = teamMemberIds.length > 0 && teamMemberIds.every((id) => uploadSelectedEmployees.includes(id));
+                          return (
+                            <Button
+                              key={`upload-team-${team.id}`}
+                              type="button"
+                              variant={allSelected ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => toggleTeamInUploadSelection(team.id)}
+                              className="h-7 text-xs"
+                            >
+                              {team.name}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
                   
                   {/* Search */}
                   <div className="relative mb-3">
@@ -3144,6 +3791,173 @@ export default function AdminDocuments() {
           </DialogContent>
         </Dialog>
 
+        {/* Bulk Delete Confirmation Dialog */}
+        <Dialog open={bulkDeleteConfirm.show} onOpenChange={(open) => !open && setBulkDeleteConfirm({ show: false, documentCount: 0 })}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center text-red-600">
+                <Trash2 className="h-5 w-5 mr-2" />
+                Confirmar Eliminación de Documentos
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <p className="text-foreground">
+                ¿Estás seguro de que quieres eliminar {bulkDeleteConfirm.documentCount} documento{bulkDeleteConfirm.documentCount !== 1 ? 's' : ''}?
+              </p>
+              
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 rounded-lg">
+                <p className="text-sm text-red-700 dark:text-red-300">
+                  ⚠️ Esta acción no se puede deshacer. Los archivos se eliminarán permanentemente del sistema.
+                </p>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setBulkDeleteConfirm({ show: false, documentCount: 0 })}
+                  disabled={deleteMutation.isPending}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  variant="destructive"
+                  onClick={() => {
+                    const documentsToDelete = displayedDocuments.filter(doc => selectedDocumentIds.has(doc.id));
+                    documentsToDelete.forEach(doc => {
+                      deleteMutation.mutate(doc.id);
+                    });
+                    setSelectedDocumentIds(new Set());
+                    setBulkDeleteConfirm({ show: false, documentCount: 0 });
+                  }}
+                  disabled={deleteMutation.isPending}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar Permanentemente'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Mobile Filters Dialog */}
+        <Dialog open={showMobileFilters} onOpenChange={setShowMobileFilters}>
+          <DialogContent className="sm:max-w-[350px]">
+            <DialogHeader>
+              <DialogTitle>Filtros</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+              {/* Employee filter - Mobile */}
+              {!isSelfAccessOnly && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Empleado</Label>
+                  <EmployeeScopeDropdown
+                    employees={employees.map((employee) => ({ id: employee.id, fullName: employee.fullName }))}
+                    teams={teams.map((team) => ({ id: team.id, name: team.name }))}
+                    value={
+                      selectedEmployeeTeamFilter !== 'all'
+                        ? { type: 'team', id: parseInt(selectedEmployeeTeamFilter, 10) }
+                        : selectedEmployee !== 'all'
+                          ? { type: 'employee', id: parseInt(selectedEmployee, 10) }
+                          : { type: 'all' }
+                    }
+                    onChange={(value) => {
+                      if (value.type === 'all') {
+                        setSelectedEmployee('all');
+                        setSelectedEmployeeTeamFilter('all');
+                        return;
+                      }
+
+                      if (value.type === 'team') {
+                        setSelectedEmployeeTeamFilter(String(value.id));
+                        setSelectedEmployee('all');
+                        return;
+                      }
+
+                      setSelectedEmployee(String(value.id));
+                      setSelectedEmployeeTeamFilter('all');
+                    }}
+                    allLabel="Todos los empleados"
+                    buttonPlaceholder="Empleados"
+                    searchPlaceholder="Buscar empleado..."
+                    buttonClassName="w-full justify-between h-9 text-sm font-normal"
+                    contentClassName="w-[240px] p-0"
+                  />
+                </div>
+              )}
+
+              {/* Document type filter - Mobile */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Tipo de documento</Label>
+                <Select value={documentTypeFilter} onValueChange={setDocumentTypeFilter}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Seleccionar tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {importedDocumentTypes.map(type => (
+                      <SelectItem key={type.id} value={type.id}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Date range filter - Mobile */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Rango de fechas</Label>
+                <DatePickerPeriod
+                  startDate={documentStartDate}
+                  endDate={documentEndDate}
+                  onStartDateChange={setDocumentStartDate}
+                  onEndDateChange={setDocumentEndDate}
+                  className="w-full h-9 text-sm"
+                />
+              </div>
+
+              {/* Signature status filter - Mobile */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Estado de firma</Label>
+                <Select value={signatureFilter} onValueChange={(value) => setSignatureFilter(value as 'all' | 'signed' | 'unsigned')}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="signed">Firmados</SelectItem>
+                    <SelectItem value="unsigned">Sin firmar</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-4 border-t">
+              <Button
+                variant="outline"
+                className="flex-1 h-9"
+                onClick={() => {
+                  setSelectedEmployee('all');
+                  setSelectedEmployeeTeamFilter('all');
+                  setDocumentTypeFilter('all');
+                  setDocumentStartDate(undefined);
+                  setDocumentEndDate(undefined);
+                  setSignatureFilter('all');
+                }}
+              >
+                Limpiar
+              </Button>
+              <Button
+                className="flex-1 h-9"
+                onClick={() => setShowMobileFilters(false)}
+              >
+                Aplicar
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Delete Request Confirmation Dialog */}
         <Dialog open={deleteRequestConfirm.show} onOpenChange={(open) => !open && setDeleteRequestConfirm({ show: false, requestId: null, documentType: '' })}>
           <DialogContent>
@@ -3233,6 +4047,26 @@ export default function AdminDocuments() {
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Empleados * ({selectedEmployees.length} seleccionados)
                 </label>
+
+                {teams.length > 0 ? (
+                  <div className="mb-2">
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Equipos</p>
+                    <div className="flex flex-wrap gap-2">
+                      {teams.map((team) => (
+                        <Button
+                          key={`request-dialog-team-${team.id}`}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => addTeamToRequestSelection(team.id)}
+                          className="h-7 text-xs"
+                        >
+                          {team.name}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
                 
                 {/* Search Input */}
                 <div className="relative mb-2">

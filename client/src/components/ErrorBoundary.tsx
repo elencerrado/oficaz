@@ -76,9 +76,35 @@ export class ErrorBoundary extends Component<Props, State> {
         );
       }
       
-      // After max errors, just render nothing (no error screen)
-      // User can manually navigate away or refresh
-      return null;
+      // After max errors, show an explicit fallback UI with recovery actions
+      return (
+        <div className="min-h-screen w-full flex items-center justify-center bg-background px-6">
+          <div className="max-w-md w-full rounded-xl border bg-card p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-foreground">Se produjo un error inesperado</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Hemos protegido la aplicación para evitar un bloqueo. Puedes recargar para recuperarte o volver al inicio de sesión.
+            </p>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                onClick={() => window.location.reload()}
+              >
+                Recargar aplicación
+              </button>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground"
+                onClick={() => {
+                  window.location.href = '/login';
+                }}
+              >
+                Ir a inicio de sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      );
     }
 
     return this.props.children;

@@ -139,8 +139,36 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
-function toast({ ...props }: Toast) {
+type ToastOptions = Toast & {
+  essential?: boolean
+}
+
+const shouldDisplayToast = ({
+  variant,
+  duration,
+  essential,
+}: Pick<ToastOptions, "variant" | "duration" | "essential">) => {
+  if (essential) return true
+  if (variant === "destructive") return true
+  if (duration === Infinity) return true
+  if (typeof duration === "number" && duration >= 8000) return true
+  return false
+}
+
+function toast({ essential, ...props }: ToastOptions) {
   const id = genId()
+
+  if (!shouldDisplayToast({
+    variant: props.variant,
+    duration: props.duration,
+    essential,
+  })) {
+    return {
+      id,
+      dismiss: () => {},
+      update: () => {},
+    }
+  }
 
   const update = (props: ToasterToast) =>
     dispatch({

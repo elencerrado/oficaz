@@ -19,7 +19,9 @@ import {
   Trash2, 
   Archive,
   Star,
-  CheckCircle
+  CheckCircle,
+  Save,
+  X
 } from 'lucide-react';
 import { format, isToday, isTomorrow, isPast, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -34,6 +36,9 @@ interface Reminder {
   reminderDate?: string;
   priority: 'low' | 'medium' | 'high';
   color: string;
+  taskStatus?: 'pending' | 'in_progress' | 'on_hold' | 'completed';
+  contextType?: 'general' | 'project' | 'area';
+  contextName?: string;
   isCompleted: boolean;
   isArchived: boolean;
   isPinned: boolean;
@@ -45,6 +50,7 @@ interface Reminder {
   assignedBy?: number;
   assignedAt?: string;
   creatorName?: string;
+  responsibleUserId?: number;
 }
 
 const priorityIcons = {
@@ -69,8 +75,39 @@ const colorOptions = [
   { value: '#fed7d7', name: 'Rojo' },
 ];
 
+const taskStatusOptions = [
+  { value: 'pending', label: 'Pendiente' },
+  { value: 'in_progress', label: 'En curso' },
+  { value: 'on_hold', label: 'En espera' },
+] as const;
+
+const taskStatusColors = {
+  pending: 'border-slate-200 text-slate-600',
+  in_progress: 'border-blue-200 text-blue-600',
+  on_hold: 'border-orange-200 text-orange-600',
+  completed: 'border-green-200 text-green-700',
+};
+
+const STATUS_TRIGGER_COLORS: Record<string, string> = {
+  on_hold:    'bg-orange-50 border border-orange-300 text-orange-700 hover:bg-orange-100',
+  in_progress:'bg-blue-50   border border-blue-300   text-blue-700   hover:bg-blue-100',
+  completed:  'bg-green-50  border border-green-300  text-green-700  hover:bg-green-100',
+};
+
+const cardStatusOptions = [
+  { value: 'on_hold', label: 'En espera' },
+  { value: 'in_progress', label: 'En proceso' },
+  { value: 'completed', label: 'Completado' },
+] as const;
+
+const contextTypeLabels = {
+  general: 'General',
+  project: 'Proyecto',
+  area: 'Area',
+};
+
 export default function EmployeeReminders() {
-  usePageTitle('Mis Recordatorios');
+  usePageTitle('Mis Tareas');
   const { user, company } = useAuth();
   const { hasAccess } = useFeatureCheck();
   
@@ -86,9 +123,8 @@ export default function EmployeeReminders() {
   if (!canAccessReminders) {
     return (
       <FeatureRestrictedPage
-        featureName="Recordatorios"
-        description="No tienes acceso a la funcionalidad de recordatorios. Contacta con el administrador para activar este addon."
-        requiredPlan="Addon"
+        featureName="Tareas"
+        description="No tienes acceso a la funcionalidad de tareas. Contacta con el administrador para activar este addon."
       />
     );
   }
@@ -107,13 +143,20 @@ export default function EmployeeReminders() {
     reminderDate: '',
     priority: 'medium' as 'low' | 'medium' | 'high',
     color: '#ffffff',
-    enableNotifications: false
+    enableNotifications: false,
+    taskStatus: 'pending' as 'pending' | 'in_progress' | 'on_hold',
+    contextType: 'general' as 'general' | 'project' | 'area',
+    contextName: '',
   });
 
   // Get all reminders
   const { data: reminders = [], isLoading } = useQuery<Reminder[]>({
     queryKey: ['/api/reminders'],
     enabled: !!user,
+    staleTime: 60_000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // Create/Update reminder mutation
@@ -130,18 +173,18 @@ export default function EmployeeReminders() {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders/check-notifications'] });
       setIsDialogOpen(false);
       setEditingReminder(null);
-      setFormData({ title: '', content: '', reminderDate: '', priority: 'medium', color: '#ffffff', enableNotifications: false });
+      setFormData({ title: '', content: '', reminderDate: '', priority: 'medium', color: '#ffffff', enableNotifications: false, taskStatus: 'pending', contextType: 'general', contextName: '' });
       if (!editingReminder) {
         toast({
-          title: "Recordatorio creado",
-          description: "Se ha creado un nuevo recordatorio",
+          title: "Tarea creada",
+          description: "Se ha creado una nueva tarea",
         });
       }
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Error al procesar el recordatorio",
+        description: error.message || "Error al procesar la tarea",
         variant: "destructive",
       });
     },
@@ -157,14 +200,14 @@ export default function EmployeeReminders() {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/reminders/check-notifications'] });
       toast({
-        title: "Recordatorio eliminado",
-        description: "El recordatorio se ha eliminado correctamente",
+        title: "Tarea eliminada",
+        description: "La tarea se ha eliminado correctamente",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Error al eliminar el recordatorio",
+        description: error.message || "Error al eliminar la tarea",
         variant: "destructive",
       });
     },
@@ -172,7 +215,7 @@ export default function EmployeeReminders() {
 
   // Update status mutation (for archiving and completing)
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: number; updates: { isArchived?: boolean; isCompleted?: boolean } }) => {
+    mutationFn: async ({ id, updates }: { id: number; updates: { isArchived?: boolean; isCompleted?: boolean; taskStatus?: 'pending' | 'in_progress' | 'on_hold' | 'completed' } }) => {
       return await apiRequest('PATCH', `/api/reminders/${id}`, updates);
     },
     onSuccess: () => {
@@ -195,7 +238,7 @@ export default function EmployeeReminders() {
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Error al completar el recordatorio",
+        description: error.message || "Error al completar la tarea",
         variant: "destructive",
       });
     },
@@ -262,9 +305,23 @@ export default function EmployeeReminders() {
       reminderDate: localDateTimeString,
       priority: reminder.priority,
       color: reminder.color,
-      enableNotifications: reminder.enableNotifications || false
+      enableNotifications: reminder.enableNotifications || false,
+      taskStatus: reminder.taskStatus === 'completed' ? 'pending' : (reminder.taskStatus || 'pending'),
+      contextType: reminder.contextType || 'general',
+      contextName: reminder.contextName || ''
     });
     setIsDialogOpen(true);
+  };
+
+  const getTaskStatusLabel = (status?: Reminder['taskStatus']) => {
+    if (status === 'completed') return 'Completado';
+    return taskStatusOptions.find((option) => option.value === status)?.label || 'Pendiente';
+  };
+
+  const getCardStatusValue = (reminder: Reminder): 'on_hold' | 'in_progress' | 'completed' => {
+    if (isCompletedByCurrentUser(reminder)) return 'completed';
+    if (reminder.taskStatus === 'in_progress') return 'in_progress';
+    return 'on_hold';
   };
 
   const formatReminderDate = (dateString: string) => {
@@ -291,7 +348,8 @@ export default function EmployeeReminders() {
   // Filter reminders - protect against null data
   const filteredReminders = (reminders || []).filter(reminder => {
     const matchesSearch = reminder.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (reminder.content || '').toLowerCase().includes(searchTerm.toLowerCase());
+                         (reminder.content || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (reminder.contextName || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const userCompleted = isCompletedByCurrentUser(reminder);
     
@@ -327,14 +385,14 @@ export default function EmployeeReminders() {
 
       {/* Page title */}
       <div className="px-6 pb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Recordatorios</h1>
-        <p className="text-gray-600 dark:text-white/70 text-sm">Gestiona tus recordatorios personales</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Tareas</h1>
+        <p className="text-gray-600 dark:text-white/70 text-sm">Gestiona tus tareas personales</p>
       </div>
 
       {/* Search and Filters */}
       <div className="px-6 pb-4 space-y-3">
         <Input
-          placeholder="Buscar recordatorios..."
+          placeholder="Buscar tareas..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="bg-white dark:bg-white/10 border-gray-200 dark:border-white/20 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-white/50"
@@ -359,127 +417,189 @@ export default function EmployeeReminders() {
                 className="bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 text-gray-900 dark:text-white border-gray-200 dark:border-white/20"
                 onClick={() => {
                   setEditingReminder(null);
-                  setFormData({ title: '', content: '', reminderDate: '', priority: 'medium', color: '#ffffff', enableNotifications: false });
+                  setFormData({ title: '', content: '', reminderDate: '', priority: 'medium', color: '#ffffff', enableNotifications: false, taskStatus: 'pending', contextType: 'general', contextName: '' });
                 }}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nuevo
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
-              <DialogHeader>
-                <DialogTitle className="text-gray-900 dark:text-white">
-                  {editingReminder ? 'Editar Recordatorio' : 'Nuevo Recordatorio'}
-                </DialogTitle>
-              </DialogHeader>
-              
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Input
-                    placeholder="Título del recordatorio"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white"
-                    required
-                  />
+            <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden border-0 bg-background">
+              <DialogTitle className="sr-only">{editingReminder ? 'Editar Tarea' : 'Nueva Tarea'}</DialogTitle>
+
+              {/* Colored header preview */}
+              <div
+                className="px-6 py-4 relative"
+                style={{ backgroundColor: formData.color !== '#ffffff' ? formData.color : '#F1F5F9' }}
+              >
+                <div className="absolute inset-0 bg-black/5" />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-gray-600 opacity-70" />
+                    <span className="text-xs text-gray-600 font-medium uppercase tracking-wide">
+                      {editingReminder ? 'Editar Tarea' : 'Nueva Tarea'}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-800 mt-0.5">
+                    {formData.title || 'Sin título'}
+                  </h3>
+                  {formData.contextName && (
+                    <span className="text-xs text-gray-600">{formData.contextName}</span>
+                  )}
                 </div>
-                
-                <div>
-                  <Textarea
-                    placeholder="Contenido (opcional)"
-                    value={formData.content}
-                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    className="bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white min-h-[80px]"
-                  />
-                </div>
-                
-                <div>
-                  <Input
-                    type="datetime-local"
-                    value={formData.reminderDate}
-                    onChange={(e) => setFormData({ ...formData, reminderDate: e.target.value })}
-                    className="bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white"
-                  />
+              </div>
+
+              <div className="flex">
+                {/* Left: color swatches */}
+                <div className="w-14 bg-muted/20 p-2 flex flex-col gap-1.5 pt-3 border-r border-border">
+                  {colorOptions.map((col, index) => (
+                    <button
+                      type="button"
+                      key={col.value}
+                      onClick={() => setFormData(prev => ({ ...prev, color: col.value }))}
+                      className={`w-10 h-7 rounded border-2 transition-all hover:scale-105 ${
+                        formData.color === col.value
+                          ? 'border-gray-700 dark:border-gray-200 scale-105 shadow-md'
+                          : 'border-gray-300 dark:border-gray-600'
+                      }`}
+                      style={{ backgroundColor: col.value }}
+                      title={col.name}
+                    />
+                  ))}
+
+                  <div className="mt-auto pt-2 border-t border-border/60 flex flex-col gap-1.5">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 rounded-xl border border-red-200 bg-red-50 text-red-600 shadow-sm transition-colors hover:bg-red-100 hover:text-red-700"
+                      onClick={() => setIsDialogOpen(false)}
+                      title="Cancelar"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="submit"
+                      form="employee-task-form"
+                      size="icon"
+                      className="h-10 w-10 rounded-xl border border-green-200 bg-green-50 text-green-600 shadow-sm transition-colors hover:bg-green-100 hover:text-green-700"
+                      disabled={createReminderMutation.isPending}
+                      title={editingReminder ? 'Actualizar tarea' : 'Guardar tarea'}
+                    >
+                      <Save className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
 
-                {/* Checkbox para activar notificaciones - solo si hay fecha */}
-                {formData.reminderDate && (
-                  <div className="flex items-center space-x-2">
+                {/* Right: form */}
+                <form id="employee-task-form" onSubmit={handleSubmit} className="flex-1 p-5 space-y-3 overflow-y-auto max-h-[70vh]">
+                  {/* Title */}
+                  <input
+                    type="text"
+                    placeholder="Título de la tarea *"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    required
+                    className="w-full px-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                  />
+
+                  {/* Row: Estado + Prioridad */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Estado</label>
+                      <Select value={formData.taskStatus} onValueChange={(value: any) => setFormData({ ...formData, taskStatus: value })}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {taskStatusOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Prioridad</label>
+                      <Select value={formData.priority} onValueChange={(value: any) => setFormData({ ...formData, priority: value })}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Baja</SelectItem>
+                          <SelectItem value="medium">Media</SelectItem>
+                          <SelectItem value="high">Alta</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Row: Organizar como + Nombre contexto */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Organizar como</label>
+                      <Select value={formData.contextType} onValueChange={(value: any) => setFormData({ ...formData, contextType: value })}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="general">General</SelectItem>
+                          <SelectItem value="project">Proyecto</SelectItem>
+                          <SelectItem value="area">Area</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">
+                        {formData.contextType === 'project' ? 'Nombre del proyecto' : formData.contextType === 'area' ? 'Nombre del área' : 'Contexto (opcional)'}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder={formData.contextType === 'project' ? 'Ej: Cliente Repsol' : formData.contextType === 'area' ? 'Ej: Administración' : 'Opcional'}
+                        value={formData.contextName}
+                        onChange={(e) => setFormData({ ...formData, contextName: e.target.value })}
+                        className="w-full px-3 py-1.5 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 h-8"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Fecha */}
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Fecha y hora</label>
                     <input
-                      type="checkbox"
-                      id="enableNotifications"
-                      checked={formData.enableNotifications}
-                      onChange={(e) => setFormData({ ...formData, enableNotifications: e.target.checked })}
-                      className="rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 text-blue-600 focus:ring-blue-500"
+                      type="datetime-local"
+                      value={formData.reminderDate}
+                      onChange={(e) => setFormData({ ...formData, reminderDate: e.target.value })}
+                      className="w-full px-3 py-1.5 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 h-8"
                     />
-                    <label htmlFor="enableNotifications" className="text-gray-900 dark:text-white text-sm">
-                      Mostrar notificación cuando llegue la fecha
+                  </div>
+
+                  {/* Notificación si hay fecha */}
+                  {formData.reminderDate && (
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.enableNotifications}
+                        onChange={(e) => setFormData({ ...formData, enableNotifications: e.target.checked })}
+                        className="rounded border-gray-300 dark:border-gray-600 text-blue-600"
+                      />
+                      <span className="text-xs text-muted-foreground">Mostrar notificación cuando llegue la fecha</span>
                     </label>
-                  </div>
-                )}
-                
-                <div className="grid grid-cols-2 gap-4">
+                  )}
+
+                  {/* Description */}
                   <div>
-                    <Select value={formData.priority} onValueChange={(value: any) => setFormData({ ...formData, priority: value })}>
-                      <SelectTrigger className="bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Baja</SelectItem>
-                        <SelectItem value="medium">Media</SelectItem>
-                        <SelectItem value="high">Alta</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <label className="text-xs text-muted-foreground mb-1 block">Descripción</label>
+                    <textarea
+                      placeholder="Contenido (opcional)"
+                      value={formData.content}
+                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                      rows={2}
+                      className="w-full px-3 py-2 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                    />
                   </div>
-                  
-                  <div>
-                    <Select value={formData.color} onValueChange={(value) => setFormData({ ...formData, color: value })}>
-                      <SelectTrigger className="bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
-                        <SelectValue>
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="w-4 h-4 rounded border"
-                              style={{ backgroundColor: formData.color }}
-                            />
-                            Color
-                          </div>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {colorOptions.map((color) => (
-                          <SelectItem key={color.value} value={color.value}>
-                            <div className="flex items-center gap-2">
-                              <div 
-                                className="w-4 h-4 rounded border"
-                                style={{ backgroundColor: color.value }}
-                              />
-                              {color.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div className="flex gap-2 pt-4">
-                  <Button 
-                    type="submit" 
-                    disabled={createReminderMutation.isPending}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white dark:text-white"
-                  >
-                    {createReminderMutation.isPending ? 'Guardando...' : (editingReminder ? 'Actualizar' : 'Crear')}
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
-                    className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
+
+                </form>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
@@ -489,14 +609,14 @@ export default function EmployeeReminders() {
       <div className="flex-1 px-6 pb-6">
         {isLoading ? (
           <div className="text-center py-8">
-            <div className="text-gray-600 dark:text-white/70">Cargando recordatorios...</div>
+            <div className="text-muted-foreground">Cargando tareas...</div>
           </div>
         ) : sortedReminders.length === 0 ? (
           <div className="text-center py-8">
-            <Clock className="h-12 w-12 text-gray-300 dark:text-white/30 mx-auto mb-4" />
-            <div className="text-gray-600 dark:text-white/70 mb-2">No hay recordatorios</div>
-            <div className="text-gray-500 dark:text-white/50 text-sm">
-              {statusFilter === 'all' ? 'Crea tu primer recordatorio' : `No hay recordatorios ${statusFilter === 'active' ? 'activos' : statusFilter === 'completed' ? 'completados' : 'archivados'}`}
+            <Clock className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
+            <div className="text-foreground mb-2">No hay tareas</div>
+            <div className="text-muted-foreground text-sm">
+              {statusFilter === 'all' ? 'Crea tu primera tarea' : `No hay tareas ${statusFilter === 'active' ? 'activas' : statusFilter === 'completed' ? 'completadas' : 'archivadas'}`}
             </div>
           </div>
         ) : (
@@ -520,6 +640,52 @@ export default function EmployeeReminders() {
                         <PriorityIcon className={`h-4 w-4 ${priorityColors[reminder.priority]}`} />
                         <h3 className="font-medium text-gray-900 dark:text-white text-sm">{reminder.title}</h3>
                       </div>
+
+                      <div className="flex items-center gap-2 flex-wrap mb-2">
+                        {!reminder.isArchived ? (
+                          <Select
+                            value={getCardStatusValue(reminder)}
+                            onValueChange={(value: 'on_hold' | 'in_progress' | 'completed') => {
+                              if (value === 'completed') {
+                                if (!isCompletedByCurrentUser(reminder)) {
+                                  completeReminderMutation.mutate(reminder.id);
+                                }
+                                return;
+                              }
+
+                              const updates: { taskStatus: 'on_hold' | 'in_progress'; isCompleted?: boolean } = {
+                                taskStatus: value,
+                              };
+                              if (isCompletedByCurrentUser(reminder)) {
+                                updates.isCompleted = false;
+                              }
+                              updateStatusMutation.mutate({ id: reminder.id, updates });
+                            }}
+                          >
+                            <SelectTrigger
+                              className={`h-6 pl-2.5 pr-1.5 gap-1 text-xs font-medium rounded-full border w-auto focus:ring-0 focus:ring-offset-0 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:shrink-0 [&>svg]:opacity-60 ${
+                                STATUS_TRIGGER_COLORS[getCardStatusValue(reminder)] ?? STATUS_TRIGGER_COLORS['on_hold']
+                              }`}
+                            >
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {cardStatusOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Badge variant="outline" className="text-xs border-gray-400/30 text-gray-400/70">
+                            Archivado
+                          </Badge>
+                        )}
+                        {reminder.contextName && (
+                          <Badge variant="outline" className="text-xs border-gray-300 dark:border-white/20 text-gray-600 dark:text-white/70">
+                            {contextTypeLabels[reminder.contextType || 'general']}: {reminder.contextName}
+                          </Badge>
+                        )}
+                      </div>
                       
                       {reminder.content && (
                         <p className="text-gray-600 dark:text-white/70 text-xs mb-2 line-clamp-2">{reminder.content}</p>
@@ -535,29 +701,6 @@ export default function EmployeeReminders() {
                             {formatReminderDate(reminder.reminderDate)}
                           </Badge>
                         )}
-                        
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs cursor-pointer transition-colors ${
-                            reminder.isArchived 
-                              ? 'border-gray-400/30 text-gray-400/70' 
-                              : isCompletedByCurrentUser(reminder)
-                                ? 'border-green-400/50 text-green-400 hover:border-green-400 hover:bg-green-400/10'
-                                : 'border-gray-300 dark:border-white/30 text-gray-600 dark:text-white/70'
-                          }`}
-                          onClick={() => {
-                            if (!reminder.isArchived && isCompletedByCurrentUser(reminder)) {
-                              // Reactivar recordatorio completado
-                              updateStatusMutation.mutate({ 
-                                id: reminder.id, 
-                                updates: { isCompleted: false } 
-                              });
-                            }
-                          }}
-                        >
-                          {reminder.isArchived ? 'Archivado' : 
-                           isCompletedByCurrentUser(reminder) ? 'Completado' : 'Activo'}
-                        </Badge>
                         
                         {reminder.isAssigned && (
                           <Badge 
@@ -592,18 +735,6 @@ export default function EmployeeReminders() {
                           className="h-8 w-8 p-0 text-gray-500 dark:text-white/60 hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-white/10"
                         >
                           <Edit className="h-4 w-4" />
-                        </Button>
-                      )}
-                      
-                      {/* Completar recordatorios (tanto propios como asignados) */}
-                      {!isCompletedByCurrentUser(reminder) && !reminder.isArchived && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => completeReminderMutation.mutate(reminder.id)}
-                          className="h-8 w-8 p-0 text-gray-500 dark:text-white/60 hover:text-green-400 hover:bg-gray-100 dark:hover:bg-white/10"
-                        >
-                          <CheckCircle className="h-4 w-4" />
                         </Button>
                       )}
                       

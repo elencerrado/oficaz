@@ -7,9 +7,10 @@ import { AlertCircle, Shield, Key, Mail, Lock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { isTokenExpired } from "@/lib/auth";
 
 interface SecurityStep {
-  step: "access-password" | "login" | "verified";
+  step: "access-password" | "login" | "totp_required" | "verified";
 }
 
 export default function SuperAdminSecurity() {
@@ -28,6 +29,15 @@ export default function SuperAdminSecurity() {
   // Check if already logged in on mount
   useEffect(() => {
     const token = sessionStorage.getItem('superAdminToken');
+    if (!token) {
+      return;
+    }
+
+    if (isTokenExpired(token)) {
+      sessionStorage.removeItem('superAdminToken');
+      return;
+    }
+
     if (token) {
       setLocation('/super-admin/dashboard');
     }
@@ -200,7 +210,7 @@ export default function SuperAdminSecurity() {
           {/* Login Form - Second layer (always in DOM for Chrome autofill) */}
           <form 
             onSubmit={handleLoginSubmit} 
-            className={`space-y-4 ${currentStep.step !== "login" ? "hidden" : ""}`}
+            className={`space-y-4 ${currentStep.step !== "login" && currentStep.step !== "totp_required" ? "hidden" : ""}`}
           >
             <div className="space-y-2">
               <Label htmlFor="email" className="flex items-center gap-2 text-white">
@@ -237,7 +247,8 @@ export default function SuperAdminSecurity() {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setShowPassword((prev) => !prev)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
                 >
                   {showPassword ? (
@@ -280,7 +291,7 @@ export default function SuperAdminSecurity() {
               </div>
             )}
 
-            {error && currentStep.step === "login" && (
+            {error && (currentStep.step === "login" || currentStep.step === "totp_required") && (
               <Alert className="bg-red-500/20 border-red-500/30 text-red-200">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
