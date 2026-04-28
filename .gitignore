@@ -20,6 +20,11 @@ vite.config.ts.*
 *.key
 *.cert
 
+# 🔒 Android signing keystores (NEVER commit these)
+*.keystore
+*.jks
+android/oficaz-release.keystore
+
 # Temporary scratch scripts
 .tmp-*.cjs
 tmp/root-scripts/

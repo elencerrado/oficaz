@@ -7,9 +7,9 @@ def parsedVersionCode = (envVersionCode != null && envVersionCode.isInteger()) ?
 
 def keystorePath = System.getenv('OFICAZ_ANDROID_KEYSTORE_PATH')
 def keystorePassword = System.getenv('OFICAZ_ANDROID_KEYSTORE_PASSWORD')
-def keyAlias = System.getenv('OFICAZ_ANDROID_KEY_ALIAS')
-def keyPassword = System.getenv('OFICAZ_ANDROID_KEY_PASSWORD')
-def hasReleaseSigning = keystorePath && keystorePassword && keyAlias && keyPassword
+def signingKeyAlias = System.getenv('OFICAZ_ANDROID_KEY_ALIAS')
+def signingKeyPassword = System.getenv('OFICAZ_ANDROID_KEY_PASSWORD')
+def hasReleaseSigning = keystorePath && keystorePassword && signingKeyAlias && signingKeyPassword
 
 android {
     namespace = "com.oficaz.app"
@@ -33,8 +33,8 @@ android {
             release {
                 storeFile file(keystorePath)
                 storePassword keystorePassword
-                keyAlias keyAlias
-                keyPassword keyPassword
+                    keyAlias signingKeyAlias
+                    keyPassword signingKeyPassword
             }
         }
     }
