@@ -3,6 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
+
+    <script>
+      (function () {
+        try {
+          var cap = window.Capacitor || window.cap;
+          var platform = cap && typeof cap.getPlatform === 'function' ? cap.getPlatform() : 'web';
+          if (platform === 'android') {
+            document.documentElement.classList.add('native-android');
+          }
+        } catch (e) {
+          // Ignore platform detection errors on first paint.
+        }
+      })();
+    </script>
     
     <!-- Global error suppression (external) -->
     <script src="/scripts/error-suppress.js"></script>
@@ -60,6 +74,11 @@
         padding: 0; 
         height: 100%; 
         background-color: #f9fafb;
+      }
+
+      html.native-android,
+      html.native-android body {
+        background-color: #007AFF;
       }
       
       /* Dark mode background - must match bg-employee-gradient: #2A3441 */

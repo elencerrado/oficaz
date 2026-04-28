@@ -3,6 +3,8 @@
  * Used by both web and Android(Capacitor) environments
  */
 
+import { Capacitor } from '@capacitor/core';
+
 export interface ServerConfig {
   baseUrl: string;
   isNative: boolean;
@@ -11,22 +13,31 @@ export interface ServerConfig {
 
 // Determine current environment
 export const isNativePlatform = (): boolean => {
-  return typeof window !== 'undefined' && 
+  if (Capacitor.isNativePlatform()) {
+    return true;
+  }
+
+  return typeof window !== 'undefined' &&
     !window.location.origin.includes('localhost:') &&
-    (window.location.origin.includes('capacitor') || 
+    (window.location.origin.includes('capacitor') ||
      window.location.origin.startsWith('file://'));
 };
 
 export const getPlatform = (): 'web' | 'android' | 'ios' => {
+  if (Capacitor.isNativePlatform()) {
+    const platform = Capacitor.getPlatform();
+    if (platform === 'android') return 'android';
+    if (platform === 'ios') return 'ios';
+  }
+
   if (!isNativePlatform()) return 'web';
-  
-  // Check if running on Capacitor
+
   if (typeof (window as any).cap !== 'undefined') {
     const platform = (window as any).cap.getPlatform?.();
     if (platform === 'android') return 'android';
     if (platform === 'ios') return 'ios';
   }
-  
+
   return 'web';
 };
 
