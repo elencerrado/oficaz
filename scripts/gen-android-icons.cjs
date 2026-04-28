@@ -6,8 +6,8 @@ const path = require('path');
 const foregroundSizes = { mdpi: 108, hdpi: 162, xhdpi: 216, xxhdpi: 324, xxxhdpi: 432 };
 // Legacy launcher icon sizes
 const legacySizes     = { mdpi: 48,  hdpi: 72,  xhdpi: 96,  xxhdpi: 144, xxxhdpi: 192 };
-const FOREGROUND_SCALE = 0.74;
-const LEGACY_SCALE = 0.84;
+const FOREGROUND_SCALE = 0.48;
+const LEGACY_SCALE = 0.55;
 
 const base = path.join(__dirname, '..', 'android', 'app', 'src', 'main', 'res');
 const sourceIcon = path.join(__dirname, '..', 'client', 'public', 'favicon.png');

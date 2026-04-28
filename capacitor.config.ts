@@ -6,9 +6,9 @@ const config: CapacitorConfig = {
   webDir: 'dist/public',
   android: {},
   server: {
-    // Assets are bundled into the APK (dist/public).
-    // API calls use https://oficaz.es via getServerBaseUrl() in server-config.ts.
+    // Use hosted app shell to keep Android auth/session behavior aligned with production.
     androidScheme: 'https',
+    url: 'https://oficaz.es',
     cleartext: false,
     allowNavigation: ['oficaz.es', '*.oficaz.es'],
   },
