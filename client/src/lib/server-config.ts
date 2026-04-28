@@ -72,28 +72,13 @@ export const getPublicHomePath = (): string => {
  * - iOS: Configured via environment or capacitor.config.ts
  */
 export const getServerBaseUrl = (): string => {
-  // In browser, use relative URLs (same origin)
-  if (typeof window !== 'undefined' && window.location.protocol !== 'file:') {
-    return ''; // Relative to current origin
+  // Native Android/iOS: always route API calls to the production server
+  if (Capacitor.isNativePlatform()) {
+    return 'https://oficaz.es';
   }
 
-  // For Capacitor (native Android/iOS)
-  if (typeof (window as any).cap !== 'undefined' && (window as any).cap.getServerUrl) {
-    try {
-      return (window as any).cap.getServerUrl();
-    } catch (e) {
-      console.warn('Failed to get Capacitor server URL:', e);
-    }
-  }
-
-  // Fallback to environment variable from .env loaded by Vite
-  const envUrl = import.meta.env.VITE_API_URL;
-  if (envUrl) {
-    return envUrl;
-  }
-
-  // Default fallback for development
-  return 'http://10.0.2.2:5000';
+  // Web browser: use relative URLs (same origin)
+  return '';
 };
 
 /**

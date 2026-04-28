@@ -1,24 +1,16 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
-const isProductionBuild = process.env.NODE_ENV === 'production';
-
 const config: CapacitorConfig = {
   appId: 'com.oficaz.app',
   appName: 'Oficaz',
   webDir: 'dist/public',
-  android: {
-    // 🔧 Asegurar que la app acceda al servidor local en Android
-    // 10.0.2.2 es la dirección especial para accesat al host desde el emulador
-    // En dispositivo real, cambiar a la IP de la máquina o usar HTTPS con dominio
-  },
+  android: {},
   server: {
+    // Assets are bundled into the APK (dist/public).
+    // API calls use https://oficaz.es via getServerBaseUrl() in server-config.ts.
     androidScheme: 'https',
-      // En producción apunta al servidor real; en dev sirve assets localmente
-      url: isProductionBuild ? 'https://oficaz.es' : undefined,
-      cleartext: !isProductionBuild,
-    allowNavigation: isProductionBuild
-      ? ['oficaz.es', '*.oficaz.es']
-      : ['localhost', '10.0.2.2', 'oficaz.es', '*.oficaz.es']
+    cleartext: false,
+    allowNavigation: ['oficaz.es', '*.oficaz.es'],
   },
   plugins: {
     SplashScreen: {
