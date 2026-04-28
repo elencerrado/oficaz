@@ -181,20 +181,47 @@ async function initializeExpress() {
   const isReplit = !!process.env.REPLIT_DOMAINS;
   const isDevelopment = process.env.NODE_ENV === 'development';
   const isLocalDevelopment = isDevelopment && !isReplit;
+  const nativeAppOrigins = [
+    'http://localhost',
+    'https://localhost',
+    'capacitor://localhost',
+    'ionic://localhost',
+  ];
 
   const allowedOrigins = isLocalDevelopment || isReplit
     ? [
         "http://localhost:5000",
         "http://localhost:5173",
         "http://127.0.0.1:5000",
+        ...nativeAppOrigins,
         ...(process.env.REPLIT_DOMAINS?.split(",").map((d: string) => `https://${d}`) || []),
       ]
-    : [];
+    : [
+        'https://oficaz.es',
+        'https://www.oficaz.es',
+        ...nativeAppOrigins,
+      ];
 
   app.use(
     cors({
       origin: (origin, callback) => {
-        if (!origin || allowedOrigins.some((allowed) => origin.includes(allowed.replace("https://", "").replace("http://", "")))) {
+        if (!origin) {
+          callback(null, true);
+          return;
+        }
+
+        const normalizedOrigin = origin.toLowerCase();
+        const isAllowed = allowedOrigins.some((allowed) => {
+          const normalizedAllowed = allowed.toLowerCase();
+          if (normalizedAllowed.includes('://')) {
+            return normalizedOrigin === normalizedAllowed;
+          }
+
+          const hostOnly = normalizedAllowed.replace('https://', '').replace('http://', '');
+          return normalizedOrigin.includes(hostOnly);
+        });
+
+        if (isAllowed) {
           callback(null, true);
         } else if (process.env.NODE_ENV !== 'production') {
           // Allow all origins in non-production environments
