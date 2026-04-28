@@ -1,5 +1,6 @@
 import { User, Company } from '@shared/schema';
 import * as CryptoJS from 'crypto-js';
+import { buildApiUrl } from './server-config';
 
 interface AuthData {
   user: User;
@@ -225,7 +226,7 @@ export async function refreshAccessToken(): Promise<string | null> {
     try {
       // // console.log('🔄 Attempting to refresh access token...');
       
-      const response = await fetch('/api/auth/refresh', {
+      const response = await fetch(buildApiUrl('/api/auth/refresh'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
