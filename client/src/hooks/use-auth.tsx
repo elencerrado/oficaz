@@ -5,6 +5,7 @@ import { refreshAccessToken } from '@/lib/auth';
 import { getSessionConfig, isSessionValid, shouldAutoRefreshToken } from '@/lib/session-config';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { dispatchRealtimeEvent, invalidateForRealtimeEvent } from '@/lib/realtime-events';
+import { buildApiUrl } from '@/lib/server-config';
 
 interface AuthContextType {
   user: User | null;
@@ -112,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (authData && authData.token) {
         try {
           // Verify token by fetching user data
-          const response = await fetch('/api/auth/me', {
+          const response = await fetch(buildApiUrl('/api/auth/me'), {
             headers: { Authorization: `Bearer ${authData.token}` },
           });
           
@@ -253,7 +254,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // console.log('🔐 Login attempt starting...');
     
     // Make login request without using apiRequest to avoid token dependency
-    const response = await fetch('/api/auth/login', {
+    const response = await fetch(buildApiUrl('/api/auth/login'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(loginData),
@@ -337,7 +338,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Immediately refresh user data to get complete subscription info
     try {
       // console.log('🔄 Refreshing user data to get complete subscription info...');
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch(buildApiUrl('/api/auth/me'), {
         headers: { Authorization: `Bearer ${data.token}` },
       });
       
@@ -397,7 +398,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 🔒 SECURITY: Revoke refresh token on manual logout (use captured token, not read from storage)
     if (manual && accessTokenToRevoke && refreshTokenToRevoke) {
       try {
-        await fetch('/api/auth/logout', {
+        await fetch(buildApiUrl('/api/auth/logout'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -425,7 +426,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token) return;
     
     try {
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch(buildApiUrl('/api/auth/me'), {
         headers: { Authorization: `Bearer ${token}` },
       });
       

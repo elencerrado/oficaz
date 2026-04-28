@@ -272,7 +272,7 @@ export async function apiRequest(
               Authorization: `Bearer ${newToken}`
             };
             
-            const retryRes = await fetch(url, {
+            const retryRes = await fetch(fullUrl, {
               method,
               headers: retryHeaders,
               body,
@@ -404,7 +404,8 @@ export const getQueryFn: <T>(options: {
       }
     }
     // Query with auth headers
-    const res = await fetch(url, {
+    const fullUrl = buildApiUrl(url);
+    const res = await fetch(fullUrl, {
       credentials: "include",
       headers: {
         ...authHeaders,
@@ -440,7 +441,7 @@ export const getQueryFn: <T>(options: {
               consecutiveAuthErrors = 0; // Reset counter after successful refresh
               
               // Retry the query with new token (use same URL with query params)
-              const retryRes = await fetch(url, {
+              const retryRes = await fetch(fullUrl, {
                 credentials: "include",
                 headers: {
                   Authorization: `Bearer ${newToken}`

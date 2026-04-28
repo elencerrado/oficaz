@@ -154,24 +154,6 @@ console.error = (...args) => {
   originalError.apply(console, args);
 };
 
-
-
-// Called after React's first render to remove the pre-React boot loader
-export const markAsLoaded = () => {
-  document.body.classList.add('loaded');
-  document.body.classList.remove('app-preload');
-
-  const bootLoader = document.getElementById('boot-loader');
-  if (bootLoader) {
-    bootLoader.classList.add('hidden');
-    window.setTimeout(() => bootLoader.remove(), 250);
-  }
-
-  // Backwards compatibility with older loading markup
-  const spinner = document.querySelector('.loading-spinner');
-  if (spinner) spinner.remove();
-};
-
 // Import App directly to avoid double loading effect
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";

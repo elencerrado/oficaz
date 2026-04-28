@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { AppProviders } from "@/components/AppProviders";
 import { GlobalOverlays } from "@/components/GlobalOverlays";
 import { RouterView } from "@/components/RouterView";
-import { markAsLoaded } from "./main";
 
 /**
  * App: Top-level component with proper architectural separation.
@@ -17,7 +16,23 @@ import { markAsLoaded } from "./main";
  */
 function App() {
   useEffect(() => {
-    markAsLoaded();
+    document.body.classList.add('loaded');
+    document.body.classList.remove('app-preload');
+
+    const bootLoader = document.getElementById('boot-loader');
+    if (bootLoader) {
+      bootLoader.classList.add('hidden');
+      window.setTimeout(() => {
+        if (bootLoader.parentNode) {
+          bootLoader.parentNode.removeChild(bootLoader);
+        }
+      }, 250);
+    }
+
+    const spinner = document.querySelector('.loading-spinner');
+    if (spinner && spinner.parentNode) {
+      spinner.parentNode.removeChild(spinner);
+    }
   }, []);
 
   return (
