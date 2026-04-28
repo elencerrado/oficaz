@@ -159,7 +159,15 @@ console.error = (...args) => {
 // Performance optimization - mark body as loaded to prevent FOUC
 const markAsLoaded = () => {
   document.body.classList.add('loaded');
-  // Remove loading spinner if present
+  document.body.classList.remove('app-preload');
+
+  const bootLoader = document.getElementById('boot-loader');
+  if (bootLoader) {
+    bootLoader.classList.add('hidden');
+    window.setTimeout(() => bootLoader.remove(), 250);
+  }
+
+  // Backwards compatibility with older loading markup
   const spinner = document.querySelector('.loading-spinner');
   if (spinner) spinner.remove();
 };

@@ -42,6 +42,20 @@ export const getPlatform = (): 'web' | 'android' | 'ios' => {
 };
 
 export const isNativeAndroid = (): boolean => {
+  if (typeof window !== 'undefined') {
+    const capGlobal = (window as any).Capacitor || (window as any).cap;
+    const globalPlatform = capGlobal?.getPlatform?.();
+
+    if (globalPlatform === 'android') {
+      return true;
+    }
+
+    const userAgent = navigator.userAgent || '';
+    if (userAgent.includes('Android') && userAgent.includes('wv')) {
+      return true;
+    }
+  }
+
   return isNativePlatform() && getPlatform() === 'android';
 };
 

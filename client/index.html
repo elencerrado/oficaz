@@ -87,13 +87,41 @@
       }
       
       /* Loading state optimization */
-      body { 
-        opacity: 0; 
+      body {
         overflow-x: hidden;
       }
-      body.loaded { 
-        opacity: 1; 
-        transition: opacity 0.15s ease-in; 
+
+      body.app-preload #root,
+      body.app-preload #chat-root {
+        visibility: hidden;
+      }
+
+      #boot-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f9fafb;
+      }
+
+      html.native-android #boot-loader {
+        background-color: #007AFF;
+      }
+
+      html.native-android #boot-loader .oficaz-loader-circle {
+        border-color: #ffffff;
+      }
+
+      html.native-android #boot-loader .oficaz-loader-dot {
+        background: #ffffff;
+      }
+
+      #boot-loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease-out;
       }
       
       /* Critical layout to prevent CLS */
@@ -146,7 +174,15 @@
       html.dark .oficaz-loader-dot { background: white; }
     </style>
   </head>
-  <body>
+  <body class="app-preload">
+    <div id="boot-loader" aria-hidden="true">
+      <div class="oficaz-loader">
+        <div class="oficaz-loader-circle"></div>
+        <div class="oficaz-loader-orbit">
+          <div class="oficaz-loader-dot"></div>
+        </div>
+      </div>
+    </div>
     <div id="root"></div>
     <!-- Separate mount point for AI chat (isolated React root) -->
     <div id="chat-root"></div>
