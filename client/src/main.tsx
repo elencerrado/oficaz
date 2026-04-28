@@ -2,11 +2,83 @@ import { createRoot } from "react-dom/client";
 import { lazy, Suspense } from "react";
 import "./index.css";
 
+const enableDebugLogs = window.localStorage.getItem('oficaz_debug_logs') === 'true';
+const enableErrorTelemetry = import.meta.env.PROD || import.meta.env.VITE_ENABLE_CLIENT_TELEMETRY === 'true';
+
+const sendClientTelemetry = (payload: Record<string, unknown>) => {
+  if (!enableErrorTelemetry) return;
+
+  try {
+    const body = JSON.stringify({
+      ...payload,
+      timestamp: new Date().toISOString(),
+      url: window.location.href,
+      userAgent: navigator.userAgent,
+      appVersion: import.meta.env.VITE_APP_VERSION || 'unknown',
+    });
+
+    if (navigator.sendBeacon) {
+      const blob = new Blob([body], { type: 'application/json' });
+      navigator.sendBeacon('/api/telemetry/client-error', blob);
+      return;
+    }
+
+    fetch('/api/telemetry/client-error', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      keepalive: true,
+    }).catch(() => {
+      // Avoid any throw in global error handlers.
+    });
+  } catch {
+    // Never throw while reporting telemetry.
+  }
+};
+
+const isSuppressedNoise = (message: string, reason: string) => {
+  const content = `${message} ${reason}`;
+
+  if (
+    content.includes('Failed to construct \'WebSocket\'') ||
+    (content.includes('WebSocket') &&
+      (content.includes('localhost:undefined') ||
+        content.includes('wss://localhost') ||
+        content.includes('is invalid')))
+  ) {
+    return true;
+  }
+
+  if (
+    content.includes('Failed to fetch') ||
+    content.includes('NetworkError') ||
+    content.includes('Load failed')
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+if (!enableDebugLogs) {
+  console.log = () => {};
+  console.info = () => {};
+  console.debug = () => {};
+}
+
 // CRITICAL: Global error handler to suppress Vite HMR WebSocket errors
 // This prevents any error popups from showing to users
 window.addEventListener('unhandledrejection', (event) => {
   const message = event.reason?.message ? String(event.reason.message) : '';
   const reasonStr = event.reason ? String(event.reason) : '';
+
+  if (!isSuppressedNoise(message, reasonStr)) {
+    sendClientTelemetry({
+      type: 'unhandledrejection',
+      message: message || reasonStr || 'Unhandled promise rejection',
+      stack: event.reason?.stack ? String(event.reason.stack) : undefined,
+    });
+  }
   
   // Suppress Vite HMR WebSocket connection errors (localhost:undefined, invalid URLs)
   if ((message.includes('Failed to construct \'WebSocket\'') || message.includes('WebSocket')) &&
@@ -32,6 +104,22 @@ window.addEventListener('unhandledrejection', (event) => {
     event.preventDefault();
     return;
   }
+});
+
+window.addEventListener('error', (event) => {
+  const message = event.message ? String(event.message) : 'Unhandled window error';
+  if (isSuppressedNoise(message, '')) {
+    return;
+  }
+
+  sendClientTelemetry({
+    type: 'window_error',
+    message,
+    stack: (event.error as Error | undefined)?.stack,
+    source: event.filename,
+    line: event.lineno,
+    column: event.colno,
+  });
 });
 
 // Suppress console errors from Vite HMR in production

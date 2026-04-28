@@ -1,7 +1,10 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { User, Company } from '@shared/schema';
-import { getAuthData, setAuthData as saveAuthData, clearAuthData, clearExpiredTokens, setTokenRefreshCallback } from '@/lib/auth';
+import { getAuthData, setAuthData as saveAuthData, clearAuthData, clearExpiredTokens, setTokenRefreshCallback, isTokenExpired } from '@/lib/auth';
+import { refreshAccessToken } from '@/lib/auth';
+import { getSessionConfig, isSessionValid, shouldAutoRefreshToken } from '@/lib/session-config';
 import { apiRequest, queryClient } from '@/lib/queryClient';
+import { dispatchRealtimeEvent, invalidateForRealtimeEvent } from '@/lib/realtime-events';
 
 interface AuthContextType {
   user: User | null;
@@ -30,27 +33,72 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authData, setAuthData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // 🔒 SECURITY: Inactivity timeout (30 minutes)
+    // 🔒 SECURITY: Session configuration by platform
+    const sessionConfig = getSessionConfig();
+  
+    // 🔒 SECURITY: Inactivity timeout (configurable by platform)
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutos
+    const autoRefreshTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const lastRefreshRef = useRef<number>(Date.now());
+    const sessionStartRef = useRef<number>(Date.now());
 
   // Preserve whether the user chose a persistent (localStorage) or session-based login
   const resolveRememberPreference = () => {
     if (localStorage.getItem('authData')) return true;
     if (sessionStorage.getItem('authData')) return false;
-    return true;
+    return false; // SECURITY: Default to session-only unless explicitly remembered
   };
 
   // 🔒 SECURITY: Reset inactivity timer on user activity
   const resetInactivityTimer = (logoutFn: () => void) => {
+    // Si inactivity está deshabilitado (ej: Android), no hacer nada
+    if (sessionConfig.inactivityTimeoutMs === 0) {
+      return;
+    }
+    
     if (inactivityTimerRef.current) {
       clearTimeout(inactivityTimerRef.current);
     }
     
     inactivityTimerRef.current = setTimeout(() => {
-      console.log('⏰ INACTIVITY TIMEOUT: 30 minutos sin actividad - Sesión cerrada automáticamente');
       logoutFn();
-    }, INACTIVITY_TIMEOUT);
+    }, sessionConfig.inactivityTimeoutMs);
+  };
+  // 🔒 SECURITY: Auto-refresh token in background
+  const startAutoRefreshTimer = () => {
+    if (autoRefreshTimerRef.current) {
+      clearInterval(autoRefreshTimerRef.current);
+    }
+    
+    // Check si necesita refresh cada 30 minutos
+    autoRefreshTimerRef.current = setInterval(async () => {
+      const authData = getAuthData();
+      if (!authData?.token || !authData?.refreshToken) {
+        return; // No hay sesión
+      }
+      
+      // Verificar si necesita refresh
+      if (shouldAutoRefreshToken(lastRefreshRef.current, sessionConfig)) {
+        try {
+          const newToken = await refreshAccessToken();
+          if (newToken) {
+            lastRefreshRef.current = Date.now();
+            setToken(newToken);
+          } else {
+            // Refresh falló, forzar logout
+            logout(false);
+          }
+        } catch (error) {
+          console.error('❌ Auto-refresh error:', error);
+          // No logout aquí - solo intentar de nuevo en la próxima verificación
+        }
+      }
+      
+      // Verificar si sesión expiró (no se renovó en X días)
+      if (!isSessionValid(sessionStartRef.current, sessionConfig)) {
+        logout(false);
+      }
+    }, 30 * 60 * 1000); // Check cada 30 minutos
   };
 
   useEffect(() => {
@@ -76,7 +124,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             // CRITICAL FIX: Check for corrupted user data (undefined role, invalid ID)
             if (!data.user || !data.user.id || data.user.id === 4 || !data.user.role) {
-              console.log('🚨 CORRUPTED USER DATA DETECTED - FORCING LOGOUT');
               // Clear only auth data, preserve other localStorage items
               clearAuthData();
               window.location.href = '/login';
@@ -85,7 +132,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // 🔄 ROLE CHANGE DETECTION: If server detected role change, update token and reload
             if (data.roleChanged && data.newToken) {
-              console.log(`🔄 ROLE CHANGE DETECTED: ${data.previousRole} → ${data.user.role} - Updating and reloading...`);
               // Update token in storage with new role
               const updatedAuthData = {
                 ...authData,
@@ -105,10 +151,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const newCompanyId = data.company?.id;
             
             if (previousCompanyId && newCompanyId && previousCompanyId !== newCompanyId) {
-              console.log('🔄 COMPANY CHANGE DETECTED - CLEARING CACHE TO PREVENT DATA LEAKAGE', { 
-                from: previousCompanyId, 
-                to: newCompanyId 
-              });
               // Clear ALL cached data when switching companies
               queryClient.clear();
             }
@@ -121,7 +163,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Check if it's a cancelled account
             const errorData = await response.json();
             if (errorData.code === 'ACCOUNT_CANCELLED') {
-              console.log('🚫 ACCOUNT CANCELLED - BLOCKING ACCESS');
               // Clear auth data and redirect to login with a message
               clearAuthData();
               window.location.href = '/login?message=account_cancelled';
@@ -164,9 +205,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       inactivityTimerRef.current = setTimeout(() => {
-        console.log('⏰ INACTIVITY TIMEOUT: 30 minutos sin actividad - Sesión cerrada automáticamente');
         logout(false); // false = auto logout, no revoke request (user already inactive)
-      }, INACTIVITY_TIMEOUT);
+      }, sessionConfig.inactivityTimeoutMs);
     };
 
     // Events that reset the inactivity timer
@@ -186,6 +226,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       if (inactivityTimerRef.current) {
         clearTimeout(inactivityTimerRef.current);
+      }
+    };
+  }, [user, token, sessionConfig.inactivityTimeoutMs]);
+
+  // 🔒 SECURITY: Setup auto-refresh timer
+  useEffect(() => {
+    if (user && token) {
+      sessionStartRef.current = Date.now(); // Reset session start time
+      lastRefreshRef.current = Date.now();
+      startAutoRefreshTimer();
+    }
+    
+    return () => {
+      if (autoRefreshTimerRef.current) {
+        clearInterval(autoRefreshTimerRef.current);
       }
     };
   }, [user, token]);
@@ -228,10 +283,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const newCompanyId = data.company?.id;
     
     if (previousCompanyId && newCompanyId && previousCompanyId !== newCompanyId) {
-      console.log('🔄 LOGIN COMPANY CHANGE - CLEARING CACHE TO PREVENT DATA LEAKAGE', { 
-        from: previousCompanyId, 
-        to: newCompanyId 
-      });
       queryClient.clear();
     }
     
@@ -292,7 +343,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (response.ok) {
         const completeData = await response.json();
-        console.log('✅ Complete user data refreshed:', { hasSubscription: !!completeData.subscription });
         
         // Update state with complete data including subscription
         setUser(completeData.user);
@@ -307,7 +357,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         setAuthData(completeAuthData);
         saveAuthData(completeAuthData);
-        console.log('✅ Complete auth data saved with subscription info');
       }
     } catch (error) {
       console.error('⚠️ Error refreshing user data after registration:', error);
@@ -317,19 +366,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // CRITICAL FIX: Invalidate all queries after registration to ensure fresh data loads
     // This is essential for the dashboard to show newly created demo employees
     queryClient.invalidateQueries();
-    console.log('🔄 All queries invalidated for fresh data after registration');
     
     // Set flag for welcome modal to show after navigation to dashboard
     localStorage.setItem('showWelcomeModal', 'true');
-    console.log('🎉 Welcome modal flag set');
     
     return data;
   };
 
   const logout = async (manual: boolean = true) => {
-    console.log(`🚪 LOGOUT (${manual ? 'MANUAL' : 'AUTO'}) - CLEARING CACHE AND AUTH DATA`);
+    // CRITICAL: Capture tokens BEFORE clearing storage/state
+    const authDataBeforeClear = getAuthData();
+    const refreshTokenToRevoke = authDataBeforeClear?.refreshToken;
+    const accessTokenToRevoke = authDataBeforeClear?.token || token;
     
-    // CRITICAL: Clear localStorage FIRST to prevent re-initialization
+    // Clear localStorage - preserve theme
     const theme = localStorage.getItem('theme');
     clearAuthData();
     localStorage.removeItem('token');
@@ -337,38 +387,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('company');
     sessionStorage.clear();
     if (theme) localStorage.setItem('theme', theme);
-    console.log('✅ localStorage cleared');
     
     // Clear state immediately AFTER localStorage
     setUser(null);
     setCompany(null);
     setToken(null);
     setAuthData(null);
-    console.log('✅ State cleared');
     
-    // 🔒 SECURITY: Revoke refresh token on manual logout
-    if (manual && token) {
+    // 🔒 SECURITY: Revoke refresh token on manual logout (use captured token, not read from storage)
+    if (manual && accessTokenToRevoke && refreshTokenToRevoke) {
       try {
-        console.log('🔒 Revoking refresh token...');
         await fetch('/api/auth/logout', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${accessTokenToRevoke}`
           },
-          body: JSON.stringify({ refreshToken: getAuthData()?.refreshToken })
+          body: JSON.stringify({ refreshToken: refreshTokenToRevoke })
         });
-        console.log('✅ Refresh token revoked');
       } catch (error) {
         console.error('⚠️ Error revoking refresh token:', error);
       }
     }
     
+    // Clear timers on logout
+    if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    if (autoRefreshTimerRef.current) clearInterval(autoRefreshTimerRef.current);
+  
     // Clear queries
     queryClient.clear();
     
     // Direct redirect without delay
-    console.log('🔄 Redirecting to login NOW...');
     window.location.href = '/login';
   };
 
@@ -385,7 +434,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // 🔄 ROLE CHANGE DETECTION: If server detected role change, update token and reload
         if (data.roleChanged && data.newToken) {
-          console.log(`🔄 ROLE CHANGE DETECTED: ${data.previousRole} → ${data.user.role} - Updating and reloading...`);
           // Update token in storage with new role
           const currentAuthData = getAuthData();
           const updatedAuthData = {
@@ -453,20 +501,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Build WebSocket URL using current host
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // ⚠️ Note: WebSocket doesn't support Authorization headers, so token is passed in query
-    // This is standard practice for WebSocket auth. The token is short-lived (15min).
-    const wsUrl = `${wsProtocol}//${window.location.host}/ws/work-sessions?token=${token}`;
     
     let ws: WebSocket | null = null;
     let reconnectAttempts = 0;
     let reconnectTimeout: NodeJS.Timeout | null = null;
     let isCleaningUp = false; // Flag to prevent reconnection during cleanup
-    const maxReconnectAttempts = 5;
     const reconnectDelay = 5000; // 5 seconds
     
     const connect = () => {
       // Don't reconnect if we're cleaning up
       if (isCleaningUp) return;
+
+      // Always use the freshest token available for reconnect attempts
+      const freshToken = getAuthData()?.token || token;
+      if (!freshToken || isTokenExpired(freshToken)) {
+        reconnectTimeout = setTimeout(connect, reconnectDelay);
+        return;
+      }
+
+      // ⚠️ WebSocket doesn't support Authorization headers, so token is passed in query.
+      const wsUrl = `${wsProtocol}//${window.location.host}/ws/work-sessions?token=${freshToken}`;
       
       try {
         ws = new WebSocket(wsUrl);
@@ -478,17 +532,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            
-            // Helper to invalidate all queries starting with a path
-            const invalidateByPath = (basePath: string) => {
-              queryClient.invalidateQueries({
-                predicate: (query) => {
-                  const key = query.queryKey[0];
-                  return typeof key === 'string' && key.startsWith(basePath);
-                }
-              });
-            };
-            
+
+            // Publish raw realtime events so global listeners (toasts, badges) can react
+            dispatchRealtimeEvent(data);
+
             // Handle different event types
             switch (data.type) {
               // Role change - reload page with new token
@@ -496,67 +543,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (data.newToken) {
                   console.log(`🔄 ROLE CHANGE: ${data.previousRole} → ${data.newRole}`);
                   const currentAuthData = getAuthData();
-                  const updatedAuthData = { ...currentAuthData, token: data.newToken };
-                  saveAuthData(updatedAuthData, resolveRememberPreference());
+                  if (currentAuthData?.user && currentAuthData.company) {
+                    const updatedAuthData = { ...currentAuthData, token: data.newToken };
+                    saveAuthData(updatedAuthData, resolveRememberPreference());
+                  }
                   queryClient.clear();
                   window.location.reload();
                 }
                 break;
-              
-              // Messages - refresh all message-related queries including unread count
-              case 'message_received':
-                invalidateByPath('/api/messages');
-                // Also invalidate unread count for badge updates
-                queryClient.invalidateQueries({ 
-                  predicate: (query) => {
-                    const key = query.queryKey[0];
-                    return typeof key === 'string' && key.startsWith('/api/messages/unread');
-                  }
-                });
-                break;
-              
-              // Work sessions - refresh all time tracking and dashboard queries
-              case 'work_session_created':
-              case 'work_session_updated':
-              case 'work_session_deleted':
-                invalidateByPath('/api/work-sessions');
-                invalidateByPath('/api/break-periods');
-                invalidateByPath('/api/admin/dashboard');
-                invalidateByPath('/api/admin/work-sessions');
-                break;
-              
-              // Vacation requests - refresh all vacation-related queries
-              case 'vacation_request_created':
-              case 'vacation_request_updated':
-                invalidateByPath('/api/vacation-requests');
-                invalidateByPath('/api/admin/dashboard');
-                break;
-              
-              // Time modification requests
-              case 'modification_request_created':
-              case 'modification_request_updated':
-                console.log(`✏️ Modification request ${data.type.replace('modification_request_', '')} via WebSocket`);
-                invalidateByPath('/api/admin/work-sessions/modification-requests');
-                break;
-              
-              // Documents - refresh all document-related queries
-              case 'document_request_created':
-              case 'document_uploaded':
-                invalidateByPath('/api/documents');
-                invalidateByPath('/api/document-notifications');
-                break;
-              
-              // Reminders - refresh all reminder queries
-              case 'reminder_created':
-              case 'reminder_user_completed':
-              case 'reminder_all_completed':
-                invalidateByPath('/api/reminders');
-                break;
-              
-              // Work reports
-              case 'work_report_created':
-                invalidateByPath('/api/admin/work-reports');
-                invalidateByPath('/api/work-reports');
+
+              default:
+                invalidateForRealtimeEvent(queryClient, data);
                 break;
             }
           } catch (e) {
@@ -565,8 +562,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         
         ws.onclose = () => {
-          // Reconnect only if not cleaning up and under max attempts
-          if (!isCleaningUp && reconnectAttempts < maxReconnectAttempts) {
+          // Reconnect while session is alive
+          if (!isCleaningUp) {
             reconnectAttempts++;
             reconnectTimeout = setTimeout(connect, reconnectDelay);
           }
