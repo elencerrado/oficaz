@@ -8,7 +8,7 @@ const config: CapacitorConfig = {
   server: {
     // Use hosted app shell to keep Android auth/session behavior aligned with production.
     androidScheme: 'https',
-    url: 'https://oficaz.es',
+    url: 'https://oficaz.es/login',
     cleartext: false,
     allowNavigation: ['oficaz.es', '*.oficaz.es'],
   },
