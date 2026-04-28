@@ -156,8 +156,8 @@ console.error = (...args) => {
 
 
 
-// Performance optimization - mark body as loaded to prevent FOUC
-const markAsLoaded = () => {
+// Called after React's first render to remove the pre-React boot loader
+export const markAsLoaded = () => {
   document.body.classList.add('loaded');
   document.body.classList.remove('app-preload');
 
@@ -171,13 +171,6 @@ const markAsLoaded = () => {
   const spinner = document.querySelector('.loading-spinner');
   if (spinner) spinner.remove();
 };
-
-// Check if DOM is already ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', markAsLoaded);
-} else {
-  markAsLoaded();
-}
 
 // Import App directly to avoid double loading effect
 import App from "./App";

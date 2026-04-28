@@ -1,6 +1,8 @@
+import { useEffect } from "react";
 import { AppProviders } from "@/components/AppProviders";
 import { GlobalOverlays } from "@/components/GlobalOverlays";
 import { RouterView } from "@/components/RouterView";
+import { markAsLoaded } from "./main";
 
 /**
  * App: Top-level component with proper architectural separation.
@@ -14,6 +16,10 @@ import { RouterView } from "@/components/RouterView";
  * of page navigation, maintaining their state and scroll position across route changes.
  */
 function App() {
+  useEffect(() => {
+    markAsLoaded();
+  }, []);
+
   return (
     <AppProviders>
       <GlobalOverlays />
