@@ -19,6 +19,7 @@ import { MobileHeader } from "@/components/layout/mobile-header";
 import { ReminderBanner } from "@/components/ui/reminder-banner";
 import { TestBanner } from "@/components/test-banner";
 import { updateThemeColor, THEME_COLORS } from "@/lib/theme-provider";
+import { isNativeAndroid } from "@/lib/server-config";
 import type { FeatureKey } from "@/lib/feature-restrictions";
 import { useQuery } from "@tanstack/react-query";
 import oficazLogo from "@/assets/oficaz-logo.png";
@@ -560,6 +561,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 function Router() {
   const { user, company } = useAuth();
   const [location, setLocation] = useLocation();
+  const nativeAndroid = isNativeAndroid();
   
   // Listen for AI assistant navigation events (SPA navigation without full page reload)
   useEffect(() => {
@@ -1041,9 +1043,13 @@ function Router() {
 
       {/* Landing page - main entry point (must be last to avoid conflicts) */}
       <Route path="/">
-        <PublicRoute>
-          <PublicLanding />
-        </PublicRoute>
+        {nativeAndroid ? (
+          <Redirect to="/login" />
+        ) : (
+          <PublicRoute>
+            <PublicLanding />
+          </PublicRoute>
+        )}
       </Route>
 
       {/* 404 fallback */}

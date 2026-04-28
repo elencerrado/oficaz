@@ -30,6 +30,14 @@ export const getPlatform = (): 'web' | 'android' | 'ios' => {
   return 'web';
 };
 
+export const isNativeAndroid = (): boolean => {
+  return isNativePlatform() && getPlatform() === 'android';
+};
+
+export const getPublicHomePath = (): string => {
+  return isNativeAndroid() ? '/login' : '/';
+};
+
 /**
  * Get the server base URL for API requests
  * 

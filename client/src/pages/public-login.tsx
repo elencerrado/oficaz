@@ -14,6 +14,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import oficazLogo from '@/assets/oficaz-logo.png';
 import { getAuthData, clearAuthData } from '@/lib/auth';
+import { getPublicHomePath } from '@/lib/server-config';
 import { logger } from '@/lib/logger';
 
 // Secure login schema
@@ -26,6 +27,7 @@ type LoginData = z.infer<typeof loginSchema>;
 
 export default function Login() {
   usePageTitle('Iniciar Sesión');
+  const publicHomePath = getPublicHomePath();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [, setLocation] = useLocation();
@@ -233,7 +235,7 @@ export default function Login() {
                 className="h-10 w-auto max-w-32 object-contain"
               />
             ) : (
-              <Link href="/">
+              <Link href={publicHomePath}>
                 <img 
                   src={oficazLogo} 
                   alt="Oficaz" 

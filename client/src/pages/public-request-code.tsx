@@ -15,6 +15,7 @@ import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@/assets/oficaz-logo.png';
 import { usePageTitle } from '@/hooks/use-page-title';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { getPublicHomePath } from '@/lib/server-config';
 import { logger } from '@/lib/logger';
 
 const emailSchema = z.object({
@@ -25,6 +26,7 @@ type EmailData = z.infer<typeof emailSchema>;
 
 export default function RequestCode() {
   usePageTitle('Solicitar Código de Verificación');
+  const publicHomePath = getPublicHomePath();
   const [, setLocation] = useLocation();
   const search = useSearch();
   const [isLoading, setIsLoading] = useState(false);
@@ -46,11 +48,11 @@ export default function RequestCode() {
     if (!isLoadingSettings && registrationSettings && !registrationSettings?.publicRegistrationEnabled) {
       // Use setTimeout to avoid immediate redirect during render
       const timer = setTimeout(() => {
-        setLocation('/');
+        setLocation(publicHomePath);
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [registrationSettings, isLoadingSettings]);
+  }, [registrationSettings, isLoadingSettings, publicHomePath, setLocation]);
 
   // Set dark notch for dark background
   useEffect(() => {
@@ -180,7 +182,7 @@ export default function RequestCode() {
         <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
           <CardHeader className="text-center pt-6 pb-4">
             <div className="flex justify-center mb-4">
-              <Link href="/">
+              <Link href={publicHomePath}>
                 <img
                   src={oficazLogo}
                   alt="Oficaz"
@@ -207,7 +209,7 @@ export default function RequestCode() {
         <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
           <CardHeader className="text-center pt-6 pb-4">
             <div className="flex justify-center mb-4">
-              <Link href="/">
+              <Link href={publicHomePath}>
                 <img
                   src={oficazLogo}
                   alt="Oficaz"
@@ -227,7 +229,7 @@ export default function RequestCode() {
           </CardHeader>
           <CardContent className="px-6 pb-6">
             <div className="space-y-3">
-              <Link href="/">
+              <Link href={publicHomePath}>
                 <Button variant="outline" className="w-full rounded-xl py-3 border-gray-300">
                   Volver al Inicio
                 </Button>
@@ -249,7 +251,7 @@ export default function RequestCode() {
       <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
         <CardHeader className="text-center pt-6 pb-4">
           <div className="flex justify-center mb-4">
-            <Link href="/">
+            <Link href={publicHomePath}>
               <img 
                 src={oficazLogo} 
                 alt="Oficaz" 

@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Shield, ArrowRight, ArrowLeft, RotateCcw, Clock, CheckCircle } from 'lucide-react';
 
 import { apiRequest } from '@/lib/queryClient';
+import { getPublicHomePath } from '@/lib/server-config';
 
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
@@ -22,6 +23,7 @@ type CodeData = z.infer<typeof codeSchema>;
 
 export default function VerifyCode() {
   const [, setLocation] = useLocation();
+  const publicHomePath = getPublicHomePath();
   const search = useSearch();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -220,7 +222,7 @@ export default function VerifyCode() {
       <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
         <CardHeader className="text-center pt-8 pb-6">
           <div className="flex justify-center mb-6">
-            <Link href="/">
+            <Link href={publicHomePath}>
               <img 
                 src="/favicon.png" 
                 alt="Oficaz" 

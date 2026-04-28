@@ -12,11 +12,13 @@ import { apiRequest } from '@/lib/queryClient';
 import { passwordResetRequestSchema } from '@shared/schema';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import oficazLogo from '@/assets/oficaz-logo.png';
+import { getPublicHomePath } from '@/lib/server-config';
 
 type ForgotPasswordData = z.infer<typeof passwordResetRequestSchema>;
 
 export default function ForgotPassword() {
   usePageTitle('Recuperar Contraseña');
+  const publicHomePath = getPublicHomePath();
   const [, setLocation] = useLocation();
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -74,7 +76,7 @@ export default function ForgotPassword() {
         <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
           <CardHeader className="text-center pt-6 pb-4">
             <div className="flex justify-center mb-4">
-              <Link href="/">
+              <Link href={publicHomePath}>
                 <img 
                   src={oficazLogo} 
                   alt="Oficaz" 
@@ -122,7 +124,7 @@ export default function ForgotPassword() {
       <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
         <CardHeader className="text-center pt-6 pb-4">
           <div className="flex justify-center mb-4">
-            <Link href="/">
+            <Link href={publicHomePath}>
               <img 
                 src={oficazLogo} 
                 alt="Oficaz" 
