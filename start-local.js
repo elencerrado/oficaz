@@ -29,7 +29,11 @@ if (!existsSync(envPath)) {
 
 // Determinar si es desarrollo o producción
 const isDev = process.argv.includes('dev');
-const port = Number(process.env.PORT || 5000);
+
+// In local development we pin the app to 5000 to avoid frequent 3000 conflicts
+// from other Node processes/tools in Windows environments.
+const devPort = 5000;
+const port = isDev ? devPort : Number(process.env.PORT || 5000);
 
 console.log(`🚀 Iniciando Oficaz en modo ${isDev ? 'desarrollo' : 'producción'}...`);
 console.log(`📁 Usando variables de entorno de: ${envPath}`);
@@ -58,6 +62,7 @@ if (isDev) {
     env: {
       ...process.env,
       NODE_ENV: 'development',
+      PORT: String(devPort),
       NODE_OPTIONS: buildNodeOptionsWithHeapFallback(),
     }
   });
